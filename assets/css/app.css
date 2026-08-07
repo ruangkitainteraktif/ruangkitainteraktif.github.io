@@ -1,0 +1,1852 @@
+* {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, html {
+      height: 100%;
+      width: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      overflow: hidden;
+    }
+
+    :root {
+      --font-size-xs: 11px;
+      --font-size-sm: 13px;
+      --font-size-md: 14px;
+      --font-size-lg: 15px;
+      --font-size-xl: 16px;
+    }
+
+    #app-container {
+      display: flex;
+      height: 100vh;
+      height: 100dvh;
+      width: 100vw;
+      position: relative;
+    }
+
+    .app-loading-overlay {position: fixed;inset: 0;z-index: 5000;display: flex; justify-content: center;align-items: center;background: radial-gradient(circle at 50% 35%,#197db4,#06365f 65%);transition: opacity .45s ease, visibility .45s ease;}
+    .app-loading-overlay.is-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .app-loading-card { display: grid; justify-items: center; gap: 8px; color: #fff; text-align: center; }
+    .app-loading-card strong { font-size: 25px; letter-spacing: .04em; }.app-loading-card strong span { color: #f4c329; }
+    .app-loading-card small { color: rgba(255,255,255,.78); font-size: 11px; }
+    .app-loading-mark { display: grid; grid-template-columns: repeat(2, 15px); grid-template-rows: repeat(2, 15px); gap: 4px; padding: 7px; border: 1px solid rgba(255,255,255,.5); border-radius: 13px; transform: rotate(-8deg); }
+    .app-loading-mark i { border-radius: 4px; background: #fff; }.app-loading-mark i:nth-child(2) { background: #f4c329; }.app-loading-mark i:nth-child(3) { background: #68dce5; }.app-loading-mark i:nth-child(4) { background: #bce7ed; }
+    .app-loading-bar { width: 142px; height: 4px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.22); }.app-loading-bar i { display: block; width: 45%; height: 100%; border-radius: inherit; background: #f4c329; animation: app-loading-slide 1.1s infinite ease-in-out; } @keyframes app-loading-slide { from { transform: translateX(-110%); } to { transform: translateX(330%); } }
+
+    /* PETA UTAMA */
+    #map {
+      flex: 1;
+      height: 100%;
+      width: 100%;
+      z-index: 1;
+    }
+
+    /* Unified Search on Map */
+    .unified-search {
+      position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+      z-index: 1000; width: min(420px, calc(100% - 32px));
+    }
+    .unified-search-inner {
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 14px; height: 46px;
+      background: rgba(255,255,255,.88);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255,255,255,.6);
+      border-radius: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.08), 0 8px 32px rgba(0,0,0,.06), inset 0 1px 0 rgba(255,255,255,.5);
+      transition: box-shadow .2s, border-color .2s;
+    }
+    .unified-search-inner:focus-within {
+      box-shadow: 0 2px 16px rgba(0,0,0,.1), 0 12px 40px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.5);
+      border-color: rgba(26,115,232,.3);
+      background: rgba(255,255,255,.95);
+    }
+    .unified-search-icon { color: #5f6368; flex-shrink: 0; opacity: .7; }
+    .unified-search-input {
+      flex: 1; border: 0; outline: none; background: transparent;
+      font-size: 14px; color: #202124; font-family: 'Google Sans', 'Segoe UI', sans-serif;
+      line-height: 1; letter-spacing: .01em;
+    }
+    .unified-search-input::placeholder { color: #5f6368; opacity: .6; }
+    .unified-search-clear {
+      display: none; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border: 0; border-radius: 50%;
+      background: rgba(0,0,0,.06); color: #5f6368; font-size: 16px;
+      cursor: pointer; transition: background .15s; flex-shrink: 0;
+    }
+    .unified-search-clear:hover { background: rgba(0,0,0,.12); }
+    .unified-search-results {
+      display: none; margin-top: 6px; max-height: 340px; overflow-y: auto;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid rgba(255,255,255,.5);
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.08), 0 12px 40px rgba(0,0,0,.06);
+    }
+    .unified-ac-group { padding: 6px 0; }
+    .unified-ac-group + .unified-ac-group { border-top: 1px solid rgba(0,0,0,.06); }
+    .unified-ac-label {
+      display: block; padding: 6px 16px 4px; font-size: 11px; font-weight: 600;
+      color: #5f6368; letter-spacing: .04em; text-transform: uppercase;
+    }
+    .unified-ac-item {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      padding: 8px 16px; border: 0; background: transparent;
+      cursor: pointer; text-align: left; transition: background .12s;
+    }
+    .unified-ac-item:hover { background: rgba(26,115,232,.06); }
+    .unified-ac-icon { font-size: 16px; width: 24px; text-align: center; flex-shrink: 0; }
+    .unified-ac-item strong { display: block; font-size: 13px; color: #202124; font-weight: 500; }
+    .unified-ac-item small { display: block; font-size: 11px; color: #5f6368; margin-top: 1px; }
+    .unified-ac-empty { padding: 14px 16px; text-align: center; color: #5f6368; font-size: 12px; }
+
+    /* Tombol lokasi saya (Leaflet Locate Control) */
+    .leaflet-control-locate { margin: 20px !important; border: 0 !important; border-radius: 15px !important; background: transparent !important; box-shadow: 0 10px 28px rgba(8, 63, 102, .24) !important; overflow: hidden; }
+    .leaflet-control-locate a { display: grid !important; width: 46px !important; height: 46px !important; place-items: center; border: 1px solid rgba(255,255,255,.86) !important; border-radius: 15px !important; background: linear-gradient(145deg, #ffffff, #e9f7fc) !important; color: #0879bf !important; text-decoration: none; transition: transform .2s ease, box-shadow .2s ease, background .2s ease; position: relative; }
+    .leaflet-control-locate a::before { content: '⌖'; font-family: Arial, sans-serif; font-size: 29px; font-weight: 700; line-height: 1; transform: translateY(-1px); }
+    .leaflet-control-locate a .leaflet-control-locate-location-arrow { display: none; }
+    .leaflet-control-locate a:hover { background: linear-gradient(145deg, #ffffff, #d5f3fb) !important; box-shadow: inset 0 0 0 1px rgba(8,121,191,.14); transform: translateY(-2px); }
+    .leaflet-control-locate.active a, .leaflet-control-locate.following a { border-color: #0879bf !important; background: linear-gradient(145deg, #0879bf, #12a7c8) !important; color: #fff !important; }
+    .leaflet-control-locate.active a::before, .leaflet-control-locate.following a::before { animation: locate-spin 1s linear infinite; }
+
+    .reset-layers-btn {
+      display: grid;
+      place-items: center;
+      width: 46px !important;
+      height: 46px !important;
+      margin: 20px !important;
+      margin-bottom: 0 !important;
+      border: 1px solid rgba(255,255,255,.86) !important;
+      border-radius: 15px !important;
+      background: linear-gradient(145deg, #ffffff, #e9f7fc) !important;
+      color: #0879bf !important;
+      font-size: 22px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(8,63,102,.18);
+      transition: transform .2s, box-shadow .2s, background .2s;
+    }
+    .reset-layers-btn:hover {
+      background: linear-gradient(145deg, #ffffff, #d5f3fb) !important;
+      box-shadow: inset 0 0 0 1px rgba(8,121,191,.14);
+      transform: translateY(-2px);
+    }
+    .reset-layers-btn.reset-flash {
+      background: linear-gradient(145deg, #0879bf, #12a7c8) !important;
+      color: #fff !important;
+      transform: scale(0.92);
+    }
+    .toggle-insight-btn {
+      display: grid;
+      place-items: center;
+      width: 46px !important;
+      height: 46px !important;
+      margin: 20px !important;
+      margin-bottom: 0 !important;
+      border: 1px solid rgba(255,255,255,.86) !important;
+      border-radius: 15px !important;
+      background: linear-gradient(145deg, #ffffff, #e9f7fc) !important;
+      color: #0879bf !important;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(8,63,102,.18);
+      transition: transform .2s, box-shadow .2s, background .2s;
+    }
+    .toggle-insight-btn:hover {
+      background: linear-gradient(145deg, #ffffff, #d5f3fb) !important;
+      box-shadow: inset 0 0 0 1px rgba(8,121,191,.14);
+      transform: translateY(-2px);
+    }
+    @keyframes locate-spin { to { transform: rotate(360deg); } }
+
+    /* Map Insight Cards */
+    .map-insight-cards {
+      position: absolute;
+      top: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      display: none;
+      gap: 8px;
+      width: min(420px, calc(100% - 32px));
+      pointer-events: auto;
+    }
+    .map-insight-card {
+      flex: 1;
+      min-width: 0;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255,255,255,0.6);
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    .map-insight-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.16), 0 4px 12px rgba(0,0,0,0.08);
+      background: rgba(255,255,255,0.98);
+    }
+    .insight-card-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 10px 2px;
+    }
+    .insight-card-icon { font-size: 12px; }
+    .insight-card-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: #0b4da2;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .insight-card-body {
+      padding: 0 10px 6px;
+      font-size: 11px;
+      color: #0b4da2;
+      line-height: 1.4;
+    }
+    .insight-loading {
+      font-size: 10px;
+      color: #54708d;
+      padding: 2px 0;
+    }
+    .insight-weather-main {
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+    }
+    .insight-weather-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 60px;
+      padding-right: 8px;
+      border-right: 1px solid #e2e8f0;
+    }
+    .insight-weather-temp {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0b4da2;
+      line-height: 1;
+    }
+    .insight-weather-icon {
+      width: 28px;
+      height: 28px;
+      margin-top: 2px;
+    }
+    .insight-weather-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      min-width: 0;
+    }
+    .insight-weather-desc {
+      font-size: 11px;
+      color: #334155;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .insight-weather-detail {
+      font-size: 10px;
+      color: #54708d;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .insight-quake-main {
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+    }
+    .insight-quake-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 50px;
+      padding-right: 8px;
+      border-right: 1px solid #e2e8f0;
+    }
+    .insight-quake-mag {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .insight-quake-label {
+      font-size: 9px;
+      color: #54708d;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .insight-quake-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      min-width: 0;
+    }
+    .insight-quake-place {
+      font-size: 11px;
+      color: #1e293b;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .insight-quake-meta {
+      font-size: 10px;
+      color: #54708d;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .insight-quake-none {
+      font-size: 10px;
+      color: #10b981;
+      font-weight: 600;
+    }
+
+    /* SIDEBAR KIRI */
+    #sidebar-left {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 360px;
+      height: 100%;
+      background: #ffffff;
+      border-right: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.15);
+      z-index: 1000;
+      transition: transform 0.3s ease-in-out;
+    }
+
+    #sidebar-left.collapsed {
+      transform: translateX(-100%);
+    }
+
+    /* Tombol Toggle Sidebar Kiri */
+    .toggle-sidebar-btn {
+      position: absolute;
+      top: 40vh;
+      right: -25px;
+      width: 25px;
+      height: 70px;
+      background: #0078d4;
+      color: white;
+      border: none;
+      border-radius: 0 6px 6px 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+      box-shadow: 3px 0 6px rgba(0,0,0,0.15);
+      z-index: 1001;
+    }
+
+    .sidebar-header {
+      padding: 13px 15px;
+      color: #fff;
+      background: linear-gradient(120deg, #063d72, #0878b9 58%, #19a8c8);
+      border-bottom: 3px solid #f1bd27;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .ruangkita-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .ruangkita-mark {
+      display: grid;
+      grid-template-columns: repeat(2, 12px);
+      grid-template-rows: repeat(2, 12px);
+      gap: 3px;
+      padding: 5px;
+      border: 1px solid rgba(255,255,255,.55);
+      border-radius: 10px;
+      background: rgba(3, 48, 89, .25);
+      transform: rotate(-8deg);
+    }
+
+    .ruangkita-mark i { border-radius: 3px; background: #fff; }
+    .ruangkita-mark i:nth-child(2) { background: #f3bf28; }
+    .ruangkita-mark i:nth-child(3) { background: #60d9e3; }
+    .ruangkita-mark i:nth-child(4) { background: #bce6ed; }
+
+    .ruangkita-name { display: grid; line-height: 1; letter-spacing: .04em; }
+    .ruangkita-name strong { font-size: 19px; font-weight: 800; letter-spacing: .02em; }
+    .ruangkita-name strong span { color: #f5c62d; }
+    .ruangkita-name small { margin-top: 4px; color: rgba(255,255,255,.82); font-size: 8px; font-weight: 700; letter-spacing: .12em; }
+
+    .tab-menu {
+      display: flex;
+      width: 100%;
+      flex-wrap: nowrap;
+      background: #f4f6f9;
+      border-bottom: 1px solid #e0e0e0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x proximity;
+      scrollbar-width: thin;
+    }
+    .tab-menu::-webkit-scrollbar { height: 4px; }
+    .tab-menu::-webkit-scrollbar-thumb { border-radius: 4px; background: #b7c7d6; }
+
+    .tab-btn {
+      flex: 0 0 auto;
+      min-width: max-content;
+      padding: 10px 12px;
+      border: none;
+      background: transparent;
+      font-size: 12px;
+      white-space: nowrap;
+      scroll-snap-align: start;
+      font-weight: 600;
+      color: #666;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      color: #0078d4;
+      background: #ffffff;
+      border-bottom: 3px solid #0078d4;
+    }
+
+    .sidebar-content {
+      padding: 15px;
+      flex: 1;
+      overflow-y: auto;
+      font-size: 13px;
+    }
+
+    .tab-content { display: none; }
+    .tab-content h4 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #173b5d;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    .tab-content h5 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #336583;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+    .tab-content p,
+    .tab-content label,
+    .tab-content span,
+    .tab-content small,
+    .tab-content input,
+    .tab-content select,
+    .tab-content button {
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .tab-content.active { display: block; }
+
+    .query-box {
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 15px;
+    }
+
+    .form-group { margin-bottom: 12px; }
+
+    .kegiatan-filter-section {
+      background: #f4f7fb;
+      border: 1px solid #e7eef5;
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
+    .kegiatan-filter-section label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #54708d;
+      margin-bottom: 6px;
+    }
+    .kegiatan-filter-section select {
+      width: 100%;
+      padding: 7px 10px;
+      font-size: 12px;
+      border: 1px solid #c4d5e3;
+      border-radius: 5px;
+      background: #fff;
+      color: #1e293b;
+      outline: none;
+    }
+    .kegiatan-filter-section select:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 0 2px rgba(0,123,255,0.1);
+    }
+
+    .query-box label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .query-box select {
+      width: 100%;
+      padding: 8px;
+      font-size: 13px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: white;
+    }
+
+    .btn-apply {
+      width: 100%;
+      background-color: #0078d4;
+      color: white;
+      border: none;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-apply:hover { background-color: #005a9e; }
+
+    .btn-wilayah-apply {
+      width: 100%;
+      background-color: #0078d4;
+      color: white;
+      border: none;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-wilayah-apply:hover { background-color: #005a9e; }
+    .btn-wilayah-apply:disabled { background-color: #9baab6; cursor: not-allowed; }
+
+    /* PANEL DETAIL ADMINISTRASI (DESKTOP: KANAN, MOBILE: MODAL) */
+    #detail-panel {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 380px;
+      max-height: calc(100vh - 30px);
+      max-height: calc(100dvh - 30px);
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 16px 16px 0 0;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      overflow: visible;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    /* Status Panel Detail Tersembunyi (Desktop) */
+    #detail-panel.hidden {
+      transform: translateX(420px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Tombol Tampilkan Panel Detail saat Tersembunyi */
+    #show-detail-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      z-index: 998;
+      background: #0078d4;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      cursor: pointer;
+      display: none; /* Muncul hanya jika detail-panel di-hide */
+    }
+
+    .panel-header {
+      padding: 12px 15px;
+      background: #0078d4;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 16px 16px 0 0;
+    }
+
+    .panel-header h3 {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* Tombol Tutup/Sembunyikan Panel Detail */
+    .close-panel-btn {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .close-panel-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .panel-body {
+      padding: 15px;
+      overflow-y: auto;
+    }
+
+    .admin-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+
+    .admin-item label {
+      display: block;
+      color: #777;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .admin-item span {
+      color: #222;
+      font-weight: 500;
+    }
+
+    .detail-subtab-content {
+      padding: 0 15px;
+    }
+
+    /* Sub Tabs Detail Zonasi */
+    .detail-tabs {
+      display: flex;
+      background: #f4f6f9;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .detail-tab-btn {
+      flex: 1;
+      padding: 8px 2px;
+      border: none;
+      background: transparent;
+      font-size: 11px;
+      font-weight: 600;
+      color: #666;
+      cursor: pointer;
+    }
+
+    .detail-tab-btn.active {
+      color: #0078d4;
+      background: #fff;
+      border-bottom: 2px solid #0078d4;
+    }
+
+    .info-card {
+      background: #f9f9f9;
+      border: 1px solid #e5e5e5;
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+    }
+
+    .info-card label {
+      font-size: 10px;
+      color: #666;
+      display: block;
+      font-weight: 600;
+    }
+
+    .info-card p {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    /* Legenda */
+    .legend-layer-title {
+      font-weight: bold;
+      font-size: 12px;
+      margin-bottom: 6px;
+      border-bottom: 2px solid #0078d4;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 4px;
+      font-size: 12px;
+    }
+
+    .legend-item img {
+      margin-right: 8px;
+      width: 18px;
+      height: 18px;
+    }
+
+    /* BACKDROP MODAL FOR MOBILE */
+    #modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      background: rgba(0,0,0,0.4);
+      z-index: 1050;
+    }
+
+    /* RESPONSIF MODE MOBILE (<= 768px) */
+    @media (max-width: 768px) {
+      .map-insight-cards {
+        gap: 6px;
+        width: calc(100% - 24px);
+      }
+      .map-insight-card { min-width: 0; }
+      .insight-card-body { padding: 0 8px 5px; }
+      .insight-weather-temp { font-size: 16px; }
+      .insight-quake-mag { width: 28px; height: 28px; font-size: 12px; }
+      .insight-quake-left { min-width: 44px; }
+      .insight-quake-main { gap: 6px; }
+      .insight-quake-meta { font-size: 9px; }
+
+      .geoid-leaflet-popup { 
+        max-width: calc(100vw - 48px) !important;
+        width: auto !important;
+        min-width: 260px;
+      }
+      .geoid-leaflet-popup .leaflet-popup-content-wrapper {
+        max-height: 70vh;
+        border-radius: 14px;
+      }
+      .geoid-popup { width: 100% !important; }
+      .geoid-popup-scroll { max-height: 100%; }
+      .geoid-popup-scroll .geoid-popup-body { max-height: calc(70vh - 80px); overflow-y: auto; }
+      .geoid-popup-meta div { padding: 4px 0; }
+      .geoid-popup-meta span { font-size: 11px; }
+      .geoid-popup-meta b { font-size: 12px; }
+
+      #sidebar-left {
+        width: 280px;
+      }
+
+      #detail-panel {
+        position: fixed;
+        top: auto;
+        bottom: -140%;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: 60vh;
+        height: 60dvh;
+        max-height: 60vh;
+        max-height: 60dvh;
+        border-radius: 16px 16px 0 0;
+        z-index: 1100;
+        transition: bottom 0.3s ease-in-out;
+        margin-bottom: -10px;
+      }
+
+      #detail-panel .panel-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      #detail-panel.hidden {
+        transform: none;
+        opacity: 1;
+        pointer-events: none;
+      }
+
+      #detail-panel.active {
+        bottom: 10px;
+        pointer-events: auto;
+      }
+
+      #modal-backdrop.active {
+        display: block;
+      }
+
+      #show-detail-btn {
+        display: none !important;
+      }
+    }
+
+    /* Styling Komponen Cuaca & Autocomplete Search */
+    .weather-card {
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .weather-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 10px 0;
+      margin-bottom: 60px;
+    }
+    .weather-temp {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .weather-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      padding: 4px 0;
+      border-bottom: 1px dashed #eee;
+    }
+    .weather-forecast-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 12px;
+    }
+
+    .wind-toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .wind-toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .wind-toggle-label input { display: none; }
+    .wind-toggle-track {
+      width: 36px; height: 20px;
+      background: #ccc;
+      border-radius: 10px;
+      position: relative;
+      transition: background .2s;
+      flex-shrink: 0;
+    }
+    .wind-toggle-label input:checked + .wind-toggle-track {
+      background: #1687d4;
+    }
+    .wind-toggle-thumb {
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 16px; height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform .2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .wind-toggle-label input:checked + .wind-toggle-track .wind-toggle-thumb {
+      transform: translateX(16px);
+    }
+    .wind-toggle-text {
+      font-size: 12px;
+      font-weight: 600;
+      color: #444;
+    }
+    .wind-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .wind-btn {
+      background: #1687d4;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .wind-btn:hover { background: #0d6ebd; }
+    .wind-ts {
+      font-size: 10px;
+      color: #666;
+      font-family: monospace;
+    }
+
+    /* Styling Autocomplete Box */
+    .search-weather-container {
+      position: relative;
+      margin-bottom: 12px;
+    }
+    .search-weather-input {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+      outline: none;
+    }
+    .search-weather-input:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 0 2px rgba(0,123,255,0.1);
+    }
+    .autocomplete-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 0 0 6px 6px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      display: none;
+    }
+    .autocomplete-item {
+      padding: 8px 12px;
+      font-size: 11px;
+      cursor: pointer;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .autocomplete-item:hover {
+      background-color: #f0f7ff;
+    }
+    .autocomplete-item strong {
+      color: #007bff;
+    }
+
+    /* Custom Leaflet Weather Icon Marker Badge */
+    .weather-marker-icon {
+      position: relative;
+      min-width: 54px;
+      min-height: 54px;
+      padding: 5px;
+      border: 2px solid #fff;
+      border-radius: 18px 18px 18px 4px;
+      background: linear-gradient(145deg, #0475bd, #0a4f91);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      box-shadow: 0 8px 18px rgba(3, 76, 136, .38);
+      font-weight: bold;
+      font-size: 10px;
+      white-space: nowrap;
+    }
+    .weather-marker-icon::after {
+      content: '';
+      position: absolute;
+      left: 7px;
+      bottom: -8px;
+      width: 13px;
+      height: 13px;
+      transform: rotate(45deg);
+      border-right: 2px solid #fff;
+      border-bottom: 2px solid #fff;
+      background: #0a4f91;
+    }
+    .weather-marker-icon img {
+      width: 26px;
+      height: 26px;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,.2));
+    }
+    .bmkg-leaflet-popup .leaflet-popup-content-wrapper { overflow: hidden; padding: 0; border-radius: 14px; box-shadow: 0 14px 40px rgba(11,54,87,.28); }
+    .bmkg-leaflet-popup .leaflet-popup-content { width: auto !important; margin: 0; }
+    .bmkg-leaflet-popup .leaflet-popup-tip { box-shadow: 0 14px 40px rgba(11,54,87,.28); }
+    .bmkg-popup { width: 270px; max-height: min(68vh, 460px); max-height: min(68dvh, 460px); overflow-y: auto; font-family: 'Segoe UI', Arial, sans-serif; color: #153652; scrollbar-width: thin; scrollbar-color: #9ab7cc transparent; }
+    .bmkg-popup::-webkit-scrollbar { width: 5px; }.bmkg-popup::-webkit-scrollbar-thumb { border-radius: 4px; background: #9ab7cc; }
+    .bmkg-popup-head { padding: 12px 14px; color: #fff; background: linear-gradient(135deg, #0879bf, #0a4d8c); }
+    .bmkg-popup-head strong { display: block; font-size: 14px; line-height: 1.25; }
+    .bmkg-popup-head span { display: block; margin-top: 2px; font-size: 11px; opacity: .92; }
+    .bmkg-popup-weather { display: flex; align-items: center; gap: 12px; padding: 14px; background: linear-gradient(180deg, #f3f9fd, #ffffff); }
+    .bmkg-popup-weather img { width: 48px; height: 48px; object-fit: contain; }
+    .bmkg-popup-weather > div { min-width: 0; }
+    .bmkg-popup-temp { color: #075c9d; font-size: 26px; font-weight: 700; line-height: 1.1; }
+    .bmkg-popup-weather span { display: block; margin-top: 2px; color: #5b7690; font-size: 12px; }
+
+    .geoid-marker-wrap { background: transparent; border: 0; }
+    .geoid-marker {
+      display: grid; place-items: center; width: 46px; height: 46px; border: 3px solid #fff; border-radius: 50% 50% 50% 8px;
+      background: linear-gradient(145deg, #1677ff, #0754b8); box-shadow: 0 8px 20px rgba(7, 84, 184, .38); transform: rotate(-45deg);
+    }
+    .geoid-marker svg { width: 25px; height: 25px; transform: rotate(45deg); fill: #fff; }
+    .geoid-marker svg circle { fill: #59d6b0; }
+    .geoid-leaflet-popup .leaflet-popup-content-wrapper { overflow: hidden; padding: 0; border-radius: 16px; box-shadow: 0 18px 45px rgba(16, 43, 80, .28); }
+    .geoid-leaflet-popup .leaflet-popup-content { width: auto !important; margin: 0; }
+    .geoid-leaflet-popup .leaflet-popup-tip { box-shadow: 4px 4px 12px rgba(16, 43, 80, .16); }
+    .geoid-popup { width: 286px; font-family: "Segoe UI", Arial, sans-serif; color: #18324c; }
+    .geoid-popup-head { padding: 16px 17px 15px; color: #fff; background: linear-gradient(135deg, #0b4da2, #1677d2 62%, #35a6e8); }
+    .geoid-popup-badge { display: flex; align-items: center; gap: 5px; margin-bottom: 7px; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #d8f2ff; }
+    .geoid-popup-pin { display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,.18); font-size: 13px; }
+    .geoid-popup-head strong { display: block; font-size: 17px; line-height: 1.25; letter-spacing: -.01em; }
+    .geoid-popup-head span { display: block; margin-top: 5px; font-size: 12px; line-height: 1.4; color: #eaf7ff; }
+    .geoid-popup-body { padding: 14px 17px 16px; background: #fff; }
+    .geoid-popup-location { display: flex; align-items: center; gap: 7px; padding-bottom: 12px; color: #54708d; font-size: 12px; }
+    .geoid-popup-location-icon { color: #1677d2; font-size: 17px; line-height: 1; }
+    .geoid-popup-meta { display: grid; gap: 8px; }
+    .geoid-popup-meta div { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; }
+    .geoid-popup-meta span { color: #71849a; }
+    .geoid-popup-meta b { color: #0b4da2; font-size: 12px; font-weight: 700; text-align: right; word-break: break-word; }
+    .geoid-popup-insights { display: grid; gap: 10px; margin-top: 12px; padding-top: 11px; border-top: 1px solid #e7eef5; color: #54708d; font-size: 13px; }
+    .geoid-popup-insights > div + div { border-bottom: 1px solid #e7eef5; padding-bottom: 8px; }
+    .geoid-popup-insights div { display: grid; gap: 3px; }
+    .geoid-popup-insights b { color: #0b4da2; font-size: 13px; }
+    .geoid-popup-insights span { color: #385773; line-height: 1.45; overflow-wrap: anywhere; }
+    .geoid-popup-cctv { margin-top: 12px; padding-top: 11px; border-top: 1px solid #e7eef5; color: #54708d; font-size: 13px; }
+    .geoid-popup-cctv div { display: grid; gap: 3px; }
+    .geoid-popup-cctv b { color: #0b4da2; font-size: 13px; }
+    .geoid-popup-cctv span { color: #385773; line-height: 1.45; overflow-wrap: anywhere; }
+    .geoid-cctv-insight { position: relative; padding-right: 42px; }
+    .geoid-cctv-button { position: absolute; top: 50%; right: 0; display: grid; place-items: center; width: 32px; height: 32px; padding: 0 0 0 2px; border: 0; border-radius: 50%; background: #0b67c2; color: #fff; font-size: 13px; cursor: pointer; transform: translateY(-50%); }
+    .geoid-cctv-button:hover { background: #084f96; }
+
+    /* Scrollable Popup */
+    .geoid-popup-scroll { max-height: 60vh; }
+    .geoid-popup-scroll .geoid-popup-body { max-height: calc(60vh - 100px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: #c4d5e3 transparent; }
+    .geoid-popup-scroll .geoid-popup-body::-webkit-scrollbar { width: 5px; }
+    .geoid-popup-scroll .geoid-popup-body::-webkit-scrollbar-track { background: transparent; }
+    .geoid-popup-scroll .geoid-popup-body::-webkit-scrollbar-thumb { background: #c4d5e3; border-radius: 10px; }
+
+    /* Prayer Schedule */
+    .geoid-popup-prayer {
+      margin-top: 12px;
+      padding-top: 11px;
+      border-top: 1px solid #e7eef5;
+    }
+    .prayer-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .prayer-icon { font-size: 16px; line-height: 1; }
+    .prayer-title { font-size: 13px; font-weight: 700; color: #0b4da2; letter-spacing: .02em; }
+    .prayer-date { font-size: 11px; color: #54708d; line-height: 1.3; }
+    .prayer-hijri { font-size: 10px; color: #7a8fa3; margin-bottom: 8px; font-style: italic; }
+    .prayer-grid { display: grid; gap: 0; }
+    .prayer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid #f0f4f8;
+      font-size: 11px;
+    }
+    .prayer-row:last-child { border-bottom: 0; }
+    .prayer-name { color: #54708d; font-weight: 500; }
+    .prayer-time { color: #0b4da2; font-weight: 700; font-size: 12px; font-variant-numeric: tabular-nums; }
+
+    /* Geoid Search Autocomplete */
+    .geoid-search-container { position: relative; margin-bottom: 14px; }
+    .geoid-search-input {
+      width: 100%;
+      padding: 9px 12px;
+      font-size: 12px;
+      border: 1px solid #c4d5e3;
+      border-radius: 6px;
+      box-sizing: border-box;
+      outline: none;
+      background: #f7fafc;
+    }
+    .geoid-search-input:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 0 2px rgba(0,123,255,0.1);
+      background: #fff;
+    }
+    .geoid-autocomplete-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border: 1px solid #c4d5e3;
+      border-top: 0;
+      border-radius: 0 0 8px 8px;
+      max-height: 240px;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 0 6px 16px rgba(17,59,91,0.15);
+      display: none;
+    }
+    .geoid-autocomplete-item {
+      padding: 9px 12px;
+      font-size: 11px;
+      cursor: pointer;
+      border-bottom: 1px solid #eef4f8;
+      transition: background 0.15s;
+    }
+    .geoid-autocomplete-item:hover { background-color: #f0f7ff; }
+    .geoid-autocomplete-item strong { color: #0b4da2; font-size: 12px; }
+    .geoid-autocomplete-item small { color: #777; display: block; margin-top: 2px; }
+    .geoid-autocomplete-item .geoid-ac-kode { color: #007bff; font-size: 10px; margin-left: 4px; }
+    .geoid-ac-header {
+      padding: 6px 12px 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: #7a8fa3;
+      background: #f5f8fa;
+      border-bottom: 1px solid #eef4f8;
+      user-select: none;
+    }
+    .geoid-ac-geocode { border-left: 3px solid #1677d2; }
+    .geoid-ac-geocode strong { color: #1677d2; }
+    .geoid-ac-geocode-addr { color: #777; font-size: 10px; }
+    .geoid-search-hint { font-size: 11px; color: #7a8fa3; margin-top: 4px; }
+
+    /* GEOID Coordinate Search */
+    .geoid-coord-search {
+      background: #f4f7fb;
+      border: 1px solid #e7eef5;
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
+    .geoid-coord-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .geoid-coord-field {
+      flex: 1;
+    }
+    .geoid-coord-field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #54708d;
+      margin-bottom: 4px;
+    }
+    .geoid-coord-input {
+      width: 100%;
+      padding: 7px 10px;
+      font-size: 12px;
+      border: 1px solid #c4d5e3;
+      border-radius: 5px;
+      background: #fff;
+      color: #1e293b;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .geoid-coord-input:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 0 2px rgba(0,123,255,0.1);
+    }
+    .geoid-coord-btn {
+      width: 100%;
+      padding: 8px 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(145deg, #0879bf, #12a7c8);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .geoid-coord-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(8,121,191,0.25);
+    }
+    .geoid-coord-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    /* Panel prakiraan 3 hari BMKG */
+    .weather-panel {
+      color: #14213d;
+    }
+    .weather-hero {
+      color: #fff;
+      padding: 16px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #0b5cab, #1687d4 58%, #64c7f5);
+      box-shadow: 0 10px 22px rgba(16, 102, 177, .22);
+    }
+    .weather-hero-location {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .weather-hero-region,
+    .weather-source {
+      margin: 10px 0 0;
+      font-size: 6px;
+      opacity: .88;
+    }
+    .weather-now {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .weather-now img {
+      width: 54px;
+      height: 54px;
+      object-fit: contain;
+    }
+    .weather-now-temp {
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .weather-now-desc {
+      margin-top: 4px;
+      font-size: 12px;
+    }
+    .weather-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+    .weather-metric {
+      padding: 7px 5px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.16);
+      text-align: center;
+      font-size: 10px;
+    }
+    .weather-metric strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 11px;
+    }
+    .weather-insights {
+      margin: 14px 0 0;
+      padding: 12px 14px;
+      background: linear-gradient(135deg, #f0f7ff 0%, #e8f5e9 100%);
+      border: 1px solid #d0e8f5;
+      border-radius: 12px;
+    }
+    .wi-kalimat {
+      font-size: 12px;
+      color: #37474f;
+      line-height: 1.5;
+      margin-bottom: 10px;
+      font-style: italic;
+    }
+    .wi-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .wi-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .bmkg-popup .weather-insights {
+      margin: 10px 0 0;
+      padding: 8px 10px;
+      background: linear-gradient(135deg, #f0f7ff 0%, #e8f5e9 100%);
+      border: 1px solid #d0e8f5;
+      border-radius: 0;
+    }
+    .bmkg-popup .wi-kalimat {
+      font-size: 10px;
+      margin-bottom: 6px;
+    }
+    .bmkg-popup .wi-badges {
+      gap: 4px;
+    }
+    .bmkg-popup .wi-badge {
+      padding: 2px 6px;
+      font-size: 9px;
+    }
+    .weather-days-title {
+      margin: 16px 0 8px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .weather-days-grid {
+      display: grid;
+      gap: 9px;
+    }
+    .weather-day-card {
+      overflow: hidden;
+      border: 1px solid #e5edf5;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(19, 59, 92, .07);
+    }
+    .weather-day-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 11px;
+      background: #f4f9fd;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .weather-day-summary {
+      color: #46718f;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .weather-slots {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      padding: 6px;
+      gap: 4px;
+    }
+    .weather-slot {
+      min-width: 0;
+      padding: 5px 2px;
+      border-radius: 7px;
+      text-align: center;
+      font-size: 9px;
+    }
+    .weather-slot:hover { background: #edf7ff; }
+    .weather-slot img { display: block; width: 25px; height: 25px; margin: 2px auto; object-fit: contain; }
+    .weather-slot-temp { color: #145b93; font-weight: 700; }
+    .weather-source { color: #567; text-align: right; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Temperature Chart */
+    .temp-chart-section {
+      margin: 16px 0 8px;
+      padding: 14px 12px 10px;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid #e5edf5;
+      box-shadow: 0 4px 12px rgba(19, 59, 92, .06);
+    }
+    .temp-chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .temp-chart-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: #173b5d;
+    }
+    .temp-chart-legend {
+      display: flex;
+      gap: 10px;
+    }
+    .temp-chart-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #54708d;
+    }
+    .temp-chart-legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .temp-chart-container {
+      width: 100%;
+      overflow-x: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #c4d5e3 transparent;
+    }
+    .temp-chart-container::-webkit-scrollbar { height: 4px; }
+    .temp-chart-container::-webkit-scrollbar-track { background: transparent; }
+    .temp-chart-container::-webkit-scrollbar-thumb { background: #c4d5e3; border-radius: 10px; }
+    .temp-chart-svg {
+      display: block;
+      width: 100%;
+      min-width: 500px;
+      height: auto;
+    }
+    .temp-chart-ylabel {
+      fill: #7a8fa3;
+      font-size: 10px;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+    .temp-chart-xlabel {
+      fill: #7a8fa3;
+      font-size: 9px;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+    .temp-chart-xday {
+      fill: #145b93;
+      font-size: 9px;
+      font-weight: 700;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+    .temp-chart-val {
+      fill: #145b93;
+      font-size: 9px;
+      font-weight: 700;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+    .temp-chart-dot {
+      transition: r .15s ease;
+      cursor: pointer;
+    }
+    .temp-chart-dot:hover {
+      r: 5.5;
+      stroke-width: 2.5;
+    }
+
+    /* Panel Gempa BMKG */
+    .quake-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .quake-toolbar h4 { margin: 0; color: #173b5d; font-size: 14px; }
+    .quake-refresh { border: 0; border-radius: 7px; padding: 6px 8px; color: #fff; background: #0879bf; cursor: pointer; font-size: 10px; }
+    .quake-latest { overflow: hidden; margin-bottom: 12px; border-radius: 14px; color: #fff; background: linear-gradient(135deg, #a71d2a, #dc3545 62%, #f06e7a); box-shadow: 0 9px 18px rgba(220, 53, 69, .25); }
+    .quake-latest-main { display: flex; gap: 12px; align-items: center; padding: 13px; }
+    .quake-magnitude { flex: 0 0 54px; height: 54px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.4); border-radius: 50%; background: rgba(0,0,0,.12); font-size: 22px; font-weight: 700; color: #fff; }
+    .quake-latest .quake-latest-title { margin: 0 0 4px; font-size: 15px; color: #fff; }
+    .quake-latest-place { font-size: 10px; line-height: 1.35; opacity: .95; }
+    .quake-latest-details { display: grid; grid-template-columns: repeat(3, 1fr); background: rgba(0,0,0,.13); }
+    .quake-latest-details span { padding: 7px 5px; border-right: 1px solid rgba(255,255,255,.15); text-align: center; font-size: 9px; }
+    .quake-latest-details b { display: block; margin-top: 2px; font-size: 10px; }
+    .quake-section { margin-top: 13px; }
+    .quake-section-title { display: flex; align-items: center; justify-content: space-between; margin: 0 0 7px; color: #244b6e; font-size: 11px; }
+    .quake-count { padding: 2px 6px; border-radius: 99px; color: #0879bf; background: #e8f4fc; font-size: 9px; }
+    .quake-list { display: grid; gap: 7px; max-height: 300px; overflow-y: auto; padding-right: 2px; }
+    .quake-card { display: grid; grid-template-columns: 38px 1fr; gap: 8px; padding: 9px; border: 1px solid #e6eef5; border-radius: 10px; background: #fff; box-shadow: 0 3px 9px rgba(24, 73, 111, .05); }
+    .quake-card-mag { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 9px; color: #dc3545; background: #fdf0f1; font-size: 13px; font-weight: 700; }
+    .quake-card-place { overflow: hidden; color: #183d5e; font-size: 10px; font-weight: 700; line-height: 1.35; }
+    .quake-card-meta { margin-top: 3px; color: #668198; font-size: 9px; }
+    .quake-card-feel { margin-top: 4px; color: #9a3c27; font-size: 9px; }
+    .quake-attribution { margin: 11px 0 0; color: #71869a; font-size: 6px; text-align: right; margin-bottom: 60px}
+    .quake-message { padding: 12px; margin:-15px; border-radius: 0px; color: #567; background: #f4f8fb; font-size: 11px; text-align: center; }
+
+    /* Earthquake Marker */
+    .quake-marker-wrap { background: transparent; border: 0; }
+    .quake-marker {
+      position: relative;
+      width: var(--qm-size, 48px);
+      height: var(--qm-size, 48px);
+      display: grid;
+      place-items: center;
+    }
+    .quake-marker-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid var(--qm-color, #e74c3c);
+      opacity: 0;
+      animation: quake-pulse 2s ease-out infinite;
+    }
+    .quake-marker-ring--delay { animation-delay: .6s; }
+    @keyframes quake-pulse {
+      0% { transform: scale(.6); opacity: .7; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+    .quake-marker-core {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: var(--qm-color, #e74c3c);
+      box-shadow: 0 4px 14px color-mix(in srgb, var(--qm-color, #e74c3c) 50%, transparent);
+      display: grid;
+      place-items: center;
+      border: 3px solid rgba(255,255,255,.85);
+    }
+    .quake-marker-mag {
+      color: #fff;
+      font-size: calc(var(--qm-size, 48px) * 0.28);
+      font-weight: 800;
+      line-height: 1;
+      text-shadow: 0 1px 3px rgba(0,0,0,.25);
+    }
+
+    /* Earthquake Popup */
+    .quake-leaflet-popup .leaflet-popup-content-wrapper { overflow: hidden; padding: 0; border-radius: 14px; box-shadow: 0 14px 40px rgba(11,54,87,.28); }
+    .quake-leaflet-popup .leaflet-popup-content { width: auto !important; margin: 0; }
+    .quake-leaflet-popup .leaflet-popup-tip-container { left: 50% !important; margin-left: -28px !important; }
+    .quake-leaflet-popup .leaflet-popup-tip { box-shadow: 0 14px 40px rgba(11,54,87,.28); }
+    .quake-popup { width: 286px; font-family: "Segoe UI", Arial, sans-serif; color: #18324c; }
+    .quake-popup-head { padding: 16px 17px 15px; color: #fff; }
+    .quake-popup-badge { display: flex; align-items: center; gap: 6px; margin-bottom: 7px; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.9); }
+    .quake-popup-dot { width: 8px; height: 8px; border-radius: 50%; animation: quake-dot-pulse 1.5s infinite; }
+    @keyframes quake-dot-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .4; }
+    }
+    .quake-popup-mag { display: block; font-size: 28px; font-weight: 800; line-height: 1.1; margin-bottom: 4px; }
+    .quake-popup-head > span { display: block; font-size: 12px; line-height: 1.4; color: rgba(255,255,255,.92); }
+    .quake-popup-body { padding: 14px 17px 16px; background: #fff; }
+    .quake-popup-meta { display: grid; gap: 8px; }
+    .quake-popup-meta div { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12px; }
+    .quake-popup-meta span { color: #71849a; }
+    .quake-popup-meta b { color: #183d5e; font-size: 13px; font-weight: 700; text-align: right; }
+
+    .alat-status-message { padding: 12px; margin-bottom:15px; border-radius: 10px; color: #567; background: #f4f8fb; font-size: 11px; text-align: center; }
+    @keyframes geoportal-spin { to { transform: rotate(360deg); } }
+    .setting-filter { display: flex; align-items: center; gap: 8px; padding: 9px; border: 1px solid #e1ebf2; border-radius: 9px; background: #fff; color: #234b6d; cursor: pointer; font-size: 11px; }
+    .setting-filter:hover { border-color: #70b9dd; background: #f3faff; }
+    .setting-filter input { accent-color: #0879bf; }
+
+    /* Alat Gambar & Ukur */
+    .alat-draw-buttons {
+      display: grid;
+      gap: 0;
+    }
+    .alat-measure-result {
+      margin-top: 8px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      background: #eef7ff;
+      color: #175a87;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    /* Alat Analisis GeoJSON/SHP */
+    .alat-file-input {
+      width: 100%;
+      padding: 8px;
+      font-size: 11px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: #fff;
+    }
+    .alat-layer-info {
+      margin: 8px 0;
+      font-size: 11px;
+      color: #668198;
+    }
+    .alat-layer-list {
+      display: grid;
+      gap: 7px;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .alat-layer-card {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 6px;
+      align-items: center;
+      padding: 8px;
+      border: 1px solid #e3edf5;
+      border-radius: 9px;
+      background: #fff;
+      box-shadow: 0 3px 9px rgba(24,73,111,.05);
+    }
+    .alat-layer-card strong {
+      grid-column: 1 / -1;
+      overflow: hidden;
+      color: #16466c;
+      font-size: 11px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .alat-layer-card small {
+      color: #668198;
+      font-size: 9px;
+    }
+    .alat-layer-card button {
+      padding: 4px 8px;
+      border: 1px solid #0879bf;
+      border-radius: 6px;
+      background: #fff;
+      color: #0879bf;
+      cursor: pointer;
+      font-size: 9px;
+    }
+    .alat-layer-card button:hover {
+      background: #e8f4fc;
+    }
+    .alat-layer-card .alat-remove-btn {
+      border-color: #c0392b;
+      color: #c0392b;
+    }
+    .alat-layer-card .alat-remove-btn:hover {
+      background: #fdecea;
+    }
+    /* Layer WMS point (marker cluster) — popup gaya CCTV */
+    .gp-point-icon {
+      background: transparent;
+      border: 0;
+    }
+    .gp-point-leaflet-popup .leaflet-popup-content-wrapper,
+    .alat-leaflet-popup .leaflet-popup-content-wrapper {
+      overflow: hidden;
+      padding: 0;
+      margin: 0;
+      border-radius: 12px;
+      box-shadow: 0 12px 30px rgba(11, 54, 87, .25);
+    }
+    .gp-point-leaflet-popup .leaflet-popup-content,
+    .alat-leaflet-popup .leaflet-popup-content {
+      width: auto !important;
+      margin: 0;
+    }
+    .gp-point-leaflet-popup .leaflet-popup-tip,
+    .alat-leaflet-popup .leaflet-popup-tip {
+      box-shadow: 0 12px 30px rgba(11, 54, 87, .25);
+    }
+    .gp-point-popup,
+    .alat-popup {
+      min-width: 250px;
+      max-height: 200px;
+      overflow-y: auto;
+      color: #173d5f;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 11px;
+    }
+    .gp-point-popup > strong,
+    .alat-popup > strong {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      display: block;
+      overflow: hidden;
+      padding: 10px 14px;
+      color: #fff;
+      background: linear-gradient(90deg, #0879bf, #11a4cb);
+      border-radius: 12px 12px 0 0;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    /* Close button: mencuat di luar pojok kanan atas popup */
+    .gp-point-leaflet-popup .leaflet-popup-close-button {
+      position: absolute;
+      top: -11px;
+      right: -11px;
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      font: 700 16px/1 'Segoe UI', sans-serif;
+      opacity: 1;
+      z-index: 5;
+      cursor: pointer;
+    }
+    .gp-point-popup-row,
+    .alat-popup-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 12px;
+      border-bottom: 1px solid #eef3f8;
+    }
+    .gp-point-popup-row:last-child,
+    .alat-popup-row:last-child {
+      border-bottom: 0;
+    }
+    .gp-point-popup-row b,
+    .alat-popup-row b {
+      color: #6a8498;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .gp-point-popup-row span,
+    .alat-popup-row span {
+      color: #173d5f;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .leaflet-control-reset-zoom {
+      background-color: #ffffff;
+      border: 2px solid rgba(0,0,0,0.2);
+      border-radius: 4px;
+      cursor: pointer;
+      width: 30px;
+      height: 30px;
+      line-height: 26px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 14px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+    }
+    
+    .leaflet-control-reset-zoom:hover {
+      background-color: #f4f4f4;
+    }
+
+    /* Location Permission Modal */
+    .location-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      animation: fadeIn 0.3s ease;
+    }
+    .location-modal {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 24px;
+      padding: 32px;
+      max-width: 360px;
+      width: calc(100% - 48px);
+      text-align: center;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1);
+      animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .location-modal-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #0284c7;
+      animation: pulse 2s infinite;
+    }
+    .location-modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 8px;
+      font-family: 'Google Sans', 'Segoe UI', sans-serif;
+    }
+    .location-modal-desc {
+      font-size: 14px;
+      color: #64748b;
+      line-height: 1.5;
+      margin: 0 0 24px;
+    }
+    .location-modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .location-modal-btn {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .location-modal-btn-primary {
+      background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+    }
+    .location-modal-btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(2, 132, 199, 0.4);
+    }
+    .location-modal-btn-secondary {
+      background: #f1f5f9;
+      color: #475569;
+    }
+    .location-modal-btn-secondary:hover {
+      background: #e2e8f0;
+    }
+    .location-modal-features {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e2e8f0;
+    }
+    .location-modal-feature {
+      font-size: 11px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .location-modal-feature span {
+      font-size: 14px;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    

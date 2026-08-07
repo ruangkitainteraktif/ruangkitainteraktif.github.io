@@ -1,0 +1,111 @@
+// LOCATION PERMISSION MODAL
+(function() {
+  const MODAL_KEY = 'ruangkita_location_permission';
+  const modal = document.getElementById('locationPermissionModal');
+  const allowBtn = document.getElementById('locationPermAllow');
+  const denyBtn = document.getElementById('locationPermDeny');
+  let userMarker = null;
+
+  if (!modal || !allowBtn || !denyBtn) return;
+
+  function showModal() {
+    modal.style.display = 'flex';
+  }
+
+  function hideModal() {
+    modal.style.display = 'none';
+  }
+
+  function showUserPopup(lat, lon) {
+    if (typeof map === 'undefined' || !map) return;
+
+    if (userMarker) map.removeLayer(userMarker);
+
+    const icon = L.divIcon({
+      className: 'geoid-marker-wrap',
+      html: `<div class="geoid-marker" role="img" aria-label="Lokasi Anda"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg></div>`,
+      iconSize: [48, 54], iconAnchor: [24, 52], popupAnchor: [0, -52]
+    });
+
+    userMarker = L.marker([lat, lon], { icon, title: 'Lokasi Anda', zIndexOffset: 1000 }).addTo(map);
+
+    const coordStr = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+     const popupContent = `
+       <div class="geoid-popup geoid-popup-scroll">
+         <div class="geoid-popup-head">
+           <strong>Lokasi Anda</strong>
+           <span>📍 Posisi saat ini</span>
+         </div>
+          <div class="geoid-popup-body">
+            <div class="geoid-popup-meta">
+              <div><span>Koordinat</span><b>${coordStr}</b></div>
+            </div>
+            <div class="geoid-popup-prayer" data-prayer-schedule><span style="color:#7a8fa3; font-size:11px">Memuat jadwal sholat…</span></div>
+            <div class="geoid-popup-insights" data-geoid-insights>
+              <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 0 10px;gap:8px;">
+                <div style="width:28px;height:28px;border:3px solid #d0dde8;border-top-color:#0879bf;border-radius:50%;animation:geoportal-spin .8s linear infinite;"></div>
+                <span style="font-size:10px;color:#7a8fa3;text-align:center;">Memuat analisis…</span>
+              </div>
+            </div>
+          </div>
+       </div>
+     `;
+
+    userMarker.bindPopup(popupContent, { maxWidth: 310, className: 'geoid-leaflet-popup' });
+    userMarker.openPopup();
+
+    if (typeof loadPrayerSchedule === 'function') loadPrayerSchedule(userMarker, lat, lon);
+    if (typeof loadGeoidPopupInsights === 'function') loadGeoidPopupInsights(userMarker, { lat, lon, kode: '' });
+  }
+
+  function handleAllow() {
+    hideModal();
+    localStorage.setItem(MODAL_KEY, 'granted');
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          window.userLocation = { lat: latitude, lon: longitude };
+          if (typeof map !== 'undefined' && map) {
+            map.flyTo([latitude, longitude], 15, { duration: 1.5 });
+            setTimeout(() => showUserPopup(latitude, longitude), 1600);
+          }
+        },
+        (err) => {
+          console.warn('Geolocation error:', err.message);
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+  }
+
+  function handleDeny() {
+    hideModal();
+    localStorage.setItem(MODAL_KEY, 'denied');
+  }
+
+  allowBtn.addEventListener('click', handleAllow);
+  denyBtn.addEventListener('click', handleDeny);
+
+  // Check permission on first visit
+  document.addEventListener('DOMContentLoaded', function() {
+    const saved = localStorage.getItem(MODAL_KEY);
+    if (saved) return;
+
+    if (!navigator.geolocation) return;
+
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+        if (result.state === 'prompt') {
+          setTimeout(showModal, 1000);
+        } else if (result.state === 'granted') {
+          localStorage.setItem(MODAL_KEY, 'granted');
+        }
+      }).catch(() => {
+        setTimeout(showModal, 1000);
+      });
+    } else {
+      setTimeout(showModal, 1000);
+    }
+  });
+})();

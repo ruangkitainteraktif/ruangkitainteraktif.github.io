@@ -1,0 +1,2 @@
+  loadProvinces();
+  loadLegend();

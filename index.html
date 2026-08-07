@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- ==================== FAVICON ==================== -->
+  <link rel="icon" type="image/png" href="assets/img/favicon.png">
+  <link rel="apple-touch-icon" href="assets/img/favicon.png">
+  <link rel="shortcut icon" href="assets/img/favicon.png">
+
+  <!-- ==================== MASTER SEO META TAGS 2026 ==================== -->
+  <!-- Primary Meta Tags -->
+  <title>RUANG KITA | Satu Peta untuk Nusantara - Peta Interaktif Indonesia</title>
+  <meta name="title" content="RUANG KITA | Satu Peta untuk Nusantara - Peta Interaktif Indonesia">
+  <meta name="description" content="Platform peta interaktif Indonesia dengan data geospasial lengkap. Akses batas wilayah administrasi, CCTV lalu lintas, cuaca BMKG, gempa bumi real-time, geoportal Jawa Timur & Sukoharjo, analisis pertanian (Geotani), dan alat ukur/gambar GIS.">
+  <meta name="keywords" content="peta indonesia, peta interaktif, GIS indonesia, geospasial, geoportal, batas wilayah, administrasi provinsi, kabupaten, kecamatan, desa, cuaca BMKG, prakiraan cuaca, gempa bumi, seismik, CCTV lalu lintas, jalan tol, pertanian, sawah, Geotani, Jawa Timur, Sukoharjo, Leaflet.js, RUANGKITA, satupeta, peta digital, pemetaan, kartografi">
+  <meta name="author" content="RUANG KITA | MAS PANNN">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="language" content="Indonesian">
+  <meta name="revisit-after" content="3 days">
+  <meta name="theme-color" content="#0a1929">
+  <meta name="msapplication-TileColor" content="#0a1929">
+  <meta name="application-name" content="RUANG KITA">
+  <meta name="apple-mobile-web-app-title" content="RUANG KITA">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://maspannnnnn.github.io/ruangkita">
+  <meta property="og:title" content="RUANG KITA | Satu Peta untuk Nusantara">
+  <meta property="og:description" content="Platform peta interaktif Indonesia dengan data geospasial lengkap. Akses batas wilayah, CCTV, cuaca BMKG, gempa bumi, geoportal Jawa Timur & Sukoharjo, serta analisis pertanian secara real-time.">
+  <meta property="og:image" content="assets/img/favicon.png">
+  <meta property="og:image:alt" content="RUANG KITA - Peta Interaktif Indonesia">
+  <meta property="og:locale" content="id_ID">
+  <meta property="og:site_name" content="RUANG KITA">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://maspannnnnn.github.io/ruangkita">
+  <meta name="twitter:title" content="RUANG KITA | Satu Peta untuk Nusantara">
+  <meta name="twitter:description" content="Platform peta interaktif Indonesia dengan data geospasial lengkap. Akses batas wilayah, CCTV, cuaca BMKG, gempa bumi, geoportal, dan analisis pertanian secara real-time.">
+  <meta name="twitter:image" content="assets/img/favicon.png">
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://maspannnnnn.github.io/ruangkita">
+
+  <!-- Geo Meta Tags (Indonesia Focus) -->
+  <meta name="geo.region" content="ID-JI">
+  <meta name="geo.placename" content="Jawa Timur">
+  <meta name="geo.position" content="-7.53932;110.82485">
+  <meta name="ICBM" content="-7.53932, 110.82485">
+
+  <!-- Structured Data / JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "RUANG KITA",
+    "alternateName": "Ruangkita LBS",
+    "url": "https://maspannnnnn.github.io/ruangkita",
+    "description": "Platform peta interaktif Indonesia dengan data geospasial lengkap untuk batas wilayah administrasi, CCTV lalu lintas, cuaca BMKG, gempa bumi, geoportal Jawa Timur & Sukoharjo, dan analisis pertanian (Geotani).",
+    "applicationCategory": "GISApplication",
+    "operatingSystem": "Web Browser (Chrome, Firefox, Safari, Edge)",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "IDR"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "RUANGKITA"
+    },
+    "inLanguage": "id",
+    "featureList": [
+      "GEOID - Pencarian batas wilayah administrasi Provinsi, Kabupaten/Kota, Kecamatan, Desa/Kelurahan",
+      "GEOID - Pencarian koordinat lintang bujur",
+      "GEOTANI - Analisis lahan sawah dilindungi, lahan baku sawah, kawasan pertanian (padi, jagung, kedelai)",
+      "GEOTANI - Balai Penyuluhan Pertanian (BPP) dan IGT Sawit",
+      "GEOPORTAL - Layer data Pemprov Jawa Timur (pendidikan, kesehatan, transportasi, batas administrasi)",
+      "GEOPORTAL - Layer data Kabupaten Sukoharjo (sekolah, puskesmas, jaringan infrastruktur, aset daerah)",
+      "CCTV - Monitoring CCTV lalu lintas jalan tol, jalan nasional, dan jalan non-tol",
+      "CUACA - Prakiraan cuaca BMKG dengan animasi angin (wind particle)",
+      "GEMPA - Data gempa bumi real-time dari BMKG",
+      "TOOLS - Alat gambar (titik, garis, poligon, persegi, lingkaran)",
+      "TOOLS - Pengukuran jarak dan luas area",
+      "TOOLS - Import dan visualisasi data GeoJSON serta Shapefile (SHP)",
+      "Basemap: Carto Light, Carto Dark, OpenStreetMap, Esri Satellite, Rupabumi Indonesia (BIG)",
+      "Pencarian terpadu (unified search) dengan insight cards cuaca dan gempa"
+    ]
+  }
+  </script>
+
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet MarkerCluster untuk layer WMS point -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <!-- Kontrol lokasi pengguna -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.85.1/dist/L.Control.Locate.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.85.1/dist/L.Control.Locate.min.js" charset="utf-8"></script>
+  <!-- Esri Leaflet Plugin untuk ArcGIS FeatureServer -->
+  <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
+  <!-- shpjs untuk membaca file SHP -->
+  <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.js"></script>
+  <!-- Leaflet.draw untuk menggambar point/line/polygon -->
+  <!-- Leaflet.draw untuk menggambar point/line/polygon -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+  <link rel="stylesheet" href="assets/css/app.css?v=8">
+
+</head>
+<body>
+
+<div id="app-container">
+  <div id="appLoadingOverlay" class="app-loading-overlay" role="status" aria-live="polite">
+    <div class="app-loading-card"><div class="app-loading-mark"><i></i><i></i><i></i><i></i></div><strong>RUANG<span>KITA</span></strong><small>Menyiapkan peta interaktif...</small><div class="app-loading-bar"><i></i></div></div>
+  </div>
+  <!-- PETA -->
+  <div id="map"></div>
+
+  <!-- UNIFIED SEARCH ON MAP -->
+  <div class="unified-search" id="unifiedSearch">
+    <div class="unified-search-inner">
+      <svg class="unified-search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" id="unifiedSearchInput" class="unified-search-input" placeholder="Cari disini" autocomplete="off"/>
+      <button type="button" id="unifiedSearchClear" class="unified-search-clear" style="display:none">&times;</button>
+    </div>
+    <div id="unifiedSearchResults" class="unified-search-results"></div>
+    <!-- INSIGHT CARDS - below search -->
+    <div class="map-insight-cards" id="mapInsightCards">
+      <div class="map-insight-card" id="insightWeather">
+        <div class="insight-card-header">
+          <span class="insight-card-icon">☀️</span>
+          <span class="insight-card-title">Cuaca</span>
+        </div>
+        <div class="insight-card-body" id="insightWeatherBody">
+          <div class="insight-loading">Memuat...</div>
+        </div>
+      </div>
+      <div class="map-insight-card" id="insightQuake">
+        <div class="insight-card-header">
+          <span class="insight-card-icon">〽️</span>
+          <span class="insight-card-title">Gempa</span>
+        </div>
+        <div class="insight-card-body" id="insightQuakeBody">
+          <div class="insight-loading">Memuat...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BACKDROP OVERLAY (MOBILE ONLY) -->
+  <div id="modal-backdrop" onclick="onBackdropClick()"></div>
+
+
+  <!-- SIDEBAR KIRI -->
+  <div id="sidebar-left" class="collapsed">
+    <button class="toggle-sidebar-btn" id="toggleBtn" onclick="toggleSidebar()">&gt;&gt;</button>
+    
+    <div class="sidebar-header">
+      <div class="ruangkita-brand" aria-label="RUANGKITA Interaktif">
+        <div class="ruangkita-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div class="ruangkita-name"><strong>RUANG<span>KITA</span></strong><small>INTERAKTIF</small></div>
+      </div>
+    </div>
+
+    <div class="tab-menu">
+      <button class="tab-btn active" onclick="openTab(event, 'tab-geoid')">GEOID</button>
+      <button class="tab-btn" onclick="openTab(event, 'tab-cuaca')">CUACA</button>
+      <button class="tab-btn" onclick="openTab(event, 'tab-gempa')">GEMPA</button>
+      <button class="tab-btn" onclick="openTab(event, 'tab-pengaturan')">SETTING</button>
+      <button class="tab-btn" onclick="openTab(event, 'tab-alat')">TOOLS</button>
+    </div>
+
+    <div class="sidebar-content">
+      <div id="tab-geoid" class="tab-content active">
+        <h4 style="font-size:15px; margin-bottom:4px;">Batas Wilayah</h4>
+        <p style="font-size:13px; color:#668198; margin-bottom:20px;">Pilih wilayah untuk ditampilkan di peta.</p>
+        <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
+        <h4 style="font-size: 13px; margin-bottom: 10px; display:none;">Pencarian Cepat</h4>
+        <div class="geoid-search-container" style="display:none;">
+          <input
+            type="text"
+            id="geoidSearchInput"
+            class="geoid-search-input"
+            placeholder="🔍 Cari Desa/Kelurahan..."
+            autocomplete="off"
+          />
+          <div id="geoidAutocompleteResults" class="geoid-autocomplete-results"></div>
+        </div>
+
+        <h4 style="font-size: 13px; margin-top:10px; margin-bottom: 10px;">Pencarian Koordinat</h4>
+        <div class="geoid-coord-search">
+          <div class="geoid-coord-row">
+            <div class="geoid-coord-field">
+              <label for="geoidLatInput">Latitude</label>
+              <input type="text" id="geoidLatInput" class="geoid-coord-input" placeholder="-7.53932" inputmode="decimal" autocomplete="off" />
+            </div>
+            <div class="geoid-coord-field">
+              <label for="geoidLngInput">Longitude</label>
+              <input type="text" id="geoidLngInput" class="geoid-coord-input" placeholder="110.82485" inputmode="decimal" autocomplete="off" />
+            </div>
+          </div>
+          <button type="button" id="geoidCoordBtn" class="geoid-coord-btn" onclick="searchByCoordinate()">🔍 Cari Koordinat</button>
+        </div>
+
+        <h4 style="font-size: 13px; margin-top:20px; margin-bottom: 10px;">Pencarian Bertingkat</h4>
+        <div class="query-box">
+          <div class="form-group">
+            <label for="pilihProvinsi">Pilih <b>Provinsi</b></label>
+            <select id="pilihProvinsi"><option value=""></option></select>
+          </div>
+
+          <div class="form-group">
+            <label for="pilihKabupaten">Pilih <b>Kabupaten/Kota</b></label>
+            <select id="pilihKabupaten" disabled><option value="">Pilih Provinsi Terlebih Dahulu</option></select>
+          </div>
+
+          <div class="form-group">
+            <label for="pilihKecamatan">Pilih <b>Kecamatan</b></label>
+            <select id="pilihKecamatan" disabled><option value="">Pilih Kab/Kota Terlebih Dahulu</option></select>
+          </div>
+
+          <div class="form-group">
+            <label for="pilihDesa">Pilih <b>Desa</b></label>
+            <select id="pilihDesa" disabled><option value="">Pilih Kecamatan Terlebih Dahulu</option></select>
+          </div>
+
+          <button id="applyWilayah" class="btn-wilayah-apply" type="button" disabled onclick="cariLayerWilayah()">Cari Wilayah</button>
+        </div>
+
+      </div>
+
+      <!-- TAB 3: CUACA BMKG -->
+      <div id="tab-cuaca" class="tab-content">
+        <h4 style="font-size: 15px; margin-bottom: 5px;">Prakiraan Cuaca BMKG</h4>
+        <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Cari wilayah atau klik titik pada peta.</p>
+        <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
+        <!-- Search Autocomplete Form -->
+        <div class="search-weather-container">
+          <input 
+            type="text" 
+            id="weatherSearchInput" 
+            class="search-weather-input" 
+            placeholder="🔍 Cari Desa/Kelurahan..." 
+            autocomplete="off"
+          />
+          <div id="autocompleteResults" class="autocomplete-results"></div>
+        </div>
+
+        <div class="wind-toggle-row" style="display:none">
+          <label class="wind-toggle-label">
+            <input type="checkbox" id="toggleWindAnim">
+            <span class="wind-toggle-track"><span class="wind-toggle-thumb"></span></span>
+            <span class="wind-toggle-text">Animasi Angin (Wind Particle)</span>
+          </label>
+          <div id="windControls" class="wind-controls" style="display:none;">
+            <button class="wind-btn" id="windPrev" title="Frame sebelumnya">◀</button>
+            <span id="windTimestamp" class="wind-ts"></span>
+            <button class="wind-btn" id="windNext" title="Frame berikutnya">▶</button>
+          </div>
+        </div>
+        
+        <!-- Container Hasil Data Cuaca -->
+        <div id="weather-content">
+          <div style="font-size:13px; color:#555; background:#eef7ff; padding:10px; margin-bottom: 100px; border-radius:5px;">
+            ℹ️ Pilih lokasi dari pencarian atau klik pada peta untuk melihat cuaca.
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: GEMPA BMKG -->
+      <div id="tab-gempa" class="tab-content">
+        <div id="earthquake-content" class="quake-message">Buka tab ini untuk memuat data gempabumi BMKG.</div>
+      </div>
+
+      <!-- TAB 4: PENGATURAN -->
+      <div id="tab-pengaturan" class="tab-content">
+        <h4 style="font-size: 15px; margin-bottom: 5px;">Pengaturan Peta</h4>
+        <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Atur transparansi layer, kunci area, dan pilih basemap.</p>
+        <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
+        <div class="query-box">
+          <div class="form-group">
+            <label for="opacityRange"><b>Opasitas Layer</b></label>
+            <input id="opacityRange" type="range" min="0.1" max="1" step="0.1" value="0.8" style="width:100%;">
+            <div id="opacityValue" style="font-size:12px; color:#668198; margin-top:4px;">0.8</div>
+          </div>
+
+          <div class="form-group">
+            <label><b>Kunci Peta</b></label>
+            <label class="setting-filter"><input type="checkbox" id="mapLockToggle"><span>Kunci area peta</span></label>
+          </div>
+
+          <div class="form-group">
+            <label for="basemapSelect"><b>Basemap</b></label>
+            <select id="basemapSelect">
+              <option value="carto-light">Carto Light</option>
+              <option value="carto-dark">Carto Dark</option>
+              <option value="osm">Open Street Map</option>
+              <option value="esri-satellite">Esri Satellite</option>
+              <option value="rupabumi">Rupabumi Indonesia (BIG)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: ALAT -->
+      <div id="tab-alat" class="tab-content">
+        <h4 style="font-size: 15px; margin-bottom: 5px;">Alat Analisis</h4>
+        <p style="font-size: 13px; color: #666;margin-bottom: 20px;">Gambar, ukur, dan muat file GeoJSON / SHP.</p>
+        <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
+        <!-- Gambar & Ukur -->
+        <div class="query-box">
+          <div class="form-group">
+            <label><b>Gambar di Peta</b></label>
+            <div class="alat-draw-buttons">
+              <button class="btn-apply" style="margin-bottom:6px;" onclick="startDraw('marker')">📍 Titik</button>
+              <button class="btn-apply" style="margin-bottom:6px;" onclick="startDraw('polyline')">📏 Garis</button>
+              <button class="btn-apply" style="margin-bottom:6px;" onclick="startDraw('polygon')">🔷 Poligon</button>
+              <button class="btn-apply" style="margin-bottom:6px;" onclick="startDraw('rectangle')">▭ Persegi</button>
+              <button class="btn-apply" style="margin-bottom:6px;" onclick="startDraw('circle')">⭕ Lingkaran</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label><b>Ukur</b></label>
+            <div class="alat-draw-buttons">
+              <button class="btn-apply" style="margin-bottom:6px;" onclick="startMeasure('distance')">📏 Ukur Jarak</button>
+              <button class="btn-apply" style="margin-bottom:6px;" onclick="startMeasure('area')">📐 Ukur Luas</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label><b>Kelola</b></label>
+            <div class="alat-draw-buttons">
+              <button class="btn-apply" style="margin-bottom:6px; background:#e67e22;" onclick="clearDrawings()">🗑️ Hapus Gambar</button>
+              <button class="btn-apply" style="margin-bottom:6px; background:#16a085;" onclick="exportDrawings()">💾 Export GeoJSON</button>
+            </div>
+          </div>
+          <div id="alatMeasureResult" class="alat-measure-result">Klik tombol ukur, lalu klik pada peta untuk mengukur.</div>
+        </div>
+
+        <!-- Upload GeoJSON -->
+        <div class="query-box">
+          <div class="form-group">
+            <label for="geojsonFileInput">Muat <b>GeoJSON</b></label>
+            <input type="file" id="geojsonFileInput" accept=".geojson,.json" class="alat-file-input">
+          </div>
+          <button class="btn-apply" onclick="loadGeoJSONFile()">Tampilkan GeoJSON</button>
+        </div>
+
+        <!-- Upload SHP -->
+        <div class="query-box">
+          <div class="form-group">
+            <label for="shpFileInput">Muat <b>SHP</b> (.shp + .dbf + .shx)</label>
+            <input type="file" id="shpFileInput" accept=".shp,.dbf,.shx,.zip" multiple class="alat-file-input">
+          </div>
+          <button class="btn-apply" onclick="loadSHPFile()">Tampilkan SHP</button>
+        </div>
+
+        <!-- Status & Info Layer -->
+        <div id="alatStatus" class="alat-status-message">Pilih file GeoJSON atau SHP untuk ditampilkan.</div>
+        <div id="alatLayerInfo" class="alat-layer-info"></div>
+
+        <!-- Daftar Layer yang Dimuat -->
+        <h4 style="font-size: 15px; margin: 12px 0 6px;">Layer Dimuat</h4>
+        <div id="alatLayerList" class="alat-layer-list"></div>
+
+        <button class="btn-apply" style="background:#c0392b; margin-top:10px;" onclick="clearAlatLayers()">🗑️ Hapus Semua Layer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOMBOL BUKA DETAIL PANEL JIKA DI-HIDE (DESKTOP) -->
+  <button id="show-detail-btn" style="display:block" onclick="toggleDetailPanel(true)">📍 Info Koordinat</button>
+
+  <!-- PANEL DETAIL ADMINISTRASI -->
+  <div id="detail-panel" class="hidden">
+    <div class="panel-header">
+      <h3>Detail Administrasi <small id="clicked-coords" style="font-size: 10px; color: #e0e0e0; font-weight: normal;">(Klik Peta)</small></h3>
+      <button class="close-panel-btn" onclick="toggleDetailPanel(false)">✕</button>
+    </div>
+
+    <div class="panel-body">
+      <!-- Admin Section -->
+      <div class="admin-grid">
+        <div class="admin-item">
+          <label>Provinsi</label>
+          <span id="adm-provinsi">-</span>
+        </div>
+        <div class="admin-item">
+          <label>Kecamatan</label>
+          <span id="adm-kecamatan">-</span>
+        </div>
+        <div class="admin-item">
+          <label>Kelurahan/Desa</label>
+          <span id="adm-desa">-</span>
+        </div>
+        <div class="admin-item">
+          <label>Nama Jalan</label>
+          <span id="adm-jalan">-</span>
+        </div>
+        <div class="admin-item" style="grid-column: span 2;">
+          <label>Kode Pos</label>
+          <span id="adm-kodepos">-</span>
+        </div>
+      </div>
+      
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Tambahkan proj4 jika SHP menggunakan proyeksi selain WGS84 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+<script src="https://unpkg.com/@turf/turf@7.1.0/turf.min.js"></script>
+<script src="assets/js/map-core.js"></script>
+<script src="assets/js/sidebar.js"></script>
+<script src="assets/js/earthquake.js"></script>
+<script src="assets/js/detail-subtab.js"></script>
+<script src="assets/js/map-click.js"></script>
+<script src="assets/js/alat-layers.js"></script>
+<script src="assets/js/alat-draw-measure.js"></script>
+<script src="assets/js/app-boot.js"></script>
+
+<script src="assets/js/geoid-wilayah.js"></script>
+<script src="assets/js/weather-data.js"></script>
+<script src="assets/js/weather-bmkg.js"></script>
+<script src="assets/js/weather-markers.js"></script>
+<script src="assets/js/weather-geocode.js"></script>
+<script src="assets/js/weather-init.js"></script>
+<script src="assets/js/wind-animation.js"></script>
+<script src="assets/js/map-insight-cards.js"></script>
+<script src="assets/js/unified-search.js"></script>
+
+</body>
+</html>
