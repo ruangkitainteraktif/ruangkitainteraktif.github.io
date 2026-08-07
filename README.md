@@ -5,7 +5,7 @@
 ### **Satu Peta untuk Nusantara** — *One Map for the Archipelago*
 
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
-[![Live Demo](https://img.shields.io/badge/Live_Demo-maspannnnnn.github.io-brightgreen)](https://maspannnnnn.github.io/ruangkita)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-ruangkitainteraktif.github.io-brightgreen)](https://ruangkitainteraktif.github.io)
 
 </div>
 
@@ -17,7 +17,7 @@
 
 **RUANG KITA** is a web-based interactive map platform for Indonesia. It integrates geospatial data from various government sources (BMKG, BIG, Kemendagri) into a single, easy-to-use interface.
 
-🌐 **Live Demo:** [https://maspannnnnn.github.io/ruangkita](https://maspannnnnn.github.io/ruangkita)
+🌐 **Live Demo:** [https://ruangkitainteraktif.github.io](https://ruangkitainteraktif.github.io)
 
 ---
 
@@ -107,16 +107,16 @@
 
 ### Online / Daring
 
-Kunjungi langsung: **[https://maspannnnnn.github.io/ruangkita](https://maspannnnnn.github.io/ruangkita)**
+Kunjungi langsung: **[https://ruangkitainteraktif.github.io](https://ruangkitainteraktif.github.io)**
 
 ### Lokal / Local
 
 ```bash
 # Clone repository
-git clone https://github.com/maspannnnnn/ruangkita.git
+git clone https://github.com/ruangkitainteraktif/ruangkitainteraktif.github.io.git
 
 # Buka folder
-cd ruangkita
+cd ruangkitainteraktif
 
 # Buka index.html di browser
 # Buka file langsung, tidak perlu build step
