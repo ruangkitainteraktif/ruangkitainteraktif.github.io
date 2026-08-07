@@ -28,7 +28,7 @@
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://maspannnnnn.github.io/ruangkita">
+  <meta property="og:url" content="https://ruangkitainteraktif.github.io/">
   <meta property="og:title" content="RUANG KITA | Satu Peta untuk Nusantara">
   <meta property="og:description" content="Platform peta interaktif Indonesia dengan data geospasial lengkap. Akses batas wilayah, CCTV, cuaca BMKG, gempa bumi, geoportal Jawa Timur & Sukoharjo, serta analisis pertanian secara real-time.">
   <meta property="og:image" content="assets/img/favicon.png">
@@ -38,13 +38,13 @@
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://maspannnnnn.github.io/ruangkita">
+  <meta name="twitter:url" content="https://ruangkitainteraktif.github.io/">
   <meta name="twitter:title" content="RUANG KITA | Satu Peta untuk Nusantara">
   <meta name="twitter:description" content="Platform peta interaktif Indonesia dengan data geospasial lengkap. Akses batas wilayah, CCTV, cuaca BMKG, gempa bumi, geoportal, dan analisis pertanian secara real-time.">
   <meta name="twitter:image" content="assets/img/favicon.png">
 
   <!-- Canonical URL -->
-  <link rel="canonical" href="https://maspannnnnn.github.io/ruangkita">
+  <link rel="canonical" href="https://ruangkitainteraktif.github.io/">
 
   <!-- Geo Meta Tags (Indonesia Focus) -->
   <meta name="geo.region" content="ID-JI">
@@ -59,7 +59,7 @@
     "@type": "WebApplication",
     "name": "RUANG KITA",
     "alternateName": "Ruangkita LBS",
-    "url": "https://maspannnnnn.github.io/ruangkita",
+    "url": "https://ruangkitainteraktif.github.io/",
     "description": "Platform peta interaktif Indonesia dengan data geospasial lengkap untuk batas wilayah administrasi, CCTV lalu lintas, cuaca BMKG, gempa bumi, geoportal Jawa Timur & Sukoharjo, dan analisis pertanian (Geotani).",
     "applicationCategory": "GISApplication",
     "operatingSystem": "Web Browser (Chrome, Firefox, Safari, Edge)",
@@ -104,8 +104,7 @@
   <script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.85.1/dist/L.Control.Locate.min.js" charset="utf-8"></script>
   <!-- Esri Leaflet Plugin untuk ArcGIS FeatureServer -->
   <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
-  <!-- shpjs untuk membaca file SHP -->
-  <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.js"></script>
+
   <!-- Leaflet.draw untuk menggambar point/line/polygon -->
   <!-- Leaflet.draw untuk menggambar point/line/polygon -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
@@ -281,18 +280,12 @@
       <!-- TAB 4: PENGATURAN -->
       <div id="tab-pengaturan" class="tab-content">
         <h4 style="font-size: 15px; margin-bottom: 5px;">Pengaturan Peta</h4>
-        <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Atur transparansi layer, kunci area, dan pilih basemap.</p>
+        <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Kunci area dan pilih basemap.</p>
         <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
         <div class="query-box">
           <div class="form-group">
-            <label for="opacityRange"><b>Opasitas Layer</b></label>
-            <input id="opacityRange" type="range" min="0.1" max="1" step="0.1" value="0.8" style="width:100%;">
-            <div id="opacityValue" style="font-size:12px; color:#668198; margin-top:4px;">0.8</div>
-          </div>
-
-          <div class="form-group">
             <label><b>Kunci Peta</b></label>
-            <label class="setting-filter"><input type="checkbox" id="mapLockToggle"><span>Kunci area peta</span></label>
+            <label class="setting-filter"><input type="checkbox" id="mapLockToggle"><span> Kunci area peta</span></label>
           </div>
 
           <div class="form-group">
@@ -351,17 +344,8 @@
           <button class="btn-apply" onclick="loadGeoJSONFile()">Tampilkan GeoJSON</button>
         </div>
 
-        <!-- Upload SHP -->
-        <div class="query-box">
-          <div class="form-group">
-            <label for="shpFileInput">Muat <b>SHP</b> (.shp + .dbf + .shx)</label>
-            <input type="file" id="shpFileInput" accept=".shp,.dbf,.shx,.zip" multiple class="alat-file-input">
-          </div>
-          <button class="btn-apply" onclick="loadSHPFile()">Tampilkan SHP</button>
-        </div>
-
         <!-- Status & Info Layer -->
-        <div id="alatStatus" class="alat-status-message">Pilih file GeoJSON atau SHP untuk ditampilkan.</div>
+        <div id="alatStatus" class="alat-status-message">Pilih file GeoJSON untuk ditampilkan.</div>
         <div id="alatLayerInfo" class="alat-layer-info"></div>
 
         <!-- Daftar Layer yang Dimuat -->

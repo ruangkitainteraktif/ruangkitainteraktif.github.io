@@ -50,13 +50,16 @@
         fillColor: '#4aa3df',
         fillOpacity: 0.35
       }),
-      pointToLayer: (feature, latlng) => L.circleMarker(latlng, {
-        radius: 6,
-        color: '#0879bf',
-        weight: 2,
-        fillColor: '#4aa3df',
-        fillOpacity: 0.8
-      }),
+      pointToLayer: (feature, latlng) => {
+        if (!latlng) return null;
+        return L.circleMarker(latlng, {
+          radius: 6,
+          color: '#0879bf',
+          weight: 2,
+          fillColor: '#4aa3df',
+          fillOpacity: 0.8
+        });
+      },
       onEachFeature: (feature, layer) => {
         if (feature.properties && Object.keys(feature.properties).length) {
           const props = Object.entries(feature.properties)
@@ -69,7 +72,12 @@
     layer.addTo(map);
     const id = ++alatLayerCounter;
     alatLayers.push({ id, name, type, layer, geojson });
-    map.flyToBounds(layer.getBounds().pad(0.1), { maxZoom: 15, duration: 0.8 });
+    try {
+      const bounds = layer.getBounds();
+      if (bounds && bounds.isValid()) {
+        map.flyToBounds(bounds.pad(0.1), { maxZoom: 15, duration: 0.8 });
+      }
+    } catch (_) {}
     renderAlatLayerList();
     setAlatStatus(`✅ ${name} dimuat: ${geojson.features.length} fitur ditampilkan.`);
   }
@@ -97,49 +105,6 @@
     reader.readAsText(file);
   }
 
-  async function loadSHPFile() {
-    const input = document.getElementById('shpFileInput');
-    const files = input.files;
-    if (!files || !files.length) {
-      setAlatStatus('⚠️ Pilih file SHP (.shp/.dbf/.shx) atau .zip terlebih dahulu.', true);
-      return;
-    }
-    setAlatStatus('⏳ Memproses file SHP...');
-    try {
-      // Jika ada file .zip, gunakan shpjs langsung.
-      const zipFile = [...files].find(f => f.name.toLowerCase().endsWith('.zip'));
-      if (zipFile) {
-        const geojson = await shp(zipFile);
-        const collection = Array.isArray(geojson) ? geojson[0] : geojson;
-        if (!collection || collection.type !== 'FeatureCollection') {
-          throw new Error('SHP tidak menghasilkan FeatureCollection.');
-        }
-        addAlatLayer(zipFile.name.replace(/\.zip$/i, ''), 'SHP (ZIP)', collection);
-        return;
-      }
-
-      // Jika file terpisah (.shp + .dbf + .shx), gabungkan menjadi array buffer.
-      const shpFile = [...files].find(f => f.name.toLowerCase().endsWith('.shp'));
-      if (!shpFile) {
-        throw new Error('File .shp tidak ditemukan.');
-      }
-      const baseName = shpFile.name.replace(/\.shp$/i, '');
-      const readBuffer = (file) => file ? file.arrayBuffer() : Promise.resolve(null);
-      const [shpBuf, dbfBuf, shxBuf] = await Promise.all([
-        readBuffer(shpFile),
-        readBuffer([...files].find(f => f.name.toLowerCase() === `${baseName}.dbf`)),
-        readBuffer([...files].find(f => f.name.toLowerCase() === `${baseName}.shx`))
-      ]);
-      const geojson = await shp.combine([shpBuf, dbfBuf, shxBuf]);
-      if (!geojson || geojson.type !== 'FeatureCollection') {
-        throw new Error('SHP tidak menghasilkan FeatureCollection.');
-      }
-      addAlatLayer(baseName, 'SHP', geojson);
-    } catch (err) {
-      console.error('Gagal memuat SHP:', err);
-      setAlatStatus(`❌ Gagal memuat SHP: ${err.message}`, true);
-    }
-  }
 
   function clearAlatLayers() {
     alatLayers.forEach(item => map.removeLayer(item.layer));

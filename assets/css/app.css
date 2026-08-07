@@ -1543,9 +1543,10 @@
 
     .alat-status-message { padding: 12px; margin-bottom:15px; border-radius: 10px; color: #567; background: #f4f8fb; font-size: 11px; text-align: center; }
     @keyframes geoportal-spin { to { transform: rotate(360deg); } }
-    .setting-filter { display: flex; align-items: center; gap: 8px; padding: 9px; border: 1px solid #e1ebf2; border-radius: 9px; background: #fff; color: #234b6d; cursor: pointer; font-size: 11px; }
+    .setting-filter { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 9px; border: 1px solid #e1ebf2; border-radius: 9px; background: #fff; color: #234b6d; cursor: pointer; font-size: 11px; }
     .setting-filter:hover { border-color: #70b9dd; background: #f3faff; }
-    .setting-filter input { accent-color: #0879bf; }
+    .setting-filter input { margin: 0; accent-color: #0879bf; }
+    .setting-filter span { line-height: 1; }
 
     /* Alat Gambar & Ukur */
     .alat-draw-buttons {

@@ -3,6 +3,10 @@
     return document.getElementById('tab-cuaca')?.classList.contains('active') === true;
   }
 
+  function isAlatTabActive() {
+    return document.getElementById('tab-alat')?.classList.contains('active') === true;
+  }
+
   map.on('click', async function(e) {
     const lat = e.latlng.lat;
     const lng = e.latlng.lng;
@@ -12,6 +16,9 @@
       findAdm4ByCoordinates(lat, lng);
       return;
     }
+
+    // Tab Alat: jangan tampilkan popup geoid
+    if (isAlatTabActive()) return;
 
     if (mapClickMarker) map.removeLayer(mapClickMarker);
 

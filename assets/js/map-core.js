@@ -25,7 +25,6 @@
   };
 
   let currentBasemapName = 'esri-satellite';
-  let currentRdtrOpacity = 0.8;
 
   function setBaseMap(name) {
     const key = baseTileLayers[name] ? name : 'esri-satellite';
@@ -36,12 +35,6 @@
     currentBasemapName = key;
     const select = document.getElementById('basemapSelect');
     if (select) select.value = key;
-  }
-
-  function setRdtrOpacity(value) {
-    currentRdtrOpacity = Number(value);
-    const valueText = document.getElementById('opacityValue');
-    if (valueText) valueText.textContent = currentRdtrOpacity.toFixed(1);
   }
 
   function setMapLocked(locked) {
@@ -63,7 +56,6 @@
   }
 
   setBaseMap(currentBasemapName);
-  setRdtrOpacity(currentRdtrOpacity);
   setMapLocked(false);
 
   const basemapSelect = document.getElementById('basemapSelect');
@@ -152,7 +144,11 @@
         const windControls = document.getElementById('windControls');
         if (windControls) windControls.style.display = 'none';
 
-        // 6. Reset detail panel
+        // 6. Hapus gambar & layer alat
+        if (typeof clearDrawings === 'function') clearDrawings();
+        if (typeof clearAlatLayers === 'function') clearAlatLayers();
+
+        // 7. Reset detail panel
         const detailPanel = document.getElementById('detail-panel');
         if (detailPanel) detailPanel.classList.add('hidden');
         const showBtn = document.getElementById('show-detail-btn');
