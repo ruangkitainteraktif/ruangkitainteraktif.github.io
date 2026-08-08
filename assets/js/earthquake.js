@@ -51,7 +51,7 @@
     }
     earthquakeLatestData = latest;
     container.innerHTML = `
-      <div class="quake-toolbar"><h4>Gempabumi BMKG</h4><button class="quake-refresh" type="button" onclick="loadEarthquakeData(true)">Muat ulang</button></div>
+      <div class="quake-toolbar"><h4>Klik untuk melihat lokasi</h4><button class="quake-refresh" type="button" onclick="loadEarthquakeData(true)">Muat ulang</button></div>
       <article class="quake-latest" onclick="flyToLatestEarthquake()" style="cursor:pointer" title="Klik untuk terbang ke lokasi gempa">
         <div class="quake-latest-main"><div class="quake-magnitude">M${escapeBMKGHTML(latest.Magnitude || '-')}</div><div><h5 class="quake-latest-title">Gempabumi Terbaru</h5><div class="quake-latest-place">${escapeBMKGHTML(latest.Wilayah || 'Lokasi tidak tersedia')}</div></div></div>
         <div class="quake-latest-details"><span>Waktu<b>${escapeBMKGHTML(latest.Jam || '-')}</b></span><span>Kedalaman<b>${escapeBMKGHTML(latest.Kedalaman || '-')}</b></span><span>Potensi<b>${escapeBMKGHTML(latest.Potensi || '-')}</b></span></div>

@@ -45,11 +45,11 @@
 ### 🌤️ CUACA — Prakiraan Cuaca BMKG
 
 - Prakiraan cuaca 3 hari ke depan dari BMKG
-- Animasi angin (*wind particle*) dari data ECMWF
+- Grafik prakiraan cuaca 3 hari per 3 jam
 - Pencarian lokasi dengan autocomplete
 - Insight cuaca (ikon, suhu, kelembapan, angin)
 
-*3-day weather forecast from BMKG. Wind particle animation from ECMWF data. Location search with autocomplete.*
+*3-day weather forecast from BMKG. 3-day / 3 hour weather forecast from BMKG. Location search with autocomplete.*
 
 ### 🔴 GEMPA — Data Gempa Real-time
 
@@ -95,7 +95,6 @@
 | [Leaflet.js](https://leafletjs.com/) | 1.9.4 | Peta interaktif inti / Core interactive map |
 | [Turf.js](https://turfjs.org/) | 7.1.0 | Analisis geospasial / Geospatial analysis |
 | [Esri Leaflet](https://esri.github.io/esri-leaflet/) | 3.0.12 | Integrasi ArcGIS / ArcGIS integration |
-| [shpjs](https://calvinmetcalf.github.io/shapefile-js/) | 4.0.4 | Pembaca Shapefile / Shapefile reader |
 | [proj4js](https://proj4js.github.io/) | 2.9.0 | Konversi proyeksi / Projection conversion |
 | [Leaflet Draw](https://leaflet.github.io/Leaflet.draw/) | 1.0.4 | Alat menggambar / Drawing tools |
 | [Leaflet MarkerCluster](https://leaflet.github.io/Leaflet.markercluster/) | 1.5.3 | Clustering marker / Marker clustering |
@@ -143,15 +142,12 @@ ruangkita/
     │   └── favicon.png            # Ikon aplikasi / App icon
     ├── data/
     │   ├── kode_wilayah.json      # Kode wilayah administrasi / Admin codes
-    │   ├── jalan_nasional.geojson # Jaringan jalan nasional / National roads
-    │   └── jalan_tol.geojson      # Jaringan jalan tol / Toll roads
     └── js/
         ├── map-core.js            # Inisialisasi peta / Map initialization
         ├── sidebar.js             # Navigasi sidebar / Sidebar navigation
         ├── geoid-wilayah.js       # Pencarian wilayah + insight / Area search + insights
         ├── weather-bmkg.js        # Data cuaca BMKG / BMKG weather data
         ├── weather-data.js        # Kode ADM4 + pencarian / ADM4 codes + search
-        ├── wind-animation.js      # Animasi angin / Wind animation
         ├── earthquake.js          # Data gempa BMKG / BMKG earthquake data
         ├── map-click.js           # Handler klik peta / Map click handler
         ├── unified-search.js      # Pencarian terpadu / Unified search

@@ -169,8 +169,8 @@
 
     <div class="tab-menu">
       <button class="tab-btn active" onclick="openTab(event, 'tab-geoid')">GEOID</button>
-      <button class="tab-btn" onclick="openTab(event, 'tab-cuaca')">CUACA</button>
-      <button class="tab-btn" onclick="openTab(event, 'tab-gempa')">GEMPA</button>
+      <button class="tab-btn" onclick="openTab(event, 'tab-cuaca')">GEOWX</button>
+      <button class="tab-btn" onclick="openTab(event, 'tab-gempa')">GEOQUAKE</button>
       <button class="tab-btn" onclick="openTab(event, 'tab-pengaturan')">SETTING</button>
       <button class="tab-btn" onclick="openTab(event, 'tab-alat')">TOOLS</button>
     </div>
@@ -180,34 +180,8 @@
         <h4 style="font-size:15px; margin-bottom:4px;">Batas Wilayah</h4>
         <p style="font-size:13px; color:#668198; margin-bottom:20px;">Pilih wilayah untuk ditampilkan di peta.</p>
         <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
-        <h4 style="font-size: 13px; margin-bottom: 10px; display:none;">Pencarian Cepat</h4>
-        <div class="geoid-search-container" style="display:none;">
-          <input
-            type="text"
-            id="geoidSearchInput"
-            class="geoid-search-input"
-            placeholder="🔍 Cari Desa/Kelurahan..."
-            autocomplete="off"
-          />
-          <div id="geoidAutocompleteResults" class="geoid-autocomplete-results"></div>
-        </div>
-
-        <h4 style="font-size: 13px; margin-top:10px; margin-bottom: 10px;">Pencarian Koordinat</h4>
-        <div class="geoid-coord-search">
-          <div class="geoid-coord-row">
-            <div class="geoid-coord-field">
-              <label for="geoidLatInput">Latitude</label>
-              <input type="text" id="geoidLatInput" class="geoid-coord-input" placeholder="-7.53932" inputmode="decimal" autocomplete="off" />
-            </div>
-            <div class="geoid-coord-field">
-              <label for="geoidLngInput">Longitude</label>
-              <input type="text" id="geoidLngInput" class="geoid-coord-input" placeholder="110.82485" inputmode="decimal" autocomplete="off" />
-            </div>
-          </div>
-          <button type="button" id="geoidCoordBtn" class="geoid-coord-btn" onclick="searchByCoordinate()">🔍 Cari Koordinat</button>
-        </div>
-
-        <h4 style="font-size: 13px; margin-top:20px; margin-bottom: 10px;">Pencarian Bertingkat</h4>
+        
+        <h4 style="font-size: 13px; margin-top:20px; margin-bottom: 10px;">Cari wilayah untuk menampilkan data</h4>
         <div class="query-box">
           <div class="form-group">
             <label for="pilihProvinsi">Pilih <b>Provinsi</b></label>
@@ -230,6 +204,35 @@
           </div>
 
           <button id="applyWilayah" class="btn-wilayah-apply" type="button" disabled onclick="cariLayerWilayah()">Cari Wilayah</button>
+        </div>
+
+        <h4 style="font-size: 13px; margin-bottom: 10px; display:none;">Cari wilayah untuk menampilkan data</h4>
+        <div class="geoid-search-container" style="display:none;">
+          <input
+            type="text"
+            id="geoidSearchInput"
+            class="geoid-search-input"
+            placeholder="🔍 Cari Desa/Kelurahan..."
+            autocomplete="off"
+          />
+          <div id="geoidAutocompleteResults" class="geoid-autocomplete-results"></div>
+        </div>
+
+        <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
+
+        <h4 style="font-size: 13px; margin-top:10px; margin-bottom: 10px;">Masukkan koordinat untuk menampilkan data</h4>
+        <div class="geoid-coord-search">
+          <div class="geoid-coord-row">
+            <div class="geoid-coord-field">
+              <label for="geoidLatInput">Latitude</label>
+              <input type="text" id="geoidLatInput" class="geoid-coord-input" placeholder="-7.53932" inputmode="decimal" autocomplete="off" />
+            </div>
+            <div class="geoid-coord-field">
+              <label for="geoidLngInput">Longitude</label>
+              <input type="text" id="geoidLngInput" class="geoid-coord-input" placeholder="110.82485" inputmode="decimal" autocomplete="off" />
+            </div>
+          </div>
+          <button type="button" id="geoidCoordBtn" class="geoid-coord-btn" onclick="searchByCoordinate()">🔍 Cari Koordinat</button>
         </div>
 
       </div>
