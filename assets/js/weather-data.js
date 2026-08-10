@@ -57,7 +57,7 @@
           return location;
         });
 
-      console.log('Data kode wilayah berhasil dimuat:', weatherSearchLocations.length, 'wilayah ADM4');
+
 
       const kecSeen = new Map();
       for (const loc of weatherSearchLocations) {
@@ -76,7 +76,7 @@
         }
       }
       kecamatanSearchIndex = [...kecSeen.values()];
-      console.log('Indeks kecamatan dibuat:', kecamatanSearchIndex.length, 'kecamatan');
+
 
       const kabkotSeen = new Map();
       for (const loc of weatherSearchLocations) {
@@ -93,7 +93,7 @@
         }
       }
       kabkotaSearchIndex = [...kabkotSeen.values()];
-      console.log('Indeks kabkota dibuat:', kabkotaSearchIndex.length, 'kabkota');
+
 
       const provSeen = new Map();
       for (const loc of weatherSearchLocations) {
@@ -109,7 +109,7 @@
         }
       }
       provinsiSearchIndex = [...provSeen.values()];
-      console.log('Indeks provinsi dibuat:', provinsiSearchIndex.length, 'provinsi');
+
 
       generate38RandomWeatherMarkers();
     } catch (err) {

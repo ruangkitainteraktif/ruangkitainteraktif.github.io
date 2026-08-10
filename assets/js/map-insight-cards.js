@@ -72,8 +72,9 @@
   }
 
   function flyToQuake(gempa) {
-    const lat = parseFloat(gempa.Lintang);
-    const lon = parseFloat(gempa.Bujur);
+    const coords = (gempa.Coordinates || '').split(',');
+    const lat = parseFloat(coords[0]);
+    const lon = parseFloat(coords[1]);
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
 
     if (quakeMarker) map.removeLayer(quakeMarker);

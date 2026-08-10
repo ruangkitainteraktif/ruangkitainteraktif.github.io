@@ -102,11 +102,16 @@
   <!-- Kontrol lokasi pengguna -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.85.1/dist/L.Control.Locate.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.85.1/dist/L.Control.Locate.min.js" charset="utf-8"></script>
+  <link href="https://vjs.zencdn.net/8.23.4/video-js.css" rel="stylesheet" />
+  <script src="https://vjs.zencdn.net/8.23.4/video.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.5/dist/hls.min.js"></script>
   <!-- Esri Leaflet Plugin untuk ArcGIS FeatureServer -->
   <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
-
+  <!-- shpjs untuk membaca file SHP -->
+  <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.js"></script>
   <!-- Leaflet.draw untuk menggambar point/line/polygon -->
-  <!-- Leaflet.draw untuk menggambar point/line/polygon -->
+  <!-- jsTree untuk layer tree -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
   <link rel="stylesheet" href="assets/css/app.css?v=8">
@@ -154,7 +159,33 @@
 
   <!-- BACKDROP OVERLAY (MOBILE ONLY) -->
   <div id="modal-backdrop" onclick="onBackdropClick()"></div>
+  <div id="cctvModal" class="cctv-modal" role="dialog" aria-modal="true" aria-labelledby="cctvModalTitle" onclick="if(event.target === this) closeCctvModal()">
+    <div class="cctv-modal-dialog">
+      <div class="cctv-modal-head"><strong id="cctvModalTitle">CCTV</strong><button class="cctv-modal-close" type="button" aria-label="Tutup" onclick="closeCctvModal()">×</button></div>
+      <iframe id="cctvIframePlayer" class="cctv-player" title="Pemutar CCTV" allow="autoplay; fullscreen"></iframe>
+      <video id="cctvVideoPlayer" class="video-js vjs-fluid cctv-player" controls autoplay muted playsinline></video>
+      <img id="cctvImagePlayer" class="cctv-player cctv-image-player" alt="Tayangan CCTV">
+    </div>
+  </div>
 
+  <!-- MODAL DETAIL LAYER GEOPORTAL -->
+  <div id="geoportalModal" class="geoportal-modal" role="dialog" aria-modal="true" aria-labelledby="geoportalModalTitle" onclick="if(event.target === this) closeGeoportalModal()">
+    <div class="geoportal-modal-dialog">
+      <div class="geoportal-modal-head">
+        <div class="geoportal-modal-title">
+          <span class="geoportal-modal-icon">📂</span>
+          <div class="geoportal-modal-caption">
+            <strong id="geoportalModalTitle">Detail Layer</strong>
+            <small id="geoportalModalCoords">(Klik peta untuk memilih lokasi)</small>
+          </div>
+        </div>
+        <button class="geoportal-modal-close" type="button" aria-label="Tutup" onclick="closeGeoportalModal()">×</button>
+      </div>
+      <div class="geoportal-modal-body">
+        <div id="geoportalProperties" class="geoportal-properties"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- SIDEBAR KIRI -->
   <div id="sidebar-left" class="collapsed">
@@ -169,6 +200,9 @@
 
     <div class="tab-menu">
       <button class="tab-btn active" onclick="openTab(event, 'tab-geoid')">GEOID</button>
+      <button class="tab-btn" onclick="openTab(event, 'tab-geotani')">GEOTANI</button>
+      <button class="tab-btn" onclick="openTab(event, 'tab-geoportal')">GEOPORTAL</button>
+      <button class="tab-btn" onclick="openTab(event, 'tab-cctv')">GEOWATCH</button>
       <button class="tab-btn" onclick="openTab(event, 'tab-cuaca')">GEOWX</button>
       <button class="tab-btn" onclick="openTab(event, 'tab-gempa')">GEOQUAKE</button>
       <button class="tab-btn" onclick="openTab(event, 'tab-pengaturan')">SETTING</button>
@@ -178,10 +212,21 @@
     <div class="sidebar-content">
       <div id="tab-geoid" class="tab-content active">
         <h4 style="font-size:15px; margin-bottom:4px;">Batas Wilayah</h4>
-        <p style="font-size:13px; color:#668198; margin-bottom:20px;">Pilih wilayah untuk ditampilkan di peta.</p>
+        <p style="font-size:13px; color:#668198; margin-bottom:20px;">Pilih wilayah atau klik di peta untuk menampilkan data.</p>
         <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
-        
-        <h4 style="font-size: 13px; margin-top:20px; margin-bottom: 10px;">Cari wilayah untuk menampilkan data</h4>
+        <h4 style="font-size: 13px; margin-bottom: 10px; display:none;">Pencarian Cepat</h4>
+        <div class="geoid-search-container" style="display:none;">
+          <input
+            type="text"
+            id="geoidSearchInput"
+            class="geoid-search-input"
+            placeholder="🔍 Cari Desa/Kelurahan..."
+            autocomplete="off"
+          />
+          <div id="geoidAutocompleteResults" class="geoid-autocomplete-results"></div>
+        </div>
+
+        <h4 style="font-size: 13px; margin-top:20px; margin-bottom: 10px;">Cari wilayah untuk melihat insights</h4>
         <div class="query-box">
           <div class="form-group">
             <label for="pilihProvinsi">Pilih <b>Provinsi</b></label>
@@ -203,46 +248,188 @@
             <select id="pilihDesa" disabled><option value="">Pilih Kecamatan Terlebih Dahulu</option></select>
           </div>
 
+          <div style="display:flex;gap:12px;flex-wrap:wrap;padding:7px 0;font-size:11px;color:#385773;">
+            <span style="font-weight:600;">Label aktif:</span>
+            <label><input id="geoidPopulationLabel" type="checkbox" checked> Populasi</label>
+          </div>
+
           <button id="applyWilayah" class="btn-wilayah-apply" type="button" disabled onclick="cariLayerWilayah()">Cari Wilayah</button>
         </div>
 
-        <h4 style="font-size: 13px; margin-bottom: 10px; display:none;">Cari wilayah untuk menampilkan data</h4>
-        <div class="geoid-search-container" style="display:none;">
-          <input
-            type="text"
-            id="geoidSearchInput"
-            class="geoid-search-input"
-            placeholder="🔍 Cari Desa/Kelurahan..."
-            autocomplete="off"
-          />
-          <div id="geoidAutocompleteResults" class="geoid-autocomplete-results"></div>
+        <hr style="margin: 20px 0 20px; border:0; border-top:1px solid #e8eef3;">
+
+      </div>
+      <!-- TAB 2: GEOPORTAL -->
+      <div id="tab-geoportal" class="tab-content">
+        <div class="geoportal-sticky-header">
+          <h4 style="font-size:15px; margin-bottom:10px;">Geoportal Hub</h4>
+          <p style="font-size:13px; color:#668198; margin-bottom:10px;">Pilih layer untuk ditampilkan di peta.</p>
+          <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
+          
+          <div class="geoportal-search-container">
+            <div class="geoportal-search-input-wrapper">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="geoportalSearchInput" class="geoportal-search-input with-icon" placeholder="Cari layer..." autocomplete="off"/>
+            </div>
+          </div>
+        </div>
+
+        <div id="geoportalLayerList"></div>
+      </div>
+
+      <!-- TAB: GEOTANI -->
+      <div id="tab-geotani" class="tab-content">
+        <h4 style="font-size:15px; margin-bottom:4px;">Geotani Analysis</h4>
+        <p style="font-size:13px; color:#668198; margin-bottom:20px;">Petakan, Analisis, dan Optimalkan</p>
+
+        <nav class="geotani-analysis-nav" aria-label="Menu analisis Geotani" role="tablist">
+          <button id="geotani-lbs-tab" class="geotani-analysis-tab active" type="button" role="tab" aria-selected="true" aria-controls="geotani-lbs-panel" onclick="openGeotaniAnalysisTab('lbs')">LBS Analysis</button>
+          <button id="geotani-kta-tab" class="geotani-analysis-tab" type="button" role="tab" aria-selected="false" aria-controls="geotani-kta-panel" onclick="openGeotaniAnalysisTab('kta')">KTA Analysis</button>
+          <button id="geotani-ndvi-tab" class="geotani-analysis-tab" type="button" role="tab" aria-selected="false" aria-controls="geotani-ndvi-panel" onclick="openGeotaniAnalysisTab('ndvi')">NDVI Analysis</button>
+        </nav>
+
+        <div id="geotani-lbs-panel" class="geotani-analysis-panel active" role="tabpanel" aria-labelledby="geotani-lbs-tab">
+          <section class="geotani-kta-card" aria-labelledby="lbsOverlayTitle">
+            <h5 id="lbsOverlayTitle">LBS Analysis</h5>
+          <div style="display:grid;gap:10px;margin-top:8px;">
+            <div>
+              <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Input Layer 1</label>
+              <select id="lbsLayer1" style="width:100%;padding:7px 10px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;">
+                <option value="sawah-2023" selected>Lahan Baku Sawah 2023</option>
+              </select>
+            </div>
+            <div style="position:relative;">
+              <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Input Layer 2 — Desa/Kelurahan</label>
+              <div style="position:relative;">
+                <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
+                <input type="text" id="lbsVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" style="width:100%;padding:7px 10px 7px 28px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;box-sizing:border-box;" />
+              </div>
+              <div id="lbsVillageResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
+              <div id="lbsVillageSelected" style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;"></div>
+            </div>
+            <button id="btnRunLbs" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">
+              Hitung Luas Sawah
+            </button>
+            <div id="lbsResultArea" style="display:none;margin-top:8px;padding:10px;background:#fff;border:1px solid #bbf7d0;border-radius:6px;font-size:11px;"></div>
+          </div>
+          </section>
+        </div>
+
+        <div id="geotani-kta-panel" class="geotani-analysis-panel" role="tabpanel" aria-labelledby="geotani-kta-tab" hidden>
+          <section class="geotani-kta-card" aria-labelledby="geoportalOverlayTitle">
+            <h5 id="geoportalOverlayTitle">KTA Analysis</h5>
+          <div style="display:grid;gap:10px;margin-top:8px;">
+            <div>
+              <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Input Layer 1</label>
+              <select id="overlayLayer1" style="width:100%;padding:7px 10px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;">
+                <option value="sawah-2023" selected>Lahan Baku Sawah 2023</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Input Layer 2</label>
+              <select id="overlayLayer2" style="width:100%;padding:7px 10px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;">
+                <option value="erosi" selected>Peta Rawan Erosi (BIG)</option>
+              </select>
+            </div>
+            <div style="position:relative;">
+              <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Wilayah Analisis</label>
+              <div style="position:relative;">
+                <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
+                <input type="text" id="overlayVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" style="width:100%;padding:7px 10px 7px 28px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;box-sizing:border-box;" />
+              </div>
+              <div id="overlayVillageResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
+              <div id="overlayVillageSelected" style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;"></div>
+            </div>
+            <label class="geoportal-filter" style="margin-top:2px;">
+              <input type="checkbox" id="overlayClipVillage" checked>
+              <span>Clip ke Batas Wilayah</span>
+            </label>
+            <button id="btnRunOverlay" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">
+              Jalankan
+            </button>
+          </div>
+          </section>
+        </div>
+
+        <div id="geotani-ndvi-panel" class="geotani-analysis-panel" role="tabpanel" aria-labelledby="geotani-ndvi-tab" hidden>
+          <section class="geotani-kta-card" aria-labelledby="ndviOverlayTitle">
+            <h5 id="ndviOverlayTitle">NDVI Analysis</h5>
+          <div style="display:grid;gap:10px;margin-top:8px;">
+            <div>
+              <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Input Layer 1</label>
+              <select id="ndviInputLayer" style="width:100%;padding:7px 10px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;">
+                <option value="ndvi" selected>NDVI (Sentinel-2)</option>
+              </select>
+            </div>
+            <div style="position:relative;">
+              <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Input Layer 2 — Desa/Kelurahan</label>
+              <div style="position:relative;">
+                <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
+                <input type="text" id="ndviVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" style="width:100%;padding:7px 10px 7px 28px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;box-sizing:border-box;" />
+              </div>
+              <div id="ndviVillageResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
+              <div id="ndviVillageSelected" style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;"></div>
+            </div>
+            <button id="btnRunNdvi" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">
+              Analisis NDVI
+            </button>
+          </div>
+          </section>
         </div>
 
         <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
 
-        <h4 style="font-size: 13px; margin-top:10px; margin-bottom: 10px;">Masukkan koordinat untuk menampilkan data</h4>
-        <div class="geoid-coord-search">
-          <div class="geoid-coord-row">
-            <div class="geoid-coord-field">
-              <label for="geoidLatInput">Latitude</label>
-              <input type="text" id="geoidLatInput" class="geoid-coord-input" placeholder="-7.53932" inputmode="decimal" autocomplete="off" />
-            </div>
-            <div class="geoid-coord-field">
-              <label for="geoidLngInput">Longitude</label>
-              <input type="text" id="geoidLngInput" class="geoid-coord-input" placeholder="110.82485" inputmode="decimal" autocomplete="off" />
-            </div>
-          </div>
-          <button type="button" id="geoidCoordBtn" class="geoid-coord-btn" onclick="searchByCoordinate()">🔍 Cari Koordinat</button>
-        </div>
+        <div id="geotaniLayerTree"></div>
 
+      </div>
+
+      <!-- TAB 3: CCTV -->
+      <div id="tab-cctv" class="tab-content">
+        <h4 style="font-size:15px; margin-bottom:5px;">CCTV Area</h4>
+        <p style="font-size:13px; color:#668198; margin-bottom:20px;">Klik pencarian untuk melihat lokasi cctv.</p>
+        <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
+        <div class="cctv-layers">
+          <label class="cctv-layer-toggle">
+            <input type="checkbox" id="toggleTollRoad">
+            <span class="cctv-layer-check"></span>
+            <span class="cctv-layer-info">
+              <span class="cctv-layer-name">Jalan Tol Pulau Jawa</span>
+              <small>Tampilkan overlay jalan tol di peta</small>
+            </span>
+          </label>
+          <label class="cctv-layer-toggle">
+            <input type="checkbox" id="toggleNationalRoad">
+            <span class="cctv-layer-check"></span>
+            <span class="cctv-layer-info">
+              <span class="cctv-layer-name">Jalan Nasional</span>
+              <small>Overlay jalan nasional dari lokal</small>
+            </span>
+          </label>
+          <label class="cctv-layer-toggle">
+            <input type="checkbox" id="toggleNonTollRoad">
+            <span class="cctv-layer-check"></span>
+            <span class="cctv-layer-info">
+              <span class="cctv-layer-name">Jalan Non Tol</span>
+              <small>Tampilkan jalan umum dari BIG</small>
+            </span>
+          </label>
+        </div>
+        <p style="font-size:13px; color:#668198;margin-top:20px;margin-bottom:10px;">Pencarian CCTV</p>
+        <div class="cctv-filter">
+          <div class="cctv-autocomplete"><input id="cctvSearchInput" type="search" placeholder="Cari disini" autocomplete="off"><div id="cctvAutocomplete" class="cctv-autocomplete-list"></div></div>
+          <select id="cctvAreaFilter"><option value="">Pilih area</option></select>
+        </div>
+        <div id="cctvStatus" class="cctv-message">Buka tab CCTV untuk memuat daftar.</div>
+        <div id="cctvResults" class="cctv-results"></div>
       </div>
 
       <!-- TAB 3: CUACA BMKG -->
       <div id="tab-cuaca" class="tab-content">
         <h4 style="font-size: 15px; margin-bottom: 5px;">Prakiraan Cuaca BMKG</h4>
-        <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Cari wilayah atau klik titik pada peta.</p>
+        <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Cari wilayah atau klik pada peta untuk melihat informasi cuaca.</p>
         <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
         <!-- Search Autocomplete Form -->
+        <h4 style="font-size: 13px; margin-bottom: 10px;">Cari wilayah untuk melihat data</h4>
         <div class="search-weather-container">
           <input 
             type="text" 
@@ -268,7 +455,7 @@
         </div>
         
         <!-- Container Hasil Data Cuaca -->
-        <div id="weather-content">
+        <div id="weather-content" style="margin-top:20px">
           <div style="font-size:13px; color:#555; background:#eef7ff; padding:10px; margin-bottom: 100px; border-radius:5px;">
             ℹ️ Pilih lokasi dari pencarian atau klik pada peta untuk melihat cuaca.
           </div>
@@ -277,18 +464,27 @@
 
       <!-- TAB 3: GEMPA BMKG -->
       <div id="tab-gempa" class="tab-content">
+        <h4 style="font-size: 15px; margin-bottom: 5px;">Info Gempa Bumi BMKG</h4>
+        <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Klik pada daftar untuk melihat informasi gempa.</p>
+        <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
         <div id="earthquake-content" class="quake-message">Buka tab ini untuk memuat data gempabumi BMKG.</div>
       </div>
 
       <!-- TAB 4: PENGATURAN -->
       <div id="tab-pengaturan" class="tab-content">
         <h4 style="font-size: 15px; margin-bottom: 5px;">Pengaturan Peta</h4>
-        <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Kunci area dan pilih basemap.</p>
+        <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Atur transparansi layer, kunci area, dan pilih basemap.</p>
         <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
         <div class="query-box">
           <div class="form-group">
+            <label for="opacityRange"><b>Opasitas Layer</b></label>
+            <input id="opacityRange" type="range" min="0.1" max="1" step="0.1" value="0.8" style="width:100%;">
+            <div id="opacityValue" style="font-size:12px; color:#668198; margin-top:4px;">0.8</div>
+          </div>
+
+          <div class="form-group">
             <label><b>Kunci Peta</b></label>
-            <label class="setting-filter"><input type="checkbox" id="mapLockToggle"><span> Kunci area peta</span></label>
+            <label class="geoportal-filter"><input type="checkbox" id="mapLockToggle"><span>Kunci area peta</span></label>
           </div>
 
           <div class="form-group">
@@ -307,7 +503,7 @@
       <!-- TAB 5: ALAT -->
       <div id="tab-alat" class="tab-content">
         <h4 style="font-size: 15px; margin-bottom: 5px;">Alat Analisis</h4>
-        <p style="font-size: 13px; color: #666;margin-bottom: 20px;">Gambar, ukur, dan muat file GeoJSON / SHP.</p>
+        <p style="font-size: 13px; color: #666;margin-bottom: 20px;">Gambar, ukur, dan muat file GeoJSON.</p>
         <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
         <!-- Gambar & Ukur -->
         <div class="query-box">
@@ -347,8 +543,17 @@
           <button class="btn-apply" onclick="loadGeoJSONFile()">Tampilkan GeoJSON</button>
         </div>
 
+        <!-- Upload SHP -->
+        <div class="query-box" style="display:none">
+          <div class="form-group">
+            <label for="shpFileInput">Muat <b>SHP</b> (.shp + .dbf + .shx)</label>
+            <input type="file" id="shpFileInput" accept=".shp,.dbf,.shx,.zip" multiple class="alat-file-input">
+          </div>
+          <button class="btn-apply" onclick="loadSHPFile()">Tampilkan SHP</button>
+        </div>
+
         <!-- Status & Info Layer -->
-        <div id="alatStatus" class="alat-status-message">Pilih file GeoJSON untuk ditampilkan.</div>
+        <div id="alatStatus" class="cctv-message">Pilih file GeoJSON atau SHP untuk ditampilkan.</div>
         <div id="alatLayerInfo" class="alat-layer-info"></div>
 
         <!-- Daftar Layer yang Dimuat -->
@@ -361,7 +566,7 @@
   </div>
 
   <!-- TOMBOL BUKA DETAIL PANEL JIKA DI-HIDE (DESKTOP) -->
-  <button id="show-detail-btn" style="display:block" onclick="toggleDetailPanel(true)">📍 Info Koordinat</button>
+  <button id="show-detail-btn" style="display:block" onclick="toggleDetailPanel(true)">Panel Detail</button>
 
   <!-- PANEL DETAIL ADMINISTRASI -->
   <div id="detail-panel" class="hidden">
@@ -402,15 +607,26 @@
 <!-- Tambahkan proj4 jika SHP menggunakan proyeksi selain WGS84 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
 <script src="https://unpkg.com/@turf/turf@7.1.0/turf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/jstree.min.js"></script>
 <script src="assets/js/map-core.js"></script>
+<script src="assets/js/geoportal.js"></script>
+<script src="assets/js/geoportal-search.js"></script>
 <script src="assets/js/sidebar.js"></script>
 <script src="assets/js/earthquake.js"></script>
+<script src="assets/js/cctv.js"></script>
 <script src="assets/js/detail-subtab.js"></script>
 <script src="assets/js/map-click.js"></script>
 <script src="assets/js/alat-layers.js"></script>
 <script src="assets/js/alat-draw-measure.js"></script>
 <script src="assets/js/app-boot.js"></script>
 
+<script src="assets/js/overlay-village-search.js"></script>
+<script src="assets/js/erosi-kta.js"></script>
+<script src="assets/js/ndvi-analysis.js"></script>
+<script src="assets/js/dukcapil-population.js"></script>
 <script src="assets/js/geoid-wilayah.js"></script>
 <script src="assets/js/weather-data.js"></script>
 <script src="assets/js/weather-bmkg.js"></script>
@@ -419,6 +635,8 @@
 <script src="assets/js/weather-init.js"></script>
 <script src="assets/js/wind-animation.js"></script>
 <script src="assets/js/map-insight-cards.js"></script>
+<script src="assets/js/geotani-search.js"></script>
+<script src="assets/js/sawah-dilindungi.js"></script>
 <script src="assets/js/unified-search.js"></script>
 
 </body>

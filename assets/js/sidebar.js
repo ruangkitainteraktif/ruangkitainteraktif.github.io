@@ -69,29 +69,40 @@
     evt.currentTarget.classList.add("active");
     window.currentActiveTab = tabId;
 
+    if (tabId !== 'tab-geoportal') closeGeoportalModal();
+
     if (tabId === 'tab-gempa') loadEarthquakeData();
+    if (tabId === 'tab-cctv') loadCctvData();
 
     const unifiedSearch = document.getElementById('unifiedSearch');
     const insightCards = document.getElementById('mapInsightCards');
 
-    if (tabId === 'tab-cuaca') {
-      // Get search position before hiding
-      const searchTop = unifiedSearch ? parseInt(getComputedStyle(unifiedSearch).top) : 14;
-      const searchHeight = unifiedSearch ? unifiedSearch.offsetHeight : 46;
-      // Hide global search, show cards at search position + 10px
-      if (unifiedSearch) unifiedSearch.style.display = 'none';
-      if (insightCards) {
-        insightCards.style.display = 'flex';
-        insightCards.style.top = (searchTop + searchHeight + 10) + 'px';
-      }
-    } else {
-      // Show global search, hide cards
+    if (tabId === 'tab-geoid') {
       if (unifiedSearch) unifiedSearch.style.display = 'block';
-      if (insightCards) insightCards.style.display = 'none';
+    } else {
+      if (unifiedSearch) unifiedSearch.style.display = 'none';
     }
+    if (insightCards) insightCards.style.display = 'none';
 
     if (tabId !== 'tab-alat') {
       removeDrawControl();
       stopMeasureMode();
     }
+  }
+
+  function openGeotaniAnalysisTab(tabId) {
+    const targetPanel = document.getElementById(`geotani-${tabId}-panel`);
+    const targetTab = document.getElementById(`geotani-${tabId}-tab`);
+    if (!targetPanel || !targetTab) return;
+
+    document.querySelectorAll('.geotani-analysis-panel').forEach(panel => {
+      const isActive = panel === targetPanel;
+      panel.classList.toggle('active', isActive);
+      panel.hidden = !isActive;
+    });
+    document.querySelectorAll('.geotani-analysis-tab').forEach(tab => {
+      const isActive = tab === targetTab;
+      tab.classList.toggle('active', isActive);
+      tab.setAttribute('aria-selected', String(isActive));
+    });
   }

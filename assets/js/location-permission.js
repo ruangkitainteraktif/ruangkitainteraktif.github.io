@@ -16,7 +16,7 @@
     modal.style.display = 'none';
   }
 
-  function showUserPopup(lat, lon) {
+  async function showUserPopup(lat, lon) {
     if (typeof map === 'undefined' || !map) return;
 
     if (userMarker) map.removeLayer(userMarker);
@@ -30,32 +30,57 @@
     userMarker = L.marker([lat, lon], { icon, title: 'Lokasi Anda', zIndexOffset: 1000 }).addTo(map);
 
     const coordStr = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+    const isGeotaniMode = window.currentActiveTab === 'tab-geotani';
+    const prefix = isGeotaniMode ? 'geotani' : 'geoid';
      const popupContent = `
-       <div class="geoid-popup geoid-popup-scroll">
-         <div class="geoid-popup-head">
+       <div class="${prefix}-popup geoid-popup-scroll">
+         <div class="${prefix}-popup-head">
+           <div class="${prefix}-popup-badge">
+             <span class="${prefix}-popup-badge-dot"></span>
+             ${isGeotaniMode ? 'Geotani' : 'Lokasi Anda'}
+           </div>
            <strong>Lokasi Anda</strong>
-           <span>📍 Posisi saat ini</span>
+           <span>Posisi saat ini</span>
          </div>
-          <div class="geoid-popup-body">
-            <div class="geoid-popup-meta">
+          <div class="${prefix}-popup-body">
+            <div class="${prefix}-popup-meta">
               <div><span>Koordinat</span><b>${coordStr}</b></div>
             </div>
-            <div class="geoid-popup-prayer" data-prayer-schedule><span style="color:#7a8fa3; font-size:11px">Memuat jadwal sholat…</span></div>
-            <div class="geoid-popup-insights" data-geoid-insights>
+            <div class="${prefix}-popup-insights" data-geoid-insights>
               <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 0 10px;gap:8px;">
-                <div style="width:28px;height:28px;border:3px solid #d0dde8;border-top-color:#0879bf;border-radius:50%;animation:geoportal-spin .8s linear infinite;"></div>
-                <span style="font-size:10px;color:#7a8fa3;text-align:center;">Memuat analisis…</span>
+                <div style="width:28px;height:28px;border:3px solid ${isGeotaniMode ? '#bbf7d0' : '#bfdbfe'};border-top-color:${isGeotaniMode ? '#16a34a' : '#2563eb'};border-radius:50%;animation:geoportal-spin .8s linear infinite;"></div>
+                <span style="font-size:10px;color:#94a3b8;text-align:center;">Memuat analisis…</span>
               </div>
             </div>
+            ${!isGeotaniMode ? `<div class="geoid-popup-cctv" data-cctv-insight><span style="color:#94a3b8; font-size:11px">Memuat CCTV terdekat…</span></div>` : ''}
+            ${!isGeotaniMode ? `<div class="geoid-popup-prayer" data-prayer-schedule><span style="color:#94a3b8; font-size:11px">Memuat jadwal sholat…</span></div>` : ''}
           </div>
        </div>
      `;
 
-    userMarker.bindPopup(popupContent, { maxWidth: 310, className: 'geoid-leaflet-popup' });
+    userMarker.bindPopup(popupContent, { maxWidth: 360, className: isGeotaniMode ? 'geotani-leaflet-popup' : 'geoid-leaflet-popup' });
     userMarker.openPopup();
 
-    if (typeof loadPrayerSchedule === 'function') loadPrayerSchedule(userMarker, lat, lon);
-    if (typeof loadGeoidPopupInsights === 'function') loadGeoidPopupInsights(userMarker, { lat, lon, kode: '' });
+    if (typeof loadPrayerSchedule === 'function' && !isGeotaniMode) loadPrayerSchedule(userMarker, lat, lon);
+
+    // Di GeoTani, lokasi pengguna hanya ditampilkan sebagai penanda. Jangan
+    // jalankan reverse geocoding ataupun pemuatan batas berdasarkan alamat.
+    if (isGeotaniMode) return;
+
+    let userAdm4Code = '';
+    try {
+      const geoRes = await fetch(`https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode?f=pjson&featureTypes=&location=${lon},${lat}`);
+      const geoData = await geoRes.json();
+      const desa = geoData?.address?.Neighborhood || geoData?.address?.District || '';
+      const kecamatan = geoData?.address?.Subregion || geoData?.address?.City || '';
+      const provinsi = geoData?.address?.Region || '';
+      if (typeof findAdm4ByGeocode === 'function') {
+        const matched = findAdm4ByGeocode(desa, kecamatan, geoData?.address?.City || kecamatan, provinsi);
+        userAdm4Code = matched ? matched.kode : '';
+      }
+    } catch (_) {}
+    if (typeof loadGeoidPopupInsights === 'function') loadGeoidPopupInsights(userMarker, { lat, lon, kode: userAdm4Code });
+    if (typeof showGeoidBoundary === 'function' && userAdm4Code) showGeoidBoundary(userAdm4Code, 15);
   }
 
   function handleAllow() {

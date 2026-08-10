@@ -3,22 +3,63 @@
     return document.getElementById('tab-cuaca')?.classList.contains('active') === true;
   }
 
-  function isAlatTabActive() {
-    return document.getElementById('tab-alat')?.classList.contains('active') === true;
+  async function openGeotaniBoundaryFromOverlay(latlng, kode) {
+    kode = kode || window._selectedVillageKode || window._lastGeotaniLocation?.kode;
+    if (!kode || typeof showGeoidBoundary !== 'function') return;
+
+    const boundaryLayer = await showGeoidBoundary(kode, undefined, { flyTo: false });
+    if (boundaryLayer?.getPopup) boundaryLayer.openPopup(latlng);
   }
 
   map.on('click', async function(e) {
     const lat = e.latlng.lat;
     const lng = e.latlng.lng;
 
+    // Nonaktifkan popup geoid di tab pengaturan dan alat
+    const activeTab = window.currentActiveTab;
+    if (activeTab === 'tab-pengaturan' || activeTab === 'tab-alat') return;
+
+    // GeoTani tidak memakai reverse geocoding. Saat area kosong dalam cakupan
+    // hasil irisan diklik, tampilkan popup batas wilayah analisis aktif.
+    if (activeTab === 'tab-geotani') {
+      const ktaOverlayLayer = typeof erosiSawahOverlayLayer !== 'undefined' && erosiSawahOverlayLayer;
+      const lbsOverlayLayer = typeof getLbsOverlayLayer === 'function' && getLbsOverlayLayer();
+      const clickedFeature = e.originalEvent?.target?.closest?.('.leaflet-interactive');
+      const overlays = [
+        { layer: lbsOverlayLayer, kode: window._selectedLbsVillageKode },
+        { layer: ktaOverlayLayer, kode: window._selectedVillageKode || window._lastGeotaniLocation?.kode }
+      ];
+      const activeOverlay = overlays.find(({ layer }) => layer && map.hasLayer(layer) && layer.getBounds().contains(e.latlng));
+      if (activeOverlay && !clickedFeature) {
+        await openGeotaniBoundaryFromOverlay(e.latlng, activeOverlay.kode);
+      }
+      return;
+    }
+
+    // Jika klik mengenai fitur overlay, biarkan Leaflet yang handle popup
+    const overlayLayer = typeof erosiSawahOverlayLayer !== 'undefined' && erosiSawahOverlayLayer;
+    if (overlayLayer && map.hasLayer(overlayLayer)) {
+      let hitOverlay = false;
+      overlayLayer.eachLayer(l => {
+        if (l instanceof L.Polygon && l.getBounds && l.getBounds().contains(e.latlng)) {
+          const poly = e.originalEvent?.target;
+          if (poly && poly.closest && poly.closest('.leaflet-interactive')) hitOverlay = true;
+        }
+      });
+      if (hitOverlay) return;
+    }
+
+    // Saat layer Geoportal/ArcGIS aktif, klik dipakai untuk GetFeatureInfo.
+    if (getActiveGeoportalLayers().length || getActiveArcgisLayers().length) {
+      await handleGeoportalMapClick(e);
+      return;
+    }
+
     // Tab Cuaca: biarkan findAdm4ByCoordinates yang tangani
     if (isCuacaTabActive()) {
       findAdm4ByCoordinates(lat, lng);
       return;
     }
-
-    // Tab Alat: jangan tampilkan popup geoid
-    if (isAlatTabActive()) return;
 
     if (mapClickMarker) map.removeLayer(mapClickMarker);
 
@@ -87,50 +128,59 @@
       const title = matched ? matched.desa : desa;
       const hierarchy = [matched ? matched.kecamatan : kecamatan, matched ? matched.provinsi : provinsi].filter(Boolean);
       const coordStr = `${lng.toFixed(5)}, ${lat.toFixed(5)}`;
+      const isGeotaniMode = window.currentActiveTab === 'tab-geotani';
       const metadata = [
         ['Alamat', jalan],
-        ['Kode pos', kodepos],
+
         ['Koordinat', coordStr],
         adm4Code && ['Kode wilayah', adm4Code]
       ].filter(Boolean);
 
+      const prefix = isGeotaniMode ? 'geotani' : 'geoid';
       const popupContent = `
-        <div class="geoid-popup geoid-popup-scroll">
-          <div class="geoid-popup-head">
+        <div class="${prefix}-popup geoid-popup-scroll">
+          <div class="${prefix}-popup-head">
+            <div class="${prefix}-popup-badge">
+              <span class="${prefix}-popup-badge-dot"></span>
+              ${isGeotaniMode ? 'Geotani' : 'Wilayah'}
+            </div>
             <strong>${escapeMapClickHtml(title)}</strong>
             ${hierarchy.length ? `<span>${hierarchy.map(escapeMapClickHtml).join(' · ')}</span>` : ''}
           </div>
-          <div class="geoid-popup-body">
-            <div class="geoid-popup-meta">${metadata.map(([label, value]) => `<div><span>${escapeMapClickHtml(label)}</span><b>${escapeMapClickHtml(value)}</b></div>`).join('')}</div>
-            <div class="geoid-popup-prayer" data-prayer-schedule><span style="color:#7a8fa3; font-size:11px">Memuat jadwal sholat…</span></div>
-            <div class="geoid-popup-insights" data-geoid-insights>
+          <div class="${prefix}-popup-body">
+            <div class="${prefix}-popup-meta">${metadata.map(([label, value]) => `<div><span>${escapeMapClickHtml(label)}</span><b>${escapeMapClickHtml(value)}</b></div>`).join('')}</div>
+            <div class="${prefix}-popup-insights" data-geoid-insights>
               <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 0 10px;gap:8px;">
-                <div style="width:28px;height:28px;border:3px solid #d0dde8;border-top-color:#0879bf;border-radius:50%;animation:geoportal-spin .8s linear infinite;"></div>
-                <span style="font-size:10px;color:#7a8fa3;text-align:center;">Memuat analisis…</span>
+                <div style="width:28px;height:28px;border:3px solid ${isGeotaniMode ? '#bbf7d0' : '#bfdbfe'};border-top-color:${isGeotaniMode ? '#16a34a' : '#2563eb'};border-radius:50%;animation:geoportal-spin .8s linear infinite;"></div>
+                <span style="font-size:10px;color:#94a3b8;text-align:center;">Memuat analisis…</span>
               </div>
             </div>
+            ${!isGeotaniMode ? `<div class="geoid-popup-cctv" data-cctv-insight><span style="color:#94a3b8; font-size:11px">Memuat CCTV terdekat…</span></div>` : ''}
+            ${!isGeotaniMode ? `<div class="geoid-popup-prayer" data-prayer-schedule><span style="color:#94a3b8; font-size:11px">Memuat jadwal sholat…</span></div>` : ''}
           </div>
         </div>
       `;
       marker.setPopupContent(popupContent);
+      marker._icon?.classList.add(isGeotaniMode ? 'geotani-leaflet-popup' : 'geoid-leaflet-popup');
 
       // Muat jadwal sholat berdasarkan koordinat dari reverse geocode
-      loadPrayerSchedule(marker, lat, lng);
+      if (!isGeotaniMode) loadPrayerSchedule(marker, lat, lng);
 
-      // Muat insights cuaca, gempa
-      loadGeoidPopupInsights(marker, { lat, lon: lng, kode: adm4Code });
+      // Muat insights cuaca, gempa, CCTV terdekat
+      if (window.currentActiveTab === 'tab-geoid') loadGeoidPopupInsights(marker, { lat, lon: lng, kode: adm4Code });
 
       // Tampilkan batas wilayah dari BIG
       if (adm4Code) showGeoidBoundary(adm4Code, 15);
     } catch (err) {
       console.error("Reverse Geocode Error:", err);
       if (marker.getPopup()) {
+        const errorPrefix = window.currentActiveTab === 'tab-geotani' ? 'geotani' : 'geoid';
         marker.setPopupContent(`
-          <div class="geoid-popup">
-            <div class="geoid-popup-head">
+          <div class="${errorPrefix}-popup">
+            <div class="${errorPrefix}-popup-head">
               <strong>${lng.toFixed(5)}, ${lat.toFixed(5)}</strong>
             </div>
-            <div class="geoid-popup-body">
+            <div class="${errorPrefix}-popup-body">
               <span style="color:#e74c3c; font-size:12px">Gagal memuat alamat</span>
             </div>
           </div>
@@ -143,6 +193,11 @@
     const element = marker.getPopup()?.getElement()?.querySelector('[data-prayer-schedule]');
     if (!element || !lat || !lon) {
       if (element) element.innerHTML = '<span style="color:#7a8fa3; font-size:11px">Jadwal sholat tidak tersedia</span>';
+      return;
+    }
+
+    if (window.currentActiveTab === 'tab-geotani') {
+      element.style.display = 'none';
       return;
     }
 

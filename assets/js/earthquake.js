@@ -33,7 +33,7 @@
   function renderEarthquakeCards(items, felt = false) {
     if (!items.length) return '<div class="quake-message">Data tidak tersedia.</div>';
     return items.map(item => `
-      <article class="quake-card">
+      <article class="quake-card" onclick="flyToEarthquake('${escapeBMKGHTML(item.Coordinates || '')}', '${escapeBMKGHTML(item.Magnitude || '')}', '${escapeBMKGHTML(item.Wilayah || '')}', '${escapeBMKGHTML(item.Tanggal || '')}', '${escapeBMKGHTML(item.Jam || '')}', '${escapeBMKGHTML(item.Kedalaman || '')}', '${escapeBMKGHTML(item.Potensi || '')}')" style="cursor:pointer" title="Klik untuk terbang ke lokasi gempa">
         <div class="quake-card-mag" style="color:${getMagnitudeColor(item.Magnitude)}; background:${getMagnitudeColor(item.Magnitude)}15">M${escapeBMKGHTML(item.Magnitude || '-')}</div>
         <div>
           <div class="quake-card-place">${escapeBMKGHTML(item.Wilayah || 'Lokasi tidak tersedia')}</div>
@@ -51,7 +51,7 @@
     }
     earthquakeLatestData = latest;
     container.innerHTML = `
-      <div class="quake-toolbar"><h4>Klik untuk melihat lokasi</h4><button class="quake-refresh" type="button" onclick="loadEarthquakeData(true)">Muat ulang</button></div>
+      <div class="quake-toolbar"><h4>Info Gempa Bumi</h4><button class="quake-refresh" type="button" onclick="loadEarthquakeData(true)">Muat ulang</button></div>
       <article class="quake-latest" onclick="flyToLatestEarthquake()" style="cursor:pointer" title="Klik untuk terbang ke lokasi gempa">
         <div class="quake-latest-main"><div class="quake-magnitude">M${escapeBMKGHTML(latest.Magnitude || '-')}</div><div><h5 class="quake-latest-title">Gempabumi Terbaru</h5><div class="quake-latest-place">${escapeBMKGHTML(latest.Wilayah || 'Lokasi tidak tersedia')}</div></div></div>
         <div class="quake-latest-details"><span>Waktu<b>${escapeBMKGHTML(latest.Jam || '-')}</b></span><span>Kedalaman<b>${escapeBMKGHTML(latest.Kedalaman || '-')}</b></span><span>Potensi<b>${escapeBMKGHTML(latest.Potensi || '-')}</b></span></div>
@@ -68,8 +68,9 @@
     if (typeof map === 'undefined' || !map) return;
     earthquakeMarkerGroup.clearLayers();
 
-    const lat = parseFloat(gempa.Lintang);
-    const lon = parseFloat(gempa.Bujur);
+    const coords = (gempa.Coordinates || '').split(',');
+    const lat = parseFloat(coords[0]);
+    const lon = parseFloat(coords[1]);
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
 
     const mag = parseFloat(gempa.Magnitude) || 0;
@@ -100,32 +101,51 @@
     const potensi = gempa.Potensi || '-';
     const popupHtml = `
       <div class="quake-popup">
-        <div class="quake-popup-head" style="background:linear-gradient(135deg, ${color}dd, ${color}99)">
-          <div class="quake-popup-badge">
-            <span class="quake-popup-dot" style="background:${color}"></span>
-            ${getMagnitudeLabel(mag)}
+        <div class="quake-popup-header">
+          <div class="quake-popup-status">
+            <span class="quake-popup-status-dot"></span>
+            Gempa Terbaru
           </div>
-          <strong class="quake-popup-mag">M${escapeBMKGHTML(mag)}</strong>
-          <span>${escapeBMKGHTML(gempa.Wilayah || 'Lokasi tidak diketahui')}</span>
+          <div class="quake-popup-region">${escapeBMKGHTML(gempa.Wilayah || 'Lokasi tidak diketahui')}</div>
         </div>
-        <div class="quake-popup-body">
-          <div class="quake-popup-meta">
-            <div><span>Waktu</span><b>${escapeBMKGHTML(gempa.Tanggal || '-')} ${escapeBMKGHTML(gempa.Jam || '-')}</b></div>
-            <div><span>Kedalaman</span><b>${escapeBMKGHTML(depth)}</b></div>
-            <div><span>Koordinat</span><b style="font-size:10px">${lat.toFixed(4)}, ${lon.toFixed(4)}</b></div>
-            <div><span>Potensi</span><b style="color:${color}">${escapeBMKGHTML(potensi)}</b></div>
-            ${feeling !== '-' ? `<div><span>Dirasakan</span><b style="font-size:10px; text-align:right; max-width:150px; white-space:normal; line-height:1.3">${escapeBMKGHTML(feeling)}</b></div>` : ''}
+        <div class="quake-popup-mag-display">
+          <div class="quake-popup-mag-circle" style="background:${color}">
+            <span class="quake-popup-mag-num">${escapeBMKGHTML(mag)}</span>
+            <span class="quake-popup-mag-label">MAG</span>
           </div>
+          <div class="quake-popup-mag-info">
+            <div class="quake-popup-potensi">${escapeBMKGHTML(potensi)}</div>
+            <div class="quake-popup-time">${escapeBMKGHTML(gempa.Tanggal || '-')} · ${escapeBMKGHTML(gempa.Jam || '-')}</div>
+          </div>
+        </div>
+        <div class="quake-popup-details">
+          <div class="quake-popup-detail-item">
+            <span class="quake-popup-detail-label">Kedalaman</span>
+            <span class="quake-popup-detail-value">${escapeBMKGHTML(depth)}</span>
+          </div>
+          <div class="quake-popup-detail-item">
+            <span class="quake-popup-detail-label">Koordinat</span>
+            <span class="quake-popup-detail-value">${lat.toFixed(2)}, ${lon.toFixed(2)}</span>
+          </div>
+        </div>
+        ${feeling !== '-' ? `
+        <div class="quake-popup-feeling">
+          <div class="quake-popup-feeling-title">Dirasakan</div>
+          <div class="quake-popup-feeling-text">${escapeBMKGHTML(feeling)}</div>
+        </div>` : ''}
+        <div class="quake-popup-footer">
+          <span class="quake-popup-footer-text">Sumber: BMKG</span>
         </div>
       </div>
     `;
-    marker.bindPopup(popupHtml, { maxWidth: 310, className: 'geoid-leaflet-popup' });
+    marker.bindPopup(popupHtml, { maxWidth: 340, className: 'quake-leaflet-popup' });
   }
 
   function flyToLatestEarthquake() {
     if (!earthquakeLatestData) return;
-    const lat = parseFloat(earthquakeLatestData.Lintang);
-    const lon = parseFloat(earthquakeLatestData.Bujur);
+    const coords = (earthquakeLatestData.Coordinates || '').split(',');
+    const lat = parseFloat(coords[0]);
+    const lon = parseFloat(coords[1]);
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
 
     map.flyTo([lat, lon], 7, { duration: 1.2 });
@@ -139,6 +159,78 @@
         }
       }
     });
+  }
+
+  function flyToEarthquake(coordinates, magnitude, wilayah, tanggal, jam, kedalaman, potensi) {
+    const coords = (coordinates || '').split(',');
+    const lat = parseFloat(coords[0]);
+    const lon = parseFloat(coords[1]);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+    earthquakeMarkerGroup.clearLayers();
+
+    const mag = parseFloat(magnitude) || 0;
+    const color = getMagnitudeColor(mag);
+    const size = Math.min(60, Math.max(36, 24 + mag * 5));
+
+    const quakeIcon = L.divIcon({
+      className: 'quake-marker-wrap',
+      html: `
+        <div class="quake-marker" style="--qm-size:${size}px; --qm-color:${color}">
+          <div class="quake-marker-ring"></div>
+          <div class="quake-marker-ring quake-marker-ring--delay"></div>
+          <div class="quake-marker-core">
+            <span class="quake-marker-mag">M${escapeBMKGHTML(mag)}</span>
+          </div>
+        </div>
+      `,
+      iconSize: [size + 30, size + 30],
+      iconAnchor: [(size + 30) / 2, (size + 30) / 2],
+      popupAnchor: [0, -(size / 2 + 15)]
+    });
+
+    const marker = L.marker([lat, lon], { icon: quakeIcon, zIndexOffset: 2000 })
+      .addTo(earthquakeMarkerGroup);
+
+    const popupHtml = `
+      <div class="quake-popup">
+        <div class="quake-popup-header">
+          <div class="quake-popup-status">
+            <span class="quake-popup-status-dot"></span>
+            Gempa Terbaru
+          </div>
+          <div class="quake-popup-region">${escapeBMKGHTML(wilayah || 'Lokasi tidak diketahui')}</div>
+        </div>
+        <div class="quake-popup-mag-display">
+          <div class="quake-popup-mag-circle" style="background:${color}">
+            <span class="quake-popup-mag-num">${escapeBMKGHTML(mag)}</span>
+            <span class="quake-popup-mag-label">MAG</span>
+          </div>
+          <div class="quake-popup-mag-info">
+            <div class="quake-popup-potensi">${escapeBMKGHTML(potensi || '-')}</div>
+            <div class="quake-popup-time">${escapeBMKGHTML(tanggal || '-')} · ${escapeBMKGHTML(jam || '-')}</div>
+          </div>
+        </div>
+        <div class="quake-popup-details">
+          <div class="quake-popup-detail-item">
+            <span class="quake-popup-detail-label">Kedalaman</span>
+            <span class="quake-popup-detail-value">${escapeBMKGHTML(kedalaman || '-')}</span>
+          </div>
+          <div class="quake-popup-detail-item">
+            <span class="quake-popup-detail-label">Koordinat</span>
+            <span class="quake-popup-detail-value">${lat.toFixed(2)}, ${lon.toFixed(2)}</span>
+          </div>
+        </div>
+        <div class="quake-popup-footer">
+          <span class="quake-popup-footer-text">Sumber: BMKG</span>
+        </div>
+      </div>
+    `;
+    marker.bindPopup(popupHtml, { maxWidth: 340, className: 'quake-leaflet-popup' });
+
+    map.flyTo([lat, lon], 7, { duration: 1.2 });
+
+    setTimeout(() => marker.openPopup(), 1300);
   }
 
   async function loadEarthquakeData(force = false) {

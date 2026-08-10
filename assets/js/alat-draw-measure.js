@@ -76,6 +76,7 @@
   map.on(L.Draw.Event.CREATED, (e) => {
     const layer = e.layer;
     drawLayerGroup.addLayer(layer);
+    // Tampilkan ukuran pada popup untuk poligon/garis.
     if (layer instanceof L.Polygon) {
       try {
         const latlngs = layer.getLatLngs()[0];
@@ -93,7 +94,6 @@
       const areaM2 = Math.PI * Math.pow(layer.getRadius(), 2);
       layer.bindPopup(`<b>Luas:</b> ${formatArea(areaM2)}<br><b>Jari-jari:</b> ${formatDistance(layer.getRadius())}`);
     }
-    map.closePopup();
   });
 
   // ---- Mode Ukur Jarak & Luas ----

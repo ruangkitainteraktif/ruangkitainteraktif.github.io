@@ -13,9 +13,9 @@
 
 ## 📖 Tentang / About
 
-**RUANG KITA** adalah platform peta interaktif berbasis web untuk Indonesia. Mengintegrasikan data geospasial dari berbagai sumber pemerintah (BMKG, BIG, Kemendagri) ke dalam satu antarmuka yang mudah digunakan.
+**RUANG KITA** adalah platform peta interaktif berbasis web untuk Indonesia. Mengintegrasikan data geospasial dari berbagai sumber Kementerian dan Lembaga (BMKG, BIG, Kementan & Kemendagri) ke dalam satu antarmuka yang mudah digunakan.
 
-**RUANG KITA** is a web-based interactive map platform for Indonesia. It integrates geospatial data from various government sources (BMKG, BIG, Kemendagri) into a single, easy-to-use interface.
+**RUANG KITA** is a web-based interactive map platform for Indonesia. It integrates geospatial data from various government sources (BMKG, BIG, Kementan & Kemendagri) into a single, easy-to-use interface.
 
 🌐 **Live Demo:** [https://ruangkitainteraktif.github.io](https://ruangkitainteraktif.github.io)
 

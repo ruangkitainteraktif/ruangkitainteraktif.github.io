@@ -75,6 +75,25 @@
     return results;
   }
 
+  function searchUnifiedCctv(query) {
+    if (!cctvData || !cctvData.length) return [];
+    const results = [];
+    for (const item of cctvData) {
+      if (item.searchText.includes(query)) {
+        results.push({
+          type: 'cctv',
+          name: item.name,
+          area: item.area,
+          id: item.id,
+          lat: item.lat,
+          lon: item.lon
+        });
+        if (results.length >= 5) break;
+      }
+    }
+    return results;
+  }
+
   function renderUnifiedResults(items) {
     const container = document.getElementById('unifiedSearchResults');
     const clearBtn = document.getElementById('unifiedSearchClear');
@@ -90,13 +109,15 @@
     const kabkotItems = items.filter(i => i.type === 'kabkot');
     const kecItems = items.filter(i => i.type === 'kecamatan');
     const desaItems = items.filter(i => i.type === 'desa');
+    const cctvItems = items.filter(i => i.type === 'cctv');
     let html = '';
 
     const groupConfig = [
       { items: provItems, label: 'Provinsi', icon: '🗺️' },
       { items: kabkotItems, label: 'Kabupaten / Kota', icon: '🏙️' },
       { items: kecItems, label: 'Kecamatan', icon: '🏘️' },
-      { items: desaItems, label: 'Desa / Kelurahan', icon: '📍' }
+      { items: desaItems, label: 'Desa / Kelurahan', icon: '📍' },
+      { items: cctvItems, label: 'CCTV', icon: '🎥' }
     ];
 
     for (const group of groupConfig) {
@@ -112,6 +133,8 @@
           detail = `<small>${escapeGeoidHtml(item.kabkot)}, ${escapeGeoidHtml(item.provinsi)}</small><small style="color:#999;font-size:10px">Kode: ${escapeGeoidHtml(item.kode)}</small>`;
         } else if (item.type === 'desa') {
           detail = `<small>${escapeGeoidHtml(item.kecamatan)}, ${escapeGeoidHtml(item.kabkot)}, ${escapeGeoidHtml(item.provinsi)}</small><small style="color:#999;font-size:10px">${escapeGeoidHtml(item.kode)}</small>`;
+        } else if (item.type === 'cctv') {
+          detail = `<small>${escapeGeoidHtml(item.area)}</small>`;
         }
         html += `<button type="button" class="unified-ac-item" data-type="${item.type}"><span class="unified-ac-icon">${group.icon}</span><div><strong>${escapeGeoidHtml(item.name)}</strong>${detail}</div></button>`;
       });
@@ -122,10 +145,29 @@
     container.style.display = 'block';
     clearBtn.style.display = 'flex';
 
-    const allItems = [...provItems, ...kabkotItems, ...kecItems, ...desaItems];
+    const allItems = [...provItems, ...kabkotItems, ...kecItems, ...desaItems, ...cctvItems];
     container.querySelectorAll('.unified-ac-item').forEach((btn, idx) => {
       btn.addEventListener('click', () => selectUnifiedResult(allItems[idx]));
     });
+  }
+
+  async function applyUnifiedWilayah(marker, location, item) {
+    if (!marker) return;
+
+    const setText = (id, value) => {
+      const element = document.getElementById(id);
+      if (element) element.innerText = value || '-';
+    };
+    setText('adm-provinsi', item.provinsi);
+    setText('adm-kecamatan', item.kecamatan);
+    setText('adm-desa', item.type === 'desa' ? item.name : item.kabkot || item.name);
+    setText('adm-jalan', '-');
+    setText('adm-kodepos', location.kodepos || location.postal_code || '-');
+
+    await loadGeoidPopupInsights(marker, { ...location, kode: item.kode });
+    if (typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, item.kode, location);
+    showGeoidBoundary(item.kode, item.type === 'provinsi' ? 8 : item.type === 'kabkot' ? 11 : item.type === 'kecamatan' ? 13 : 15);
+    if (typeof loadPrayerSchedule === 'function') loadPrayerSchedule(marker, location.lat, location.lon);
   }
 
   async function selectUnifiedResult(item) {
@@ -136,13 +178,17 @@
     results.style.display = 'none';
     clearBtn.style.display = 'none';
 
+    if (item.type === 'cctv') {
+      map.flyTo([item.lat, item.lon], 16, { duration: 0.5 });
+      openCctvModal(item.id);
+      return;
+    }
+
     if (item.type === 'provinsi') {
       const location = await geocodeAdministrativeArea({ provinsi: item.name });
       if (!location) { alert('Koordinat wilayah tidak ditemukan.'); return; }
       const marker = showGeoidFlyup(location.lat, location.lon, { provinsi: item.name, kode: item.kode }, 8);
-      if (marker) {
-        showGeoidBoundary(item.kode, 8);
-      }
+      await applyUnifiedWilayah(marker, location, item);
       return;
     }
 
@@ -150,9 +196,7 @@
       const location = await geocodeAdministrativeArea({ kabkota: item.name, provinsi: item.provinsi });
       if (!location) { alert('Koordinat wilayah tidak ditemukan.'); return; }
       const marker = showGeoidFlyup(location.lat, location.lon, { kabkota: item.name, provinsi: item.provinsi, kode: item.kode }, 11);
-      if (marker) {
-        showGeoidBoundary(item.kode, 11);
-      }
+      await applyUnifiedWilayah(marker, location, item);
       return;
     }
 
@@ -160,9 +204,7 @@
       const location = await geocodeAdministrativeArea({ kecamatan: item.name, kabkota: item.kabkot, provinsi: item.provinsi });
       if (!location) { alert('Koordinat wilayah tidak ditemukan.'); return; }
       const marker = showGeoidFlyup(location.lat, location.lon, { kecamatan: item.name, kabkota: item.kabkot, provinsi: item.provinsi, kode: item.kode }, 13);
-      if (marker) {
-        showGeoidBoundary(item.kode, 13);
-      }
+      await applyUnifiedWilayah(marker, location, item);
       return;
     }
 
@@ -183,11 +225,7 @@
         kode: item.kode
       }, 15);
 
-      if (marker) {
-        loadGeoidPopupInsights(marker, { ...location, kode: item.kode });
-        showGeoidBoundary(item.kode, 15);
-        if (typeof loadPrayerSchedule === 'function') loadPrayerSchedule(marker, location.lat, location.lon);
-      }
+      await applyUnifiedWilayah(marker, location, item);
     }
   }
 
@@ -203,22 +241,26 @@
       if (query.length < 2) { results.style.display = 'none'; clearBtn.style.display = 'none'; return; }
 
       unifiedSearchTimer = setTimeout(async () => {
+        if (!cctvLoaded && typeof loadCctvData === 'function') loadCctvData();
         const provResults = searchUnifiedProvinsi(query);
         const kabkotResults = searchUnifiedKabkot(query);
         const kecResults = searchUnifiedKecamatan(query);
         const desaResults = searchUnifiedDesa(query);
-        renderUnifiedResults([...provResults, ...kabkotResults, ...kecResults, ...desaResults]);
+        const cctvResults = searchUnifiedCctv(query);
+        renderUnifiedResults([...provResults, ...kabkotResults, ...kecResults, ...desaResults, ...cctvResults]);
       }, 80);
     });
 
     input.addEventListener('focus', function () {
       const query = unifiedNormalize(this.value.trim());
       if (query.length >= 2) {
+        if (!cctvLoaded && typeof loadCctvData === 'function') loadCctvData();
         const provResults = searchUnifiedProvinsi(query);
         const kabkotResults = searchUnifiedKabkot(query);
         const kecResults = searchUnifiedKecamatan(query);
         const desaResults = searchUnifiedDesa(query);
-        renderUnifiedResults([...provResults, ...kabkotResults, ...kecResults, ...desaResults]);
+        const cctvResults = searchUnifiedCctv(query);
+        renderUnifiedResults([...provResults, ...kabkotResults, ...kecResults, ...desaResults, ...cctvResults]);
       }
     });
 

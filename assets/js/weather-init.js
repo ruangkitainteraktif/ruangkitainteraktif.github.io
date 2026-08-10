@@ -2,7 +2,7 @@
   // Muat panel cuaca awal tanpa memindahkan peta atau membuka popup marker.
   fetchWeatherBMKG('31.71.03.1001', { focusMap: false });
 
-  // Tampilan awal: tab Geoportal aktif, tampilkan pencarian global
+  // Tampilan awal: tab Geoid aktif, tampilkan pencarian global
   const unifiedSearch = document.getElementById('unifiedSearch');
   const insightCards = document.getElementById('mapInsightCards');
   if (unifiedSearch) unifiedSearch.style.display = 'block';
