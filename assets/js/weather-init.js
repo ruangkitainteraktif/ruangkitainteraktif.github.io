@@ -7,7 +7,24 @@
   const insightCards = document.getElementById('mapInsightCards');
   if (unifiedSearch) unifiedSearch.style.display = 'block';
   if (insightCards) insightCards.style.display = 'none';
-  
+
+  // Close welcome modal helper
+  function closeWelcomeModal() {
+    const modal = document.getElementById('welcomeFeatureModal');
+    if (modal) modal.classList.remove('open');
+  }
+  window.closeWelcomeModal = closeWelcomeModal;
+
   window.addEventListener('load', () => {
-    setTimeout(() => document.getElementById('appLoadingOverlay')?.classList.add('is-hidden'), 350);
+    setTimeout(() => {
+      document.getElementById('appLoadingOverlay')?.classList.add('is-hidden');
+      // Tampilkan welcome modal setelah loading overlay fade-out (session-based)
+      if (!sessionStorage.getItem('ruangkita_welcome_shown')) {
+        sessionStorage.setItem('ruangkita_welcome_shown', '1');
+        setTimeout(() => {
+          const welcomeModal = document.getElementById('welcomeFeatureModal');
+          if (welcomeModal) welcomeModal.classList.add('open');
+        }, 600);
+      }
+    }, 350);
   });

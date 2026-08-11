@@ -79,7 +79,8 @@
         userAdm4Code = matched ? matched.kode : '';
       }
     } catch (_) {}
-    if (typeof loadGeoidPopupInsights === 'function') loadGeoidPopupInsights(userMarker, { lat, lon, kode: userAdm4Code });
+    if (typeof loadGeoidPopupInsights === 'function') await loadGeoidPopupInsights(userMarker, { lat, lon, kode: userAdm4Code });
+    if (userAdm4Code && typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(userMarker, userAdm4Code, { lat, lon });
     if (typeof showGeoidBoundary === 'function' && userAdm4Code) showGeoidBoundary(userAdm4Code, 15);
   }
 

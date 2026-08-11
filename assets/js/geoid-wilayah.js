@@ -190,10 +190,28 @@ async function loadGeoidProvinces() {
       .map(item => ({ code: item.kode, name: item.nama }));
     if (!provinces.length) throw new Error('Data provinsi tidak ditemukan');
     renderGeoidProvinces(provinces);
+    populateGeoidSummaryCards(data);
   } catch (err) {
     console.warn('kode_wilayah.json tidak dapat dimuat; memakai data cadangan:', err);
     renderGeoidProvinces(GEOID_PROVINCE_FALLBACK);
   }
+}
+
+function populateGeoidSummaryCards(data) {
+  const fmt = n => n.toLocaleString('id-ID');
+  const counts = { prov: 0, kab: 0, kec: 0, desa: 0 };
+  data.forEach(item => {
+    const depth = item.kode.split('.').length;
+    if (depth === 1) counts.prov++;
+    else if (depth === 2) counts.kab++;
+    else if (depth === 3) counts.kec++;
+    else if (depth === 4) counts.desa++;
+  });
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = fmt(val); };
+  set('geoidCountProv', counts.prov);
+  set('geoidCountKab', counts.kab);
+  set('geoidCountKec', counts.kec);
+  set('geoidCountDesa', counts.desa);
 }
 
 async function loadGeoidRegencies(provinceCode) {
@@ -686,6 +704,17 @@ async function fetchBigHazardZone(lat, lng) {
   };
 }
 
+function syncPopupContent(marker) {
+  try {
+    const popup = marker?.getPopup?.();
+    if (!popup) return;
+    const el = popup.getElement?.();
+    if (!el) return;
+    const root = el.querySelector('.geoid-popup') || el.querySelector('.geotani-popup') || el.querySelector('.leaflet-popup-content');
+    if (root) popup.setContent(root.outerHTML);
+  } catch (_) {}
+}
+
 async function loadGeoidPopupInsights(marker, location) {
 
   const element = marker?.getPopup()?.getElement()?.querySelector('[data-geoid-insights]');
@@ -884,6 +913,7 @@ async function loadGeoidPopupInsights(marker, location) {
     if (hasPopup) {
       element.innerHTML = cuacaHtml + luasHtml + sawahHtml + ktaHtml;
     }
+    syncPopupContent(marker);
     return;
   }
 
@@ -1074,12 +1104,14 @@ async function loadGeoidPopupInsights(marker, location) {
       ${risikoHtml}
     `;
   }
+  syncPopupContent(marker);
 
   } catch (err) {
     console.warn('Gagal memuat insight:', err);
     if (hasPopup) {
       element.innerHTML = '<div style="color:#e74c3c; font-size:11px">Gagal memuat data insight</div>';
     }
+    syncPopupContent(marker);
   }
 }
 
@@ -1605,7 +1637,8 @@ async function selectGeoidLocalResult(item, container) {
       provinsi: item.provinsi,
       kode: item.kode
     }, zoom);
-    loadGeoidPopupInsights(marker, { ...location, kode: item.kode });
+    await loadGeoidPopupInsights(marker, { ...location, kode: item.kode });
+    if (typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, item.kode, location);
     showGeoidBoundary(item.kode, zoom);
     if (typeof loadPrayerSchedule === 'function') loadPrayerSchedule(marker, location.lat, location.lon);
   }
@@ -1690,7 +1723,8 @@ async function selectGeoidGeocodeResult(item, container) {
       provinsi: matched ? matched.provinsi : item.region || '',
       kode: adm4Code
     }, zoom);
-    loadGeoidPopupInsights(marker, { lat: item.lat, lon: item.lon, kode: adm4Code });
+    await loadGeoidPopupInsights(marker, { lat: item.lat, lon: item.lon, kode: adm4Code });
+    if (adm4Code && typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, adm4Code, { lat: item.lat, lon: item.lon });
     if (adm4Code) showGeoidBoundary(adm4Code, zoom);
     if (typeof loadPrayerSchedule === 'function') loadPrayerSchedule(marker, item.lat, item.lon);
   }

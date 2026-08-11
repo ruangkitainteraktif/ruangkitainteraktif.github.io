@@ -83,7 +83,10 @@
           <div class="geoid-popup-meta">
             <div><span>Koordinat</span><b>${lng.toFixed(5)}, ${lat.toFixed(5)}</b></div>
           </div>
-          <span style="color:#7a8fa3; font-size:12px">Memuat alamat…</span>
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 0 14px;gap:8px;">
+            <div style="width:26px;height:26px;border:3px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:geoportal-spin .8s linear infinite;"></div>
+            <span style="font-size:10px;color:#94a3b8;text-align:center;">Memuat alamat…</span>
+          </div>
         </div>
       </div>
     `, { maxWidth: 310, className: 'geoid-leaflet-popup' });
@@ -167,7 +170,10 @@
       if (!isGeotaniMode) loadPrayerSchedule(marker, lat, lng);
 
       // Muat insights cuaca, gempa, CCTV terdekat
-      if (window.currentActiveTab === 'tab-geoid') loadGeoidPopupInsights(marker, { lat, lon: lng, kode: adm4Code });
+      if (window.currentActiveTab === 'tab-geoid') {
+        await loadGeoidPopupInsights(marker, { lat, lon: lng, kode: adm4Code });
+        if (adm4Code && typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, adm4Code, { lat, lon: lng });
+      }
 
       // Tampilkan batas wilayah dari BIG
       if (adm4Code) showGeoidBoundary(adm4Code, 15);
@@ -246,8 +252,10 @@
           `).join('')}
         </div>
       `;
+      if (typeof syncPopupContent === 'function') syncPopupContent(marker);
     } catch (err) {
       console.warn('Gagal memuat jadwal sholat:', err);
       element.innerHTML = '<span style="color:#7a8fa3; font-size:11px">Jadwal sholat tidak tersedia</span>';
+      if (typeof syncPopupContent === 'function') syncPopupContent(marker);
     }
   }

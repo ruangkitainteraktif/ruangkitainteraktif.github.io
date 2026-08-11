@@ -158,6 +158,113 @@
         <div class="app-loading-bar"><i></i></div>
       </div>
     </div>
+
+    <!-- WELCOME FEATURE MODAL -->
+    <div id="welcomeFeatureModal" class="welcome-modal" role="dialog" aria-modal="true" aria-labelledby="welcomeModalTitle">
+      <div class="welcome-modal-dialog">
+        <!-- Header -->
+        <div class="welcome-modal-header">
+          <div class="welcome-modal-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <div class="welcome-modal-title" id="welcomeModalTitle">Selamat Datang di <span>RUANG KITA</span></div>
+          <div class="welcome-modal-subtitle">Satu Peta untuk Nusantara</div>
+        </div>
+
+        <!-- Body -->
+        <div class="welcome-modal-body">
+          <div class="welcome-features-label">Fitur Utama</div>
+          <div class="welcome-features-grid">
+            <!-- GEOID - Highlighted -->
+            <div class="welcome-feature-card highlighted">
+              <div class="welcome-feature-icon icon-geoid">🗺️</div>
+              <div class="welcome-feature-info">
+                <div class="welcome-feature-name">GEOID — Batas Wilayah</div>
+                <div class="welcome-feature-desc">Pencarian batas wilayah administrasi Provinsi, Kabupaten/Kota, Kecamatan, hingga Desa/Kelurahan. Klik di peta untuk melihat data lengkap wilayah.</div>
+              </div>
+            </div>
+            <!-- GEOTANI - Highlighted -->
+            <div class="welcome-feature-card highlighted">
+              <div class="welcome-feature-icon icon-geotani">🌾</div>
+              <div class="welcome-feature-info">
+                <div class="welcome-feature-name">GEOTANI — Analisis Pertanian</div>
+                <div class="welcome-feature-desc">Analisis Lahan Baku Sawah (LBS), overlay erosi (KTA), indeks vegetasi NDVI, dan Land Cover berbasis Sentinel-2. Lengkapi dengan pencarian BPP & IGT Sawit.</div>
+              </div>
+            </div>
+            <!-- GEOPORTAL -->
+            <div class="welcome-feature-card">
+              <div class="welcome-feature-icon icon-geoportal">📡</div>
+              <div class="welcome-feature-info">
+                <div class="welcome-feature-name">GEOPORTAL</div>
+                <div class="welcome-feature-desc">Layer data Pemprov Jawa Timur & Kabupaten Sukoharjo (pendidikan, kesehatan, transportasi, aset daerah).</div>
+              </div>
+            </div>
+            <!-- GEOWATCH -->
+            <div class="welcome-feature-card">
+              <div class="welcome-feature-icon icon-geowatch">🎥</div>
+              <div class="welcome-feature-info">
+                <div class="welcome-feature-name">GEOWATCH — CCTV</div>
+                <div class="welcome-feature-desc">Monitoring CCTV lalu lintas jalan tol, nasional, dan non-tol dengan video streaming real-time.</div>
+              </div>
+            </div>
+            <!-- GEOWX -->
+            <div class="welcome-feature-card">
+              <div class="welcome-feature-icon icon-geowx">🌤️</div>
+              <div class="welcome-feature-info">
+                <div class="welcome-feature-name">GEOWX — Cuaca BMKG</div>
+                <div class="welcome-feature-desc">Prakiraan cuaca BMKG + animasi angin (wind particle) untuk setiap wilayah di Indonesia.</div>
+              </div>
+            </div>
+            <!-- GEOQUAKE -->
+            <div class="welcome-feature-card">
+              <div class="welcome-feature-icon icon-geoquake">🔴</div>
+              <div class="welcome-feature-info">
+                <div class="welcome-feature-name">GEOQUAKE — Gempa Bumi</div>
+                <div class="welcome-feature-desc">Data gempa bumi real-time dari BMKG dengan magnitude, kedalaman, dan lokasi.</div>
+              </div>
+            </div>
+            <!-- TOOLS -->
+            <div class="welcome-feature-card">
+              <div class="welcome-feature-icon icon-tools">🛠️</div>
+              <div class="welcome-feature-info">
+                <div class="welcome-feature-name">TOOLS — Alat Analisis</div>
+                <div class="welcome-feature-desc">Gambar (titik, garis, poligon), ukur jarak & luas, import GeoJSON/SHP, export PDF.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="welcome-tech-label">Teknologi yang Digunakan</div>
+          <div class="welcome-tech-badges">
+            <span class="welcome-tech-badge"><i></i>Leaflet.js</span>
+            <span class="welcome-tech-badge"><i></i>Turf.js</span>
+            <span class="welcome-tech-badge"><i></i>ArcGIS</span>
+            <span class="welcome-tech-badge"><i></i>BMKG API</span>
+            <span class="welcome-tech-badge"><i></i>Sentinel-2</span>
+            <span class="welcome-tech-badge"><i></i>Esri Leaflet</span>
+            <span class="welcome-tech-badge"><i></i>jsPDF</span>
+            <span class="welcome-tech-badge"><i></i>Video.js</span>
+            <span class="welcome-tech-badge"><i></i>HLS.js</span>
+            <span class="welcome-tech-badge"><i></i>proj4js</span>
+            <span class="welcome-tech-badge"><i></i>jQuery</span>
+            <span class="welcome-tech-badge"><i></i>jsTree</span>
+            <span class="welcome-tech-badge"><i></i>shpjs</span>
+            <span class="welcome-tech-badge"><i></i>MarkerCluster</span>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="welcome-modal-footer">
+          <button class="welcome-btn welcome-btn-primary" onclick="closeWelcomeModal()" type="button">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            Mulai Jelajahi
+          </button>
+          <a href="assets/data/app-release.apk" download class="welcome-btn welcome-btn-secondary">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download APK
+          </a>
+        </div>
+      </div>
+    </div>
+    <!-- END WELCOME FEATURE MODAL -->
+
     <!-- PETA -->
     <div id="map"></div>
 
@@ -253,11 +360,57 @@
         <button class="tab-btn" onclick="openTab(event, 'tab-alat')">TOOLS</button>
       </div>
 
+      <div class="app-banner" id="appBanner">
+        <button class="app-banner-close" onclick="document.getElementById('appBanner').style.display='none'" aria-label="Tutup banner">&times;</button>
+        <div class="app-banner-glow"></div>
+        <div class="app-banner-content">
+          <div class="app-banner-icon">
+            <div class="app-banner-icon-inner">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+                <line x1="8" y1="2" x2="8" y2="18"/>
+                <line x1="16" y1="6" x2="16" y2="22"/>
+              </svg>
+            </div>
+          </div>
+          <div class="app-banner-text">
+            <div class="app-banner-title">RuangKita Mobile</div>
+            <div class="app-banner-desc">Jelajahi data geospasial langsung dari HP Anda</div>
+          </div>
+          <a href="assets/data/app-release.apk" download class="app-banner-btn">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download
+          </a>
+        </div>
+      </div>
+
       <div class="sidebar-content">
         <div id="tab-geoid" class="tab-content active">
           <h4 style="font-size:15px; margin-bottom:4px;">Batas Wilayah</h4>
           <p style="font-size:13px; color:#668198; margin-bottom:20px;">Pilih wilayah atau klik di peta untuk
             menampilkan data.</p>
+          <div id="geoidSummaryCards" class="geoid-summary-cards">
+            <div class="geoid-summary-box geoid-summary-prov">
+              <span class="geoid-summary-count" id="geoidCountProv">–</span>
+              <span class="geoid-summary-label">Provinsi</span>
+            </div>
+            <div class="geoid-summary-box geoid-summary-kab">
+              <span class="geoid-summary-count" id="geoidCountKab">–</span>
+              <span class="geoid-summary-label">Kab/Kota</span>
+            </div>
+            <div class="geoid-summary-box geoid-summary-kec">
+              <span class="geoid-summary-count" id="geoidCountKec">–</span>
+              <span class="geoid-summary-label">Kecamatan</span>
+            </div>
+            <div class="geoid-summary-box geoid-summary-desa">
+              <span class="geoid-summary-count" id="geoidCountDesa">–</span>
+              <span class="geoid-summary-label">Desa/Kel</span>
+            </div>
+          </div>
           <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
           <h4 style="font-size: 13px; margin-bottom: 10px; display:none;">Pencarian Cepat</h4>
           <div class="geoid-search-container" style="display:none;">
@@ -278,27 +431,27 @@
             <div class="form-group">
               <label for="pilihKabupaten">Pilih <b>Kabupaten/Kota</b></label>
               <select id="pilihKabupaten" disabled>
-                <option value="">Pilih Provinsi Terlebih Dahulu</option>
+                <option value="">Pilih Provinsi</option>
               </select>
             </div>
 
             <div class="form-group">
               <label for="pilihKecamatan">Pilih <b>Kecamatan</b></label>
               <select id="pilihKecamatan" disabled>
-                <option value="">Pilih Kab/Kota Terlebih Dahulu</option>
+                <option value="">Pilih Kab/Kota</option>
               </select>
             </div>
 
             <div class="form-group">
               <label for="pilihDesa">Pilih <b>Desa</b></label>
               <select id="pilihDesa" disabled>
-                <option value="">Pilih Kecamatan Terlebih Dahulu</option>
+                <option value="">Pilih Kecamatan</option>
               </select>
             </div>
 
             <div style="display:flex;gap:12px;flex-wrap:wrap;padding:7px 0;font-size:11px;color:#385773;">
-              <span style="font-weight:600;">Label aktif:</span>
-              <label><input id="geoidPopulationLabel" type="checkbox" checked> Populasi</label>
+              <span style="font-weight:600;">Data :</span>
+              <label><input id="geoidPopulationLabel" type="checkbox" checked> Kemendagri</label>
             </div>
 
             <button id="applyWilayah" class="btn-wilayah-apply" type="button" disabled onclick="cariLayerWilayah()">Cari
@@ -334,15 +487,15 @@
 
           <nav class="geotani-analysis-nav" aria-label="Menu analisis Geotani" role="tablist">
             <button id="geotani-lbs-tab" class="geotani-analysis-tab active" type="button" role="tab"
-              aria-selected="true" aria-controls="geotani-lbs-panel" onclick="openGeotaniAnalysisTab('lbs')">LBS
+              aria-selected="true" aria-controls="geotani-lbs-panel" onclick="openGeotaniAnalysisTab('lbs')">LBS Analysis
             </button>
             <button id="geotani-kta-tab" class="geotani-analysis-tab" type="button" role="tab" aria-selected="false"
-              aria-controls="geotani-kta-panel" onclick="openGeotaniAnalysisTab('kta')">KTA</button>
+              aria-controls="geotani-kta-panel" onclick="openGeotaniAnalysisTab('kta')">KTA Analysis</button>
             <button id="geotani-ndvi-tab" class="geotani-analysis-tab" type="button" role="tab" aria-selected="false"
-              aria-controls="geotani-ndvi-panel" onclick="openGeotaniAnalysisTab('ndvi')">NDVI</button>
+              aria-controls="geotani-ndvi-panel" onclick="openGeotaniAnalysisTab('ndvi')">NDVI Analysis</button>
             <button id="geotani-landcover-tab" class="geotani-analysis-tab" type="button" role="tab"
               aria-selected="false" aria-controls="geotani-landcover-panel"
-              onclick="openGeotaniAnalysisTab('landcover')">LAND COVER</button>
+              onclick="openGeotaniAnalysisTab('landcover')">LAND COVER Analysis</button>
           </nav>
 
           <div id="geotani-lbs-panel" class="geotani-analysis-panel active" role="tabpanel"
@@ -408,8 +561,8 @@
                   </select>
                 </div>
                 <div style="position:relative;">
-                  <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Wilayah
-                    Analisis</label>
+                  <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Input
+                    Layer 2 — Desa/Kelurahan</label>
                   <div style="position:relative;">
                     <span
                       style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>

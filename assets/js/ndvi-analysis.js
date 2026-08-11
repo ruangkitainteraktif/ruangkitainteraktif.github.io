@@ -352,7 +352,7 @@
       option.type = 'button';
       option.style.cssText = 'display:block;width:100%;padding:7px 9px;border:0;border-bottom:1px solid #edf3f6;background:#fff;color:#385773;font-size:10px;text-align:left;cursor:pointer;';
       option.setAttribute('role', 'option');
-      option.textContent = item.nama;
+      option.textContent = `${item.nama} (${item.kode})`;
       option.addEventListener('mouseenter', () => { option.style.background = '#edf8f0'; option.style.color = '#276b3a'; });
       option.addEventListener('mouseleave', () => { option.style.background = '#fff'; option.style.color = '#385773'; });
       option.addEventListener('click', () => {

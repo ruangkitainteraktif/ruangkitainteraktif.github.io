@@ -197,6 +197,7 @@ L.control.scale({
         if (typeof clearOverlay === 'function') clearOverlay();
         if (typeof clearLbsAnalysis === 'function') clearLbsAnalysis();
         if (typeof clearNdviAnalysis === 'function') clearNdviAnalysis();
+        if (typeof clearLandcoverAnalysis === 'function') clearLandcoverAnalysis();
 
         // 6. Hapus map click marker
         if (mapClickMarker && map.hasLayer(mapClickMarker)) {

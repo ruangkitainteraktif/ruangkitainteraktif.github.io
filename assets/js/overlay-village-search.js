@@ -41,7 +41,7 @@
     results.forEach(item => {
       const div = document.createElement('div');
       div.style.cssText = 'padding:7px 10px;font-size:11px;cursor:pointer;border-bottom:1px solid #f0f4f8;color:#385773;transition:background .1s;';
-      div.textContent = item.nama;
+      div.textContent = `${item.nama} (${item.kode})`;
       div.addEventListener('mouseenter', () => { div.style.background = '#e3f2fd'; });
       div.addEventListener('mouseleave', () => { div.style.background = ''; });
       div.addEventListener('mousedown', (e) => {

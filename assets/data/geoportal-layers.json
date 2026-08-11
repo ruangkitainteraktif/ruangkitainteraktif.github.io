@@ -10,7 +10,7 @@
     },
     "magelang": {
       "wmsUrl": "https://geoportal.magelangkota.go.id/geoserver/ows",
-      "label": "Pemda Kota Magelang"
+      "label": "Kota Magelang"
     },
     "igtpr": {
       "wmsUrl": "https://igtpr.atrbpn.go.id/geoserver/ows",
@@ -521,7 +521,7 @@
     },
     {
       "id": "magelang",
-      "title": "Pemda Kota Magelang",
+      "title": "Kota Magelang",
       "source": "magelang",
       "layers": [
         { "id": "geonode:airtanah", "label": "Airtanah", "swatch": "geo-hydro" },
@@ -688,7 +688,7 @@
     },
     {
       "id": "sukoharjo",
-      "title": "Pemda Kabupaten Sukoharjo",
+      "title": "Kabupaten Sukoharjo",
       "source": "sukoharjo",
       "layers": [
         { "id": "geonode:2026_batas_adminsitrasi_desa_kelurahan_ar_50k", "label": "Batas Desa/Kelurahan", "swatch": "geo-boundary" },
