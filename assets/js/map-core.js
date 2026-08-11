@@ -120,6 +120,25 @@ L.control.scale({
     }
   }).addTo(map);
 
+  // Detail Panel Toggle Control
+  const DetailPanelControl = L.Control.extend({
+    options: { position: 'bottomright' },
+    onAdd() {
+      const btn = L.DomUtil.create('button', 'detail-panel-btn');
+      btn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="15" y1="3" x2="15" y2="21"/></svg>';
+      btn.title = 'Panel Detail Administrasi';
+      btn.setAttribute('aria-label', 'Buka/tutup panel detail administrasi');
+      L.DomEvent.disableClickPropagation(btn);
+      L.DomEvent.disableScrollPropagation(btn);
+      btn.addEventListener('click', () => {
+        toggleDetailPanel();
+      });
+      window._detailPanelBtn = btn;
+      return btn;
+    }
+  });
+  new DetailPanelControl().addTo(map);
+
   // Reset Layers Control
   const ResetLayersControl = L.Control.extend({
     options: { position: 'bottomright' },
@@ -222,8 +241,8 @@ L.control.scale({
         // 10. Reset detail panel
         const detailPanel = document.getElementById('detail-panel');
         if (detailPanel) detailPanel.classList.add('hidden');
-        const showBtn = document.getElementById('show-detail-btn');
-        if (showBtn) showBtn.style.display = 'block';
+        const detailBtn = window._detailPanelBtn;
+        if (detailBtn) detailBtn.classList.remove('active');
 
         btn.classList.add('reset-flash');
         setTimeout(() => btn.classList.remove('reset-flash'), 400);

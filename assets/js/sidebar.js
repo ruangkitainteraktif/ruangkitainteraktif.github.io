@@ -13,7 +13,7 @@
   // Toggle Detail Panel
   function toggleDetailPanel(show = null) {
     const panel = document.getElementById('detail-panel');
-    const showBtn = document.getElementById('show-detail-btn');
+    const btn = window._detailPanelBtn;
     const isMobile = window.innerWidth <= 768;
 
     if (isMobile) {
@@ -25,10 +25,10 @@
     } else {
       if (show === true || (show === null && panel.classList.contains('hidden'))) {
         panel.classList.remove('hidden');
-        showBtn.style.display = 'none';
+        if (btn) btn.classList.add('active');
       } else {
         panel.classList.add('hidden');
-        showBtn.style.display = 'block';
+        if (btn) btn.classList.remove('active');
       }
     }
   }

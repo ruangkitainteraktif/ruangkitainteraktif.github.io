@@ -473,7 +473,7 @@
         hiddenEls.push({ el: sidebar, cls: 'collapsed', remove: false });
       }
 
-      const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .leaflet-control-scale, #show-detail-btn, #detail-panel');
+      const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .leaflet-control-scale, .detail-panel-btn, #detail-panel');
       overlays.forEach(el => {
         if (el && getComputedStyle(el).display !== 'none') {
           el.style.setProperty('display', 'none', 'important');

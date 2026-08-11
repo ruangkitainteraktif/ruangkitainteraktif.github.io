@@ -6,18 +6,18 @@
     var treeData = [
       {
         id: 'grp-ksp', text: 'Lahan Baku Sawah (KSP BIG)', children: [
-          { id: 'toggleSawahDilindungi', text: 'Lahan Sawah Dilindungi 50K', li_attr: { 'data-toggle': 'special' } },
-          { id: 'toggleSawahNasional50k', text: 'Lahan Baku Sawah Nasional 50K', li_attr: { 'data-toggle': 'special' } }
+          { id: 'toggleSawahDilindungi', text: 'LSD 50K', li_attr: { 'data-toggle': 'special' } },
+          { id: 'toggleSawahNasional50k', text: 'LBS 50K', li_attr: { 'data-toggle': 'special' } }
         ], state: { opened: true }, li_attr: { 'data-level': '0' }
       },
       {
         id: 'grp-kementan', text: 'Lahan Baku Sawah (KEMENTAN)', children: [
-          { id: 'arcgis-sawah-2023', text: 'Lahan Baku Sawah 2023', li_attr: { 'data-toggle': 'arcgis' } },
-          { id: 'arcgis-sawah-2019', text: 'Lahan Baku Sawah 2019', li_attr: { 'data-toggle': 'arcgis' } }
+          { id: 'arcgis-sawah-2023', text: 'LBS 2023', li_attr: { 'data-toggle': 'arcgis' } },
+          { id: 'arcgis-sawah-2019', text: 'LBS 2019', li_attr: { 'data-toggle': 'arcgis' } }
         ], state: { opened: true }, li_attr: { 'data-level': '0' }
       },
       {
-        id: 'grp-kta', text: 'Analisis Konservasi Tanah & Air (KTA)', children: [
+        id: 'grp-kta', text: 'Peta Rawan Erosi (BIG)', children: [
           { id: 'toggleErosiLayer', text: 'Peta Rawan Erosi (BIG)', li_attr: { 'data-toggle': 'special' } }
         ], state: { opened: true }, li_attr: { 'data-level': '0' }
       },
@@ -30,7 +30,7 @@
       },
       {
         id: 'grp-bpp', text: 'Balai Penyuluhan Pertanian', children: [
-          { id: 'toggleBppLayer', text: 'Balai Penyuluhan Pertanian (BPP)', li_attr: { 'data-toggle': 'special' } }
+          { id: 'toggleBppLayer', text: 'BPP', li_attr: { 'data-toggle': 'special' } }
         ], state: { opened: true }, li_attr: { 'data-level': '0' }
       },
       {
