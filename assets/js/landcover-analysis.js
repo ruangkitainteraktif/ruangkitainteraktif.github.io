@@ -664,36 +664,6 @@
       pdf.text(String(sbValue), sbX + actualW / 2, sbY - 1, { align: 'center' });
       pdf.text(sbValue * 2 + ' ' + sbLabelUnit, sbX + actualW, sbY - 1, { align: 'center' });
 
-      const lgLegend = LANDCOVER_CLASSES.filter(c => c.id > 0);
-      const lgX = mapFrameX + mapFrameW - 55;
-      const lgY = mapFrameY + mapFrameH - (lgLegend.length * 3.5 + 10);
-      const lgW = 51;
-      const lgH = lgLegend.length * 3.5 + 10;
-      pdf.setFillColor(255, 255, 255);
-      pdf.setDrawColor(220, 220, 220);
-      pdf.setLineWidth(0.2);
-      pdf.roundedRect(lgX, lgY, lgW, lgH, 1, 1, 'FD');
-      pdf.setFontSize(6);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(30, 41, 59);
-      pdf.text('Legenda Land Cover', lgX + 3, lgY + 4);
-      let lgRowY = lgY + 8;
-      for (const band of lgLegend) {
-        const rgb = hexToRgb(band.color);
-        pdf.setFillColor(rgb[0], rgb[1], rgb[2]);
-        pdf.rect(lgX + 3, lgRowY, 4, 3, 'F');
-        pdf.setFontSize(5.5);
-        pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(55, 65, 81);
-        pdf.text(band.nameId, lgX + 9, lgRowY + 2.5);
-        const classDist = distribution[band.id];
-        if (classDist) {
-          pdf.setTextColor(rgb[0], rgb[1], rgb[2]);
-          pdf.text(classDist.pct.toFixed(1) + '%', lgX + lgW - 3, lgRowY + 2.5, { align: 'right' });
-        }
-        lgRowY += 3.5;
-      }
-
       pdf.setDrawColor(200, 200, 200);
       pdf.setLineWidth(0.2);
       pdf.line(panelX, mapFrameY, panelX, mapFrameY + mapFrameH);
@@ -714,12 +684,14 @@
       pdf.setTextColor(100, 116, 139);
       pdf.text('Tutupan Dominan', panelX + 8, py + 5);
       pdf.text('Luas Area Analisis', panelX + 8, py + 11);
-      pdf.setFontSize(11);
+      pdf.setFontSize(7);
       pdf.setFont('helvetica', 'bold');
       if (dominantClass) {
         const dcRgb = hexToRgb(dominantClass.color);
         pdf.setTextColor(dcRgb[0], dcRgb[1], dcRgb[2]);
-        pdf.text(dominantClass.nameId + ' (' + dominantClass.pct.toFixed(1) + '%)', panelX + 40, py + 5);
+        const dominantText = dominantClass.nameId + ' (' + dominantClass.pct.toFixed(1) + '%)';
+        const splitDominant = pdf.splitTextToSize(dominantText, panelW - 48);
+        pdf.text(splitDominant, panelX + 40, py + 5);
       } else {
         pdf.setTextColor(30, 41, 59);
         pdf.text('-', panelX + 40, py + 5);
@@ -732,6 +704,9 @@
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(55, 65, 81);
       pdf.text('Distribusi Tutupan Lahan', panelX + 4, py);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(panelX + 4, py + 1, panelX + cardW, py + 1);
       py += 4;
 
       const barLabelW = 32;
@@ -764,6 +739,9 @@
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(55, 65, 81);
       pdf.text('Ringkasan', panelX + 4, py);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(panelX + 4, py + 1, panelX + cardW, py + 1);
       py += 4;
 
       const summaryItems = [
@@ -798,19 +776,24 @@
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(55, 65, 81);
       pdf.text('Insight', panelX + 4, py);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(panelX + 4, py + 1, panelX + cardW, py + 1);
       py += 4;
       pdf.setFontSize(6.5);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(71, 85, 105);
       const splitInsight = pdf.splitTextToSize(insightText, cardW);
       pdf.text(splitInsight, panelX + 4, py);
-      py += splitInsight.length * 3.2 + 5;
+      py += splitInsight.length * 3.2 + 3;
 
-      py += 2;
       pdf.setFontSize(7);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(55, 65, 81);
       pdf.text('Metadata & Sumber', panelX + 4, py);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(panelX + 4, py + 1, panelX + cardW, py + 1);
       py += 4;
 
       const metaLines = [
@@ -830,6 +813,40 @@
         py += 3.5;
       }
 
+      py += 4;
+      const lgLegend = LANDCOVER_CLASSES.filter(c => c.id > 0);
+      const lgX = panelX + 4;
+      const lgW = panelW - 8;
+      const lgRowH = 3.5;
+      const lgRows = Math.ceil(lgLegend.length / 2);
+      const lgH = lgRows * lgRowH + 8;
+      const lgY = py;
+      const lgColW = (lgW - 8) / 2;
+
+      pdf.setFontSize(7);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(55, 65, 81);
+      pdf.text('Legenda Land Cover', lgX, lgY + 4);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(lgX, lgY + 5, lgX + lgW, lgY + 5);
+
+      let lgRowY = lgY + 8;
+      for (let i = 0; i < lgLegend.length; i++) {
+        const band = lgLegend[i];
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const itemX = lgX + col * lgColW;
+        const itemY = lgRowY + row * lgRowH;
+        const rgb = hexToRgb(band.color);
+        pdf.setFillColor(rgb[0], rgb[1], rgb[2]);
+        pdf.rect(itemX, itemY, 3, 2.5, 'F');
+        pdf.setFontSize(5.5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(55, 65, 81);
+        pdf.text(band.nameId, itemX + 4, itemY + 2.2);
+      }
+
       const bottomY = pageH - margin - 2;
       pdf.setDrawColor(200, 200, 200);
       pdf.setLineWidth(0.2);
@@ -842,6 +859,24 @@
       pdf.setFontSize(5);
       pdf.setTextColor(160, 160, 160);
       pdf.text('Koordinat: WGS84 / EPSG:4326 \u00B7 Grid graticule untuk referensi ArcGIS / QGIS', margin + 2, bottomY);
+
+      const wcX = pageW / 2;
+      const wcY = pageH / 2;
+      pdf.setFillColor(200, 200, 200);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.5);
+      const hs = 12;
+      pdf.triangle(wcX, wcY - hs - 8, wcX - hs, wcY - 8, wcX + hs, wcY - 8, 'S');
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(wcX - hs * 0.35, wcY - hs * 0.2 - 8, hs * 0.7, hs * 0.3, 'F');
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(32);
+      pdf.setTextColor(220, 220, 220);
+      pdf.text('RuangKita', wcX, wcY + 10, { align: 'center' });
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(210, 210, 210);
+      pdf.text('ruangkitainteraktif.github.io', wcX, wcY + 16, { align: 'center' });
 
       pdf.save(fileName);
     } catch (error) {

@@ -659,40 +659,6 @@
       pdf.text(`${sbValue}`, sbX + actualW / 2, sbY - 1, { align: 'center' });
       pdf.text(`${sbValue * 2} ${sbLabelUnit}`, sbX + actualW, sbY - 1, { align: 'center' });
 
-      const lgX = mapFrameX + mapFrameW - 52;
-      const lgY = mapFrameY + mapFrameH - 30;
-      const lgW = 48;
-      const lgH = 24;
-      pdf.setFillColor(255, 255, 255);
-      pdf.setDrawColor(220, 220, 220);
-      pdf.setLineWidth(0.2);
-      pdf.roundedRect(lgX, lgY, lgW, lgH, 1, 1, 'FD');
-      pdf.setFontSize(6);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(30, 41, 59);
-      pdf.text('Legenda NDVI', lgX + 3, lgY + 4);
-
-      const legendBands = [
-        { label: 'Sangat rendah', color: '#397ca8', range: '< 0' },
-        { label: 'Rendah', color: '#c6872a', range: '0 - 0.2' },
-        { label: 'Sedang', color: '#d7be37', range: '0.2 - 0.4' },
-        { label: 'Tinggi', color: '#65a942', range: '0.4 - 0.6' },
-        { label: 'Sangat tinggi', color: '#176b34', range: '>= 0.6' }
-      ];
-      let lgRowY = lgY + 8;
-      for (const band of legendBands) {
-        const rgb = hexToRgb(band.color);
-        pdf.setFillColor(rgb[0], rgb[1], rgb[2]);
-        pdf.rect(lgX + 3, lgRowY, 4, 3, 'F');
-        pdf.setFontSize(5.5);
-        pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(55, 65, 81);
-        pdf.text(band.label, lgX + 9, lgRowY + 2.5);
-        pdf.setTextColor(rgb[0], rgb[1], rgb[2]);
-        pdf.text(band.range, lgX + lgW - 3, lgRowY + 2.5, { align: 'right' });
-        lgRowY += 3.2;
-      }
-
       pdf.setDrawColor(200, 200, 200);
       pdf.setLineWidth(0.2);
       pdf.line(panelX, mapFrameY, panelX, mapFrameY + panelH);
@@ -727,6 +693,9 @@
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(55, 65, 81);
       pdf.text('Insight', panelX + 4, py);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(panelX + 4, py + 1, panelX + cardW, py + 1);
       py += 4;
       pdf.setFontSize(6.5);
       pdf.setFont('helvetica', 'normal');
@@ -752,6 +721,9 @@
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(55, 65, 81);
       pdf.text('Distribusi NDVI', panelX + 4, py);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(panelX + 4, py + 1, panelX + cardW, py + 1);
       py += 4;
 
       const barLabelW = 26;
@@ -786,6 +758,9 @@
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(55, 65, 81);
       pdf.text('Statistik', panelX + 4, py);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(panelX + 4, py + 1, panelX + cardW, py + 1);
       py += 4;
 
       const statColW = (cardW - 4) / 2;
@@ -821,6 +796,9 @@
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(55, 65, 81);
       pdf.text('Kualitas & Citra', panelX + 4, py);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(panelX + 4, py + 1, panelX + cardW, py + 1);
       py += 4;
 
       const qualityLabel = !Number.isFinite(cloudPercent) ? 'Metadata awan tidak tersedia'
@@ -846,6 +824,46 @@
         py += 3.5;
       }
 
+      py += 4;
+      const legendBands = [
+        { label: 'Sangat rendah', color: '#397ca8' },
+        { label: 'Rendah', color: '#c6872a' },
+        { label: 'Sedang', color: '#d7be37' },
+        { label: 'Tinggi', color: '#65a942' },
+        { label: 'Sangat tinggi', color: '#176b34' }
+      ];
+      const lgX = panelX + 4;
+      const lgW = panelW - 8;
+      const lgRowH = 3.5;
+      const lgRows = Math.ceil(legendBands.length / 2);
+      const lgH = lgRows * lgRowH + 8;
+      const lgY = py;
+      const lgColW = (lgW - 8) / 2;
+
+      pdf.setFontSize(7);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(55, 65, 81);
+      pdf.text('Legenda NDVI', lgX, lgY + 4);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(lgX, lgY + 5, lgX + lgW, lgY + 5);
+
+      let lgRowY = lgY + 8;
+      for (let i = 0; i < legendBands.length; i++) {
+        const band = legendBands[i];
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const itemX = lgX + col * lgColW;
+        const itemY = lgRowY + row * lgRowH;
+        const rgb = hexToRgb(band.color);
+        pdf.setFillColor(rgb[0], rgb[1], rgb[2]);
+        pdf.rect(itemX, itemY, 3, 2.5, 'F');
+        pdf.setFontSize(5.5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(55, 65, 81);
+        pdf.text(band.label, itemX + 4, itemY + 2.2);
+      }
+
       const bottomY = pageH - margin - 2;
       pdf.setDrawColor(200, 200, 200);
       pdf.setLineWidth(0.2);
@@ -861,6 +879,24 @@
       pdf.setTextColor(160, 160, 160);
       pdf.text('Koordinat: WGS84 / EPSG:4326 · Grid graticule untuk referensi ArcGIS / QGIS', margin + 2, bottomY);
       pdf.text(`Skala: 1:${Math.round(metersPerPixel * mapFrameH / mapFrameH * 100).toLocaleString('id-ID')}`, pageW - margin - 2, bottomY, { align: 'right' });
+
+      const wcX = pageW / 2;
+      const wcY = pageH / 2;
+      pdf.setFillColor(200, 200, 200);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.5);
+      const hs = 12;
+      pdf.triangle(wcX, wcY - hs - 8, wcX - hs, wcY - 8, wcX + hs, wcY - 8, 'S');
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(wcX - hs * 0.35, wcY - hs * 0.2 - 8, hs * 0.7, hs * 0.3, 'F');
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(32);
+      pdf.setTextColor(220, 220, 220);
+      pdf.text('RuangKita', wcX, wcY + 10, { align: 'center' });
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(210, 210, 210);
+      pdf.text('ruangkitainteraktif.github.io', wcX, wcY + 16, { align: 'center' });
 
       pdf.save(fileName);
     } catch (error) {

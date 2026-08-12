@@ -1276,38 +1276,6 @@ document.addEventListener('DOMContentLoaded', () => {
       pdf.text(String(sbValue), sbX + actualW / 2, sbY - 1, { align: 'center' });
       pdf.text(sbValue * 2 + ' ' + sbLabelUnit, sbX + actualW, sbY - 1, { align: 'center' });
 
-      const ktaLegend = [
-        { label: 'Ringan', color: '#4caf50', range: '<= 60' },
-        { label: 'Sedang', color: '#ff9800', range: '60 - 180' },
-        { label: 'Berat', color: '#f44336', range: '180 - 480' },
-        { label: 'Sangat Berat', color: '#b71c1c', range: '> 480' }
-      ];
-      const lgX = mapFrameX + mapFrameW - 52;
-      const lgY = mapFrameY + mapFrameH - 26;
-      const lgW = 48;
-      const lgH = 22;
-      pdf.setFillColor(255, 255, 255);
-      pdf.setDrawColor(220, 220, 220);
-      pdf.setLineWidth(0.2);
-      pdf.roundedRect(lgX, lgY, lgW, lgH, 1, 1, 'FD');
-      pdf.setFontSize(6);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(30, 41, 59);
-      pdf.text('Legenda Erosi (Ton/Ha/Th)', lgX + 3, lgY + 4);
-      let lgRowY = lgY + 8;
-      for (const band of ktaLegend) {
-        const rgb = hexToRgb(band.color);
-        pdf.setFillColor(rgb[0], rgb[1], rgb[2]);
-        pdf.rect(lgX + 3, lgRowY, 4, 3, 'F');
-        pdf.setFontSize(5.5);
-        pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(55, 65, 81);
-        pdf.text(band.label, lgX + 9, lgRowY + 2.5);
-        pdf.setTextColor(rgb[0], rgb[1], rgb[2]);
-        pdf.text(band.range, lgX + lgW - 3, lgRowY + 2.5, { align: 'right' });
-        lgRowY += 3.2;
-      }
-
       pdf.setDrawColor(200, 200, 200);
       pdf.setLineWidth(0.2);
       pdf.line(panelX, mapFrameY, panelX, mapFrameY + mapFrameH);
@@ -1331,10 +1299,12 @@ document.addEventListener('DOMContentLoaded', () => {
       pdf.setTextColor(100, 116, 139);
       pdf.text('Kelas Erosi Dominan', panelX + 8, py + 5);
       pdf.text('Rata-rata Nilai Erosi', panelX + 8, py + 11);
-      pdf.setFontSize(11);
+      pdf.setFontSize(7);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(ktaRgb[0], ktaRgb[1], ktaRgb[2]);
-      pdf.text(dominantClass || '-', panelX + 40, py + 5);
+      const dominantText = dominantClass || '-';
+      const splitDominant = pdf.splitTextToSize(dominantText, panelW - 48);
+      pdf.text(splitDominant, panelX + 40, py + 5);
       pdf.setTextColor(30, 41, 59);
       pdf.text(avgValue.toFixed(1) + ' Ton/Ha/Th', panelX + 40, py + 11);
       py += cardH + 5;
@@ -1343,6 +1313,9 @@ document.addEventListener('DOMContentLoaded', () => {
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(55, 65, 81);
       pdf.text('Rincian Kelas Erosi', panelX + 4, py);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(panelX + 4, py + 1, panelX + cardW, py + 1);
       py += 4;
 
       const barLabelW = 28;
@@ -1381,6 +1354,9 @@ document.addEventListener('DOMContentLoaded', () => {
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(55, 65, 81);
         pdf.text('Rekomendasi Konservasi', panelX + 4, py);
+        pdf.setDrawColor(200, 200, 200);
+        pdf.setLineWidth(0.2);
+        pdf.line(panelX + 4, py + 1, panelX + cardW, py + 1);
         py += 4;
 
         pdf.setFontSize(6);
@@ -1425,6 +1401,9 @@ document.addEventListener('DOMContentLoaded', () => {
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(55, 65, 81);
       pdf.text('Informasi Wilayah', panelX + 4, py);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(panelX + 4, py + 1, panelX + cardW, py + 1);
       py += 4;
 
       const infoLines = [
@@ -1444,11 +1423,14 @@ document.addEventListener('DOMContentLoaded', () => {
         py += 3.5;
       }
 
-      py += 4;
+      py += 2;
       pdf.setFontSize(7);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(55, 65, 81);
       pdf.text('Metadata & Kualitas', panelX + 4, py);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(panelX + 4, py + 1, panelX + cardW, py + 1);
       py += 4;
 
       const metaLines = [
@@ -1469,6 +1451,45 @@ document.addEventListener('DOMContentLoaded', () => {
         py += 3.5;
       }
 
+      py += 4;
+      const ktaLegend = [
+        { label: 'Ringan', color: '#4caf50' },
+        { label: 'Sedang', color: '#ff9800' },
+        { label: 'Berat', color: '#f44336' },
+        { label: 'Sangat Berat', color: '#b71c1c' }
+      ];
+      const lgX = panelX + 4;
+      const lgW = panelW - 8;
+      const lgRowH = 3.5;
+      const lgRows = Math.ceil(ktaLegend.length / 2);
+      const lgH = lgRows * lgRowH + 8;
+      const lgY = py;
+      const lgColW = (lgW - 8) / 2;
+
+      pdf.setFontSize(7);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(55, 65, 81);
+      pdf.text('Legenda Erosi', lgX, lgY + 4);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(lgX, lgY + 5, lgX + lgW, lgY + 5);
+
+      let lgRowY = lgY + 8;
+      for (let i = 0; i < ktaLegend.length; i++) {
+        const band = ktaLegend[i];
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const itemX = lgX + col * lgColW;
+        const itemY = lgRowY + row * lgRowH;
+        const rgb = hexToRgb(band.color);
+        pdf.setFillColor(rgb[0], rgb[1], rgb[2]);
+        pdf.rect(itemX, itemY, 3, 2.5, 'F');
+        pdf.setFontSize(5.5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(55, 65, 81);
+        pdf.text(band.label, itemX + 4, itemY + 2.2);
+      }
+
       const bottomY = pageH - margin - 2;
       pdf.setDrawColor(200, 200, 200);
       pdf.setLineWidth(0.2);
@@ -1481,6 +1502,24 @@ document.addEventListener('DOMContentLoaded', () => {
       pdf.setFontSize(5);
       pdf.setTextColor(160, 160, 160);
       pdf.text('Koordinat: WGS84 / EPSG:4326 · Grid graticule untuk referensi ArcGIS / QGIS', margin + 2, bottomY);
+
+      const wcX = pageW / 2;
+      const wcY = pageH / 2;
+      pdf.setFillColor(200, 200, 200);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.5);
+      const hs = 12;
+      pdf.triangle(wcX, wcY - hs - 8, wcX - hs, wcY - 8, wcX + hs, wcY - 8, 'S');
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(wcX - hs * 0.35, wcY - hs * 0.2 - 8, hs * 0.7, hs * 0.3, 'F');
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(32);
+      pdf.setTextColor(220, 220, 220);
+      pdf.text('RuangKita', wcX, wcY + 10, { align: 'center' });
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(210, 210, 210);
+      pdf.text('ruangkitainteraktif.github.io', wcX, wcY + 16, { align: 'center' });
 
       pdf.save(fileName);
     } catch (error) {
@@ -1903,36 +1942,6 @@ document.addEventListener('DOMContentLoaded', () => {
       pdf.text(String(sbValue), sbX + actualW / 2, sbY - 1, { align: 'center' });
       pdf.text(sbValue * 2 + ' ' + sbLabelUnit, sbX + actualW, sbY - 1, { align: 'center' });
 
-      const lbsLegend = [
-        { label: 'Sawah Teriris', color: '#22c55e', desc: 'Irisan sawah + desa' },
-        { label: 'Batas Desa', color: '#15803d', desc: 'Garis batas wilayah' }
-      ];
-      const lgX = mapFrameX + mapFrameW - 52;
-      const lgY = mapFrameY + mapFrameH - 18;
-      const lgW = 48;
-      const lgH = 14;
-      pdf.setFillColor(255, 255, 255);
-      pdf.setDrawColor(220, 220, 220);
-      pdf.setLineWidth(0.2);
-      pdf.roundedRect(lgX, lgY, lgW, lgH, 1, 1, 'FD');
-      pdf.setFontSize(6);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(30, 41, 59);
-      pdf.text('Legenda Lahan Baku Sawah', lgX + 3, lgY + 4);
-      let lgRowY = lgY + 8;
-      for (const band of lbsLegend) {
-        const rgb = hexToRgb(band.color);
-        pdf.setFillColor(rgb[0], rgb[1], rgb[2]);
-        pdf.rect(lgX + 3, lgRowY, 4, 3, 'F');
-        pdf.setFontSize(5.5);
-        pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(55, 65, 81);
-        pdf.text(band.label, lgX + 9, lgRowY + 2.5);
-        pdf.setTextColor(rgb[0], rgb[1], rgb[2]);
-        pdf.text(band.desc, lgX + lgW - 3, lgRowY + 2.5, { align: 'right' });
-        lgRowY += 3.2;
-      }
-
       pdf.setDrawColor(200, 200, 200);
       pdf.setLineWidth(0.2);
       pdf.line(panelX, mapFrameY, panelX, mapFrameY + mapFrameH);
@@ -1990,6 +1999,9 @@ document.addEventListener('DOMContentLoaded', () => {
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(55, 65, 81);
       pdf.text('Metadata & Kualitas', panelX + 4, py);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(panelX + 4, py + 1, panelX + cardW, py + 1);
       py += 4;
 
       const metaLines = [
@@ -2010,6 +2022,43 @@ document.addEventListener('DOMContentLoaded', () => {
         py += 3.5;
       }
 
+      py += 4;
+      const lbsLegend = [
+        { label: 'Sawah Teriris', color: '#22c55e' },
+        { label: 'Batas Desa', color: '#15803d' }
+      ];
+      const lgX = panelX + 4;
+      const lgW = panelW - 8;
+      const lgRowH = 3.5;
+      const lgRows = Math.ceil(lbsLegend.length / 2);
+      const lgH = lgRows * lgRowH + 8;
+      const lgY = py;
+      const lgColW = (lgW - 8) / 2;
+
+      pdf.setFontSize(7);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(55, 65, 81);
+      pdf.text('Legenda Lahan Baku Sawah', lgX, lgY + 4);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(lgX, lgY + 5, lgX + lgW, lgY + 5);
+
+      let lgRowY = lgY + 8;
+      for (let i = 0; i < lbsLegend.length; i++) {
+        const band = lbsLegend[i];
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const itemX = lgX + col * lgColW;
+        const itemY = lgRowY + row * lgRowH;
+        const rgb = hexToRgb(band.color);
+        pdf.setFillColor(rgb[0], rgb[1], rgb[2]);
+        pdf.rect(itemX, itemY, 3, 2.5, 'F');
+        pdf.setFontSize(5.5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(55, 65, 81);
+        pdf.text(band.label, itemX + 4, itemY + 2.2);
+      }
+
       const bottomY = pageH - margin - 2;
       pdf.setDrawColor(200, 200, 200);
       pdf.setLineWidth(0.2);
@@ -2022,6 +2071,24 @@ document.addEventListener('DOMContentLoaded', () => {
       pdf.setFontSize(5);
       pdf.setTextColor(160, 160, 160);
       pdf.text('Koordinat: WGS84 / EPSG:4326 · Grid graticule untuk referensi ArcGIS / QGIS', margin + 2, bottomY);
+
+      const wcX = pageW / 2;
+      const wcY = pageH / 2;
+      pdf.setFillColor(200, 200, 200);
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.5);
+      const hs = 12;
+      pdf.triangle(wcX, wcY - hs - 8, wcX - hs, wcY - 8, wcX + hs, wcY - 8, 'S');
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(wcX - hs * 0.35, wcY - hs * 0.2 - 8, hs * 0.7, hs * 0.3, 'F');
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(32);
+      pdf.setTextColor(220, 220, 220);
+      pdf.text('RuangKita', wcX, wcY + 10, { align: 'center' });
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(210, 210, 210);
+      pdf.text('ruangkitainteraktif.github.io', wcX, wcY + 16, { align: 'center' });
 
       pdf.save(fileName);
     } catch (error) {
