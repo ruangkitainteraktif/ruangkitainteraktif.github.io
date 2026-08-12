@@ -1330,7 +1330,7 @@
       .geotani-btn-print { width: 100%; justify-content: center; }
 
       #sidebar-left {
-      width: 360px;
+      width: 300px;
       }
 
       #detail-panel {
@@ -1340,10 +1340,10 @@
         left: 0;
         right: 0;
         width: 100%;
-        height: 60vh;
-        height: 60dvh;
-        max-height: 60vh;
-        max-height: 60dvh;
+        height: 90vh;
+        height: 90dvh;
+        max-height: 90vh;
+        max-height: 90dvh;
         border-radius: 16px 16px 0 0;
         z-index: 1100;
         transition: bottom 0.3s ease-in-out;
@@ -3583,6 +3583,17 @@
       .welcome-features-grid { grid-template-columns: 1fr; gap: 8px; }
       .welcome-modal-footer { flex-direction: column; gap: 8px; padding: 14px 16px; }
       .welcome-btn { width: 100%; }
+
+      .panel-header {
+        padding: 12px 15px;
+        background: #0078d4;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top-left-radius: 15px;
+        border-top-right-radius: 15px;
+      }
     }
 
 
