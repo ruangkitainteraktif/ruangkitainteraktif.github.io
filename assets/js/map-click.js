@@ -12,12 +12,17 @@
   }
 
   map.on('click', async function(e) {
+    // Jika klik mengenai fitur interaktif (marker hotspot, polygon, dll),
+    // biarkan Leaflet yang handle popup-nya.
+    const target = e.originalEvent?.target;
+    if (target && target.closest && target.closest('.leaflet-interactive')) return;
+
     const lat = e.latlng.lat;
     const lng = e.latlng.lng;
 
-    // Nonaktifkan popup geoid di tab pengaturan dan alat
+    // Nonaktifkan popup geoid di tab pengaturan, alat, dan gempa
     const activeTab = window.currentActiveTab;
-    if (activeTab === 'tab-pengaturan' || activeTab === 'tab-alat') return;
+    if (activeTab === 'tab-pengaturan' || activeTab === 'tab-alat' || activeTab === 'tab-gempa') return;
 
     // GeoTani tidak memakai reverse geocoding. Saat area kosong dalam cakupan
     // hasil irisan diklik, tampilkan popup batas wilayah analisis aktif.

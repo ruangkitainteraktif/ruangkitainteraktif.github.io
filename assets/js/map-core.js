@@ -154,7 +154,7 @@ L.control.scale({
         const toggles = [
           'toggleTollRoad', 'toggleNonTollRoad', 'toggleNationalRoad',
           'toggleWindAnim', 'toggleSawahDilindungi', 'toggleSawahNasional50k',
-          'toggleBppLayer', 'toggleSawitLayer', 'toggleErosiLayer'
+          'toggleBppLayer', 'toggleSawitLayer', 'toggleErosiLayer', 'toggleHotspotLayer'
         ];
         toggles.forEach(id => {
           const el = document.getElementById(id);

@@ -165,7 +165,66 @@
       box-shadow: inset 0 0 0 1px rgba(8,121,191,.14);
       transform: translateY(-2px);
     }
-    @keyframes locate-spin { to { transform: rotate(360deg); } }
+
+    .choropleth-legend {
+      background: rgba(255,255,255,0.95);
+      border-radius: 8px;
+      padding: 10px 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      border: 1px solid #e5e7eb;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 220px;
+      margin-bottom: 10px;
+    }
+
+    .choropleth-legend-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .choropleth-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .choropleth-legend-color {
+      width: 16px;
+      height: 12px;
+      border-radius: 2px;
+      flex-shrink: 0;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .choropleth-legend-label {
+      font-size: 10px;
+      color: #475569;
+    }
+
+    .choropleth-legend-unit {
+      font-size: 9px;
+      color: #94a3b8;
+      margin-top: 6px;
+      font-style: italic;
+    }
+
+    .choropleth-tooltip {
+      background: rgba(255,255,255,0.96) !important;
+      border: 1px solid #e5e7eb !important;
+      border-radius: 8px !important;
+      padding: 8px 10px !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12) !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    }
+
+    .choropleth-tooltip::before {
+      border-top-color: #e5e7eb !important;
+    }
+
 
     /* Map Insight Cards */
     .map-insight-cards {
@@ -2835,6 +2894,24 @@
     .cctv-layer-info { display: flex; flex-direction: column; gap: 1px; }
     .cctv-layer-name { font-size: 11px; font-weight: 700; color: #16466c; }
     .cctv-layer-info small { font-size: 9px; color: #668198; }
+    .hotspot-eye-btn {
+      margin-left: auto;
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #d1d9e2;
+      border-radius: 6px;
+      background: #fff;
+      color: #475569;
+      cursor: pointer;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    .hotspot-eye-btn:hover { background: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
+    .hotspot-eye-btn.markers-hidden { color: #cbd5e1; border-color: #e2e8f0; }
+    .hotspot-eye-btn.markers-hidden svg { opacity: .4; }
 
     /* Toll Road Tooltip */
     .toll-road-tooltip {
@@ -3355,9 +3432,11 @@
     .leaflet-control-scale {
       background: rgba(255,255,255,0.95);
       border: none;
-      border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-      padding: 5px 10px;
+      border-radius:5px;
+      padding: 5px 5px;
+      left: 5px;
+      bottom: 5px;
       font-family: "Avenir Next", "Segoe UI", sans-serif;
       font-size: 11px;
       color: #333;
@@ -3596,4 +3675,82 @@
       }
     }
 
+    .hotspot-legend {
+      background: rgba(255,255,255,0.95);
+      border-radius: 8px;
+      padding: 10px 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      border: 1px solid #e5e7eb;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-width: 160px;
+    }
+
+    .hotspot-legend-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .hotspot-legend-total {
+      font-size: 10px;
+      color: #475569;
+      margin-bottom: 8px;
+    }
+
+    .hotspot-legend-items {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .hotspot-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: #475569;
+    }
+
+    .hotspot-legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .hotspot-legend-source {
+      font-size: 8px;
+      color: #94a3b8;
+      margin-top: 8px;
+      font-style: italic;
+    }
+
+    .hotspot-legend-gradient {
+      margin-bottom: 8px;
+    }
+
+    .hotspot-legend-bar {
+      height: 8px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #22c55e 0%, #84cc16 25%, #f59e0b 50%, #ef4444 75%, #dc2626 100%);
+      margin-bottom: 3px;
+    }
+
+    .hotspot-legend-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 8px;
+      color: #94a3b8;
+    }
+
+    .hotspot-popup .leaflet-popup-content-wrapper {
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+    .hotspot-popup .leaflet-popup-content {
+      margin: 10px 12px;
+    }
 

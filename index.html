@@ -19,8 +19,8 @@
 
   <!-- ==================== MASTER SEO META TAGS 2026 ==================== -->
   <!-- Primary Meta Tags -->
-  <title>RUANG KITA | Satu Peta untuk Nusantara - Peta Interaktif Indonesia</title>
-  <meta name="title" content="RUANG KITA | Satu Peta untuk Nusantara - Peta Interaktif Indonesia">
+  <title>RUANG KITA | Satu Peta untuk Nusantara</title>
+  <meta name="title" content="RUANG KITA | Satu Peta untuk Nusantara">
   <meta name="description"
     content="Platform peta interaktif Indonesia dengan data geospasial lengkap. Akses batas wilayah administrasi, CCTV lalu lintas, cuaca BMKG, gempa bumi real-time, geoportal Jawa Timur & Sukoharjo, analisis pertanian (Geotani), dan alat ukur/gambar GIS.">
   <meta name="keywords"
@@ -45,7 +45,7 @@
   <meta property="og:title" content="RUANG KITA | Satu Peta untuk Nusantara">
   <meta property="og:description"
     content="Platform peta interaktif Indonesia dengan data geospasial lengkap. Akses batas wilayah, CCTV, cuaca BMKG, gempa bumi, geoportal Jawa Timur & Sukoharjo, serta analisis pertanian secara real-time.">
-  <meta property="og:image" content="assets/img/favicon.png">
+  <meta property="og:image" content="assets/img/share.jpg">
   <meta property="og:image:alt" content="RUANG KITA - Peta Interaktif Indonesia">
   <meta property="og:locale" content="id_ID">
   <meta property="og:site_name" content="RUANG KITA">
@@ -56,7 +56,7 @@
   <meta name="twitter:title" content="RUANG KITA | Satu Peta untuk Nusantara">
   <meta name="twitter:description"
     content="Platform peta interaktif Indonesia dengan data geospasial lengkap. Akses batas wilayah, CCTV, cuaca BMKG, gempa bumi, geoportal, dan analisis pertanian secara real-time.">
-  <meta name="twitter:image" content="assets/img/favicon.png">
+  <meta name="twitter:image" content="assets/img/share.jpg">
 
   <!-- Canonical URL -->
   <link rel="canonical" href="https://ruangkitainteraktif.github.io/">
@@ -110,6 +110,8 @@
   <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet.heat by Vladimir Agafonkin -->
+  <script src="assets/js/leaflet-heat.js"></script>
   <!-- Leaflet MarkerCluster untuk layer WMS point -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
@@ -131,7 +133,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=11">
+  <link rel="stylesheet" href="assets/css/app.css?v=12">
 
 </head>
 
@@ -792,6 +794,19 @@
           <h4 style="font-size: 15px; margin-bottom: 5px;">Info Gempa Bumi BMKG</h4>
           <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Klik pada daftar untuk melihat informasi gempa.
           </p>
+          <div class="cctv-layers" style="margin-bottom: 12px;">
+            <label class="cctv-layer-toggle">
+              <input type="checkbox" id="toggleHotspotLayer">
+              <span class="cctv-layer-check"></span>
+              <span class="cctv-layer-info">
+                <span class="cctv-layer-name">🔥 Hotspot Karhutla (24 Jam)</span>
+                <small>Titik panas dari NASA-MODIS, SNPP, NOAA20</small>
+              </span>
+              <button type="button" id="toggleHotspotMarkers" class="hotspot-eye-btn" title="Sembunyikan marker" style="display:none;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </label>
+          </div>
           <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
           <div id="earthquake-content" class="quake-message">Buka tab ini untuk memuat data gempabumi BMKG.</div>
         </div>
@@ -971,6 +986,8 @@
   <script src="assets/js/geotani-search.js"></script>
   <script src="assets/js/sawah-dilindungi.js"></script>
   <script src="assets/js/unified-search.js"></script>
+  <script src="assets/js/choropleth.js"></script>
+  <script src="assets/js/hotspot.js"></script>
   <script src="assets/js/population-chart.js"></script>
 
 </body>

@@ -599,12 +599,14 @@
       if (val === 'jumlah') {
         chartArea.innerHTML = '';
         titleEl.textContent = 'Peringkat Provinsi (Jumlah Penduduk)';
+        if (typeof hideChoropleth === 'function') hideChoropleth();
         const freshRank = await loadRank();
         const freshProvincesRank = getProvincesRanking(freshRank?.data || freshRank);
         createRankingTable(rankingEl, freshProvincesRank, 'jumlah');
       } else if (val === 'laju') {
         chartArea.innerHTML = '';
         titleEl.textContent = 'Peringkat Provinsi (Laju Pertumbuhan)';
+        if (typeof hideChoropleth === 'function') hideChoropleth();
         const freshLaju = await loadLaju();
         const freshProvincesLaju = getProvincesLaju(freshLaju?.data || freshLaju);
         createRankingTable(rankingEl, freshProvincesLaju, 'laju');
@@ -612,6 +614,7 @@
         chartArea.innerHTML = '';
         titleEl.textContent = 'Memuat...';
         rankingEl.innerHTML = '';
+        if (typeof showChoropleth === 'function') showChoropleth(val);
         await loadAndRenderIndicator(val, chartArea, rankingEl, titleEl);
       }
     });
