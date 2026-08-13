@@ -218,6 +218,9 @@ L.control.scale({
         if (typeof clearNdviAnalysis === 'function') clearNdviAnalysis();
         if (typeof clearLandcoverAnalysis === 'function') clearLandcoverAnalysis();
 
+        // 5c. Sembunyikan choropleth BPS indikator
+        if (typeof hideChoropleth === 'function') hideChoropleth();
+
         // 6. Hapus map click marker
         if (mapClickMarker && map.hasLayer(mapClickMarker)) {
           map.removeLayer(mapClickMarker);

@@ -1233,6 +1233,32 @@
       border-bottom: 2px solid #0078d4;
     }
 
+    .gempa-subtabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 14px;
+      background: #f4f6f9;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 3px;
+    }
+    .gempa-subtab-btn {
+      flex: 1;
+      padding: 7px 0;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      font-size: 11px;
+      font-weight: 600;
+      color: #666;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .gempa-subtab-btn:hover { background: #e8ecf0; color: #334155; }
+    .gempa-subtab-btn.active { background: #fff; color: #0891b2; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .gempa-subtab-panel { display: none; }
+    .gempa-subtab-panel.active { display: block; }
+
     .info-card {
       background: #f9f9f9;
       border: 1px solid #e5e5e5;
@@ -2605,7 +2631,90 @@
     .quake-card-meta { margin-top: 3px; color: #668198; font-size: 9px; }
     .quake-card-feel { margin-top: 4px; color: #9a3c27; font-size: 9px; }
     .quake-attribution { margin: 11px 0 0; color: #71869a; font-size: 6px; text-align: right; margin-bottom: 60px}
-    .quake-message { padding: 12px; margin:-15px; border-radius: 0px; color: #567; background: #f4f8fb; font-size: 11px; text-align: center; }
+    .quake-message { padding: 12px; border-radius: 0px; color: #567; background: transparent; font-size: 11px; text-align: center; }
+
+    /* Hotspot Summary Card */
+    .hotspot-summary { overflow: hidden; margin-bottom: 12px; border-radius: 14px; color: #fff; background: linear-gradient(135deg, #b45309, #f59e0b 62%, #fbbf24); box-shadow: 0 9px 18px rgba(245, 158, 11, .25); }
+    .hotspot-summary-main { display: flex; gap: 12px; align-items: center; padding: 13px; }
+    .hotspot-summary-icon { flex: 0 0 54px; height: 54px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.4); border-radius: 50%; background: rgba(0,0,0,.12); font-size: 24px; }
+    .hotspot-summary .hotspot-summary-title { margin: 0 0 4px; font-size: 15px; color: #fff; }
+    .hotspot-summary-count { font-size: 10px; line-height: 1.35; opacity: .95; }
+    .hotspot-summary-details { display: grid; grid-template-columns: repeat(3, 1fr); background: rgba(0,0,0,.13); }
+    .hotspot-summary-details span { padding: 7px 5px; border-right: 1px solid rgba(255,255,255,.15); text-align: center; font-size: 9px; }
+    .hotspot-summary-details b { display: block; margin-top: 2px; font-size: 10px; }
+    .hotspot-summary-waktu { padding: 7px 5px; background: rgba(0,0,0,.13); text-align: center; font-size: 9px; border-top: 1px solid rgba(255,255,255,.15); }
+    .hotspot-summary-waktu b { display: block; margin-top: 2px; font-size: 10px; }
+
+    /* CO2 Chart */
+    .co2-chart { margin-top: 16px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; overflow: hidden; }
+    .co2-chart-header { padding: 12px 14px 8px; }
+    .co2-chart-title { font-size: 11px; font-weight: 700; color: #1e293b; margin: 0 0 2px; }
+    .co2-chart-subtitle { font-size: 8px; color: #94a3b8; }
+    .co2-chart-body { padding: 8px 14px 14px; }
+    .co2-chart-bars { display: flex; align-items: flex-end; gap: 6px; height: 140px; }
+    .co2-chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+    .co2-chart-bar { width: 100%; border-radius: 4px 4px 0 0; background: linear-gradient(180deg, #f97316, #ea580c); transition: height .4s ease; position: relative; min-height: 2px; }
+    .co2-chart-bar:hover { filter: brightness(1.1); }
+    .co2-chart-bar-val { font-size: 7px; font-weight: 700; color: #334155; white-space: nowrap; text-align: center; }
+    .co2-chart-bar-label { font-size: 7px; color: #94a3b8; text-align: center; }
+
+    .luas-chart { margin-top: 12px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; overflow: hidden; }
+    .luas-chart-header { padding: 12px 14px 8px; }
+    .luas-chart-title { font-size: 11px; font-weight: 700; color: #1e293b; margin: 0 0 2px; }
+    .luas-chart-subtitle { font-size: 8px; color: #94a3b8; }
+    .luas-chart-body { padding: 8px 14px 14px; }
+    .luas-chart-bars { display: flex; align-items: flex-end; gap: 6px; height: 140px; }
+    .luas-chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+    .luas-chart-bar { width: 100%; border-radius: 4px 4px 0 0; background: linear-gradient(180deg, #ef4444, #dc2626); transition: height .4s ease; position: relative; min-height: 2px; }
+    .luas-chart-bar:hover { filter: brightness(1.1); }
+    .luas-chart-bar-val { font-size: 7px; font-weight: 700; color: #334155; white-space: nowrap; text-align: center; }
+    .luas-chart-bar-label { font-size: 7px; color: #94a3b8; text-align: center; }
+
+    .hs-table-wrap { margin-top: 12px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; overflow: hidden; }
+    .hs-table-header { padding: 12px 14px 6px; display: flex; justify-content: space-between; align-items: center; }
+    .hs-table-title { font-size: 11px; font-weight: 700; color: #1e293b; }
+    .hs-table-total { font-size: 8px; color: #94a3b8; }
+    .hs-cat-items { display: flex; gap: 12px; padding: 0 14px 8px; flex-wrap: wrap; }
+    .hs-cat-item { font-size: 8px; color: #64748b; display: flex; align-items: center; gap: 3px; }
+    .hs-cat-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .hs-table-controls { display: flex; gap: 6px; padding: 0 14px 8px; flex-wrap: wrap; }
+    .hs-search-input { flex: 1; min-width: 120px; padding: 5px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 8px; outline: none; }
+    .hs-search-input:focus { border-color: #3b82f6; }
+    .hs-select { padding: 5px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 8px; background: #fff; outline: none; }
+    .hs-select:focus { border-color: #3b82f6; }
+    .hs-table-scroll { overflow-x: auto; }
+    .hs-table { width: 100%; border-collapse: collapse; font-size: 8px; }
+    .hs-table th { background: #f8fafc; color: #64748b; font-weight: 600; text-align: left; padding: 6px 10px; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
+    .hs-table td { padding: 5px 10px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+    .hs-table tbody tr:hover { background: #f8fafc; }
+    .hs-num { text-align: right; font-weight: 600; }
+    .hs-conf-badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 7px; font-weight: 600; }
+    .hs-conf-high { background: #fef2f2; color: #dc2626; }
+    .hs-conf-medium { background: #fffbeb; color: #d97706; }
+    .hs-conf-low { background: #f0fdf4; color: #16a34a; }
+    .hs-pagination { display: flex; justify-content: center; gap: 4px; padding: 8px 14px 12px; }
+    .hs-page-btn { padding: 3px 8px; border: 1px solid #e5e7eb; border-radius: 4px; background: #fff; font-size: 8px; cursor: pointer; color: #334155; }
+    .hs-page-btn:hover { background: #f1f5f9; }
+    .hs-page-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+    .hs-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .hs-page-dots { font-size: 8px; color: #94a3b8; padding: 0 2px; }
+
+    .hs-bar-chart { margin-top: 12px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; overflow: visible; }
+    .hs-bar-header { padding: 12px 14px 8px; }
+    .hs-bar-title { font-size: 11px; font-weight: 700; color: #1e293b; margin: 0 0 2px; }
+    .hs-bar-subtitle { font-size: 8px; color: #94a3b8; }
+    .hs-bar-body { padding: 8px 14px 14px; overflow-x: auto; }
+    .hs-bar-bars { display: flex; align-items: flex-end; gap: 3px; height: 160px; padding-bottom: 0; padding-top: 24px; }
+    .hs-bar-wrap { flex: 0 0 auto; width: 22px; display: flex; flex-direction: column; align-items: stretch; height: 100%; position: relative; cursor: pointer; z-index: 1; overflow: visible; }
+    .hs-bar-bars { position: relative; z-index: 0; overflow: visible; }
+    .hs-bar-tooltip { display: none; position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 8px; white-space: nowrap; z-index: 1000; pointer-events: none; }
+    .hs-bar-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 4px solid transparent; border-top-color: #1e293b; }
+    .hs-bar-wrap:hover .hs-bar-tooltip { display: block; }
+    .hs-bar-val { font-size: 6px; font-weight: 700; color: #334155; white-space: nowrap; text-align: center; padding-bottom: 2px; margin-bottom: 4px; }
+    .hs-bar-area { flex: 1; display: flex; align-items: flex-end; }
+    .hs-bar { width: 100%; border-radius: 3px 3px 0 0; background: linear-gradient(180deg, #3b82f6, #2563eb); transition: height .4s ease; min-height: 2px; }
+    .hs-bar:hover { filter: brightness(1.1); }
+    .hs-bar-label { font-size: 6px; color: #64748b; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-top: 3px; }
 
     /* Earthquake Marker */
     .quake-marker-wrap { background: transparent; border: 0; }

@@ -85,7 +85,7 @@
 
   function getTotalPopulation(rankData) {
     if (!rankData?.features) return null;
-    const indo = rankData.features.find(f => f.properties.nama_wilayah === 'INDONESIA');
+    const indo = rankData.features.find(f => f.properties.nama_wilayah === 'INDONESIA' && (f.properties.id_dimensi === 1 || f.properties.nama_dimensi === 'Total'));
     return indo?.properties?.nilai || null;
   }
 
@@ -128,8 +128,14 @@
 
   function getProvincesRanking(rankData) {
     if (!rankData?.features) return [];
+    const seen = new Set();
     return rankData.features
-      .filter(f => f.properties.nama_wilayah !== 'INDONESIA')
+      .filter(f => {
+        if (f.properties.nama_wilayah === 'INDONESIA') return false;
+        if (seen.has(f.properties.nama_wilayah)) return false;
+        seen.add(f.properties.nama_wilayah);
+        return true;
+      })
       .map(f => ({
         name: f.properties.nama_wilayah || '-',
         code: f.properties.id_wilayah || '-',

@@ -71,7 +71,10 @@
 
     if (tabId !== 'tab-geoportal') closeGeoportalModal();
 
-    if (tabId === 'tab-gempa') loadEarthquakeData();
+    if (tabId === 'tab-gempa') {
+      var gempaGempaPanel = document.getElementById('gempa-subtab-gempa');
+      if (gempaGempaPanel && gempaGempaPanel.classList.contains('active')) loadEarthquakeData();
+    }
     if (tabId === 'tab-cctv') loadCctvData();
 
     const unifiedSearch = document.getElementById('unifiedSearch');
@@ -105,4 +108,24 @@
       tab.classList.toggle('active', isActive);
       tab.setAttribute('aria-selected', String(isActive));
     });
+  }
+
+  // Sub-tab GEOQUAKE: Gempabumi / Karhutla
+  function openGempaSubtab(btn) {
+    var subtabId = btn.getAttribute('data-subtab');
+    if (!subtabId) return;
+
+    // Toggle buttons
+    var tabs = btn.parentElement.querySelectorAll('.gempa-subtab-btn');
+    for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+    btn.classList.add('active');
+
+    // Toggle panels
+    var panels = document.querySelectorAll('.gempa-subtab-panel');
+    for (var j = 0; j < panels.length; j++) panels[j].classList.remove('active');
+    var target = document.getElementById(subtabId);
+    if (target) target.classList.add('active');
+
+    // Load earthquake data when switching to gempa sub-tab
+    if (subtabId === 'gempa-subtab-gempa') loadEarthquakeData();
   }

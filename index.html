@@ -188,7 +188,7 @@
               <div class="welcome-feature-icon icon-geotani">🌾</div>
               <div class="welcome-feature-info">
                 <div class="welcome-feature-name">GEOTANI — Analisis Pertanian</div>
-                <div class="welcome-feature-desc">Analisis Lahan Baku Sawah (LBS), overlay erosi (KTA), indeks vegetasi NDVI, dan Land Cover berbasis Sentinel-2. Lengkapi dengan pencarian BPP & IGT Sawit.</div>
+                <div class="welcome-feature-desc">Analisis Lahan Baku Sawah (LBS), overlay erosi (KTA), indeks vegetasi NDVI, dan LULC berbasis Sentinel-2. Lengkapi dengan pencarian BPP & IGT Sawit.</div>
               </div>
             </div>
             <!-- GEOPORTAL -->
@@ -301,9 +301,9 @@
           </div>
           <div class="insight-card-body" id="insightQuakeBody">
             <div class="insight-loading">Memuat...</div>
+            </div>
           </div>
         </div>
-      </div>
     </div>
 
     <!-- BACKDROP OVERLAY (MOBILE ONLY) -->
@@ -357,7 +357,7 @@
         <button class="tab-btn" onclick="openTab(event, 'tab-geoportal')">GEOPORTAL</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-cctv')">GEOWATCH</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-cuaca')">GEOWX</button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-gempa')">GEOQUAKE</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-gempa')">GEOGUARD</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-pengaturan')">SETTING</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-alat')">TOOLS</button>
       </div>
@@ -493,7 +493,7 @@
               aria-controls="geotani-ndvi-panel" onclick="openGeotaniAnalysisTab('ndvi')">NDVI Analysis</button>
             <button id="geotani-landcover-tab" class="geotani-analysis-tab" type="button" role="tab"
               aria-selected="false" aria-controls="geotani-landcover-panel"
-              onclick="openGeotaniAnalysisTab('landcover')">LAND COVER Analysis</button>
+              onclick="openGeotaniAnalysisTab('landcover')">LULC Analysis</button>
           </nav>
 
           <div id="geotani-lbs-panel" class="geotani-analysis-panel active" role="tabpanel"
@@ -628,7 +628,7 @@
           <div id="geotani-landcover-panel" class="geotani-analysis-panel" role="tabpanel"
             aria-labelledby="geotani-landcover-tab" hidden>
             <section class="geotani-kta-card" aria-labelledby="landcoverOverlayTitle">
-              <h5 id="landcoverOverlayTitle">LAND COVER</h5>
+              <h5 id="landcoverOverlayTitle">LULC</h5>
               <div style="display:grid;gap:10px;margin-top:8px;">
                 <div>
                   <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Input
@@ -667,7 +667,7 @@
               <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #d0dde8;">
                 <label
                   style="font-size:10px;color:#54708d;font-weight:700;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.03em;">Legenda
-                  Land Cover</label>
+                  LULC</label>
                 <div class="landcover-legend-grid"
                   style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:10px;">
                   <div style="display:flex;align-items:center;gap:6px;"><span
@@ -791,24 +791,36 @@
 
         <!-- TAB 3: GEMPA BMKG -->
         <div id="tab-gempa" class="tab-content">
-          <h4 style="font-size: 15px; margin-bottom: 5px;">Info Gempa Bumi BMKG</h4>
-          <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Klik pada daftar untuk melihat informasi gempa.
-          </p>
-          <div class="cctv-layers" style="margin-bottom: 12px;">
-            <label class="cctv-layer-toggle">
-              <input type="checkbox" id="toggleHotspotLayer">
-              <span class="cctv-layer-check"></span>
-              <span class="cctv-layer-info">
-                <span class="cctv-layer-name">🔥 Hotspot Karhutla (24 Jam)</span>
-                <small>Titik panas dari NASA-MODIS, SNPP, NOAA20</small>
-              </span>
-              <button type="button" id="toggleHotspotMarkers" class="hotspot-eye-btn" title="Sembunyikan marker" style="display:none;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              </button>
-            </label>
+          <div class="gempa-subtabs">
+            <button class="gempa-subtab-btn active" data-subtab="gempa-subtab-gempa" onclick="openGempaSubtab(this)">Gempabumi</button>
+            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-karhutla" onclick="openGempaSubtab(this)">Karhutla</button>
           </div>
-          <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
-          <div id="earthquake-content" class="quake-message">Buka tab ini untuk memuat data gempabumi BMKG.</div>
+
+          <div id="gempa-subtab-gempa" class="gempa-subtab-panel active">
+            <div id="earthquake-content" class="quake-message">Buka tab ini untuk memuat data gempabumi BMKG.</div>
+          </div>
+
+          <div id="gempa-subtab-karhutla" class="gempa-subtab-panel">
+            <p style="font-size:12px;color:#666;margin-bottom:12px;">Pantau titik panas kebakaran hutan dan lahan (Karhutla) dari satelit NASA-MODIS, SNPP, dan NOAA20 dalam 24 jam terakhir.</p>
+            <div id="hotspot-summary-card"></div>
+            <div class="cctv-layers" style="margin-bottom: 12px;">
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleHotspotLayer">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Hotspot Karhutla (24 Jam)</span>
+                  <small>Titik panas dari NASA-MODIS, SNPP, NOAA20</small>
+                </span>
+                <button type="button" id="toggleHotspotMarkers" class="hotspot-eye-btn" title="Sembunyikan marker" style="display:none;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </label>
+            </div>
+            <div id="hotspot-table-container"></div>
+            <div id="hotspot-bar-container"></div>
+            <div id="luas-chart-container"></div>
+            <div id="co2-chart-container"></div>
+          </div>
         </div>
 
         <!-- TAB 4: PENGATURAN -->
