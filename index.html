@@ -760,11 +760,22 @@
             informasi cuaca.</p>
           <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
           <!-- Search Autocomplete Form -->
-          <h4 style="font-size: 13px; margin-bottom: 10px;">Cari wilayah untuk melihat data</h4>
+          <h4 style="font-size: 13px; margin-bottom: 10px;">Cari wilayah untuk melihat data cuaca.</h4>
           <div class="search-weather-container">
             <input type="text" id="weatherSearchInput" class="search-weather-input"
               placeholder="🔍 Cari Desa/Kelurahan..." autocomplete="off" />
             <div id="autocompleteResults" class="autocomplete-results"></div>
+          </div>
+
+          <div class="cctv-layers" style="margin-bottom:12px;">
+            <label class="cctv-layer-toggle">
+              <input type="checkbox" id="toggleWindRgb">
+              <span class="cctv-layer-check"></span>
+              <span class="cctv-layer-info">
+                <span class="cctv-layer-name">Wind Speed and Direction</span>
+                <small id="windRgbInfo">Layer warna kecepatan angin GFS</small>
+              </span>
+            </label>
           </div>
 
           <div class="wind-toggle-row" style="display:none">
@@ -994,6 +1005,7 @@
   <script src="assets/js/weather-geocode.js"></script>
   <script src="assets/js/weather-init.js"></script>
   <script src="assets/js/wind-animation.js"></script>
+  <script src="assets/js/wind-rgb.js"></script>
   <script src="assets/js/map-insight-cards.js"></script>
   <script src="assets/js/geotani-search.js"></script>
   <script src="assets/js/sawah-dilindungi.js"></script>

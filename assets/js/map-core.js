@@ -5,7 +5,7 @@
 
   // 1. Inisialisasi Peta
   // Pusat awal mengikuti extent layer IGTPR ATR/BPN: BIDANG_JAKARTA_CLP.
-  const map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([-7.68, 110.83], 11);
+  const map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([-7.9425, 112.9530], 11);
 
 L.control.scale({
   position: 'bottomleft',
@@ -153,7 +153,7 @@ L.control.scale({
         // 1. Matikan layer jalan & angin (checkbox-driven)
         const toggles = [
           'toggleTollRoad', 'toggleNonTollRoad', 'toggleNationalRoad',
-          'toggleWindAnim', 'toggleSawahDilindungi', 'toggleSawahNasional50k',
+          'toggleWindAnim', 'toggleWindRgb', 'toggleSawahDilindungi', 'toggleSawahNasional50k',
           'toggleBppLayer', 'toggleSawitLayer', 'toggleErosiLayer', 'toggleHotspotLayer'
         ];
         toggles.forEach(id => {
