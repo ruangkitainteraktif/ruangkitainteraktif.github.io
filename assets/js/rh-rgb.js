@@ -113,7 +113,7 @@
     var candidates = await GfsBase.buildCandidateListAsync();
     for (var i = 0; i < candidates.length; i++) {
       var c = candidates[i];
-      var ok = await GfsBase.probeTile('rh', GfsBase.buildDateStr(c.modelRun), GfsBase.buildDateStr(c.forecast));
+      var ok = await GfsBase.probeTileFor('gfs_indo', 'rh', GfsBase.buildDateStr(c.modelRun), GfsBase.buildDateStr(c.forecast));
       if (ok) { addLayer(c.modelRun, c.forecast); return; }
     }
     var info = document.getElementById('rhRgbInfo');

@@ -1,8 +1,8 @@
-/* ── GFS RGB Base — shared utilities for BMKG GFS tile layers ── */
+/* ── GFS RGB Base — shared utilities for BMKG RGB tile layers ── */
 (function () {
   'use strict';
 
-  var WIND_RGB_BASE = 'https://spartan.bmkg.go.id/map/rgb_req/gfs_indo';
+  var BASE_URL = 'https://spartan.bmkg.go.id/map/rgb_req';
   var MODELRUN_API = 'https://spartan.bmkg.go.id/map/modelrun';
   var CACHE_MS = 10 * 60 * 1000;
 
@@ -38,6 +38,17 @@
     return forecast;
   }
 
+  function calcForecastForModel(modelRun) {
+    var now = new Date();
+    var utcH = now.getUTCHours();
+    var forecast = new Date(modelRun);
+    if (utcH >= 12) { forecast.setUTCDate(forecast.getUTCDate() + 1); forecast.setUTCHours(3, 0, 0, 0); }
+    else if (utcH >= 3) { forecast.setUTCHours(12, 0, 0, 0); }
+    else { forecast.setUTCHours(3, 0, 0, 0); }
+    if (forecast <= modelRun) { forecast = new Date(modelRun); forecast.setUTCHours(forecast.getUTCHours() + 3); }
+    return forecast;
+  }
+
   function buildCandidateList() {
     var now = new Date();
     var utcH = now.getUTCHours();
@@ -62,23 +73,28 @@
     });
   }
 
-  var _cachedModelruns = null;
-  var _lastFetch = 0;
+  var _modelrunCache = {};
 
-  function fetchLatestModelruns() {
-    if (_cachedModelruns && (Date.now() - _lastFetch) < CACHE_MS) {
-      return Promise.resolve(_cachedModelruns);
+  function fetchModelrunsFor(modelName) {
+    var cached = _modelrunCache[modelName];
+    if (cached && (Date.now() - cached.ts) < CACHE_MS) {
+      return Promise.resolve(cached.runs);
     }
     return fetch(MODELRUN_API)
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
-        if (!data || !data.gfs_indo) return _cachedModelruns || [];
-        var runs = data.gfs_indo.map(function (s) { return new Date(s); });
-        _cachedModelruns = runs;
-        _lastFetch = Date.now();
+        var runs = [];
+        if (data && data[modelName]) {
+          runs = data[modelName].map(function (s) { return new Date(s); });
+        }
+        _modelrunCache[modelName] = { runs: runs, ts: Date.now() };
         return runs;
       })
-      .catch(function () { return _cachedModelruns || []; });
+      .catch(function () { return (cached && cached.runs) || []; });
+  }
+
+  function fetchLatestModelruns() {
+    return fetchModelrunsFor('gfs_indo');
   }
 
   function buildCandidateListAsync() {
@@ -98,6 +114,16 @@
       });
 
       return apiCandidates;
+    });
+  }
+
+  function buildCandidateListForModel(modelName, calcForecast) {
+    var fn = calcForecast || calcForecastForModel;
+    return fetchModelrunsFor(modelName).then(function (modelruns) {
+      if (!modelruns || modelruns.length === 0) return [];
+      return modelruns.map(function (mr) {
+        return { modelRun: mr, forecast: fn(mr) };
+      });
     });
   }
 
@@ -128,7 +154,17 @@
       var timeout = setTimeout(function () { img.src = ''; resolve(false); }, 5000);
       img.onload = function () { clearTimeout(timeout); resolve(true); };
       img.onerror = function () { clearTimeout(timeout); resolve(false); };
-      img.src = WIND_RGB_BASE + '/' + basePath + '/1000/' + mrStr + '/' + fcStr + '/5/24/16.png';
+      img.src = BASE_URL + '/' + basePath + '/1000/' + mrStr + '/' + fcStr + '/5/24/16.png';
+    });
+  }
+
+  function probeTileFor(basePath, layer, mrStr, fcStr) {
+    return new Promise(function (resolve) {
+      var img = new Image();
+      var timeout = setTimeout(function () { img.src = ''; resolve(false); }, 5000);
+      img.onload = function () { clearTimeout(timeout); resolve(true); };
+      img.onerror = function () { clearTimeout(timeout); resolve(false); };
+      img.src = BASE_URL + '/' + basePath + '/' + layer + '/1000/' + mrStr + '/' + fcStr + '/5/24/16.png';
     });
   }
 
@@ -176,13 +212,16 @@
   }
 
   var _layerMap = {};
+  var _allToggleIds = ['toggleWindRgb', 'toggleRhRgb', 'toggleTp24Rgb', 'togglePm25Rgb', 'toggleHthRgb', 'toggleGsmapRgb'];
+
   function registerLayer(name, hideFn) { _layerMap[name] = hideFn; }
   function deactivateOthers(except) {
     Object.keys(_layerMap).forEach(function (k) {
       if (k !== except && typeof _layerMap[k] === 'function') _layerMap[k]();
     });
-    ['toggleWindRgb', 'toggleRhRgb', 'toggleTp24Rgb'].forEach(function (id) {
-      if (id !== 'toggle' + except.charAt(0).toUpperCase() + except.slice(1) + 'Rgb') {
+    var exceptToggle = 'toggle' + except.charAt(0).toUpperCase() + except.slice(1) + 'Rgb';
+    _allToggleIds.forEach(function (id) {
+      if (id !== exceptToggle) {
         var cb = document.getElementById(id);
         if (cb && cb.checked) { cb.checked = false; }
       }
@@ -190,14 +229,17 @@
   }
 
   window.GfsBase = {
-    basePath: WIND_RGB_BASE,
+    basePath: BASE_URL + '/gfs_indo',
     buildDateStr: buildDateStr,
     buildCandidateList: buildCandidateList,
     buildCandidateListAsync: buildCandidateListAsync,
+    buildCandidateListForModel: buildCandidateListForModel,
     fetchLatestModelruns: fetchLatestModelruns,
+    fetchModelrunsFor: fetchModelrunsFor,
     startAutoRefresh: startAutoRefresh,
     onNewModelrun: onNewModelrun,
     probeTile: probeTile,
+    probeTileFor: probeTileFor,
     formatInfo: formatInfo,
     loadProvinsi: loadProvinsi,
     removeProvinsi: removeProvinsi,
@@ -210,7 +252,7 @@
       startAutoRefresh(10 * 60 * 1000);
     });
     onNewModelrun(function () {
-      ['toggleWindRgb', 'toggleRhRgb', 'toggleTp24Rgb'].forEach(function (id) {
+      _allToggleIds.forEach(function (id) {
         var cb = document.getElementById(id);
         if (cb && cb.checked) cb.dispatchEvent(new Event('change'));
       });

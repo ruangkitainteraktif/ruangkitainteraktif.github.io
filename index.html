@@ -370,7 +370,7 @@
 
       <div class="sidebar-content">
         <div id="tab-geoid" class="tab-content active">
-          <h4 style="font-size:15px; margin-bottom:4px;">Batas Wilayah</h4>
+          <h4 style="font-size:15px; margin-bottom:4px;">GeoID Analysis</h4>
           <p style="font-size:13px; color:#668198; margin-bottom:20px;">Pilih wilayah atau klik di peta untuk
             menampilkan data.</p>
           <div id="geoidSummaryCards" class="geoid-summary-cards">
@@ -462,7 +462,7 @@
 
         <!-- TAB: GEOTANI -->
         <div id="tab-geotani" class="tab-content">
-          <h4 style="font-size:15px; margin-bottom:4px;">Geotani Analysis</h4>
+          <h4 style="font-size:15px; margin-bottom:4px;">GeoTani Analysis</h4>
           <p style="font-size:13px; color:#668198; margin-bottom:20px;">Petakan, Analisis, dan Optimalkan</p>
 
           <nav class="geotani-analysis-nav" aria-label="Menu analisis Geotani" role="tablist">
@@ -692,7 +692,7 @@
 
         <!-- TAB 3: CCTV -->
         <div id="tab-cctv" class="tab-content">
-          <h4 style="font-size:15px; margin-bottom:5px;">CCTV Area</h4>
+          <h4 style="font-size:15px; margin-bottom:5px;">CCTV Analysis</h4>
           <p style="font-size:13px; color:#668198; margin-bottom:20px;">Klik pencarian untuk melihat lokasi cctv.</p>
           <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
           <div class="cctv-layers">
@@ -745,6 +745,10 @@
 
         <!-- TAB 3: GEMPA BMKG -->
         <div id="tab-gempa" class="tab-content">
+
+          <h4 style="font-size:15px; margin-bottom:4px;">GeoMeteo Analysis</h4>
+          <p style="font-size:13px; color:#668198; margin-bottom:20px;">Data Atmosfer dalam Satu Peta</p>
+
           <div class="gempa-subtabs">
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-gempa" onclick="openGempaSubtab(this)">Gempa Bumi</button>
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-karhutla" onclick="openGempaSubtab(this)">Info Karhutla</button>
@@ -779,10 +783,7 @@
           </div>
 
           <div id="gempa-subtab-infocuaca" class="gempa-subtab-panel active">
-            <h4 style="font-size: 15px; margin-bottom: 5px;">Info Cuaca BMKG</h4>
-            <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Cari wilayah atau klik pada peta untuk melihat informasi cuaca.</p>
-            <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
-            <h4 style="font-size: 13px; margin-bottom: 10px;">Cari wilayah untuk melihat data cuaca.</h4>
+            <h4 style="font-size: 15px; margin-bottom: 15px;">Cari wilayah untuk melihat data cuaca terbaru.</h4>
             <div class="search-weather-container">
               <input type="text" id="weatherSearchInput" class="search-weather-input"
                 placeholder="🔍 Cari Desa/Kelurahan..." autocomplete="off" />
@@ -822,6 +823,30 @@
                 <span class="cctv-layer-info">
                   <span class="cctv-layer-name">Total Precipitation 24 Jam</span>
                   <small id="tp24RgbInfo">Layer curah hujan 24 jam GFS</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="togglePm25Rgb">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">PM2.5 Air Quality</span>
+                  <small id="pm25RgbInfo">Layer kualitas udara PM2.5 BMKG PCM</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleHthRgb">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Hari Tanpa Hujan (HTH)</span>
+                  <small id="hthRgbInfo">Layer hari tanpa hujan BMKG HTH</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleGsmapRgb">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">GsMAP Precipitation</span>
+                  <small id="gsmapRgbInfo">Layer curah hujan GsMAP BMKG</small>
                 </span>
               </label>
             </div>
@@ -1019,6 +1044,9 @@
   <script src="assets/js/wind-rgb.js"></script>
   <script src="assets/js/rh-rgb.js"></script>
   <script src="assets/js/tp24-rgb.js"></script>
+  <script src="assets/js/pm25-rgb.js"></script>
+  <script src="assets/js/hth-rgb.js"></script>
+  <script src="assets/js/gsmap-rgb.js"></script>
   <script src="assets/js/map-insight-cards.js"></script>
   <script src="assets/js/geotani-search.js"></script>
   <script src="assets/js/sawah-dilindungi.js"></script>

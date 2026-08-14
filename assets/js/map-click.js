@@ -37,6 +37,18 @@
       if (typeof showTp24Popup === 'function') showTp24Popup(lat, lng);
       return;
     }
+    if (typeof isPm25RgbActive === 'function' && isPm25RgbActive()) {
+      if (typeof showPm25Popup === 'function') showPm25Popup(lat, lng);
+      return;
+    }
+    if (typeof isHthRgbActive === 'function' && isHthRgbActive()) {
+      if (typeof showHthPopup === 'function') showHthPopup(lat, lng);
+      return;
+    }
+    if (typeof isGsmapRgbActive === 'function' && isGsmapRgbActive()) {
+      if (typeof showGsmapPopup === 'function') showGsmapPopup(lat, lng);
+      return;
+    }
 
     // Nonaktifkan popup geoid di tab pengaturan, alat, dan gempa
     const activeTab = window.currentActiveTab;
