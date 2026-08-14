@@ -159,8 +159,9 @@
       if (element) element.innerText = value || '-';
     };
     setText('adm-provinsi', item.provinsi);
+    setText('adm-kabkota', item.type === 'kabkot' ? item.name : item.kabkot);
     setText('adm-kecamatan', item.kecamatan);
-    setText('adm-desa', item.type === 'desa' ? item.name : item.kabkot || item.name);
+    setText('adm-desa', item.type === 'desa' ? item.name : '-');
     setText('adm-jalan', '-');
     setText('adm-kodepos', location.kodepos || location.postal_code || '-');
 

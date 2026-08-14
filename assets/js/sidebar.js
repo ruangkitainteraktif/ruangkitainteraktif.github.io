@@ -21,11 +21,13 @@
         closeAdminModal();
       } else {
         openAdminModal();
+        if (typeof showChoropleth === 'function') showChoropleth('jumlah');
       }
     } else {
       if (show === true || (show === null && panel.classList.contains('hidden'))) {
         panel.classList.remove('hidden');
         if (btn) btn.classList.add('active');
+        if (typeof showChoropleth === 'function') showChoropleth('jumlah');
       } else {
         panel.classList.add('hidden');
         if (btn) btn.classList.remove('active');
@@ -110,7 +112,7 @@
     });
   }
 
-  // Sub-tab GEOQUAKE: Gempabumi / Karhutla
+  // Sub-tab GEOQUAKE: Gempabumi / Karhutla / Info Cuaca / Prediksi Cuaca
   function openGempaSubtab(btn) {
     var subtabId = btn.getAttribute('data-subtab');
     if (!subtabId) return;
@@ -129,3 +131,11 @@
     // Load earthquake data when switching to gempa sub-tab
     if (subtabId === 'gempa-subtab-gempa') loadEarthquakeData();
   }
+
+  function openGempaSubtabById(subtabId) {
+    var btn = document.querySelector('.gempa-subtab-btn[data-subtab="' + subtabId + '"]');
+    if (btn) openGempaSubtab(btn);
+  }
+
+  window.openGempaSubtabById = openGempaSubtabById;
+  window.openGempaSubtab = openGempaSubtab;

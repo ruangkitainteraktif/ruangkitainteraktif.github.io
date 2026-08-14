@@ -1241,10 +1241,17 @@
       border: 1px solid #e0e0e0;
       border-radius: 6px;
       padding: 3px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 transparent;
     }
+    .gempa-subtabs::-webkit-scrollbar { height: 4px; }
+    .gempa-subtabs::-webkit-scrollbar-track { background: transparent; }
+    .gempa-subtabs::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
     .gempa-subtab-btn {
-      flex: 1;
-      padding: 7px 0;
+      flex: 0 0 auto;
+      padding: 7px 10px;
       border: none;
       border-radius: 4px;
       background: transparent;
@@ -1252,6 +1259,7 @@
       font-weight: 600;
       color: #666;
       cursor: pointer;
+      white-space: nowrap;
       transition: background .15s, color .15s;
     }
     .gempa-subtab-btn:hover { background: #e8ecf0; color: #334155; }
@@ -1802,6 +1810,10 @@
     .geoid-cctv-insight { position: relative; padding-right: 42px; }
     .geoid-cctv-button { position: absolute; top: 50%; right: 0; display: grid; place-items: center; width: 32px; height: 32px; padding: 0 0 0 2px; border: 0; border-radius: 50%; background: #2563eb; color: #fff; font-size: 13px; cursor: pointer; transform: translateY(-50%); box-shadow: 0 2px 8px rgba(37, 99, 235, .3); }
     .geoid-cctv-button:hover { background: #1d4ed8; }
+
+    .geoid-risiko-wrap { position: relative; padding-right: 42px; }
+    .geoid-risiko-button { position: absolute; top: 0; right: 0; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: #dc2626; color: #fff; font-size: 13px; cursor: pointer; box-shadow: 0 2px 8px rgba(220, 38, 38, .3); }
+    .geoid-risiko-button:hover { background: #b91c1c; }
 
     /* Scrollable Popup */
     .geoid-popup-scroll { max-height: 60vh; }
@@ -2662,10 +2674,10 @@
     .luas-chart-header { padding: 12px 14px 8px; }
     .luas-chart-title { font-size: 11px; font-weight: 700; color: #1e293b; margin: 0 0 2px; }
     .luas-chart-subtitle { font-size: 8px; color: #94a3b8; }
-    .luas-chart-body { padding: 8px 14px 14px; }
-    .luas-chart-bars { display: flex; align-items: flex-end; gap: 6px; height: 140px; }
-    .luas-chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
-    .luas-chart-bar { width: 100%; border-radius: 4px 4px 0 0; background: linear-gradient(180deg, #ef4444, #dc2626); transition: height .4s ease; position: relative; min-height: 2px; }
+    .luas-chart-body { padding: 8px 14px 14px; overflow-x: auto; }
+    .luas-chart-bars { display: flex; align-items: flex-end; gap: 6px; height: 140px; min-width: max-content; }
+    .luas-chart-bar-wrap { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+    .luas-chart-bar { width: 100%; min-width: 18px; max-width: 32px; border-radius: 4px 4px 0 0; background: linear-gradient(180deg, #ef4444, #dc2626); transition: height .4s ease; position: relative; min-height: 2px; }
     .luas-chart-bar:hover { filter: brightness(1.1); }
     .luas-chart-bar-val { font-size: 7px; font-weight: 700; color: #334155; white-space: nowrap; text-align: center; }
     .luas-chart-bar-label { font-size: 7px; color: #94a3b8; text-align: center; }
@@ -2737,6 +2749,37 @@
     .wind-legend-item { display: flex; align-items: center; gap: 5px; font-size: 9px; color: #475569; }
     .wind-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
     .wind-legend-unit { font-size: 8px; color: #94a3b8; margin-top: 6px; font-style: italic; }
+
+    /* Wind Popup */
+    .wind-popup { width: 310px; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1e293b; background: #fff; overflow: hidden; }
+    .wind-popup-head { padding: 12px 14px; color: #fff; background: linear-gradient(135deg, #0ea5e9, #0369a1); }
+    .wind-popup-head strong { display: block; font-size: 14px; line-height: 1.25; }
+    .wind-popup-head span { display: block; margin-top: 2px; font-size: 11px; opacity: .92; }
+    .wind-popup-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; background: rgba(255,255,255,.18); padding: 3px 8px; border-radius: 20px; margin-bottom: 6px; }
+    .wind-popup-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #38bdf8; animation: pulse-dot 1.5s ease-in-out infinite; }
+    .wind-popup-body { padding: 0; }
+    .wind-popup-meta { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
+    .wind-popup-meta div { display: flex; justify-content: space-between; align-items: center; }
+    .wind-popup-meta span { font-size: 12px; color: #64748b; }
+    .wind-popup-meta b { font-size: 12px; color: #1e293b; font-weight: 600; }
+    .wind-popup-card { display: flex; align-items: center; gap: 14px; padding: 14px; border-bottom: 1px solid #f1f5f9; }
+    .wind-popup-compass { position: relative; width: 56px; height: 56px; flex-shrink: 0; }
+    .wind-popup-compass-ring { width: 56px; height: 56px; border-radius: 50%; border: 2px solid #cbd5e1; display: grid; place-items: center; position: relative; background: #fff; }
+    .wind-popup-compass-arrow { display: block; width: 3px; height: 22px; background: linear-gradient(to bottom, #0ea5e9 50%, #ef4444 50%); border-radius: 2px; transform-origin: bottom center; position: absolute; bottom: 50%; left: calc(50% - 1.5px); }
+    .wind-popup-compass-label { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 9px; color: #64748b; white-space: nowrap; font-weight: 600; }
+    .wind-popup-wind-info { display: flex; flex-direction: column; gap: 2px; }
+    .wind-popup-speed { display: flex; align-items: baseline; gap: 4px; }
+    .wind-popup-speed-val { font-size: 28px; font-weight: 800; line-height: 1; }
+    .wind-popup-speed-unit { font-size: 12px; color: #64748b; font-weight: 500; }
+    .wind-popup-cat { font-size: 12px; font-weight: 600; color: #334155; }
+    .wind-popup-beaufort { font-size: 10px; color: #94a3b8; }
+    .wind-popup-detail-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; padding: 0; }
+    .wind-popup-detail { display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
+    .wind-popup-detail span { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: .3px; }
+    .wind-popup-detail b { font-size: 12px; color: #1e293b; font-weight: 600; }
+    .wind-popup-fallback { padding: 14px; text-align: center; font-size: 12px; color: #64748b; line-height: 1.5; }
+    .wind-popup-fallback small { font-size: 10px; color: #94a3b8; }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
 
     /* Earthquake Marker */
     .quake-marker-wrap { background: transparent; border: 0; }

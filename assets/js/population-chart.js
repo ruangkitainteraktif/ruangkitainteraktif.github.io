@@ -85,8 +85,15 @@
 
   function getTotalPopulation(rankData) {
     if (!rankData?.features) return null;
-    const indo = rankData.features.find(f => f.properties.nama_wilayah === 'INDONESIA' && (f.properties.id_dimensi === 1 || f.properties.nama_dimensi === 'Total'));
-    return indo?.properties?.nilai || null;
+    const indo = rankData.features.find(f => f.properties.nama_wilayah === 'INDONESIA');
+    if (!indo) return null;
+    const all = rankData.features.filter(f => f.properties.nama_wilayah === 'INDONESIA');
+    let max = 0;
+    for (let i = 0; i < all.length; i++) {
+      const v = all[i].properties.nilai || 0;
+      if (v > max) max = v;
+    }
+    return max || indo.properties.nilai || null;
   }
 
   function getIndicatorNational(jsonData) {
@@ -605,17 +612,19 @@
       if (val === 'jumlah') {
         chartArea.innerHTML = '';
         titleEl.textContent = 'Peringkat Provinsi (Jumlah Penduduk)';
-        if (typeof hideChoropleth === 'function') hideChoropleth();
         const freshRank = await loadRank();
-        const freshProvincesRank = getProvincesRanking(freshRank?.data || freshRank);
+        const freshRankData = freshRank?.data || freshRank;
+        const freshProvincesRank = getProvincesRanking(freshRankData);
         createRankingTable(rankingEl, freshProvincesRank, 'jumlah');
+        if (typeof showChoropleth === 'function') showChoropleth('jumlah', freshRank);
       } else if (val === 'laju') {
         chartArea.innerHTML = '';
         titleEl.textContent = 'Peringkat Provinsi (Laju Pertumbuhan)';
-        if (typeof hideChoropleth === 'function') hideChoropleth();
         const freshLaju = await loadLaju();
-        const freshProvincesLaju = getProvincesLaju(freshLaju?.data || freshLaju);
+        const freshLajuData = freshLaju?.data || freshLaju;
+        const freshProvincesLaju = getProvincesLaju(freshLajuData);
         createRankingTable(rankingEl, freshProvincesLaju, 'laju');
+        if (typeof showChoropleth === 'function') showChoropleth('laju', freshLaju);
       } else {
         chartArea.innerHTML = '';
         titleEl.textContent = 'Memuat...';
@@ -628,6 +637,7 @@
     createPyramidChart(document.getElementById('pyramid-chart'), male, female);
     createGenerationChart(document.getElementById('generation-chart'), generasi);
     createRankingTable(document.getElementById('ranking-table'), provincesRank, 'jumlah');
+
   }
 
   window.renderPopulationChart = renderPopulationChart;

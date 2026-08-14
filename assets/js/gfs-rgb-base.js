@@ -1,0 +1,219 @@
+/* ── GFS RGB Base — shared utilities for BMKG GFS tile layers ── */
+(function () {
+  'use strict';
+
+  var WIND_RGB_BASE = 'https://spartan.bmkg.go.id/map/rgb_req/gfs_indo';
+  var MODELRUN_API = 'https://spartan.bmkg.go.id/map/modelrun';
+  var CACHE_MS = 10 * 60 * 1000;
+
+  function pad2(n) { return n < 10 ? '0' + n : String(n); }
+
+  function buildDateStr(d) {
+    return '' + d.getUTCFullYear()
+      + pad2(d.getUTCMonth() + 1)
+      + pad2(d.getUTCDate())
+      + pad2(d.getUTCHours()) + '00';
+  }
+
+  function calcForecastTime(modelRun) {
+    var now = new Date();
+    var utcH = now.getUTCHours();
+    var base = modelRun ? new Date(modelRun) : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+    var forecast = new Date(base);
+
+    if (utcH >= 12) {
+      forecast.setUTCDate(forecast.getUTCDate() + 1);
+      forecast.setUTCHours(3, 0, 0, 0);
+    } else if (utcH >= 3) {
+      forecast.setUTCHours(12, 0, 0, 0);
+    } else {
+      forecast.setUTCHours(3, 0, 0, 0);
+    }
+
+    if (forecast <= modelRun) {
+      forecast = new Date(modelRun);
+      forecast.setUTCHours(forecast.getUTCHours() + 3);
+    }
+
+    return forecast;
+  }
+
+  function buildCandidateList() {
+    var now = new Date();
+    var utcH = now.getUTCHours();
+    var candidates = [];
+
+    var today00 = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+    var today12 = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 12, 0, 0));
+    var yesterday12 = new Date(today00);
+    yesterday12.setUTCDate(yesterday12.getUTCDate() - 1);
+    yesterday12.setUTCHours(12, 0, 0, 0);
+    var yesterday00 = new Date(today00);
+    yesterday00.setUTCDate(yesterday00.getUTCDate() - 1);
+    yesterday00.setUTCHours(0, 0, 0, 0);
+
+    if (utcH >= 12) candidates.push(today12);
+    candidates.push(today00);
+    candidates.push(yesterday12);
+    candidates.push(yesterday00);
+
+    return candidates.map(function (mr) {
+      return { modelRun: mr, forecast: calcForecastTime(mr) };
+    });
+  }
+
+  var _cachedModelruns = null;
+  var _lastFetch = 0;
+
+  function fetchLatestModelruns() {
+    if (_cachedModelruns && (Date.now() - _lastFetch) < CACHE_MS) {
+      return Promise.resolve(_cachedModelruns);
+    }
+    return fetch(MODELRUN_API)
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !data.gfs_indo) return _cachedModelruns || [];
+        var runs = data.gfs_indo.map(function (s) { return new Date(s); });
+        _cachedModelruns = runs;
+        _lastFetch = Date.now();
+        return runs;
+      })
+      .catch(function () { return _cachedModelruns || []; });
+  }
+
+  function buildCandidateListAsync() {
+    return fetchLatestModelruns().then(function (modelruns) {
+      var local = buildCandidateList();
+      if (!modelruns || modelruns.length === 0) return local;
+
+      var apiCandidates = modelruns.map(function (mr) {
+        return { modelRun: mr, forecast: calcForecastTime(mr) };
+      });
+
+      local.forEach(function (c) {
+        var dup = apiCandidates.some(function (a) {
+          return a.modelRun.getTime() === c.modelRun.getTime();
+        });
+        if (!dup) apiCandidates.push(c);
+      });
+
+      return apiCandidates;
+    });
+  }
+
+  var _refreshTimer = null;
+  var _refreshCallbacks = [];
+  var _lastNotifiedRun = null;
+
+  function startAutoRefresh(intervalMs) {
+    if (_refreshTimer) clearInterval(_refreshTimer);
+    _refreshTimer = setInterval(function () {
+      fetchLatestModelruns().then(function (runs) {
+        if (!runs || runs.length === 0) return;
+        var latest = runs[0].getTime();
+        if (_lastNotifiedRun !== null && _lastNotifiedRun !== latest) {
+          _lastNotifiedRun = latest;
+          _refreshCallbacks.forEach(function (cb) { try { cb(runs); } catch (e) {} });
+        }
+        if (_lastNotifiedRun === null) _lastNotifiedRun = latest;
+      });
+    }, intervalMs || 10 * 60 * 1000);
+  }
+
+  function onNewModelrun(cb) { _refreshCallbacks.push(cb); }
+
+  function probeTile(basePath, mrStr, fcStr) {
+    return new Promise(function (resolve) {
+      var img = new Image();
+      var timeout = setTimeout(function () { img.src = ''; resolve(false); }, 5000);
+      img.onload = function () { clearTimeout(timeout); resolve(true); };
+      img.onerror = function () { clearTimeout(timeout); resolve(false); };
+      img.src = WIND_RGB_BASE + '/' + basePath + '/1000/' + mrStr + '/' + fcStr + '/5/24/16.png';
+    });
+  }
+
+  function formatInfo(modelRun, forecast) {
+    var m = buildDateStr(modelRun);
+    var f = buildDateStr(forecast);
+    var ms = m.slice(6, 8) + ' ' + m.slice(8, 10) + 'Z ' + m.slice(4, 6) + '/' + m.slice(0, 4);
+    var fs = f.slice(6, 8) + ' ' + f.slice(8, 10) + 'Z ' + f.slice(4, 6) + '/' + f.slice(0, 4);
+    return ms + ' → ' + fs;
+  }
+
+  var _provinsiLoaded = false;
+  var _provinsiLayer = null;
+
+  function loadProvinsi(provinsiGeojsonUrl) {
+    if (_provinsiLoaded) {
+      if (_provinsiLayer) _provinsiLayer.addTo(map);
+      return Promise.resolve();
+    }
+    return new Promise(function (resolve) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', provinsiGeojsonUrl, true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            var geojson = JSON.parse(xhr.responseText);
+            _provinsiLayer = L.geoJSON(geojson, {
+              style: { color: '#ffffff', weight: 1.2, opacity: 0.6, fillColor: '#3b82f6', fillOpacity: 0.03 },
+              interactive: false
+            }).addTo(map);
+            _provinsiLoaded = true;
+          } catch (e) {
+            console.error('[GfsBase] Gagal load provinsi GeoJSON:', e);
+          }
+        }
+        resolve();
+      };
+      xhr.send();
+    });
+  }
+
+  function removeProvinsi() {
+    if (_provinsiLayer && map.hasLayer(_provinsiLayer)) map.removeLayer(_provinsiLayer);
+  }
+
+  var _layerMap = {};
+  function registerLayer(name, hideFn) { _layerMap[name] = hideFn; }
+  function deactivateOthers(except) {
+    Object.keys(_layerMap).forEach(function (k) {
+      if (k !== except && typeof _layerMap[k] === 'function') _layerMap[k]();
+    });
+    ['toggleWindRgb', 'toggleRhRgb', 'toggleTp24Rgb'].forEach(function (id) {
+      if (id !== 'toggle' + except.charAt(0).toUpperCase() + except.slice(1) + 'Rgb') {
+        var cb = document.getElementById(id);
+        if (cb && cb.checked) { cb.checked = false; }
+      }
+    });
+  }
+
+  window.GfsBase = {
+    basePath: WIND_RGB_BASE,
+    buildDateStr: buildDateStr,
+    buildCandidateList: buildCandidateList,
+    buildCandidateListAsync: buildCandidateListAsync,
+    fetchLatestModelruns: fetchLatestModelruns,
+    startAutoRefresh: startAutoRefresh,
+    onNewModelrun: onNewModelrun,
+    probeTile: probeTile,
+    formatInfo: formatInfo,
+    loadProvinsi: loadProvinsi,
+    removeProvinsi: removeProvinsi,
+    registerLayer: registerLayer,
+    deactivateOthers: deactivateOthers
+  };
+
+  document.addEventListener('DOMContentLoaded', function () {
+    fetchLatestModelruns().then(function () {
+      startAutoRefresh(10 * 60 * 1000);
+    });
+    onNewModelrun(function () {
+      ['toggleWindRgb', 'toggleRhRgb', 'toggleTp24Rgb'].forEach(function (id) {
+        var cb = document.getElementById(id);
+        if (cb && cb.checked) cb.dispatchEvent(new Event('change'));
+      });
+    });
+  });
+})();

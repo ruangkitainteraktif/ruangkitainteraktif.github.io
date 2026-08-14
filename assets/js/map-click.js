@@ -1,6 +1,11 @@
   // KLIK MAP -> REVERSE GEOCODE, POPUP & DETAIL PANEL
   function isCuacaTabActive() {
-    return document.getElementById('tab-cuaca')?.classList.contains('active') === true;
+    if (document.getElementById('tab-cuaca')?.classList.contains('active') === true) return true;
+    if (document.getElementById('tab-gempa')?.classList.contains('active') === true) {
+      var infoCuacaPanel = document.getElementById('gempa-subtab-infocuaca');
+      if (infoCuacaPanel && infoCuacaPanel.classList.contains('active')) return true;
+    }
+    return false;
   }
 
   async function openGeotaniBoundaryFromOverlay(latlng, kode) {
@@ -19,6 +24,19 @@
 
     const lat = e.latlng.lat;
     const lng = e.latlng.lng;
+
+    if (typeof isWindRgbActive === 'function' && isWindRgbActive()) {
+      if (typeof showWindPopup === 'function') showWindPopup(lat, lng);
+      return;
+    }
+    if (typeof isRhRgbActive === 'function' && isRhRgbActive()) {
+      if (typeof showRhPopup === 'function') showRhPopup(lat, lng);
+      return;
+    }
+    if (typeof isTp24RgbActive === 'function' && isTp24RgbActive()) {
+      if (typeof showTp24Popup === 'function') showTp24Popup(lat, lng);
+      return;
+    }
 
     // Nonaktifkan popup geoid di tab pengaturan, alat, dan gempa
     const activeTab = window.currentActiveTab;
@@ -107,41 +125,30 @@
   }
 
   async function fetchReverseGeocodeWithPopup(lng, lat, marker) {
-    const geocodeUrl = `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode?f=pjson&featureTypes=&location=${lng},${lat}`;
-
-    try {
-      const response = await fetch(geocodeUrl);
-      const data = await response.json();
-
-      const desa = data?.address?.Neighborhood || data?.address?.District || data?.address?.City || '-';
-      const kecamatan = data?.address?.Subregion || data?.address?.City || '-';
-      const provinsi = data?.address?.Region || '-';
-      const jalan = data?.address?.Match_addr || data?.address?.Address || '-';
-      const kodepos = data?.address?.Postal || '-';
-
-      // Cari adm4 code dari kode_wilayah.json
-      const matched = typeof findAdm4ByGeocode === 'function'
-        ? findAdm4ByGeocode(desa, kecamatan, data?.address?.City || kecamatan, provinsi)
-        : null;
-      const adm4Code = matched ? matched.kode : '';
+    const matched = null;
+    const adm4Code = '';
+    const desa = '-';
+    const kecamatan = '-';
+    const kabkota = '-';
+    const provinsi = '-';
+    const jalan = `${lng.toFixed(5)}, ${lat.toFixed(5)}`;
+    const kodepos = '-';
 
       // Update detail panel
-      document.getElementById('adm-provinsi').innerText = matched ? matched.provinsi : provinsi;
-      document.getElementById('adm-kecamatan').innerText = matched ? matched.kecamatan : kecamatan;
-      document.getElementById('adm-desa').innerText = matched ? matched.desa : desa;
+      document.getElementById('adm-provinsi').innerText = provinsi;
+      document.getElementById('adm-kabkota').innerText = kabkota;
+      document.getElementById('adm-kecamatan').innerText = kecamatan;
+      document.getElementById('adm-desa').innerText = desa;
       document.getElementById('adm-jalan').innerText = jalan;
       document.getElementById('adm-kodepos').innerText = kodepos;
 
       // Bangun popup konsisten dengan showGeoidFlyup()
-      const title = matched ? matched.desa : desa;
-      const hierarchy = [matched ? matched.kecamatan : kecamatan, matched ? matched.provinsi : provinsi].filter(Boolean);
+      const title = `${lng.toFixed(5)}, ${lat.toFixed(5)}`;
+      const hierarchy = [];
       const coordStr = `${lng.toFixed(5)}, ${lat.toFixed(5)}`;
       const isGeotaniMode = window.currentActiveTab === 'tab-geotani';
       const metadata = [
-        ['Alamat', jalan],
-
-        ['Koordinat', coordStr],
-        adm4Code && ['Kode wilayah', adm4Code]
+        ['Koordinat', coordStr]
       ].filter(Boolean);
 
       const prefix = isGeotaniMode ? 'geotani' : 'geoid';
@@ -153,7 +160,6 @@
               ${isGeotaniMode ? 'Geotani' : 'Wilayah'}
             </div>
             <strong>${escapeMapClickHtml(title)}</strong>
-            ${hierarchy.length ? `<span>${hierarchy.map(escapeMapClickHtml).join(' · ')}</span>` : ''}
           </div>
           <div class="${prefix}-popup-body">
             <div class="${prefix}-popup-meta">${metadata.map(([label, value]) => `<div><span>${escapeMapClickHtml(label)}</span><b>${escapeMapClickHtml(value)}</b></div>`).join('')}</div>
@@ -171,7 +177,7 @@
       marker.setPopupContent(popupContent);
       marker._icon?.classList.add(isGeotaniMode ? 'geotani-leaflet-popup' : 'geoid-leaflet-popup');
 
-      // Muat jadwal sholat berdasarkan koordinat dari reverse geocode
+      // Muat jadwal sholat berdasarkan koordinat
       if (!isGeotaniMode) loadPrayerSchedule(marker, lat, lng);
 
       // Muat insights cuaca, gempa, CCTV terdekat
@@ -264,3 +270,5 @@
       if (typeof syncPopupContent === 'function') syncPopupContent(marker);
     }
   }
+
+  window.loadPrayerSchedule = loadPrayerSchedule;

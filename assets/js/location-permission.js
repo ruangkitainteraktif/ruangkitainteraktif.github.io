@@ -68,17 +68,6 @@
     if (isGeotaniMode) return;
 
     let userAdm4Code = '';
-    try {
-      const geoRes = await fetch(`https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode?f=pjson&featureTypes=&location=${lon},${lat}`);
-      const geoData = await geoRes.json();
-      const desa = geoData?.address?.Neighborhood || geoData?.address?.District || '';
-      const kecamatan = geoData?.address?.Subregion || geoData?.address?.City || '';
-      const provinsi = geoData?.address?.Region || '';
-      if (typeof findAdm4ByGeocode === 'function') {
-        const matched = findAdm4ByGeocode(desa, kecamatan, geoData?.address?.City || kecamatan, provinsi);
-        userAdm4Code = matched ? matched.kode : '';
-      }
-    } catch (_) {}
     if (typeof loadGeoidPopupInsights === 'function') await loadGeoidPopupInsights(userMarker, { lat, lon, kode: userAdm4Code });
     if (userAdm4Code && typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(userMarker, userAdm4Code, { lat, lon });
     if (typeof showGeoidBoundary === 'function' && userAdm4Code) showGeoidBoundary(userAdm4Code, 15);

@@ -232,24 +232,6 @@
               </div>
             </div>
           </div>
-
-          <div class="welcome-tech-label">Teknologi yang Digunakan</div>
-          <div class="welcome-tech-badges">
-            <span class="welcome-tech-badge"><i></i>Leaflet.js</span>
-            <span class="welcome-tech-badge"><i></i>Turf.js</span>
-            <span class="welcome-tech-badge"><i></i>ArcGIS</span>
-            <span class="welcome-tech-badge"><i></i>BMKG API</span>
-            <span class="welcome-tech-badge"><i></i>Sentinel-2</span>
-            <span class="welcome-tech-badge"><i></i>Esri Leaflet</span>
-            <span class="welcome-tech-badge"><i></i>jsPDF</span>
-            <span class="welcome-tech-badge"><i></i>Video.js</span>
-            <span class="welcome-tech-badge"><i></i>HLS.js</span>
-            <span class="welcome-tech-badge"><i></i>proj4js</span>
-            <span class="welcome-tech-badge"><i></i>jQuery</span>
-            <span class="welcome-tech-badge"><i></i>jsTree</span>
-            <span class="welcome-tech-badge"><i></i>shpjs</span>
-            <span class="welcome-tech-badge"><i></i>MarkerCluster</span>
-          </div>
         </div>
 
         <!-- Footer -->
@@ -354,10 +336,10 @@
       <div class="tab-menu">
         <button class="tab-btn active" onclick="openTab(event, 'tab-geoid')">GEOID</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-geotani')">GEOTANI</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-gempa'); openGempaSubtabById('gempa-subtab-infocuaca')" style="display:none">GEOMET</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-gempa')">GEOMETEO</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-geoportal')">GEOPORTAL</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-cctv')">GEOWATCH</button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-cuaca')">GEOWX</button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-gempa')">GEOGUARD</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-pengaturan')">SETTING</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-alat')">TOOLS</button>
       </div>
@@ -754,60 +736,23 @@
         </div>
 
         <!-- TAB 3: CUACA BMKG -->
+        <!-- TAB 3: CUACA BMKG (content moved to tab-gempa sub-tabs) -->
         <div id="tab-cuaca" class="tab-content">
-          <h4 style="font-size: 15px; margin-bottom: 5px;">Prakiraan Cuaca BMKG</h4>
-          <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Cari wilayah atau klik pada peta untuk melihat
-            informasi cuaca.</p>
-          <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
-          <!-- Search Autocomplete Form -->
-          <h4 style="font-size: 13px; margin-bottom: 10px;">Cari wilayah untuk melihat data cuaca.</h4>
-          <div class="search-weather-container">
-            <input type="text" id="weatherSearchInput" class="search-weather-input"
-              placeholder="🔍 Cari Desa/Kelurahan..." autocomplete="off" />
-            <div id="autocompleteResults" class="autocomplete-results"></div>
-          </div>
-
-          <div class="cctv-layers" style="margin-bottom:12px;">
-            <label class="cctv-layer-toggle">
-              <input type="checkbox" id="toggleWindRgb">
-              <span class="cctv-layer-check"></span>
-              <span class="cctv-layer-info">
-                <span class="cctv-layer-name">Wind Speed and Direction</span>
-                <small id="windRgbInfo">Layer warna kecepatan angin GFS</small>
-              </span>
-            </label>
-          </div>
-
-          <div class="wind-toggle-row" style="display:none">
-            <label class="wind-toggle-label">
-              <input type="checkbox" id="toggleWindAnim">
-              <span class="wind-toggle-track"><span class="wind-toggle-thumb"></span></span>
-              <span class="wind-toggle-text">Animasi Angin (Wind Particle)</span>
-            </label>
-            <div id="windControls" class="wind-controls" style="display:none;">
-              <button class="wind-btn" id="windPrev" title="Frame sebelumnya">◀</button>
-              <span id="windTimestamp" class="wind-ts"></span>
-              <button class="wind-btn" id="windNext" title="Frame berikutnya">▶</button>
-            </div>
-          </div>
-
-          <!-- Container Hasil Data Cuaca -->
-          <div id="weather-content" style="margin-top:20px">
-            <div
-              style="font-size:13px; color:#555; background:#eef7ff; padding:10px; margin-bottom: 100px; border-radius:5px;">
-              ℹ️ Pilih lokasi dari pencarian atau klik pada peta untuk melihat cuaca.
-            </div>
+          <div style="text-align:center; padding:40px 20px;">
+            <p style="font-size:14px; color:#666;">Menu ini telah dipindahkan ke sub-tab <b>Info Cuaca</b> dan <b>Prediksi Cuaca</b> pada tab <b>GEOGUARD</b>.</p>
           </div>
         </div>
 
         <!-- TAB 3: GEMPA BMKG -->
         <div id="tab-gempa" class="tab-content">
           <div class="gempa-subtabs">
-            <button class="gempa-subtab-btn active" data-subtab="gempa-subtab-gempa" onclick="openGempaSubtab(this)">Gempabumi</button>
-            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-karhutla" onclick="openGempaSubtab(this)">Karhutla</button>
+            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-gempa" onclick="openGempaSubtab(this)">Gempa Bumi</button>
+            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-karhutla" onclick="openGempaSubtab(this)">Info Karhutla</button>
+            <button class="gempa-subtab-btn active" data-subtab="gempa-subtab-infocuaca" onclick="openGempaSubtab(this)">Info Cuaca</button>
+            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-prediksicuaca" onclick="openGempaSubtab(this)">Prediksi Cuaca</button>
           </div>
 
-          <div id="gempa-subtab-gempa" class="gempa-subtab-panel active">
+          <div id="gempa-subtab-gempa" class="gempa-subtab-panel">
             <div id="earthquake-content" class="quake-message">Buka tab ini untuk memuat data gempabumi BMKG.</div>
           </div>
 
@@ -831,6 +776,67 @@
             <div id="hotspot-bar-container"></div>
             <div id="luas-chart-container"></div>
             <div id="co2-chart-container"></div>
+          </div>
+
+          <div id="gempa-subtab-infocuaca" class="gempa-subtab-panel active">
+            <h4 style="font-size: 15px; margin-bottom: 5px;">Info Cuaca BMKG</h4>
+            <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Cari wilayah atau klik pada peta untuk melihat informasi cuaca.</p>
+            <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
+            <h4 style="font-size: 13px; margin-bottom: 10px;">Cari wilayah untuk melihat data cuaca.</h4>
+            <div class="search-weather-container">
+              <input type="text" id="weatherSearchInput" class="search-weather-input"
+                placeholder="🔍 Cari Desa/Kelurahan..." autocomplete="off" />
+              <div id="autocompleteResults" class="autocomplete-results"></div>
+            </div>
+            <div id="weather-content" style="margin-top:20px">
+              <div style="font-size:13px; color:#555; background:#eef7ff; padding:10px; margin-bottom: 100px; border-radius:5px;">
+                ℹ️ Pilih lokasi dari pencarian atau klik pada peta untuk melihat cuaca.
+              </div>
+            </div>
+          </div>
+
+          <div id="gempa-subtab-prediksicuaca" class="gempa-subtab-panel">
+            <h4 style="font-size: 15px; margin-bottom: 5px;">Prediksi Cuaca GFS</h4>
+            <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Layer prediksi cuaca dari model GFS BMKG dengan data model run terbaru.</p>
+            <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
+            <div class="cctv-layers" style="margin-bottom:12px;">
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleWindRgb">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Wind Speed and Direction</span>
+                  <small id="windRgbInfo">Layer warna kecepatan angin GFS</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleRhRgb">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Relative Humidity</span>
+                  <small id="rhRgbInfo">Layer kelembapan relatif GFS</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleTp24Rgb">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Total Precipitation 24 Jam</span>
+                  <small id="tp24RgbInfo">Layer curah hujan 24 jam GFS</small>
+                </span>
+              </label>
+            </div>
+            <div class="wind-toggle-row" style="display:none">
+              <label class="wind-toggle-label">
+                <input type="checkbox" id="toggleWindAnim">
+                <span class="wind-toggle-track"><span class="wind-toggle-thumb"></span></span>
+                <span class="wind-toggle-text">Animasi Angin (Wind Particle)</span>
+              </label>
+              <div id="windControls" class="wind-controls" style="display:none;">
+                <button class="wind-btn" id="windPrev" title="Frame sebelumnya">◀</button>
+                <span id="windTimestamp" class="wind-ts"></span>
+                <button class="wind-btn" id="windNext" title="Frame berikutnya">▶</button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -953,6 +959,10 @@
             <span id="adm-provinsi">-</span>
           </div>
           <div class="admin-item">
+            <label>Kabupaten/Kota</label>
+            <span id="adm-kabkota">-</span>
+          </div>
+          <div class="admin-item">
             <label>Kecamatan</label>
             <span id="adm-kecamatan">-</span>
           </div>
@@ -1005,7 +1015,10 @@
   <script src="assets/js/weather-geocode.js"></script>
   <script src="assets/js/weather-init.js"></script>
   <script src="assets/js/wind-animation.js"></script>
+  <script src="assets/js/gfs-rgb-base.js"></script>
   <script src="assets/js/wind-rgb.js"></script>
+  <script src="assets/js/rh-rgb.js"></script>
+  <script src="assets/js/tp24-rgb.js"></script>
   <script src="assets/js/map-insight-cards.js"></script>
   <script src="assets/js/geotani-search.js"></script>
   <script src="assets/js/sawah-dilindungi.js"></script>

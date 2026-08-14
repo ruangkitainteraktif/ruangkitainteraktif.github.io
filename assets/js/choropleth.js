@@ -185,16 +185,21 @@
     activeIndicatorMeta = null;
   }
 
-  async function showChoropleth(indicatorId) {
+  async function showChoropleth(indicatorId, customData) {
     removeChoropleth();
 
-    const json = await loadIndicator(indicatorId);
-    if (!json?.data) {
+    let json;
+    if (customData) {
+      json = customData;
+    } else {
+      json = await loadIndicator(indicatorId);
+    }
+    if (!json) {
       console.error('[Choropleth] Gagal load indikator:', indicatorId);
       return;
     }
 
-    const data = json.data;
+    const data = json.data || json;
     const meta = data.indikator;
     const allFeatures = data.features || [];
     const allKelas = data.klasifikasi?.kelas || [];
