@@ -7,6 +7,8 @@
   const SENTINEL_CATALOG_URL = 'https://sentinel.arcgis.com/arcgis/rest/services/Sentinel2/ImageServer/query';
   const VILLAGE_BOUNDARY_URL = 'https://wilayah.smartartstudio.my.id/api/boundaries/';
   let villageIndex = [];
+  let ndviKabData = [];
+  let ndviDesaData = [];
   let villageLoadPromise = null;
   let ndviLayer = null;
   let selectedVillage = null;
@@ -68,13 +70,46 @@
     villageLoadPromise = fetch('assets/data/kode_wilayah.json')
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)))
       .then(items => {
-        villageIndex = items.filter(item => item.kode && (item.kode.match(/\./g) || []).length === 3);
+        ndviKabData = items.filter(item => item.kode && (item.kode.match(/\./g) || []).length === 1);
+        ndviDesaData = items.filter(item => item.kode && (item.kode.match(/\./g) || []).length === 3);
+        villageIndex = ndviDesaData;
       })
       .catch(error => {
         console.warn('[NDVI] Gagal memuat daftar desa:', error);
         villageIndex = [];
       });
     return villageLoadPromise;
+  }
+
+  function searchNdviAreas(query, level) {
+    if (!query || query.length < 2) return [];
+    const q = query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const pool = level === 'kabupaten' ? ndviKabData : ndviDesaData;
+    return pool.filter(item => {
+      const name = item.nama.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      return name.includes(q);
+    }).slice(0, 20);
+  }
+
+  async function fetchAdminBoundary(kode) {
+    const url = `${VILLAGE_BOUNDARY_URL}${encodeURIComponent(kode)}`;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!data.path?.length) return null;
+        const rings = data.path.map(ring => ring.map(([lat, lon]) => [lon, lat]));
+        return { name: data.nama || '', rings };
+      } catch (e) {
+        console.warn(`[NDVI] fetchAdminBoundary attempt ${attempt + 1} failed:`, e.message);
+        if (attempt === 0) await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+    return null;
   }
 
   async function fetchVillageBoundary(kode) {
@@ -357,6 +392,8 @@
       option.addEventListener('mouseleave', () => { option.style.background = '#fff'; option.style.color = '#385773'; });
       option.addEventListener('click', () => {
         selectedVillage = item;
+        window._selectedNdviVillageKode = item.kode;
+        window._selectedNdviAreaName = item.nama;
         input.value = item.nama;
         selected.textContent = `✓ ${item.nama} (${item.kode})`;
         selected.style.display = 'block';
@@ -372,28 +409,79 @@
     const results = document.getElementById('ndviVillageResults');
     const selected = document.getElementById('ndviVillageSelected');
     const button = document.getElementById('btnRunNdvi');
+    const levelMode = document.getElementById('ndviLevelMode');
+    const levelLabel = document.getElementById('ndviLevelLabel');
     if (!input || !results || !selected || !button) return;
     const elements = { input, results, selected };
+
+    const levelPlaceholders = { desa: 'Ketik nama desa...', kabupaten: 'Ketik nama kabupaten...' };
+    const levelLabels = { desa: 'Desa/Kelurahan', kabupaten: 'Kabupaten/Kota' };
+
+    if (levelMode) {
+      levelMode.addEventListener('change', () => {
+        const level = levelMode.value;
+        if (input) input.placeholder = levelPlaceholders[level] || levelPlaceholders.desa;
+        if (levelLabel) levelLabel.textContent = levelLabels[level] || levelLabels.desa;
+        if (input) input.value = '';
+        if (selected) { selected.style.display = 'none'; selected.textContent = ''; }
+        window._selectedNdviVillageKode = null;
+        window._selectedNdviAreaName = null;
+        if (results) results.style.display = 'none';
+      });
+    }
 
     loadVillages();
     input.addEventListener('input', async () => {
       selectedVillage = null;
+      window._selectedNdviVillageKode = null;
+      window._selectedNdviAreaName = null;
       selected.style.display = 'none';
       const query = input.value.trim().toLowerCase();
       if (query.length < 2) { results.style.display = 'none'; return; }
       await loadVillages();
-      renderVillageOptions(villageIndex.filter(item => item.nama.toLowerCase().includes(query)).slice(0, 20), elements);
+      const level = levelMode?.value || 'desa';
+      const items = searchNdviAreas(query, level);
+      renderVillageOptions(items, elements);
     });
     document.addEventListener('click', event => {
       if (!event.target.closest('#ndviVillageResults') && event.target !== input) results.style.display = 'none';
     });
 
     button.addEventListener('click', async () => {
-      if (!selectedVillage) { alert('Silakan pilih desa dari dropdown terlebih dahulu.'); return; }
-      button.disabled = true;
-      button.innerHTML = '<span class="ndvi-btn-spinner"></span>Menghitung NDVI…';
+      const level = levelMode?.value || 'desa';
+      let boundary;
+
+      if (level === 'kabupaten') {
+        const kode = window._selectedNdviVillageKode;
+        if (!kode) { alert('Silakan pilih kabupaten dari dropdown terlebih dahulu.'); return; }
+        button.disabled = true;
+        button.innerHTML = '<span class="ndvi-btn-spinner"></span>Menghitung NDVI…';
+        try {
+          boundary = await fetchAdminBoundary(kode);
+          if (!boundary || !boundary.rings?.length) throw new Error('Gagal memuat batas kabupaten');
+          if (typeof showGeoidBoundary === 'function') showGeoidBoundary(kode, 10);
+        } catch (e) {
+          button.disabled = false;
+          button.innerHTML = 'Analisis NDVI';
+          alert(`Analisis NDVI gagal: ${e.message}`);
+          return;
+        }
+      } else {
+        if (!selectedVillage) { alert('Silakan pilih desa dari dropdown terlebih dahulu.'); return; }
+        button.disabled = true;
+        button.innerHTML = '<span class="ndvi-btn-spinner"></span>Menghitung NDVI…';
+        try {
+          boundary = await fetchVillageBoundary(selectedVillage.kode);
+          if (typeof showGeoidBoundary === 'function') showGeoidBoundary(selectedVillage.kode, 14);
+        } catch (e) {
+          button.disabled = false;
+          button.innerHTML = 'Analisis NDVI';
+          alert(`Analisis NDVI gagal: ${e.message}`);
+          return;
+        }
+      }
+
       try {
-        const boundary = await fetchVillageBoundary(selectedVillage.kode);
         const [statistics, samples] = await Promise.all([
           fetchNdviStatistics(boundary.rings),
           fetchNdviSamples(boundary.rings)
@@ -406,7 +494,10 @@
           boundary,
           stats: statistics,
           samples,
-          imageMetadata
+          imageMetadata,
+          adminName: level === 'kabupaten' ? (window._selectedNdviAreaName || boundary.name) : null,
+          adminKode: level === 'kabupaten' ? (window._selectedNdviVillageKode || '') : null,
+          adminLevel: level === 'kabupaten' ? 'kabupaten' : null
         };
 
         const sidebar = document.getElementById('sidebar-left');
@@ -424,6 +515,14 @@
         button.innerHTML = 'Analisis NDVI';
       }
     });
+
+    function renderVillageOptionsFromInput() {
+      const query = input.value.trim().toLowerCase();
+      if (query.length < 2) { results.style.display = 'none'; return; }
+      const level = levelMode?.value || 'desa';
+      const items = searchNdviAreas(query, level);
+      renderVillageOptions(items, elements);
+    }
   });
 
   window.printNdviPdf = async function() {
@@ -432,7 +531,9 @@
       return;
     }
 
-    const { village, boundary, stats, samples, imageMetadata } = lastNdviData;
+    const { village, boundary, stats, samples, imageMetadata, adminName, adminKode, adminLevel } = lastNdviData;
+    const displayName = adminName || boundary.name || '';
+    const displayKode = adminKode || village?.kode || '';
     const mean = Number(stats.mean);
     const category = ndviCategory(mean);
     const cloudValue = Number(imageMetadata?.cloudcover);
@@ -446,7 +547,7 @@
 
     const now = new Date();
     const dateStr = `${String(now.getDate()).padStart(2, '0')}${String(now.getMonth() + 1).padStart(2, '0')}${now.getFullYear()}`;
-    const fileName = `NDVI_${boundary.name.replace(/[^a-zA-Z0-9]/g, '_')}_${dateStr}.pdf`;
+    const fileName = `NDVI_${displayName.replace(/[^a-zA-Z0-9]/g, '_')}_${dateStr}.pdf`;
 
     const btn = document.querySelector('.ndvi-btn-print');
     if (btn) { btn.disabled = true; btn.innerHTML = '<span class="ndvi-btn-spinner"></span>Membuat PDF…'; }
@@ -511,8 +612,8 @@
       pdf.setFontSize(12);
       pdf.setTextColor(30, 41, 59);
       pdf.text('Analisis NDVI', margin + 2, margin + 6);
-      const villageCode = village?.kode || '';
-      const titleText = villageCode ? `${boundary.name} (${villageCode})` : boundary.name;
+      const villageCode = displayKode;
+      const titleText = villageCode ? `${displayName} (${villageCode})` : displayName;
       const dashX = margin + 2 + pdf.getTextWidth('Analisis NDVI') + 2;
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(5);
@@ -837,6 +938,8 @@
       const lgRowH = 3.5;
       const lgRows = Math.ceil(legendBands.length / 2);
       const lgH = lgRows * lgRowH + 8;
+      const panelBottom = mapFrameY + mapFrameH;
+      if (py + lgH > panelBottom) py = panelBottom - lgH;
       const lgY = py;
       const lgColW = (lgW - 8) / 2;
 

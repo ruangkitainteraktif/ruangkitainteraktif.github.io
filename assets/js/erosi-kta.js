@@ -551,10 +551,11 @@ async function fetchSawahInEnvelope(minX, minY, maxX, maxY) {
       const data = await res.json();
       const features = data.features || [];
       allFeatures = allFeatures.concat(features);
-      if (features.length < maxPerRequest || !data.exceededTransferLimit) break;
+      if (!features.length || features.length < maxPerRequest) break;
+      const exceeded = data.exceededTransferLimit || (data.properties && data.properties.exceededTransferLimit);
+      if (!exceeded) break;
       offset += maxPerRequest;
-    } while (offset < 5000); // safety limit
-
+    } while (true);
 
     return allFeatures;
   } catch (e) {
@@ -1564,6 +1565,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.clearLbsAnalysis = clearLbsAnalysis;
 
+  let lbsKabData = [];
+  let lbsDesaData = [];
+
   function ensureLbsVillageData() {
     if (lbsVillageLoadPromise) return lbsVillageLoadPromise;
     lbsVillageLoadPromise = (async () => {
@@ -1571,16 +1575,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const res = await fetch('assets/data/kode_wilayah.json');
         if (!res.ok) return;
         const all = await res.json();
-        lbsVillageData = all.filter(item => item.kode && (item.kode.match(/\./g) || []).length === 3);
+        lbsKabData = all.filter(item => item.kode && (item.kode.match(/\./g) || []).length === 1);
+        lbsDesaData = all.filter(item => item.kode && (item.kode.match(/\./g) || []).length === 3);
+        lbsVillageData = lbsDesaData;
       } catch (e) { /* ignore */ }
     })();
     return lbsVillageLoadPromise;
   }
 
-  function searchLbsVillages(query) {
-    if (!query || query.length < 2 || !lbsVillageData.length) return [];
+  function searchLbsAreas(query, level) {
+    if (!query || query.length < 2) return [];
     const q = query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    return lbsVillageData.filter(item => {
+    const pool = level === 'kabupaten' ? lbsKabData : lbsDesaData;
+    return pool.filter(item => {
       const name = item.nama.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       return name.includes(q);
     }).slice(0, 20);
@@ -1592,11 +1599,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const villageFeature = await fetchVillageBoundary(villageKode);
     if (!villageFeature || !villageFeature.geometry?.rings) return null;
 
-    const villagePolyRaw = {
-      type: 'Feature',
-      properties: {},
-      geometry: { type: 'Polygon', coordinates: villageFeature.geometry.rings }
-    };
+    const rings = villageFeature.geometry.rings;
+    let villageGeo;
+    if (rings.length === 1) {
+      villageGeo = { type: 'Polygon', coordinates: [rings[0]] };
+    } else {
+      const outerRing = rings[0];
+      const holes = [];
+      const otherPolygons = [];
+      const outerPoly = turf.polygon([outerRing]);
+      for (let i = 1; i < rings.length; i++) {
+        const pt = turf.point(rings[i][0]);
+        if (turf.booleanPointInPolygon(pt, outerPoly)) {
+          holes.push(rings[i]);
+        } else {
+          otherPolygons.push(rings[i]);
+        }
+      }
+      if (otherPolygons.length === 0) {
+        villageGeo = { type: 'Polygon', coordinates: [outerRing, ...holes] };
+      } else {
+        const polys = [outerRing, ...otherPolygons].map(r => [r]);
+        villageGeo = { type: 'MultiPolygon', coordinates: polys };
+      }
+    }
+
+    const villagePolyRaw = { type: 'Feature', properties: {}, geometry: villageGeo };
     let villagePolygon;
     try { villagePolygon = turf.rewind(villagePolyRaw); } catch (e) { villagePolygon = villagePolyRaw; }
 
@@ -1607,6 +1635,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (y < minY) minY = y; if (y > maxY) maxY = y;
       });
     });
+    minX -= 0.0001; minY -= 0.0001; maxX += 0.0001; maxY += 0.0001;
     if (minX >= maxX || minY >= maxY) return null;
 
     const sawahFeatures = await fetchSawahInEnvelope(minX, minY, maxX, maxY);
@@ -1644,7 +1673,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (intersection && intersection.geometry) {
           const areaM2 = turf.area(intersection);
           const areaHa = areaM2 / 10000;
-          if (areaHa < 0.0001) continue;
+          if (areaHa < 0.00001) continue;
           intersection.properties = {
             ...sawahPoly.properties,
             area_ha: Math.round(areaHa * 10000) / 10000
@@ -1652,7 +1681,7 @@ document.addEventListener('DOMContentLoaded', () => {
           totalSawahHa += areaHa;
           intersections.push(intersection);
         }
-      } catch (e) { /* skip */ }
+      } catch (e) { console.warn('[LBS] intersect error (desa):', e.message); }
     }
 
     return {
@@ -1665,10 +1694,118 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
+  // ---- Fetch Admin Boundary (kab/kec/desa) from API ----
+  async function fetchAdminBoundary(kode) {
+    const url = `https://wilayah.smartartstudio.my.id/api/boundaries/${kode}`;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!data.path || !data.path.length) return null;
+        const rings = data.path.map(ring => ring.map(([lat, lng]) => [lng, lat]));
+        return { geometry: { rings }, attributes: { name: data.nama || '' } };
+      } catch (e) {
+        console.warn(`[LBS] fetchAdminBoundary attempt ${attempt + 1} failed:`, e.message);
+        if (attempt === 0) await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+    return null;
+  }
+
+  // ---- Compute LBS Intersection for Kabupaten/Kecamatan ----
+  async function computeLbsIntersectionMulti(outerKode, outerName, level) {
+    if (!outerKode || typeof turf === 'undefined') return null;
+
+    const outerFeature = await fetchAdminBoundary(outerKode);
+    if (!outerFeature || !outerFeature.geometry?.rings) return null;
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    outerFeature.geometry.rings.forEach(ring => {
+      ring.forEach(([x, y]) => {
+        if (x < minX) minX = x; if (x > maxX) maxX = x;
+        if (y < minY) minY = y; if (y > maxY) maxY = y;
+      });
+    });
+    minX -= 0.0001; minY -= 0.0001; maxX += 0.0001; maxY += 0.0001;
+    if (minX >= maxX || minY >= maxY) return null;
+
+    const sawahFeatures = await fetchSawahInEnvelope(minX, minY, maxX, maxY);
+    if (!sawahFeatures.length) return null;
+
+    const outerPolygons = outerFeature.geometry.rings.map(ring => ({
+      type: 'Feature', properties: {},
+      geometry: { type: 'Polygon', coordinates: [ring] }
+    }));
+
+    const intersections = [];
+    let totalSawahHa = 0;
+
+    for (const f of sawahFeatures) {
+      if (!f.geometry?.rings) continue;
+      const attrs = f.attributes || {};
+      const sawahLuasHa = Number(attrs.Luas_Ha || 0);
+      const sawahJenis = attrs.Jenis_Lahan_Sawah || '-';
+      const sawahWadmpr = attrs.WADMPR || '';
+      const sawahWadmkk = attrs.WADMKK || '';
+
+      let sawahPoly;
+      try {
+        sawahPoly = turf.rewind({
+          type: 'Feature',
+          properties: { sawah_luas: sawahLuasHa, sawah_jenis: sawahJenis, sawah_wadmpr: sawahWadmpr, sawah_wadmkk: sawahWadmkk },
+          geometry: { type: 'Polygon', coordinates: f.geometry.rings }
+        });
+      } catch (e) {
+        sawahPoly = {
+          type: 'Feature',
+          properties: { sawah_luas: sawahLuasHa, sawah_jenis: sawahJenis, sawah_wadmpr: sawahWadmpr, sawah_wadmkk: sawahWadmkk },
+          geometry: { type: 'Polygon', coordinates: f.geometry.rings }
+        };
+      }
+
+      for (const outerPoly of outerPolygons) {
+        try {
+          const intersection = turf.intersect(turf.featureCollection([sawahPoly, outerPoly]));
+          if (intersection && intersection.geometry) {
+            const areaM2 = turf.area(intersection);
+            const areaHa = areaM2 / 10000;
+            if (areaHa < 0.00001) continue;
+            intersection.properties = {
+              ...sawahPoly.properties,
+              area_ha: Math.round(areaHa * 10000) / 10000,
+              admin_name: outerName,
+              admin_level: level
+            };
+            totalSawahHa += areaHa;
+            intersections.push(intersection);
+            break;
+          }
+        } catch (e) { console.warn('[LBS] intersect error (kab/kec):', e.message); }
+      }
+    }
+
+    return {
+      intersections,
+      adminName: outerName,
+      adminKode: outerKode,
+      adminLevel: level,
+      totalSawahHa: Math.round(totalSawahHa * 100) / 100,
+      bidangCount: intersections.length,
+      totalBidangAsli: sawahFeatures.length
+    };
+  }
+
   function showLbsOverlayOnMap(result) {
     if (!result || !result.intersections || !result.intersections.length) return;
     removeLbsOverlay();
     clearOverlay();
+
+    const levelLabel = result.adminLevel === 'kabupaten' ? 'Kabupaten' : 'Desa';
+    const headerLabel = result.adminLevel ? `Irisan Sawah + ${levelLabel}` : 'Irisan Sawah + Desa';
 
     lbsOverlayLayer = L.geoJSON(
       { type: 'FeatureCollection', features: result.intersections },
@@ -1693,7 +1830,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   <span class="irisan-popup-badge-dot"></span>
                   LBS
                 </div>
-                <strong>Irisan Sawah + Desa</strong>
+                <strong>${headerLabel}</strong>
               </div>
               <div class="irisan-popup-body">
                 <div class="irisan-popup-detail">
@@ -1738,10 +1875,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const { villageName, villageKode, totalSawahHa, bidangCount, totalBidangAsli } = lastLbsData;
+    const { villageName, villageKode, adminName, adminKode, adminLevel, totalSawahHa, bidangCount, totalBidangAsli } = lastLbsData;
+    const displayName = adminName || villageName || '';
+    const displayKode = adminKode || villageKode || '';
     const now = new Date();
     const dateStr = `${String(now.getDate()).padStart(2, '0')}${String(now.getMonth() + 1).padStart(2, '0')}${now.getFullYear()}`;
-    const fileName = `LBS_${villageName.replace(/[^a-zA-Z0-9]/g, '_')}_${dateStr}.pdf`;
+    const fileName = `LBS_${displayName.replace(/[^a-zA-Z0-9]/g, '_')}_${dateStr}.pdf`;
     const dateFormatted = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 
     const btn = document.querySelector('.kta-btn-print');
@@ -1817,7 +1956,7 @@ document.addEventListener('DOMContentLoaded', () => {
       pdf.setFontSize(12);
       pdf.setTextColor(30, 41, 59);
       pdf.text('Lahan Baku Sawah (2023)', margin + 2, margin + 6);
-      const titleText = `${villageName} (${villageKode})`;
+      const titleText = `${displayName} (${displayKode})`;
       const dashX = margin + 2 + pdf.getTextWidth('Lahan Baku Sawah (2023)') + 2;
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(5);
@@ -1950,6 +2089,7 @@ document.addEventListener('DOMContentLoaded', () => {
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(9);
       pdf.setTextColor(30, 41, 59);
+      const levelTitleMap = { kabupaten: 'KABUPATEN/KOTA', desa: 'DESA/KELURAHAN' };
       pdf.text('INFORMASI WILAYAH', panelX + 4, py);
       py += 6;
 
@@ -1961,14 +2101,14 @@ document.addEventListener('DOMContentLoaded', () => {
       pdf.setFontSize(6);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(100, 116, 139);
-      pdf.text('Nama Desa', panelX + 8, py + 5);
+      pdf.text(levelTitleMap[adminLevel] || 'NAMA DESA', panelX + 8, py + 5);
       pdf.text('Kode Wilayah', panelX + 8, py + 10);
       pdf.setFontSize(8);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(22, 101, 52);
-      pdf.text(villageName || '-', panelX + 38, py + 5);
+      pdf.text(displayName || '-', panelX + 38, py + 5);
       pdf.setTextColor(55, 65, 81);
-      pdf.text(villageKode || '-', panelX + 38, py + 10);
+      pdf.text(displayKode || '-', panelX + 38, py + 10);
       py += cardH + 5;
 
       pdf.setFontSize(7);
@@ -2004,12 +2144,13 @@ document.addEventListener('DOMContentLoaded', () => {
       pdf.line(panelX + 4, py + 1, panelX + cardW, py + 1);
       py += 4;
 
+      const levelTypeMap = { kabupaten: 'Batas Kabupaten/Kota + Lahan Baku Sawah 2023' };
       const metaLines = [
         ['Sumber', 'Kementan Sawah 2023'],
-        ['Tipe data', 'Batas Desa/Kelurahan + Lahan Baku Sawah 2023'],
+        ['Tipe data', levelTypeMap[adminLevel] || 'Batas Desa/Kelurahan + Lahan Baku Sawah 2023'],
         ['Referensi', 'EPSG:4326'],
         ['Metode', 'Geoprocessing Intersect'],
-        ['Kualitas', 'Batas Desa/Kelurahan (BIG)']
+        ['Kualitas', adminLevel ? (adminLevel === 'kabupaten' ? 'Batas Kabupaten/Kota (API)' : 'Batas Kecamatan (API)') : 'Batas Desa/Kelurahan (BIG)']
       ];
       for (const [metaLabel, value] of metaLines) {
         pdf.setFontSize(5.5);
@@ -2023,15 +2164,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       py += 4;
+      const boundaryLabel = adminLevel === 'kabupaten' ? 'Batas Kabupaten' : 'Batas Desa';
       const lbsLegend = [
         { label: 'Sawah Teriris', color: '#22c55e' },
-        { label: 'Batas Desa', color: '#15803d' }
+        { label: boundaryLabel, color: '#15803d' }
       ];
       const lgX = panelX + 4;
       const lgW = panelW - 8;
       const lgRowH = 3.5;
       const lgRows = Math.ceil(lbsLegend.length / 2);
       const lgH = lgRows * lgRowH + 8;
+      const panelBottom = mapFrameY + mapFrameH;
+      if (py + lgH > panelBottom) py = panelBottom - lgH;
       const lgY = py;
       const lgColW = (lgW - 8) / 2;
 
@@ -2113,16 +2257,28 @@ document.addEventListener('DOMContentLoaded', () => {
     btnRunLbs.addEventListener('click', async () => {
       const kode = window._selectedLbsVillageKode;
       if (!kode) {
-        alert('Silakan pilih nama desa terlebih dahulu.');
+        alert('Silakan pilih nama wilayah terlebih dahulu.');
         return;
       }
+
+      const levelMode = document.getElementById('lbsLevelMode')?.value || 'desa';
+      const levelLabelMap = { desa: 'Desa/Kelurahan', kabupaten: 'Kabupaten/Kota' };
+      const levelZoomMap = { desa: 14, kabupaten: 10 };
 
       btnRunLbs.disabled = true;
       btnRunLbs.innerHTML = '<span class="btn-spinner"></span> Menghitung…';
       btnRunLbs.style.background = '#90caf9';
       try {
-        if (typeof showGeoidBoundary === 'function') showGeoidBoundary(kode, 14);
-        const result = await computeLbsIntersection(kode);
+        if (typeof showGeoidBoundary === 'function') showGeoidBoundary(kode, levelZoomMap[levelMode] || 14);
+
+        let result;
+        if (levelMode === 'desa') {
+          result = await computeLbsIntersection(kode);
+        } else {
+          const areaName = window._selectedLbsAreaName || '';
+          result = await computeLbsIntersectionMulti(kode, areaName, levelMode);
+        }
+
         if (result && result.intersections && result.intersections.length) {
           lastLbsData = result;
           showLbsOverlayOnMap(result);
@@ -2130,9 +2286,11 @@ document.addEventListener('DOMContentLoaded', () => {
           const resultArea = document.getElementById('lbsResultArea');
           if (resultArea) {
             const fmtNum = (n) => n.toLocaleString('id-ID', { maximumFractionDigits: 2 });
+            const displayName = result.adminName || result.villageName || '';
+            const displayLevel = result.adminLevel ? levelLabelMap[result.adminLevel] : 'Desa/Kelurahan';
             resultArea.innerHTML = `
               <div style="display:grid;gap:4px;">
-                <div style="display:flex;justify-content:space-between;"><span style="color:#54708d;">Desa</span><b style="color:#166534;">${result.villageName}</b></div>
+                <div style="display:flex;justify-content:space-between;"><span style="color:#54708d;">${displayLevel}</span><b style="color:#166534;">${displayName}</b></div>
                 <div style="display:flex;justify-content:space-between;"><span style="color:#54708d;">Total Luas Sawah</span><b style="color:#166534;">${fmtNum(result.totalSawahHa)} ha</b></div>
                 <div style="display:flex;justify-content:space-between;"><span style="color:#54708d;">Jumlah Bidang</span><b>${result.bidangCount}</b></div>
               </div>
@@ -2149,7 +2307,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         } else {
           clearOverlay();
-          alert('Tidak ada irisan sawah ditemukan untuk desa ini.\n\nKemungkinan data sawah belum tersedia atau CORS diblokir.');
+          alert('Tidak ada irisan sawah ditemukan untuk wilayah ini.\n\nKemungkinan data sawah belum tersedia atau CORS diblokir.');
         }
       } catch (e) {
         console.warn('[LBS] Error:', e);
@@ -2166,6 +2324,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const lbsInput = document.getElementById('lbsVillageSearch');
   const lbsResults = document.getElementById('lbsVillageResults');
   const lbsSelected = document.getElementById('lbsVillageSelected');
+  const lbsLevelMode = document.getElementById('lbsLevelMode');
+  const lbsLevelLabel = document.getElementById('lbsLevelLabel');
+  const lbsLevelPlaceholders = { desa: 'Ketik nama desa...', kabupaten: 'Ketik nama kabupaten...' };
+  const lbsLevelLabels = { desa: 'Desa/Kelurahan', kabupaten: 'Kabupaten/Kota' };
+
+  if (lbsLevelMode) {
+    lbsLevelMode.addEventListener('change', () => {
+      const level = lbsLevelMode.value;
+      if (lbsInput) lbsInput.placeholder = lbsLevelPlaceholders[level] || lbsLevelPlaceholders.desa;
+      if (lbsLevelLabel) lbsLevelLabel.textContent = lbsLevelLabels[level] || lbsLevelLabels.desa;
+      if (lbsInput) lbsInput.value = '';
+      if (lbsSelected) { lbsSelected.style.display = 'none'; lbsSelected.textContent = ''; }
+      window._selectedLbsVillageKode = null;
+      window._selectedLbsAreaName = null;
+      if (lbsResults) lbsResults.style.display = 'none';
+    });
+  }
+
   if (lbsInput && lbsResults && lbsSelected) {
     let lbsDebounce = null;
 
@@ -2178,7 +2354,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       lbsDebounce = setTimeout(async () => {
         await ensureLbsVillageData();
-        const results = searchLbsVillages(query);
+        const level = lbsLevelMode?.value || 'desa';
+        const results = searchLbsAreas(query, level);
         lbsResults.innerHTML = '';
         if (!results.length) {
           lbsResults.style.display = 'none';
@@ -2194,6 +2371,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             lbsInput.value = item.nama;
             window._selectedLbsVillageKode = item.kode;
+            window._selectedLbsAreaName = item.nama;
             lbsSelected.textContent = `\u2713 ${item.nama} (${item.kode})`;
             lbsSelected.style.display = 'block';
             lbsResults.style.display = 'none';

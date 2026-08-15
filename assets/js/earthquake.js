@@ -89,7 +89,7 @@
 
     const mag = parseFloat(gempa.Magnitude) || 0;
     const color = getMagnitudeColor(mag);
-    const size = Math.min(60, Math.max(36, 24 + mag * 5));
+    const size = Math.min(34, Math.max(20, 12 + mag * 3));
 
     const quakeIcon = L.divIcon({
       className: 'quake-marker-wrap',
@@ -102,9 +102,9 @@
           </div>
         </div>
       `,
-      iconSize: [size + 30, size + 30],
-      iconAnchor: [(size + 30) / 2, (size + 30) / 2],
-      popupAnchor: [0, -(size / 2 + 15)]
+      iconSize: [size + 16, size + 16],
+      iconAnchor: [(size + 16) / 2, (size + 16) / 2],
+      popupAnchor: [0, -(size / 2 + 10)]
     });
 
     const marker = L.marker([lat, lon], { icon: quakeIcon, zIndexOffset: 2000 })
@@ -193,7 +193,7 @@
 
     const mag = parseFloat(magnitude) || 0;
     const color = getMagnitudeColor(mag);
-    const size = Math.min(60, Math.max(36, 24 + mag * 5));
+    const size = Math.min(34, Math.max(20, 12 + mag * 3));
 
     const quakeIcon = L.divIcon({
       className: 'quake-marker-wrap',
@@ -206,9 +206,9 @@
           </div>
         </div>
       `,
-      iconSize: [size + 30, size + 30],
-      iconAnchor: [(size + 30) / 2, (size + 30) / 2],
-      popupAnchor: [0, -(size / 2 + 15)]
+      iconSize: [size + 16, size + 16],
+      iconAnchor: [(size + 16) / 2, (size + 16) / 2],
+      popupAnchor: [0, -(size / 2 + 10)]
     });
 
     const marker = L.marker([lat, lon], { icon: quakeIcon, zIndexOffset: 2000 })

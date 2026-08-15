@@ -168,7 +168,6 @@
     await loadGeoidPopupInsights(marker, { ...location, kode: item.kode });
     if (typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, item.kode, location);
     showGeoidBoundary(item.kode, item.type === 'provinsi' ? 8 : item.type === 'kabkot' ? 11 : item.type === 'kecamatan' ? 13 : 15);
-    if (typeof loadPrayerSchedule === 'function') loadPrayerSchedule(marker, location.lat, location.lon);
   }
 
   async function selectUnifiedResult(item) {

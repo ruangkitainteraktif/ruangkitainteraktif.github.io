@@ -182,15 +182,11 @@
               </div>
             </div>
             ${!isGeotaniMode ? `<div class="geoid-popup-cctv" data-cctv-insight><span style="color:#94a3b8; font-size:11px">Memuat CCTV terdekat…</span></div>` : ''}
-            ${!isGeotaniMode ? `<div class="geoid-popup-prayer" data-prayer-schedule><span style="color:#94a3b8; font-size:11px">Memuat jadwal sholat…</span></div>` : ''}
           </div>
         </div>
       `;
       marker.setPopupContent(popupContent);
       marker._icon?.classList.add(isGeotaniMode ? 'geotani-leaflet-popup' : 'geoid-leaflet-popup');
-
-      // Muat jadwal sholat berdasarkan koordinat
-      if (!isGeotaniMode) loadPrayerSchedule(marker, lat, lng);
 
       // Muat insights cuaca, gempa, CCTV terdekat
       if (window.currentActiveTab === 'tab-geoid') {
@@ -218,69 +214,4 @@
     }
   }
 
-  async function loadPrayerSchedule(marker, lat, lon) {
-    const element = marker.getPopup()?.getElement()?.querySelector('[data-prayer-schedule]');
-    if (!element || !lat || !lon) {
-      if (element) element.innerHTML = '<span style="color:#7a8fa3; font-size:11px">Jadwal sholat tidak tersedia</span>';
-      return;
-    }
 
-    if (window.currentActiveTab === 'tab-geotani') {
-      element.style.display = 'none';
-      return;
-    }
-
-    try {
-      const now = new Date();
-      const dd = String(now.getDate()).padStart(2, '0');
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const yyyy = now.getFullYear();
-      const dateStr = `${dd}-${mm}-${yyyy}`;
-
-      const url = `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lon}&method=20`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const payload = await response.json();
-
-      const timings = payload?.data?.timings;
-      const date = payload?.data?.date;
-      if (!timings) throw new Error('Data tidak valid');
-
-      const hijri = date?.hijri;
-      const gregorian = date?.gregorian;
-
-      const prayerList = [
-        ['Imsak', timings.Imsak],
-        ['Subuh', timings.Fajr],
-        ['Terbit', timings.Sunrise],
-        ['Dzuhur', timings.Dhuhr],
-        ['Ashar', timings.Asr],
-        ['Maghrib', timings.Maghrib],
-        ['Isya', timings.Isha]
-      ];
-
-      element.innerHTML = `
-        <div class="prayer-header">
-          <span class="prayer-icon">🕌</span>
-          <span class="prayer-title">Jadwal Sholat</span>
-        </div>
-        <div class="prayer-date">${escapeMapClickHtml(gregorian?.weekday?.en || '')}, ${escapeMapClickHtml(gregorian?.date || '')} ${escapeMapClickHtml(gregorian?.month?.en || '')} ${escapeMapClickHtml(gregorian?.year || '')}</div>
-        <div class="prayer-hijri">${escapeMapClickHtml(hijri?.day || '')} ${escapeMapClickHtml(hijri?.month?.en || '')} ${escapeMapClickHtml(hijri?.year || '')} H</div>
-        <div class="prayer-grid">
-          ${prayerList.map(([name, time]) => `
-            <div class="prayer-row">
-              <span class="prayer-name">${name}</span>
-              <span class="prayer-time">${escapeMapClickHtml(time || '-')}</span>
-            </div>
-          `).join('')}
-        </div>
-      `;
-      if (typeof syncPopupContent === 'function') syncPopupContent(marker);
-    } catch (err) {
-      console.warn('Gagal memuat jadwal sholat:', err);
-      element.innerHTML = '<span style="color:#7a8fa3; font-size:11px">Jadwal sholat tidak tersedia</span>';
-      if (typeof syncPopupContent === 'function') syncPopupContent(marker);
-    }
-  }
-
-  window.loadPrayerSchedule = loadPrayerSchedule;

@@ -89,8 +89,8 @@
     },
     "inLanguage": "id",
     "featureList": [
-      "GEOID - Pencarian batas wilayah administrasi Provinsi, Kabupaten/Kota, Kecamatan, Desa/Kelurahan",
-      "GEOID - Pencarian koordinat lintang bujur",
+      "GEONUSA - Pencarian batas wilayah administrasi Provinsi, Kabupaten/Kota, Kecamatan, Desa/Kelurahan",
+      "GEONUSA - Pencarian koordinat lintang bujur",
       "GEOTANI - Analisis lahan sawah dilindungi, lahan baku sawah, kawasan pertanian (padi, jagung, kedelai)",
       "GEOTANI - Balai Penyuluhan Pertanian (BPP) dan IGT Sawit",
       "GEOPORTAL - Layer data Pemprov Jawa Timur (pendidikan, kesehatan, transportasi, batas administrasi)",
@@ -179,7 +179,7 @@
             <div class="welcome-feature-card highlighted">
               <div class="welcome-feature-icon icon-geoid">🗺️</div>
               <div class="welcome-feature-info">
-                <div class="welcome-feature-name">GEOID — Batas Wilayah</div>
+                <div class="welcome-feature-name">GEONUSA — Batas Wilayah</div>
                 <div class="welcome-feature-desc">Pencarian batas wilayah administrasi Provinsi, Kabupaten/Kota, Kecamatan, hingga Desa/Kelurahan. Klik di peta untuk melihat data lengkap wilayah.</div>
               </div>
             </div>
@@ -334,7 +334,7 @@
       </div>
 
       <div class="tab-menu">
-        <button class="tab-btn active" onclick="openTab(event, 'tab-geoid')">GEOID</button>
+        <button class="tab-btn active" onclick="openTab(event, 'tab-geoid')">GEONUSA</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-geotani')">GEOTANI</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-gempa'); openGempaSubtabById('gempa-subtab-infocuaca')" style="display:none">GEOMET</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-gempa')">GEOMETEO</button>
@@ -370,7 +370,7 @@
 
       <div class="sidebar-content">
         <div id="tab-geoid" class="tab-content active">
-          <h4 style="font-size:15px; margin-bottom:4px;">GeoID Analysis</h4>
+          <h4 style="font-size:15px; margin-bottom:4px;">GeoNusa Analysis</h4>
           <p style="font-size:13px; color:#668198; margin-bottom:20px;">Pilih wilayah untuk menampilkan insight.</p>
           <div id="geoidSummaryCards" class="geoid-summary-cards">
             <div class="geoid-summary-box geoid-summary-prov">
@@ -431,6 +431,7 @@
             <div style="display:flex;gap:12px;flex-wrap:wrap;padding:7px 0;font-size:11px;color:#385773;">
               <span style="font-weight:600;">Data :</span>
               <label><input id="geoidPopulationLabel" type="checkbox" checked> Kemendagri</label>
+              <label><input id="geoidPopulationLabel" type="checkbox" checked> Bps</label>
             </div>
 
             <button id="applyWilayah" class="btn-wilayah-apply" type="button" disabled onclick="cariLayerWilayah()">Cari
@@ -490,20 +491,30 @@
                     <option value="sawah-2023" selected>Lahan Baku Sawah 2023</option>
                   </select>
                 </div>
-                <div style="position:relative;">
-                  <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Input
-                    Layer 2 — Desa/Kelurahan</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                  <div>
+                    <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Input
+                      Layer 2</label>
+                    <select id="lbsLevelMode"
+                      style="width:100%;padding:7px 10px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;">
+                      <option value="desa" selected>Desa/Kelurahan</option>
+                      <option value="kabupaten">Kabupaten/Kota</option>
+                    </select>
+                  </div>
                   <div style="position:relative;">
-                    <span
-                      style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
-                    <input type="text" id="lbsVillageSearch" placeholder="Ketik nama desa..." autocomplete="off"
-                      style="width:100%;padding:7px 10px 7px 28px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;box-sizing:border-box;" />
-                  </div>
-                  <div id="lbsVillageResults"
-                    style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);">
-                  </div>
-                  <div id="lbsVillageSelected"
-                    style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;">
+                    <label id="lbsLevelLabel" style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Cari nama wilayah</label>
+                    <div style="position:relative;">
+                      <span
+                        style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
+                      <input type="text" id="lbsVillageSearch" placeholder="Pilih nama wilayah..." autocomplete="off"
+                        style="width:100%;padding:7px 10px 7px 28px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;box-sizing:border-box;" />
+                    </div>
+                    <div id="lbsVillageResults"
+                      style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);">
+                    </div>
+                    <div id="lbsVillageSelected"
+                      style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;">
+                    </div>
                   </div>
                 </div>
                 <button id="btnRunLbs"
@@ -581,20 +592,30 @@
                     <option value="ndvi" selected>NDVI (Sentinel-2)</option>
                   </select>
                 </div>
-                <div style="position:relative;">
-                  <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Input
-                    Layer 2 — Desa/Kelurahan</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                  <div>
+                    <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Input
+                      Layer 2</label>
+                    <select id="ndviLevelMode"
+                      style="width:100%;padding:7px 10px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;">
+                      <option value="desa" selected>Desa/Kelurahan</option>
+                      <option value="kabupaten">Kabupaten/Kota</option>
+                    </select>
+                  </div>
                   <div style="position:relative;">
-                    <span
-                      style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
-                    <input type="text" id="ndviVillageSearch" placeholder="Ketik nama desa..." autocomplete="off"
-                      style="width:100%;padding:7px 10px 7px 28px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;box-sizing:border-box;" />
-                  </div>
-                  <div id="ndviVillageResults"
-                    style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);">
-                  </div>
-                  <div id="ndviVillageSelected"
-                    style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;">
+                    <label id="ndviLevelLabel" style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Desa/Kelurahan</label>
+                    <div style="position:relative;">
+                      <span
+                        style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
+                      <input type="text" id="ndviVillageSearch" placeholder="Ketik nama desa..." autocomplete="off"
+                        style="width:100%;padding:7px 10px 7px 28px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;box-sizing:border-box;" />
+                    </div>
+                    <div id="ndviVillageResults"
+                      style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);">
+                    </div>
+                    <div id="ndviVillageSelected"
+                      style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;">
+                    </div>
                   </div>
                 </div>
                 <button id="btnRunNdvi"
@@ -621,20 +642,30 @@
                       selected>Sentinel-2 10m Land Cover (Esri)</option>
                   </select>
                 </div>
-                <div style="position:relative;">
-                  <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Input
-                    Layer 2 — Desa/Kelurahan</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                  <div>
+                    <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Input
+                      Layer 2</label>
+                    <select id="landcoverLevelMode"
+                      style="width:100%;padding:7px 10px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;">
+                      <option value="desa" selected>Desa/Kelurahan</option>
+                      <option value="kabupaten">Kabupaten/Kota</option>
+                    </select>
+                  </div>
                   <div style="position:relative;">
-                    <span
-                      style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
-                    <input type="text" id="landcoverVillageSearch" placeholder="Ketik nama desa..." autocomplete="off"
-                      style="width:100%;padding:7px 10px 7px 28px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;box-sizing:border-box;" />
-                  </div>
-                  <div id="landcoverVillageResults"
-                    style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);">
-                  </div>
-                  <div id="landcoverVillageSelected"
-                    style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;">
+                    <label id="landcoverLevelLabel" style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Desa/Kelurahan</label>
+                    <div style="position:relative;">
+                      <span
+                        style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
+                      <input type="text" id="landcoverVillageSearch" placeholder="Ketik nama desa..." autocomplete="off"
+                        style="width:100%;padding:7px 10px 7px 28px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;box-sizing:border-box;" />
+                    </div>
+                    <div id="landcoverVillageResults"
+                      style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);">
+                    </div>
+                    <div id="landcoverVillageSelected"
+                      style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;">
+                    </div>
                   </div>
                 </div>
                 <button id="btnRunLandcover"

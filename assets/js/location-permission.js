@@ -53,15 +53,12 @@
               </div>
             </div>
             ${!isGeotaniMode ? `<div class="geoid-popup-cctv" data-cctv-insight><span style="color:#94a3b8; font-size:11px">Memuat CCTV terdekat…</span></div>` : ''}
-            ${!isGeotaniMode ? `<div class="geoid-popup-prayer" data-prayer-schedule><span style="color:#94a3b8; font-size:11px">Memuat jadwal sholat…</span></div>` : ''}
           </div>
        </div>
      `;
 
     userMarker.bindPopup(popupContent, { maxWidth: 360, className: isGeotaniMode ? 'geotani-leaflet-popup' : 'geoid-leaflet-popup' });
     userMarker.openPopup();
-
-    if (typeof loadPrayerSchedule === 'function' && !isGeotaniMode) loadPrayerSchedule(userMarker, lat, lon);
 
     // Di GeoTani, lokasi pengguna hanya ditampilkan sebagai penanda. Jangan
     // jalankan reverse geocoding ataupun pemuatan batas berdasarkan alamat.

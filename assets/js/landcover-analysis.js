@@ -26,6 +26,8 @@
   let landcoverLayer = null;
   let selectedVillage = null;
   let lastLandcoverData = null;
+  let lcKabData = [];
+  let lcDesaData = [];
 
   window.clearLandcoverAnalysis = function () {
     if (landcoverLayer && map.hasLayer(landcoverLayer)) map.removeLayer(landcoverLayer);
@@ -77,6 +79,37 @@
     if (!data.path?.length) throw new Error('Geometri batas desa tidak tersedia');
     const rings = data.path.map(ring => ring.map(([lat, lon]) => [lon, lat]));
     return { name: data.nama || selectedVillage?.nama || 'Desa terpilih', rings };
+  }
+
+  function searchLandcoverAreas(query, level) {
+    if (!query || query.length < 2) return [];
+    const q = query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const pool = level === 'kabupaten' ? lcKabData : lcDesaData;
+    return pool.filter(item => {
+      const name = item.nama.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      return name.includes(q);
+    }).slice(0, 20);
+  }
+
+  async function fetchLcAdminBoundary(kode) {
+    const url = `${VILLAGE_BOUNDARY_URL}${encodeURIComponent(kode)}`;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!data.path?.length) return null;
+        const rings = data.path.map(ring => ring.map(([lat, lon]) => [lon, lat]));
+        return { name: data.nama || '', rings };
+      } catch (e) {
+        console.warn(`[LandCover] fetchAdminBoundary attempt ${attempt + 1} failed:`, e.message);
+        if (attempt === 0) await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+    return null;
   }
 
   async function fetchLandcoverSamples(rings) {
@@ -318,6 +351,7 @@
       option.addEventListener('click', () => {
         selectedVillage = item;
         window._selectedLandcoverVillageKode = item.kode;
+        window._selectedLandcoverAreaName = item.nama;
         input.value = item.nama;
         selected.textContent = `\u2713 ${item.nama} (${item.kode})`;
         selected.style.display = 'block';
@@ -333,10 +367,27 @@
     const results = document.getElementById('landcoverVillageResults');
     const selected = document.getElementById('landcoverVillageSelected');
     const button = document.getElementById('btnRunLandcover');
+    const levelMode = document.getElementById('landcoverLevelMode');
+    const levelLabel = document.getElementById('landcoverLevelLabel');
     if (!input || !results || !selected || !button) return;
     const elements = { input, results, selected };
 
-    let villageData = [];
+    const levelPlaceholders = { desa: 'Ketik nama desa...', kabupaten: 'Ketik nama kabupaten...' };
+    const levelLabels = { desa: 'Desa/Kelurahan', kabupaten: 'Kabupaten/Kota' };
+
+    if (levelMode) {
+      levelMode.addEventListener('change', () => {
+        const level = levelMode.value;
+        if (input) input.placeholder = levelPlaceholders[level] || levelPlaceholders.desa;
+        if (levelLabel) levelLabel.textContent = levelLabels[level] || levelLabels.desa;
+        if (input) input.value = '';
+        if (selected) { selected.style.display = 'none'; selected.textContent = ''; }
+        window._selectedLandcoverVillageKode = null;
+        window._selectedLandcoverAreaName = null;
+        if (results) results.style.display = 'none';
+      });
+    }
+
     let villageLoadPromise = null;
 
     function ensureLoaded() {
@@ -346,7 +397,8 @@
           const res = await fetch('assets/data/kode_wilayah.json');
           if (!res.ok) return;
           const all = await res.json();
-          villageData = all.filter(item => item.kode && (item.kode.match(/\./g) || []).length === 3);
+          lcKabData = all.filter(item => item.kode && (item.kode.match(/\./g) || []).length === 1);
+          lcDesaData = all.filter(item => item.kode && (item.kode.match(/\./g) || []).length === 3);
         } catch (e) {
           console.warn('[LandCover] Gagal memuat kode_wilayah.json:', e);
         }
@@ -359,28 +411,22 @@
     input.addEventListener('input', async () => {
       selectedVillage = null;
       window._selectedLandcoverVillageKode = null;
+      window._selectedLandcoverAreaName = null;
       selected.style.display = 'none';
       const query = input.value.trim().toLowerCase();
       if (query.length < 2) { results.style.display = 'none'; return; }
       await ensureLoaded();
-      const filtered = villageData.filter(item => {
-        const name = item.nama.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        const q = query.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        return name.includes(q);
-      }).slice(0, 20);
-      renderVillageOptions(filtered, elements);
+      const level = levelMode?.value || 'desa';
+      const items = searchLandcoverAreas(query, level);
+      renderVillageOptions(items, elements);
     });
 
     input.addEventListener('focus', async () => {
       if (input.value.trim().length >= 2) {
         await ensureLoaded();
-        const q = input.value.trim().toLowerCase();
-        const filtered = villageData.filter(item => {
-          const name = item.nama.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          const nq = q.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          return name.includes(nq);
-        }).slice(0, 20);
-        renderVillageOptions(filtered, elements);
+        const level = levelMode?.value || 'desa';
+        const items = searchLandcoverAreas(input.value.trim(), level);
+        renderVillageOptions(items, elements);
       }
     });
 
@@ -395,13 +441,40 @@
     });
 
     button.addEventListener('click', async () => {
-      if (!selectedVillage) { alert('Silakan pilih desa dari dropdown terlebih dahulu.'); return; }
+      const level = levelMode?.value || 'desa';
+      let boundary;
 
-      button.disabled = true;
-      button.innerHTML = '<span class="ndvi-btn-spinner"></span>Menganalisis Land Cover\u2026';
+      if (level === 'kabupaten') {
+        const kode = window._selectedLandcoverVillageKode;
+        if (!kode) { alert('Silakan pilih kabupaten dari dropdown terlebih dahulu.'); return; }
+        button.disabled = true;
+        button.innerHTML = '<span class="ndvi-btn-spinner"></span>Menganalisis Land Cover\u2026';
+        try {
+          boundary = await fetchLcAdminBoundary(kode);
+          if (!boundary || !boundary.rings?.length) throw new Error('Gagal memuat batas kabupaten');
+          if (typeof showGeoidBoundary === 'function') showGeoidBoundary(kode, 10);
+        } catch (e) {
+          button.disabled = false;
+          button.innerHTML = 'Jalankan Analisis';
+          alert(`Analisis Land Cover gagal: ${e.message}`);
+          return;
+        }
+      } else {
+        if (!selectedVillage) { alert('Silakan pilih desa dari dropdown terlebih dahulu.'); return; }
+        button.disabled = true;
+        button.innerHTML = '<span class="ndvi-btn-spinner"></span>Menganalisis Land Cover\u2026';
+        try {
+          boundary = await fetchVillageBoundary(selectedVillage.kode);
+          if (typeof showGeoidBoundary === 'function') showGeoidBoundary(selectedVillage.kode, 14);
+        } catch (e) {
+          button.disabled = false;
+          button.innerHTML = 'Jalankan Analisis';
+          alert(`Analisis Land Cover gagal: ${e.message}`);
+          return;
+        }
+      }
 
       try {
-        const boundary = await fetchVillageBoundary(selectedVillage.kode);
         const [statistics, samples] = await Promise.all([
           fetchLandcoverStatistics(boundary.rings),
           fetchLandcoverSamples(boundary.rings)
@@ -416,7 +489,10 @@
           boundary,
           distribution,
           totalPixels,
-          samples
+          samples,
+          adminName: level === 'kabupaten' ? (window._selectedLandcoverAreaName || boundary.name) : null,
+          adminKode: level === 'kabupaten' ? (window._selectedLandcoverVillageKode || '') : null,
+          adminLevel: level === 'kabupaten' ? 'kabupaten' : null
         };
 
         const sidebar = document.getElementById('sidebar-left');
@@ -445,7 +521,9 @@
       return;
     }
 
-    const { village, boundary, distribution, totalPixels, samples } = lastLandcoverData;
+    const { village, boundary, distribution, totalPixels, samples, adminName, adminKode, adminLevel } = lastLandcoverData;
+    const displayName = adminName || boundary.name || '';
+    const displayKode = adminKode || village?.kode || '';
     const classes = Object.values(distribution).sort((a, b) => b.pct - a.pct);
     const dominantClass = classes[0] || null;
     const vegetationClasses = classes.filter(c => [2, 3, 4].includes(c.id));
@@ -458,7 +536,7 @@
 
     const now = new Date();
     const dateStr = `${String(now.getDate()).padStart(2, '0')}${String(now.getMonth() + 1).padStart(2, '0')}${now.getFullYear()}`;
-    const fileName = `LandCover_${boundary.name.replace(/[^a-zA-Z0-9]/g, '_')}_${dateStr}.pdf`;
+    const fileName = `LandCover_${displayName.replace(/[^a-zA-Z0-9]/g, '_')}_${dateStr}.pdf`;
 
     const btn = document.querySelector('.landcover-btn-print');
     if (btn) { btn.disabled = true; btn.innerHTML = '<span class="ndvi-btn-spinner"></span>Membuat PDF\u2026'; }
@@ -532,8 +610,8 @@
       pdf.setFontSize(12);
       pdf.setTextColor(30, 41, 59);
       pdf.text('Analisis Land Cover', margin + 2, margin + 6);
-      const villageCode = village?.kode || '';
-      const titleText = villageCode ? `${boundary.name} (${villageCode})` : boundary.name;
+      const villageCode = displayKode;
+      const titleText = villageCode ? `${displayName} (${villageCode})` : displayName;
       const dashX = margin + 2 + pdf.getTextWidth('Analisis Land Cover') + 2;
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(5);
@@ -820,6 +898,8 @@
       const lgRowH = 3.5;
       const lgRows = Math.ceil(lgLegend.length / 2);
       const lgH = lgRows * lgRowH + 8;
+      const panelBottom = mapFrameY + mapFrameH;
+      if (py + lgH > panelBottom) py = panelBottom - lgH;
       const lgY = py;
       const lgColW = (lgW - 8) / 2;
 

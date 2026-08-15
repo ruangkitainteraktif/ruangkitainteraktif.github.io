@@ -649,8 +649,6 @@ function showGeoidFlyup(lat, lon, info, zoom = 15) {
             <span style="font-size:10px;color:#94a3b8;text-align:center;">Memuat analisis…</span>
           </div>
           ${!isGeotaniMode ? `<div class="geoid-popup-cctv" data-cctv-insight><span style="color:#94a3b8; font-size:11px">Memuat CCTV terdekat…</span></div>` : ''}
-        </div>
-        ${!isGeotaniMode ? `<div class="geoid-popup-prayer" data-prayer-schedule><span style="color:#94a3b8; font-size:11px">Memuat jadwal sholat…</span></div>` : ''}
       </div>
     </div>
   `;
@@ -1540,7 +1538,6 @@ async function cariLayerWilayah() {
         await loadGeoidPopupInsights(marker, { ...location, kode: location.kode || adm4Code });
         if (typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, selectedCode, location);
         if (selectedCode) showGeoidBoundary(selectedCode, zoom);
-        if (typeof loadPrayerSchedule === 'function') loadPrayerSchedule(marker, location.lat, location.lon);
       }
     } else {
       alert('Koordinat wilayah tidak ditemukan. Coba pilih tingkat wilayah yang lebih rinci.');
@@ -1779,7 +1776,6 @@ async function selectGeoidLocalResult(item, container) {
     await loadGeoidPopupInsights(marker, { ...location, kode: item.kode });
     if (typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, item.kode, location);
     showGeoidBoundary(item.kode, zoom);
-    if (typeof loadPrayerSchedule === 'function') loadPrayerSchedule(marker, location.lat, location.lon);
   }
 }
 
@@ -1865,7 +1861,6 @@ async function selectGeoidGeocodeResult(item, container) {
     await loadGeoidPopupInsights(marker, { lat: item.lat, lon: item.lon, kode: adm4Code });
     if (adm4Code && typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, adm4Code, { lat: item.lat, lon: item.lon });
     if (adm4Code) showGeoidBoundary(adm4Code, zoom);
-    if (typeof loadPrayerSchedule === 'function') loadPrayerSchedule(marker, item.lat, item.lon);
   }
 }
 
