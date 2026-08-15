@@ -130,7 +130,7 @@
     for (var i = 0; i < candidates.length; i++) {
       var c = candidates[i];
       var fc = ensureTp24Forecast(c.modelRun);
-      var ok = await GfsBase.probeTile('tp24', GfsBase.buildDateStr(c.modelRun), GfsBase.buildDateStr(fc));
+      var ok = await GfsBase.probeTileFor('gfs_indo', 'tp24', GfsBase.buildDateStr(c.modelRun), GfsBase.buildDateStr(fc));
       if (ok) { addLayer(c.modelRun, fc); return; }
     }
     var info = document.getElementById('tp24RgbInfo');

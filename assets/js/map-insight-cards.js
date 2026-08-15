@@ -1,5 +1,6 @@
 // MAP INSIGHT CARDS — Cuaca & Gempa Hari Ini
   let quakeMarker = null;
+  let _insightQuakeRadius = null;
 
   function initMapInsightCards() {
     loadInsightWeather();
@@ -78,9 +79,14 @@
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
 
     if (quakeMarker) map.removeLayer(quakeMarker);
+    if (_insightQuakeRadius) { map.removeLayer(_insightQuakeRadius); _insightQuakeRadius = null; }
 
     const mag = parseFloat(gempa.Magnitude) || 0;
-    const color = '#dc3545';
+    let color = '#22c55e';
+    if (mag >= 7) color = '#991b1b';
+    else if (mag >= 6) color = '#dc2626';
+    else if (mag >= 5) color = '#ea580c';
+    else if (mag >= 4) color = '#f59e0b';
     const size = Math.min(60, Math.max(36, 24 + mag * 5));
 
     const quakeIcon = L.divIcon({
@@ -100,6 +106,20 @@
     });
 
     quakeMarker = L.marker([lat, lon], { icon: quakeIcon, zIndexOffset: 2000 }).addTo(map);
+
+    let radius = 50000;
+    if (mag >= 7) radius = 800000;
+    else if (mag >= 6) radius = 400000;
+    else if (mag >= 5) radius = 200000;
+    else if (mag >= 4) radius = 100000;
+    _insightQuakeRadius = L.circle([lat, lon], {
+      radius: radius,
+      color: color,
+      weight: 1.5,
+      opacity: 0.7,
+      fillColor: color,
+      fillOpacity: 0.12
+    }).addTo(map);
 
     const getMagnitudeLabel = (m) => {
       if (m < 4) return 'Ringan';

@@ -371,8 +371,7 @@
       <div class="sidebar-content">
         <div id="tab-geoid" class="tab-content active">
           <h4 style="font-size:15px; margin-bottom:4px;">GeoID Analysis</h4>
-          <p style="font-size:13px; color:#668198; margin-bottom:20px;">Pilih wilayah atau klik di peta untuk
-            menampilkan data.</p>
+          <p style="font-size:13px; color:#668198; margin-bottom:20px;">Pilih wilayah untuk menampilkan insight.</p>
           <div id="geoidSummaryCards" class="geoid-summary-cards">
             <div class="geoid-summary-box geoid-summary-prov">
               <span class="geoid-summary-count" id="geoidCountProv">–</span>
@@ -747,16 +746,34 @@
         <div id="tab-gempa" class="tab-content">
 
           <h4 style="font-size:15px; margin-bottom:4px;">GeoMeteo Analysis</h4>
-          <p style="font-size:13px; color:#668198; margin-bottom:20px;">Data Atmosfer dalam Satu Peta</p>
+          <p style="font-size:13px; color:#668198; margin-bottom:20px;">Data Bumi dalam Satu Peta</p>
 
           <div class="gempa-subtabs">
-            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-gempa" onclick="openGempaSubtab(this)">Gempa Bumi</button>
+            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-gempa" onclick="openGempaSubtab(this)">Info Gempa</button>
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-karhutla" onclick="openGempaSubtab(this)">Info Karhutla</button>
             <button class="gempa-subtab-btn active" data-subtab="gempa-subtab-infocuaca" onclick="openGempaSubtab(this)">Info Cuaca</button>
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-prediksicuaca" onclick="openGempaSubtab(this)">Prediksi Cuaca</button>
           </div>
 
           <div id="gempa-subtab-gempa" class="gempa-subtab-panel">
+            <div class="cctv-layers" style="margin-bottom: 12px;">
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleWorldPlatesLayer">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Zona Patahan Dunia (USGS)</span>
+                  <small>Plat tektonik &amp; batas lempeng global dari USGS</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleFaultLayer">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Patahan Indonesia (BNPB)</span>
+                  <small>Garis patahan &amp; Megathrust dari INARISK BNPB</small>
+                </span>
+              </label>
+            </div>
             <div id="earthquake-content" class="quake-message">Buka tab ini untuk memuat data gempabumi BMKG.</div>
           </div>
 
@@ -791,7 +808,7 @@
             </div>
             <div id="weather-content" style="margin-top:20px">
               <div style="font-size:13px; color:#555; background:#eef7ff; padding:10px; margin-bottom: 100px; border-radius:5px;">
-                ℹ️ Pilih lokasi dari pencarian atau klik pada peta untuk melihat cuaca.
+                ℹ️ Pilih lokasi dari pencarian untuk melihat cuaca.
               </div>
             </div>
           </div>
@@ -1053,6 +1070,8 @@
   <script src="assets/js/unified-search.js"></script>
   <script src="assets/js/choropleth.js"></script>
   <script src="assets/js/hotspot.js"></script>
+  <script src="assets/js/fault-layer.js"></script>
+  <script src="assets/js/world-plates-layer.js"></script>
   <script src="assets/js/population-chart.js"></script>
 
 </body>

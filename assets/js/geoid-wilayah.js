@@ -704,6 +704,8 @@ async function fetchBigHazardZone(lat, lng) {
   };
 }
 
+var _gempaRadiusCircle = null;
+
 function showGempaPopup(lat, lon, mag, wilayah, potensi, tanggal, jam, kedalaman, dirasakan) {
   const magNum = parseFloat(mag) || 0;
   let color = '#22c55e';
@@ -711,6 +713,12 @@ function showGempaPopup(lat, lon, mag, wilayah, potensi, tanggal, jam, kedalaman
   else if (magNum >= 6) color = '#dc2626';
   else if (magNum >= 5) color = '#ea580c';
   else if (magNum >= 4) color = '#f59e0b';
+
+  let radius = 50000;
+  if (magNum >= 7) radius = 800000;
+  else if (magNum >= 6) radius = 400000;
+  else if (magNum >= 5) radius = 200000;
+  else if (magNum >= 4) radius = 100000;
 
   const popupHtml = `<div class="quake-popup">
     <div class="quake-popup-header">
@@ -743,6 +751,15 @@ function showGempaPopup(lat, lon, mag, wilayah, potensi, tanggal, jam, kedalaman
 
   map.flyTo([lat, lon], 8, { duration: 1 });
   setTimeout(() => {
+    if (_gempaRadiusCircle) { map.removeLayer(_gempaRadiusCircle); _gempaRadiusCircle = null; }
+    _gempaRadiusCircle = L.circle([lat, lon], {
+      radius: radius,
+      color: color,
+      weight: 1.5,
+      opacity: 0.7,
+      fillColor: color,
+      fillOpacity: 0.12
+    }).addTo(map);
     L.marker([lat, lon]).addTo(map).bindPopup(popupHtml, { maxWidth: 340, className: 'quake-leaflet-popup' }).openPopup();
   }, 1100);
 }

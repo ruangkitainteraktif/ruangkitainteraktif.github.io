@@ -12,7 +12,21 @@
   }
 
   function getMagnitudeColor(mag) {
-    return '#dc3545';
+    const m = parseFloat(mag) || 0;
+    if (m >= 7) return '#991b1b';
+    if (m >= 6) return '#dc2626';
+    if (m >= 5) return '#ea580c';
+    if (m >= 4) return '#f59e0b';
+    return '#22c55e';
+  }
+
+  function getMagnitudeRadius(mag) {
+    const m = parseFloat(mag) || 0;
+    if (m >= 7) return 800000;
+    if (m >= 6) return 400000;
+    if (m >= 5) return 200000;
+    if (m >= 4) return 100000;
+    return 50000;
   }
 
   function getMagnitudeLabel(mag) {
@@ -96,6 +110,16 @@
     const marker = L.marker([lat, lon], { icon: quakeIcon, zIndexOffset: 2000 })
       .addTo(earthquakeMarkerGroup);
 
+    const radius = getMagnitudeRadius(mag);
+    L.circle([lat, lon], {
+      radius: radius,
+      color: color,
+      weight: 1.5,
+      opacity: 0.7,
+      fillColor: color,
+      fillOpacity: 0.12
+    }).addTo(earthquakeMarkerGroup);
+
     const depth = gempa.Kedalaman || '-';
     const feeling = gempa.Dirasakan || '-';
     const potensi = gempa.Potensi || '-';
@@ -167,8 +191,6 @@
     const lon = parseFloat(coords[1]);
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
 
-    earthquakeMarkerGroup.clearLayers();
-
     const mag = parseFloat(magnitude) || 0;
     const color = getMagnitudeColor(mag);
     const size = Math.min(60, Math.max(36, 24 + mag * 5));
@@ -191,6 +213,16 @@
 
     const marker = L.marker([lat, lon], { icon: quakeIcon, zIndexOffset: 2000 })
       .addTo(earthquakeMarkerGroup);
+
+    const radius = getMagnitudeRadius(mag);
+    L.circle([lat, lon], {
+      radius: radius,
+      color: color,
+      weight: 1.5,
+      opacity: 0.7,
+      fillColor: color,
+      fillOpacity: 0.12
+    }).addTo(earthquakeMarkerGroup);
 
     const popupHtml = `
       <div class="quake-popup">

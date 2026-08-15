@@ -232,6 +232,10 @@ L.control.scale({
         if (selectedWeatherGroup) selectedWeatherGroup.clearLayers();
         if (cctvMarkersGroup) cctvMarkersGroup.clearLayers();
         if (earthquakeMarkerGroup) earthquakeMarkerGroup.clearLayers();
+        if (typeof _gempaRadiusCircle !== 'undefined' && _gempaRadiusCircle) { map.removeLayer(_gempaRadiusCircle); _gempaRadiusCircle = null; }
+        if (typeof _insightQuakeRadius !== 'undefined' && _insightQuakeRadius) { map.removeLayer(_insightQuakeRadius); _insightQuakeRadius = null; }
+        if (typeof _faultLayerCleanup === 'function') _faultLayerCleanup();
+        if (typeof _worldPlatesLayerCleanup === 'function') _worldPlatesLayerCleanup();
 
         // 8. Uncheck semua checkbox geoportal & arcgis
         document.querySelectorAll('[data-geolayer]').forEach(cb => { cb.checked = false; });
