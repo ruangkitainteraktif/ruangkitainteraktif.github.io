@@ -49,6 +49,10 @@
       if (typeof showGsmapPopup === 'function') showGsmapPopup(lat, lng);
       return;
     }
+    if (typeof isMaritimeAnyActive === 'function' && isMaritimeAnyActive()) {
+      if (typeof showMaritimePopup === 'function') showMaritimePopup(lat, lng);
+      return;
+    }
 
     // Nonaktifkan popup geoid di tab pengaturan, alat, dan gempa
     const activeTab = window.currentActiveTab;

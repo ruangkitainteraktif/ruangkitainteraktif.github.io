@@ -212,7 +212,7 @@
   }
 
   var _layerMap = {};
-  var _allToggleIds = ['toggleWindRgb', 'toggleRhRgb', 'toggleTp24Rgb', 'togglePm25Rgb', 'toggleHthRgb', 'toggleGsmapRgb'];
+  var _allToggleIds = ['toggleWindRgb', 'toggleRhRgb', 'toggleTp24Rgb', 'togglePm25Rgb', 'toggleHthRgb', 'toggleGsmapRgb', 'toggleMaritimeAngin', 'toggleMaritimeGelombang', 'toggleMaritimeSwell', 'toggleMaritimeWindSea'];
 
   function registerLayer(name, hideFn) { _layerMap[name] = hideFn; }
   function deactivateOthers(except) {
@@ -225,6 +225,16 @@
         var cb = document.getElementById(id);
         if (cb && cb.checked) { cb.checked = false; }
       }
+    });
+  }
+
+  function deactivateAll() {
+    Object.keys(_layerMap).forEach(function (k) {
+      if (typeof _layerMap[k] === 'function') _layerMap[k]();
+    });
+    _allToggleIds.forEach(function (id) {
+      var cb = document.getElementById(id);
+      if (cb && cb.checked) { cb.checked = false; }
     });
   }
 
@@ -244,7 +254,8 @@
     loadProvinsi: loadProvinsi,
     removeProvinsi: removeProvinsi,
     registerLayer: registerLayer,
-    deactivateOthers: deactivateOthers
+    deactivateOthers: deactivateOthers,
+    deactivateAll: deactivateAll
   };
 
   document.addEventListener('DOMContentLoaded', function () {

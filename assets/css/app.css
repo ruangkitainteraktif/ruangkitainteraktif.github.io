@@ -2754,6 +2754,23 @@
     .wind-popup-fallback small { font-size: 10px; color: #94a3b8; }
     @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
 
+    /* Maritime Legend */
+    .maritime-legend { background: rgba(255,255,255,.95); border-radius: 8px; padding: 10px 12px; box-shadow: 0 2px 8px rgba(0,0,0,.15); border: 1px solid #e2e8f0; max-width: 200px; }
+    .maritime-legend-title { font-size: 10px; font-weight: 700; color: #0e7490; margin-bottom: 6px; }
+    .maritime-legend-row { display: flex; align-items: center; gap: 5px; font-size: 9px; color: #475569; padding: 2px 0; }
+    .maritime-legend-swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; border: 1px solid rgba(0,0,0,.1); }
+    .maritime-legend-source { font-size: 8px; color: #94a3b8; margin-top: 6px; font-style: italic; }
+
+    /* Maritime Popup - cuaca grid */
+    .wind-popup-cuaca { padding: 10px 14px; border-top: 1px solid #f1f5f9; }
+    .wind-popup-cuaca-title { font-size: 10px; font-weight: 700; color: #0e7490; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .3px; }
+    .wind-popup-cuaca-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .wind-popup-cuaca-item { display: flex; flex-direction: column; gap: 1px; padding: 6px 8px; background: #f0fdfa; border-radius: 6px; border: 1px solid #ccfbf1; }
+    .wind-popup-cuaca-item span { font-size: 9px; color: #64748b; }
+    .wind-popup-cuaca-item b { font-size: 11px; color: #1e293b; font-weight: 600; }
+    .wind-popup-footer { padding: 8px 14px; border-top: 1px solid #f1f5f9; }
+    .wind-popup-footer span { font-size: 9px; color: #94a3b8; }
+
     /* Earthquake Marker */
     .quake-marker-wrap { background: transparent; border: 0; }
     .quake-marker {

@@ -337,7 +337,7 @@
         <button class="tab-btn active" onclick="openTab(event, 'tab-geoid')">GEONUSA</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-geotani')">GEOTANI</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-gempa'); openGempaSubtabById('gempa-subtab-infocuaca')" style="display:none">GEOMET</button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-gempa')">GEOMETEO</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-gempa')">GEOPULSE</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-geoportal')">GEOPORTAL</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-cctv')">GEOWATCH</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-pengaturan')">SETTING</button>
@@ -776,14 +776,15 @@
         <!-- TAB 3: GEMPA BMKG -->
         <div id="tab-gempa" class="tab-content">
 
-          <h4 style="font-size:15px; margin-bottom:4px;">GeoMeteo Analysis</h4>
-          <p style="font-size:13px; color:#668198; margin-bottom:20px;">Data Bumi dalam Satu Peta</p>
+          <h4 style="font-size:15px; margin-bottom:4px;">GeoPulse Analysis</h4>
+          <p style="font-size:13px; color:#668198; margin-bottom:20px;">Monitoring Bumi secara realtime dalam satu peta.</p>
 
           <div class="gempa-subtabs">
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-gempa" onclick="openGempaSubtab(this)">Info Gempa</button>
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-karhutla" onclick="openGempaSubtab(this)">Info Karhutla</button>
             <button class="gempa-subtab-btn active" data-subtab="gempa-subtab-infocuaca" onclick="openGempaSubtab(this)">Info Cuaca</button>
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-prediksicuaca" onclick="openGempaSubtab(this)">Prediksi Cuaca</button>
+            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-maritim" onclick="openGempaSubtab(this)">Prediksi Maritim</button>
           </div>
 
           <div id="gempa-subtab-gempa" class="gempa-subtab-panel">
@@ -802,6 +803,14 @@
                 <span class="cctv-layer-info">
                   <span class="cctv-layer-name">Patahan Indonesia (BNPB)</span>
                   <small>Garis patahan &amp; Megathrust dari INARISK BNPB</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleKatalogGempa">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Katalog Gempa BMKG</span>
+                  <small id="katalogGempaInfo">420 gempa signifikan historis (1923-2022)</small>
                 </span>
               </label>
             </div>
@@ -911,9 +920,46 @@
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- TAB 4: PENGATURAN -->
+          <div id="gempa-subtab-maritim" class="gempa-subtab-panel">
+            <h4>Prakiraan Cuaca Maritim</h4>
+            <p style="font-size:12px; color:#668198; margin-bottom:12px;">Layer cuaca laut dari model InaWaves BMKG (w3g_hires) dengan data model run terbaru.</p>
+            <div class="cctv-layers">
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleMaritimeAngin">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Angin Laut</span>
+                  <small id="maritimeAnginInfo">Wind Speed &amp; Direction</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleMaritimeGelombang">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Tinggi Gelombang</span>
+                  <small id="maritimeGelombangInfo">Significant Wave Height</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleMaritimeSwell">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Swell</span>
+                  <small id="maritimeSwellInfo">Primary Swell Direction</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleMaritimeWindSea">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Gelombang Angin</span>
+                  <small id="maritimeWindSeaInfo">Wind Sea Direction</small>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
         <div id="tab-pengaturan" class="tab-content">
           <h4 style="font-size: 15px; margin-bottom: 5px;">Pengaturan Peta</h4>
           <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Atur transparansi layer, kunci area, dan pilih
@@ -1069,6 +1115,7 @@
   <script src="assets/js/geoportal-search.js"></script>
   <script src="assets/js/sidebar.js"></script>
   <script src="assets/js/earthquake.js"></script>
+  <script src="assets/js/katalog-gempa.js"></script>
   <script src="assets/js/cctv.js"></script>
   <script src="assets/js/detail-subtab.js"></script>
   <script src="assets/js/map-click.js"></script>
@@ -1095,6 +1142,7 @@
   <script src="assets/js/pm25-rgb.js"></script>
   <script src="assets/js/hth-rgb.js"></script>
   <script src="assets/js/gsmap-rgb.js"></script>
+  <script src="assets/js/maritime-rgb.js"></script>
   <script src="assets/js/map-insight-cards.js"></script>
   <script src="assets/js/geotani-search.js"></script>
   <script src="assets/js/sawah-dilindungi.js"></script>
