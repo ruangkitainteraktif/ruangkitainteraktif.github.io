@@ -340,8 +340,7 @@
         <button class="tab-btn" onclick="openTab(event, 'tab-gempa')">GEOPULSE</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-geoportal')">GEOPORTAL</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-cctv')">GEOWATCH</button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-pengaturan')">SETTING</button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-alat')">TOOLS</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-alat')">GEOTOOLS</button>
       </div>
 
       <div class="app-banner" id="appBanner">
@@ -430,8 +429,8 @@
 
             <div style="display:flex;gap:12px;flex-wrap:wrap;padding:7px 0;font-size:11px;color:#385773;">
               <span style="font-weight:600;">Data :</span>
-              <label><input id="geoidPopulationLabel" type="checkbox" checked> Kemendagri</label>
-              <label><input id="geoidPopulationLabel" type="checkbox" checked> Bps</label>
+              <label><input id="geoidPopulationLabel" type="checkbox" checked> KEMENDAGRI</label>
+              <label><input id="geoidPopulationLabel" type="checkbox" checked> BPS</label>
             </div>
 
             <button id="applyWilayah" class="btn-wilayah-apply" type="button" disabled onclick="cariLayerWilayah()">Cari
@@ -476,6 +475,9 @@
             <button id="geotani-landcover-tab" class="geotani-analysis-tab" type="button" role="tab"
               aria-selected="false" aria-controls="geotani-landcover-panel"
               onclick="openGeotaniAnalysisTab('landcover')">LULC Analysis</button>
+            <button id="geotani-dem-tab" class="geotani-analysis-tab" type="button" role="tab"
+              aria-selected="false" aria-controls="geotani-dem-panel"
+              onclick="openGeotaniAnalysisTab('dem')">TERRAIN Analysis</button>
           </nav>
 
           <div id="geotani-lbs-panel" class="geotani-analysis-panel active" role="tabpanel"
@@ -550,8 +552,17 @@
                     <option value="erosi" selected>Peta Rawan Erosi (BIG)</option>
                   </select>
                 </div>
-                <div style="position:relative;">
+                <div>
                   <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Input
+                    Layer 2 — Wilayah</label>
+                  <select id="overlayLevelMode"
+                    style="width:100%;padding:7px 10px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;">
+                    <option value="desa" selected>Desa/Kelurahan</option>
+                    <option value="kabupaten">Kabupaten/Kota</option>
+                  </select>
+                </div>
+                <div style="position:relative;">
+                  <label id="overlayAreaLabel" style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Input
                     Layer 2 — Desa/Kelurahan</label>
                   <div style="position:relative;">
                     <span
@@ -710,6 +721,65 @@
                       style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#e3e2c3;"></span>Rangeland
                   </div>
                 </div>
+              </div>
+            </section>
+          </div>
+
+          <div id="geotani-dem-panel" class="geotani-analysis-panel" role="tabpanel"
+            aria-labelledby="geotani-dem-tab" hidden>
+            <section class="geotani-kta-card" aria-labelledby="demOverlayTitle">
+              <h5 id="demOverlayTitle">Topografi (DEM)</h5>
+              <div style="display:grid;gap:10px;margin-top:8px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                  <div>
+                    <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Level</label>
+                    <select id="demLevelMode"
+                      style="width:100%;padding:7px 10px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;">
+                      <option value="desa" selected>Desa/Kelurahan</option>
+                      <option value="kabupaten">Kabupaten/Kota</option>
+                    </select>
+                  </div>
+                  <div style="position:relative;">
+                    <label id="demLevelLabel" style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Cari nama wilayah</label>
+                    <div style="position:relative;">
+                      <span
+                        style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
+                      <input type="text" id="demVillageSearch" placeholder="Pilih nama wilayah..." autocomplete="off"
+                        style="width:100%;padding:7px 10px 7px 28px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;box-sizing:border-box;" />
+                    </div>
+                    <div id="demVillageResults"
+                      style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);">
+                    </div>
+                    <div id="demVillageSelected"
+                      style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;">
+                    </div>
+                  </div>
+                </div>
+                <button id="btnRunDem"
+                  style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#7c3aed;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;"
+                  onmouseover="this.style.background='#6d28d9'" onmouseout="this.style.background='#7c3aed'">
+                  Analisis Topografi
+                </button>
+                <button id="btnClearDem"
+                  style="margin-top:4px;padding:7px 14px;font-size:11px;font-weight:600;color:#7c3aed;background:#fff;border:1px solid #7c3aed;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:none;"
+                  onmouseover="this.style.background='#f5f3ff'" onmouseout="this.style.background='#fff'">
+                  Hapus Overlay
+                </button>
+                <label class="cctv-layer-toggle" style="margin-top:6px;display:none;" id="demnasToggleWrap">
+                  <input type="checkbox" id="toggleDemnasOverlay">
+                  <span class="cctv-layer-check"></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">Terrain Overlay</span>
+                    <small>Tampilkan visualisasi elevasi (SRTM)</small>
+                  </span>
+                </label>
+                <div id="dem-progress" style="display:none;">
+                  <div style="height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden;margin-top:4px;">
+                    <div id="dem-progress-fill" style="height:100%;background:#7c3aed;border-radius:2px;transition:width .3s;width:0%;"></div>
+                  </div>
+                  <div id="dem-progress-text" style="font-size:10px;color:#64748b;margin-top:4px;">Memuat data elevasi...</div>
+                </div>
+                <div id="dem-report-container" style="display:none;"></div>
               </div>
             </section>
           </div>
@@ -1008,40 +1078,10 @@
             </div>
           </div>
         </div>
-        <div id="tab-pengaturan" class="tab-content">
-          <h4 style="font-size: 15px; margin-bottom: 5px;">Pengaturan Peta</h4>
-          <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Atur transparansi layer, kunci area, dan pilih
-            basemap.</p>
-          <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
-          <div class="query-box">
-            <div class="form-group">
-              <label for="opacityRange"><b>Opasitas Layer</b></label>
-              <input id="opacityRange" type="range" min="0.1" max="1" step="0.1" value="0.8" style="width:100%;">
-              <div id="opacityValue" style="font-size:12px; color:#668198; margin-top:4px;">0.8</div>
-            </div>
-
-            <div class="form-group">
-              <label><b>Kunci Peta</b></label>
-              <label class="geoportal-filter"><input type="checkbox" id="mapLockToggle"><span>Kunci area
-                  peta</span></label>
-            </div>
-
-            <div class="form-group">
-              <label for="basemapSelect"><b>Basemap</b></label>
-              <select id="basemapSelect">
-                <option value="carto-light">Carto Light</option>
-                <option value="carto-dark">Carto Dark</option>
-                <option value="osm">Open Street Map</option>
-                <option value="esri-satellite">Esri Satellite</option>
-                <option value="rupabumi">Rupabumi Indonesia (BIG)</option>
-              </select>
-            </div>
-          </div>
-        </div>
 
         <!-- TAB 5: ALAT -->
         <div id="tab-alat" class="tab-content">
-          <h4 style="font-size: 15px; margin-bottom: 5px;">Alat Analisis</h4>
+          <h4 style="font-size: 15px; margin-bottom: 5px;">GeoTools Analysis</h4>
           <p style="font-size: 13px; color: #666;margin-bottom: 20px;">Gambar, ukur, dan muat file GeoJSON.</p>
           <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
           <!-- Gambar & Ukur -->
@@ -1156,6 +1196,7 @@
   <script src="https://unpkg.com/@turf/turf@7.1.0/turf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/jstree.min.js"></script>
   <script src="assets/js/map-core.js"></script>
@@ -1167,6 +1208,7 @@
   <script src="assets/js/sensor-seismic.js"></script>
   <script src="assets/js/sensor-global.js"></script>
   <script src="assets/js/history-gempa.js"></script>
+  <script src="assets/js/dem-analysis.js"></script>
   <script src="assets/js/cctv.js"></script>
   <script src="assets/js/detail-subtab.js"></script>
   <script src="assets/js/map-click.js"></script>
@@ -1176,6 +1218,7 @@
 
   <script src="assets/js/overlay-village-search.js"></script>
   <script src="assets/js/erosi-kta.js"></script>
+  <script src="assets/js/crop-health.js"></script>
   <script src="assets/js/ndvi-analysis.js"></script>
   <script src="assets/js/landcover-analysis.js"></script>
   <script src="assets/js/dukcapil-population.js"></script>

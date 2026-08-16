@@ -79,14 +79,6 @@ L.control.scale({
   setRdtrOpacity(currentRdtrOpacity);
   setMapLocked(false);
 
-  const basemapSelect = document.getElementById('basemapSelect');
-  if (basemapSelect) {
-    basemapSelect.value = currentBasemapName;
-    basemapSelect.addEventListener('change', function() {
-      setBaseMap(this.value);
-    });
-  }
-
   L.control.locate({
     position: 'bottomright',
     flyTo: true,
@@ -138,6 +130,53 @@ L.control.scale({
     }
   });
   new DetailPanelControl().addTo(map);
+
+  // Basemap Control
+  const basemapLabels = {
+    'carto-light': 'Carto Light',
+    'carto-dark': 'Carto Dark',
+    'osm': 'Open Street Map',
+    'esri-satellite': 'Esri Satellite',
+    'rupabumi': 'Rupabumi Indonesia'
+  };
+  const BasemapControl = L.Control.extend({
+    options: { position: 'bottomright' },
+    onAdd() {
+      const wrap = L.DomUtil.create('div', 'basemap-control-wrap');
+      L.DomEvent.disableClickPropagation(wrap);
+      L.DomEvent.disableScrollPropagation(wrap);
+
+      const dropdown = L.DomUtil.create('div', 'basemap-dropdown', wrap);
+      dropdown.style.display = 'none';
+      Object.entries(basemapLabels).forEach(([key, label]) => {
+        const opt = L.DomUtil.create('div', 'basemap-option', dropdown);
+        opt.textContent = label;
+        opt.dataset.value = key;
+        if (key === currentBasemapName) opt.classList.add('active');
+        opt.addEventListener('click', (e) => {
+          e.stopPropagation();
+          setBaseMap(key);
+          dropdown.querySelectorAll('.basemap-option').forEach(o => o.classList.remove('active'));
+          opt.classList.add('active');
+          dropdown.style.display = 'none';
+        });
+      });
+
+      const btn = L.DomUtil.create('button', 'basemap-btn', wrap);
+      btn.innerHTML = '🗺️';
+      btn.title = 'Pilih Basemap';
+      btn.setAttribute('aria-label', 'Ganti basemap');
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isVisible = dropdown.style.display === 'block';
+        dropdown.style.display = isVisible ? 'none' : 'block';
+      });
+
+      document.addEventListener('click', () => { dropdown.style.display = 'none'; });
+      return wrap;
+    }
+  });
+  new BasemapControl().addTo(map);
 
   // Reset Layers Control
   const ResetLayersControl = L.Control.extend({

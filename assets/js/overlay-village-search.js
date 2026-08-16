@@ -1,10 +1,12 @@
 // ==========================================
 // Overlay Village Search
-// Autocomplete desa dari kode_wilayah.json
+// Autocomplete desa & kabupaten dari kode_wilayah.json
 // ==========================================
 
 (function() {
-  let villageData = [];
+  let allData = [];
+  let desaData = [];
+  let kabData = [];
   let loadPromise = null;
 
   function ensureLoaded() {
@@ -14,8 +16,13 @@
         const res = await fetch('assets/data/kode_wilayah.json');
         if (!res.ok) return;
         const all = await res.json();
-        villageData = all.filter(item => item.kode && (item.kode.match(/\./g) || []).length === 3);
-
+        allData = all.filter(item => {
+          if (!item.kode) return false;
+          const dots = (item.kode.match(/\./g) || []).length;
+          return dots === 1 || dots === 3;
+        });
+        desaData = allData.filter(item => (item.kode.match(/\./g) || []).length === 3);
+        kabData = allData.filter(item => (item.kode.match(/\./g) || []).length === 1);
       } catch (e) {
         console.warn('Gagal memuat kode_wilayah.json:', e);
       }
@@ -23,10 +30,16 @@
     return loadPromise;
   }
 
-  function searchVillages(query) {
-    if (!query || query.length < 2 || !villageData.length) return [];
+  function getLevelMode() {
+    return document.getElementById('overlayLevelMode')?.value || 'desa';
+  }
+
+  function searchItems(query) {
+    const level = getLevelMode();
+    const source = level === 'kabupaten' ? kabData : desaData;
+    if (!query || query.length < 2 || !source.length) return [];
     const q = query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    return villageData.filter(item => {
+    return source.filter(item => {
       const name = item.nama.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       return name.includes(q);
     }).slice(0, 20);
@@ -48,6 +61,7 @@
         e.preventDefault();
         input.value = item.nama;
         window._selectedVillageKode = item.kode;
+        window._selectedOverlayLevel = getLevelMode();
         selectedEl.textContent = `\u2713 ${item.nama} (${item.kode})`;
         selectedEl.style.display = 'block';
         container.style.display = 'none';
@@ -61,9 +75,27 @@
     const input = document.getElementById('overlayVillageSearch');
     const results = document.getElementById('overlayVillageResults');
     const selected = document.getElementById('overlayVillageSelected');
+    const levelMode = document.getElementById('overlayLevelMode');
+    const areaLabel = document.getElementById('overlayAreaLabel');
     if (!input || !results || !selected) return;
 
+    const levelPlaceholders = { desa: 'Ketik nama desa...', kabupaten: 'Ketik nama kabupaten...' };
+    const levelLabels = { desa: 'Input Layer 2 — Desa/Kelurahan', kabupaten: 'Input Layer 2 — Kabupaten/Kota' };
+
     ensureLoaded();
+
+    if (levelMode) {
+      levelMode.addEventListener('change', () => {
+        const level = levelMode.value;
+        input.placeholder = levelPlaceholders[level] || levelPlaceholders.desa;
+        if (areaLabel) areaLabel.textContent = levelLabels[level] || levelLabels.desa;
+        input.value = '';
+        results.style.display = 'none';
+        selected.style.display = 'none';
+        window._selectedVillageKode = null;
+        window._selectedOverlayLevel = level;
+      });
+    }
 
     input.addEventListener('input', async () => {
       const q = input.value.trim();
@@ -74,14 +106,14 @@
         return;
       }
       await ensureLoaded();
-      const found = searchVillages(q);
+      const found = searchItems(q);
       renderResults(found, results, input, selected);
     });
 
     input.addEventListener('focus', async () => {
       if (input.value.trim().length >= 2) {
         await ensureLoaded();
-        const found = searchVillages(input.value.trim());
+        const found = searchItems(input.value.trim());
         renderResults(found, results, input, selected);
       }
     });

@@ -977,10 +977,12 @@ document.addEventListener('DOMContentLoaded', () => {
     btnRunOverlay.addEventListener('click', async () => {
       const kode = window._selectedVillageKode || window._lastGeotaniLocation?.kode;
       if (!kode) {
-        alert('Silakan pilih nama desa terlebih dahulu.');
+        alert('Silakan pilih nama wilayah terlebih dahulu.');
         return;
       }
 
+      const levelMode = document.getElementById('overlayLevelMode')?.value || 'desa';
+      const levelZoomMap = { desa: 14, kabupaten: 10 };
       const layer2 = document.getElementById('overlayLayer2')?.value || 'erosi';
 
       btnRunOverlay.disabled = true;
@@ -990,7 +992,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const options = {
           layer1: document.getElementById('overlayLayer1')?.value || 'sawah-2023',
           layer2: layer2,
-          clipToVillage: document.getElementById('overlayClipVillage')?.checked !== false
+          clipToVillage: document.getElementById('overlayClipVillage')?.checked !== false,
+          level: levelMode
         };
 
         const withTimeout = (promise, ms) => {
@@ -1004,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const sawahReq = (typeof fetchLuasSawah === 'function') ? withTimeout(fetchLuasSawah(kode), 12000) : Promise.resolve(null);
         const luasReq = (typeof fetchLuasWilayah === 'function') ? withTimeout(fetchLuasWilayah(kode), 8000) : Promise.resolve(null);
 
-        if (typeof showGeoidBoundary === 'function') showGeoidBoundary(kode, 14);
+        if (typeof showGeoidBoundary === 'function') showGeoidBoundary(kode, levelZoomMap[levelMode] || 14);
         const [boundaryData, sawahResult, luasResult, result] = await Promise.all([
           boundaryReq, sawahReq, luasReq,
           computeOverlayIntersection(kode, options)
@@ -1041,7 +1044,8 @@ document.addEventListener('DOMContentLoaded', () => {
             kta: ktaItem,
             sawahHa,
             luasWilayahHa,
-            layer2: document.getElementById('overlayLayer2')?.value || 'erosi'
+            layer2: document.getElementById('overlayLayer2')?.value || 'erosi',
+            level: levelMode
           };
 
           const sidebar = document.getElementById('sidebar-left');
@@ -1818,46 +1822,59 @@ document.addEventListener('DOMContentLoaded', () => {
           else if (luas > 1) { fillColor = '#16a34a'; fillOpacity = 0.50; }
           return { color: '#15803d', weight: 1.5, fillColor, fillOpacity, opacity: 0.85 };
         },
-        onEachFeature: function(feature, layer) {
-          const p = feature.properties || {};
-          const areaHa = p.area_ha != null ? Number(p.area_ha).toLocaleString('id-ID', { maximumFractionDigits: 4 }) : '-';
-          const sawahHa = p.sawah_luas != null ? Number(p.sawah_luas).toLocaleString('id-ID', { maximumFractionDigits: 2 }) : '-';
+        onEachFeature: (function() {
+          var featureIdx = 0;
+          return function(feature, layer) {
+            var p = feature.properties || {};
+            var areaHa = p.area_ha != null ? Number(p.area_ha).toLocaleString('id-ID', { maximumFractionDigits: 4 }) : '-';
+            var sawahHa = p.sawah_luas != null ? Number(p.sawah_luas).toLocaleString('id-ID', { maximumFractionDigits: 2 }) : '-';
+            var cardId = 'cropHealthCard_' + featureIdx;
+            featureIdx++;
 
-          layer.bindPopup(`
-            <div class="irisan-popup">
-              <div class="irisan-popup-header">
-                <div class="irisan-popup-badge">
-                  <span class="irisan-popup-badge-dot"></span>
-                  LBS
+            layer.bindPopup(`
+              <div class="irisan-popup">
+                <div class="irisan-popup-header">
+                  <div class="irisan-popup-badge">
+                    <span class="irisan-popup-badge-dot"></span>
+                    LBS
+                  </div>
+                  <strong>${headerLabel}</strong>
                 </div>
-                <strong>${headerLabel}</strong>
-              </div>
-              <div class="irisan-popup-body">
-                <div class="irisan-popup-detail">
-                  <span>Luas Irisan</span>
-                  <b style="color:#166534">${areaHa} Ha</b>
-                  <span>Luas Sawah Asli</span>
-                  <b>${sawahHa} Ha</b>
-                  <span>Jenis Sawah</span>
-                  <b>${p.sawah_jenis || '-'}</b>
-                  <span>Kab/Kota</span>
-                  <b>${p.sawah_wadmkk || '-'}</b>
-                  <span>Provinsi</span>
-                  <b>${p.sawah_wadmpr || '-'}</b>
+                <div class="irisan-popup-body">
+                  <div class="irisan-popup-detail">
+                    <span>Luas Irisan</span>
+                    <b style="color:#166534">${areaHa} Ha</b>
+                    <span>Luas Sawah Asli</span>
+                    <b>${sawahHa} Ha</b>
+                    <span>Jenis Sawah</span>
+                    <b>${p.sawah_jenis || '-'}</b>
+                    <span>Kab/Kota</span>
+                    <b>${p.sawah_wadmkk || '-'}</b>
+                    <span>Provinsi</span>
+                    <b>${p.sawah_wadmpr || '-'}</b>
+                  </div>
+                  <div id="${cardId}" class="crop-health-card-wrap"></div>
+                </div>
+                <div class="irisan-popup-footer">
+                  <span>Sumber: Kementan Sawah 2023</span>
+                  <div style="display:flex;justify-content:center;gap:8px;margin-top:6px;">
+                    <button class="kta-btn-print" onclick="printLbsPdf()">
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                      Cetak PDF
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div class="irisan-popup-footer">
-                <span>Sumber: Kementan Sawah 2023</span>
-                <div style="display:flex;justify-content:center;gap:8px;margin-top:6px;">
-                  <button class="kta-btn-print" onclick="printLbsPdf()">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                    Cetak PDF
-                  </button>
-                </div>
-              </div>
-            </div>
-          `, { maxWidth: 320, className: 'irisan-leaflet-popup' });
-        }
+            `, { maxWidth: 340, className: 'irisan-leaflet-popup' });
+
+            layer.on('popupopen', function() {
+              var cardEl = document.getElementById(cardId);
+              if (cardEl && typeof window.fetchCropHealth === 'function') {
+                window.fetchCropHealth(feature, p, cardEl);
+              }
+            });
+          };
+        })()
       }
     ).addTo(map);
 

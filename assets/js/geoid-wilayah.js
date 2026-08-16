@@ -15,6 +15,7 @@ let geoidSelectedDistrict = null;
 let geoidWilayahDataPromise = null;
 let geoidBoundaryLayer = null;
 let geoidBoundaryRequestId = 0;
+let geoidBoundaryRawData = null;
 let lastGeotaniPopupData = null;
 
 async function getGeoidWilayahData() {
@@ -348,6 +349,7 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
     const data = await response.json();
     if (!data.path || !data.path.length || requestId !== geoidBoundaryRequestId) return;
 
+    geoidBoundaryRawData = { path: data.path, nama: data.nama || 'Wilayah', kode };
     const rings = data.path.map(ring => ring);
     const isGeotaniMode = window.currentActiveTab === 'tab-geotani';
     geoidBoundaryLayer = L.polygon(rings, {

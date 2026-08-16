@@ -143,6 +143,59 @@
       color: #fff !important;
       transform: scale(0.92);
     }
+    .basemap-control-wrap {
+      position: relative;
+      margin: 20px !important;
+      margin-bottom: 0 !important;
+    }
+    .basemap-btn {
+      display: grid;
+      place-items: center;
+      width: 46px !important;
+      height: 46px !important;
+      margin: 0 !important;
+      border: 1px solid rgba(255,255,255,.86) !important;
+      border-radius: 50% !important;
+      background: linear-gradient(145deg, #ffffff, #e9f7fc) !important;
+      color: #0879bf !important;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 10px 28px rgba(8,63,102,.24) !important;
+      transition: transform .2s, box-shadow .2s, background .2s;
+    }
+    .basemap-btn:hover {
+      background: linear-gradient(145deg, #ffffff, #d5f3fb) !important;
+      box-shadow: inset 0 0 0 1px rgba(8,121,191,.14);
+      transform: translateY(-2px);
+    }
+    .basemap-dropdown {
+      position: absolute;
+      bottom: 54px;
+      right: 0;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 8px 28px rgba(0,0,0,.18);
+      padding: 6px 0;
+      min-width: 180px;
+      z-index: 10000;
+      overflow: hidden;
+    }
+    .basemap-option {
+      padding: 8px 14px;
+      font-size: 12px;
+      color: #334155;
+      cursor: pointer;
+      transition: background .15s;
+      white-space: nowrap;
+    }
+    .basemap-option:hover {
+      background: #f1f5f9;
+    }
+    .basemap-option.active {
+      color: #0879bf;
+      font-weight: 700;
+      background: #eff6ff;
+    }
     .toggle-insight-btn {
       display: grid;
       place-items: center;
@@ -1266,6 +1319,10 @@
     .gempa-subtab-btn.active { background: #fff; color: #0891b2; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
     .gempa-subtab-panel { display: none; }
     .gempa-subtab-panel.active { display: block; }
+    .gempa-subtab-panel .cctv-layers { max-height: 35vh; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+    .gempa-subtab-panel .cctv-layers::-webkit-scrollbar { width: 4px; }
+    .gempa-subtab-panel .cctv-layers::-webkit-scrollbar-track { background: transparent; }
+    .gempa-subtab-panel .cctv-layers::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
 
     .info-card {
       background: #f9f9f9;
@@ -3916,5 +3973,299 @@
 
     .hotspot-popup .leaflet-popup-content {
       margin: 10px 12px;
+    }
+
+    /* ── DEM Topography Analysis ── */
+    .topo-report-card {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      padding: 16px;
+      margin-top: 12px;
+    }
+    .topo-header {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 12px;
+    }
+    .topo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .topo-stat {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 10px;
+    }
+    .topo-stat-label {
+      font-size: 10px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .topo-stat-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-top: 2px;
+    }
+    .topo-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: #e5e7eb;
+      margin-top: 4px;
+      overflow: hidden;
+    }
+    .topo-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    @keyframes dem-spin { to { transform: rotate(360deg); } }
+    .dem-spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: dem-spin .6s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .dem-spinner.dark {
+      border-color: rgba(124,58,237,.2);
+      border-top-color: #7c3aed;
+    }
+
+    /* ── DEM Point Popup ── */
+    .dem-leaflet-popup .leaflet-popup-content-wrapper {
+      border-radius: 12px;
+      padding: 0;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,.18);
+      border: none;
+    }
+    .dem-leaflet-popup .leaflet-popup-content {
+      margin: 0;
+      min-width: 200px;
+    }
+    .dem-popup {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .dem-popup-header {
+      padding: 14px 16px 10px;
+      color: #fff;
+      position: relative;
+    }
+    .dem-popup-header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 20px;
+      background: linear-gradient(to bottom, transparent, rgba(0,0,0,.1));
+    }
+    .dem-popup-elev {
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1.1;
+      text-shadow: 0 1px 3px rgba(0,0,0,.25);
+    }
+    .dem-popup-unit {
+      font-size: 11px;
+      font-weight: 500;
+      opacity: .85;
+    }
+    .dem-popup-coord {
+      font-size: 9px;
+      opacity: .7;
+      margin-top: 3px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+    .dem-popup-body {
+      padding: 10px 14px 12px;
+    }
+    .dem-popup-row {
+      display: grid;
+      grid-template-columns: 18px 1fr auto;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .dem-popup-row:last-child {
+      border-bottom: none;
+    }
+    .dem-popup-icon {
+      font-size: 12px;
+      width: 18px;
+      text-align: center;
+    }
+    .dem-popup-label {
+      font-size: 10px;
+      color: #64748b;
+    }
+    .dem-popup-val {
+      font-size: 11px;
+      font-weight: 700;
+      color: #1e293b;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    /* ── DEM Polygon Popup ── */
+    .dem-poly-popup .leaflet-popup-content-wrapper {
+      border-radius: 12px;
+      padding: 0;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,.18);
+      border: none;
+    }
+    .dem-poly-popup .leaflet-popup-content {
+      margin: 0;
+      min-width: 260px;
+    }
+
+    /* ── Crop Health Card ── */
+    .crop-health-card-wrap {
+      margin-top: 8px;
+      max-height: 30vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 transparent;
+    }
+    .crop-health-card-wrap::-webkit-scrollbar { width: 4px; }
+    .crop-health-card-wrap::-webkit-scrollbar-track { background: transparent; }
+    .crop-health-card-wrap::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+    .crop-health-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .crop-health-loading {
+      text-align: center;
+      padding: 14px;
+      color: #64748b;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .crop-health-header {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      padding: 10px 12px;
+      color: #fff;
+    }
+    .crop-health-field-id {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+    }
+    .crop-health-crop {
+      font-size: 10px;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+    .crop-health-section {
+      padding: 8px 12px;
+      border-top: 1px solid #f1f5f9;
+    }
+    .crop-health-section-title {
+      font-size: 9px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .crop-health-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .crop-health-indices {
+      margin-top: 6px;
+    }
+    .crop-health-index-row {
+      display: grid;
+      grid-template-columns: 50px 1fr auto;
+      align-items: center;
+      padding: 3px 0;
+      font-size: 11px;
+    }
+    .crop-health-idx-label {
+      font-weight: 600;
+      color: #475569;
+    }
+    .crop-health-idx-value {
+      font-weight: 700;
+      color: #1e293b;
+      text-align: right;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+    .crop-health-idx-tag {
+      font-size: 9px;
+      font-weight: 600;
+      min-width: 60px;
+      text-align: right;
+    }
+    .crop-health-stress {
+      text-align: center;
+      padding: 4px 0;
+    }
+    .crop-health-stress-score {
+      margin-bottom: 4px;
+    }
+    .crop-health-stress-num {
+      font-size: 22px;
+      font-weight: 800;
+      color: #1e293b;
+    }
+    .crop-health-stress-of {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    .crop-health-condition {
+      font-size: 10px;
+      color: #64748b;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+    .crop-health-chart-section {
+      border-top: 1px solid #e2e8f0;
+    }
+    .crop-health-chart-wrap {
+      height: 130px;
+      position: relative;
+    }
+    .crop-health-concerns {
+      margin-top: 6px;
+    }
+    .crop-health-concern-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      font-size: 10px;
+      line-height: 1.4;
+      padding: 3px 0;
+    }
+    .crop-health-meta {
+      text-align: center;
+      font-size: 9px;
+      color: #94a3b8;
+      padding: 6px 12px;
+      border-top: 1px solid #f1f5f9;
     }
 

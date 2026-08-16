@@ -58,9 +58,9 @@
       return;
     }
 
-    // Nonaktifkan popup geoid di tab pengaturan, alat, dan gempa
+    // Nonaktifkan popup geoid di tab alat dan gempa
     const activeTab = window.currentActiveTab;
-    if (activeTab === 'tab-pengaturan' || activeTab === 'tab-alat' || activeTab === 'tab-gempa') return;
+    if (activeTab === 'tab-alat' || activeTab === 'tab-gempa') return;
 
     // GeoTani tidak memakai reverse geocoding. Saat area kosong dalam cakupan
     // hasil irisan diklik, tampilkan popup batas wilayah analisis aktif.
