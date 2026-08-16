@@ -53,6 +53,10 @@
       if (typeof showMaritimePopup === 'function') showMaritimePopup(lat, lng);
       return;
     }
+    if (typeof isFiniteFaultNTTActive === 'function' && isFiniteFaultNTTActive()) {
+      if (typeof showFiniteFaultPopup === 'function') showFiniteFaultPopup(lat, lng);
+      return;
+    }
 
     // Nonaktifkan popup geoid di tab pengaturan, alat, dan gempa
     const activeTab = window.currentActiveTab;

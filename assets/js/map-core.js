@@ -235,7 +235,27 @@ L.control.scale({
         if (typeof _gempaRadiusCircle !== 'undefined' && _gempaRadiusCircle) { map.removeLayer(_gempaRadiusCircle); _gempaRadiusCircle = null; }
         if (typeof _insightQuakeRadius !== 'undefined' && _insightQuakeRadius) { map.removeLayer(_insightQuakeRadius); _insightQuakeRadius = null; }
         if (typeof _faultLayerCleanup === 'function') _faultLayerCleanup();
+        if (typeof _faultNewLayerCleanup === 'function') _faultNewLayerCleanup();
+        if (typeof _jalurEvakuasiCleanup === 'function') _jalurEvakuasiCleanup();
+        if (typeof _finiteFaultNTTCleanup === 'function') _finiteFaultNTTCleanup();
         if (typeof _worldPlatesLayerCleanup === 'function') _worldPlatesLayerCleanup();
+
+        // Bersihkan layer sensor & katalog gempa
+        document.querySelectorAll('#toggleKatalogGempa, #toggleSensorSeismic, #toggleSensorGlobal, #toggleHistoryGempa').forEach(function (cb) {
+          if (cb) cb.checked = false;
+        });
+        if (typeof isKatalogGempaActive === 'function' && isKatalogGempaActive()) {
+          document.getElementById('toggleKatalogGempa')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isSensorSeismicActive === 'function' && isSensorSeismicActive()) {
+          document.getElementById('toggleSensorSeismic')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isSensorGlobalActive === 'function' && isSensorGlobalActive()) {
+          document.getElementById('toggleSensorGlobal')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isHistoryGempaActive === 'function' && isHistoryGempaActive()) {
+          document.getElementById('toggleHistoryGempa')?.dispatchEvent(new Event('change'));
+        }
 
         // 8. Uncheck semua checkbox geoportal & arcgis
         document.querySelectorAll('[data-geolayer]').forEach(cb => { cb.checked = false; });

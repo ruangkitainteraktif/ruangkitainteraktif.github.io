@@ -806,11 +806,59 @@
                 </span>
               </label>
               <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleFaultLayerNew">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Patahan Indonesia Baru (PUSGEN 2024)</span>
+                  <small>Patahan Aktif Skala Besar PVMBG &amp; Shallow Crustal PUSGEN 2024</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleFiniteFaultNTT">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Finite Fault NTT 2026</span>
+                  <small>Peta sesar gempa NTT 2026 dari INARISK BNPB</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleJalurEvakuasi">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Jalur Evakuasi (BNPB)</span>
+                  <small>Jalur evakuasi bencana dari INARISK BNPB</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleHistoryGempa">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Riwayat Gempa BMKG</span>
+                  <small id="historyGempaInfo">Gempa M5+ tercatat dari BMKG</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
                 <input type="checkbox" id="toggleKatalogGempa">
                 <span class="cctv-layer-check"></span>
                 <span class="cctv-layer-info">
                   <span class="cctv-layer-name">Katalog Gempa BMKG</span>
                   <small id="katalogGempaInfo">420 gempa signifikan historis (1923-2022)</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleSensorSeismic">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Sensor Seismic BMKG</span>
+                  <small id="sensorSeismicInfo">Stasiun sensor gempa aktif di Indonesia</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleSensorGlobal">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Sensor Global</span>
+                  <small id="sensorGlobalInfo">Stasiun sensor global (GEOFON/GSN)</small>
                 </span>
               </label>
             </div>
@@ -1116,6 +1164,9 @@
   <script src="assets/js/sidebar.js"></script>
   <script src="assets/js/earthquake.js"></script>
   <script src="assets/js/katalog-gempa.js"></script>
+  <script src="assets/js/sensor-seismic.js"></script>
+  <script src="assets/js/sensor-global.js"></script>
+  <script src="assets/js/history-gempa.js"></script>
   <script src="assets/js/cctv.js"></script>
   <script src="assets/js/detail-subtab.js"></script>
   <script src="assets/js/map-click.js"></script>
@@ -1150,6 +1201,9 @@
   <script src="assets/js/choropleth.js"></script>
   <script src="assets/js/hotspot.js"></script>
   <script src="assets/js/fault-layer.js"></script>
+  <script src="assets/js/fault-layer-new.js"></script>
+  <script src="assets/js/jalur-evakuasi.js"></script>
+  <script src="assets/js/finite-fault-ntt.js"></script>
   <script src="assets/js/world-plates-layer.js"></script>
   <script src="assets/js/population-chart.js"></script>
 
