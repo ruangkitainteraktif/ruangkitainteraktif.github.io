@@ -296,6 +296,51 @@ L.control.scale({
           document.getElementById('toggleHistoryGempa')?.dispatchEvent(new Event('change'));
         }
 
+        // Bersihkan layer gunung api
+        if (document.getElementById('toggleVolcanoLayer')) {
+          document.getElementById('toggleVolcanoLayer').checked = false;
+        }
+        if (typeof isVolcanoLayerActive === 'function' && isVolcanoLayerActive()) {
+          document.getElementById('toggleVolcanoLayer')?.dispatchEvent(new Event('change'));
+        }
+
+        // Bersihkan layer gerakan tanah
+        if (document.getElementById('toggleGertanLayer')) {
+          document.getElementById('toggleGertanLayer').checked = false;
+        }
+        if (typeof isGertanLayerActive === 'function' && isGertanLayerActive()) {
+          document.getElementById('toggleGertanLayer')?.dispatchEvent(new Event('change'));
+        }
+
+        // Bersihkan layer KRB Gunung Api
+        if (document.getElementById('toggleKrbGunungApi')) {
+          document.getElementById('toggleKrbGunungApi').checked = false;
+        }
+        if (typeof isKrbGunungApiActive === 'function' && isKrbGunungApiActive()) {
+          document.getElementById('toggleKrbGunungApi')?.dispatchEvent(new Event('change'));
+        }
+
+        // Bersihkan layer KRB Titik Gas Vulkanik
+        if (document.getElementById('toggleKrbTitik')) {
+          document.getElementById('toggleKrbTitik').checked = false;
+        }
+        if (typeof isKrbTitikActive === 'function' && isKrbTitikActive()) {
+          document.getElementById('toggleKrbTitik')?.dispatchEvent(new Event('change'));
+        }
+
+        // Bersihkan layer geologi BIG
+        var bigGeoToggles = ['togglePetaGeologi', 'toggleGeostruktur', 'togglePatahanAktif', 'toggleLikuifaksi', 'toggleKarst'];
+        var bigGeoFns = ['isPetaGeologiActive', 'isGeostrukturActive', 'isPatahanAktifActive', 'isLikuifaksiActive', 'isKarstActive'];
+        bigGeoToggles.forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) el.checked = false;
+        });
+        bigGeoFns.forEach(function (fn, i) {
+          if (typeof window[fn] === 'function' && window[fn]()) {
+            document.getElementById(bigGeoToggles[i])?.dispatchEvent(new Event('change'));
+          }
+        });
+
         // 8. Uncheck semua checkbox geoportal & arcgis
         document.querySelectorAll('[data-geolayer]').forEach(cb => { cb.checked = false; });
 

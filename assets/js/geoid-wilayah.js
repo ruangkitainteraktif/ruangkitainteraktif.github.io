@@ -536,10 +536,12 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
 
           <div style="padding:8px 14px;background:#f8fafc;display:flex;align-items:center;justify-content:space-between;">
             <span style="font-size:8px;color:#94a3b8;">Sumber: BMKG · BIG SatuPeta · Sentinel-2</span>
-            <button class="geotani-btn-print" onclick="printGeotaniPdf()">
-              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-              Cetak PDF
-            </button>
+            <div style="display:flex;gap:6px;">
+              <button class="geotani-btn-print" onclick="printGeotaniPdf()">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Cetak PDF
+              </button>
+            </div>
           </div>
         </div>
       `;
@@ -572,9 +574,9 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
                 <span class="boundary-popup-meta-value">${fmtNum(luasHa / 100)} km²</span>
               </div>` : ''}
             </div>
+            </div>
           </div>
-        </div>
-      `;
+        `;
       geoidBoundaryLayer.bindPopup(boundaryPopupHtml, { maxWidth: 300, className: 'boundary-leaflet-popup' });
     }
 
@@ -583,6 +585,7 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
     geoidBoundaryLayer.on('click', event => {
       if (event.originalEvent) L.DomEvent.stopPropagation(event.originalEvent);
       geoidBoundaryLayer.openPopup(event.latlng);
+      injectDownloadBtn(geoidBoundaryLayer);
     });
 
     geoidBoundaryLayer.bringToFront();
@@ -602,6 +605,77 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
     }
   }
 }
+
+function getActiveBoundaryKode() {
+  return window._lastGeotaniLocation?.kode
+    || window._selectedVillageKode
+    || geoidBoundaryRawData?.kode
+    || document.getElementById('pilihDesa')?.value
+    || document.getElementById('pilihKecamatan')?.value
+    || document.getElementById('pilihKabupaten')?.value
+    || document.getElementById('pilihProvinsi')?.value
+    || null;
+}
+
+function downloadBoundaryGeoJSON() {
+  const activeKode = getActiveBoundaryKode();
+  if (!activeKode) {
+    alert('Tidak ada data batas wilayah untuk diunduh.');
+    return;
+  }
+
+  fetch(`https://wilayah.smartartstudio.my.id/api/boundaries/${activeKode}`)
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (!data || !data.path) { alert('Gagal mengambil data batas wilayah.'); return; }
+
+      const rings = data.path.map(ring => ring.map(c => [c[1], c[0]]));
+      const parts = (activeKode || '').split('.');
+      const levelNames = { 1: 'Provinsi', 2: 'Kabupaten/Kota', 3: 'Kecamatan', 4: 'Desa/Kelurahan' };
+      const geojson = {
+        type: 'FeatureCollection',
+        features: [{
+          type: 'Feature',
+          properties: { nama: data.nama || 'Wilayah', kode: activeKode, level: levelNames[parts.length] || 'Wilayah' },
+          geometry: { type: 'Polygon', coordinates: rings }
+        }]
+      };
+      const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/geo+json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `batas_${(data.nama || activeKode || 'wilayah').replace(/[^a-zA-Z0-9]/g, '_')}.geojson`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    })
+    .catch(() => alert('Gagal mengambil data batas wilayah.'));
+}
+window.downloadBoundaryGeoJSON = downloadBoundaryGeoJSON;
+
+function injectDownloadBtn(marker) {
+  try {
+    const popup = marker?.getPopup?.();
+    if (!popup) return;
+    const el = popup.getElement?.();
+    if (!el) return;
+    if (el.querySelector('[data-download-injected]')) return;
+    const wrapper = el.querySelector('.leaflet-popup-content');
+    if (!wrapper) return;
+    wrapper.style.position = 'relative';
+    const btn = document.createElement('button');
+    btn.dataset.downloadInjected = 'true';
+    btn.title = 'Unduh GeoJSON batas wilayah';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+    btn.style.cssText = 'position:absolute;top:6px;right:6px;z-index:10;width:28px;height:28px;border-radius:6px;border:1px solid rgba(255,255,255,.8);background:rgba(255,255,255,.85);color:#2563eb;cursor:pointer;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.12);transition:background .15s,transform .15s;';
+    btn.addEventListener('mouseenter', () => { btn.style.background = '#eff6ff'; btn.style.transform = 'scale(1.1)'; });
+    btn.addEventListener('mouseleave', () => { btn.style.background = 'rgba(255,255,255,.85)'; btn.style.transform = ''; });
+    btn.addEventListener('click', (e) => { e.stopPropagation(); downloadBoundaryGeoJSON(); });
+    wrapper.appendChild(btn);
+  } catch (_) {}
+}
+window.injectDownloadBtn = injectDownloadBtn;
 
 function showGeoidFlyup(lat, lon, info, zoom = 15) {
   if (typeof map === 'undefined' || !map) return;
@@ -651,12 +725,14 @@ function showGeoidFlyup(lat, lon, info, zoom = 15) {
             <span style="font-size:10px;color:#94a3b8;text-align:center;">Memuat analisis…</span>
           </div>
           ${!isGeotaniMode ? `<div class="geoid-popup-cctv" data-cctv-insight><span style="color:#94a3b8; font-size:11px">Memuat CCTV terdekat…</span></div>` : ''}
+        </div>
       </div>
     </div>
   `;
 
   marker.bindPopup(popupContent, { maxWidth: 360, className: isGeotaniMode ? 'geotani-leaflet-popup' : 'geoid-leaflet-popup' });
   marker.openPopup();
+  injectDownloadBtn(marker);
 
   map.flyTo([lat, lon], zoom, { duration: 1 });
   return marker;
@@ -1520,8 +1596,8 @@ async function cariLayerWilayah() {
       const zoom = selection.desa ? 15 : selection.kecamatan ? 12 : selection.kabkota ? 10 : 7;
       const isGeotani = window.currentActiveTab === 'tab-geotani';
       if (isGeotani) {
-        window._lastGeotaniLocation = { ...location, kode: location.kode || adm4Code };
-        if (selection.desa) showGeoidBoundary(adm4Code, zoom);
+        window._lastGeotaniLocation = { ...location, kode: selectedCode };
+        if (selectedCode) showGeoidBoundary(selectedCode, zoom);
       } else {
         const marker = showGeoidFlyup(location.lat, location.lon, {
           desa: selection.desa || selection.kecamatan || selection.kabkota || selection.provinsi,

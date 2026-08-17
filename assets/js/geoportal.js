@@ -160,30 +160,31 @@
     const layer = geoportalLayers.get(cacheKey);
 
     if (!layer) {
-      // Belum pernah dimuat: layer point dicoba sebagai marker cluster via WFS;
-      // bila bukan point (atau WFS gagal) fallback ke raster WMS.
+      // Belum pernah dimuat: buat WMS raster secara synchronus agar popup
+      // langsung aktif; di latar belakang coba upgrade ke marker cluster
+      // bila layer adalah titik (WFS).
       if (!visible) return;
+      const raster = makeGeoportalRasterLayer(layerName, wmsUrl);
+      geoportalLayers.set(cacheKey, raster);
+      if (isGeoportalCheckboxActive(layerName, wmsUrl) && !map.hasLayer(raster)) {
+        raster.addTo(map);
+        flyToGeoportalLayer(raster, wmsUrl, layerName);
+      }
+      // Coba WFS di latar belakang — bila berhasil, ganti layer di cache.
       buildGeoportalPointCluster(layerName, wmsUrl)
         .then(clusterLayer => {
-
-          const resolved = clusterLayer || makeGeoportalRasterLayer(layerName, wmsUrl);
-          geoportalLayers.set(cacheKey, resolved);
-          if (isGeoportalCheckboxActive(layerName, wmsUrl) && !map.hasLayer(resolved)) {
-            resolved.addTo(map);
-            flyToGeoportalLayer(resolved, wmsUrl, layerName);
+          if (!clusterLayer) return;
+          const current = geoportalLayers.get(cacheKey);
+          if (current && map.hasLayer(current)) {
+            map.removeLayer(current);
+          }
+          geoportalLayers.set(cacheKey, clusterLayer);
+          if (isGeoportalCheckboxActive(layerName, wmsUrl) && !map.hasLayer(clusterLayer)) {
+            clusterLayer.addTo(map);
+            flyToGeoportalLayer(clusterLayer, wmsUrl, layerName);
           }
         })
-        .catch(err => {
-          console.warn('[Geoportal] WFS failed, fallback WMS:', layerName, err);
-          if (!geoportalLayers.has(cacheKey)) {
-            const raster = makeGeoportalRasterLayer(layerName, wmsUrl);
-            geoportalLayers.set(cacheKey, raster);
-            if (isGeoportalCheckboxActive(layerName, wmsUrl)) {
-              raster.addTo(map);
-              flyToGeoportalLayer(raster, wmsUrl, layerName);
-            }
-          }
-        });
+        .catch(() => {});
       return;
     }
 
@@ -241,9 +242,14 @@
     container.replaceChildren();
 
     if (!features.length) {
+      const hasActiveLayers = getActiveGeoportalLayers().length > 0 || getActiveArcgisLayers().length > 0;
       const empty = document.createElement('div');
       empty.className = 'geoportal-empty';
-      empty.innerHTML = '<span>🗺️</span><p>Tidak ada fitur pada lokasi ini.</p><small>Coba klik titik lain atau perbesar peta.</small>';
+      if (hasActiveLayers) {
+        empty.innerHTML = '<span>🗺️</span><p>Tidak ada fitur pada lokasi ini.</p><small>Coba klik titik lain atau perbesar peta.</small>';
+      } else {
+        empty.innerHTML = '<span>📂</span><p>Aktifkan layer dari panel Geoportal.</p><small>Centang layer di panel sebelah kiri, lalu klik pada peta untuk melihat properti fitur.</small>';
+      }
       container.appendChild(empty);
       return;
     }
@@ -410,23 +416,36 @@
   }
 
   async function handleGeoportalMapClick(e) {
-    const activeWMS = getActiveGeoportalLayers();
-    const activeArcGIS = getActiveArcgisLayers();
-    if (!activeWMS.length && !activeArcGIS.length) return false;
-    document.getElementById('geoportalModalCoords').innerText = `(${e.latlng.lng.toFixed(5)}, ${e.latlng.lat.toFixed(5)})`;
-    openGeoportalModal();
-    renderGeoportalLoading();
+    try {
+      const activeWMS = getActiveGeoportalLayers();
+      const activeArcGIS = getActiveArcgisLayers();
 
-    const wmsPromises = activeWMS.map(({ layerName, wmsUrl }) => getGeoportalFeatureInfo(layerName, e.latlng, wmsUrl));
-    const arcgisPromises = activeArcGIS.map(({ layerKey, url, layers }) =>
-      fetchArcGISFeatureInfo(url, layers, e.latlng).then(results => results.map(r => ({ ...r, layerName: `${layerKey} — ${r.layerName}` })))
-    );
-    const results = await Promise.allSettled([...wmsPromises, ...arcgisPromises]);
-    const features = results.filter(result => result.status === 'fulfilled').flatMap(result => result.value);
-    renderGeoportalDetails(features);
-    const failed = results.filter(result => result.status === 'rejected');
-    if (failed.length) console.warn('Sebagian GetFeatureInfo gagal:', failed);
-    return true;
+      const coordsEl = document.getElementById('geoportalModalCoords');
+      if (coordsEl) coordsEl.innerText = `(${e.latlng.lng.toFixed(5)}, ${e.latlng.lat.toFixed(5)})`;
+      openGeoportalModal();
+      renderGeoportalLoading();
+
+      if (!activeWMS.length && !activeArcGIS.length) {
+        renderGeoportalDetails([]);
+        return false;
+      }
+
+      const wmsPromises = activeWMS.map(({ layerName, wmsUrl }) => getGeoportalFeatureInfo(layerName, e.latlng, wmsUrl));
+      const arcgisPromises = activeArcGIS.map(({ layerKey, url, layers }) =>
+        fetchArcGISFeatureInfo(url, layers, e.latlng).then(results => results.map(r => ({ ...r, layerName: `${layerKey} — ${r.layerName}` })))
+      );
+      const results = await Promise.allSettled([...wmsPromises, ...arcgisPromises]);
+      const features = results.filter(result => result.status === 'fulfilled').flatMap(result => result.value);
+      renderGeoportalDetails(features);
+      const failed = results.filter(result => result.status === 'rejected');
+      if (failed.length) console.warn('Sebagian GetFeatureInfo gagal:', failed);
+      return true;
+    } catch (err) {
+      console.error('[Geoportal] handleGeoportalMapClick error:', err);
+      openGeoportalModal();
+      renderGeoportalDetails([]);
+      return false;
+    }
   }
   // ArcGIS REST Layer: Lahan Baku Sawah & Kawasan Pertanian
   const ARCGIS_SAWAH_CONFIG = {
@@ -451,7 +470,7 @@
           layers: config.layers
         }).addTo(map);
       } catch (err) {
-        console.warn(`Gagal memuat layer ${layerKey}:`, err);
+        console.warn('Gagal memuat layer ' + layerKey + ':', err);
       }
     } else {
       if (arcgisSawahLayers[layerKey] && map.hasLayer(arcgisSawahLayers[layerKey])) {

@@ -92,9 +92,23 @@
       if (hitOverlay) return;
     }
 
+    // Tab Geoportal: selalu tangani klik untuk GetFeatureInfo
+    if (activeTab === 'tab-geoportal') {
+      try {
+        await handleGeoportalMapClick(e);
+      } catch (err) {
+        console.error('[MapClick] handleGeoportalMapClick gagal:', err);
+      }
+      return;
+    }
+
     // Saat layer Geoportal/ArcGIS aktif, klik dipakai untuk GetFeatureInfo.
     if (getActiveGeoportalLayers().length || getActiveArcgisLayers().length) {
-      await handleGeoportalMapClick(e);
+      try {
+        await handleGeoportalMapClick(e);
+      } catch (err) {
+        console.error('[MapClick] handleGeoportalMapClick gagal:', err);
+      }
       return;
     }
 
@@ -201,6 +215,8 @@
         await loadGeoidPopupInsights(marker, { lat, lon: lng, kode: adm4Code });
         if (adm4Code && typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, adm4Code, { lat, lon: lng });
       }
+
+      injectDownloadBtn(marker);
 
       // Tampilkan batas wilayah dari BIG
       if (adm4Code) showGeoidBoundary(adm4Code, 15);

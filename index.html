@@ -340,8 +340,9 @@
         <button class="tab-btn" onclick="openTab(event, 'tab-gempa')">GEOPULSE</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-geoportal')">GEOPORTAL</button>
         <button class="tab-btn" onclick="openTab(event, 'tab-cctv')">GEOWATCH</button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-alat')">GEOTOOLS</button>
-      </div>
+  <button class="tab-btn" onclick="openTab(event, 'tab-alat')">GEOTOOLS</button>
+  <button class="tab-btn" onclick="openTab(event, 'tab-about')">ABOUT</button>
+</div>
 
       <div class="app-banner" id="appBanner">
         <button class="app-banner-close" onclick="document.getElementById('appBanner').style.display='none'" aria-label="Tutup banner">&times;</button>
@@ -851,8 +852,9 @@
 
           <div class="gempa-subtabs">
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-gempa" onclick="openGempaSubtab(this)">Info Gempa</button>
-            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-karhutla" onclick="openGempaSubtab(this)">Info Karhutla</button>
             <button class="gempa-subtab-btn active" data-subtab="gempa-subtab-infocuaca" onclick="openGempaSubtab(this)">Info Cuaca</button>
+            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-gunungapi" onclick="openGempaSubtab(this)">Info Geologi</button>
+            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-karhutla" onclick="openGempaSubtab(this)">Info Karhutla</button>
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-prediksicuaca" onclick="openGempaSubtab(this)">Prediksi Cuaca</button>
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-maritim" onclick="openGempaSubtab(this)">Prediksi Maritim</button>
           </div>
@@ -1077,9 +1079,104 @@
               </label>
             </div>
           </div>
-        </div>
 
-        <!-- TAB 5: ALAT -->
+          <div id="gempa-subtab-gunungapi" class="gempa-subtab-panel">
+            <h4>Info Gunung Api</h4>
+            <p style="font-size:12px; color:#668198; margin-bottom:12px;">74 gunung api aktif di Indonesia dengan status aktivitas dari PVMBG/MAGMA.</p>
+            <div class="cctv-layers">
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleVolcanoLayer">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Gunung Api Indonesia (PVMBG)</span>
+                  <small id="volcanoInfo">74 gunung api aktif beserta status aktivitas dari MAGMA PVMBG</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleKrbGunungApi">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Kawasan Rawan Bencana Gunung Api (BIG)</span>
+                  <small id="krbGunungApiInfo">Peta KRB I, II, III dari BIG SatuPeta</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleKrbTitik">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Gas Vulkanik Gunung Api (BIG)</span>
+                  <small id="krbTitikInfo">Fumarol, Gas Vulkanik Beracun, Solfatara</small>
+                </span>
+              </label>
+              <div style="border-top:1px solid #e8eef3;margin:6px 0;"></div>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="togglePetaGeologi">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Peta Geologi (BIG)</span>
+                  <small>Peta litologi dan umur batuan Indonesia</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleGeostruktur">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Geologi Geostruktur (BIG)</span>
+                  <small>Lipatan, patahan, rekahan, kelurusan</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="togglePatahanAktif">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Patahan Aktif 1:50K (BIG)</span>
+                  <small>Peta patahan aktif skala besar</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleLikuifaksi">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Kerentanan Likuifaksi (BIG)</span>
+                  <small>Peta kerentanan likuifaksi 1:100K</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleKarst">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Kawasan Bentang Alam Karst (BIG)</span>
+                  <small>Delineasi KBAK dan sebaran batugamping</small>
+                </span>
+              </label>
+              <div style="border-top:1px solid #e8eef3;margin:6px 0;"></div>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleGertanLayer">
+                <span class="cctv-layer-check"></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Gerakan Tanah (PVMBG)</span>
+                  <small id="gertanInfo">Kejadian longsor, aliran, dan jatuhan batu</small>
+                </span>
+              </label>
+            </div>
+            <div style="margin-top:10px;">
+              <div style="display:flex;flex-wrap:wrap;gap:6px;font-size:11px;">
+                <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block;"></span> Normal</span>
+                <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block;"></span> Waspada</span>
+                <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#ea580c;display:inline-block;"></span> Siaga</span>
+                <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#dc2626;display:inline-block;"></span> Awas</span>
+                <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block;"></span> Zona Rendah</span>
+                <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block;"></span> Zona Menengah</span>
+                <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#dc2626;display:inline-block;"></span> Zona Tinggi</span>
+              </div>
+            </div>
+            <div id="volcano-content" style="margin-top:12px">
+              <div style="font-size:13px; color:#555; background:#eef7ff; padding:10px; border-radius:5px;">
+                Centang layer untuk menampilkan layer di peta.
+              </div>
+            </div>
+          </div>
+        </div>
         <div id="tab-alat" class="tab-content">
           <h4 style="font-size: 15px; margin-bottom: 5px;">GeoTools Analysis</h4>
           <p style="font-size: 13px; color: #666;margin-bottom: 20px;">Gambar, ukur, dan muat file GeoJSON.</p>
@@ -1147,6 +1244,59 @@
           <button class="btn-apply" style="background:#c0392b; margin-top:10px;" onclick="clearAlatLayers()">🗑️ Hapus
             Semua Layer</button>
         </div>
+
+        <!-- TAB 7: ABOUT -->
+        <div id="tab-about" class="tab-content">
+          <h4 style="font-size: 15px; margin-bottom: 5px;">Tentang Ruang Kita Interaktif</h4>
+          <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Platform Geoportal Interaktif untuk Eksplorasi Data Spasial Indonesia.</p>
+          <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
+
+          <div class="query-box">
+            <p style="font-size:13px; color:#475569; margin-bottom:12px;">Kirim pesan, masukan, atau saran untuk pengembangan platform ini.</p>
+            <form name="ruang-imajinasi-form" id="ruangImajinasiForm">
+              <div class="form-group">
+                <label><b>Pesan</b></label>
+                <textarea name="pesan" rows="4" placeholder="Tulis pesan Anda..." required style="width:100%;padding:8px;font-size:13px;border:1px solid #ccc;border-radius:4px;resize:vertical;font-family:inherit;"></textarea>
+              </div>
+              <button type="submit" class="btn-apply" id="btnKirim">Kirim Pesan</button>
+              <button type="button" class="btn-apply" id="btnLoading" style="display:none;background:#6c757d;">Mengirim...</button>
+            </form>
+            <div id="myAlert" style="display:none;margin-top:10px;padding:10px;background:#d4edda;color:#155724;border-radius:4px;font-size:13px;">
+              Pesan berhasil dikirim! Terima kasih.
+            </div>
+          </div>
+
+          <div class="query-box">
+            <div class="form-group">
+              <label><b>Tentang Platform</b></label>
+              <p style="font-size:12px; color:#666; line-height:1.6;">
+                <b>Ruang Kita Interaktif</b> adalah platform geoportal open-source yang menyediakan akses terhadap berbagai data spasial Indonesia meliputi:
+              </p>
+              <ul style="font-size:12px; color:#666; line-height:1.8; margin:8px 0; padding-left:20px;">
+                <li>Data Administrasi & Batas Wilayah</li>
+                <li>Data Pertanian & Lahan Sawah</li>
+                <li>Data Kebencanaan (Gempa, Gunung Api, Gerakan Tanah)</li>
+                <li>Data Cuaca & Prediksi Maritim</li>
+                <li>Data Geologi & Peta Sumber Daya Alam</li>
+                <li>CCTV & Monitoring Realtime</li>
+              </ul>
+              <p style="font-size:11px; color:#94a3b8; margin-top:10px;">
+                Dikembangkan dengan Leaflet.js, Esri Leaflet, dan berbagai sumber data terbuka.
+              </p>
+            </div>
+          </div>
+
+          <div class="query-box" style="text-align:center;">
+            <div class="form-group">
+              <a href="https://saweria.co/maspannn" target="_blank" rel="noopener" style="display:block;background:#f59e0b;color:#fff;padding:12px;border-radius:6px;font-size:14px;font-weight:700;text-decoration:none;margin-bottom:10px;transition:background 0.2s;" onmouseover="this.style.background='#d97706'" onmouseout="this.style.background='#f59e0b'">Support / Donasi via Saweria</a>
+            </div>
+            <div class="form-group">
+              <a href="assets/data/app-release.apk" target="_blank" rel="noopener" style="display:block;background:#16a085;color:#fff;padding:12px;border-radius:6px;font-size:14px;font-weight:700;text-decoration:none;transition:background 0.2s;" onmouseover="this.style.background='#0e8c6c'" onmouseout="this.style.background='#16a085'">Download APK (Android)</a>
+            </div>
+            <p style="font-size:11px; color:#94a3b8; margin-top:8px;">Dukungan Anda sangat berarti untuk pengembangan platform ini.</p>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1248,6 +1398,16 @@
   <script src="assets/js/jalur-evakuasi.js"></script>
   <script src="assets/js/finite-fault-ntt.js"></script>
   <script src="assets/js/world-plates-layer.js"></script>
+  <script src="assets/js/volcano-layer.js"></script>
+  <script src="assets/js/gertan-layer.js"></script>
+  <script src="assets/js/krb-gunung-api.js"></script>
+  <script src="assets/js/krb-titik.js"></script>
+  <script src="assets/js/peta-geologi.js"></script>
+  <script src="assets/js/geostruktur.js"></script>
+  <script src="assets/js/patahan-aktif.js"></script>
+  <script src="assets/js/likuifaksi.js"></script>
+  <script src="assets/js/karst.js"></script>
+  <script src="assets/js/about.js"></script>
   <script src="assets/js/population-chart.js"></script>
 
 </body>

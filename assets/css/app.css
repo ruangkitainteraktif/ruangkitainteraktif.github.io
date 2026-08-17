@@ -1489,10 +1489,10 @@
         left: 0;
         right: 0;
         width: 100%;
-        height: 90vh;
-        height: 90dvh;
-        max-height: 90vh;
-        max-height: 90dvh;
+        height: 60vh;
+        height: 60dvh;
+        max-height: 60vh;
+        max-height: 60dvh;
         border-radius: 16px 16px 0 0;
         z-index: 1100;
         transition: bottom 0.3s ease-in-out;
@@ -2190,6 +2190,25 @@
       color: #374151;
     }
 
+    .boundary-btn-download {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #2563eb;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .boundary-btn-download:hover {
+      background: #dbeafe;
+      border-color: #93c5fd;
+    }
+
     /* Modern Green Irisan Popup */
     .irisan-leaflet-popup { max-width: 320px !important; }
     .irisan-leaflet-popup .leaflet-popup-content-wrapper { border-radius: 14px; padding: 0; overflow: hidden; box-shadow: 0 6px 24px rgba(22, 163, 74, .2); border: none; }
@@ -2880,7 +2899,7 @@
     .quake-leaflet-popup .leaflet-popup-tip-container { left: 50% !important; margin-left: -14px !important; }
     .quake-leaflet-popup .leaflet-popup-tip { box-shadow: 4px 4px 12px rgba(153, 27, 27, .2); }
 
-    .quake-popup { width: 340px; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1a2e44; background: #fff; overflow: hidden; }
+    .quake-popup { width: 340px; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1a2e44; background: #fff; overflow: hidden; max-height: 50vh; overflow-y: auto; }
 
     .quake-popup-header {
       position: relative;
