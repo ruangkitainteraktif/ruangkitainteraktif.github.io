@@ -128,6 +128,8 @@
   <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
   <!-- shpjs untuk membaca file SHP -->
   <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.js"></script>
+  <!-- shp-write untuk membuat unduhan SHP batas wilayah -->
+  <script src="https://unpkg.com/@mapbox/shp-write@0.4.3/shpwrite.js"></script>
   <!-- jszip untuk membaca KMZ (ZIP-compressed KML) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <!-- togeojson untuk membaca GPX/KML -->
@@ -263,7 +265,6 @@
 
     <!-- PETA -->
     <div id="map"></div>
-    <div id="gpxAnimMapOverlay" class="gpx-anim-map-overlay" aria-live="polite"></div>
 
     <!-- UNIFIED SEARCH ON MAP -->
     <div class="unified-search" id="unifiedSearch">
@@ -1280,6 +1281,19 @@
           <h4 style="font-size: 15px; margin-bottom: 5px;">GeoTools Analysis</h4>
           <p style="font-size: 13px; color: #666;margin-bottom: 20px;">Gambar, ukur, dan tampilkan file.</p>
           <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
+
+          <div class="alat-section-nav" role="tablist" aria-label="Menu GeoTools">
+            <button type="button" class="alat-section-tab active" role="tab" aria-selected="true" onclick="alatSectionTabSwitch(this, 'alat-section-draw')">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              Gambar & Ukur
+            </button>
+            <button type="button" class="alat-section-tab" role="tab" aria-selected="false" onclick="alatSectionTabSwitch(this, 'alat-section-file')">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              Muat Data
+            </button>
+          </div>
+
+          <div id="alat-section-draw" class="alat-section-panel active" role="tabpanel">
           <!-- Gambar & Ukur -->
           <div class="query-box">
             <div class="alat-grid-2">
@@ -1340,13 +1354,19 @@
             </div>
             <div id="alatMeasureResult" class="alat-measure-result">Klik tombol ukur, lalu klik pada peta untuk mengukur.</div>
           </div>
+          </div>
 
+          <div id="alat-section-file" class="alat-section-panel" role="tabpanel">
           <!-- Muat File -->
           <div class="alat-file-card">
             <div class="alat-file-nav">
               <button class="alat-file-tab active" onclick="alatFileTabSwitch(this, 'alat-tab-geojson')">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                 <span>GeoJSON</span>
+              </button>
+              <button class="alat-file-tab" onclick="alatFileTabSwitch(this, 'alat-tab-shp')">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 18l9 4 9-4"/></svg>
+                <span>SHP</span>
               </button>
               <button class="alat-file-tab" onclick="alatFileTabSwitch(this, 'alat-tab-gpx')">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
@@ -1362,6 +1382,11 @@
                 <input type="file" id="geojsonFileInput" accept=".geojson,.json" class="alat-file-input">
                 <button class="btn-apply" onclick="loadGeoJSONFile()">Tampilkan</button>
               </div>
+              <div id="alat-tab-shp" class="alat-file-panel">
+                <input type="file" id="shpFileInput" accept=".shp,.dbf,.shx,.prj,.zip" multiple class="alat-file-input">
+                <small class="alat-file-hint">Pilih .shp + .dbf + .shx sekaligus, atau satu file .zip.</small>
+                <button class="btn-apply" onclick="loadSHPFile()">Tampilkan SHP</button>
+              </div>
               <div id="alat-tab-gpx" class="alat-file-panel">
                 <input type="file" id="gpxFileInput" accept=".gpx,.kml" class="alat-file-input">
                 <button class="btn-apply" onclick="loadGPXFile()">Tampilkan</button>
@@ -1373,47 +1398,8 @@
             </div>
           </div>
 
-          <!-- Upload SHP -->
-          <div class="query-box" style="display:none">
-            <div class="form-group">
-              <label for="shpFileInput">Muat <b>SHP</b> (.shp + .dbf + .shx)</label>
-              <input type="file" id="shpFileInput" accept=".shp,.dbf,.shx,.zip" multiple class="alat-file-input">
-            </div>
-            <button class="btn-apply" onclick="loadSHPFile()">Tampilkan SHP</button>
-          </div>
-
-          <!-- GPX Track Animation -->
-          <div id="gpxAnimControls" class="alat-anim-card" style="display:none">
-            <div class="alat-anim-header">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              <span>Animasi Track</span>
-            </div>
-            <div class="alat-anim-body">
-              <select id="gpxTrackSelect" class="alat-anim-select"></select>
-              <div class="gpx-anim-bar">
-                <button id="gpxAnimPlay" class="alat-anim-btn" onclick="gpxAnimToggle()">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                  <span>Play</span>
-                </button>
-                <select id="gpxAnimSpeed" class="alat-anim-speed" onchange="gpxAnimSetSpeed(this.value)">
-                  <option value="1" selected>1x</option>
-                  <option value="2">2x</option>
-                  <option value="5">5x</option>
-                  <option value="10">10x</option>
-                </select>
-                <div class="gpx-anim-progress-wrap">
-                  <input type="range" id="gpxAnimSlider" min="0" max="100" value="0" class="gpx-anim-slider" oninput="gpxAnimSeek(this.value)">
-                </div>
-                <button id="gpxAnimReset" class="alat-anim-btn alat-anim-btn-danger" onclick="gpxAnimStop()">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
-                </button>
-              </div>
-              <div id="gpxAnimInfo" class="gpx-anim-info">Pilih track lalu tekan Play.</div>
-            </div>
-          </div>
-
           <!-- Status & Info Layer -->
-          <div id="alatStatus" class="cctv-message">Pilih file GeoJSON, GPX, KML, atau KMZ untuk ditampilkan.</div>
+          <div id="alatStatus" class="cctv-message">Pilih file GeoJSON, SHP, GPX, KML, atau KMZ untuk ditampilkan.</div>
           <div id="alatLayerInfo" class="alat-layer-info"></div>
 
           <!-- Daftar Layer yang Dimuat -->
@@ -1429,6 +1415,7 @@
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
             Hapus Semua Layer
           </button>
+          </div>
         </div>
 
         <!-- TAB 7: ABOUT -->
@@ -1483,6 +1470,38 @@
           </div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- GPX Track Animation: positioned below the sidebar on desktop and above it on mobile. -->
+    <div id="gpxAnimMapOverlay" class="gpx-anim-map-overlay" aria-live="polite">
+      <div id="gpxAnimControls" class="alat-anim-card" style="display:none">
+        <div class="alat-anim-header">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span>Animasi Track</span>
+        </div>
+        <div class="alat-anim-body">
+          <select id="gpxTrackSelect" class="alat-anim-select"></select>
+          <div class="gpx-anim-bar">
+            <button id="gpxAnimPlay" class="alat-anim-btn" onclick="gpxAnimToggle()">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>Play</span>
+            </button>
+            <select id="gpxAnimSpeed" class="alat-anim-speed" onchange="gpxAnimSetSpeed(this.value)">
+              <option value="1" selected>1x</option>
+              <option value="2">2x</option>
+              <option value="5">5x</option>
+              <option value="10">10x</option>
+            </select>
+            <div class="gpx-anim-progress-wrap">
+              <input type="range" id="gpxAnimSlider" min="0" max="100" value="0" class="gpx-anim-slider" oninput="gpxAnimSeek(this.value)">
+            </div>
+            <button id="gpxAnimReset" class="alat-anim-btn alat-anim-btn-danger" onclick="gpxAnimStop()">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+            </button>
+          </div>
+          <div id="gpxAnimInfo" class="gpx-anim-info">Pilih track lalu tekan Play.</div>
+        </div>
       </div>
     </div>
 

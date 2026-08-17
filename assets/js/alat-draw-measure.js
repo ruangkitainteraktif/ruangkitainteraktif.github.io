@@ -23,6 +23,12 @@
     return `${meters.toFixed(1)} m`;
   }
 
+  function getMeasureDistance(points) {
+    return points.slice(1).reduce((total, point, index) => (
+      total + map.distance(points[index], point)
+    ), 0);
+  }
+
   function formatArea(sqMeters) {
     if (sqMeters >= 1000000) return `${(sqMeters / 1000000).toFixed(3)} km²`;
     if (sqMeters >= 10000) return `${(sqMeters / 10000).toFixed(2)} ha`;
@@ -31,7 +37,7 @@
 
   function setMeasureResult(message) {
     const el = document.getElementById('alatMeasureResult');
-    if (el) el.textContent = message;
+    if (el) el.innerHTML = message;
   }
 
   function startDraw(type) {
@@ -45,7 +51,7 @@
     if (drawControl) map.removeControl(drawControl);
 
     const options = {
-      position: 'topleft',
+      position: 'topright',
       draw: {
         marker: type === 'marker',
         polyline: type === 'polyline',
@@ -126,7 +132,7 @@
     if (measureMode === 'distance') {
       if (measurePolyline) measureLayerGroup.removeLayer(measurePolyline);
       measurePolyline = L.polyline(measurePoints, { color: '#e74c3c', weight: 3 }).addTo(measureLayerGroup);
-      const dist = L.GeometryUtil.length(measurePolyline);
+      const dist = getMeasureDistance(measurePoints);
       setMeasureResult(`📏 Jarak total: <b>${formatDistance(dist)}</b> (${measurePoints.length} titik). Klik titik baru untuk menambah.`);
     } else if (measureMode === 'area') {
       if (measurePoints.length >= 3) {

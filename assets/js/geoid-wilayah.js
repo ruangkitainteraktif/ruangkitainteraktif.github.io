@@ -14,7 +14,11 @@ let geoidSelectedRegency = null;
 let geoidSelectedDistrict = null;
 let geoidWilayahDataPromise = null;
 let geoidBoundaryLayer = null;
+let geoidChildBoundaryLayer = null;
 let geoidBoundaryRequestId = 0;
+let geoidChildBoundaryRequestId = 0;
+let geoidChildBoundaryLoading = false;
+let geoidChildBoundaryParentCode = null;
 let geoidBoundaryRawData = null;
 let lastGeotaniPopupData = null;
 
@@ -606,53 +610,195 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
   }
 }
 
+function clearGeoidChildBoundaries() {
+  geoidChildBoundaryRequestId++;
+  geoidChildBoundaryLoading = false;
+  geoidChildBoundaryParentCode = null;
+  if (geoidChildBoundaryLayer && map?.hasLayer(geoidChildBoundaryLayer)) {
+    map.removeLayer(geoidChildBoundaryLayer);
+  }
+  geoidChildBoundaryLayer = null;
+}
+
+const geoidWait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function fetchGeoidChildBoundaryFeature(child, retries = 3) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    try {
+      const response = await fetch(`https://wilayah.smartartstudio.my.id/api/boundaries/${child.kode}`, { signal: controller.signal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const boundary = await response.json();
+      if (!boundary?.path?.length) throw new Error('Geometri batas tidak tersedia');
+      const collection = boundaryPathToGeoJSON(boundary.path, {
+        nama: boundary.nama || child.nama,
+        kode: child.kode
+      });
+      return { feature: collection.features[0], error: null };
+    } catch (error) {
+      lastError = error;
+      if (attempt < retries) await geoidWait(500 * attempt);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+  return { feature: null, error: lastError || new Error('Tidak dapat memuat batas wilayah') };
+}
+
+async function fetchGeoidChildBoundaryFeatures(parentCode, childDepth, concurrency = 4) {
+  const data = await getGeoidWilayahData();
+  const children = getWilayahChildren(data, parentCode, childDepth);
+  const features = [];
+  const failed = [];
+  let nextIndex = 0;
+  const worker = async () => {
+    while (nextIndex < children.length) {
+      const child = children[nextIndex++];
+      const { feature, error } = await fetchGeoidChildBoundaryFeature(child);
+      if (feature) features.push(feature);
+      else failed.push({ child, error });
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(concurrency, children.length) }, worker));
+  return { children, features, failed };
+}
+
+async function showGeoidChildBoundaries(parentCode, childDepth) {
+  if (!parentCode || typeof map === 'undefined' || !map) return;
+  clearGeoidChildBoundaries();
+  const requestId = ++geoidChildBoundaryRequestId;
+  geoidChildBoundaryLoading = true;
+  geoidChildBoundaryParentCode = parentCode;
+
+  try {
+    const { children, features, failed } = await fetchGeoidChildBoundaryFeatures(parentCode, childDepth);
+    if (!children.length || requestId !== geoidChildBoundaryRequestId) return;
+    if (requestId !== geoidChildBoundaryRequestId || !features.length) return;
+
+    geoidChildBoundaryLayer = L.geoJSON({ type: 'FeatureCollection', features }, {
+      style: {
+        color: '#0f766e',
+        weight: 1.25,
+        opacity: 0.9,
+        fillColor: '#2dd4bf',
+        fillOpacity: 0.04
+      },
+      onEachFeature: (feature, layer) => {
+        const { nama, kode } = feature.properties || {};
+        layer.bindPopup(`<div class="boundary-popup"><div class="boundary-popup-header"><div class="boundary-popup-badge"><span class="boundary-popup-badge-dot"></span>Batas Wilayah</div><strong>${escapeGeoidHtml(nama || 'Wilayah')}</strong><span>${escapeGeoidHtml(kode || '')}</span></div></div>`, { maxWidth: 260, className: 'boundary-leaflet-popup' });
+      }
+    }).addTo(map);
+    geoidChildBoundaryLayer.bringToFront();
+    if (failed.length) console.warn(`[GEOID] ${failed.length}/${children.length} batas turunan gagal dimuat setelah percobaan ulang.`, failed);
+  } catch (error) {
+    console.warn('[GEOID] Gagal memuat batas wilayah turunan:', error);
+  } finally {
+    if (requestId === geoidChildBoundaryRequestId) geoidChildBoundaryLoading = false;
+  }
+}
+
 function getActiveBoundaryKode() {
   return window._lastGeotaniLocation?.kode
-    || window._selectedVillageKode
-    || geoidBoundaryRawData?.kode
     || document.getElementById('pilihDesa')?.value
     || document.getElementById('pilihKecamatan')?.value
     || document.getElementById('pilihKabupaten')?.value
     || document.getElementById('pilihProvinsi')?.value
+    || window._selectedVillageKode
+    || geoidBoundaryRawData?.kode
     || null;
 }
 
-function downloadBoundaryGeoJSON() {
+function boundaryPathToGeoJSON(path, properties) {
+  const isCoordinate = value => Array.isArray(value)
+    && value.length >= 2
+    && Number.isFinite(Number(value[0]))
+    && Number.isFinite(Number(value[1]));
+  const swapCoordinates = value => isCoordinate(value)
+    ? [Number(value[1]), Number(value[0])]
+    : value.map(swapCoordinates);
+  const getDepth = value => isCoordinate(value) ? 0 : 1 + getDepth(value[0]);
+  const depth = getDepth(path);
+  const coordinates = swapCoordinates(path);
+
+  return {
+    type: 'FeatureCollection',
+    features: [{
+      type: 'Feature',
+      properties,
+      geometry: depth <= 2
+        ? { type: 'Polygon', coordinates: depth === 1 ? [coordinates] : coordinates }
+        : { type: 'MultiPolygon', coordinates }
+    }]
+  };
+}
+
+async function downloadBoundarySHP() {
   const activeKode = getActiveBoundaryKode();
   if (!activeKode) {
     alert('Tidak ada data batas wilayah untuk diunduh.');
     return;
   }
 
-  fetch(`https://wilayah.smartartstudio.my.id/api/boundaries/${activeKode}`)
-    .then(r => r.ok ? r.json() : null)
-    .then(data => {
-      if (!data || !data.path) { alert('Gagal mengambil data batas wilayah.'); return; }
+  if (typeof shpwrite === 'undefined') {
+    alert('Modul pembuat SHP belum siap. Muat ulang halaman lalu coba kembali.');
+    return;
+  }
 
-      const rings = data.path.map(ring => ring.map(c => [c[1], c[0]]));
-      const parts = (activeKode || '').split('.');
-      const levelNames = { 1: 'Provinsi', 2: 'Kabupaten/Kota', 3: 'Kecamatan', 4: 'Desa/Kelurahan' };
-      const geojson = {
-        type: 'FeatureCollection',
-        features: [{
-          type: 'Feature',
-          properties: { nama: data.nama || 'Wilayah', kode: activeKode, level: levelNames[parts.length] || 'Wilayah' },
-          geometry: { type: 'Polygon', coordinates: rings }
-        }]
-      };
-      const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/geo+json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `batas_${(data.nama || activeKode || 'wilayah').replace(/[^a-zA-Z0-9]/g, '_')}.geojson`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    })
-    .catch(() => alert('Gagal mengambil data batas wilayah.'));
+  try {
+    if (geoidChildBoundaryLoading && geoidChildBoundaryParentCode === activeKode) {
+      alert('Batas wilayah turunan masih dimuat. Tunggu hingga seluruh batas tampil, lalu unduh kembali.');
+      return;
+    }
+
+    const response = await fetch(`https://wilayah.smartartstudio.my.id/api/boundaries/${activeKode}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if (!data?.path?.length) throw new Error('Geometri batas wilayah tidak tersedia.');
+
+    const parts = activeKode.split('.');
+    const levelNames = { 1: 'Provinsi', 2: 'Kabupaten/Kota', 3: 'Kecamatan', 4: 'Desa/Kelurahan' };
+    const safeName = (data.nama || activeKode || 'wilayah').replace(/[^a-zA-Z0-9]/g, '_');
+    const childGeoJSON = geoidChildBoundaryLayer && map?.hasLayer(geoidChildBoundaryLayer)
+      ? geoidChildBoundaryLayer.toGeoJSON()
+      : null;
+    const hasChildBoundaries = childGeoJSON?.features?.length && geoidChildBoundaryParentCode === activeKode;
+    const geojson = hasChildBoundaries
+      ? childGeoJSON
+      : boundaryPathToGeoJSON(data.path, {
+        nama: data.nama || 'Wilayah',
+        kode: activeKode,
+        level: levelNames[parts.length] || 'Wilayah'
+      });
+    const exportLevel = hasChildBoundaries
+      ? (levelNames[parts.length + 1] || 'Wilayah')
+      : (levelNames[parts.length] || 'Wilayah');
+    const exportName = (hasChildBoundaries ? `${exportLevel}_${safeName}` : safeName)
+      .replace(/[^a-zA-Z0-9_]/g, '_');
+    const exportFileName = `batas_${exportName}`;
+    const zipData = await shpwrite.zip(geojson, {
+      folder: exportFileName,
+      filename: exportFileName,
+      outputType: 'blob',
+      types: { polygon: exportFileName },
+      prj: 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
+    });
+    const blob = zipData instanceof Blob ? zipData : new Blob([zipData], { type: 'application/zip' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${exportFileName}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Gagal mengunduh SHP batas wilayah:', error);
+    alert(`Gagal membuat SHP batas wilayah: ${error.message}`);
+  }
 }
-window.downloadBoundaryGeoJSON = downloadBoundaryGeoJSON;
+window.downloadBoundarySHP = downloadBoundarySHP;
 
 function injectDownloadBtn(marker) {
   try {
@@ -666,12 +812,12 @@ function injectDownloadBtn(marker) {
     wrapper.style.position = 'relative';
     const btn = document.createElement('button');
     btn.dataset.downloadInjected = 'true';
-    btn.title = 'Unduh GeoJSON batas wilayah';
+    btn.title = 'Unduh SHP batas wilayah';
     btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
     btn.style.cssText = 'position:absolute;top:6px;right:6px;z-index:10;width:28px;height:28px;border-radius:6px;border:1px solid rgba(255,255,255,.8);background:rgba(255,255,255,.85);color:#2563eb;cursor:pointer;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.12);transition:background .15s,transform .15s;';
     btn.addEventListener('mouseenter', () => { btn.style.background = '#eff6ff'; btn.style.transform = 'scale(1.1)'; });
     btn.addEventListener('mouseleave', () => { btn.style.background = 'rgba(255,255,255,.85)'; btn.style.transform = ''; });
-    btn.addEventListener('click', (e) => { e.stopPropagation(); downloadBoundaryGeoJSON(); });
+    btn.addEventListener('click', (e) => { e.stopPropagation(); downloadBoundarySHP(); });
     wrapper.appendChild(btn);
   } catch (_) {}
 }
@@ -1378,21 +1524,31 @@ async function fetchPropertiHarga(lat, lng, radiusMeter = 2000) {
 
 function computePolygonAreaHa(path) {
   if (!Array.isArray(path) || !path.length) { console.warn('[GEOID] computePolygonAreaHa: path empty'); return 0; }
-  const ring = Array.isArray(path[0]) && Array.isArray(path[0][0]) ? path[0] : path;
-  if (!ring || ring.length < 3) { console.warn('[GEOID] computePolygonAreaHa: ring too short', ring?.length); return 0; }
-  const R = 6371000;
-  let area = 0;
-  for (let i = 0; i < ring.length; i++) {
-    const [lat1, lng1] = ring[i];
-    const [lat2, lng2] = ring[(i + 1) % ring.length];
-    const lat1Rad = lat1 * Math.PI / 180;
-    const lat2Rad = lat2 * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    area += dLng * (2 + Math.sin(lat1Rad) + Math.sin(lat2Rad));
-  }
-  const result = Math.abs(area * R * R / 2) / 10000;
 
-  return result;
+  const isCoordinate = value => Array.isArray(value)
+    && value.length >= 2
+    && Number.isFinite(Number(value[0]))
+    && Number.isFinite(Number(value[1]));
+  const collectRings = value => {
+    if (!Array.isArray(value) || !value.length) return [];
+    if (isCoordinate(value[0])) return [value];
+    return value.flatMap(collectRings);
+  };
+  const rings = collectRings(path).filter(ring => ring.length >= 3);
+  if (!rings.length) { console.warn('[GEOID] computePolygonAreaHa: no valid rings'); return 0; }
+
+  const R = 6371000;
+  const ringArea = ring => ring.reduce((area, point, index) => {
+    const [lat1, lng1] = point;
+    const [lat2, lng2] = ring[(index + 1) % ring.length];
+    const lat1Rad = Number(lat1) * Math.PI / 180;
+    const lat2Rad = Number(lat2) * Math.PI / 180;
+    const dLng = (Number(lng2) - Number(lng1)) * Math.PI / 180;
+    return area + dLng * (2 + Math.sin(lat1Rad) + Math.sin(lat2Rad));
+  }, 0) * R * R / 2;
+
+  // Orientasi ring menjaga lubang poligon tetap dikurangi dari luas total.
+  return Math.abs(rings.reduce((total, ring) => total + ringArea(ring), 0)) / 10000;
 }
 
 async function fetchLuasWilayah(kode) {
@@ -1959,6 +2115,9 @@ function setupGeoidDropdowns() {
 
     if (this.value) {
       loadGeoidRegencies(this.value);
+      showGeoidChildBoundaries(this.value, 2);
+    } else {
+      clearGeoidChildBoundaries();
     }
   });
 
@@ -1970,6 +2129,9 @@ function setupGeoidDropdowns() {
 
     if (this.value) {
       loadGeoidDistricts(this.value);
+      showGeoidChildBoundaries(this.value, 3);
+    } else {
+      clearGeoidChildBoundaries();
     }
   });
 
@@ -1980,6 +2142,9 @@ function setupGeoidDropdowns() {
 
     if (this.value) {
       loadGeoidVillages(this.value);
+      showGeoidChildBoundaries(this.value, 4);
+    } else {
+      clearGeoidChildBoundaries();
     }
   });
 

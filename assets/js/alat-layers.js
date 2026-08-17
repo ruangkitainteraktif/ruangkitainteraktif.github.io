@@ -17,6 +17,23 @@
     document.getElementById(panelId).classList.add('active');
   }
 
+  function alatSectionTabSwitch(btn, panelId) {
+    const toolsTab = btn.closest('#tab-alat');
+    toolsTab.querySelectorAll('.alat-section-tab').forEach(tab => {
+      tab.classList.remove('active');
+      tab.setAttribute('aria-selected', 'false');
+    });
+    toolsTab.querySelectorAll('.alat-section-panel').forEach(panel => panel.classList.remove('active'));
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
+    toolsTab.querySelector(`#${panelId}`).classList.add('active');
+
+    if (panelId === 'alat-section-file') {
+      if (typeof removeDrawControl === 'function') removeDrawControl();
+      if (typeof stopMeasureMode === 'function') stopMeasureMode();
+    }
+  }
+
   function renderAlatLayerList() {
     const list = document.getElementById('alatLayerList');
     list.replaceChildren(...alatLayers.map(item => {
@@ -47,6 +64,7 @@
         map.removeLayer(item.layer);
         const idx = alatLayers.indexOf(item);
         if (idx > -1) alatLayers.splice(idx, 1);
+        if (item.type === 'GPX' || item.type === 'KML') resetGpxAnimationControls();
         renderAlatLayerList();
       });
       btns.append(toggle, remove);
@@ -190,7 +208,7 @@
       // Jika ada file .zip, gunakan shpjs langsung.
       const zipFile = [...files].find(f => f.name.toLowerCase().endsWith('.zip'));
       if (zipFile) {
-        const geojson = await shp(zipFile);
+        const geojson = await shp(await zipFile.arrayBuffer());
         const collection = Array.isArray(geojson) ? geojson[0] : geojson;
         if (!collection || collection.type !== 'FeatureCollection') {
           throw new Error('SHP tidak menghasilkan FeatureCollection.');
@@ -199,19 +217,24 @@
         return;
       }
 
-      // Jika file terpisah (.shp + .dbf + .shx), gabungkan menjadi array buffer.
+      // Jika file terpisah, parse geometri dan atribut sebelum digabungkan.
       const shpFile = [...files].find(f => f.name.toLowerCase().endsWith('.shp'));
       if (!shpFile) {
         throw new Error('File .shp tidak ditemukan.');
       }
       const baseName = shpFile.name.replace(/\.shp$/i, '');
+      const baseNameLower = baseName.toLowerCase();
       const readBuffer = (file) => file ? file.arrayBuffer() : Promise.resolve(null);
-      const [shpBuf, dbfBuf, shxBuf] = await Promise.all([
+      const [shpBuf, dbfBuf, prjText] = await Promise.all([
         readBuffer(shpFile),
-        readBuffer([...files].find(f => f.name.toLowerCase() === `${baseName}.dbf`)),
-        readBuffer([...files].find(f => f.name.toLowerCase() === `${baseName}.shx`))
+        readBuffer([...files].find(f => f.name.toLowerCase() === `${baseNameLower}.dbf`)),
+        (() => {
+          const prjFile = [...files].find(f => f.name.toLowerCase() === `${baseNameLower}.prj`);
+          return prjFile ? prjFile.text() : Promise.resolve(undefined);
+        })()
       ]);
-      const geojson = await shp.combine([shpBuf, dbfBuf, shxBuf]);
+      if (!dbfBuf) throw new Error('File .dbf tidak ditemukan.');
+      const geojson = await shpBuffersToGeoJSON(shpBuf, dbfBuf, prjText);
       if (!geojson || geojson.type !== 'FeatureCollection') {
         throw new Error('SHP tidak menghasilkan FeatureCollection.');
       }
@@ -226,8 +249,16 @@
     alatLayers.forEach(item => map.removeLayer(item.layer));
     alatLayers.length = 0;
     renderAlatLayerList();
-    gpxAnimReset();
+    resetGpxAnimationControls();
     setAlatStatus('🗑️ Semua layer analisis dihapus.');
+  }
+
+  async function shpBuffersToGeoJSON(shpBuffer, dbfBuffer, prjText) {
+    const [geometries, properties] = await Promise.all([
+      shp.parseShp(shpBuffer, prjText),
+      shp.parseDbf(dbfBuffer)
+    ]);
+    return shp.combine([geometries, properties]);
   }
 
   // ==============================================================
@@ -269,7 +300,7 @@
     const mapOverlay = document.getElementById('gpxAnimMapOverlay');
     sel.innerHTML = '';
     if (!gpxTracks.length) { ctrl.style.display = 'none'; return; }
-    // Tutup sidebar terlebih dahulu, kemudian tampilkan kartu di atas peta.
+    // Tutup sidebar terlebih dahulu, kemudian tampilkan panel animasi di atas peta.
     ctrl.style.display = 'none';
     const sidebar = document.getElementById('sidebar-left');
     if (sidebar) {
@@ -277,7 +308,8 @@
       if (typeof setToggleIcon === 'function') setToggleIcon(true);
     }
     window.setTimeout(() => {
-      if (mapOverlay) mapOverlay.appendChild(ctrl);
+      // Panel sudah ditempatkan di overlay peta melalui markup index.html.
+      if (mapOverlay && ctrl.parentElement !== mapOverlay) mapOverlay.appendChild(ctrl);
       ctrl.style.display = '';
       map.invalidateSize();
     }, 300);
@@ -303,6 +335,17 @@
     if (btn) { const s = btn.querySelector('span'); if (s) s.textContent = 'Play'; }
     const slider = document.getElementById('gpxAnimSlider');
     if (slider) slider.value = 0;
+  }
+
+  function resetGpxAnimationControls() {
+    gpxAnimReset();
+    gpxTracks = [];
+    const ctrl = document.getElementById('gpxAnimControls');
+    const select = document.getElementById('gpxTrackSelect');
+    const info = document.getElementById('gpxAnimInfo');
+    if (ctrl) ctrl.style.display = 'none';
+    if (select) select.replaceChildren();
+    if (info) info.textContent = 'Pilih track lalu tekan Play.';
   }
 
   function gpxAnimToggle() {

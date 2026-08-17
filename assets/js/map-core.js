@@ -280,12 +280,17 @@ L.control.scale({
           map.removeLayer(geoidBoundaryLayer);
           geoidBoundaryLayer = null;
         }
+        if (typeof clearGeoidChildBoundaries === 'function') clearGeoidChildBoundaries();
 
         // 5b. Bersihkan hasil analisis GeoTani: KTA, LBS, dan NDVI.
         if (typeof clearOverlay === 'function') clearOverlay();
         if (typeof clearLbsAnalysis === 'function') clearLbsAnalysis();
         if (typeof clearNdviAnalysis === 'function') clearNdviAnalysis();
         if (typeof clearLandcoverAnalysis === 'function') clearLandcoverAnalysis();
+
+        // 5d. Bersihkan file yang dimuat lewat Alat Analisis, termasuk GPX/KML
+        // serta marker, jejak, dan kartu Animasi Track.
+        if (typeof clearAlatLayers === 'function') clearAlatLayers();
 
         // 5c. Sembunyikan choropleth BPS indikator
         if (typeof hideChoropleth === 'function') hideChoropleth();
