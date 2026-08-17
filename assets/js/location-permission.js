@@ -16,6 +16,27 @@
     modal.style.display = 'none';
   }
 
+  async function reverseGeocodeToAdm4(lat, lon) {
+    try {
+      const res = await fetch(`https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode?f=pjson&featureTypes=&location=${lon},${lat}`);
+      const data = await res.json();
+      if (!data?.address) return null;
+      const addr = data.address;
+      const strip = (s) => String(s || '').replace(/^(kabupaten|kab|kota administrasi|kota adm|kota|provinsi|daerah khusus ibukota|daerah khusus ibu kota|daerah istimewa|di|dki)\b\s*/gi, '').trim();
+      const desa = strip(addr.Neighborhood || addr.PlaceName || '');
+      const kecamatan = strip(addr.City || addr.District || '');
+      const kabkota = strip(addr.Subregion || addr.MetroArea || '');
+      const provinsi = strip(addr.Region || '');
+      if (typeof findAdm4ByGeocode === 'function') {
+        const matched = findAdm4ByGeocode(desa, kecamatan, kabkota, provinsi);
+        if (matched) return { kode: matched.kode, desa: matched.desa, kecamatan: matched.kecamatan, kabkota: matched.kabkota, provinsi: matched.provinsi };
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   async function showUserPopup(lat, lon) {
     if (typeof map === 'undefined' || !map) return;
 
@@ -65,6 +86,10 @@
     if (isGeotaniMode) return;
 
     let userAdm4Code = '';
+    try {
+      const geo = await reverseGeocodeToAdm4(lat, lon);
+      if (geo?.kode) userAdm4Code = geo.kode;
+    } catch (_) {}
     if (typeof loadGeoidPopupInsights === 'function') await loadGeoidPopupInsights(userMarker, { lat, lon, kode: userAdm4Code });
     if (userAdm4Code && typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(userMarker, userAdm4Code, { lat, lon });
     if (typeof showGeoidBoundary === 'function' && userAdm4Code) showGeoidBoundary(userAdm4Code, 15);

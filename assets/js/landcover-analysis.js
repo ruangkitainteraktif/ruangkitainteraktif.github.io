@@ -121,7 +121,7 @@
       f: 'json',
       geometryType: 'esriGeometryPolygon',
       geometry: JSON.stringify(geometry),
-      sampleCount: '400',
+      sampleCount: '625',
       returnFirstValueOnly: 'true',
       pixelSize: '10'
     });

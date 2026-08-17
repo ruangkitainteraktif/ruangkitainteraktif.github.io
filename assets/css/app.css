@@ -114,7 +114,9 @@
     .leaflet-control-locate a .leaflet-control-locate-location-arrow { display: none; }
     .leaflet-control-locate a:hover { background: linear-gradient(145deg, #ffffff, #d5f3fb) !important; box-shadow: inset 0 0 0 1px rgba(8,121,191,.14); transform: translateY(-2px); }
     .leaflet-control-locate.active a, .leaflet-control-locate.following a { border-color: #0879bf !important; background: linear-gradient(145deg, #0879bf, #12a7c8) !important; color: #fff !important; }
-    .leaflet-control-locate.active a::before, .leaflet-control-locate.following a::before { animation: locate-spin 1s linear infinite; }
+    .leaflet-control-locate.active a::before, .leaflet-control-locate.following a::before { display: none !important; }
+    .leaflet-control-locate.active a::after, .leaflet-control-locate.following a::after { content: '' !important; position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; margin: -10px 0 0 -10px; border: 3px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: locate-spin .8s linear infinite; }
+    @keyframes locate-spin { to { transform: rotate(360deg); } }
 
     .reset-layers-btn {
       display: grid;
@@ -158,11 +160,14 @@
       border-radius: 50% !important;
       background: linear-gradient(145deg, #ffffff, #e9f7fc) !important;
       color: #0879bf !important;
-      font-size: 20px;
+      font-size: 22px;
+      line-height: 1;
       cursor: pointer;
       box-shadow: 0 10px 28px rgba(8,63,102,.24) !important;
       transition: transform .2s, box-shadow .2s, background .2s;
+      padding: 0;
     }
+    .basemap-btn::-moz-focus-inner { border: 0; }
     .basemap-btn:hover {
       background: linear-gradient(145deg, #ffffff, #d5f3fb) !important;
       box-shadow: inset 0 0 0 1px rgba(8,121,191,.14);
@@ -1466,6 +1471,7 @@
       .irisan-popup-body { padding: 10px 12px; }
       .irisan-popup-detail { gap: 5px 8px; font-size: 10px; }
       .irisan-popup-meta-grid { gap: 3px 6px; font-size: 9px; }
+      .crop-health-card-wrap { max-height: 50vh; }
 
       .ndvi-leaflet-popup { max-width: calc(100vw - 40px) !important; }
       .ndvi-leaflet-popup .leaflet-popup-content-wrapper { border-radius: 12px; }

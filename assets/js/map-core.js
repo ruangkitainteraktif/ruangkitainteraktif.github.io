@@ -5,7 +5,7 @@
 
   // 1. Inisialisasi Peta
   // Pusat awal mengikuti extent layer IGTPR ATR/BPN: BIDANG_JAKARTA_CLP.
-  const map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([-8.012, 112.936], 11);
+  const map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([-7.249, 112.751], 12);
 
 L.control.scale({
   position: 'bottomleft',
@@ -34,14 +34,26 @@ L.control.scale({
     'carto-dark': L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
       attribution: 'Mas Pannn'
+    }),
+    'google-maps': L.tileLayer('https://mt0.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+      maxZoom: 19,
+      attribution: '&copy; Google Maps'
+    }),
+    'google-terrain': L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
+      maxZoom: 19,
+      attribution: '&copy; Google Maps'
+    }),
+    'google-traffic': L.tileLayer('https://mt0.google.com/vt?lyrs=s@159000000,traffic|seconds_into_week:-1&style=3&x={x}&y={y}&z={z}', {
+      maxZoom: 19,
+      attribution: '&copy; Google Maps'
     })
   };
 
-  let currentBasemapName = 'esri-satellite';
+  let currentBasemapName = 'google-maps';
   let currentRdtrOpacity = 0.8;
 
   function setBaseMap(name) {
-    const key = baseTileLayers[name] ? name : 'esri-satellite';
+    const key = baseTileLayers[name] ? name : 'google-maps';
     Object.entries(baseTileLayers).forEach(([layerName, layer]) => {
       if (map.hasLayer(layer)) map.removeLayer(layer);
     });
@@ -137,7 +149,10 @@ L.control.scale({
     'carto-dark': 'Carto Dark',
     'osm': 'Open Street Map',
     'esri-satellite': 'Esri Satellite',
-    'rupabumi': 'Rupabumi Indonesia'
+    'rupabumi': 'Rupabumi Indonesia',
+    'google-maps': 'Google Maps',
+    'google-terrain': 'Google Terrain',
+    'google-traffic': 'Google Traffic'
   };
   const BasemapControl = L.Control.extend({
     options: { position: 'bottomright' },
