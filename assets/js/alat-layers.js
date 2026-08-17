@@ -240,7 +240,7 @@
   let gpxAnimRaf = null;
   let gpxAnimPlaying = false;
   let gpxAnimIdx = 0;
-  let gpxAnimSpeed = 2;
+  let gpxAnimSpeed = 1;
   let gpxAnimLastTs = 0;
 
   function gpxCollectTracks(geojson) {
@@ -266,9 +266,21 @@
     });
     const sel = document.getElementById('gpxTrackSelect');
     const ctrl = document.getElementById('gpxAnimControls');
+    const mapOverlay = document.getElementById('gpxAnimMapOverlay');
     sel.innerHTML = '';
     if (!gpxTracks.length) { ctrl.style.display = 'none'; return; }
-    ctrl.style.display = '';
+    // Tutup sidebar terlebih dahulu, kemudian tampilkan kartu di atas peta.
+    ctrl.style.display = 'none';
+    const sidebar = document.getElementById('sidebar-left');
+    if (sidebar) {
+      sidebar.classList.add('collapsed');
+      if (typeof setToggleIcon === 'function') setToggleIcon(true);
+    }
+    window.setTimeout(() => {
+      if (mapOverlay) mapOverlay.appendChild(ctrl);
+      ctrl.style.display = '';
+      map.invalidateSize();
+    }, 300);
     gpxTracks.forEach((t, i) => {
       const opt = document.createElement('option');
       opt.value = i;
@@ -367,7 +379,7 @@
     gpxAnimUpdateView(track);
   }
 
-  function gpxAnimSetSpeed(v) { gpxAnimSpeed = parseInt(v, 10) || 2; }
+  function gpxAnimSetSpeed(v) { gpxAnimSpeed = parseInt(v, 10) || 1; }
 
   function gpxAnimStep(ts) {
     if (!gpxAnimPlaying) return;
