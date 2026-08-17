@@ -29,20 +29,21 @@
 
   function buildPopup(p) {
     var color = getColor(p.umurobj);
-    var html = '<div class="quake-popup" style="min-width:240px">';
-    html += '<div class="quake-popup-header">';
-    html += '<div class="quake-popup-status"><span class="quake-popup-status-dot" style="background:' + color + '"></span>Peta Geologi</div>';
-    html += '<div class="quake-popup-region">' + esc(p.namobj || '-') + '</div>';
+    var html = '<div class="agol-popup" style="min-width:240px">';
+    html += '<div class="agol-popup-header agol-geo-geologi">';
+    html += '<div class="agol-popup-badge"><span class="agol-popup-badge-dot"></span>Peta Geologi</div>';
+    html += '<div class="agol-popup-title">' + esc(p.namobj || '-') + '</div>';
     html += '</div>';
-    html += '<div style="padding:10px 14px"><div class="quake-popup-details">';
-    html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">Umur Geologi</span><span class="quake-popup-detail-value">' + esc(p.umurobj || '-') + '</span></div>';
-    html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">Kode</span><span class="quake-popup-detail-value">' + esc(p.fcode || '-') + '</span></div>';
-    html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">Simbol</span><span class="quake-popup-detail-value">' + esc(p.simobj || '-') + '</span></div>';
-    html += '</div></div>';
+    html += '<div class="agol-popup-body"><div class="agol-popup-fields">';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Umur Geologi</span><span class="agol-popup-field-value">' + esc(p.umurobj || '-') + '</span></div>';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Kode</span><span class="agol-popup-field-value">' + esc(p.fcode || '-') + '</span></div>';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Simbol</span><span class="agol-popup-field-value">' + esc(p.simobj || '-') + '</span></div>';
+    html += '</div>';
     if (p.remark && p.remark !== '-') {
-      html += '<div style="padding:8px 14px;border-top:1px solid #f1f5f9"><div style="font-size:10px;font-weight:600;color:#64748b;margin-bottom:2px">KETERANGAN</div><div style="font-size:11px;color:#475569;line-height:1.4">' + esc(p.remark) + '</div></div>';
+      html += '<div class="agol-popup-remark"><div class="agol-popup-remark-title">Keterangan</div><div class="agol-popup-remark-text">' + esc(p.remark) + '</div></div>';
     }
-    html += '<div class="quake-popup-footer"><span>Sumber: BIG SatuPeta</span></div>';
+    html += '</div>';
+    html += '<div class="agol-popup-footer"><span>Sumber: BIG SatuPeta</span></div>';
     html += '</div>';
     return html;
   }
@@ -57,7 +58,7 @@
         var color = getColor(f.properties.umurobj);
         return { color: color, weight: 0.5, fillColor: color, fillOpacity: 0.5 };
       },
-      onEachFeature: function (f, l) { l.bindPopup(buildPopup(f.properties), { maxWidth: 340, className: 'quake-leaflet-popup' }); }
+      onEachFeature: function (f, l) { l.bindPopup(buildPopup(f.properties), { maxWidth: 340, className: 'agol-leaflet-popup' }); }
     });
     layer.addTo(map); visible = true;
     layer.on('error', function (e) { console.error('[Peta Geologi] Error:', e); });

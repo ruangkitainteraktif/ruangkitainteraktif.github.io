@@ -1428,6 +1428,10 @@
       .quake-popup-mag-num { font-size: 20px; }
       .quake-popup-details { padding: 12px 14px; gap: 10px; }
 
+      .agol-leaflet-popup { max-width: calc(100vw - 40px) !important; }
+      .agol-leaflet-popup .leaflet-popup-content-wrapper { border-radius: 14px; }
+      .agol-popup { width: 100% !important; min-width: 260px; }
+
       .geoid-popup { width: 100% !important; max-width: 250px; }
       .geoid-popup-scroll { max-height: 100%; }
       .geoid-popup-scroll .geoid-popup-body { max-height: calc(70vh - 80px); overflow-y: auto; }
@@ -2895,6 +2899,10 @@
     /* Modern BMKG Earthquake Popup */
     .quake-leaflet-popup { max-width: 340px !important; }
     .quake-leaflet-popup .leaflet-popup-content-wrapper { border-radius: 16px; padding: 0; overflow: hidden; box-shadow: 0 8px 32px rgba(153, 27, 27, .2); border: none; }
+    .agol-leaflet-popup { max-width: 340px !important; }
+    .agol-leaflet-popup .leaflet-popup-content-wrapper { border-radius: 10px; padding: 0; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,.18); border: none; }
+    .agol-leaflet-popup .leaflet-popup-content { width: auto !important; margin: 0; }
+    .agol-leaflet-popup .leaflet-popup-tip { box-shadow: 0 4px 20px rgba(0,0,0,.18); }
     .quake-leaflet-popup .leaflet-popup-content { margin: 0; width: 100% !important; }
     .quake-leaflet-popup .leaflet-popup-tip-container { left: 50% !important; margin-left: -14px !important; }
     .quake-leaflet-popup .leaflet-popup-tip { box-shadow: 4px 4px 12px rgba(153, 27, 27, .2); }
@@ -3068,6 +3076,159 @@
       color: #991b1b;
       font-weight: 600;
     }
+
+    /* ── Modern ArcGIS Online-style popup ── */
+    .agol-popup {
+      width: 320px;
+      font-family: 'Avenir Next', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #323232;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      max-height: 50vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,.18);
+      border: none;
+    }
+    .agol-popup-header {
+      position: relative;
+      padding: 14px 16px 12px;
+      color: #fff;
+      overflow: hidden;
+    }
+    .agol-popup-header::after {
+      content: '';
+      position: absolute;
+      top: -30px; right: -30px;
+      width: 80px; height: 80px;
+      background: rgba(255,255,255,.1);
+      border-radius: 50%;
+    }
+    .agol-popup-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 4px;
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      background: rgba(255,255,255,.2);
+      color: #fff;
+      backdrop-filter: blur(4px);
+      margin-bottom: 8px;
+    }
+    .agol-popup-badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #fff;
+      flex-shrink: 0;
+    }
+    .agol-popup-title {
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.3;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 1px 3px rgba(0,0,0,.12);
+    }
+    .agol-popup-subtitle {
+      font-size: 11px;
+      font-weight: 500;
+      opacity: .85;
+      margin-top: 2px;
+      position: relative;
+      z-index: 1;
+    }
+    .agol-popup-body {
+      padding: 12px 16px;
+    }
+    .agol-popup-meta {
+      font-size: 10px;
+      color: #999;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .agol-popup-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .agol-popup-field {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 7px 0;
+      border-bottom: 1px solid #f5f5f5;
+      gap: 12px;
+    }
+    .agol-popup-field:last-child {
+      border-bottom: none;
+    }
+    .agol-popup-field-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #6e6e6e;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      flex-shrink: 0;
+      min-width: 80px;
+    }
+    .agol-popup-field-value {
+      font-size: 12px;
+      font-weight: 600;
+      color: #323232;
+      text-align: right;
+      word-break: break-word;
+    }
+    .agol-popup-remark {
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border-left: 3px solid #d1d5db;
+    }
+    .agol-popup-remark-title {
+      font-size: 9px;
+      font-weight: 700;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 3px;
+    }
+    .agol-popup-remark-text {
+      font-size: 11px;
+      color: #555;
+      line-height: 1.45;
+    }
+    .agol-popup-footer {
+      padding: 8px 16px;
+      background: #fafafa;
+      border-top: 1px solid #f0f0f0;
+      text-align: center;
+    }
+    .agol-popup-footer span {
+      font-size: 9.5px;
+      color: #aaa;
+      font-weight: 500;
+    }
+    /* severity colors for gempa NTT */
+    .agol-severity-berat { background: linear-gradient(135deg, #b91c1c, #dc2626); }
+    .agol-severity-sedang { background: linear-gradient(135deg, #b45309, #f59e0b); }
+    .agol-severity-ringan { background: linear-gradient(135deg, #1d4ed8, #3b82f6); }
+    .agol-severity-data   { background: linear-gradient(135deg, #4b5563, #6b7280); }
+    /* geologi colors */
+    .agol-geo-patahan  { background: linear-gradient(135deg, #7f1d1d, #991b1b); }
+    .agol-geo-geostruktur { background: linear-gradient(135deg, #1e3a5f, #2563eb); }
+    .agol-geo-geologi  { background: linear-gradient(135deg, #065f46, #059669); }
+    .agol-geo-likuifaksi { background: linear-gradient(135deg, #7c2d12, #ea580c); }
+    .agol-geo-karst    { background: linear-gradient(135deg, #5b4636, #9e7462); }
+    .agol-geo-gasvul   { background: linear-gradient(135deg, #581c87, #7c3aed); }
+    .agol-geo-gertan   { background: linear-gradient(135deg, #7f1d1d, #b91c1c); }
+    .agol-geo-volcano  { background: linear-gradient(135deg, #9a3412, #dc2626); }
+    .agol-geo-krb      { background: linear-gradient(135deg, #831843, #be185d); }
 
     .cctv-message { padding: 12px; margin-bottom:15px; border-radius: 10px; color: #567; background: #f4f8fb; font-size: 11px; text-align: center; }
     /* CCTV */
@@ -4193,6 +4354,63 @@
       opacity: 0.85;
       margin-top: 2px;
     }
+    .crop-health-copy-btn {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 6px;
+      color: #fff;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      flex-shrink: 0;
+    }
+    .crop-health-copy-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    .crop-health-copy-btn:active {
+      transform: scale(0.9);
+    }
+    .crop-health-copy-btn.copied {
+      background: #22c55e;
+      border-color: #22c55e;
+    }
+    .crop-health-hero {
+      padding: 16px 12px;
+      text-align: center;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .crop-health-hero-icon {
+      font-size: 32px;
+      line-height: 1;
+    }
+    .crop-health-hero-label {
+      font-size: 16px;
+      font-weight: 800;
+      margin-top: 4px;
+      letter-spacing: 0.3px;
+    }
+    .crop-health-hero-score {
+      margin-top: 6px;
+    }
+    .crop-health-hero-num {
+      font-size: 26px;
+      font-weight: 800;
+      color: #1e293b;
+    }
+    .crop-health-hero-of {
+      font-size: 13px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+    .crop-health-hero-condition {
+      font-size: 11px;
+      margin-top: 2px;
+      opacity: 0.85;
+    }
     .crop-health-section {
       padding: 8px 12px;
       border-top: 1px solid #f1f5f9;
@@ -4256,7 +4474,7 @@
       font-size: 11px;
       color: #94a3b8;
     }
-    .crop-health-condition {
+    .crop-health-stress-label {
       font-size: 10px;
       color: #64748b;
       margin-top: 6px;

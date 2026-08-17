@@ -413,15 +413,25 @@
     html += '<div class="crop-health-card">';
 
     html += '<div class="crop-health-header">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;">';
+    html += '<div>';
     html += '<div class="crop-health-field-id">\uD83D\uDCCA Crop Health</div>';
     html += '<div class="crop-health-crop">' + fieldId + ' \u2022 ' + cropType + ' \u2022 ' + areaHa + ' ha</div>';
+    html += '</div>';
+    html += '<button class="crop-health-copy-btn" onclick="copyCropHealth(this)" title="Salin Laporan">';
+    html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+    html += '</button>';
+    html += '</div></div>';
+
+    html += '<div class="crop-health-hero" style="background:' + health.bg + ';">';
+    html += '<div class="crop-health-hero-icon">' + health.icon + '</div>';
+    html += '<div class="crop-health-hero-label" style="color:' + health.color + ';">' + health.label + '</div>';
+    html += '<div class="crop-health-hero-score"><span class="crop-health-hero-num">' + stressScore + '</span><span class="crop-health-hero-of"> / 100</span></div>';
+    html += '<div class="crop-health-hero-condition" style="color:' + health.color + ';">' + conditionText(stressScore) + '</div>';
     html += '</div>';
 
     html += '<div class="crop-health-section">';
     html += '<div class="crop-health-section-title">CROP HEALTH</div>';
-    html += '<div class="crop-health-status" style="background:' + health.bg + ';color:' + health.color + ';">';
-    html += '<span>' + health.icon + '</span> <strong>' + health.label + '</strong>';
-    html += '</div>';
     html += '<div class="crop-health-indices">';
     html += '<div class="crop-health-index-row">';
     html += '<span class="crop-health-idx-label">NDVI</span>';
@@ -504,10 +514,7 @@
     html += '<span class="crop-health-stress-num">' + stressScore + '</span>';
     html += '<span class="crop-health-stress-of"> / 100</span>';
     html += '</div>';
-    html += '<div class="crop-health-status" style="background:' + health.bg + ';color:' + health.color + ';">';
-    html += '<span>' + health.icon + '</span> <strong>' + health.label + '</strong>';
-    html += '</div>';
-    html += '<div class="crop-health-condition">' + conditionText(stressScore) + '</div>';
+    html += '<div class="crop-health-stress-label">' + conditionText(stressScore) + '</div>';
     html += '</div></div>';
 
     html += '<div class="crop-health-section crop-health-chart-section">';
@@ -576,6 +583,49 @@
       cardElement.innerHTML = '<div class="crop-health-loading" style="color:#dc2626;">Gagal memuat data: ' + (err.message || 'Unknown error') + '</div>';
     });
   }
+
+  function copyCropHealth(btn) {
+    var card = btn.closest('.crop-health-card');
+    if (!card) return;
+
+    var text = [];
+    var rows = card.querySelectorAll('.crop-health-section');
+    rows.forEach(function (sec) {
+      var title = sec.querySelector('.crop-health-section-title');
+      if (title) text.push('[' + title.textContent.trim() + ']');
+      var lines = sec.querySelectorAll('.crop-health-index-row, .crop-health-status, .crop-health-concern-row, .crop-health-stress, .crop-health-condition');
+      lines.forEach(function (row) {
+        var label = row.querySelector('.crop-health-idx-label');
+        var val = row.querySelector('.crop-health-idx-value');
+        var tag = row.querySelector('.crop-health-idx-tag');
+        if (label && val) {
+          text.push(label.textContent.trim() + ': ' + val.textContent.trim() + (tag ? ' (' + tag.textContent.trim() + ')' : ''));
+        } else {
+          var t = row.textContent.trim();
+          if (t) text.push(t);
+        }
+      });
+      text.push('');
+    });
+
+    var meta = card.querySelector('.crop-health-meta');
+    if (meta) text.push(meta.textContent.trim());
+
+    var header = card.querySelector('.crop-health-crop');
+    if (header) text.unshift(header.textContent.trim());
+
+    text.unshift('=== Crop Health Report ===');
+
+    navigator.clipboard.writeText(text.join('\n')).then(function () {
+      btn.classList.add('copied');
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>';
+      setTimeout(function () {
+        btn.classList.remove('copied');
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+      }, 2000);
+    });
+  }
+  window.copyCropHealth = copyCropHealth;
 
   window.fetchCropHealth = fetchCropHealth;
 })();

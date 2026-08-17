@@ -56,50 +56,40 @@
     var color = STATUS_COLOR[status] || STATUS_COLOR[1];
     var statusLabel = STATUS_LABEL[status] || 'Normal';
 
-    var html = '<div class="quake-popup" style="min-width:260px">';
-    html += '<div class="quake-popup-header">';
-    html += '<div class="quake-popup-status"><span class="quake-popup-status-dot" style="background:' + color + '"></span>Gunung Api</div>';
-    html += '<div class="quake-popup-region">' + esc(v.ga_nama_gapi) + '</div>';
+    var html = '<div class="agol-popup" style="min-width:260px">';
+    html += '<div class="agol-popup-header agol-geo-volcano">';
+    html += '<div class="agol-popup-badge"><span class="agol-popup-badge-dot"></span>Gunung Api</div>';
+    html += '<div class="agol-popup-title">' + esc(v.ga_nama_gapi) + '</div>';
+    html += '<div class="agol-popup-subtitle">' + esc(statusLabel) + '</div>';
     html += '</div>';
 
-    html += '<div style="padding:10px 14px">';
-    html += '<div style="display:inline-block;background:' + color + ';color:#fff;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;margin-bottom:8px;">' + esc(statusLabel) + '</div>';
-    html += '<div class="quake-popup-details">';
-
-    html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">Kode</span><span class="quake-popup-detail-value">' + esc(v.ga_code) + '</span></div>';
-    html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">Kabupaten</span><span class="quake-popup-detail-value">' + esc(v.ga_kab_gapi) + '</span></div>';
-    html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">Provinsi</span><span class="quake-popup-detail-value">' + esc(v.ga_prov_gapi) + '</span></div>';
-    html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">Elevasi</span><span class="quake-popup-detail-value">' + esc(v.ga_elev_gapi) + ' m</span></div>';
-    html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">Koordinat</span><span class="quake-popup-detail-value">' + esc(v.ga_lat_gapi) + ', ' + esc(v.ga_lon_gapi) + '</span></div>';
+    html += '<div class="agol-popup-body"><div class="agol-popup-fields">';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Kode</span><span class="agol-popup-field-value">' + esc(v.ga_code) + '</span></div>';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Kabupaten</span><span class="agol-popup-field-value">' + esc(v.ga_kab_gapi) + '</span></div>';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Provinsi</span><span class="agol-popup-field-value">' + esc(v.ga_prov_gapi) + '</span></div>';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Elevasi</span><span class="agol-popup-field-value">' + esc(v.ga_elev_gapi) + ' m</span></div>';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Koordinat</span><span class="agol-popup-field-value">' + esc(v.ga_lat_gapi) + ', ' + esc(v.ga_lon_gapi) + '</span></div>';
 
     if (v.ga_koter_gapi) {
-      html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">Kota Terdekat</span><span class="quake-popup-detail-value">' + esc(v.ga_koter_gapi) + '</span></div>';
+      html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Kota Terdekat</span><span class="agol-popup-field-value">' + esc(v.ga_koter_gapi) + '</span></div>';
     }
 
-    html += '</div></div>';
+    html += '</div>';
 
-    // VONA notice
     if (v.has_vona && v.noticenumber) {
-      html += '<div style="padding:8px 14px;border-top:1px solid #f1f5f9">';
-      html += '<div style="font-size:10px;font-weight:600;color:#ea580c;margin-bottom:4px">VONA / NOTAM</div>';
-      html += '<div style="font-size:11px;color:#475569">Nomor: ' + esc(v.noticenumber);
+      html += '<div class="agol-popup-remark" style="border-left-color:#ea580c;"><div class="agol-popup-remark-title">VONA / NOTAM</div><div class="agol-popup-remark-text">Nomor: ' + esc(v.noticenumber);
       if (v.erupt_icon) {
         html += ' <span style="color:#dc2626;font-weight:700">ERUPSI</span>';
       }
       html += '</div></div>';
     } else {
-      html += '<div style="padding:8px 14px;border-top:1px solid #f1f5f9">';
-      html += '<div style="font-size:11px;color:#94a3b8;font-style:italic">Tidak ada VONA aktif</div>';
-      html += '</div>';
+      html += '<div class="agol-popup-remark" style="border-left-color:#94a3b8;"><div class="agol-popup-remark-title">VONA</div><div class="agol-popup-remark-text" style="font-style:italic;color:#999;">Tidak ada VONA aktif</div></div>';
     }
 
-    // Link to MAGMA
-    html += '<div style="padding:8px 14px;border-top:1px solid #f1f5f9">';
-    html += '<a href="https://magma.esdm.go.id" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#0891b2;text-decoration:none;font-weight:600;">';
-    html += 'Lihat detail di MAGMA &#8599;</a>';
-    html += '</div>';
+    html += '<div style="margin-top:8px;"><a href="https://magma.esdm.go.id" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#0891b2;text-decoration:none;font-weight:600;">Lihat detail di MAGMA &#8599;</a></div>';
 
-    html += '<div class="quake-popup-footer"><span>Sumber: PVMBG/MAGMA · ' + esc(v.ga_code) + '</span></div>';
+    html += '</div>';
+    html += '<div class="agol-popup-footer"><span>Sumber: PVMBG/MAGMA · ' + esc(v.ga_code) + '</span></div>';
     html += '</div>';
     return html;
   }
@@ -120,7 +110,7 @@
         icon: createVolcanoIcon(color)
       });
 
-      marker.bindPopup(buildVolcanoPopup(v), { maxWidth: 360, className: 'quake-leaflet-popup' });
+      marker.bindPopup(buildVolcanoPopup(v), { maxWidth: 360, className: 'agol-leaflet-popup' });
 
       volcanoClusterGroup.addLayer(marker);
     }

@@ -328,6 +328,14 @@ L.control.scale({
           document.getElementById('toggleKrbTitik')?.dispatchEvent(new Event('change'));
         }
 
+        // Bersihkan layer gempa NTT
+        if (document.getElementById('toggleGempaNTT')) {
+          document.getElementById('toggleGempaNTT').checked = false;
+        }
+        if (typeof isGempaNTTActive === 'function' && isGempaNTTActive()) {
+          document.getElementById('toggleGempaNTT')?.dispatchEvent(new Event('change'));
+        }
+
         // Bersihkan layer geologi BIG
         var bigGeoToggles = ['togglePetaGeologi', 'toggleGeostruktur', 'togglePatahanAktif', 'toggleLikuifaksi', 'toggleKarst'];
         var bigGeoFns = ['isPetaGeologiActive', 'isGeostrukturActive', 'isPatahanAktifActive', 'isLikuifaksiActive', 'isKarstActive'];

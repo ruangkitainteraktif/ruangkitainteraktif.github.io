@@ -40,33 +40,30 @@
     var vic = p.vic != null ? p.vic : '-';
     var dur = p.dur != null ? p.dur : '-';
 
-    var html = '<div class="quake-popup" style="min-width:260px">';
-    html += '<div class="quake-popup-header">';
-    html += '<div class="quake-popup-status"><span class="quake-popup-status-dot" style="background:' + c.color + '"></span>Kawasan Rawan Bencana</div>';
-    html += '<div class="quake-popup-region">' + esc(namobj) + '</div>';
+    var html = '<div class="agol-popup" style="min-width:260px">';
+    html += '<div class="agol-popup-header agol-geo-krb">';
+    html += '<div class="agol-popup-badge"><span class="agol-popup-badge-dot"></span>Kawasan Rawan Bencana</div>';
+    html += '<div class="agol-popup-title">' + esc(namobj) + '</div>';
+    html += '<div class="agol-popup-subtitle">' + esc(label) + '</div>';
     html += '</div>';
 
-    html += '<div style="padding:10px 14px">';
-    html += '<span style="display:inline-block;background:' + c.color + ';color:#fff;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:700;margin-bottom:8px;">' + esc(label) + '</span>';
-    html += '<div class="quake-popup-details">';
-    html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">Kode</span><span class="quake-popup-detail-value">' + esc(p.lcode || '-') + '</span></div>';
-    html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">Tahun Terbit</span><span class="quake-popup-detail-value">' + esc(thterbit) + '</span></div>';
-    html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">VEI</span><span class="quake-popup-detail-value">' + esc(vei) + '</span></div>';
-    html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">Jenis Letusan</span><span class="quake-popup-detail-value">' + esc(eru) + '</span></div>';
-    html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">Material</span><span class="quake-popup-detail-value">' + esc(matga) + '</span></div>';
-    html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">Lava</span><span class="quake-popup-detail-value">' + esc(lav) + '</span></div>';
-    html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">Korban Jiwa</span><span class="quake-popup-detail-value">' + esc(vic) + '</span></div>';
-    html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">Durasi (jam)</span><span class="quake-popup-detail-value">' + esc(dur) + '</span></div>';
-    html += '</div></div>';
+    html += '<div class="agol-popup-body"><div class="agol-popup-fields">';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Kode</span><span class="agol-popup-field-value">' + esc(p.lcode || '-') + '</span></div>';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Tahun Terbit</span><span class="agol-popup-field-value">' + esc(thterbit) + '</span></div>';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">VEI</span><span class="agol-popup-field-value">' + esc(vei) + '</span></div>';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Jenis Letusan</span><span class="agol-popup-field-value">' + esc(eru) + '</span></div>';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Material</span><span class="agol-popup-field-value">' + esc(matga) + '</span></div>';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Lava</span><span class="agol-popup-field-value">' + esc(lav) + '</span></div>';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Korban Jiwa</span><span class="agol-popup-field-value">' + esc(vic) + '</span></div>';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Durasi (jam)</span><span class="agol-popup-field-value">' + esc(dur) + '</span></div>';
+    html += '</div>';
 
     if (remark && remark !== '-') {
-      html += '<div style="padding:8px 14px;border-top:1px solid #f1f5f9">';
-      html += '<div style="font-size:10px;font-weight:600;color:#64748b;margin-bottom:2px">KETERANGAN</div>';
-      html += '<div style="font-size:11px;color:#475569;line-height:1.4">' + esc(remark) + '</div>';
-      html += '</div>';
+      html += '<div class="agol-popup-remark"><div class="agol-popup-remark-title">Keterangan</div><div class="agol-popup-remark-text">' + esc(remark) + '</div></div>';
     }
 
-    html += '<div class="quake-popup-footer"><span>Sumber: BIG SatuPeta · ' + esc(p.srs_id || '-') + '</span></div>';
+    html += '</div>';
+    html += '<div class="agol-popup-footer"><span>Sumber: BIG SatuPeta · ' + esc(p.srs_id || '-') + '</span></div>';
     html += '</div>';
     return html;
   }
@@ -96,7 +93,7 @@
         return { color: c.color, weight: 1, fillColor: c.fillColor, fillOpacity: 0.35 };
       },
       onEachFeature: function (feature, layer) {
-        layer.bindPopup(buildPopup(feature.properties), { maxWidth: 340, className: 'quake-leaflet-popup' });
+        layer.bindPopup(buildPopup(feature.properties), { maxWidth: 340, className: 'agol-leaflet-popup' });
       }
     });
 

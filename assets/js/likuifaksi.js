@@ -22,16 +22,16 @@
 
   function buildPopup(p) {
     var c = getColor(p.kerentanan);
-    var html = '<div class="quake-popup" style="min-width:240px">';
-    html += '<div class="quake-popup-header">';
-    html += '<div class="quake-popup-status"><span class="quake-popup-status-dot" style="background:' + c.color + '"></span>Likuifaksi</div>';
-    html += '<div class="quake-popup-region">' + esc(p.namobj || '-') + '</div>';
+    var html = '<div class="agol-popup" style="min-width:240px">';
+    html += '<div class="agol-popup-header agol-geo-likuifaksi">';
+    html += '<div class="agol-popup-badge"><span class="agol-popup-badge-dot"></span>Likuifaksi</div>';
+    html += '<div class="agol-popup-title">' + esc(p.namobj || '-') + '</div>';
     html += '</div>';
-    html += '<div style="padding:10px 14px"><div class="quake-popup-details">';
-    html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">Kerentanan</span><span class="quake-popup-detail-value">' + esc(p.kerentanan || '-') + '</span></div>';
-    html += '<div class="quake-popup-detail-item"><span class="quake-popup-detail-label">Keterangan</span><span class="quake-popup-detail-value">' + esc(p.keterangan || '-') + '</span></div>';
+    html += '<div class="agol-popup-body"><div class="agol-popup-fields">';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Kerentanan</span><span class="agol-popup-field-value">' + esc(p.kerentanan || '-') + '</span></div>';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Keterangan</span><span class="agol-popup-field-value">' + esc(p.keterangan || '-') + '</span></div>';
     html += '</div></div>';
-    html += '<div class="quake-popup-footer"><span>Sumber: BIG SatuPeta</span></div>';
+    html += '<div class="agol-popup-footer"><span>Sumber: BIG SatuPeta</span></div>';
     html += '</div>';
     return html;
   }
@@ -46,7 +46,7 @@
         var c = getColor(f.properties.kerentanan);
         return { color: c.color, weight: 1, fillColor: c.fill, fillOpacity: 0.35 };
       },
-      onEachFeature: function (f, l) { l.bindPopup(buildPopup(f.properties), { maxWidth: 340, className: 'quake-leaflet-popup' }); }
+      onEachFeature: function (f, l) { l.bindPopup(buildPopup(f.properties), { maxWidth: 340, className: 'agol-leaflet-popup' }); }
     });
     layer.addTo(map); visible = true;
     layer.on('error', function (e) { console.error('[Likuifaksi] Error:', e); });
