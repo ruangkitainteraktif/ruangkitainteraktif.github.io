@@ -124,6 +124,21 @@ L.control.scale({
     }
   }).addTo(map);
 
+  var locateA = document.querySelector('.leaflet-control-locate a');
+  if (locateA) {
+    var locateSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    locateSvg.setAttribute('viewBox', '0 0 24 24');
+    locateSvg.setAttribute('width', '22');
+    locateSvg.setAttribute('height', '22');
+    locateSvg.setAttribute('fill', 'none');
+    locateSvg.setAttribute('stroke', 'currentColor');
+    locateSvg.setAttribute('stroke-width', '2');
+    locateSvg.setAttribute('stroke-linecap', 'round');
+    locateSvg.setAttribute('stroke-linejoin', 'round');
+    locateSvg.innerHTML = '<circle cx="12" cy="12" r="3"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/>';
+    locateA.prepend(locateSvg);
+  }
+
   // Detail Panel Toggle Control
   const DetailPanelControl = L.Control.extend({
     options: { position: 'bottomright' },
@@ -178,7 +193,7 @@ L.control.scale({
       });
 
       const btn = L.DomUtil.create('button', 'basemap-btn', wrap);
-      btn.innerHTML = '🗺️';
+      btn.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>';
       btn.title = 'Pilih Basemap';
       btn.setAttribute('aria-label', 'Ganti basemap');
       btn.addEventListener('click', (e) => {

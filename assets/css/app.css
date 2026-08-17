@@ -108,10 +108,11 @@
     .unified-ac-empty { padding: 14px 16px; text-align: center; color: #5f6368; font-size: 12px; }
 
     /* Tombol lokasi saya (Leaflet Locate Control) */
-    .leaflet-control-locate { margin: 20px !important; border: 0 !important; border-radius: 50% !important; background: transparent !important; box-shadow: 0 10px 28px rgba(8, 63, 102, .24) !important; overflow: hidden; }
+    .leaflet-control-locate { margin: 12px !important; border: 0 !important; border-radius: 50% !important; background: transparent !important; box-shadow: 0 10px 28px rgba(8, 63, 102, .24) !important; overflow: hidden; }
     .leaflet-control-locate a { display: grid !important; width: 46px !important; height: 46px !important; place-items: center; border: 1px solid rgba(255,255,255,.86) !important; border-radius: 50% !important; background: linear-gradient(145deg, #ffffff, #e9f7fc) !important; color: #0879bf !important; text-decoration: none; transition: transform .2s ease, box-shadow .2s ease, background .2s ease; position: relative; }
-    .leaflet-control-locate a::before { content: '⌖'; font-family: Arial, sans-serif; font-size: 29px; font-weight: 700; line-height: 1; transform: translateY(-1px); }
-    .leaflet-control-locate a .leaflet-control-locate-location-arrow { display: none; }
+    .leaflet-control-locate a::before { content: none; }
+    .leaflet-control-locate a .leaflet-control-locate-location-arrow,
+    .leaflet-control-locate a .leaflet-control-locate-spinner { display: none !important; }
     .leaflet-control-locate a:hover { background: linear-gradient(145deg, #ffffff, #d5f3fb) !important; box-shadow: inset 0 0 0 1px rgba(8,121,191,.14); transform: translateY(-2px); }
     .leaflet-control-locate.active a, .leaflet-control-locate.following a { border-color: #0879bf !important; background: linear-gradient(145deg, #0879bf, #12a7c8) !important; color: #fff !important; }
     .leaflet-control-locate.active a::before, .leaflet-control-locate.following a::before { display: none !important; }
@@ -123,7 +124,7 @@
       place-items: center;
       width: 46px !important;
       height: 46px !important;
-      margin: 20px !important;
+      margin: 12px !important;
       margin-bottom: 0 !important;
       border: 1px solid rgba(255,255,255,.86) !important;
       border-radius: 50% !important;
@@ -147,7 +148,7 @@
     }
     .basemap-control-wrap {
       position: relative;
-      margin: 20px !important;
+      margin: 12px !important;
       margin-bottom: 0 !important;
     }
     .basemap-btn {
@@ -206,7 +207,7 @@
       place-items: center;
       width: 46px !important;
       height: 46px !important;
-      margin: 20px !important;
+      margin: 12px !important;
       margin-bottom: 0 !important;
       border: 1px solid rgba(255,255,255,.86) !important;
       border-radius: 15px !important;
@@ -1176,7 +1177,7 @@
       place-items: center;
       width: 46px !important;
       height: 46px !important;
-      margin: 20px !important;
+      margin: 12px !important;
       margin-bottom: 0 !important;
       border: 1px solid rgba(255,255,255,.86) !important;
       border-radius: 50% !important;

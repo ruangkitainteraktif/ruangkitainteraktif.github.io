@@ -13,9 +13,9 @@
 
 ## 📖 Tentang / About
 
-**RUANG KITA** adalah platform peta interaktif berbasis web untuk Indonesia. Mengintegrasikan data geospasial dari berbagai sumber Kementerian dan Lembaga (BMKG, BIG, Kementan, Kemendagri, Pemprov Jatim, Kab. Sukoharjo) ke dalam satu antarmuka yang mudah digunakan.
+**RUANG KITA** adalah platform peta interaktif berbasis web untuk Indonesia. Mengintegrasikan data geospasial dari berbagai sumber Kementerian dan Lembaga (BMKG, BIG, Kementan, Kemendagri, Pemprov Jatim, Kab. Sukoharjo, BNPB, PVMBG, BPS) ke dalam satu antarmuka yang mudah digunakan.
 
-**RUANG KITA** is a web-based interactive map platform for Indonesia. It integrates geospatial data from various government sources (BMKG, BIG, Kementan, Kemendagri, East Java Provincial Govt, Sukoharjo Regency) into a single, easy-to-use interface.
+**RUANG KITA** is a web-based interactive map platform for Indonesia. It integrates geospatial data from various government sources into a single, easy-to-use interface.
 
 🌐 **Live Demo:** [https://ruangkitainteraktif.github.io](https://ruangkitainteraktif.github.io)
 
@@ -35,28 +35,34 @@
 
 ## ✨ Fitur / Features
 
-### 🗺️ GEOID — Batas Wilayah Administrasi
+### 🗺️ GEONUSA — Batas Wilayah Administrasi
 
 - Pencarian bertingkat: Provinsi → Kabupaten/Kota → Kecamatan → Desa/Kelurahan
 - Pencarian koordinat (Latitude, Longitude)
-- Reverse geocode otomatis saat klik peta
+- Reverse geocode otomatis saat klik peta dengan insight wilayah (cuaca, luas, sawah, CCTV, POI, dukcapil)
 - Tampilan batas wilayah dari **BIG** (Badan Informasi Geospasial)
 - Ringkasan jumlah wilayah (Provinsi, Kab/Kota, Kecamatan, Desa)
 - Pop-up detail administrasi (provinsi, kecamatan, desa, jalan, kode pos)
+- **Geolokasi pengguna** dengan izin GPS — menampilkan batas wilayah dan data lengkap lokasi
 
-*Hierarchical search: Province → Regency → District → Village. Automatic reverse geocode on map click. Administrative boundaries from BIG.*
+*Hierarchical search with automatic reverse geocode, user geolocation with boundary display.*
 
 ### 🌾 GEOTANI — Analisis Pertanian
 
 - **LBS Analysis** — Analisis Luas Lahan Baku Sawah per desa/kelurahan
 - **KTA Analysis** — Overlay erosi (Konservasi Tanah & Air) dengan Lahan Baku Sawah
-- **NDVI Analysis** — Indeks Vegetasi Normalisasi (Sentinel-2) untuk analisis kesehatan tanaman
+- **NDVI Analysis** — Indeks Vegetasi Normalisasi (Sentinel-2) untuk analisis kesehatan tanaman dengan time series
+- **NDRE / NDMI** — Indeks lanjutan untuk deteksi stres tanaman
+- **Crop Health** — Skor kesehatan tanaman berbasis NDVI/NDRE/NDMI dengan status warna (Sehat/Sedang/Stres)
+- **DEM/Terrain Analysis** — Analisis SRTM (elevasi, slope, aspect, flood potential)
 - **Land Cover Analysis** — Klasifikasi tutupan lahan (Sentinel-2 10m, Esri)
+- **Choropleth BPS** — Peta interaktif 18 indikator demografi per provinsi (BPS)
+- **Population Pyramid** — Piramida populasi usia × jenis kelamin
 - Pencarian BPP (Balai Penyuluhan Pertanian) dan IGT Sawit
 - Skor kerentanan pertanian (CVSS-style scoring) berbasis erosi, NDVI, dan rasio sawah
 - Cetak PDF hasil analisis geotani
 
-*Agricultural analysis: LBS (Rice Field Area), KTA (Soil & Water Conservation overlay), NDVI (Sentinel-2 vegetation index), Land Cover (Sentinel-2 10m). Agricultural vulnerability scoring and PDF export.*
+*Agricultural analysis: LBS, KTA, NDVI/NDRE/NDMI crop health scoring, DEM terrain, Land Cover, Choropleth BPS, Population Pyramid, PDF export.*
 
 ### 📡 GEOPORTAL — Layer Data Pemerintah
 
@@ -67,7 +73,7 @@
 - Tree view layer (jsTree) dengan checkbox on/off
 - Klik peta untuk melihat detail fitur (properti attribute)
 
-*Government data layers: East Java Provincial (education, health, transport), Sukoharjo Regency (schools, health centers, infrastructure), ATR/BPN land parcels, BPS statistics.*
+*Government data layers: East Java Provincial, Sukoharjo Regency, ATR/BPN land parcels, BPS statistics.*
 
 ### 🎥 GEOWATCH — CCTV Lalu Lintas
 
@@ -77,29 +83,58 @@
 - Filter berdasarkan area
 - Marker clustering untuk titik CCTV
 
-*Real-time traffic CCTV monitoring on toll roads, national roads, and non-toll roads with video streaming.*
+*Real-time traffic CCTV monitoring with video streaming.*
 
-### 🌤️ GEOWX — Prakiraan Cuaca BMKG
+### 🌤️ GEOPULSE — Cuaca & Prediksi
 
+**Sub-tab: Info Cuaca**
 - Prakiraan cuaca 3 hari ke depan dari BMKG
 - Grafik prakiraan cuaca 3 hari per 3 jam
 - Pencarian lokasi dengan autocomplete
 - Insight cuaca (ikon, suhu, kelembapan, angin, tutupan awan)
+
+**Sub-tab: Prediksi Cuaca**
 - **Animasi Angin (Wind Particle)** — visualisasi aliran angin real-time
+- **Prediksi GFS** — Grafik animasi prediksi angin, kelembapan, curah hujan, PM2.5, HTH, GsMAP (48 jam ke depan)
+- **Prediksi Maritim** — Analisis gelombang laut (InaWaves API): tinggi gelombang, arus, angin laut, arah gelombang
+- Peta prediksi dengan overlay gelombang dan angin
 
-*3-day weather forecast from BMKG. Wind particle animation for real-time wind flow visualization.*
+*BMKG weather forecast, wind particle animation, GFS model predictions, maritime wave analysis (InaWaves).*
 
-### 🔴 GEOQUAKE — Data Gempa Real-time
+### 🔴 GEOQUAKE — Gempa & Info Geologi
 
+**Sub-tab: Info Gempa**
 - Gempa terkini dari BMKG
 - Gempa signifikan (M5.0+)
 - Gempa dirasakan
 - Marker animasi dengan popup detail
 - Zona risiko gempa dan longsor dari **BIG**
 
-*Real-time earthquake data from BMKG: latest, significant (M5.0+), and felt earthquakes with animated markers. Hazard zone mapping from BIG.*
+**Sub-tab: Info Geologi**
+- **Gunung Api** — 74 gunung api berstatus dari MAGMA Indonesia, marker warna berdasarkan level aktivitas
+- **KRB Gunung Api** — Zona bahaya火山 (MapServer) polygon overlay
+- **KRB Titik** — Titik gas vulkanik berbahaya (MapServer) dengan popup detail
+- **Peta Geologi** — Peta geologi nasional (BIG MapServer)
+- **Geostruktur** — Patahan sesar dan lipatan dari BIG
+- **Patahan Aktif 1:50K** — Data patahan aktif detail
+- **Likuifaksi** — Zona kerentanan likuifaksi
+- **Karst** — Lanskap karst nasional
 
-### 🛠️ TOOLS — Alat Analisis GIS
+**Sub-tab: Info Bencana**
+- **Gempa NTT 2026** — Data kerusakan gempa dari BNPB (FeatureServer) dengan warna tingkat kerusakan
+- **Jalur Evakuasi** — Rute evakuasi bencana
+- **Sensor Seismic** — Stasiun pemantauan gempa aktif
+- **Sensor Global** — Stasiun pemantauan global
+- **Riwayat Gempa** — Data gempa historis
+- **Katalog Gempa** — Katalog gempa BMKG
+
+**Sub-tab: Info Karhutla**
+- **Hotspot Karhutla** — Titik panas kebakaran hutan dan lahan dari NASA FIRMS via SIPONGI
+- Heatmap visualisasi kepadatan hotspot
+
+*Real-time earthquakes, volcano monitoring (74 volcanoes), geological hazard layers, BNPB damage data, karhutla hotspot monitoring.*
+
+### 🛠️ GEOTOOLS — Alat Analisis GIS
 
 - Gambar di peta: Titik, Garis, Poligon, Persegi, Lingkaran
 - Pengukuran jarak dan luas area
@@ -108,7 +143,7 @@
 - Import dan visualisasi **Shapefile** (.shp + .dbf + .shx)
 - Cetak PDF dari analisis geotani
 
-*Drawing tools (marker, polyline, polygon, rectangle, circle). Distance and area measurement. GeoJSON/SHP import and visualization. PDF export.*
+*Drawing tools, distance/area measurement, GeoJSON/SHP import, PDF export.*
 
 ### 🔍 Pencarian Terpadu / Unified Search
 
@@ -116,37 +151,42 @@
 - Hasil instan dengan autocomplete
 - **Insight Cards** — kartu cuaca dan gempa terkini di bawah pencarian
 
-*Single search bar for all administrative levels with instant results. Live weather and earthquake insight cards.*
+*Single search bar with instant results, live weather and earthquake insight cards.*
 
 ### 📊 Insight & Analisis / Insights & Analysis
 
 - **Statistik Dukcapil** — data kependudukan (usia, agama, pendidikan, pekerjaan, golongan darah)
+- **Choropleth Maps** — 18 indikator demografi per provinsi dari BPS
+- **Population Pyramid** — visualisasi piramida populasi
+- **Crop Health** — skor kesehatan tanaman berbasis indeks vegetasi
 - Jadwal sholat (Aladhan API)
 - Fasilitas terdekat dari Overpass API (rumah sakit, sekolah, dll)
 - Estimasi harga properti (Rupabumi.com)
 - Luas wilayah dan lahan baku sawah
 - Zona bahaya (gempa, longsor) dari BIG
 
-*Population statistics (age, religion, education, occupation, blood type). Prayer schedule. Nearby facilities. Property price estimation. Village area analysis. Hazard zone mapping.*
+*Population statistics, choropleth maps, population pyramid, crop health, prayer schedule, nearby facilities, property estimation.*
 
-### 📱 Welcome Feature Modal
+### 📱 Welcome Feature Modal & About
 
 - Modal selamat datang otomatis saat pertama kali membuka website (session-based)
-- Daftar lengkap semua fitur dan teknologi yang digunakan
+- Daftar lengkap semua fitur dalam modal
 - Tombol Download RuangKita Mobile APK
+- **Tab ABOUT** — Form kontak (via Google Apps Script), donasi Saweria & PayPal, download APK
 
-*Auto-show welcome modal on first visit with feature overview and mobile app download.*
+*Auto-show welcome modal, contact form, donation links, APK download.*
 
 ### 🗺️ Fitur Peta Lainnya
 
-- **Basemap**: Carto Light, Carto Dark, OpenStreetMap, Esri Satellite, Rupabumi Indonesia (BIG)
+- **Basemap**: Carto Light, Carto Dark, OpenStreetMap, Esri Satellite, Rupabumi Indonesia (BIG), **Google Maps**, **Google Terrain**, **Google Traffic**
+- **Scale bar** — pengukuran skala di peta
 - **Opasitas layer** yang dapat diatur
 - **Kunci peta** — disable interaksi peta
 - **Reset layer** — hapus semua layer aktif sekaligus
-- **Lokasi saya** — tombol geolokasi pengguna
+- **Lokasi saya** — tombol geolokasi pengguna dengan reverse geocoding
 - **RuangKita Mobile** — aplikasi Android (APK) untuk akses dari HP
 
-*Multiple basemaps, adjustable layer opacity, map lock, layer reset, user geolocation, and mobile app (APK).*
+*8 basemaps including Google, scale bar, layer opacity, map lock, layer reset, user geolocation, mobile app.*
 
 ---
 
@@ -161,8 +201,10 @@
 | [Leaflet Draw](https://leaflet.github.io/Leaflet.draw/) | 1.0.4 | Alat menggambar / Drawing tools |
 | [Leaflet MarkerCluster](https://leaflet.github.io/Leaflet.markercluster/) | 1.5.3 | Clustering marker / Marker clustering |
 | [Leaflet LocateControl](https://leaflet.github.io/Leaflet.control.locate/) | 0.85.1 | Lokasi pengguna / User geolocation |
+| [Leaflet.heat](https://github.com/Leaflet/Leaflet.heat) | 0.2.0 | Heatmap karhutla / Karhutla heatmap |
 | [Video.js](https://videojs.com/) | 8.23.4 | Pemutar video CCTV / CCTV video player |
 | [HLS.js](https://github.com/video-dev/hls.js/) | 1.6.5 | Streaming video HLS / HLS video streaming |
+| [Chart.js](https://www.chartjs.org/) | 4.4.7 | Grafik & visualisasi / Charts & visualization |
 | [jsPDF](https://github.com/parallax/jsPDF) | 2.5.1 | Cetak PDF / PDF generation |
 | [html2canvas](https://html2canvas.hertzen.com/) | 1.4.1 | Screenshot peta untuk PDF / Map screenshot for PDF |
 | [jQuery](https://jquery.com/) | 3.7.1 | DOM manipulation & jsTree |
@@ -197,62 +239,9 @@ cd ruangkitainteraktif
 
 ---
 
-## 📂 Struktur File / Project Structure
-
-```
-ruangkita/
-├── index.html                     # Halaman utama / Main page
-├── LICENSE                        # GPL-3.0
-├── README.md
-└── assets/
-    ├── css/
-    │   └── app.css                # Semua gaya CSS / All CSS styles
-    ├── img/
-    │   └── favicon.png            # Ikon aplikasi / App icon
-    ├── data/
-    │   ├── kode_wilayah.json      # Kode wilayah administrasi / Admin codes
-    │   ├── geoportal-layers.json  # Konfigurasi layer geoportal
-    │   ├── dukcapil/              # Data kependudukan per provinsi
-    │   └── app-release.apk        # RuangKita Mobile APK
-    └── js/
-        ├── map-core.js            # Inisialisasi peta + basemap
-        ├── sidebar.js             # Navigasi sidebar + tab
-        ├── app-boot.js            # Bootstrap aplikasi
-        ├── geoid-wilayah.js       # Pencarian wilayah + insight + boundary
-        ├── geotani-search.js      # Pencarian geotani (BPP, IGT Sawit)
-        ├── erosi-kta.js           # Analisis KTA + overlay erosi
-        ├── ndvi-analysis.js       # Analisis NDVI (Sentinel-2)
-        ├── landcover-analysis.js  # Analisis Land Cover
-        ├── sawah-dilindungi.js    # Layer sawah dilindungi & nasional
-        ├── dukcapil-population.js # Data kependudukan Dukcapil
-        ├── geoportal.js           # Geoportal WMS/WFS layers
-        ├── geoportal-search.js    # Pencarian layer geoportal
-        ├── cctv.js                # CCTV lalu lintas
-        ├── weather-bmkg.js        # Data cuaca BMKG
-        ├── weather-data.js        # Kode ADM4 + pencarian cuaca
-        ├── weather-markers.js     # Marker cuaca di peta
-        ├── weather-geocode.js     # Geocode untuk pencarian cuaca
-        ├── weather-init.js        # Inisialisasi cuaca + welcome modal
-        ├── wind-animation.js      # Animasi angin (wind particle)
-        ├── earthquake.js          # Data gempa BMKG
-        ├── map-click.js           # Handler klik peta + reverse geocode
-        ├── map-insight-cards.js   # Kartu insight cuaca & gempa
-        ├── unified-search.js      # Pencarian terpadu
-        ├── overlay-village-search.js # Pencarian desa untuk overlay
-        ├── alat-draw-measure.js   # Alat gambar & ukur
-        ├── alat-layers.js         # Import GeoJSON/SHP
-        ├── detail-subtab.js       # Sub-tab detail
-        ├── location-permission.js # Modal izin lokasi
-        └── geoid-wilayah.js       # Pencarian wilayah + insight
-```
-
----
-
 ## 🤝 Kontribusi / Contributing
 
 Kontribusi sangat diterima! Berikut cara berkontribusi:
-
-Contributions are welcome! Here's how to contribute:
 
 1. **Fork** repository ini
 2. **Buat branch** baru: `git checkout -b fitur-baru`
@@ -284,8 +273,6 @@ This project is licensed under the **GPL-3.0 License** — see [LICENSE](LICENSE
 ## ❤️ Dukungan / Support
 
 Jika proyek ini bermanfaat, dukunglah pengembangannya:
-
-If this project is useful, consider supporting its development:
 
 <a href="https://saweria.co/maspannn">
   <img src="https://img.shields.io/badge/Saweria-Dukung-ff4d4d?style=for-the-badge" alt="Saweria">
