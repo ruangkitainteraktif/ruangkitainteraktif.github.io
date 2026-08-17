@@ -1,12 +1,15 @@
   // Toggle Sidebar
   window.currentActiveTab = 'tab-geoid';
+  const CHEVRON_RIGHT = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+  const CHEVRON_LEFT = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
+  function setToggleIcon(collapsed) {
+    const btn = document.getElementById('toggleBtn');
+    if (btn) btn.innerHTML = collapsed ? CHEVRON_RIGHT : CHEVRON_LEFT;
+  }
   function toggleSidebar() {
     const sidebar = document.getElementById('sidebar-left');
-    const toggleBtn = document.getElementById('toggleBtn');
-    
     sidebar.classList.toggle('collapsed');
-    toggleBtn.innerHTML = sidebar.classList.contains('collapsed') ? '&gt;&gt;' : '&lt;&lt;';
-
+    setToggleIcon(sidebar.classList.contains('collapsed'));
     setTimeout(() => map.invalidateSize(), 300);
   }
 

@@ -420,15 +420,7 @@
       const activeWMS = getActiveGeoportalLayers();
       const activeArcGIS = getActiveArcgisLayers();
 
-      const coordsEl = document.getElementById('geoportalModalCoords');
-      if (coordsEl) coordsEl.innerText = `(${e.latlng.lng.toFixed(5)}, ${e.latlng.lat.toFixed(5)})`;
-      openGeoportalModal();
-      renderGeoportalLoading();
-
-      if (!activeWMS.length && !activeArcGIS.length) {
-        renderGeoportalDetails([]);
-        return false;
-      }
+      if (!activeWMS.length && !activeArcGIS.length) return false;
 
       const wmsPromises = activeWMS.map(({ layerName, wmsUrl }) => getGeoportalFeatureInfo(layerName, e.latlng, wmsUrl));
       const arcgisPromises = activeArcGIS.map(({ layerKey, url, layers }) =>
@@ -436,17 +428,41 @@
       );
       const results = await Promise.allSettled([...wmsPromises, ...arcgisPromises]);
       const features = results.filter(result => result.status === 'fulfilled').flatMap(result => result.value);
-      renderGeoportalDetails(features);
       const failed = results.filter(result => result.status === 'rejected');
       if (failed.length) console.warn('Sebagian GetFeatureInfo gagal:', failed);
+
+      if (!features.length) return false;
+
+      const coordsEl = document.getElementById('geoportalModalCoords');
+      if (coordsEl) coordsEl.innerText = `(${e.latlng.lng.toFixed(5)}, ${e.latlng.lat.toFixed(5)})`;
+      openGeoportalModal();
+      renderGeoportalDetails(features);
       return true;
     } catch (err) {
       console.error('[Geoportal] handleGeoportalMapClick error:', err);
-      openGeoportalModal();
-      renderGeoportalDetails([]);
       return false;
     }
   }
+
+  // Tangkap klik lebih awal dari event Leaflet. Beberapa polygon/vector layer
+  // menghentikan propagasi event, sehingga map.on('click') tidak selalu menerima
+  // kliknya. Capture listener memastikan GetFeatureInfo tetap dipanggil untuk
+  // semua layer Geoportal aktif, termasuk polygon.
+  map.getContainer().addEventListener('click', async function (event) {
+    if (window.currentActiveTab !== 'tab-geoportal') return;
+    if (event.target.closest?.('.leaflet-control')) return;
+
+    event.__geoportalFeatureInfoCaptured = true;
+    try {
+      await handleGeoportalMapClick({
+        latlng: map.mouseEventToLatLng(event),
+        originalEvent: event
+      });
+    } catch (err) {
+      console.error('[Geoportal] GetFeatureInfo capture gagal:', err);
+    }
+  }, true);
+
   // ArcGIS REST Layer: Lahan Baku Sawah & Kawasan Pertanian
   const ARCGIS_SAWAH_CONFIG = {
     'arcgis-sawah-2023': { url: 'https://sig02.pertanian.go.id/server/rest/services/Sawah/Sawah2023/MapServer', layers: [0] },

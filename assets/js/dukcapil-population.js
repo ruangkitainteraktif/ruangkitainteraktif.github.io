@@ -95,7 +95,7 @@
     const data = await getDukcapilPopulation(kode);
     renderDetail(data, kode);
     if (typeof toggleDetailPanel === 'function') toggleDetailPanel(false);
-    const showLabel = data && document.getElementById('geoidPopulationLabel')?.checked !== false;
+    const showLabel = data && document.getElementById('geoidToggleKemendagri')?.checked !== false;
     const popup = marker?.getPopup?.()?.getElement?.();
     if (!popup || !showLabel) return data;
     popup.querySelector('[data-dukcapil-summary]')?.remove();

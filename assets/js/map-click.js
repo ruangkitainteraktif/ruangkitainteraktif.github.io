@@ -17,13 +17,16 @@
   }
 
   map.on('click', async function(e) {
-    // Jika klik mengenai fitur interaktif (marker hotspot, polygon, dll),
-    // biarkan Leaflet yang handle popup-nya.
-    const target = e.originalEvent?.target;
-    if (target && target.closest && target.closest('.leaflet-interactive')) return;
-
     const lat = e.latlng.lat;
     const lng = e.latlng.lng;
+    const activeTab = window.currentActiveTab;
+
+    // Jika klik mengenai fitur interaktif (marker hotspot, polygon, dll),
+    // biarkan Leaflet yang handle popup-nya — kecuali sedang mode geoportal
+    // di mana GetFeatureInfo harus tetap dijalankan untuk semua layer aktif.
+    const target = e.originalEvent?.target;
+    const isInteractive = target && target.closest && target.closest('.leaflet-interactive');
+    if (isInteractive && activeTab !== 'tab-geoportal' && !getActiveGeoportalLayers().length && !getActiveArcgisLayers().length) return;
 
     if (typeof isWindRgbActive === 'function' && isWindRgbActive()) {
       if (typeof showWindPopup === 'function') showWindPopup(lat, lng);
@@ -59,7 +62,6 @@
     }
 
     // Nonaktifkan popup geoid di tab alat dan gempa
-    const activeTab = window.currentActiveTab;
     if (activeTab === 'tab-alat' || activeTab === 'tab-gempa') return;
 
     // GeoTani tidak memakai reverse geocoding. Saat area kosong dalam cakupan
@@ -94,6 +96,9 @@
 
     // Tab Geoportal: selalu tangani klik untuk GetFeatureInfo
     if (activeTab === 'tab-geoportal') {
+      // Klik Geoportal sudah ditangkap pada capture phase agar klik polygon
+      // yang menghentikan propagasi event tetap membuka modal.
+      if (e.originalEvent?.__geoportalFeatureInfoCaptured) return;
       try {
         await handleGeoportalMapClick(e);
       } catch (err) {
@@ -159,14 +164,15 @@
   }
 
   async function fetchReverseGeocodeWithPopup(lng, lat, marker) {
-    const matched = null;
-    const adm4Code = '';
-    const desa = '-';
-    const kecamatan = '-';
-    const kabkota = '-';
-    const provinsi = '-';
-    const jalan = `${lng.toFixed(5)}, ${lat.toFixed(5)}`;
-    const kodepos = '-';
+    try {
+      const matched = null;
+      const adm4Code = '';
+      const desa = '-';
+      const kecamatan = '-';
+      const kabkota = '-';
+      const provinsi = '-';
+      const jalan = `${lng.toFixed(5)}, ${lat.toFixed(5)}`;
+      const kodepos = '-';
 
       // Update detail panel
       document.getElementById('adm-provinsi').innerText = provinsi;

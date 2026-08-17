@@ -1052,7 +1052,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (sidebar && !sidebar.classList.contains('collapsed')) {
             sidebar.classList.add('collapsed');
             const toggleBtn = document.getElementById('toggleBtn');
-            if (toggleBtn) toggleBtn.innerHTML = '&gt;&gt;';
+            if (toggleBtn) setToggleIcon(true);
             setTimeout(() => map.invalidateSize(), 300);
           }
         } else {
@@ -2319,7 +2319,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (sidebar && !sidebar.classList.contains('collapsed')) {
             sidebar.classList.add('collapsed');
             const toggleBtn = document.getElementById('toggleBtn');
-            if (toggleBtn) toggleBtn.innerHTML = '&gt;&gt;';
+            if (toggleBtn) setToggleIcon(true);
             setTimeout(() => map.invalidateSize(), 300);
           }
         } else {
