@@ -74,13 +74,49 @@
     evt.currentTarget.classList.add("active");
     window.currentActiveTab = tabId;
 
+    if (tabId !== 'tab-cctv') {
+      var sheet = document.getElementById('cctv-search-sheet');
+      if (sheet) {
+        sheet.classList.remove('sheet-open');
+        if (window.innerWidth <= 768 && sheet.parentElement === document.body) {
+          var tabCctv = document.getElementById('tab-cctv');
+          if (tabCctv) {
+            var refNode = tabCctv.querySelector('.cctv-card');
+            if (refNode && refNode.parentNode === tabCctv) {
+              tabCctv.insertBefore(sheet, refNode);
+            } else {
+              tabCctv.appendChild(sheet);
+            }
+          }
+        }
+      }
+    }
+
     if (tabId !== 'tab-geoportal') closeGeoportalModal();
 
     if (tabId === 'tab-gempa') {
       var gempaGempaPanel = document.getElementById('gempa-subtab-gempa');
       if (gempaGempaPanel && gempaGempaPanel.classList.contains('active')) loadEarthquakeData();
     }
-    if (tabId === 'tab-cctv') loadCctvData();
+    if (tabId === 'tab-cctv') {
+      loadCctvData();
+      if (window.innerWidth <= 768) {
+        var sidebar = document.getElementById('sidebar-left');
+        var sheet = document.getElementById('cctv-search-sheet');
+        if (sheet && sheet.parentElement !== document.body) {
+          document.body.appendChild(sheet);
+        }
+        if (sidebar && !sidebar.classList.contains('collapsed')) {
+          sidebar.classList.add('collapsed');
+          setToggleIcon(true);
+          setTimeout(function () { map.invalidateSize(); }, 300);
+        }
+        setTimeout(function () {
+          if (sheet) sheet.classList.add('sheet-open');
+        }, 350);
+      }
+    }
+    if (tabId === 'tab-geopangan' && typeof window.geopanganAutoLoad === 'function') window.geopanganAutoLoad();
 
     const unifiedSearch = document.getElementById('unifiedSearch');
     const insightCards = document.getElementById('mapInsightCards');

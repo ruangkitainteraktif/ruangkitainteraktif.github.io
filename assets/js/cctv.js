@@ -244,3 +244,9 @@
       map.removeLayer(nationalRoadLayer);
     }
   });
+
+  // CCTV Bottom Sheet Toggle (Mobile)
+  window.toggleCctvSheet = function () {
+    var sheet = document.getElementById('cctv-search-sheet');
+    if (sheet) sheet.classList.toggle('sheet-open');
+  };

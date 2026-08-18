@@ -358,6 +358,10 @@
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           <span>GEOTANI</span>
         </button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-geopangan')">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          <span>GEOPANGAN</span>
+        </button>
         <button class="tab-btn" onclick="openTab(event, 'tab-gempa'); openGempaSubtabById('gempa-subtab-infocuaca')" style="display:none">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           <span>GEOMET</span>
@@ -414,19 +418,19 @@
           <p style="font-size:13px; color:#668198; margin-bottom:20px;">Pilih wilayah untuk menampilkan insight.</p>
           <div id="geoidSummaryCards" class="geoid-summary-cards">
             <div class="geoid-summary-box geoid-summary-prov">
-              <span class="geoid-summary-count" id="geoidCountProv" style="font-size:30px;font-weight:700;line-height:1;">–</span>
+              <span class="geoid-summary-count" id="geoidCountProv" style="font-size:22px;font-weight:700;line-height:1;">–</span>
               <span class="geoid-summary-label">Provinsi</span>
             </div>
             <div class="geoid-summary-box geoid-summary-kab">
-              <span class="geoid-summary-count" id="geoidCountKab" style="font-size:30px;font-weight:700;line-height:1;">–</span>
+              <span class="geoid-summary-count" id="geoidCountKab" style="font-size:22px;font-weight:700;line-height:1;">–</span>
               <span class="geoid-summary-label">Kab/Kota</span>
             </div>
             <div class="geoid-summary-box geoid-summary-kec">
-              <span class="geoid-summary-count" id="geoidCountKec" style="font-size:30px;font-weight:700;line-height:1;">–</span>
+              <span class="geoid-summary-count" id="geoidCountKec" style="font-size:22px;font-weight:700;line-height:1;">–</span>
               <span class="geoid-summary-label">Kecamatan</span>
             </div>
             <div class="geoid-summary-box geoid-summary-desa">
-              <span class="geoid-summary-count" id="geoidCountDesa" style="font-size:30px;font-weight:700;line-height:1;">–</span>
+              <span class="geoid-summary-count" id="geoidCountDesa" style="font-size:22px;font-weight:700;line-height:1;">–</span>
               <span class="geoid-summary-label">Desa/Kel</span>
             </div>
           </div>
@@ -838,6 +842,51 @@
 
         </div>
 
+        <!-- TAB: GEOPANGAN -->
+        <div id="tab-geopangan" class="tab-content">
+          <div class="geopangan-sticky-header">
+            <h4 style="font-size:15px; margin-bottom:4px;">GeoPangan</h4>
+            <p style="font-size:13px; color:#668198; margin-bottom:10px;">Harga Pangan Nasional — Bank Indonesia</p>
+
+            <div class="geopangan-field">
+              <label>Jenis Pasar</label>
+              <select id="geopanganPriceType">
+                <option value="1">Pasar Tradisional</option>
+                <option value="2">Pasar Modern (Supermarket/Minimarket)</option>
+                <option value="3">Pedagang Besar / Grosir</option>
+                <option value="4">Produsen</option>
+              </select>
+            </div>
+
+            <div class="geopangan-field">
+              <label>Komoditas</label>
+              <select id="geopanganCommodity"></select>
+            </div>
+
+            <div class="geopangan-field">
+              <label>Provinsi</label>
+              <select id="geopanganProvince">
+                <option value="">Semua Provinsi</option>
+              </select>
+            </div>
+
+            <div class="geopangan-field" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div>
+                <label>Dari</label>
+                <input type="date" id="geopanganDateStart" />
+              </div>
+              <div>
+                <label>Sampai</label>
+                <input type="date" id="geopanganDateEnd" />
+              </div>
+            </div>
+
+            <button id="geopanganLoadBtn" class="geopangan-btn" style="margin-top:4px;">Tampilkan</button>
+          </div>
+
+          <div id="geopanganResult"></div>
+        </div>
+
         <!-- TAB 3: CCTV -->
         <div id="tab-cctv" class="tab-content">
           <h4 style="font-size:15px; margin-bottom:5px;">CCTV Analysis</h4>
@@ -878,24 +927,29 @@
             </div>
           </div>
 
-          <!-- CCTV Search Card -->
-          <div class="cctv-card" style="margin-top:10px;">
-            <div class="cctv-card-header">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <span>Pencarian CCTV</span>
-            </div>
-            <div class="cctv-card-body cctv-search-body">
-              <div class="cctv-autocomplete">
-                <input id="cctvSearchInput" type="search" placeholder="Cari CCTV..." autocomplete="off">
-                <div id="cctvAutocomplete" class="cctv-autocomplete-list"></div>
+          <!-- CCTV Bottom Sheet (Mobile) -->
+          <div id="cctv-search-sheet">
+            <div class="cctv-sheet-handle" onclick="toggleCctvSheet()"></div>
+
+            <!-- CCTV Search Card -->
+            <div class="cctv-card" style="margin-top:0;">
+              <div class="cctv-card-header">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <span>Pencarian CCTV</span>
               </div>
-              <select id="cctvAreaFilter">
-                <option value="">Pilih area</option>
-              </select>
+              <div class="cctv-card-body cctv-search-body">
+                <div class="cctv-autocomplete">
+                  <input id="cctvSearchInput" type="search" placeholder="Cari CCTV..." autocomplete="off">
+                  <div id="cctvAutocomplete" class="cctv-autocomplete-list"></div>
+                </div>
+                <select id="cctvAreaFilter">
+                  <option value="">Pilih area</option>
+                </select>
+              </div>
             </div>
+            <div id="cctvStatus" class="cctv-message">Buka tab CCTV untuk memuat daftar.</div>
+            <div id="cctvResults" class="cctv-results"></div>
           </div>
-          <div id="cctvStatus" class="cctv-message">Buka tab CCTV untuk memuat daftar.</div>
-          <div id="cctvResults" class="cctv-results"></div>
         </div>
 
         <!-- TAB 3: CUACA BMKG -->
@@ -1613,6 +1667,7 @@
   <script src="assets/js/patahan-aktif.js"></script>
   <script src="assets/js/likuifaksi.js"></script>
   <script src="assets/js/karst.js"></script>
+  <script src="assets/js/geopangan.js"></script>
   <script src="assets/js/about.js"></script>
   <script src="assets/js/population-chart.js"></script>
 

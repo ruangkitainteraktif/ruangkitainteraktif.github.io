@@ -488,35 +488,72 @@
 (function () {
   'use strict';
 
-  var HOTSPOT_URL = 'assets/data/hotspot-sebaran.json';
+  var HOTSPOT_API = 'https://opsroom.sipongidata.my.id/api/opsroom/indoHotspot?wilayah=IN&filterperiode=false&from=&to=&late=24&satelit[]=NASA-MODIS&satelit[]=NASA-SNPP&satelit[]=NASA-NOAA20&confidence[]=low&confidence[]=medium&confidence[]=high&provinsi=&kabkota=';
+  var REFRESH_INTERVAL = 5 * 60 * 1000;
+  var refreshTimer = null;
   var allData = [];
   var filteredData = [];
   var currentPage = 1;
   var perPage = 10;
+
+  function aggregateFeatures(features) {
+    var map = {};
+    for (var i = 0; i < features.length; i++) {
+      var p = features[i].properties;
+      var prov = p.nama_provinsi || '-';
+      var kab = p.kabkota || '-';
+      var src = p.sumber || '-';
+      var conf = p.confidence_level || '-';
+      if (conf === 'high') conf = 'High';
+      else if (conf === 'medium') conf = 'Medium';
+      else conf = 'Low';
+      var key = prov + '|' + kab + '|' + src + '|' + conf;
+      if (!map[key]) map[key] = { provinsi: prov, kabupaten: kab, sumber: src, confidence: conf, counter: 0 };
+      map[key].counter++;
+    }
+    var result = [];
+    var keys = Object.keys(map);
+    for (var k = 0; k < keys.length; k++) {
+      result.push(map[keys[k]]);
+    }
+    return result;
+  }
 
   function loadData() {
     var container = document.getElementById('hotspot-table-container');
     if (!container) return;
     container.innerHTML = '<div style="text-align:center;padding:10px;color:#94a3b8;font-size:8px;">Memuat data hotspot...</div>';
 
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', HOTSPOT_URL, true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          var json = JSON.parse(xhr.responseText);
-          allData = json.data || [];
-          filteredData = allData.slice();
-          renderTable();
-        } catch (e) {
-          container.innerHTML = '<div style="text-align:center;padding:10px;color:#ef4444;font-size:8px;">Gagal memuat data hotspot</div>';
-        }
-      } else {
+    fetch(HOTSPOT_API)
+      .then(function (resp) {
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        return resp.json();
+      })
+      .then(function (geojson) {
+        if (!geojson || !geojson.features) throw new Error('No features');
+        allData = aggregateFeatures(geojson.features);
+        filteredData = allData.slice();
+        renderTable();
+      })
+      .catch(function () {
         container.innerHTML = '<div style="text-align:center;padding:10px;color:#ef4444;font-size:8px;">Gagal memuat data hotspot</div>';
-      }
-    };
-    xhr.send();
+      });
+  }
+
+  function startAutoRefresh() {
+    if (refreshTimer) clearInterval(refreshTimer);
+    refreshTimer = setInterval(function () {
+      fetch(HOTSPOT_API)
+        .then(function (r) { return r.json(); })
+        .then(function (geojson) {
+          if (geojson && geojson.features) {
+            allData = aggregateFeatures(geojson.features);
+            filteredData = allData.slice();
+            applyFilters();
+          }
+        })
+        .catch(function () {});
+    }, REFRESH_INTERVAL);
   }
 
   function getProvinsiList() {
@@ -590,7 +627,7 @@
       '<div class="hs-table-wrap">' +
         '<div class="hs-table-header">' +
           '<div class="hs-table-title">Sebaran Hotspot (24 Jam)</div>' +
-          '<div class="hs-table-total">' + allData.length + ' titik panas</div>' +
+          '<div class="hs-table-total">' + allData.reduce(function(s, r) { return s + r.counter; }, 0).toLocaleString('id-ID') + ' titik panas</div>' +
         '</div>' +
         catHtml +
         '<div class="hs-table-controls">' +
@@ -678,13 +715,32 @@
   }
 
   loadData();
+  startAutoRefresh();
 })();
 
 /* ── Hotspot Bar Chart per Provinsi ── */
 (function () {
   'use strict';
 
-  var HOTSPOT_URL = 'assets/data/hotspot-sebaran.json';
+  var HOTSPOT_API = 'https://opsroom.sipongidata.my.id/api/opsroom/indoHotspot?wilayah=IN&filterperiode=false&from=&to=&late=24&satelit[]=NASA-MODIS&satelit[]=NASA-SNPP&satelit[]=NASA-NOAA20&confidence[]=low&confidence[]=medium&confidence[]=high&provinsi=&kabkota=';
+  var REFRESH_INTERVAL = 5 * 60 * 1000;
+  var refreshTimer = null;
+
+  function aggregateByProvinsi(features) {
+    var map = {};
+    for (var i = 0; i < features.length; i++) {
+      var p = features[i].properties;
+      var prov = p.nama_provinsi || '-';
+      if (!map[prov]) map[prov] = 0;
+      map[prov]++;
+    }
+    var arr = [];
+    var keys = Object.keys(map);
+    for (var k = 0; k < keys.length; k++) {
+      arr.push({ provinsi: keys[k], counter: map[keys[k]] });
+    }
+    return arr;
+  }
 
   function formatNum(val) {
     if (val >= 1000) return (val / 1000).toFixed(1) + ' Rb';
@@ -742,23 +798,32 @@
     if (!container) return;
     container.innerHTML = '<div style="text-align:center;padding:10px;color:#94a3b8;font-size:8px;">Memuat data hotspot...</div>';
 
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', HOTSPOT_URL, true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          var json = JSON.parse(xhr.responseText);
-          renderHotspotBar(json.data || []);
-        } catch (e) {
-          container.innerHTML = '<div style="text-align:center;padding:10px;color:#ef4444;font-size:8px;">Gagal memuat data hotspot</div>';
-        }
-      } else {
+    fetch(HOTSPOT_API)
+      .then(function (resp) {
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        return resp.json();
+      })
+      .then(function (geojson) {
+        if (!geojson || !geojson.features) throw new Error('No features');
+        renderHotspotBar(aggregateByProvinsi(geojson.features));
+      })
+      .catch(function () {
         container.innerHTML = '<div style="text-align:center;padding:10px;color:#ef4444;font-size:8px;">Gagal memuat data hotspot</div>';
-      }
-    };
-    xhr.send();
+      });
+  }
+
+  function startAutoRefresh() {
+    if (refreshTimer) clearInterval(refreshTimer);
+    refreshTimer = setInterval(function () {
+      fetch(HOTSPOT_API)
+        .then(function (r) { return r.json(); })
+        .then(function (geojson) {
+          if (geojson && geojson.features) renderHotspotBar(aggregateByProvinsi(geojson.features));
+        })
+        .catch(function () {});
+    }, REFRESH_INTERVAL);
   }
 
   loadData();
+  startAutoRefresh();
 })();
