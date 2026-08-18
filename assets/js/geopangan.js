@@ -391,6 +391,184 @@
     return parseInt(parts[0]) + ' ' + months[parseInt(parts[1]) - 1] + ' ' + parts[2];
   }
 
+  /* ── Dynamic Table: Harga Pangan Per Provinsi ── */
+  var _gpTableState = { sortKey: 'price', sortDir: 'desc', page: 1, search: '', rows: [], last7Labels: [] };
+
+  function renderGeopanganTable(data, priceMap, dailyMap, dateLabels, latestDate) {
+    var container = $('geopanganTable');
+    if (!container) return;
+
+    var rows = [];
+    data.filter(function (r) { return r.level === 1; }).forEach(function (r) {
+      var key = normalize(r.name);
+      var price = priceMap[key];
+      if (price === null || price === undefined) return;
+      var daily = dailyMap[key] || [];
+      var last7 = daily.slice(-7);
+      var trend = 'stable';
+      if (last7.length >= 2) {
+        var a = last7[last7.length - 2], b = last7[last7.length - 1];
+        if (a !== null && b !== null) {
+          if (b > a) trend = 'up';
+          else if (b < a) trend = 'down';
+        }
+      }
+      rows.push({ name: r.name, price: price, daily7: last7, trend: trend });
+    });
+
+    _gpTableState.rows = rows;
+    _gpTableState.page = 1;
+    _gpTableState.search = '';
+    _gpTableState.sortKey = 'price';
+    _gpTableState.sortDir = 'desc';
+    _gpTableState.last7Labels = dateLabels.slice(-7);
+
+    var last7Labels = dateLabels.slice(-7);
+
+    container.innerHTML =
+      '<div class="gp-table-wrap">' +
+        '<div class="gp-table-header">' +
+          '<div class="gp-table-title">Harga Pangan Per Provinsi</div>' +
+          '<input type="text" id="gpTableSearch" class="gp-table-search" placeholder="Cari provinsi..." autocomplete="off" />' +
+        '</div>' +
+        '<div class="gp-table-scroll">' +
+          '<table class="gp-table">' +
+            '<thead><tr>' +
+              '<th class="gp-th-no" data-sort="no">No</th>' +
+              '<th class="gp-th-prov" data-sort="name">Provinsi <span class="gp-sort-icon"></span></th>' +
+              '<th class="gp-th-price" data-sort="price">Harga (Rp) <span class="gp-sort-icon"></span></th>' +
+              last7Labels.map(function (l) { return '<th class="gp-th-day">' + l + '</th>'; }).join('') +
+              '<th class="gp-th-trend">Tren</th>' +
+            '</tr></thead>' +
+            '<tbody id="gpTableBody"></tbody>' +
+          '</table>' +
+        '</div>' +
+        '<div id="gpTablePagination" class="gp-pagination"></div>' +
+      '</div>';
+
+    container.querySelector('#gpTableSearch').addEventListener('input', function (e) {
+      _gpTableState.search = e.target.value.toLowerCase();
+      _gpTableState.page = 1;
+      renderGpTableBody(_gpTableState.last7Labels);
+      renderGpPagination();
+    });
+
+    var ths = container.querySelectorAll('th[data-sort]');
+    for (var t = 0; t < ths.length; t++) {
+      ths[t].addEventListener('click', function () {
+        var key = this.getAttribute('data-sort');
+        if (key === 'no') return;
+        if (_gpTableState.sortKey === key) {
+          _gpTableState.sortDir = _gpTableState.sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          _gpTableState.sortKey = key;
+          _gpTableState.sortDir = key === 'name' ? 'asc' : 'desc';
+        }
+        _gpTableState.page = 1;
+        renderGpTableBody(_gpTableState.last7Labels);
+        renderGpPagination();
+        updateGpSortIcons();
+      });
+    }
+
+    renderGpTableBody(last7Labels);
+    renderGpPagination();
+    updateGpSortIcons();
+  }
+
+  function getFilteredSortedGpRows() {
+    var s = _gpTableState;
+    var rows = s.rows;
+    if (s.search) {
+      rows = rows.filter(function (r) { return r.name.toLowerCase().indexOf(s.search) !== -1; });
+    }
+    var key = s.sortKey;
+    var dir = s.sortDir === 'asc' ? 1 : -1;
+    rows = rows.slice().sort(function (a, b) {
+      if (key === 'name') return a.name.localeCompare(b.name) * dir;
+      if (key === 'price') return (a.price - b.price) * dir;
+      return 0;
+    });
+    return rows;
+  }
+
+  function renderGpTableBody(last7Labels) {
+    var tbody = $('gpTableBody');
+    if (!tbody) return;
+    var filtered = getFilteredSortedGpRows();
+    var perPage = 10;
+    var start = (_gpTableState.page - 1) * perPage;
+    var end = Math.min(start + perPage, filtered.length);
+    var rows = '';
+    for (var i = start; i < end; i++) {
+      var d = filtered[i];
+      var trendSvg = d.trend === 'up'
+        ? '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 10 8 6 12 10"/></svg>'
+        : d.trend === 'down'
+        ? '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 6 8 10 12 6"/></svg>'
+        : '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="8" x2="12" y2="8"/></svg>';
+      var trendClass = 'gp-trend-' + d.trend;
+      var cells = d.daily7.map(function (v) {
+        return '<td class="gp-td-price">' + (v !== null ? 'Rp ' + v.toLocaleString('id-ID') : '-') + '</td>';
+      }).join('');
+      rows += '<tr>' +
+        '<td class="gp-td-no">' + (i + 1) + '</td>' +
+        '<td class="gp-td-name">' + d.name + '</td>' +
+        '<td class="gp-td-price gp-td-price-main">Rp ' + d.price.toLocaleString('id-ID') + '</td>' +
+        cells +
+        '<td class="gp-td-trend ' + trendClass + '">' + trendSvg + '</td>' +
+      '</tr>';
+    }
+    if (filtered.length === 0) {
+      rows = '<tr><td colspan="' + (3 + 7 + 1) + '" class="gp-td-empty">Tidak ada data</td></tr>';
+    }
+    tbody.innerHTML = rows;
+  }
+
+  function renderGpPagination() {
+    var pag = $('gpTablePagination');
+    if (!pag) return;
+    var filtered = getFilteredSortedGpRows();
+    var totalPages = Math.ceil(filtered.length / 10);
+    if (totalPages <= 1) { pag.innerHTML = ''; return; }
+    var cp = _gpTableState.page;
+    var html = '<button class="gp-page-btn" data-page="prev">&laquo;</button>';
+    for (var i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || Math.abs(i - cp) <= 2) {
+        html += '<button class="gp-page-btn' + (i === cp ? ' active' : '') + '" data-page="' + i + '">' + i + '</button>';
+      } else if (Math.abs(i - cp) === 3) {
+        html += '<span class="gp-page-dots">...</span>';
+      }
+    }
+    html += '<button class="gp-page-btn" data-page="next">&raquo;</button>';
+    pag.innerHTML = html;
+
+    var btns = pag.querySelectorAll('.gp-page-btn');
+    for (var b = 0; b < btns.length; b++) {
+      btns[b].addEventListener('click', function () {
+        var pg = this.getAttribute('data-page');
+        if (pg === 'prev') _gpTableState.page = Math.max(1, _gpTableState.page - 1);
+        else if (pg === 'next') _gpTableState.page++;
+        else _gpTableState.page = parseInt(pg);
+        renderGpTableBody(_gpTableState.last7Labels);
+        renderGpPagination();
+      });
+    }
+  }
+
+  function updateGpSortIcons() {
+    var icons = document.querySelectorAll('.gp-table th[data-sort] .gp-sort-icon');
+    for (var i = 0; i < icons.length; i++) {
+      var th = icons[i].parentElement;
+      var key = th.getAttribute('data-sort');
+      if (key === _gpTableState.sortKey) {
+        icons[i].textContent = _gpTableState.sortDir === 'asc' ? ' \u25B2' : ' \u25BC';
+      } else {
+        icons[i].textContent = '';
+      }
+    }
+  }
+
   /* ── Main: load and display ── */
   async function loadAndDisplay() {
     var resultEl = $('geopanganResult');
@@ -645,6 +823,8 @@
             '<span>' + formatDateID(latestDate) + '</span>' +
           '</div>';
       }
+
+      renderGeopanganTable(data, priceMap, dailyMap, dateLabels, latestDate);
 
     } catch (e) {
       console.error('[Geopangan] Error:', e);
