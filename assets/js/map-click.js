@@ -171,16 +171,12 @@
       const kecamatan = '-';
       const kabkota = '-';
       const provinsi = '-';
-      const jalan = `${lng.toFixed(5)}, ${lat.toFixed(5)}`;
-      const kodepos = '-';
 
       // Update detail panel
       document.getElementById('adm-provinsi').innerText = provinsi;
       document.getElementById('adm-kabkota').innerText = kabkota;
       document.getElementById('adm-kecamatan').innerText = kecamatan;
       document.getElementById('adm-desa').innerText = desa;
-      document.getElementById('adm-jalan').innerText = jalan;
-      document.getElementById('adm-kodepos').innerText = kodepos;
 
       // Bangun popup konsisten dengan showGeoidFlyup()
       const title = `${lng.toFixed(5)}, ${lat.toFixed(5)}`;

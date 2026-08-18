@@ -855,15 +855,11 @@ function showGeoidFlyup(lat, lon, info, zoom = 15) {
   const popupContent = `
     <div class="${prefix}-popup geoid-popup-scroll">
       <div class="${prefix}-popup-head">
-        <div class="${prefix}-popup-badge">
-          <span class="${prefix}-popup-badge-dot"></span>
-          ${isGeotaniMode ? 'Geotani' : 'Wilayah'}
-        </div>
         <strong>${escapeGeoidHtml(title)}</strong>
         ${hierarchy.length ? `<span>${hierarchy.map(escapeGeoidHtml).join(' · ')}</span>` : ''}
       </div>
       <div class="${prefix}-popup-body">
-        ${metadata.length ? `<div class="${prefix}-popup-meta">${metadata.map(([label, value]) => `<div><span>${escapeGeoidHtml(label)}</span><b>${escapeGeoidHtml(value)}</b></div>`).join('')}</div>` : ''}
+        ${metadata.length ? `<div class="${prefix}-popup-meta">${metadata.map(([label, value]) => `<div><span>${escapeMapClickHtml(label)}</span><b>${escapeMapClickHtml(value)}</b></div>`).join('')}</div>` : ''}
         <div class="${prefix}-popup-insights" data-geoid-insights>
           <div style="display:flex;justify-content:center;padding:16px 0 10px;">
             <div style="width:28px;height:28px;border:3px solid ${isGeotaniMode ? '#bbf7d0' : '#bfdbfe'};border-top-color:${isGeotaniMode ? '#16a34a' : '#2563eb'};border-radius:50%;animation:geoportal-spin .8s linear infinite;"></div>
@@ -923,6 +919,7 @@ async function fetchBigHazardZone(lat, lng) {
 }
 
 var _gempaRadiusCircle = null;
+var _popupMarkerGroup = null;
 
 function showGempaPopup(lat, lon, mag, wilayah, potensi, tanggal, jam, kedalaman, dirasakan) {
   const magNum = parseFloat(mag) || 0;
@@ -978,7 +975,8 @@ function showGempaPopup(lat, lon, mag, wilayah, potensi, tanggal, jam, kedalaman
       fillColor: color,
       fillOpacity: 0.12
     }).addTo(map);
-    L.marker([lat, lon]).addTo(map).bindPopup(popupHtml, { maxWidth: 340, className: 'quake-leaflet-popup' }).openPopup();
+    if (!_popupMarkerGroup) _popupMarkerGroup = L.layerGroup().addTo(map);
+    L.marker([lat, lon]).bindPopup(popupHtml, { maxWidth: 340, className: 'quake-leaflet-popup' }).openPopup().addTo(_popupMarkerGroup);
   }, 1100);
 }
 
@@ -1001,7 +999,8 @@ function showHotspotPopup(lat, lon, desa, kecamatan, kabkota, provinsi, sumber, 
 
   map.flyTo([lat, lon], 10, { duration: 1 });
   setTimeout(() => {
-    L.marker([lat, lon]).addTo(map).bindPopup(popupHtml, { maxWidth: 280, className: 'hotspot-popup' }).openPopup();
+    if (!_popupMarkerGroup) _popupMarkerGroup = L.layerGroup().addTo(map);
+    L.marker([lat, lon]).bindPopup(popupHtml, { maxWidth: 280, className: 'hotspot-popup' }).openPopup().addTo(_popupMarkerGroup);
   }, 1100);
 }
 
@@ -1755,15 +1754,12 @@ async function cariLayerWilayah() {
           kecamatan: selection.kecamatan || location.kecamatan,
           kabkota: selection.kabkota || location.kabkota || location.kotkab,
           provinsi: selection.provinsi || location.provinsi,
-          kode: selectedCode,
-          postal_code: (selectedVillage && selectedVillage.dataset.postalCode) || location.postal_code || location.kodepos
+          kode: selectedCode
         }, zoom);
         document.getElementById('adm-provinsi').innerText = selection.provinsi || location.provinsi || '-';
         document.getElementById('adm-kabkota').innerText = selection.kabkota || location.kabkota || location.kotkab || '-';
         document.getElementById('adm-kecamatan').innerText = selection.kecamatan || location.kecamatan || '-';
         document.getElementById('adm-desa').innerText = selection.desa || '-';
-        document.getElementById('adm-jalan').innerText = '-';
-        document.getElementById('adm-kodepos').innerText = (selectedVillage && selectedVillage.dataset.postalCode) || location.postal_code || location.kodepos || '-';
         await loadGeoidPopupInsights(marker, { ...location, kode: location.kode || adm4Code });
         if (typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, selectedCode, location);
         if (typeof loadLuasWilayahPopup === 'function') await loadLuasWilayahPopup(marker, selectedCode);

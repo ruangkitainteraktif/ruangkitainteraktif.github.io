@@ -311,6 +311,7 @@ L.control.scale({
         if (earthquakeMarkerGroup) earthquakeMarkerGroup.clearLayers();
         if (typeof _gempaRadiusCircle !== 'undefined' && _gempaRadiusCircle) { map.removeLayer(_gempaRadiusCircle); _gempaRadiusCircle = null; }
         if (typeof _insightQuakeRadius !== 'undefined' && _insightQuakeRadius) { map.removeLayer(_insightQuakeRadius); _insightQuakeRadius = null; }
+        if (typeof _popupMarkerGroup !== 'undefined' && _popupMarkerGroup) { _popupMarkerGroup.clearLayers(); _popupMarkerGroup = null; }
         if (typeof _faultLayerCleanup === 'function') _faultLayerCleanup();
         if (typeof _faultNewLayerCleanup === 'function') _faultNewLayerCleanup();
         if (typeof _jalurEvakuasiCleanup === 'function') _jalurEvakuasiCleanup();

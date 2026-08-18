@@ -63,15 +63,15 @@
       for (const loc of weatherSearchLocations) {
         const parts = loc.kode.split('.');
         const kecCode = [parts[0], parts[1], parts[2]].join('.');
-        const key = `${loc.kecamatan}|${loc.kabkot}|${loc.provinsi}`;
+        const key = `${loc.kecamatan}|${loc.kabkota}|${loc.provinsi}`;
         if (!kecSeen.has(key)) {
           kecSeen.set(key, {
             level: 'kecamatan',
             name: loc.kecamatan,
-            kabkot: loc.kabkot,
+            kabkot: loc.kabkota,
             provinsi: loc.provinsi,
             kode: kecCode,
-            searchText: normalizeWeatherSearch([loc.kecamatan, loc.kabkot, loc.provinsi].join(' '))
+            searchText: normalizeWeatherSearch([loc.kecamatan, loc.kabkota, loc.provinsi].join(' '))
           });
         }
       }
@@ -85,10 +85,10 @@
         if (!kabkotSeen.has(kabkotCode)) {
           kabkotSeen.set(kabkotCode, {
             level: 'kabkot',
-            name: loc.kabkot,
+            name: loc.kabkota,
             provinsi: loc.provinsi,
             kode: kabkotCode,
-            searchText: normalizeWeatherSearch([loc.kabkot, loc.provinsi].join(' '))
+            searchText: normalizeWeatherSearch([loc.kabkota, loc.provinsi].join(' '))
           });
         }
       }

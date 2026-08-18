@@ -13,7 +13,7 @@
           type: 'desa',
           name: loc.desa,
           kecamatan: loc.kecamatan,
-          kabkot: loc.kabkot,
+          kabkot: loc.kabkota,
           provinsi: loc.provinsi,
           kode: loc.kode
         });
@@ -162,8 +162,6 @@
     setText('adm-kabkota', item.type === 'kabkot' ? item.name : item.kabkot);
     setText('adm-kecamatan', item.kecamatan);
     setText('adm-desa', item.type === 'desa' ? item.name : '-');
-    setText('adm-jalan', '-');
-    setText('adm-kodepos', location.kodepos || location.postal_code || '-');
 
     await loadGeoidPopupInsights(marker, { ...location, kode: item.kode });
     if (typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, item.kode, location);
