@@ -114,7 +114,23 @@
       video.classList.add('active');
       if (window.videojs && !cctvVideoJs) cctvVideoJs = window.videojs(video, { controls: true, autoplay: true, muted: true, fluid: true });
       const media = cctvVideoJs ? (cctvVideoJs.el().querySelector('video') || video) : video;
-      if (window.Hls?.isSupported()) { cctvHls = new Hls(); cctvHls.loadSource(item.url); cctvHls.attachMedia(media); }
+      if (window.Hls?.isSupported()) {
+        cctvHls = new Hls({
+          xhrSetup: function (xhr, url) {
+            xhr.open('GET', 'https://corsproxy.io/?' + encodeURIComponent(url), true);
+          }
+        });
+        cctvHls.on(Hls.Events.ERROR, function (event, data) {
+          console.error('[CCTV HLS] Error:', data.type, data.details, data);
+          if (data.fatal) {
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) cctvHls.startLoad();
+            else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) cctvHls.recoverMediaError();
+          }
+        });
+        cctvHls.loadSource(item.url);
+        cctvHls.attachMedia(media);
+        media.play().catch(function () {});
+      }
       else { media.src = item.url; media.play().catch(() => {}); }
     }
     modal.classList.add('open');

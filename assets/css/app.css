@@ -316,6 +316,8 @@
       min-height: 0;
       overflow-x: hidden;
       overflow-y: auto;
+      margin-right: -15px;
+      padding-right: 15px;
     }
 
     .geopangan-sticky-header {
@@ -323,6 +325,7 @@
       padding: 0 0 8px;
       margin-left: -15px; margin-right: -15px;
       padding-left: 15px; padding-right: 15px;
+      border-bottom: 1px solid #e8eef3;
       flex-shrink: 0;
     }
 
@@ -357,18 +360,17 @@
     .geopangan-btn {
       width: 100%;
       padding: 10px;
-      background: linear-gradient(135deg, #0b5cab, #12a7c8);
+      background: #0b5cab;
       color: #fff;
       border: none;
       border-radius: 8px;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      transition: opacity .2s, transform .1s;
+      transition: background .2s;
     }
-    .geopangan-btn:hover { opacity: .88; }
-    .geopangan-btn:active { transform: scale(.98); }
-    .geopangan-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .geopangan-btn:hover { background: #094a8e; }
+    .geopangan-btn:disabled { background: #9baab6; cursor: not-allowed; }
 
     .geopangan-loading {
       display: flex; align-items: center; gap: 8px;
@@ -450,15 +452,16 @@
     .gp-leaflet-popup .leaflet-popup-content-wrapper {
       border-radius: 14px; padding: 0; overflow: hidden;
       box-shadow: 0 8px 32px rgba(16, 163, 127, .2); border: none;
+      max-height: 60vh; overflow-x: hidden;
     }
     .gp-leaflet-popup .leaflet-popup-content { width: auto !important; margin: 0; }
     .gp-leaflet-popup .leaflet-popup-tip { box-shadow: 4px 4px 12px rgba(16, 163, 127, .15); }
 
-    .gp-popup { width: 280px; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1e293b; background: #fff; overflow: hidden; }
+    .gp-popup { width: 280px; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1e293b; background: #fff; max-height: 60vh; overflow-x: hidden; overflow-y: auto; display: flex; flex-direction: column; }
 
     .gp-popup-head {
       position: relative; padding: 18px 16px 14px;
-      color: #fff; overflow: hidden;
+      color: #fff; overflow: hidden; flex-shrink: 0;
       background: linear-gradient(135deg, #047857 0%, #10a37f 50%, #34d399 100%);
     }
     .gp-popup-head::before {
@@ -491,12 +494,12 @@
       color: rgba(255,255,255,.85); position: relative; z-index: 1;
     }
 
-    .gp-popup-body { padding: 0; }
+    .gp-popup-body { padding: 0; overflow-x: hidden; overflow-y: auto; flex: 1 1 auto; }
 
     .gp-popup-price {
       display: flex; align-items: center; gap: 10px;
       padding: 14px 16px; background: linear-gradient(180deg, #f0fdf9 0%, #fff 100%);
-      border-bottom: 1px solid #d1fae5;
+      border-bottom: 1px solid #d1fae5; flex-shrink: 0;
     }
     .gp-popup-price-icon {
       display: flex; align-items: center; justify-content: center;
@@ -507,7 +510,7 @@
     .gp-popup-price-label { display: block; font-size: 10px; color: #668198; font-weight: 500; }
     .gp-popup-price-value { display: block; font-size: 18px; font-weight: 700; color: #047857; letter-spacing: -.02em; line-height: 1.3; }
 
-    .gp-popup-meta { padding: 10px 16px 14px; display: grid; gap: 10px; }
+    .gp-popup-meta { padding: 10px 16px 14px; display: grid; gap: 10px; flex-shrink: 0; }
     .gp-popup-meta-row { display: flex; align-items: center; gap: 10px; }
     .gp-popup-meta-icon {
       display: flex; align-items: center; justify-content: center;
@@ -520,7 +523,11 @@
     .gp-popup-chart { border-top: 1px solid #d1fae5; padding: 10px 16px 8px; }
     .gp-popup-chart-head { display: flex; align-items: center; gap: 5px; margin-bottom: 6px; color: #047857; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
     .gp-popup-chart-head svg { stroke: #10a37f; }
-    .gp-popup-chart-wrap { position: relative; width: 100%; height: 100px; }
+    .gp-popup-chart-wrap { position: relative; width: 100%; height: 140px; }
+
+    .gp-popup-chart--inflasi { border-top: 1px solid #fef3c7; padding-bottom: 12px; }
+    .gp-popup-chart--inflasi .gp-popup-chart-head { color: #92400e; }
+    .gp-popup-chart--inflasi .gp-popup-chart-head svg { stroke: #f59e0b; }
 
 
     /* Map Insight Cards */
@@ -1799,14 +1806,6 @@
       #cctv-search-sheet .cctv-card {
         margin: 0 15px 10px;
         border-radius: 10px;
-        overflow: visible;
-      }
-      #cctv-search-sheet .cctv-card .cctv-autocomplete {
-        position: sticky;
-        top: 26px;
-        z-index: 1;
-        background: #f8fbfe;
-        padding: 8px 0 2px;
       }
       #cctv-search-sheet #cctvStatus,
       #cctv-search-sheet #cctvResults {

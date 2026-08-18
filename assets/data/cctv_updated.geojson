@@ -76160,6 +76160,146 @@
         "mode": "embed",
         "url": "https://atcs.banjarmasinkota.go.id/stream/simpang_s_parman_tarakan/index.m3u8"
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.914849, -7.082593] },
+      "properties": { "id": 4481, "name": "Simpang Kencana Selatan 2", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/c4af6157-1252-4757-ab1c-2e59f35940de.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/46eb011a-143f-4b0e-89fb-2ac5173ed8e7.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "CCTV Simpang Kencana", "status": "online", "lastUpdate": "9 jam lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.915477, -7.083287] },
+      "properties": { "id": 4482, "name": "Simpang Kencana Timur", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/692517c9-cd96-4907-ab38-898cea6ae611.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/6d0f03d1-2332-446a-b1a7-910b3bacb90c.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "CCTV Simpang Kencana Arah Timur", "status": "online", "lastUpdate": "9 jam lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.914747, -7.083649] },
+      "properties": { "id": 4483, "name": "Simpang Kencana Selatan", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/1fc88916-fc43-428a-8710-7b9c22e32c77.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/da41efd3-28b9-452e-8156-772f247f0351.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "CCTV Simpang Kencana / RS Yakkum", "status": "offline", "lastUpdate": "3 jam lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.914173, -7.083238] },
+      "properties": { "id": 4484, "name": "Simpang Kencana Barat", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/0c71034d-c8c2-419a-aa63-b4794467732b.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/dd938828-0f27-4319-9856-d7bb0b124646.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "CCTV Simpang Kencana Arah Jl A Yani", "status": "online", "lastUpdate": "1 hari lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.916607, -7.079942] },
+      "properties": { "id": 4485, "name": "Alun-Alun Utara", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/00f24e82-2004-4806-9611-8fcfd211656c.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/87e66cbb-c1f8-47b0-b0c5-e77d83860fc4.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "Monitoring area alun-alun", "status": "online", "lastUpdate": "10 hari lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.916897, -7.080229] },
+      "properties": { "id": 4486, "name": "Alun-Alun Timur", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/01bc9e0b-8b80-4a9a-80d5-dcd856a36aaa.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/e4871f1c-4437-48a7-af72-ff20f7b61026.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "Monitoring area alun-alun", "status": "online", "lastUpdate": "9 hari lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.916618, -7.080432] },
+      "properties": { "id": 4487, "name": "Alun-Alun Selatan", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/deb97d9b-8f4c-4b84-8be3-3e5388a3a4fa.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/13d7236f-5bd9-475d-8399-24940f9930fa.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "Monitoring area alun-alun", "status": "online", "lastUpdate": "10 hari lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.916329, -7.080166] },
+      "properties": { "id": 4488, "name": "Alun-Alun Barat", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/75bc4339-1a83-4ece-9c74-18a53197edb8.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/e4427c97-55b7-4460-8665-cd7da2e54b8a.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "Monitoring area alun-alun", "status": "online", "lastUpdate": "2 hari lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.91162, -7.111479] },
+      "properties": { "id": 4489, "name": "Simpang Danyang Utara", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/1c3a407f-904a-4102-aed9-8341a3d45659.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/b7ff11ce-e6e3-4b5f-b94c-885fa6e86518.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "CCTV Simpang Danyang, Purwodadi", "status": "online", "lastUpdate": "1 menit lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.912156, -7.112012] },
+      "properties": { "id": 4490, "name": "Simpang Danyang Timur", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/61afd631-b802-4032-8265-53719d2ff3b7.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/9f6f986f-f77c-4818-9e42-989862234d85.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "CCTV Simpang Danyang, Purwodadi", "status": "online", "lastUpdate": "16 jam lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.911598, -7.112544] },
+      "properties": { "id": 4491, "name": "Simpang Danyang Selatan", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/1896ce4f-aee9-41b6-bad0-a8f489547c7e.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/9a72d19b-bf91-4bb7-b4ad-2f7407a58c7b.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "CCTV Simpang Danyang, Purwodadi", "status": "online", "lastUpdate": "1 hari lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.91104, -7.11199] },
+      "properties": { "id": 4492, "name": "Simpang Danyang Barat", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/ddb5a908-4377-451e-bb25-11eb7f6b5d40.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/ee32e2b2-ee5c-4de0-8a06-b3f7ce0f225d.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "CCTV Simpang Danyang, Purwodadi", "status": "online", "lastUpdate": "1 hari lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.913839, -7.09185] },
+      "properties": { "id": 4493, "name": "SMA N 1 Purwodadi", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/fa108bdc-0a01-416b-a47a-5d1f9131a1cf.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/12cc32af-3cb7-4eca-9e03-9986e34e6a9f.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "CCTV Pelican Cross SMA N 1 Purwodadi", "status": "offline", "lastUpdate": "12 hari lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.913855, -7.091383] },
+      "properties": { "id": 4494, "name": "SMA N 1 Purwodadi PC", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/0f62775f-2512-4f36-b22a-296ef1011aee.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/b5fe1325-698e-49cf-921b-72d554d3973b.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "CCTV Pelican Cross SMA N 1 Purwodadi", "status": "offline", "lastUpdate": "2 jam lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.909543, -7.095644] },
+      "properties": { "id": 4495, "name": "Simpang Polres", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/f0d61d65-7efe-486b-a525-f1913129c276.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/06167275-c380-4e11-8a30-d22d7d3c7353.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "CCTV Simpang Polres", "status": "online", "lastUpdate": "3 hari lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.909994, -7.096087] },
+      "properties": { "id": 4496, "name": "Simpang Polres Timur", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/87af85fe-87c4-42f0-9c36-9a4fe66b6386.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/d4d85227-c7b2-499d-a5eb-99b55d99f32d.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "Simpang Polres Arah Timur", "status": "online", "lastUpdate": "3 hari lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.882075, -7.07146] },
+      "properties": { "id": 4497, "name": "Simpang Putat", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/70baa804-425b-475f-b2ea-2cd0ffa886a4.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/5ebd4079-3c6e-4b95-ae78-25fc4ccb48ac.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "CCTV Simpang Putat, Jalan Raya Purwodadi-Semarang / Demak", "status": "online", "lastUpdate": "3 hari lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.881416, -7.071143] },
+      "properties": { "id": 4498, "name": "Simpang Putat Arah Barat", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/2917361c-032d-4ab5-a53a-552d17bd401a.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/1c8ad190-41ab-41be-9f29-3f6b3f061700.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "Simpang Putat Arah Barat, Jalan Raya Purwodadi-Semarang / Demak", "status": "online", "lastUpdate": "3 hari lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.908858, -7.129537] },
+      "properties": { "id": 4499, "name": "Depan Kantor Dishub", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/32e4139f-0780-47bd-b0a5-b890e9e56287.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/6bb89699-37d9-4a68-abd4-5d35e16f8d15.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "Depan Kantor Dinas Perhubungan Kabupaten Grobogan, Jalan Raya Purwodadi-Solo", "status": "online", "lastUpdate": "1 hari lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.918038, -7.071248] },
+      "properties": { "id": 4500, "name": "Getasrejo", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/ff0a20ee-06df-43fa-be1f-39205d7eba59.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/924ab4d4-9746-4a3f-a5b5-19122b92d7ac.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "Bundaran Getas. CCTV Disediakan oleh PT BPR Bank Purwa Artha (Perseroda)", "status": "online", "lastUpdate": "3 hari lalu", "preview": "img/purwaartha.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.781668, -7.084743] },
+      "properties": { "id": 4501, "name": "Mojoagung", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/995b115b-8708-4a06-a77e-290cba2fd09d.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/5c67ade7-9f22-4a7a-955b-56e8c74089d5.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "CCTV Jl Raya Godong-Juwangi KM7", "status": "online", "lastUpdate": "33 hari lalu", "preview": "img/linkbit.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.781591, -7.084214] },
+      "properties": { "id": 4502, "name": "Mojoagung 2", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/9da2f0e3-7fa7-4b48-b9e9-73c666a698b9.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/52479284-3746-4934-bd8b-fefcfd84dd5f.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "CCTV Jl Raya Godong-Juwangi KM7", "status": "online", "lastUpdate": "3 hari lalu", "preview": "img/linkbit.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.973199, -7.118] },
+      "properties": { "id": 4503, "name": "Nambuhan", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/eca08f61-3896-46a8-a86f-0909d56777f4.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/f9c2b196-eb23-448a-83b4-8f119aaec9d0.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "Pertigaan REGOL Pulogendol", "status": "offline", "lastUpdate": "27 hari lalu", "preview": "img/reconet.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.766685, -7.020135] },
+      "properties": { "id": 4504, "name": "Simpang Bugel", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/318729ba-5275-4b93-b98a-730967c92044.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "Simpang Bugel, Godong", "status": "online", "lastUpdate": "23 jam lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.76714, -7.020332] },
+      "properties": { "id": 4505, "name": "Simpang Bugel 2", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/41116482-0dbf-4790-b3d7-bc401314196c.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "Simpang Bugel, Godong", "status": "online", "lastUpdate": "3 jam lalu", "preview": "img/dishub.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.9143, -7.087409] },
+      "properties": { "id": 4506, "name": "DISKOMINFO (Jl. R. Suprapto)", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/474d4814-bbc4-4a37-96eb-5476548b7ab9.m3u8?key=cris&exp=1787043964", "videoSub": "https://stream.dishub.grobogan.go.id/memfs/7b90ddbb-83ef-4742-9d21-d3e605de12fd.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "Perempatan Diskominfo", "status": "online", "lastUpdate": "21 hari lalu", "preview": "img/diskominfo.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.914807, -7.08735] },
+      "properties": { "id": 4507, "name": "DISKOMINFO (Jl. Siswomiharjo)", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/f8ecbe3c-6cc7-408e-9c0f-95aa85e597a9.m3u8?key=cris&exp=1787043964", "videoSub": "https://stream.dishub.grobogan.go.id/memfs/3757e1f6-ba30-47c1-aeb7-885d9c327339.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "Perempatan Diskominfo", "status": "online", "lastUpdate": "69 hari lalu", "preview": "img/diskominfo.png" }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [110.884836, -7.109406] },
+      "properties": { "id": 4508, "name": "Genuksuran", "area": "GROBOGAN", "mode": "embed", "url": "https://stream.dishub.grobogan.go.id/memfs/ce22d717-b3c1-43af-8ec5-b21e03ec56fa.m3u8?key=cris&exp=1787043964", "videoSub": "https://dishub.cradnu.com/memfs/3c93faac-2bee-4647-a973-94ca804e25c5.m3u8?key=cris&exp=1787043964", "videoType": "m3u8", "description": "Pasar Genuksuran", "status": "online", "lastUpdate": "1 hari lalu", "preview": "img/linkbit.png" }
     }
   ]
 }

@@ -4,11 +4,32 @@
   var BI_API_RAW = 'https://www.bi.go.id/hargapangan/WebSite/TabelHarga';
   var GEOJSON_URL = 'assets/data/bps/geojson/provinsi.geojson';
   var COMMODITY_URL = 'assets/data/bi-hargapangan-commodities.json';
+  var BPS_INFLASI_URL_125 = 'https://webapi.bps.go.id/v1/api/list/model/data/lang/ind/domain/0000/var/2263/th/125/key/4c135b6a06a97bd32fd0476067e0a5dd';
+  var BPS_INFLASI_URL_126 = 'https://webapi.bps.go.id/v1/api/list/model/data/lang/ind/domain/0000/var/2263/th/126/key/4c135b6a06a97bd32fd0476067e0a5dd';
+  var BPS_INFLASI_BULANAN_URL_125 = 'https://webapi.bps.go.id/v1/api/list/model/data/lang/ind/domain/0000/var/2262/th/125/key/4c135b6a06a97bd32fd0476067e0a5dd';
+  var BPS_INFLASI_BULANAN_URL_126 = 'https://webapi.bps.go.id/v1/api/list/model/data/lang/ind/domain/0000/var/2262/th/126/key/4c135b6a06a97bd32fd0476067e0a5dd';
 
   var PROXY_LIST = [
     function (url) { return 'https://corsproxy.io/?url=' + encodeURIComponent(url); },
     function (url) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url); }
   ];
+
+  var BPS_VERVAR_TO_PROV = {
+    1100: 'ACEH', 1200: 'SUMATERA UTARA', 1300: 'SUMATERA BARAT',
+    1400: 'RIAU', 1500: 'JAMBI', 1600: 'SUMATERA SELATAN',
+    1700: 'BENGKULU', 1800: 'LAMPUNG', 1900: 'KEPULAUAN BANGKA BELITUNG',
+    2100: 'KEPULAUAN RIAU', 3100: 'DKI JAKARTA', 3200: 'JAWA BARAT',
+    3300: 'JAWA TENGAH', 3400: 'DI YOGYAKARTA', 3500: 'JAWA TIMUR',
+    3600: 'BANTEN', 5100: 'BALI', 5200: 'NUSA TENGGARA BARAT',
+    5300: 'NUSA TENGGARA TIMUR', 6100: 'KALIMANTAN BARAT',
+    6200: 'KALIMANTAN TENGAH', 6300: 'KALIMANTAN SELATAN',
+    6400: 'KALIMANTAN TIMUR', 6500: 'KALIMANTAN UTARA',
+    7100: 'SULAWESI UTARA', 7200: 'SULAWESI TENGAH', 7300: 'SULAWESI SELATAN',
+    7400: 'SULAWESI TENGGARA', 7500: 'GORONTALO', 7600: 'SULAWESI BARAT',
+    8100: 'MALUKU', 8200: 'MALUKU UTARA', 9100: 'PAPUA BARAT',
+    9200: 'PAPUA BARAT DAYA', 9400: 'PAPUA', 9500: 'PAPUA SELATAN',
+    9600: 'PAPUA TENGAH', 9700: 'PAPUA PEGUNUNGAN', 9999: 'INDONESIA'
+  };
 
   var PROVINCE_MAP = {
     1:  { code: '11', name: 'Aceh',                      nmprov: 'ACEH' },
@@ -50,8 +71,87 @@
   var activeLayer = null;
   var activeLegend = null;
   var loaded = false;
+  var inflasiCache = null;
 
   function $(id) { return document.getElementById(id); }
+
+  var MONTH_LABELS = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+  function fetchBpsWithProxy(url) {
+    // Web API BPS already allows CORS. Direct access is more reliable than
+    // public proxies, which can be blocked or temporarily unavailable.
+    var urls = [url].concat(PROXY_LIST.map(function (makeProxy) { return makeProxy(url); }));
+    var tryFetch = function (idx) {
+      if (idx >= urls.length) return Promise.reject(new Error('Semua sumber BPS gagal'));
+      return fetch(urls[idx], { cache: 'no-store' })
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r; })
+        .catch(function () { return tryFetch(idx + 1); });
+    };
+    return tryFetch(0)
+      .then(function (resp) { if (!resp.ok) throw new Error('HTTP ' + resp.status); return resp.json(); });
+  }
+
+  /* ── Fetch Inflasi BPS (2 years: 2025 + 2026) ── */
+  function fetchInflasiData() {
+    if (inflasiCache) return Promise.resolve(inflasiCache);
+    return Promise.all([
+      fetchBpsWithProxy(BPS_INFLASI_URL_125).catch(function (err) { console.warn('[Geopangan] Inflasi BPS 2025 gagal:', err); return null; }),
+      fetchBpsWithProxy(BPS_INFLASI_URL_126).catch(function (err) { console.warn('[Geopangan] Inflasi BPS 2026 gagal:', err); return null; }),
+      fetchBpsWithProxy(BPS_INFLASI_BULANAN_URL_125).catch(function (err) { console.warn('[Geopangan] Inflasi bulanan BPS 2025 gagal:', err); return null; }),
+      fetchBpsWithProxy(BPS_INFLASI_BULANAN_URL_126).catch(function (err) { console.warn('[Geopangan] Inflasi bulanan BPS 2026 gagal:', err); return null; })
+    ]).then(function (results) {
+      var all = [], allBulanan = [];
+      results.forEach(function (json, resultIndex) {
+        if (!json || json.status !== 'OK' || !json.datacontent || !json.var || !json.tahun || !json.turtahun || !json.vervar) return;
+        var dc = json.datacontent;
+        var varId = json.var[0] && json.var[0].val;
+        var turvarId = json.turvar && json.turvar[0] ? json.turvar[0].val : '0';
+        // BPS mengirim `tahun` sebagai array, walaupun filter API hanya
+        // menghasilkan satu tahun per respons.
+        var yearMeta = Array.isArray(json.tahun) ? json.tahun[0] : json.tahun;
+        var yearId = yearMeta && yearMeta.val;
+        var yearNum = parseInt(yearMeta && yearMeta.label, 10);
+        if (varId === undefined || yearId === undefined || !yearNum) return;
+
+        // `datacontent` has no delimiters. Build its key from the BPS metadata
+        // (vervar + var + turvar + tahun + turtahun) instead of slicing it at
+        // assumed character positions.
+        json.vervar.forEach(function (vervar) {
+          var provName = BPS_VERVAR_TO_PROV[vervar.val];
+          if (!provName) return;
+          json.turtahun.forEach(function (turtahun) {
+            var month = parseInt(turtahun.val, 10);
+            if (month < 1 || month > 12) return; // Ignore the annual aggregate (13).
+            var key = String(vervar.val) + String(varId) + String(turvarId) + String(yearId) + String(turtahun.val);
+            var value = Number(dc[key]);
+            if (!isFinite(value)) return;
+            (resultIndex >= 2 ? allBulanan : all).push({ provKey: normalize(provName), year: yearNum, month: month, val: value });
+          });
+        });
+      });
+      function buildInflasiMap(entries) {
+        entries.sort(function (a, b) { return a.year - b.year || a.month - b.month; });
+        var latest = {}, monthly = {};
+        entries.forEach(function (e) {
+          if (!monthly[e.provKey]) monthly[e.provKey] = [];
+          monthly[e.provKey].push({ label: MONTH_LABELS[e.month] + ' ' + String(e.year).slice(2), val: e.val });
+          var cur = latest[e.provKey];
+          if (!cur || e.year > cur.year || (e.year === cur.year && e.month > cur.month)) {
+            latest[e.provKey] = { month: e.month, year: e.year, val: e.val };
+          }
+        });
+        return { latest: latest, monthly: monthly };
+      }
+      var annual = buildInflasiMap(all);
+      var bulanan = buildInflasiMap(allBulanan);
+      var result = { latest: annual.latest, monthly: annual.monthly, latestBulanan: bulanan.latest, monthlyBulanan: bulanan.monthly };
+      // Jangan cache kegagalan sementara. Dengan begitu tombol "Tampilkan"
+      // dapat mencoba lagi apabila API BPS/proxy sempat tidak tersedia.
+      if (all.length || allBulanan.length) inflasiCache = result;
+      else console.warn('[Geopangan] Respons BPS tidak menghasilkan data inflasi yang dapat dipetakan.');
+      return result;
+    }).catch(function () { return { latest: {}, monthly: {} }; });
+  }
 
   function fmtDate(d) { return d.toISOString().slice(0, 10); }
 
@@ -299,9 +399,14 @@
     if (resultEl) resultEl.innerHTML = '<div class="geopangan-loading"><div class="geopangan-spinner"></div><span>Memuat data harga...</span></div>';
 
     try {
-      var results = await Promise.all([fetchPriceData(), loadGeoJSON()]);
+      var results = await Promise.all([fetchPriceData(), loadGeoJSON(), fetchInflasiData()]);
       var data = results[0];
       var geojson = results[1];
+      var inflasiResult = results[2] || {};
+      var inflasiLatest = inflasiResult.latest || {};
+      var inflasiMonthly = inflasiResult.monthly || {};
+      var inflasiBulananLatest = inflasiResult.latestBulanan || {};
+      var inflasiBulananMonthly = inflasiResult.monthlyBulanan || {};
 
       if (!data.length) {
         if (resultEl) resultEl.innerHTML = '<div class="geopangan-loading"><span>Tidak ada data untuk filter ini.</span></div>';
@@ -344,6 +449,16 @@
           var svgDate = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
           var svgMarket = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18l-2 13H5L3 3z"/><line x1="3" y1="3" x2="1" y2="1"/><circle cx="9" cy="21" r="1"/><circle cx="17" cy="21" r="1"/></svg>';
           var svgChart = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>';
+          var svgInflasi = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>';
+
+          var inflasiEntry = inflasiLatest[normalize(provName)];
+          var inflasiVal = inflasiEntry ? inflasiEntry.val : null;
+          var inflasiFormatted = inflasiVal !== null ? inflasiVal.toFixed(2).replace('.', ',') + '%' : '-';
+          var inflasiMonthLabel = inflasiEntry ? MONTH_LABELS[inflasiEntry.month] + ' ' + String(inflasiEntry.year).slice(2) : '';
+          var inflasiBulananEntry = inflasiBulananLatest[normalize(provName)];
+          var inflasiBulananVal = inflasiBulananEntry ? inflasiBulananEntry.val : null;
+          var inflasiBulananFormatted = inflasiBulananVal !== null ? inflasiBulananVal.toFixed(2).replace('.', ',') + '%' : '-';
+          var inflasiBulananMonthLabel = inflasiBulananEntry ? MONTH_LABELS[inflasiBulananEntry.month] + ' ' + String(inflasiBulananEntry.year).slice(2) : '';
 
           var popupHtml =
             '<div class="gp-popup">' +
@@ -375,10 +490,32 @@
                       '<span class="gp-popup-meta-value">' + priceTypeName + '</span>' +
                     '</div>' +
                   '</div>' +
+                  '<div class="gp-popup-meta-row">' +
+                    '<div class="gp-popup-meta-icon">' + svgInflasi + '</div>' +
+                    '<div class="gp-popup-meta-text">' +
+                      '<span class="gp-popup-meta-label">Inflasi BPS (Y-on-Y)</span>' +
+                      '<span class="gp-popup-meta-value">' + inflasiFormatted + (inflasiMonthLabel ? ' <small>(' + inflasiMonthLabel + ')</small>' : '') + '</span>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="gp-popup-meta-row">' +
+                    '<div class="gp-popup-meta-icon">' + svgInflasi + '</div>' +
+                    '<div class="gp-popup-meta-text">' +
+                      '<span class="gp-popup-meta-label">Inflasi BPS (M-to-M)</span>' +
+                      '<span class="gp-popup-meta-value">' + inflasiBulananFormatted + (inflasiBulananMonthLabel ? ' <small>(' + inflasiBulananMonthLabel + ')</small>' : '') + '</span>' +
+                    '</div>' +
+                  '</div>' +
                 '</div>' +
                 '<div class="gp-popup-chart">' +
                   '<div class="gp-popup-chart-head">' + svgChart + '<span>Harga 7 Hari Terakhir</span></div>' +
                   '<div class="gp-popup-chart-wrap"><canvas id="gp-chart-' + provCode + '"></canvas></div>' +
+                '</div>' +
+                '<div class="gp-popup-chart gp-popup-chart--inflasi">' +
+                  '<div class="gp-popup-chart-head">' + svgInflasi + '<span>Tren Inflasi Y-on-Y</span></div>' +
+                  '<div class="gp-popup-chart-wrap"><canvas id="gp-inflasi-chart-' + provCode + '"></canvas></div>' +
+                '</div>' +
+                '<div class="gp-popup-chart gp-popup-chart--inflasi">' +
+                  '<div class="gp-popup-chart-head">' + svgInflasi + '<span>Tren Inflasi M-to-M</span></div>' +
+                  '<div class="gp-popup-chart-wrap"><canvas id="gp-inflasi-bulanan-chart-' + provCode + '"></canvas></div>' +
                 '</div>' +
               '</div>' +
             '</div>';
@@ -387,38 +524,97 @@
 
           layer.on('popupopen', function () {
             var canvas = document.getElementById('gp-chart-' + provCode);
-            if (!canvas || !daily.length) return;
-            var ctx = canvas.getContext('2d');
-            if (canvas._chartInstance) canvas._chartInstance.destroy();
-            var shortLabels = dateLabels.slice(-7);
-            var values = daily.slice(-7);
-            canvas._chartInstance = new Chart(ctx, {
-              type: 'line',
-              data: {
-                labels: shortLabels,
-                datasets: [{
-                  data: values,
-                  borderColor: '#10a37f',
-                  backgroundColor: 'rgba(16,163,127,0.10)',
-                  fill: true,
-                  tension: 0.35,
-                  pointRadius: 3,
-                  pointBackgroundColor: '#10a37f',
-                  pointBorderColor: '#fff',
-                  pointBorderWidth: 1.5,
-                  borderWidth: 2
-                }]
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false }, tooltip: { enabled: true, callbacks: { label: function (c) { return 'Rp ' + c.parsed.y.toLocaleString('id-ID'); } } } },
-                scales: {
-                  x: { display: true, grid: { display: false }, ticks: { font: { size: 9, family: 'Inter, sans-serif' }, color: '#6b7280', maxRotation: 45 } },
-                  y: { display: true, grid: { color: '#f0f0f0' }, ticks: { font: { size: 9, family: 'Inter, sans-serif' }, color: '#6b7280', callback: function (v) { return 'Rp' + v.toLocaleString('id-ID'); } } }
+            if (canvas && daily.length) {
+              var ctx = canvas.getContext('2d');
+              if (canvas._chartInstance) canvas._chartInstance.destroy();
+              var shortLabels = dateLabels.slice(-7);
+              var values = daily.slice(-7);
+              canvas._chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                  labels: shortLabels,
+                  datasets: [{
+                    data: values,
+                    borderColor: '#10a37f',
+                    backgroundColor: 'rgba(16,163,127,0.10)',
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#10a37f',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 1.5,
+                    borderWidth: 2
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { display: false }, tooltip: { enabled: true, callbacks: { label: function (c) { return 'Rp ' + c.parsed.y.toLocaleString('id-ID'); } } } },
+                  scales: {
+                    x: { display: true, grid: { display: false }, ticks: { font: { size: 9, family: 'Inter, sans-serif' }, color: '#6b7280', maxRotation: 45 } },
+                    y: { display: true, grid: { color: '#f0f0f0' }, ticks: { font: { size: 9, family: 'Inter, sans-serif' }, color: '#6b7280', callback: function (v) { return 'Rp' + v.toLocaleString('id-ID'); } } }
+                  }
                 }
-              }
-            });
+              });
+            }
+
+            var infCanvas = document.getElementById('gp-inflasi-chart-' + provCode);
+            var infMonthly = inflasiMonthly[provKey] || [];
+            if (infCanvas && infMonthly.length > 1) {
+              var infCtx = infCanvas.getContext('2d');
+              if (infCanvas._chartInstance) infCanvas._chartInstance.destroy();
+              var infLabels = infMonthly.map(function (e) { return e.label; });
+              var infValues = infMonthly.map(function (e) { return e.val; });
+              infCanvas._chartInstance = new Chart(infCtx, {
+                type: 'line',
+                data: {
+                  labels: infLabels,
+                  datasets: [{
+                    data: infValues,
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245,158,11,0.10)',
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#f59e0b',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 1.5,
+                    borderWidth: 2
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { display: false }, tooltip: { enabled: true, callbacks: { label: function (c) { return c.parsed.y.toFixed(2).replace('.', ',') + '%'; } } } },
+                  scales: {
+                    x: { display: true, grid: { display: false }, ticks: { font: { size: 8, family: 'Inter, sans-serif' }, color: '#6b7280', maxRotation: 45 } },
+                    y: { display: true, grid: { color: '#fef3c7' }, ticks: { font: { size: 8, family: 'Inter, sans-serif' }, color: '#6b7280', callback: function (v) { return v.toFixed(1) + '%'; } } }
+                  }
+                }
+              });
+            }
+
+            var infBulananCanvas = document.getElementById('gp-inflasi-bulanan-chart-' + provCode);
+            var infBulananMonthly = inflasiBulananMonthly[provKey] || [];
+            if (infBulananCanvas && infBulananMonthly.length > 1) {
+              var infBulananCtx = infBulananCanvas.getContext('2d');
+              if (infBulananCanvas._chartInstance) infBulananCanvas._chartInstance.destroy();
+              infBulananCanvas._chartInstance = new Chart(infBulananCtx, {
+                type: 'line',
+                data: {
+                  labels: infBulananMonthly.map(function (e) { return e.label; }),
+                  datasets: [{ data: infBulananMonthly.map(function (e) { return e.val; }), borderColor: '#0ea5e9', backgroundColor: 'rgba(14,165,233,0.10)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#0ea5e9', pointBorderColor: '#fff', pointBorderWidth: 1.5, borderWidth: 2 }]
+                },
+                options: {
+                  responsive: true, maintainAspectRatio: false,
+                  plugins: { legend: { display: false }, tooltip: { enabled: true, callbacks: { label: function (c) { return c.parsed.y.toFixed(2).replace('.', ',') + '%'; } } } },
+                  scales: {
+                    x: { display: true, grid: { display: false }, ticks: { font: { size: 8, family: 'Inter, sans-serif' }, color: '#6b7280', maxRotation: 45 } },
+                    y: { display: true, grid: { color: '#e0f2fe' }, ticks: { font: { size: 8, family: 'Inter, sans-serif' }, color: '#6b7280', callback: function (v) { return v.toFixed(1) + '%'; } } }
+                  }
+                }
+              });
+            }
           });
 
           layer.on('mouseover', function () { layer.setStyle({ weight: 2.5, fillOpacity: 0.9 }); });
@@ -466,6 +662,12 @@
       setDefaultDates();
     }
     loadAndDisplay();
+  };
+
+  /* ── Public cleanup (called by reset layers) ── */
+  window.clearGeopanganLayers = function () {
+    if (activeLayer && map.hasLayer(activeLayer)) { map.removeLayer(activeLayer); activeLayer = null; }
+    if (activeLegend) { map.removeControl(activeLegend); activeLegend = null; }
   };
 
   /* ── Init on first load if already on tab ── */

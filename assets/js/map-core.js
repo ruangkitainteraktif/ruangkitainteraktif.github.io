@@ -21,7 +21,7 @@ L.control.scale({
     }),
     'osm': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
+      attribution: 'Mas Pannn'
     }),
     'esri-satellite': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
@@ -29,7 +29,7 @@ L.control.scale({
     }),
     'rupabumi': L.tileLayer('https://geoservices.big.go.id/rbi/rest/services/BASEMAP/Rupabumi_Indonesia/MapServer/tile/{z}/{y}/{x}?blankTile=false', {
       maxZoom: 18,
-      attribution: '&copy; BIG - Badan Informasi Geospasial'
+      attribution: 'Mas Pannn'
     }),
     'carto-dark': L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
@@ -37,15 +37,15 @@ L.control.scale({
     }),
     'google-maps': L.tileLayer('https://mt0.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
       maxZoom: 19,
-      attribution: '&copy; Google Maps'
+      attribution: 'Mas Pannn'
     }),
     'google-terrain': L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
       maxZoom: 19,
-      attribution: '&copy; Google Maps'
+      attribution: 'Mas Pannn'
     }),
     'google-traffic': L.tileLayer('https://mt0.google.com/vt?lyrs=s@159000000,traffic|seconds_into_week:-1&style=3&x={x}&y={y}&z={z}', {
       maxZoom: 19,
-      attribution: '&copy; Google Maps'
+      attribution: 'Mas Pannn'
     })
   };
 
@@ -294,6 +294,9 @@ L.control.scale({
 
         // 5c. Sembunyikan choropleth BPS indikator
         if (typeof hideChoropleth === 'function') hideChoropleth();
+
+        // 5d. Hapus layer geopangan (choropleth harga pangan)
+        if (typeof clearGeopanganLayers === 'function') clearGeopanganLayers();
 
         // 6. Hapus map click marker
         if (mapClickMarker && map.hasLayer(mapClickMarker)) {
