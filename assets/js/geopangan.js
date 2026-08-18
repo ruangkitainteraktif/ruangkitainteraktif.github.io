@@ -841,20 +841,22 @@
       await Promise.all([loadCommodities(), populateProvinces()]);
       setDefaultDates();
     }
-    loadAndDisplay();
   };
 
   /* ── Public cleanup (called by reset layers) ── */
   window.clearGeopanganLayers = function () {
     if (activeLayer && map.hasLayer(activeLayer)) { map.removeLayer(activeLayer); activeLayer = null; }
     if (activeLegend) { map.removeControl(activeLegend); activeLegend = null; }
+    var resultEl = $('geopanganResult');
+    if (resultEl) resultEl.innerHTML = '';
+    var tableEl = $('geopanganTable');
+    if (tableEl) tableEl.innerHTML = '';
   };
 
   /* ── Init on first load if already on tab ── */
   async function init() {
     await Promise.all([loadCommodities(), populateProvinces()]);
     setDefaultDates();
-    loadAndDisplay();
   }
 
   /* ── Event listeners ── */

@@ -68,12 +68,10 @@
               <div><span>Koordinat</span><b>${coordStr}</b></div>
             </div>
             <div class="${prefix}-popup-insights" data-geoid-insights>
-              <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 0 10px;gap:8px;">
+              <div style="display:flex;justify-content:center;padding:16px 0 10px;">
                 <div style="width:28px;height:28px;border:3px solid ${isGeotaniMode ? '#bbf7d0' : '#bfdbfe'};border-top-color:${isGeotaniMode ? '#16a34a' : '#2563eb'};border-radius:50%;animation:geoportal-spin .8s linear infinite;"></div>
-                <span style="font-size:10px;color:#94a3b8;text-align:center;">Memuat analisis…</span>
               </div>
             </div>
-            ${!isGeotaniMode ? `<div class="geoid-popup-cctv" data-cctv-insight><span style="color:#94a3b8; font-size:11px">Memuat CCTV terdekat…</span></div>` : ''}
           </div>
        </div>
      `;

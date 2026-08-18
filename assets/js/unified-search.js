@@ -167,6 +167,8 @@
 
     await loadGeoidPopupInsights(marker, { ...location, kode: item.kode });
     if (typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, item.kode, location);
+    if (typeof loadLuasWilayahPopup === 'function') await loadLuasWilayahPopup(marker, item.kode);
+    if (typeof loadCuacaPopup === 'function') await loadCuacaPopup(marker, item.kode, location.lat, location.lon);
     showGeoidBoundary(item.kode, item.type === 'provinsi' ? 8 : item.type === 'kabkot' ? 11 : item.type === 'kecamatan' ? 13 : 15);
   }
 

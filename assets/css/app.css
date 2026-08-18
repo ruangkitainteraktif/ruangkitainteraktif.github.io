@@ -2156,7 +2156,7 @@
     }
 
     .geoid-popup-head strong {
-      display: block;
+      display: inline;
       font-size: 18px;
       font-weight: 700;
       line-height: 1.2;
@@ -2164,6 +2164,13 @@
       position: relative;
       z-index: 1;
       text-shadow: 0 1px 2px rgba(0,0,0,.1);
+    }
+    .geoid-popup-title-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      z-index: 1;
     }
     .geoid-popup-head > span {
       display: block;
@@ -2174,6 +2181,26 @@
       position: relative;
       z-index: 1;
     }
+    .geoid-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      margin-left: 6px;
+      border: 0;
+      border-radius: 6px;
+      background: rgba(255,255,255,.2);
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      vertical-align: middle;
+      transition: background .2s;
+      position: relative;
+      z-index: 1;
+    }
+    .geoid-copy-btn:hover { background: rgba(255,255,255,.35); }
 
     .geoid-popup-meta {
       padding: 14px 18px;
@@ -2231,6 +2258,35 @@
     .geoid-cctv-button { position: absolute; top: 50%; right: 0; display: grid; place-items: center; width: 32px; height: 32px; padding: 0 0 0 2px; border: 0; border-radius: 50%; background: #2563eb; color: #fff; font-size: 13px; cursor: pointer; transform: translateY(-50%); box-shadow: 0 2px 8px rgba(37, 99, 235, .3); }
     .geoid-cctv-button:hover { background: #1d4ed8; }
 
+    .geoid-popup-cctv-section {
+      padding: 14px 18px;
+      background: linear-gradient(180deg, #eff6ff 0%, #fff 100%);
+      border-bottom: 1px solid #dbeafe;
+    }
+    .geoid-popup-cctv-section > b { display: block; color: #1e40af; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .geoid-popup-cctv-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; padding: 6px 0; }
+    .geoid-popup-cctv-row span { color: #64748b; font-weight: 500; }
+    .geoid-popup-cctv-row b { color: #1e40af; font-size: 13px; font-weight: 700; text-align: right; word-break: break-word; }
+    .geoid-popup-cctv-btn { display: flex; justify-content: center; padding-top: 8px; }
+    .geoid-popup-cctv-btn button { width: 100%; padding: 8px; border: 1px solid #bfdbfe; border-radius: 8px; background: #f0f7ff; cursor: pointer; font-size: 12px; color: #0b4da2; font-weight: 600; transition: background .2s; }
+    .geoid-popup-cctv-btn button:hover { background: #dbeafe; }
+    .geoid-cctv-insight { position: relative; padding-right: 42px; }
+    .geoid-cctv-button { position: absolute; top: 50%; right: 0; display: grid; place-items: center; width: 32px; height: 32px; padding: 0 0 0 2px; border: 0; border-radius: 50%; background: #2563eb; color: #fff; font-size: 13px; cursor: pointer; transform: translateY(-50%); box-shadow: 0 2px 8px rgba(37, 99, 235, .3); }
+    .geoid-cctv-button:hover { background: #1d4ed8; }
+
+    .geoid-popup-risiko-section {
+      padding: 14px 18px;
+      background: linear-gradient(180deg, #eff6ff 0%, #fff 100%);
+      border-bottom: 1px solid #dbeafe;
+    }
+    .geoid-popup-risiko-section > b { display: block; color: #1e40af; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .geoid-popup-risiko-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; padding: 6px 0; }
+    .geoid-popup-risiko-row span { color: #64748b; font-weight: 500; }
+    .geoid-popup-risiko-row b { color: #1e40af; font-size: 13px; font-weight: 700; text-align: left; word-break: break-word; }
+    .geoid-popup-risiko-sep { border-top: 1px solid #e0e7ff; margin: 4px 0; }
+    .geoid-popup-risiko-btn { display: flex; justify-content: center; padding-top: 8px; }
+    .geoid-popup-risiko-btn button { width: 100%; padding: 8px; border: 1px solid #fecaca; border-radius: 8px; background: #fef2f2; cursor: pointer; font-size: 12px; color: #dc2626; font-weight: 600; transition: background .2s; }
+    .geoid-popup-risiko-btn button:hover { background: #fee2e2; }
     .geoid-risiko-wrap { position: relative; padding-right: 42px; }
     .geoid-risiko-button { position: absolute; top: 0; right: 0; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: #dc2626; color: #fff; font-size: 13px; cursor: pointer; box-shadow: 0 2px 8px rgba(220, 38, 38, .3); }
     .geoid-risiko-button:hover { background: #b91c1c; }

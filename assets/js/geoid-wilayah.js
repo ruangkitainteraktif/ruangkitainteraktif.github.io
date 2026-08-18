@@ -589,7 +589,6 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
     geoidBoundaryLayer.on('click', event => {
       if (event.originalEvent) L.DomEvent.stopPropagation(event.originalEvent);
       geoidBoundaryLayer.openPopup(event.latlng);
-      injectDownloadBtn(geoidBoundaryLayer);
     });
 
     geoidBoundaryLayer.bringToFront();
@@ -866,11 +865,9 @@ function showGeoidFlyup(lat, lon, info, zoom = 15) {
       <div class="${prefix}-popup-body">
         ${metadata.length ? `<div class="${prefix}-popup-meta">${metadata.map(([label, value]) => `<div><span>${escapeGeoidHtml(label)}</span><b>${escapeGeoidHtml(value)}</b></div>`).join('')}</div>` : ''}
         <div class="${prefix}-popup-insights" data-geoid-insights>
-          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 0 10px;gap:8px;">
+          <div style="display:flex;justify-content:center;padding:16px 0 10px;">
             <div style="width:28px;height:28px;border:3px solid ${isGeotaniMode ? '#bbf7d0' : '#bfdbfe'};border-top-color:${isGeotaniMode ? '#16a34a' : '#2563eb'};border-radius:50%;animation:geoportal-spin .8s linear infinite;"></div>
-            <span style="font-size:10px;color:#94a3b8;text-align:center;">Memuat analisis…</span>
           </div>
-          ${!isGeotaniMode ? `<div class="geoid-popup-cctv" data-cctv-insight><span style="color:#94a3b8; font-size:11px">Memuat CCTV terdekat…</span></div>` : ''}
         </div>
       </div>
     </div>
@@ -878,7 +875,6 @@ function showGeoidFlyup(lat, lon, info, zoom = 15) {
 
   marker.bindPopup(popupContent, { maxWidth: 360, className: isGeotaniMode ? 'geotani-leaflet-popup' : 'geoid-leaflet-popup' });
   marker.openPopup();
-  injectDownloadBtn(marker);
 
   map.flyTo([lat, lon], zoom, { duration: 1 });
   return marker;
@@ -1023,11 +1019,9 @@ function syncPopupContent(marker) {
 async function loadGeoidPopupInsights(marker, location) {
 
   const element = marker?.getPopup()?.getElement()?.querySelector('[data-geoid-insights]');
-  const cctvElement = marker?.getPopup()?.getElement()?.querySelector('[data-cctv-insight]');
   const hasPopup = !!element;
 
   const isGeotani = window.currentActiveTab === 'tab-geotani';
-  if (isGeotani && cctvElement) cctvElement.style.display = 'none';
   if (isGeotani && location?.kode) window._lastGeotaniLocation = location;
 
   try {
@@ -1368,7 +1362,7 @@ async function loadGeoidPopupInsights(marker, location) {
     }
   }
 
-  let risikoHtml = '<div><b>⚠️ Risiko Bencana</b><span style="font-size:10px;color:#7a8fa3">Tidak tersedia</span></div>';
+  let risikoHtml = '<div class="geoid-popup-risiko-section"><b>⚠️ Risiko Bencana</b><span style="color:#7a8fa3">Tidak tersedia</span></div>';
   if (quake || hazard || karhutlaPayload?.features?.length) {
     const rows = [];
     if (quake) {
@@ -1377,19 +1371,18 @@ async function loadGeoidPopupInsights(marker, location) {
       const quakeLon = parseFloat(quakeCoords[1]);
       const quakeDist = (Number.isFinite(quakeLat) && Number.isFinite(quakeLon) && location.lat && location.lon)
         ? geoidDistanceKm(location.lat, location.lon, quakeLat, quakeLon) : null;
-      const distText = quakeDist != null ? `${quakeDist.toFixed(0)} km dari lokasi` : '';
+      const distText = quakeDist != null ? `${quakeDist.toFixed(1)} km` : '';
       const quakeBtn = (Number.isFinite(quakeLat) && Number.isFinite(quakeLon))
         ? `<button type="button" class="geoid-risiko-button" title="Lihat lokasi gempa di peta" onclick="showGempaPopup(${quakeLat},${quakeLon},'${escapeGeoidHtml(String(quake.Magnitude || ''))}','${escapeGeoidHtml(quake.Wilayah || '')}','${escapeGeoidHtml(quake.Potensi || '')}','${escapeGeoidHtml(quake.Tanggal || '')}','${escapeGeoidHtml(quake.Jam || '')}','${escapeGeoidHtml(quake.Kedalaman || '')}','${escapeGeoidHtml(quake.Dirasakan || '')}')">📍</button>` : '';
-      rows.push(`<div class="geoid-risiko-wrap"><div><span>Gempa</span><div style="font-weight:600;margin-top:1px;">M${escapeGeoidHtml(quake.Magnitude || '-')} · ${escapeGeoidHtml(quake.Wilayah || '')}</div></div>${quakeBtn}</div>`);
+      rows.push(`<div class="geoid-popup-risiko-row geoid-risiko-wrap"><div><span>Gempa</span><b>M${escapeGeoidHtml(quake.Magnitude || '-')} · ${escapeGeoidHtml(quake.Wilayah || '')}</b></div>${quakeBtn}</div>`);
       if (distText) {
-        rows.push(`<div><span>Jarak</span><div style="font-weight:600;margin-top:1px;">${distText}</div></div>`);
+        rows.push(`<div class="geoid-popup-risiko-row"><span>Jarak</span><b>${distText}</b></div>`);
       }
     }
     if (karhutlaPayload?.features?.length) {
+      if (quake) rows.push('<div class="geoid-popup-risiko-sep"></div>');
       const features = karhutlaPayload.features;
       const totalHotspot = features.length;
-      const highConf = features.filter(f => f.properties?.confidence_level === 'high').length;
-      const medConf = features.filter(f => f.properties?.confidence_level === 'medium').length;
 
       let nearestDist = Infinity;
       let nearestProps = null;
@@ -1427,41 +1420,43 @@ async function loadGeoidPopupInsights(marker, location) {
         riskColor = '#16a34a';
       }
 
-      rows.push(`<div><span>Karhutla</span><div style="font-weight:600;margin-top:1px;">${totalHotspot} hotspot aktif</div></div>`);
+      rows.push(`<div class="geoid-popup-risiko-row"><span>Karhutla</span><b>${totalHotspot} hotspot aktif</b></div>`);
       if (hasNearest) {
         const nearLabel = [nearestProps?.desa, nearestProps?.kecamatan, nearestProps?.kabkota].filter(Boolean).join(', ');
         const hotLat = Number(nearestProps?.lat);
         const hotLon = Number(nearestProps?.long);
         const hotBtn = (Number.isFinite(hotLat) && Number.isFinite(hotLon))
           ? `<button type="button" class="geoid-risiko-button" title="Lihat lokasi hotspot di peta" onclick="showHotspotPopup(${hotLat},${hotLon},'${escapeGeoidHtml(nearestProps?.desa || '')}','${escapeGeoidHtml(nearestProps?.kecamatan || '')}','${escapeGeoidHtml(nearestProps?.kabkota || '')}','${escapeGeoidHtml(nearestProps?.nama_provinsi || '')}','${escapeGeoidHtml(nearestProps?.sumber || '')}','${escapeGeoidHtml(String(nearestProps?.confidence || ''))}','${escapeGeoidHtml(nearestProps?.confidence_level || '')}','${escapeGeoidHtml(nearestProps?.date_hotspot || '')}','${escapeGeoidHtml(nearestProps?.route_create || '')}')">📍</button>` : '';
-        rows.push(`<div class="geoid-risiko-wrap"><div><span>Jarak</span><div style="font-weight:600;margin-top:1px;">${distKm.toFixed(1)} km · ${escapeGeoidHtml(nearLabel)}</div></div>${hotBtn}</div>`);
+        rows.push(`<div class="geoid-popup-risiko-row geoid-risiko-wrap"><div><span>Jarak</span><b>${distKm.toFixed(1)} km · ${escapeGeoidHtml(nearLabel)}</b></div>${hotBtn}</div>`);
       }
-      rows.push(`<div><span>Risiko</span><div style="font-weight:700;margin-top:1px;color:${riskColor};">${riskLevel}</div></div>`);
+      rows.push(`<div class="geoid-popup-risiko-row"><span>Risiko</span><b style="color:${riskColor};">${riskLevel}</b></div>`);
     }
     if (hazard?.gempa) {
-      rows.push(`<div><span>Zona Gempa</span><div style="font-weight:600;margin-top:1px;">${escapeGeoidHtml(hazard.gempa)}</div></div>`);
+      rows.push(`<div class="geoid-popup-risiko-row"><span>Zona Gempa</span><b>${escapeGeoidHtml(hazard.gempa)}</b></div>`);
     }
     if (hazard?.longsor) {
-      rows.push(`<div><span>Zona Longsor</span><div style="font-weight:600;margin-top:1px;">${escapeGeoidHtml(hazard.longsor)}</div></div>`);
+      rows.push(`<div class="geoid-popup-risiko-row"><span>Zona Longsor</span><b>${escapeGeoidHtml(hazard.longsor)}</b></div>`);
     }
     if (rows.length) {
-      risikoHtml = `<div><b>⚠️ Risiko Bencana</b><div style="margin-top:4px;display:grid;gap:2px">${rows.join('')}</div></div>`;
+      risikoHtml = `<div class="geoid-popup-risiko-section"><b>⚠️ Risiko Bencana</b>${rows.join('')}</div>`;
     }
   }
 
   if (hasPopup) {
-    const cctvRow = nearest
-      ? `<div class="geoid-popup-cctv" data-cctv-insight><div class="geoid-cctv-insight"><b>📹 CCTV terdekat</b><span>${escapeGeoidHtml(nearest.name)} · ${nearest.distance.toFixed(1)} km</span><button type="button" class="geoid-cctv-button" onclick="openCctvModal('${escapeGeoidHtml(nearest.id)}')" aria-label="Buka tayangan CCTV" title="Buka tayangan CCTV">▶</button></div></div>`
-      : `<div class="geoid-popup-cctv" data-cctv-insight><div class="geoid-cctv-insight"><b>📹 CCTV terdekat</b><span>Tidak tersedia</span></div></div>`;
+    let cctvRows = '';
+    if (nearest) {
+      cctvRows = `<div class="geoid-popup-cctv-row"><span>Lokasi</span><b>${escapeGeoidHtml(nearest.name)}</b></div>`
+        + `<div class="geoid-popup-cctv-row"><span>Jarak</span><b>${nearest.distance.toFixed(1)} km</b></div>`;
+    } else {
+      cctvRows = `<span style="color:#7a8fa3">Tidak tersedia</span>`;
+    }
+    const cctvBtn = nearest
+      ? `<div class="geoid-popup-cctv-btn"><button type="button" onclick="openCctvModal('${escapeGeoidHtml(nearest.id)}')" aria-label="Buka tayangan CCTV" title="Buka tayangan CCTV">▶ Tayangkan CCTV</button></div>`
+      : '';
+    const cctvHtml = `<div class="geoid-popup-cctv-section"><b>📹 CCTV terdekat</b>${cctvRows}${cctvBtn}</div>`;
     element.innerHTML = `
-      ${cctvRow}
-      ${luasHtml}
-      ${sawahHtml}
-      ${weatherHtml}
+      ${cctvHtml}
       ${risikoHtml}
-      ${poiHtml}
-      ${kesehatanHtml}
-      ${pendidikanHtml}
     `;
   }
   syncPopupContent(marker);
@@ -1771,6 +1766,8 @@ async function cariLayerWilayah() {
         document.getElementById('adm-kodepos').innerText = (selectedVillage && selectedVillage.dataset.postalCode) || location.postal_code || location.kodepos || '-';
         await loadGeoidPopupInsights(marker, { ...location, kode: location.kode || adm4Code });
         if (typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, selectedCode, location);
+        if (typeof loadLuasWilayahPopup === 'function') await loadLuasWilayahPopup(marker, selectedCode);
+        if (typeof loadCuacaPopup === 'function') await loadCuacaPopup(marker, selectedCode, location.lat, location.lon);
         if (selectedCode) showGeoidBoundary(selectedCode, zoom);
       }
     } else {
@@ -2009,6 +2006,8 @@ async function selectGeoidLocalResult(item, container) {
     }, zoom);
     await loadGeoidPopupInsights(marker, { ...location, kode: item.kode });
     if (typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, item.kode, location);
+    if (typeof loadLuasWilayahPopup === 'function') await loadLuasWilayahPopup(marker, item.kode);
+    if (typeof loadCuacaPopup === 'function') await loadCuacaPopup(marker, item.kode, location.lat, location.lon);
     showGeoidBoundary(item.kode, zoom);
   }
 }
@@ -2094,6 +2093,8 @@ async function selectGeoidGeocodeResult(item, container) {
     }, zoom);
     await loadGeoidPopupInsights(marker, { lat: item.lat, lon: item.lon, kode: adm4Code });
     if (adm4Code && typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, adm4Code, { lat: item.lat, lon: item.lon });
+    if (adm4Code && typeof loadLuasWilayahPopup === 'function') await loadLuasWilayahPopup(marker, adm4Code);
+    if (typeof loadCuacaPopup === 'function') await loadCuacaPopup(marker, adm4Code, item.lat, item.lon);
     if (adm4Code) showGeoidBoundary(adm4Code, zoom);
   }
 }
@@ -2550,3 +2551,78 @@ document.addEventListener('DOMContentLoaded', () => {
     buildGeoidSearchIndex();
   }
 });
+
+window.loadLuasWilayahPopup = async function (marker, kode) {
+  if (!marker || !kode) return;
+  try {
+    const data = await fetchLuasWilayah(kode);
+    const popup = marker?.getPopup?.()?.getElement?.();
+    if (!popup) return;
+    popup.querySelector('[data-luas-summary]')?.remove();
+    const card = document.createElement('div');
+    card.dataset.luasSummary = 'true';
+    card.style.cssText = 'padding:8px 10px;background:#f8fafc;border-bottom:1px solid #dbeafe;';
+    const fmt = (n) => n != null ? Number(n).toLocaleString('id-ID', { maximumFractionDigits: 2 }) : '-';
+    if (data && data.luas > 0) {
+      const ha = Number(data.luas);
+      const km2 = ha / 100;
+      card.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;"><div><span style="font-size:9px;font-weight:700;color:#2563eb;">LUAS WILAYAH</span><strong style="display:block;font-size:17px;line-height:1.1;color:#1e3a8a;">${fmt(ha)} ha</strong><small style="font-size:9px;color:#64748b;">${fmt(km2)} km²</small></div></div>`;
+    } else {
+      card.innerHTML = `<span style="font-size:10px;font-weight:600;color:#64748b;">LUAS WILAYAH: TIDAK TERSEDIA</span>`;
+    }
+    const insights = popup.querySelector('[data-geoid-insights]');
+    if (!insights) return;
+    insights.prepend(card);
+  } catch (_) {}
+};
+
+window.loadCuacaPopup = async function (marker, kode, lat, lon) {
+  if (!marker) return;
+  try {
+    let url;
+    if (kode) {
+      url = `https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${kode}`;
+    } else if (lat && lon) {
+      url = `https://api.bmkg.go.id/publik/prakiraan-cuaca?lat=${lat}&lon=${lon}`;
+    } else {
+      return;
+    }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) return;
+    const wd = await res.json();
+    const forecastDays = wd.data?.[0]?.cuaca || [];
+    const validDays = forecastDays.filter(day => Array.isArray(day) && day.length);
+    if (!validDays.length) return;
+
+    const today = validDays[0];
+    const popup = marker?.getPopup?.()?.getElement?.();
+    if (!popup) return;
+    popup.querySelector('[data-cuaca-summary]')?.remove();
+
+    const icons = { 'Cerah': '☀️', 'Cerah Berawan': '⛅', 'Berawan': '☁️', 'Berawan Tebal': '☁️', 'Hujan Ringan': '🌦️', 'Hujan': '🌧️', 'Hujan Sedang': '🌧️', 'Hujan Lebat': '⛈️', 'Hujan Petir': '⛈️', 'Kabur': '🌫️' };
+
+    const temps = today.map(s => Number(s.t)).filter(n => !isNaN(n));
+    const hus = today.map(s => Number(s.hu)).filter(n => !isNaN(n));
+    const wss = today.map(s => Number(s.ws)).filter(n => !isNaN(n));
+    const tccs = today.map(s => Number(s.tcc)).filter(n => !isNaN(n));
+    const descs = today.map(s => s.weather_desc).filter(Boolean);
+    const minT = temps.length ? Math.min(...temps) : '-';
+    const maxT = temps.length ? Math.max(...temps) : '-';
+    const avgHu = hus.length ? Math.round(hus.reduce((a, b) => a + b, 0) / hus.length) : '-';
+    const avgWs = wss.length ? (wss.reduce((a, b) => a + b, 0) / wss.length).toFixed(1) : '-';
+    const avgTcc = tccs.length ? Math.round(tccs.reduce((a, b) => a + b, 0) / tccs.length) : '-';
+    const mainDesc = descs.length ? descs[Math.floor(descs.length / 2)] : '-';
+    const icon = icons[mainDesc] || '🌤️';
+
+    const card = document.createElement('div');
+    card.dataset.cuacaSummary = 'true';
+    card.style.cssText = 'padding:8px 10px;background:#f8fafc;border-bottom:1px solid #dbeafe;';
+    card.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;"><div><span style="font-size:9px;font-weight:700;color:#2563eb;">CUACA SAAT INI</span><strong style="display:block;font-size:17px;line-height:1.1;color:#1e3a8a;">${icon} ${minT}–${maxT}°C</strong><small style="font-size:9px;color:#64748b;">${escapeGeoidHtml(mainDesc)} · 💧${avgHu}% · ☁️${avgTcc}% · 💨${avgWs}m/s</small></div></div>`;
+    const insights = popup.querySelector('[data-geoid-insights]');
+    if (!insights) return;
+    insights.prepend(card);
+  } catch (_) {}
+};

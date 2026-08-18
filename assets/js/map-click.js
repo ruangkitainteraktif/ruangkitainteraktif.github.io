@@ -61,8 +61,8 @@
       return;
     }
 
-    // Nonaktifkan popup geoid di tab alat dan gempa
-    if (activeTab === 'tab-alat' || activeTab === 'tab-gempa') return;
+    // Nonaktifkan popup geoid di tab alat, gempa, dan geopangan
+    if (activeTab === 'tab-alat' || activeTab === 'tab-gempa' || activeTab === 'tab-geopangan') return;
 
     // GeoTani tidak memakai reverse geocoding. Saat area kosong dalam cakupan
     // hasil irisan diklik, tampilkan popup batas wilayah analisis aktif.
@@ -151,7 +151,7 @@
           </div>
         </div>
       </div>
-    `, { maxWidth: 310, className: 'geoid-leaflet-popup' });
+    `, { maxWidth: 360, className: 'geoid-leaflet-popup' });
     mapClickMarker.openPopup();
 
     fetchReverseGeocodeWithPopup(lng, lat, mapClickMarker);
@@ -185,11 +185,7 @@
       // Bangun popup konsisten dengan showGeoidFlyup()
       const title = `${lng.toFixed(5)}, ${lat.toFixed(5)}`;
       const hierarchy = [];
-      const coordStr = `${lng.toFixed(5)}, ${lat.toFixed(5)}`;
       const isGeotaniMode = window.currentActiveTab === 'tab-geotani';
-      const metadata = [
-        ['Koordinat', coordStr]
-      ].filter(Boolean);
 
       const prefix = isGeotaniMode ? 'geotani' : 'geoid';
       const popupContent = `
@@ -199,17 +195,14 @@
               <span class="${prefix}-popup-badge-dot"></span>
               ${isGeotaniMode ? 'Geotani' : 'Wilayah'}
             </div>
-            <strong>${escapeMapClickHtml(title)}</strong>
+            <span class="geoid-popup-title-row"><strong>${escapeMapClickHtml(title)}</strong><button type="button" class="geoid-copy-btn" onclick="navigator.clipboard.writeText('${lng.toFixed(5)}, ${lat.toFixed(5)}').then(()=>{this.textContent='✓';setTimeout(()=>this.textContent='⧉',1200)})" title="Salin koordinat">⧉</button></span>
           </div>
           <div class="${prefix}-popup-body">
-            <div class="${prefix}-popup-meta">${metadata.map(([label, value]) => `<div><span>${escapeMapClickHtml(label)}</span><b>${escapeMapClickHtml(value)}</b></div>`).join('')}</div>
             <div class="${prefix}-popup-insights" data-geoid-insights>
-              <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 0 10px;gap:8px;">
+              <div style="display:flex;justify-content:center;padding:16px 0 10px;">
                 <div style="width:28px;height:28px;border:3px solid ${isGeotaniMode ? '#bbf7d0' : '#bfdbfe'};border-top-color:${isGeotaniMode ? '#16a34a' : '#2563eb'};border-radius:50%;animation:geoportal-spin .8s linear infinite;"></div>
-                <span style="font-size:10px;color:#94a3b8;text-align:center;">Memuat analisis…</span>
               </div>
             </div>
-            ${!isGeotaniMode ? `<div class="geoid-popup-cctv" data-cctv-insight><span style="color:#94a3b8; font-size:11px">Memuat CCTV terdekat…</span></div>` : ''}
           </div>
         </div>
       `;
@@ -220,9 +213,9 @@
       if (window.currentActiveTab === 'tab-geoid') {
         await loadGeoidPopupInsights(marker, { lat, lon: lng, kode: adm4Code });
         if (adm4Code && typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, adm4Code, { lat, lon: lng });
+        if (adm4Code && typeof loadLuasWilayahPopup === 'function') await loadLuasWilayahPopup(marker, adm4Code);
+        if (typeof loadCuacaPopup === 'function') await loadCuacaPopup(marker, adm4Code, lat, lng);
       }
-
-      injectDownloadBtn(marker);
 
       // Tampilkan batas wilayah dari BIG
       if (adm4Code) showGeoidBoundary(adm4Code, 15);
