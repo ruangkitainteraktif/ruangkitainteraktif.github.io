@@ -428,3 +428,4 @@ L.control.scale({
   const BHUMI_WMS_URL = 'https://atlas.atrbpn.go.id/geoserver/ows';
   const BPS_WMS_URL = 'https://geoserver.bps.go.id/ows';
   const KLATEN_WMS_URL = 'https://geoportal.klaten.go.id/geoserver/wms';
+  const CIREBON_WMS_URL = 'https://geoserver.cirebonkota.go.id/geoserver/wms';

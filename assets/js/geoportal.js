@@ -145,8 +145,7 @@
       transparent: true,
       version: '1.1.1',
       tiled: true,
-      opacity: .82,
-      crossOrigin: true
+      opacity: .82
     });
     layer.on('tileerror', function (e) {
       console.warn('[Geoportal] WMS tile error:', { layerName, resolvedName, wmsUrl, tileUrl: e.tile?.src });

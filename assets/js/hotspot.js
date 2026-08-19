@@ -186,6 +186,9 @@
 
       createHotspotLegend(hotspotFeatures.length, high, medium, low);
       renderHotspotSummaryCard(high, medium, low);
+
+      if (typeof window.loadHotspotTable === 'function') window.loadHotspotTable();
+      if (typeof window.loadHotspotBar === 'function') window.loadHotspotBar();
     });
   }
 
@@ -253,6 +256,9 @@
     }
     var summaryCard = document.getElementById('hotspot-summary-card');
     if (summaryCard) summaryCard.innerHTML = '';
+
+    if (typeof window.clearHotspotTable === 'function') window.clearHotspotTable();
+    if (typeof window.clearHotspotBar === 'function') window.clearHotspotBar();
   }
 
   function toggleHotspotMarkers() {
@@ -500,6 +506,7 @@
     var map = {};
     for (var i = 0; i < features.length; i++) {
       var p = features[i].properties;
+      if (p.lat == null || p.long == null) continue;
       var prov = p.nama_provinsi || '-';
       var kab = p.kabkota || '-';
       var src = p.sumber || '-';
@@ -714,8 +721,15 @@
     }
   }
 
-  loadData();
-  startAutoRefresh();
+  function clearTable() {
+    allData = [];
+    filteredData = [];
+    var container = document.getElementById('hotspot-table-container');
+    if (container) container.innerHTML = '';
+  }
+
+  window.loadHotspotTable = loadData;
+  window.clearHotspotTable = clearTable;
 })();
 
 /* ── Hotspot Bar Chart per Provinsi ── */
@@ -730,6 +744,7 @@
     var map = {};
     for (var i = 0; i < features.length; i++) {
       var p = features[i].properties;
+      if (p.lat == null || p.long == null) continue;
       var prov = p.nama_provinsi || '-';
       if (!map[prov]) map[prov] = 0;
       map[prov]++;
@@ -824,6 +839,11 @@
     }, REFRESH_INTERVAL);
   }
 
-  loadData();
-  startAutoRefresh();
+  function clearBar() {
+    var container = document.getElementById('hotspot-bar-container');
+    if (container) container.innerHTML = '';
+  }
+
+  window.loadHotspotBar = loadData;
+  window.clearHotspotBar = clearBar;
 })();
