@@ -19,17 +19,19 @@
 
   <!-- ==================== MASTER SEO META TAGS 2026 ==================== -->
   <!-- Primary Meta Tags -->
-  <title>RUANG KITA | Satu Peta untuk Nusantara</title>
-  <meta name="title" content="RUANG KITA | Satu Peta untuk Nusantara">
+  <title>RUANG KITA | Peta Interaktif & Data Geospasial Indonesia</title>
+  <meta name="title" content="RUANG KITA | Peta Interaktif & Data Geospasial Indonesia">
   <meta name="description"
     content="Platform peta interaktif Indonesia dengan data geospasial lengkap. Akses batas wilayah administrasi, CCTV lalu lintas, cuaca BMKG, gempa bumi real-time, geoportal Jawa Timur & Sukoharjo, analisis pertanian (Geotani), dan alat ukur/gambar GIS.">
   <meta name="keywords"
-    content="peta indonesia, peta interaktif, GIS indonesia, geospasial, geoportal, batas wilayah, administrasi provinsi, kabupaten, kecamatan, desa, cuaca BMKG, prakiraan cuaca, gempa bumi, seismik, CCTV lalu lintas, jalan tol, pertanian, sawah, Geotani, Jawa Timur, Sukoharjo, Leaflet.js, RUANGKITA, satupeta, peta digital, pemetaan, kartografi">
+    content="peta interaktif Indonesia, GIS Indonesia, data geospasial, geoportal, batas wilayah, cuaca BMKG, gempa bumi, CCTV lalu lintas, pertanian, Geotani, peta digital, RUANG KITA">
   <meta name="author" content="RUANG KITA | MAS PANNN">
   <meta name="google-adsense-account" content="ca-pub-7501816933195235">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7501816933195235"
      crossorigin="anonymous"></script>
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
   <meta name="language" content="Indonesian">
   <meta name="revisit-after" content="3 days">
   <meta name="theme-color" content="#0a1929">
@@ -41,25 +43,28 @@
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://ruangkitainteraktif.github.io/">
-  <meta property="og:title" content="RUANG KITA | Satu Peta untuk Nusantara">
+  <meta property="og:url" content="https://ruangkita.net/">
+  <meta property="og:title" content="RUANG KITA | Peta Interaktif & Data Geospasial Indonesia">
   <meta property="og:description"
     content="Platform peta interaktif Indonesia dengan data geospasial lengkap. Akses batas wilayah, CCTV, cuaca BMKG, gempa bumi, geoportal Jawa Timur & Sukoharjo, serta analisis pertanian secara real-time.">
-  <meta property="og:image" content="assets/img/share.jpg">
+  <meta property="og:image" content="https://ruangkita.net/assets/img/share.jpg">
+  <meta property="og:image:secure_url" content="https://ruangkita.net/assets/img/share.jpg">
+  <meta property="og:image:type" content="image/jpeg">
   <meta property="og:image:alt" content="RUANG KITA - Peta Interaktif Indonesia">
   <meta property="og:locale" content="id_ID">
   <meta property="og:site_name" content="RUANG KITA">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://ruangkitainteraktif.github.io/">
-  <meta name="twitter:title" content="RUANG KITA | Satu Peta untuk Nusantara">
+  <meta name="twitter:url" content="https://ruangkita.net/">
+  <meta name="twitter:title" content="RUANG KITA | Peta Interaktif & Data Geospasial Indonesia">
   <meta name="twitter:description"
     content="Platform peta interaktif Indonesia dengan data geospasial lengkap. Akses batas wilayah, CCTV, cuaca BMKG, gempa bumi, geoportal, dan analisis pertanian secara real-time.">
-  <meta name="twitter:image" content="assets/img/share.jpg">
+  <meta name="twitter:image" content="https://ruangkita.net/assets/img/share.jpg">
+  <meta name="twitter:image:alt" content="RUANG KITA - Peta Interaktif Indonesia">
 
   <!-- Canonical URL -->
-  <link rel="canonical" href="https://ruangkitainteraktif.github.io/">
+  <link rel="canonical" href="https://ruangkita.net/">
 
   <!-- Geo Meta Tags (Indonesia Focus) -->
   <meta name="geo.region" content="ID-JI">
@@ -71,10 +76,28 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://ruangkita.net/#organization",
+        "name": "RUANG KITA",
+        "url": "https://ruangkita.net/",
+        "logo": "https://ruangkita.net/assets/img/favicon.png"
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://ruangkita.net/#website",
+        "name": "RUANG KITA",
+        "url": "https://ruangkita.net/",
+        "inLanguage": "id-ID",
+        "publisher": { "@id": "https://ruangkita.net/#organization" }
+      },
+      {
     "@type": "WebApplication",
+    "@id": "https://ruangkita.net/#webapplication",
     "name": "RUANG KITA",
     "alternateName": "Ruangkita LBS",
-    "url": "https://ruangkitainteraktif.github.io/",
+    "url": "https://ruangkita.net/",
     "description": "Platform peta interaktif Indonesia dengan data geospasial lengkap untuk batas wilayah administrasi, CCTV lalu lintas, cuaca BMKG, gempa bumi, geoportal Jawa Timur & Sukoharjo, dan analisis pertanian (Geotani).",
     "applicationCategory": "GISApplication",
     "operatingSystem": "Web Browser (Chrome, Firefox, Safari, Edge)",
@@ -83,11 +106,10 @@
       "price": "0",
       "priceCurrency": "IDR"
     },
-    "author": {
-      "@type": "Organization",
-      "name": "RUANGKITA"
-    },
-    "inLanguage": "id",
+    "author": { "@id": "https://ruangkita.net/#organization" },
+    "isPartOf": { "@id": "https://ruangkita.net/#website" },
+    "image": "https://ruangkita.net/assets/img/share.jpg",
+    "inLanguage": "id-ID",
     "featureList": [
       "GEONUSA - Pencarian batas wilayah administrasi Provinsi, Kabupaten/Kota, Kecamatan, Desa/Kelurahan",
       "GEONUSA - Pencarian koordinat lintang bujur",
@@ -103,6 +125,8 @@
       "TOOLS - Import dan visualisasi data GeoJSON serta Shapefile (SHP)",
       "Basemap: Carto Light, Carto Dark, OpenStreetMap, Esri Satellite, Rupabumi Indonesia (BIG)",
       "Pencarian terpadu (unified search) dengan insight cards cuaca dan gempa"
+    ]
+      }
     ]
   }
   </script>

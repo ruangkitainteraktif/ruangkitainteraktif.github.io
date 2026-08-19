@@ -428,7 +428,7 @@
     container.innerHTML =
       '<div class="gp-table-wrap">' +
         '<div class="gp-table-header">' +
-          '<div class="gp-table-title">Harga Pangan Per Provinsi</div>' +
+          '<div class="gp-table-title">Harga Per Provinsi</div>' +
           '<input type="text" id="gpTableSearch" class="gp-table-search" placeholder="Cari provinsi..." autocomplete="off" />' +
         '</div>' +
         '<div class="gp-table-scroll">' +
