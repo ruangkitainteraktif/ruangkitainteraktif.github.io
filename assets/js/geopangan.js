@@ -2,6 +2,10 @@
   'use strict';
 
   var BI_API_RAW = 'https://www.bi.go.id/hargapangan/WebSite/TabelHarga';
+  // Diteruskan melalui Cloudflare Worker agar browser tidak terhalang CORS BI.
+  // Host relatif memungkinkan endpoint tetap ikut domain produksi atau localhost.
+  var isLocalDevelopment = /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
+  var GEOPANGAN_PROXY_URL = window.GEOPANGAN_PROXY_URL || (isLocalDevelopment ? '' : 'https://ruangkita-geopangan-proxy.ms-ruang-imajinasi.workers.dev/api/geopangan');
   var GEOJSON_URL = 'assets/data/bps/geojson/provinsi.geojson';
   var COMMODITY_URL = 'assets/data/bi-hargapangan-commodities.json';
   var BPS_INFLASI_URL_125 = 'https://webapi.bps.go.id/v1/api/list/model/data/lang/ind/domain/0000/var/2263/th/125/key/4c135b6a06a97bd32fd0476067e0a5dd';
@@ -266,8 +270,17 @@
       end_date: endDate
     });
 
-    var url = BI_API_RAW + '/GetGridDataKomoditas?' + params.toString();
-    var json = await fetchWithProxy(url);
+    var query = params.toString();
+    var json;
+    if (GEOPANGAN_PROXY_URL) {
+      var url = GEOPANGAN_PROXY_URL + '/harga?' + query;
+      var res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Proxy harga pangan HTTP ' + res.status);
+      json = await res.json();
+    } else {
+      // Tetap mendukung localhost tanpa Worker untuk pengembangan lama.
+      json = await fetchWithProxy(BI_API_RAW + '/GetGridDataKomoditas?' + query);
+    }
     return json.data || [];
   }
 
