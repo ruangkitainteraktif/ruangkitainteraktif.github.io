@@ -15,6 +15,10 @@
     "magelang": {
       "wmsUrl": "https://geoportal.magelangkota.go.id/geoserver/ows",
       "label": "Kota Magelang"
+    },
+    "klaten": {
+      "wmsUrl": "https://geoportal.klaten.go.id/geoserver/wms",
+      "label": "Kabupaten Klaten"
     }
   },
   "categories": [
@@ -462,6 +466,66 @@
         { "id": "geonode:tbc2024", "label": "TBC 2024", "swatchColor": "#e91e63" },
         { "id": "geonode:hiv_aids_ktp_skh_2025", "label": "HIV/AIDS 2025", "swatchColor": "#e91e63" },
         { "id": "geonode:kematian_ibu_2025", "label": "Kematian Ibu 2025", "swatchColor": "#e91e63" }
+      ]
+    },
+    {
+      "id": "klaten",
+      "title": "Kabupaten Klaten",
+      "source": "klaten",
+      "layers": [
+        { "id": "geonode:administrasi_ar_50k", "label": "Batas Administrasi (Area)" },
+        { "id": "geonode:administrasi_ln_50k", "label": "Batas Administrasi (Garis)" },
+        { "id": "geonode:desa_kelurahan_kampung_pt", "label": "Titik Desa/Kelurahan" },
+        { "id": "geonode:jalan_lingkungan_ln", "label": "Jalan Lingkungan" },
+        { "id": "geonode:jalan_lokal_ln", "label": "Jalan Lokal" },
+        { "id": "geonode:jalan_kolektor_ln", "label": "Jalan Kolektor" },
+        { "id": "geonode:jalan_ln_50k", "label": "Jaringan Jalan" },
+        { "id": "geonode:jembatan_pt_50k", "label": "Jembatan" },
+        { "id": "geonode:stasiunka_pt_50k", "label": "Stasiun Kereta Api" },
+        { "id": "geonode:terminalbus_pt_50k", "label": "Terminal" },
+        { "id": "geonode:sungai_ar_50k", "label": "Sungai (Area)" },
+        { "id": "geonode:sungai_ln_50k", "label": "Sungai (Garis)" },
+        { "id": "geonode:drainase_ln_50k", "label": "Jaringan Drainase" },
+        { "id": "geonode:irigasi_ln_ar", "label": "Jaringan Irigasi" },
+        { "id": "geonode:jaringan_irigasi_ln", "label": "Sistem Jaringan Irigasi" },
+        { "id": "geonode:waduk_ar_50k", "label": "Waduk Rowo Jombor" },
+        { "id": "geonode:airbaku_pt_50k", "label": "Titik Air Baku" },
+        { "id": "geonode:mata_air_pt", "label": "Mata Air" },
+        { "id": "geonode:mataair_pt_50k", "label": "Titik Mata Air" },
+        { "id": "geonode:spam_ln_50k", "label": "Jaringan Air Minum (SPAM)" },
+        { "id": "geonode:kolam_ar_50k", "label": "Kolam (Area)" },
+        { "id": "geonode:kolam_pt_50k", "label": "Kolam (Titik)" },
+        { "id": "geonode:banjir_ar_50k", "label": "Kerawanan Banjir" },
+        { "id": "geonode:krbgempabumi_ar_50k", "label": "Kerawanan Gempa Bumi" },
+        { "id": "geonode:letusangunungapi_ar_50k", "label": "Kerawanan Letusan Gunung Api" },
+        { "id": "geonode:zonagerakantanah_ar_50k", "label": "Zona Gerakan Tanah" },
+        { "id": "geonode:geologi_ar_50k", "label": "Peta Geologi" },
+        { "id": "geonode:lereng_ar_50k", "label": "Kelerengan" },
+        { "id": "geonode:kontur_ln", "label": "Garis Kontur" },
+        { "id": "geonode:puskesmas_pt_50k", "label": "Puskesmas" },
+        { "id": "geonode:klinik_pt_50k", "label": "Klinik" },
+        { "id": "geonode:rumah_sakit_pt", "label": "Rumah Sakit" },
+        { "id": "geonode:rumahsakit_pt_50k", "label": "Rumah Sakit (Detail)" },
+        { "id": "geonode:apotek_pt_50k", "label": "Apotek" },
+        { "id": "geonode:praktik_bidan_pt", "label": "Praktik Bidan" },
+        { "id": "geonode:sd_setingkat_pt", "label": "SD Setingkat" },
+        { "id": "geonode:smp_setingkat_pt", "label": "SMP Setingkat" },
+        { "id": "geonode:sma_setingkat_pt", "label": "SMA Setingkat" },
+        { "id": "geonode:pendidikan_pt_50k", "label": "Pendidikan" },
+        { "id": "geonode:kantor_pemerintah_pt", "label": "Kantor Pemerintahan" },
+        { "id": "geonode:pemerintahan_pt_50k", "label": "Kantor Pemerintahan (Detail)" },
+        { "id": "geonode:pertahanan_pt_50k", "label": "Pertahanan" },
+        { "id": "geonode:persampahan_pt_50k", "label": "Sarana Persampahan" },
+        { "id": "geonode:makam_pt_50k", "label": "Makam" },
+        { "id": "geonode:toponim_pt", "label": "Toponim" },
+        { "id": "geonode:destinasipariwisata_pt_50k", "label": "Destinasi Pariwisata" },
+        { "id": "geonode:saranaibadah_pt_50k", "label": "Sarana Ibadah" },
+        { "id": "geonode:mushola_pt", "label": "Mushola" },
+        { "id": "geonode:gardulistrik_pt_50k", "label": "Gardu Listrik" },
+        { "id": "geonode:kabellistrik_ln_50k", "label": "Jaringan Kelistrikan" },
+        { "id": "geonode:jaringantelkom_ln_50k", "label": "Jaringan Telekomunikasi" },
+        { "id": "geonode:data_rth_taman_kelurahan", "label": "Ruang Terbuka Hijau 2024" },
+        { "id": "geonode:kawasanhutan_ar_50k", "label": "Kawasan Hutan" }
       ]
     }
   ]

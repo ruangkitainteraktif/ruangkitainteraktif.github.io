@@ -139,15 +139,17 @@
     mapClickMarker.bindPopup(`
       <div class="geoid-popup geoid-popup-scroll">
         <div class="geoid-popup-head">
-          <strong>${lng.toFixed(5)}, ${lat.toFixed(5)}</strong>
+          <div class="geoid-popup-badge">
+            <span class="geoid-popup-badge-dot"></span>
+            Wilayah
+          </div>
+          <span class="geoid-popup-title-row"><strong>${lng.toFixed(5)}, ${lat.toFixed(5)}</strong><button type="button" class="geoid-copy-btn" onclick="navigator.clipboard.writeText('${lng.toFixed(5)}, ${lat.toFixed(5)}').then(()=>{this.textContent='✓';setTimeout(()=>this.textContent='⧉',1200)})" title="Salin koordinat">⧉</button></span>
         </div>
         <div class="geoid-popup-body">
-          <div class="geoid-popup-meta">
-            <div><span>Koordinat</span><b>${lng.toFixed(5)}, ${lat.toFixed(5)}</b></div>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 0 14px;gap:8px;">
-            <div style="width:26px;height:26px;border:3px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:geoportal-spin .8s linear infinite;"></div>
-            <span style="font-size:10px;color:#94a3b8;text-align:center;">Memuat alamat…</span>
+          <div class="geoid-popup-insights" data-geoid-insights>
+            <div style="display:flex;justify-content:center;padding:16px 0 10px;">
+              <div style="width:28px;height:28px;border:3px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:geoportal-spin .8s linear infinite;"></div>
+            </div>
           </div>
         </div>
       </div>

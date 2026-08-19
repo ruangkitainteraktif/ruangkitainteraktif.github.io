@@ -427,3 +427,4 @@ L.control.scale({
   const IGTPR_WMS_URL = 'https://igtpr.atrbpn.go.id/geoserver/ows';
   const BHUMI_WMS_URL = 'https://atlas.atrbpn.go.id/geoserver/ows';
   const BPS_WMS_URL = 'https://geoserver.bps.go.id/ows';
+  const KLATEN_WMS_URL = 'https://geoportal.klaten.go.id/geoserver/wms';

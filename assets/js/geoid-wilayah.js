@@ -840,7 +840,7 @@ function showGeoidFlyup(lat, lon, info, zoom = 15) {
   const marker = L.marker([lat, lon], { icon, title: info.desa || info.name || 'Lokasi', zIndexOffset: 1000 })
     .addTo(selectedGroup);
 
-  const title = info.desa || info.name || 'Wilayah terpilih';
+  const title = info.desa || info.name || `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
   const hierarchy = [info.kecamatan, info.kabkota, info.provinsi].filter(Boolean);
   const coordStr = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
   const isGeotaniMode = window.currentActiveTab === 'tab-geotani';
@@ -855,7 +855,11 @@ function showGeoidFlyup(lat, lon, info, zoom = 15) {
   const popupContent = `
     <div class="${prefix}-popup geoid-popup-scroll">
       <div class="${prefix}-popup-head">
-        <strong>${escapeGeoidHtml(title)}</strong>
+        <div class="${prefix}-popup-badge">
+          <span class="${prefix}-popup-badge-dot"></span>
+          ${isGeotaniMode ? 'Geotani' : 'Wilayah'}
+        </div>
+        <span class="geoid-popup-title-row"><strong>${escapeGeoidHtml(title)}</strong><button type="button" class="geoid-copy-btn" onclick="navigator.clipboard.writeText('${coordStr}').then(()=>{this.textContent='✓';setTimeout(()=>this.textContent='⧉',1200)})" title="Salin koordinat">⧉</button></span>
         ${hierarchy.length ? `<span>${hierarchy.map(escapeGeoidHtml).join(' · ')}</span>` : ''}
       </div>
       <div class="${prefix}-popup-body">
