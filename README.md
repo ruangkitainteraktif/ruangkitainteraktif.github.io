@@ -5,7 +5,7 @@
 ### **Satu Peta untuk Nusantara** — *One Map for the Archipelago*
 
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
-[![Live Demo](https://img.shields.io/badge/Live_Demo-ruangkitainteraktif.github.io-brightgreen)](https://ruangkitainteraktif.github.io)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-ruangkita.net-brightgreen)](https://ruangkita.net)
 
 </div>
 
@@ -17,7 +17,7 @@
 
 **RUANG KITA** is a web-based interactive map platform for Indonesia. It integrates geospatial data from various government sources into a single, easy-to-use interface.
 
-🌐 **Live Demo:** [https://ruangkitainteraktif.github.io](https://ruangkitainteraktif.github.io)
+🌐 **Live Demo:** [https://ruangkita.net](https://ruangkita.net)
 
 📱 **Mobile App:** Download APK RuangKita Mobile langsung dari website
 
@@ -217,7 +217,7 @@
 
 ### Online / Daring
 
-Kunjungi langsung: **[https://ruangkitainteraktif.github.io](https://ruangkitainteraktif.github.io)**
+Kunjungi langsung: **[https://ruangkita.net](https://ruangkita.net)**
 
 ### Lokal / Local
 

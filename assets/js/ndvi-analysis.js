@@ -999,7 +999,7 @@
       pdf.setFontSize(8);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(210, 210, 210);
-      pdf.text('ruangkitainteraktif.github.io', wcX, wcY + 16, { align: 'center' });
+      pdf.text('ruangkita.net', wcX, wcY + 16, { align: 'center' });
 
       pdf.save(fileName);
     } catch (error) {

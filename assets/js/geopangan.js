@@ -2,10 +2,6 @@
   'use strict';
 
   var BI_API_RAW = 'https://www.bi.go.id/hargapangan/WebSite/TabelHarga';
-  // Diteruskan melalui Cloudflare Worker agar browser tidak terhalang CORS BI.
-  // Host relatif memungkinkan endpoint tetap ikut domain produksi atau localhost.
-  var isLocalDevelopment = /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
-  var GEOPANGAN_PROXY_URL = window.GEOPANGAN_PROXY_URL || (isLocalDevelopment ? '' : 'https://ruangkita-geopangan-proxy.ms-ruang-imajinasi.workers.dev/api/geopangan');
   var GEOJSON_URL = 'assets/data/bps/geojson/provinsi.geojson';
   var COMMODITY_URL = 'assets/data/bi-hargapangan-commodities.json';
   var BPS_INFLASI_URL_125 = 'https://webapi.bps.go.id/v1/api/list/model/data/lang/ind/domain/0000/var/2263/th/125/key/4c135b6a06a97bd32fd0476067e0a5dd';
@@ -76,6 +72,7 @@
   var activeLegend = null;
   var loaded = false;
   var inflasiCache = null;
+  var sebaranPasarLayer = null;
 
   function $(id) { return document.getElementById(id); }
 
@@ -271,16 +268,7 @@
     });
 
     var query = params.toString();
-    var json;
-    if (GEOPANGAN_PROXY_URL) {
-      var url = GEOPANGAN_PROXY_URL + '/harga?' + query;
-      var res = await fetch(url, { cache: 'no-store' });
-      if (!res.ok) throw new Error('Proxy harga pangan HTTP ' + res.status);
-      json = await res.json();
-    } else {
-      // Tetap mendukung localhost tanpa Worker untuk pengembangan lama.
-      json = await fetchWithProxy(BI_API_RAW + '/GetGridDataKomoditas?' + query);
-    }
+    var json = await fetchWithProxy(BI_API_RAW + '/GetGridDataKomoditas?' + query);
     return json.data || [];
   }
 
@@ -440,9 +428,12 @@
 
     container.innerHTML =
       '<div class="gp-table-wrap">' +
+        '<div class="gp-table-title">Harga Pangan Per Provinsi</div>' +
         '<div class="gp-table-header">' +
-          '<div class="gp-table-title">Harga Per Provinsi</div>' +
-          '<input type="text" id="gpTableSearch" class="gp-table-search" placeholder="Cari provinsi..." autocomplete="off" />' +
+          '<div class="gp-table-actions">' +
+            '<input type="text" id="gpTableSearch" class="gp-table-search" placeholder="Cari provinsi..." autocomplete="off" />' +
+            '<button id="gpExportCsv" class="gp-btn-csv" title="Export CSV"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> CSV</button>' +
+          '</div>' +
         '</div>' +
         '<div class="gp-table-scroll">' +
           '<table class="gp-table">' +
@@ -465,6 +456,9 @@
       renderGpTableBody(_gpTableState.last7Labels);
       renderGpPagination();
     });
+
+    var csvBtn = container.querySelector('#gpExportCsv');
+    if (csvBtn) csvBtn.addEventListener('click', exportGeopanganCSV);
 
     var ths = container.querySelectorAll('th[data-sort]');
     for (var t = 0; t < ths.length; t++) {
@@ -580,6 +574,43 @@
         icons[i].textContent = '';
       }
     }
+  }
+
+  function exportGeopanganCSV() {
+    var rows = getFilteredSortedGpRows();
+    if (!rows.length) return;
+
+    var trendMap = { up: 'Naik', down: 'Turun', stable: 'Stabil' };
+    var labels = _gpTableState.last7Labels;
+    var headers = ['No', 'Provinsi', 'Harga (Rp)'].concat(labels).concat(['Tren']);
+    var lines = [headers.join(',')];
+
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var daily = r.daily7.map(function (v) { return v !== null ? v : ''; });
+      var trend = trendMap[r.trend] || r.trend;
+      var cells = [i + 1, '"' + r.name.replace(/"/g, '""') + '"', r.price]
+        .concat(daily)
+        .concat([trend]);
+      lines.push(cells.join(','));
+    }
+
+    var blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+
+    var commodityEl = $('geopanganCommodity');
+    var commodityName = commodityEl && commodityEl.selectedOptions[0] ? commodityEl.selectedOptions[0].textContent : 'all';
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0');
+    var yyyy = today.getFullYear();
+    var filename = 'harga_pangan_' + commodityName.toLowerCase().replace(/\s+/g, '_') + '_' + yyyy + '-' + mm + '-' + dd + '.csv';
+
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   /* ── Main: load and display ── */
@@ -860,11 +891,55 @@
   window.clearGeopanganLayers = function () {
     if (activeLayer && map.hasLayer(activeLayer)) { map.removeLayer(activeLayer); activeLayer = null; }
     if (activeLegend) { map.removeControl(activeLegend); activeLegend = null; }
+    if (sebaranPasarLayer && map.hasLayer(sebaranPasarLayer)) { map.removeLayer(sebaranPasarLayer); sebaranPasarLayer = null; }
+    var chk = $('toggleSebaranPasar');
+    if (chk) chk.checked = false;
     var resultEl = $('geopanganResult');
     if (resultEl) resultEl.innerHTML = '';
     var tableEl = $('geopanganTable');
     if (tableEl) tableEl.innerHTML = '';
   };
+
+  /* ── Sebaran Pasar Layer (BAPPENAS / Kementerian Perdagangan) ── */
+  var SEBARAN_PASAR_URL = 'https://geospasial.bappenas.go.id/server/rest/services/TRPPB_Sebaran_Pasar_kemendag/MapServer/0';
+
+  function toggleSebaranPasar(visible) {
+    if (!visible) {
+      if (sebaranPasarLayer && map.hasLayer(sebaranPasarLayer)) {
+        map.removeLayer(sebaranPasarLayer);
+      }
+      return;
+    }
+    if (sebaranPasarLayer) { sebaranPasarLayer.addTo(map); return; }
+    sebaranPasarLayer = L.esri.featureLayer({
+      url: SEBARAN_PASAR_URL,
+      pointToLayer: function (geojson, latlng) {
+        return L.circleMarker(latlng, {
+          radius: 5,
+          fillColor: '#e67e22',
+          color: '#d35400',
+          weight: 1,
+          opacity: 1,
+          fillOpacity: 0.85
+        });
+      },
+      onEachFeature: function (feature, layer) {
+        var p = feature.properties || {};
+        var name = p.NAMA_PASAR || p.nama_pasar || '-';
+        var jenis = p.JENIS_PASAR || p.jenis_pasar || '-';
+        var kabkota = p.NAMA_KOTA || p.nama_kota || p.NAMA_KAB || p.nama_kab || '-';
+        var provinsi = p.NAMA_PROP || p.nama_prop || '-';
+        layer.bindPopup(
+          '<div style="font-size:12px;line-height:1.6">' +
+            '<strong style="color:#d35400">' + name + '</strong><br>' +
+            'Jenis: ' + jenis + '<br>' +
+            'Kab/Kota: ' + kabkota + '<br>' +
+            'Provinsi: ' + provinsi +
+          '</div>'
+        );
+      }
+    }).addTo(map);
+  }
 
   /* ── Init on first load if already on tab ── */
   async function init() {
@@ -876,6 +951,8 @@
   document.addEventListener('DOMContentLoaded', function () {
     var loadBtn = $('geopanganLoadBtn');
     if (loadBtn) loadBtn.addEventListener('click', loadAndDisplay);
+    var chkPasar = $('toggleSebaranPasar');
+    if (chkPasar) chkPasar.addEventListener('change', function () { toggleSebaranPasar(this.checked); });
     if (window.currentActiveTab === 'tab-geopangan') init();
   });
 

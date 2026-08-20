@@ -1,0 +1,58 @@
+# RUANG KITA — Peta Interaktif & Data Geospasial Indonesia
+
+> Platform peta interaktif Indonesia dengan data geospasial lengkap. Akses batas wilayah administrasi, CCTV lalu lintas, cuaca BMKG, gempa bumi real-time, geoportal, analisis pertanian (Geotani), dan alat ukur/gambar GIS — gratis dan terbuka.
+
+## Ringkasan
+
+RUANG KITA adalah aplikasi web GIS Indonesia yang menyatukan berbagai sumber data geospasial dalam satu peta interaktif. Pengguna dapat menjelajahi batas wilayah administrasi (provinsi, kabupaten/kota, kecamatan, desa), memantau cuaca dan gempa secara real-time, melihat kamera CCTV lalu lintas, menganalisis data pertanian, dan menggunakan berbagai alat GIS seperti pengukur jarak, gambar poligon, dan koordinat.
+
+## Fitur Utama
+
+- **Peta Interaktif**: OpenLayers-based map dengan multi-basemap (OSM, Satellite, Terrain, Dark)
+- **Batas Wilayah**: Administrasi Indonesia dari BPS (provinsi hingga desa) dengan popup info lengkap
+- **Cuaca BMKG**: Data cuaca real-time untuk 34 provinsi dengan curah hujan, suhu, kelembaban
+- **Gempa Bumi**: Ringkasan BMKG terkini dengan magnitudo, kedalaman, dan koordinat
+- **CCTV Lalu Lintas**: Pemantauan kamera lalu lintas dari beberapa kota besar
+- **GeoPortal**: Akses layer WMS dari berbagai pemerintah daerah (Jawa Timur, Sukoharjo, Temanggung, Magelang, Klaten, Cirebon Kota, Banjarmasin)
+- **Geotani**: Analisis data pertanian berbasis peta
+- **Harga Pangan**: Data harga pangan dari Bank Indonesia per provinsi
+- **Alat GIS**: Pengukur jarak, gambar poligon/poin/teks, tangkapan layar, koordinat cursor
+- **Analisis NDVI**: Normalized Difference Vegetation Index untuk analisis vegetasi
+- **Analisis Erosi**: Klasifikasi erosi tanah
+- **Analisis Land Cover**: Klasifikasi penggunaan lahan
+
+## Sumber Data
+
+- **BPS (Badan Pusat Statistik)**: Batas wilayah administrasi, data statistik
+- **BMKG**: Cuaca real-time, gempa bumi
+- **Bank Indonesia**: Harga pangan nasional
+- **GeoServer Pemerintah Daerah**: Layer WMS untuk berbagai sektor (kesehatan, pertanahan, bencana, dll.)
+- **OpenStreetMap**: Basemap dan infrastruktur
+
+## Akses
+
+- **URL**: https://ruangkita.net
+- **Gratis**: Tidak memerlukan akun atau langganan
+- **Responsif**: Bekerja di desktop dan mobile
+- **Offline-ready**: Beberapa fitur dapat digunakan tanpa koneksi internet
+
+## Teknologi
+
+- OpenLayers 10.5.0 untuk peta interaktif
+- jsTree 3.3.17 untuk navigasi layer
+- Chart.js untuk visualisasi data
+- Bootstrap 5.3.7 untuk UI
+- jQuery 3.7.1
+- jsPDF + html2canvas untuk ekspor PDF
+- Proj4js untuk transformasi koordinat
+
+## Struktur URL
+
+- `/` — Halaman utama dengan peta interaktif
+- `?lat=-7.53932&lng=110.82485&zoom=12` — Buka peta di koordinat tertentu
+- `?search=Magelang` — Pencarian wilayah
+
+## Kontak
+
+- Website: https://ruangkita.net
+- Developer: MAS PANNN
