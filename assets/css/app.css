@@ -448,12 +448,74 @@
     }
 
     /* ===== GeoPangan Table ===== */
-    .gp-table-wrap { border: 1px solid #e3ecf4; border-radius: 10px; background: #fff; overflow: hidden; margin: 10px 0; }
-    .gp-table-title { font-size: 12px; font-weight: 700; color: #16466c; padding: 10px 12px; background: #f0f7ff; border-bottom: 1px solid #e3ecf4; }
-    .gp-table-header { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 8px 12px; background: #f8fbfe; border-bottom: 1px solid #e3ecf4; }
-    .gp-table-search { flex: 1; padding: 6px 10px; border: 1px solid #d7e2eb; border-radius: 6px; font-size: 11px; color: #336583; outline: none; transition: border-color .2s; }
-    .gp-table-search:focus { border-color: #047857; }
-    .gp-table-actions { display: flex; align-items: center; gap: 6px; flex: 1; }
+    /* Base Style */
+    .gp-table-wrap { 
+      border: 1px solid #e3ecf4; 
+      border-radius: 10px; 
+      background: #fff; 
+      overflow: hidden; 
+      margin: 10px 0; 
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .gp-table-title { 
+      font-size: 12px; 
+      font-weight: 700; 
+      color: #16466c; 
+      padding: 10px 12px; 
+      background: #f0f7ff; 
+      border-bottom: 1px solid #e3ecf4; 
+    }
+    /* Header Flex Container */
+    .gp-table-header { 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      gap: 8px; 
+      padding: 8px 12px; 
+      background: #f8fbfe; 
+      border-bottom: 1px solid #e3ecf4; 
+      box-sizing: border-box;
+      width: 100%;
+    }
+    .gp-table-search { 
+      box-sizing: border-box; 
+      flex: 1; 
+      width: 100%; 
+      min-width: 0; /* Penting agar flex item tidak overflow pada parent */
+      padding: 6px 10px; 
+      border: 1px solid #d7e2eb; 
+      border-radius: 6px; 
+      font-size: 11px; 
+      color: #336583; 
+      outline: none; 
+      transition: border-color .2s; 
+    }
+    .gp-table-search:focus { 
+      border-color: #047857; 
+    }
+    .gp-table-actions { 
+      display: flex; 
+      align-items: center; 
+      gap: 6px; 
+      flex-shrink: 0; /* Mencegah tombol gepeng atau terdorong keluar */
+    }
+
+    /* --- RESPONSIVE MEDIA QUERY UNTUK MOBILE --- */
+    @media (max-width: 576px) {
+      .gp-table-header {
+        flex-direction: column; /* Ubah ke susunan bertumpuk atas-bawah */
+        align-items: stretch;   /* Input & tombol memenuhi lebar kontainer */
+        gap: 8px;
+      }
+
+    .gp-table-search {
+      width: 100%;
+    }
+
+    .gp-table-actions {
+      justify-content: flex-end; /* Tombol CSV rata kanan di bawah input search */
+    }}
     .gp-btn-csv { display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; border: 1px solid #d7e2eb; border-radius: 6px; background: #fff; color: #336583; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s, color .15s; }
     .gp-btn-csv:hover { background: #ecfdf5; border-color: #047857; color: #047857; }
     .gp-btn-csv svg { flex-shrink: 0; }
