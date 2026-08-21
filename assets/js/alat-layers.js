@@ -262,17 +262,119 @@
   }
 
   // ==============================================================
+  // GOOGLE MAPS TIMELINE JSON → ANIMASI TRACK
+  // ==============================================================
+  // Timeline (Google Maps JSON → GeoJSON)
+
+  function parseTimelinePoint(str) {
+    if (!str) return null;
+    const parts = str.split(',');
+    if (parts.length < 2) return null;
+    const lat = parseFloat(parts[0].replace('°', '').trim());
+    const lng = parseFloat(parts[1].replace('°', '').trim());
+    if (isNaN(lat) || isNaN(lng)) return null;
+    return [lng, lat]; // GeoJSON order [lng, lat]
+  }
+
+  function timelineToGeoJSON(json) {
+    const segs = json && json.semanticSegments ? json.semanticSegments : [];
+    const points = [];
+    segs.forEach(function (seg) {
+      if (!seg.timelinePath || !seg.timelinePath.length) return;
+      seg.timelinePath.forEach(function (pt) {
+        const ll = parseTimelinePoint(pt.point);
+        if (!ll) return;
+        const t = pt.time ? new Date(pt.time) : null;
+        points.push({ lng: ll[0], lat: ll[1], t: t });
+      });
+    });
+    // Dedup titik berurutan yang hampir identik (posisi diam) agar animasi ringan
+    const dedup = [];
+    const EPS = 1e-6;
+    points.forEach(function (p) {
+      const prev = dedup[dedup.length - 1];
+      if (!prev || Math.abs(prev.lat - p.lat) > EPS || Math.abs(prev.lng - p.lng) > EPS) {
+        dedup.push(p);
+      }
+    });
+    if (dedup.length < 2) return null;
+    const coords = dedup.map(function (p) { return [p.lng, p.lat]; });
+    const f = dedup[0].t;
+    const l = dedup[dedup.length - 1].t;
+    let name = 'Google Timeline';
+    if (f && l) {
+      const opt = { day: '2-digit', month: 'short' };
+      name += ' ' + f.toLocaleDateString('id-ID', opt) + ' – ' + l.toLocaleDateString('id-ID', opt);
+    }
+    return {
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature',
+        properties: { name: name },
+        geometry: { type: 'LineString', coordinates: coords }
+      }]
+    };
+  }
+
+  function loadTimelineJSON() {
+    const input = document.getElementById('timelineFileInput');
+    function run(text) {
+      try {
+        const json = JSON.parse(text);
+        const geojson = timelineToGeoJSON(json);
+        if (!geojson) {
+          setAlatStatus('Tidak ada timelinePath ditemukan dalam JSON.', true);
+          return;
+        }
+        gpxCollectTracks(geojson);
+        // Saat Muat & Animasi: basemap → Carto Light, zoom 15
+        if (typeof setBaseMap === 'function') setBaseMap('carto-light');
+        map.setZoom(8);
+        setAlatStatus('Timeline dimuat (' + geojson.features[0].geometry.coordinates.length + ' titik). Tekan Play untuk memutar animasi.');
+      } catch (e) {
+        setAlatStatus('Gagal memuat Timeline JSON: ' + e.message, true);
+      }
+    }
+    if (input && input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function () { run(reader.result); };
+      reader.onerror = function () { setAlatStatus('Gagal membaca file.', true); };
+      reader.readAsText(input.files[0]);
+    } else {
+      setAlatStatus('Pilih file Timeline.json dari HP Anda terlebih dahulu.', true);
+    }
+  }
+
+  // ==============================================================
   // GPX TRACK ANIMATION
   // ==============================================================
   let gpxTracks = [];          // [{ name, coords }]
   let gpxAnimMarker = null;
-  let gpxAnimTrailDone = null; // polyline sudah dilalui
-  let gpxAnimTrailTodo = null; // polyline belum dilalui
+  let gpxAnimTodo = null;       // panduan rute utuh (faint)
+  let gpxAnimComet = [];        // band trail memudar (comet)
   let gpxAnimRaf = null;
   let gpxAnimPlaying = false;
-  let gpxAnimIdx = 0;
+  let gpxAnimPos = 0;           // posisi float untuk interpolasi halus
   let gpxAnimSpeed = 1;
   let gpxAnimLastTs = 0;
+  let gpxAnimFinished = false;  // true bila animasi telah sampai ujung (jalur penuh menyala)
+  const GPX_PTS_PER_SEC = 50;  // kecepatan dasar poin/detik (1x) — seimbang: ekor komet tetap terlihat (~12 dtk) & putar penuh ~2 menit
+  const GPX_COMET_BASE_TAIL = 380;   // jumlah titik ekor komet pada 1x
+  const GPX_COMET_SEGMENTS = 32;      // jumlah band → gradien halus kepala→ekor
+  const GPX_COMET_HEAD = { color: [96, 165, 250], weight: 6, opacity: 0.95 };  // #60a5fa
+  const GPX_COMET_TAIL = { color: [30, 64, 175], weight: 1, opacity: 0.0 };    // #1e40af
+  function gpxCometStyle(k) {
+    const f = k / (GPX_COMET_SEGMENTS - 1); // 0 = kepala, 1 = ekor
+    const cr = Math.round(GPX_COMET_HEAD.color[0] + (GPX_COMET_TAIL.color[0] - GPX_COMET_HEAD.color[0]) * f);
+    const cg = Math.round(GPX_COMET_HEAD.color[1] + (GPX_COMET_TAIL.color[1] - GPX_COMET_HEAD.color[1]) * f);
+    const cb = Math.round(GPX_COMET_HEAD.color[2] + (GPX_COMET_TAIL.color[2] - GPX_COMET_HEAD.color[2]) * f);
+    return {
+      color: 'rgb(' + cr + ',' + cg + ',' + cb + ')',
+      weight: GPX_COMET_HEAD.weight + (GPX_COMET_TAIL.weight - GPX_COMET_HEAD.weight) * f,
+      opacity: GPX_COMET_HEAD.opacity + (GPX_COMET_TAIL.opacity - GPX_COMET_HEAD.opacity) * f,
+      lineCap: 'round', lineJoin: 'round'
+    };
+  }
 
   function gpxCollectTracks(geojson) {
     gpxTracks = [];
@@ -326,11 +428,13 @@
     if (gpxAnimRaf) cancelAnimationFrame(gpxAnimRaf);
     gpxAnimRaf = null;
     gpxAnimPlaying = false;
-    gpxAnimIdx = 0;
+    gpxAnimPos = 0;
     gpxAnimLastTs = 0;
+    gpxAnimFinished = false;
     if (gpxAnimMarker) { map.removeLayer(gpxAnimMarker); gpxAnimMarker = null; }
-    if (gpxAnimTrailDone) { map.removeLayer(gpxAnimTrailDone); gpxAnimTrailDone = null; }
-    if (gpxAnimTrailTodo) { map.removeLayer(gpxAnimTrailTodo); gpxAnimTrailTodo = null; }
+    if (gpxAnimTodo) { map.removeLayer(gpxAnimTodo); gpxAnimTodo = null; }
+    gpxAnimComet.forEach(function (l) { if (l) map.removeLayer(l); });
+    gpxAnimComet = [];
     const btn = document.getElementById('gpxAnimPlay');
     if (btn) { const s = btn.querySelector('span'); if (s) s.textContent = 'Play'; }
     const slider = document.getElementById('gpxAnimSlider');
@@ -359,17 +463,24 @@
     const track = gpxTracks[tIdx];
 
     // Jika mulai dari awal, setup trail
-    if (gpxAnimIdx === 0 || gpxAnimIdx >= track.coords.length - 1) {
+    if (gpxAnimPos === 0 || gpxAnimPos >= track.coords.length - 1) {
       gpxAnimReset();
-      gpxAnimIdx = 0;
+      gpxAnimPos = 0;
       const latlngs = track.coords;
-      gpxAnimTrailDone = L.polyline([], { color: '#0879bf', weight: 4, opacity: 0.9 }).addTo(map);
-      gpxAnimTrailTodo = L.polyline(latlngs, { color: '#b0c4d8', weight: 3, opacity: 0.6, dashArray: '6 4' }).addTo(map);
-      gpxAnimMarker = L.circleMarker(latlngs[0], {
-        radius: 8, color: '#fff', weight: 3, fillColor: '#e74c3c', fillOpacity: 1
+      gpxAnimTodo = L.polyline(latlngs, { color: '#94a3b8', weight: 2, opacity: 0.12 }).addTo(map);
+      gpxAnimComet = [];
+      for (let k = GPX_COMET_SEGMENTS - 1; k >= 0; k--) {
+        gpxAnimComet[k] = L.polyline([], gpxCometStyle(k)).addTo(map);
+      }
+      gpxAnimMarker = L.marker(latlngs[0], {
+        icon: L.divIcon({
+          className: 'gpx-anim-dot',
+          html: '<span class="gpx-anim-dot-inner"></span>',
+          iconSize: [18, 18], iconAnchor: [9, 9]
+        }),
+        zIndexOffset: 1000
       }).addTo(map);
-      gpxAnimMarker.bindPopup('', { maxWidth: 200, className: 'alat-leaflet-popup' });
-      map.flyToBounds(L.latLngBounds(latlngs).pad(0.1), { duration: 0.6 });
+      map.flyToBounds(L.latLngBounds(latlngs), { padding: [60, 60], maxZoom: 7, duration: 0.6 });
     }
 
     gpxAnimPlaying = true;
@@ -405,21 +516,35 @@
     if (isNaN(tIdx) || !gpxTracks[tIdx]) return;
     const track = gpxTracks[tIdx];
     const total = track.coords.length - 1;
-    const target = Math.round(pct / 100 * total);
-    if (target === gpxAnimIdx) return;
+    const target = (pct / 100) * total;
+    if (Math.round(target) === Math.round(gpxAnimPos) && !gpxAnimFinished) return;
 
-    // Setup layers if needed
-    if (!gpxAnimTrailDone) {
-      gpxAnimTrailDone = L.polyline([], { color: '#0879bf', weight: 4, opacity: 0.9 }).addTo(map);
-      gpxAnimTrailTodo = L.polyline(track.coords, { color: '#b0c4d8', weight: 3, opacity: 0.6, dashArray: '6 4' }).addTo(map);
-      gpxAnimMarker = L.circleMarker(track.coords[0], {
-        radius: 8, color: '#fff', weight: 3, fillColor: '#e74c3c', fillOpacity: 1
+    // Bersihkan mode "selesai" agar kembali ke comet normal
+    if (gpxAnimFinished || !gpxAnimComet.length) {
+      if (gpxAnimMarker) { map.removeLayer(gpxAnimMarker); gpxAnimMarker = null; }
+      if (gpxAnimTodo) { map.removeLayer(gpxAnimTodo); gpxAnimTodo = null; }
+      gpxAnimComet.forEach(function (l) { if (l) map.removeLayer(l); });
+      gpxAnimComet = [];
+    gpxAnimFinished = false;
+      gpxAnimTodo = L.polyline(track.coords, { color: '#94a3b8', weight: 2, opacity: 0.12 }).addTo(map);
+      gpxAnimComet = [];
+      for (let k = GPX_COMET_SEGMENTS - 1; k >= 0; k--) {
+        gpxAnimComet[k] = L.polyline([], gpxCometStyle(k)).addTo(map);
+      }
+      gpxAnimMarker = L.marker(track.coords[0], {
+        icon: L.divIcon({ className: 'gpx-anim-dot', html: '<span class="gpx-anim-dot-inner"></span>', iconSize: [18, 18], iconAnchor: [9, 9] }),
+        zIndexOffset: 1000
       }).addTo(map);
-      gpxAnimMarker.bindPopup('', { maxWidth: 200, className: 'alat-leaflet-popup' });
+      map.flyToBounds(L.latLngBounds(track.coords), { padding: [60, 60], maxZoom: 7, duration: 0.5 });
     }
 
-    gpxAnimIdx = target;
+    gpxAnimPos = target;
     gpxAnimUpdateView(track);
+
+    if (target >= total) {
+      gpxAnimFinished = true;
+      gpxAnimRevealFull(track);
+    }
   }
 
   function gpxAnimSetSpeed(v) { gpxAnimSpeed = parseInt(v, 10) || 1; }
@@ -432,16 +557,18 @@
     if (!track) return;
 
     if (!gpxAnimLastTs) gpxAnimLastTs = ts;
-    const delta = ts - gpxAnimLastTs;
-    // ~30 points per second at 1x speed
-    const step = Math.max(1, Math.round(delta / 1000 * 30 * gpxAnimSpeed));
-    gpxAnimIdx = Math.min(gpxAnimIdx + step, track.coords.length - 1);
+    const delta = (ts - gpxAnimLastTs) / 1000;
     gpxAnimLastTs = ts;
+    // Maju berbasis waktu agar pergerakan halus & konsisten antar kecepatan
+    const step = Math.max(0.5, delta * GPX_PTS_PER_SEC * gpxAnimSpeed);
+    gpxAnimPos = Math.min(gpxAnimPos + step, track.coords.length - 1);
 
     gpxAnimUpdateView(track);
 
-    if (gpxAnimIdx >= track.coords.length - 1) {
+    if (gpxAnimPos >= track.coords.length - 1) {
       gpxAnimPlaying = false;
+      gpxAnimFinished = true;
+      gpxAnimRevealFull(track);
       const playBtn = document.getElementById('gpxAnimPlay');
       const playSpan = playBtn.querySelector('span');
       const playSvg = playBtn.querySelector('svg');
@@ -454,32 +581,58 @@
 
   function gpxAnimUpdateView(track) {
     const coords = track.coords;
-    const idx = gpxAnimIdx;
-    const done = coords.slice(0, idx + 1);
-    gpxAnimTrailDone.setLatLngs(done);
-    gpxAnimMarker.setLatLng(coords[idx]);
-    // Update remaining trail
-    if (idx < coords.length - 1) {
-      gpxAnimTrailTodo.setLatLngs(coords.slice(idx));
-    } else {
-      gpxAnimTrailTodo.setLatLngs([]);
+    const pos = gpxAnimPos;
+    const last = coords.length - 1;
+    const i = Math.max(0, Math.min(Math.floor(pos), last - 1));
+    const frac = pos - i;
+    const a = coords[i];
+    const b = coords[Math.min(i + 1, last)];
+    // Interpolasi posisi marker antar-titik → pergerakan halus
+    const head = [a[0] + (b[0] - a[0]) * frac, a[1] + (b[1] - a[1]) * frac];
+    gpxAnimMarker.setLatLng(head);
+    if (gpxAnimPlaying) map.panTo(head);
+
+    // Comet halus: banyak band dengan gradien ketebalan & transparansi kepala→ekor
+    if (!gpxAnimFinished) {
+      const sp = gpxAnimSpeed || 1;
+      const tailLen = Math.min(Math.round(GPX_COMET_BASE_TAIL * sp), last);
+      const segLen = Math.max(1, tailLen / GPX_COMET_SEGMENTS);
+      for (let k = 0; k < GPX_COMET_SEGMENTS; k++) {
+        const end = i - Math.round(k * segLen);
+        const start = i - Math.round((k + 1) * segLen);
+        const s = Math.max(0, start);
+        const e = Math.max(s, end);
+        const pts = coords.slice(s, e + 1).map(function (c) { return [c[0], c[1]]; });
+        if (k === 0) pts.push(head); // sambungkan ke posisi marker terinterpolasi
+        gpxAnimComet[k].setLatLngs(pts);
+      }
     }
+
     // Slider
-    const pct = idx / (coords.length - 1) * 100;
-    document.getElementById('gpxAnimSlider').value = pct;
-    // Info
+    const pct = (pos / last) * 100;
+    const slider = document.getElementById('gpxAnimSlider');
+    if (slider) slider.value = pct;
+
+    // Info jarak
     let dist = 0;
-    for (let i = 1; i <= idx; i++) {
-      dist += L.latLng(coords[i - 1]).distanceTo(L.latLng(coords[i]));
+    for (let k = 1; k <= i; k++) {
+      dist += L.latLng(coords[k - 1]).distanceTo(L.latLng(coords[k]));
     }
     let totalDist = 0;
-    for (let i = 1; i < coords.length; i++) {
-      totalDist += L.latLng(coords[i - 1]).distanceTo(L.latLng(coords[i]));
+    for (let k = 1; k < coords.length; k++) {
+      totalDist += L.latLng(coords[k - 1]).distanceTo(L.latLng(coords[k]));
     }
     const fmtDist = dist >= 1000 ? (dist / 1000).toFixed(2) + ' km' : Math.round(dist) + ' m';
     const fmtTotal = totalDist >= 1000 ? (totalDist / 1000).toFixed(2) + ' km' : Math.round(totalDist) + ' m';
-    gpxAnimMarker.setPopupContent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M10 22V17L7 14V10l5-2 5 2v4l-3 3v5"/><path d="M10 13l2 2 2-2"/></svg>');
-    gpxAnimMarker.openPopup();
     document.getElementById('gpxAnimInfo').innerHTML =
-      `<b>${track.name}</b> — ${fmtDist} / ${fmtTotal} — titik ${idx + 1}/${coords.length}`;
+      `<b>${track.name}</b> — ${fmtDist} / ${fmtTotal} — titik ${i + 1}/${coords.length}`;
+  }
+
+  // Seluruh jalur menyala dengan gaya comet (tiap band diisi penuh)
+  function gpxAnimRevealFull(track) {
+    for (let k = 0; k < GPX_COMET_SEGMENTS; k++) {
+      if (gpxAnimComet[k]) gpxAnimComet[k].setLatLngs(track.coords);
+    }
+    if (gpxAnimTodo) { map.removeLayer(gpxAnimTodo); gpxAnimTodo = null; }
+    gpxAnimMarker.setLatLng(track.coords[track.coords.length - 1]);
   }

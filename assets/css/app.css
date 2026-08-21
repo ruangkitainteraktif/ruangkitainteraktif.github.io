@@ -4192,6 +4192,19 @@
       background: #0879bf; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.25); cursor: pointer;
     }
     .gpx-anim-info { margin-top: 8px; font-size: 11px; color: #567; line-height: 1.5; }
+    /* Marker animasi modern (dot berdenyut) */
+    .gpx-anim-dot { background: transparent; border: 0; }
+    .gpx-anim-dot-inner {
+      display: block; width: 14px; height: 14px; border-radius: 50%;
+      background: #2563eb; border: 2px solid #fff;
+      box-shadow: 0 0 0 2px rgba(37,99,235,.35);
+      animation: gpxAnimPulse 1.5s cubic-bezier(.4,0,.6,1) infinite;
+    }
+    @keyframes gpxAnimPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(37,99,235,.55); }
+      70%  { box-shadow: 0 0 0 12px rgba(37,99,235,0); }
+      100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+    }
     /* Layer WMS point (marker cluster) — popup gaya CCTV */
     .gp-point-icon {
       background: transparent;
