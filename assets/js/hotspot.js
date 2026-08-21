@@ -52,7 +52,7 @@
     }
 
     var LegendControl = L.Control.extend({
-      options: { position: 'topright' },
+      options: { position: 'bottomleft' },
       onAdd: function () {
         var div = L.DomUtil.create('div', 'hotspot-legend');
         L.DomEvent.disableClickPropagation(div);
@@ -131,7 +131,7 @@
           1.0: '#dc2626'
         },
         minOpacity: 0.4
-      }).addTo(map);
+      });
 
       hotspotMarkerGroup = L.layerGroup();
 
@@ -181,7 +181,7 @@
       if (eyeBtn) {
         eyeBtn.style.display = 'flex';
         eyeBtn.classList.remove('markers-hidden');
-        eyeBtn.title = 'Sembunyikan marker';
+        eyeBtn.title = 'Tampilkan heatmap';
       }
 
       createHotspotLegend(hotspotFeatures.length, high, medium, low);
@@ -261,20 +261,20 @@
     if (typeof window.clearHotspotBar === 'function') window.clearHotspotBar();
   }
 
-  function toggleHotspotMarkers() {
-    if (!hotspotMarkerGroup) return;
+  function toggleHotspotHeatmap() {
+    if (!heatmapLayer) return;
     var eyeBtn = document.getElementById('toggleHotspotMarkers');
-    if (map.hasLayer(hotspotMarkerGroup)) {
-      map.removeLayer(hotspotMarkerGroup);
+    if (map.hasLayer(heatmapLayer)) {
+      map.removeLayer(heatmapLayer);
       if (eyeBtn) {
         eyeBtn.classList.add('markers-hidden');
-        eyeBtn.title = 'Tampilkan marker';
+        eyeBtn.title = 'Tampilkan heatmap';
       }
     } else {
-      hotspotMarkerGroup.addTo(map);
+      heatmapLayer.addTo(map);
       if (eyeBtn) {
         eyeBtn.classList.remove('markers-hidden');
-        eyeBtn.title = 'Sembunyikan marker';
+        eyeBtn.title = 'Sembunyikan heatmap';
       }
     }
   }
@@ -296,7 +296,7 @@
       eyeBtn.addEventListener('click', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        toggleHotspotMarkers();
+        toggleHotspotHeatmap();
       });
     }
   });
@@ -503,25 +503,21 @@
   var perPage = 10;
 
   function aggregateFeatures(features) {
-    var map = {};
+    var result = [];
     for (var i = 0; i < features.length; i++) {
       var p = features[i].properties;
       if (p.lat == null || p.long == null) continue;
-      var prov = p.nama_provinsi || '-';
-      var kab = p.kabkota || '-';
-      var src = p.sumber || '-';
       var conf = p.confidence_level || '-';
       if (conf === 'high') conf = 'High';
       else if (conf === 'medium') conf = 'Medium';
       else conf = 'Low';
-      var key = prov + '|' + kab + '|' + src + '|' + conf;
-      if (!map[key]) map[key] = { provinsi: prov, kabupaten: kab, sumber: src, confidence: conf, counter: 0 };
-      map[key].counter++;
-    }
-    var result = [];
-    var keys = Object.keys(map);
-    for (var k = 0; k < keys.length; k++) {
-      result.push(map[keys[k]]);
+      result.push({
+        provinsi: p.nama_provinsi || '-',
+        kabupaten: p.kabkota || '-',
+        sumber: p.sumber || '-',
+        confidence: conf,
+        tanggal: p.date_hotspot || '-'
+      });
     }
     return result;
   }
@@ -590,7 +586,7 @@
     filteredData = [];
     for (var i = 0; i < allData.length; i++) {
       var d = allData[i];
-      if (search && d.kabupaten.toLowerCase().indexOf(search) === -1 && d.provinsi.toLowerCase().indexOf(search) === -1) continue;
+      if (search && d.kabupaten.toLowerCase().indexOf(search) === -1 && d.provinsi.toLowerCase().indexOf(search) === -1 && d.tanggal.toLowerCase().indexOf(search) === -1) continue;
       if (provFilter && d.provinsi !== provFilter) continue;
       if (confFilter && d.confidence !== confFilter) continue;
       filteredData.push(d);
@@ -634,18 +630,19 @@
       '<div class="hs-table-wrap">' +
         '<div class="hs-table-header">' +
           '<div class="hs-table-title">Sebaran Hotspot (24 Jam)</div>' +
-          '<div class="hs-table-total">' + allData.reduce(function(s, r) { return s + r.counter; }, 0).toLocaleString('id-ID') + ' titik panas</div>' +
+          '<div class="hs-table-total">' + allData.length.toLocaleString('id-ID') + ' titik panas</div>' +
         '</div>' +
         catHtml +
         '<div class="hs-table-controls">' +
           '<input type="text" id="hotspotSearch" class="hs-search-input" placeholder="Cari provinsi / kabupaten...">' +
           '<select id="hotspotProvFilter" class="hs-select">' + provOpts + '</select>' +
           '<select id="hotspotConfFilter" class="hs-select">' + confOpts + '</select>' +
+          '<button id="hotspotExportCsv" class="gp-btn-csv" title="Export CSV"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> CSV</button>' +
         '</div>' +
         '<div class="hs-table-scroll">' +
           '<table class="hs-table">' +
             '<thead><tr>' +
-              '<th>No</th><th>Provinsi</th><th>Kabupaten</th><th>Sumber</th><th>Confidence</th><th>Jumlah</th>' +
+              '<th>No</th><th>Provinsi</th><th>Kabupaten</th><th>Sumber</th><th>Confidence</th><th>Tanggal</th>' +
             '</tr></thead>' +
             '<tbody id="hotspotTableBody"></tbody>' +
           '</table>' +
@@ -656,6 +653,7 @@
     document.getElementById('hotspotSearch').addEventListener('input', applyFilters);
     document.getElementById('hotspotProvFilter').addEventListener('change', applyFilters);
     document.getElementById('hotspotConfFilter').addEventListener('change', applyFilters);
+    document.getElementById('hotspotExportCsv').addEventListener('click', exportHotspotCSV);
 
     renderTableBody();
     renderPagination();
@@ -678,7 +676,7 @@
         '<td>' + d.kabupaten + '</td>' +
         '<td>' + d.sumber + '</td>' +
         '<td><span class="hs-conf-badge ' + confClass + '">' + d.confidence + '</span></td>' +
-        '<td class="hs-num">' + d.counter + '</td>' +
+        '<td>' + d.tanggal + '</td>' +
       '</tr>';
     }
 
@@ -719,6 +717,38 @@
         renderPagination();
       });
     }
+  }
+
+  function exportHotspotCSV() {
+    var data = filteredData.length ? filteredData : allData;
+    if (!data.length) return;
+
+    var lines = ['No,Provinsi,Kabupaten,Sumber,Confidence,Tanggal'];
+    for (var i = 0; i < data.length; i++) {
+      var d = data[i];
+      lines.push([
+        i + 1,
+        '"' + d.provinsi.replace(/"/g, '""') + '"',
+        '"' + d.kabupaten.replace(/"/g, '""') + '"',
+        '"' + d.sumber.replace(/"/g, '""') + '"',
+        d.confidence,
+        '"' + d.tanggal.replace(/"/g, '""') + '"'
+      ].join(','));
+    }
+
+    var blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0');
+    var yyyy = today.getFullYear();
+    var filename = 'hotspot_karhutla_' + yyyy + '-' + mm + '-' + dd + '.csv';
+
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function clearTable() {

@@ -73,6 +73,7 @@
   var loaded = false;
   var inflasiCache = null;
   var sebaranPasarLayer = null;
+  var sppgLayer = null;
 
   function $(id) { return document.getElementById(id); }
 
@@ -892,8 +893,11 @@
     if (activeLayer && map.hasLayer(activeLayer)) { map.removeLayer(activeLayer); activeLayer = null; }
     if (activeLegend) { map.removeControl(activeLegend); activeLegend = null; }
     if (sebaranPasarLayer && map.hasLayer(sebaranPasarLayer)) { map.removeLayer(sebaranPasarLayer); sebaranPasarLayer = null; }
+    if (sppgLayer && map.hasLayer(sppgLayer)) { map.removeLayer(sppgLayer); sppgLayer = null; }
     var chk = $('toggleSebaranPasar');
     if (chk) chk.checked = false;
+    var chkSppg = $('toggleSppgLayer');
+    if (chkSppg) chkSppg.checked = false;
     var resultEl = $('geopanganResult');
     if (resultEl) resultEl.innerHTML = '';
     var tableEl = $('geopanganTable');
@@ -941,6 +945,54 @@
     }).addTo(map);
   }
 
+  /* ── SPPG Layer (Sismonbgn / Kementerian PUPR) ── */
+  var SPPG_URL = 'assets/data/SPPG.geojson';
+
+  function toggleSppg(visible) {
+    if (!visible) {
+      if (sppgLayer && map.hasLayer(sppgLayer)) {
+        map.removeLayer(sppgLayer);
+      }
+      return;
+    }
+    if (sppgLayer) { sppgLayer.addTo(map); return; }
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', SPPG_URL, true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          var geojson = JSON.parse(xhr.responseText);
+          sppgLayer = L.geoJSON(geojson, {
+            pointToLayer: function (feature, latlng) {
+              return L.circleMarker(latlng, {
+                radius: 5,
+                fillColor: '#8b5cf6',
+                color: '#6d28d9',
+                weight: 1,
+                opacity: 1,
+                fillOpacity: 0.85
+              });
+            },
+            onEachFeature: function (feature, layer) {
+              var p = feature.properties || {};
+              layer.bindPopup(
+                '<div style="font-size:12px;line-height:1.6">' +
+                  '<strong style="color:#6d28d9">' + (p.name || '-') + '</strong><br>' +
+                  'Kategori: ' + (p.category || '-') + '<br>' +
+                  'Alamat: ' + (p.desc || '-') +
+                '</div>'
+              );
+            }
+          }).addTo(map);
+        } catch (e) {
+          console.error('[Geopangan] Gagal load SPPG GeoJSON:', e);
+        }
+      }
+    };
+    xhr.send();
+  }
+
   /* ── Init on first load if already on tab ── */
   async function init() {
     await Promise.all([loadCommodities(), populateProvinces()]);
@@ -953,6 +1005,8 @@
     if (loadBtn) loadBtn.addEventListener('click', loadAndDisplay);
     var chkPasar = $('toggleSebaranPasar');
     if (chkPasar) chkPasar.addEventListener('change', function () { toggleSebaranPasar(this.checked); });
+    var chkSppg = $('toggleSppgLayer');
+    if (chkSppg) chkSppg.addEventListener('change', function () { toggleSppg(this.checked); });
     if (window.currentActiveTab === 'tab-geopangan') init();
   });
 

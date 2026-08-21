@@ -880,6 +880,14 @@
                 <small>Data sebaran pasar induk, penunjang, dan eceran — Kementerian Perdagangan</small>
               </span>
             </label>
+            <label class="cctv-layer-toggle" style="margin:8px 12px;">
+              <input type="checkbox" id="toggleSppgLayer">
+              <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span class="cctv-layer-info">
+                <span class="cctv-layer-name">SPPG Indonesia</span>
+                <small>Satuan Pelayanan Pemenuhan Gizi - Sismonbgn</small>
+              </span>
+            </label>
 
             <h4 style="font-size: 13px; margin-top:20px; margin-bottom: 10px;">Cari wilayah untuk melihat harga pangan.</h4>
             <div class="geopangan-field">
@@ -1006,7 +1014,7 @@
             <button class="gempa-subtab-btn active" data-subtab="gempa-subtab-infocuaca" onclick="openGempaSubtab(this)">Info Cuaca</button>
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-gempa" onclick="openGempaSubtab(this)">Info Gempa</button>
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-gunungapi" onclick="openGempaSubtab(this)">Info Geologi</button>
-            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-karhutla" onclick="openGempaSubtab(this)">Info Karhutla</button>
+            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-karhutla" onclick="openGempaSubtab(this)">Info Kehutanan</button>
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-prediksicuaca" onclick="openGempaSubtab(this)">Prediksi Cuaca</button>
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-maritim" onclick="openGempaSubtab(this)">Prediksi Maritim</button>
           </div>
@@ -1104,12 +1112,11 @@
           </div>
 
           <div id="gempa-subtab-karhutla" class="gempa-subtab-panel">
-            <p style="font-size:12px;color:#666;margin-bottom:12px;">Pantau titik panas kebakaran hutan dan lahan (Karhutla) dari satelit NASA-MODIS, SNPP, dan NOAA20 dalam 24 jam terakhir.</p>
             <div id="hotspot-summary-card"></div>
             <div class="cctv-card" style="margin-bottom:12px;">
               <div class="cctv-card-header">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                <span>Layer Karhutla</span>
+                <span>Layer Kehutanan</span>
               </div>
               <div class="cctv-card-body cctv-layers">
               <label class="cctv-layer-toggle">
@@ -1119,9 +1126,17 @@
                   <span class="cctv-layer-name">Hotspot Karhutla (24 Jam)</span>
                   <small>Titik panas dari NASA-MODIS, SNPP, NOAA20</small>
                 </span>
-                <button type="button" id="toggleHotspotMarkers" class="hotspot-eye-btn" title="Sembunyikan marker" style="display:none;">
+                <button type="button" id="toggleHotspotMarkers" class="hotspot-eye-btn" title="Sembunyikan heatmap" style="display:none;">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleKawasanHutanLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Kawasan Hutan</span>
+                  <small>Batas kawasan hutan dari Geoportal ESDM</small>
+                </span>
               </label>
             </div>
             </div>
@@ -1269,7 +1284,7 @@
             <div class="cctv-card">
               <div class="cctv-card-header">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                <span>Layer Gunung Api</span>
+                <span>Layer Geologi Indonesia</span>
               </div>
               <div class="cctv-card-body cctv-layers">
               <label class="cctv-layer-toggle">
@@ -1637,6 +1652,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/jstree.min.js"></script>
   <script src="assets/js/map-core.js"></script>
+  <script src="assets/js/modis-time-slider.js"></script>
   <script src="assets/js/geoportal.js"></script>
   <script src="assets/js/geoportal-search.js"></script>
   <script src="assets/js/sidebar.js"></script>
@@ -1680,6 +1696,7 @@
   <script src="assets/js/unified-search.js"></script>
   <script src="assets/js/choropleth.js"></script>
   <script src="assets/js/hotspot.js"></script>
+  <script src="assets/js/kawasan-hutan.js"></script>
   <script src="assets/js/fault-layer.js"></script>
   <script src="assets/js/fault-layer-new.js"></script>
   <script src="assets/js/jalur-evakuasi.js"></script>

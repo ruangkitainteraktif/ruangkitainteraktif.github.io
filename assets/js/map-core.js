@@ -46,6 +46,12 @@ L.control.scale({
     'google-traffic': L.tileLayer('https://mt0.google.com/vt?lyrs=s@159000000,traffic|seconds_into_week:-1&style=3&x={x}&y={y}&z={z}', {
       maxZoom: 19,
       attribution: 'Mas Pannn'
+    }),
+    'modis-terra': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/{Time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', {
+      maxZoom: 12,
+      minZoom: 0,
+      attribution: 'NASA GIBS',
+      Time: new Date().toISOString().slice(0, 10)
     })
   };
 
@@ -61,6 +67,7 @@ L.control.scale({
     currentBasemapName = key;
     const select = document.getElementById('basemapSelect');
     if (select) select.value = key;
+    map.fire('basemapchanged', { basemap: key });
   }
 
   function setRdtrOpacity(value) {
@@ -167,7 +174,8 @@ L.control.scale({
     'rupabumi': 'Rupabumi Indonesia',
     'google-maps': 'Google Maps',
     'google-terrain': 'Google Terrain',
-    'google-traffic': 'Google Traffic'
+    'google-traffic': 'Google Traffic',
+    'modis-terra': 'MODIS Terra (NASA GIBS)'
   };
   const BasemapControl = L.Control.extend({
     options: { position: 'bottomright' },
@@ -222,8 +230,13 @@ L.control.scale({
         // 1. Matikan layer jalan & angin (checkbox-driven)
         const toggles = [
           'toggleTollRoad', 'toggleNonTollRoad', 'toggleNationalRoad',
-          'toggleWindAnim', 'toggleWindRgb', 'toggleRhRgb', 'toggleTp24Rgb', 'toggleSawahDilindungi', 'toggleSawahNasional50k',
-          'toggleBppLayer', 'toggleSawitLayer', 'toggleErosiLayer', 'toggleHotspotLayer'
+          'toggleWindAnim', 'toggleWindRgb', 'toggleRhRgb', 'toggleTp24Rgb',
+          'togglePm25Rgb', 'toggleHthRgb', 'toggleGsmapRgb',
+          'toggleMaritimeAngin', 'toggleMaritimeGelombang', 'toggleMaritimeSwell', 'toggleMaritimeWindSea',
+          'toggleSawahDilindungi', 'toggleSawahNasional50k',
+          'toggleBppLayer', 'toggleSawitLayer', 'toggleErosiLayer',
+          'toggleHotspotLayer', 'toggleKawasanHutanLayer',
+          'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer'
         ];
         toggles.forEach(id => {
           const el = document.getElementById(id);
@@ -317,6 +330,8 @@ L.control.scale({
         if (typeof _jalurEvakuasiCleanup === 'function') _jalurEvakuasiCleanup();
         if (typeof _finiteFaultNTTCleanup === 'function') _finiteFaultNTTCleanup();
         if (typeof _worldPlatesLayerCleanup === 'function') _worldPlatesLayerCleanup();
+        if (typeof kawasanHutanCleanup === 'function') kawasanHutanCleanup();
+        if (typeof modisTimeSliderCleanup === 'function') modisTimeSliderCleanup();
 
         // Bersihkan layer sensor & katalog gempa
         document.querySelectorAll('#toggleKatalogGempa, #toggleSensorSeismic, #toggleSensorGlobal, #toggleHistoryGempa').forEach(function (cb) {
