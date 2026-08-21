@@ -466,51 +466,58 @@
             <div id="geoidAutocompleteResults" class="geoid-autocomplete-results"></div>
           </div>
 
-          <h4 style="font-size: 13px; margin-top:20px; margin-bottom: 10px;">Cari wilayah untuk melihat data.</h4>
-          <div class="query-box">
-            <div class="form-group">
-              <label for="pilihProvinsi">Pilih <b>Provinsi</b></label>
-              <select id="pilihProvinsi">
-                <option value=""></option>
-              </select>
+          <div class="cctv-card" style="margin-bottom:12px;">
+            <div class="cctv-card-header">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span>Cari Wilayah Data</span>
             </div>
+            <div class="cctv-card-body">
+            <div class="query-box">
+              <div class="form-group">
+                <label for="pilihProvinsi">Pilih <b>Provinsi</b></label>
+                <select id="pilihProvinsi">
+                  <option value=""></option>
+                </select>
+              </div>
 
-            <div class="form-group">
-              <label for="pilihKabupaten">Pilih <b>Kabupaten/Kota</b></label>
-              <select id="pilihKabupaten" disabled>
-                <option value="">Pilih Provinsi</option>
-              </select>
+              <div class="form-group">
+                <label for="pilihKabupaten">Pilih <b>Kabupaten/Kota</b></label>
+                <select id="pilihKabupaten" disabled>
+                  <option value="">Pilih Provinsi</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="pilihKecamatan">Pilih <b>Kecamatan</b></label>
+                <select id="pilihKecamatan" disabled>
+                  <option value="">Pilih Kab/Kota</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="pilihDesa">Pilih <b>Desa</b></label>
+                <select id="pilihDesa" disabled>
+                  <option value="">Pilih Kecamatan</option>
+                </select>
+              </div>
+
+              <div class="geoid-data-toggles">
+                <label class="geoid-check">
+                  <input id="geoidToggleKemendagri" type="checkbox" checked>
+                  <svg class="geoid-check-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><polyline points="9 12 11 14 15 10"/></svg>
+                  <span>KEMENDAGRI</span>
+                </label>
+                <label class="geoid-check">
+                  <input id="geoidToggleBps" type="checkbox" checked>
+                  <svg class="geoid-check-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><polyline points="9 12 11 14 15 10"/></svg>
+                  <span>BPS</span>
+                </label>
+              </div>
+
+              <button id="applyWilayah" class="btn-wilayah-apply" type="button" disabled onclick="cariLayerWilayah()">Cari
+                Wilayah</button>
             </div>
-
-            <div class="form-group">
-              <label for="pilihKecamatan">Pilih <b>Kecamatan</b></label>
-              <select id="pilihKecamatan" disabled>
-                <option value="">Pilih Kab/Kota</option>
-              </select>
             </div>
-
-            <div class="form-group">
-              <label for="pilihDesa">Pilih <b>Desa</b></label>
-              <select id="pilihDesa" disabled>
-                <option value="">Pilih Kecamatan</option>
-              </select>
-            </div>
-
-            <div class="geoid-data-toggles">
-              <label class="geoid-check">
-                <input id="geoidToggleKemendagri" type="checkbox" checked>
-                <svg class="geoid-check-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><polyline points="9 12 11 14 15 10"/></svg>
-                <span>KEMENDAGRI</span>
-              </label>
-              <label class="geoid-check">
-                <input id="geoidToggleBps" type="checkbox" checked>
-                <svg class="geoid-check-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><polyline points="9 12 11 14 15 10"/></svg>
-                <span>BPS</span>
-              </label>
-            </div>
-
-            <button id="applyWilayah" class="btn-wilayah-apply" type="button" disabled onclick="cariLayerWilayah()">Cari
-              Wilayah</button>
           </div>
 
           <hr style="margin: 20px 0 20px; border:0; border-top:1px solid #e8eef3;">
@@ -544,8 +551,6 @@
             <button id="geotani-lbs-tab" class="geotani-analysis-tab active" type="button" role="tab"
               aria-selected="true" aria-controls="geotani-lbs-panel" onclick="openGeotaniAnalysisTab('lbs')">LBS Analysis
             </button>
-            <button id="geotani-kta-tab" class="geotani-analysis-tab" type="button" role="tab" aria-selected="false"
-              aria-controls="geotani-kta-panel" onclick="openGeotaniAnalysisTab('kta')">KTA Analysis</button>
             <button id="geotani-ndvi-tab" class="geotani-analysis-tab" type="button" role="tab" aria-selected="false"
               aria-controls="geotani-ndvi-panel" onclick="openGeotaniAnalysisTab('ndvi')">NDVI Analysis</button>
             <button id="geotani-landcover-tab" class="geotani-analysis-tab" type="button" role="tab"
@@ -554,6 +559,8 @@
             <button id="geotani-dem-tab" class="geotani-analysis-tab" type="button" role="tab"
               aria-selected="false" aria-controls="geotani-dem-panel"
               onclick="openGeotaniAnalysisTab('dem')">TERRAIN Analysis</button>
+            <button id="geotani-kta-tab" class="geotani-analysis-tab" type="button" role="tab" aria-selected="false"
+              aria-controls="geotani-kta-panel" onclick="openGeotaniAnalysisTab('kta')">KTA Analysis</button>
           </nav>
 
           <div id="geotani-lbs-panel" class="geotani-analysis-panel active" role="tabpanel"
@@ -629,8 +636,7 @@
                   </select>
                 </div>
                 <div>
-                  <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Input
-                    Layer 2 — Wilayah</label>
+                  <label style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Pilih Wilayah Observasi</label>
                   <select id="overlayLevelMode"
                     style="width:100%;padding:7px 10px;font-size:11px;border:1px solid #d0dde8;border-radius:4px;background:#fff;color:#385773;outline:none;">
                     <option value="desa" selected>Desa/Kelurahan</option>
@@ -639,7 +645,7 @@
                 </div>
                 <div style="position:relative;">
                   <label id="overlayAreaLabel" style="font-size:10px;color:#54708d;font-weight:600;display:block;margin-bottom:3px;">Input
-                    Layer 2 — Desa/Kelurahan</label>
+                    Layer 3 — Desa/Kelurahan</label>
                   <div style="position:relative;">
                     <span
                       style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
@@ -653,7 +659,7 @@
                     style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;">
                   </div>
                 </div>
-                <label class="geoportal-filter" style="margin-top:2px;">
+                <label class="geoportal-filter" style="margin-top:2px;display:none;">
                   <input type="checkbox" id="overlayClipVillage" checked>
                   <span>Clip ke Batas Wilayah</span>
                 </label>
@@ -872,58 +878,73 @@
             <h4 style="font-size:15px; margin-bottom:4px;">GeoPangan</h4>
             <p style="font-size:13px; color:#668198; margin-bottom:25px;">Harga Pangan Nasional - PIHPS Bank Indonesia</p>
 
-            <label class="cctv-layer-toggle" style="margin:8px 12px;">
-              <input type="checkbox" id="toggleSebaranPasar">
-              <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
-              <span class="cctv-layer-info">
-                <span class="cctv-layer-name">Sebaran Pasar Indonesia</span>
-                <small>Data sebaran pasar induk, penunjang, dan eceran — Kementerian Perdagangan</small>
-              </span>
-            </label>
-            <label class="cctv-layer-toggle" style="margin:8px 12px;">
-              <input type="checkbox" id="toggleSppgLayer">
-              <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
-              <span class="cctv-layer-info">
-                <span class="cctv-layer-name">SPPG Indonesia</span>
-                <small>Satuan Pelayanan Pemenuhan Gizi - Sismonbgn</small>
-              </span>
-            </label>
-
-            <h4 style="font-size: 13px; margin-top:20px; margin-bottom: 10px;">Cari wilayah untuk melihat harga pangan.</h4>
-            <div class="geopangan-field">
-              <label>Jenis Pasar</label>
-              <select id="geopanganPriceType">
-                <option value="1">Pasar Tradisional</option>
-                <option value="2">Pasar Modern (Supermarket/Minimarket)</option>
-                <option value="3">Pedagang Besar / Grosir</option>
-                <option value="4">Produsen</option>
-              </select>
-            </div>
-
-            <div class="geopangan-field">
-              <label>Komoditas</label>
-              <select id="geopanganCommodity"></select>
-            </div>
-
-            <div class="geopangan-field">
-              <label>Provinsi</label>
-              <select id="geopanganProvince">
-                <option value="">Semua Provinsi</option>
-              </select>
-            </div>
-
-            <div class="geopangan-field" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-              <div>
-                <label>Dari</label>
-                <input type="date" id="geopanganDateStart" />
+            <div class="cctv-card" style="margin-bottom:12px;">
+              <div class="cctv-card-header">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-5.447-2.724A1 1 0 0 1 3 16.382V5.618a1 1 0 0 1 .553-.894L9 2l6 3 5.447-2.724A1 1 0 0 1 21 3.382v10.764a1 1 0 0 1-.553.894L15 18l-6 3z"/><path d="M9 2v20"/><path d="M15 6v15"/></svg>
+                <span>Layer Geopangan</span>
               </div>
-              <div>
-                <label>Sampai</label>
-                <input type="date" id="geopanganDateEnd" />
+              <div class="cctv-card-body cctv-layers">
+              <label class="cctv-layer-toggle" style="margin:8px 12px;">
+                <input type="checkbox" id="toggleSebaranPasar">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Sebaran Pasar Indonesia</span>
+                  <small>Data sebaran pasar induk, penunjang, dan eceran — Kementerian Perdagangan</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle" style="margin:8px 12px;">
+                <input type="checkbox" id="toggleSppgLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">SPPG Indonesia</span>
+                  <small>Satuan Pelayanan Pemenuhan Gizi - Sismonbgn</small>
+                </span>
+              </label>
               </div>
             </div>
 
-            <button id="geopanganLoadBtn" class="geopangan-btn" style="margin-top:4px;">Tampilkan</button>
+            <div class="cctv-card" style="margin-bottom:12px;">
+              <div class="cctv-card-header">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <span>Cari Wilayah Harga Pangan</span>
+              </div>
+              <div class="cctv-card-body">
+              <div class="geopangan-field">
+                <label>Jenis Pasar</label>
+                <select id="geopanganPriceType">
+                  <option value="1">Pasar Tradisional</option>
+                  <option value="2">Pasar Modern (Supermarket/Minimarket)</option>
+                  <option value="3">Pedagang Besar / Grosir</option>
+                  <option value="4">Produsen</option>
+                </select>
+              </div>
+
+              <div class="geopangan-field">
+                <label>Komoditas</label>
+                <select id="geopanganCommodity"></select>
+              </div>
+
+              <div class="geopangan-field">
+                <label>Provinsi</label>
+                <select id="geopanganProvince">
+                  <option value="">Semua Provinsi</option>
+                </select>
+              </div>
+
+              <div class="geopangan-field" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <div>
+                  <label>Dari</label>
+                  <input type="date" id="geopanganDateStart" />
+                </div>
+                <div>
+                  <label>Sampai</label>
+                  <input type="date" id="geopanganDateEnd" />
+                </div>
+              </div>
+
+              <button id="geopanganLoadBtn" class="geopangan-btn" style="margin-top:4px;">Tampilkan</button>
+              </div>
+            </div>
           </div>
 
           <div id="geopanganResult"></div>
@@ -1013,8 +1034,8 @@
             
             <button class="gempa-subtab-btn active" data-subtab="gempa-subtab-infocuaca" onclick="openGempaSubtab(this)">Info Cuaca</button>
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-gempa" onclick="openGempaSubtab(this)">Info Gempa</button>
-            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-gunungapi" onclick="openGempaSubtab(this)">Info Geologi</button>
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-karhutla" onclick="openGempaSubtab(this)">Info Kehutanan</button>
+            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-gunungapi" onclick="openGempaSubtab(this)">Info Geologi</button>
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-prediksicuaca" onclick="openGempaSubtab(this)">Prediksi Cuaca</button>
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-maritim" onclick="openGempaSubtab(this)">Prediksi Maritim</button>
           </div>
@@ -1108,7 +1129,15 @@
               </label>
             </div>
             </div>
-            <div id="earthquake-content" class="quake-message">Buka tab ini untuk memuat data gempabumi BMKG.</div>
+            <div class="cctv-card" style="margin-bottom:12px;">
+              <div class="cctv-card-header">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                <span>Info Gempa Bumi</span>
+              </div>
+              <div class="cctv-card-body">
+              <div id="earthquake-content" class="quake-message">Buka tab ini untuk memuat data gempabumi BMKG.</div>
+              </div>
+            </div>
           </div>
 
           <div id="gempa-subtab-karhutla" class="gempa-subtab-panel">
@@ -1119,6 +1148,24 @@
                 <span>Layer Kehutanan</span>
               </div>
               <div class="cctv-card-body cctv-layers">
+              <h4 style="font-size:12px; margin:0 0 6px; color:#668198;">Citra Satelit</h4>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleModisOverlay">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">MODIS Terra</span>
+                  <small>Citra reflectance RGB</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleViirsOverlay">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">VIIRS SNPP</span>
+                  <small>Citra reflectance RGB</small>
+                </span>
+              </label>
+              <hr style="margin: 12px 0 12px; border:0; border-top:1px solid #e8eef3;">
               <label class="cctv-layer-toggle">
                 <input type="checkbox" id="toggleHotspotLayer">
                 <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
@@ -1147,15 +1194,22 @@
           </div>
 
           <div id="gempa-subtab-infocuaca" class="gempa-subtab-panel active">
-            <h4 style="font-size: 15px; margin-bottom: 15px;">Cari wilayah untuk melihat data cuaca terbaru.</h4>
-            <div class="search-weather-container">
-              <input type="text" id="weatherSearchInput" class="search-weather-input"
-                placeholder="🔍 Cari Desa/Kelurahan..." autocomplete="off" />
-              <div id="autocompleteResults" class="autocomplete-results"></div>
-            </div>
-            <div id="weather-content" style="margin-top:20px">
-              <div style="font-size:13px; color:#555; background:#eef7ff; padding:10px; margin-bottom: 100px; border-radius:5px;">
-                ℹ️ Pilih lokasi dari pencarian untuk melihat cuaca.
+            <div class="cctv-card" style="margin-bottom:12px;">
+              <div class="cctv-card-header">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
+                <span>Cari Wilayah untuk Info Cuaca Terkini</span>
+              </div>
+              <div class="cctv-card-body">
+              <div class="search-weather-container">
+                <input type="text" id="weatherSearchInput" class="search-weather-input"
+                  placeholder="🔍 Cari Desa/Kelurahan..." autocomplete="off" />
+                <div id="autocompleteResults" class="autocomplete-results"></div>
+              </div>
+              <div id="weather-content" style="margin-top:20px">
+                <div style="font-size:13px; color:#555; background:#eef7ff; padding:10px; margin-bottom: 100px; border-radius:5px;">
+                  ℹ️ Pilih lokasi dari pencarian untuk melihat cuaca.
+                </div>
+              </div>
               </div>
             </div>
           </div>
@@ -1292,7 +1346,7 @@
                 <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
                 <span class="cctv-layer-info">
                   <span class="cctv-layer-name">Gunung Api Indonesia (PVMBG)</span>
-                  <small id="volcanoInfo">74 gunung api aktif beserta status aktivitas dari MAGMA PVMBG</small>
+                  <small id="volcanoInfo">Gunung Api aktif beserta status aktivitas dari MAGMA PVMBG</small>
                 </span>
               </label>
               <label class="cctv-layer-toggle">
@@ -1652,6 +1706,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/jstree.min.js"></script>
   <script src="assets/js/map-core.js"></script>
+  <script src="assets/js/layer-loading.js"></script>
+  <script src="assets/js/bnpb-hillshade.js"></script>
   <script src="assets/js/modis-time-slider.js"></script>
   <script src="assets/js/geoportal.js"></script>
   <script src="assets/js/geoportal-search.js"></script>
@@ -1697,6 +1753,7 @@
   <script src="assets/js/choropleth.js"></script>
   <script src="assets/js/hotspot.js"></script>
   <script src="assets/js/kawasan-hutan.js"></script>
+  <script src="assets/js/modis-viirs-overlay.js"></script>
   <script src="assets/js/fault-layer.js"></script>
   <script src="assets/js/fault-layer-new.js"></script>
   <script src="assets/js/jalur-evakuasi.js"></script>

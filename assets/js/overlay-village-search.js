@@ -80,7 +80,7 @@
     if (!input || !results || !selected) return;
 
     const levelPlaceholders = { desa: 'Ketik nama desa...', kabupaten: 'Ketik nama kabupaten...' };
-    const levelLabels = { desa: 'Input Layer 2 — Desa/Kelurahan', kabupaten: 'Input Layer 2 — Kabupaten/Kota' };
+    const levelLabels = { desa: 'Input Layer 3 — Desa/Kelurahan', kabupaten: 'Input Layer 3 — Kabupaten/Kota' };
 
     ensureLoaded();
 

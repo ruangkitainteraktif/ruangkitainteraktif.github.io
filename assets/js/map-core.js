@@ -56,18 +56,34 @@ L.control.scale({
   };
 
   let currentBasemapName = 'google-maps';
+  let baseBasemapName = 'google-maps';
   let currentRdtrOpacity = 0.8;
 
   function setBaseMap(name) {
-    const key = baseTileLayers[name] ? name : 'google-maps';
-    Object.entries(baseTileLayers).forEach(([layerName, layer]) => {
-      if (map.hasLayer(layer)) map.removeLayer(layer);
+    var isHillshade = (name === 'hillshade-indonesia');
+    var isPth = (name === 'topografi-pth');
+
+    Object.entries(baseTileLayers).forEach(function (entry) {
+      if (map.hasLayer(entry[1])) map.removeLayer(entry[1]);
     });
-    baseTileLayers[key].addTo(map);
-    currentBasemapName = key;
-    const select = document.getElementById('basemapSelect');
-    if (select) select.value = key;
-    map.fire('basemapchanged', { basemap: key });
+
+    if (isHillshade) {
+      baseTileLayers[baseBasemapName].addTo(map);
+      if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.show();
+    } else if (isPth) {
+      baseTileLayers[baseBasemapName].addTo(map);
+      if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.showPth();
+    } else {
+      if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.hide();
+      if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.hidePth();
+      baseBasemapName = name;
+      baseTileLayers[name].addTo(map);
+    }
+
+    currentBasemapName = name;
+    var select = document.getElementById('basemapSelect');
+    if (select) select.value = name;
+    map.fire('basemapchanged', { basemap: name });
   }
 
   function setRdtrOpacity(value) {
@@ -175,7 +191,9 @@ L.control.scale({
     'google-maps': 'Google Maps',
     'google-terrain': 'Google Terrain',
     'google-traffic': 'Google Traffic',
-    'modis-terra': 'MODIS Terra (NASA GIBS)'
+    'modis-terra': 'MODIS Terra (NASA GIBS)',
+    'hillshade-indonesia': 'Hillshade Indonesia (BNPB)',
+    'topografi-pth': 'TOPOGRAFI PTH (BNPB)'
   };
   const BasemapControl = L.Control.extend({
     options: { position: 'bottomright' },
@@ -236,7 +254,8 @@ L.control.scale({
           'toggleSawahDilindungi', 'toggleSawahNasional50k',
           'toggleBppLayer', 'toggleSawitLayer', 'toggleErosiLayer',
           'toggleHotspotLayer', 'toggleKawasanHutanLayer',
-          'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer'
+          'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer',
+          'toggleModisOverlay', 'toggleViirsOverlay'
         ];
         toggles.forEach(id => {
           const el = document.getElementById(id);
@@ -332,6 +351,7 @@ L.control.scale({
         if (typeof _worldPlatesLayerCleanup === 'function') _worldPlatesLayerCleanup();
         if (typeof kawasanHutanCleanup === 'function') kawasanHutanCleanup();
         if (typeof modisTimeSliderCleanup === 'function') modisTimeSliderCleanup();
+        if (typeof modisViirsOverlayCleanup === 'function') modisViirsOverlayCleanup();
 
         // Bersihkan layer sensor & katalog gempa
         document.querySelectorAll('#toggleKatalogGempa, #toggleSensorSeismic, #toggleSensorGlobal, #toggleHistoryGempa').forEach(function (cb) {
@@ -411,7 +431,11 @@ L.control.scale({
         const windControls = document.getElementById('windControls');
         if (windControls) windControls.style.display = 'none';
 
-        // 10. Reset detail panel
+        // 10b. Reset hillshade & PTH overlays
+        if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.cleanupAll();
+        baseBasemapName = 'google-maps';
+
+        // 11. Reset detail panel
         const detailPanel = document.getElementById('detail-panel');
         if (detailPanel) detailPanel.classList.add('hidden');
         const detailBtn = window._detailPanelBtn;
