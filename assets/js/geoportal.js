@@ -5,6 +5,17 @@
     return wmsUrl.replace(/\/wms\/?$/, '/wfs');
   }
 
+  // Proxy CORS opsional untuk server yang memblokir fetch lintas-origin
+  // (GetCapabilities, WFS, GetFeatureInfo). Kosongkan ('') untuk akses langsung.
+  // Contoh: 'https://geoportal-proxy.example.workers.dev/'
+  const GEOPORTAL_PROXY = '';
+  function geoFetch(targetUrl, init) {
+    if (GEOPORTAL_PROXY) {
+      return fetch(GEOPORTAL_PROXY + '?url=' + encodeURIComponent(targetUrl));
+    }
+    return fetch(targetUrl, init);
+  }
+
   function resolveGeoportalLayerName(layerName) {
     if (layerName.startsWith('geonode:')) return layerName.slice(8);
     return layerName;
@@ -18,14 +29,14 @@
     const resolvedName = resolveGeoportalLayerName(layerName);
     const detectUrl = `${wfsUrl}?service=WFS&version=1.1.0&request=GetFeature&typeNames=${encodeURIComponent(resolvedName)}&outputFormat=application/json&count=1`;
 
-    const detectRes = await fetch(detectUrl);
+    const detectRes = await geoFetch(detectUrl);
     if (!detectRes.ok) throw new Error(`WFS HTTP ${detectRes.status}`);
     const detectData = await detectRes.json();
     const geomType = detectData.features?.[0]?.geometry?.type;
     if (geomType !== 'Point' && geomType !== 'MultiPoint') return null;
 
     const fullUrl = `${wfsUrl}?service=WFS&version=1.1.0&request=GetFeature&typeNames=${encodeURIComponent(resolvedName)}&outputFormat=application/json`;
-    const fullRes = await fetch(fullUrl);
+    const fullRes = await geoFetch(fullUrl);
     if (!fullRes.ok) throw new Error(`WFS HTTP ${fullRes.status}`);
     const fullData = await fullRes.json();
     if (!fullData.features || !fullData.features.length) return null;
@@ -55,13 +66,22 @@
     return cluster;
   }
 
+  // Pemetaan cacheKey (wmsUrl::layerName) -> id node jsTree yang unik.
+  // Diperlukan karena beberapa server mempublikasikan nama layer yang sama
+  // (mis. "geonode:...") di banyak kategori, sehingga id node harus
+  // diprefix dengan id kategori agar tidak tabrakan di jsTree.
+  const geoportalNodeIndex = new Map();
+
   // Cek apakah checkbox layer geoportal masih aktif.
   function isGeoportalCheckboxActive(layerName, wmsUrl) {
     // Check jsTree state first
     var tree = $('#geoportalLayerList').jstree(true);
     if (tree) {
-      var node = tree.get_node(layerName);
-      if (node) return tree.is_checked(node);
+      var nodeId = geoportalNodeIndex.get(`${wmsUrl}::${layerName}`);
+      if (nodeId) {
+        var node = tree.get_node(nodeId);
+        if (node) return tree.is_checked(node);
+      }
     }
     // Fallback to legacy checkbox
     const input = [...document.querySelectorAll('[data-geolayer]')].find(el =>
@@ -71,16 +91,48 @@
     return input ? input.checked : false;
   }
 
-  // Ambil batas (bbox) layer dari WMS GetCapabilities (cache per server).
+  // Cache GetCapabilities per server: { doc, crsByLayer }
   const geoportalCapsCache = new Map();
+  async function loadGeoportalCaps(wmsUrl) {
+    let cached = geoportalCapsCache.get(wmsUrl);
+    if (cached) return cached;
+    const res = await geoFetch(`${wmsUrl}?service=WMS&version=1.1.1&request=GetCapabilities`);
+    const text = await res.text();
+    const doc = new DOMParser().parseFromString(text, 'text/xml');
+    const crsByLayer = new Map();
+    let rootCrs = [];
+    const rootLayer = [...doc.querySelectorAll('Layer')].find(l => !l.querySelector(':scope > Name'));
+    if (rootLayer) rootCrs = [...rootLayer.querySelectorAll(':scope > CRS')].map(e => e.textContent.trim());
+    doc.querySelectorAll('Layer > Name').forEach(nameEl => {
+      const layerEl = nameEl.parentElement;
+      const crsList = [...layerEl.querySelectorAll(':scope > CRS')].map(e => e.textContent.trim());
+      crsByLayer.set(nameEl.textContent.trim(), crsList.length ? crsList : rootCrs);
+    });
+    cached = { doc, crsByLayer, rootCrs };
+    geoportalCapsCache.set(wmsUrl, cached);
+    return cached;
+  }
+
+  // Pilih CRS Leaflet yang paling pas untuk layer tertentu berdasarkan daftar
+  // CRS yang diiklankan server. Default ke EPSG:4326 (paling lazim didukung oleh
+  // GeoServer, termasuk layer yang hanya mempublikasikan CRS:84).
+  function pickGeoportalCrs(wmsUrl, layerName) {
+    const cached = geoportalCapsCache.get(wmsUrl);
+    const resolved = resolveGeoportalLayerName(layerName);
+    const crsList = (cached ? (cached.crsByLayer.get(resolved) || cached.crsByLayer.get(layerName)) : null) || (cached ? cached.rootCrs : []) || [];
+    if (crsList.some(c => /EPSG:3857|EPSG:3785|EPSG:900913|EPSG:102100/i.test(c))) return L.CRS.EPSG3857;
+    if (crsList.some(c => /EPSG:4326|CRS:84|CRS:83|CRS:27/i.test(c))) return L.CRS.EPSG4326;
+    // GeoServer umumnya bisa mereproyeksi ke 4326 meski tak diiklankan.
+    // Default ke 4326 (bukan 3857) agar layer tetap tampil meski fetch
+    // GetCapabilities terblokir CORS di beberapa server (mis. Jabar).
+    if (crsList.length) return L.CRS.EPSG4326;
+    return L.CRS.EPSG4326;
+  }
+
+  // Ambil batas (bbox) layer dari WMS GetCapabilities (cache per server).
   async function getGeoportalLayerBBox(wmsUrl, layerName) {
-    let doc = geoportalCapsCache.get(wmsUrl);
-    if (!doc) {
-      const res = await fetch(`${wmsUrl}?service=WMS&version=1.1.1&request=GetCapabilities`);
-      const text = await res.text();
-      doc = new DOMParser().parseFromString(text, 'text/xml');
-      geoportalCapsCache.set(wmsUrl, doc);
-    }
+    const cached = await loadGeoportalCaps(wmsUrl);
+    const doc = cached.doc;
     for (const layer of doc.querySelectorAll('Layer')) {
       const nameEl = layer.querySelector(':scope > Name');
       if (!nameEl || nameEl.textContent !== layerName) continue;
@@ -138,6 +190,7 @@
 
   function makeGeoportalRasterLayer(layerName, wmsUrl) {
     const resolvedName = resolveGeoportalLayerName(layerName);
+    const crs = pickGeoportalCrs(wmsUrl, layerName);
 
     const layer = L.tileLayer.wms(wmsUrl, {
       layers: resolvedName,
@@ -145,7 +198,8 @@
       transparent: true,
       version: '1.1.1',
       tiled: true,
-      opacity: .82
+      opacity: .82,
+      crs: crs
     });
     layer.on('tileerror', function (e) {
       console.warn('[Geoportal] WMS tile error:', { layerName, resolvedName, wmsUrl, tileUrl: e.tile?.src });
@@ -153,7 +207,7 @@
     return layer;
   }
 
-  function toggleGeoportalLayer(layerName, visible, wmsUrl = GEOPORTAL_WMS_URL) {
+  async function toggleGeoportalLayer(layerName, visible, wmsUrl = GEOPORTAL_WMS_URL) {
 
     const cacheKey = `${wmsUrl}::${layerName}`;
     const layer = geoportalLayers.get(cacheKey);
@@ -163,6 +217,7 @@
       // langsung aktif; di latar belakang coba upgrade ke marker cluster
       // bila layer adalah titik (WFS).
       if (!visible) return;
+      await loadGeoportalCaps(wmsUrl).catch(() => {});
       const raster = makeGeoportalRasterLayer(layerName, wmsUrl);
       geoportalLayers.set(cacheKey, raster);
       if (isGeoportalCheckboxActive(layerName, wmsUrl) && !map.hasLayer(raster)) {
@@ -292,12 +347,12 @@
     });
   }
 
-  function buildGeoportalFeatureInfoParams(layerName, latlng, wmsUrl = GEOPORTAL_WMS_URL) {
+  function buildGeoportalFeatureInfoParams(layerName, latlng, wmsUrl = GEOPORTAL_WMS_URL, crs) {
     const resolvedName = resolveGeoportalLayerName(layerName);
     const bounds = map.getBounds();
     const size = map.getSize();
     const point = map.latLngToContainerPoint(latlng, map.getZoom());
-    const projection = map.options?.crs || L.CRS.EPSG3857;
+    const projection = crs || map.options?.crs || L.CRS.EPSG3857;
     const sw = projection.project(bounds.getSouthWest());
     const ne = projection.project(bounds.getNorthEast());
     const srs = projection.code || 'EPSG:3857';
@@ -355,13 +410,13 @@
   }
 
   async function fetchGeoportalInfo(wmsUrl, params) {
-    const response = await fetch(`${wmsUrl}?${params.toString()}`);
+    const response = await geoFetch(`${wmsUrl}?${params.toString()}`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.text();
   }
 
-  async function getGeoportalFeatureInfo(layerName, latlng, wmsUrl = GEOPORTAL_WMS_URL) {
-    const params = buildGeoportalFeatureInfoParams(layerName, latlng, wmsUrl);
+  async function getGeoportalFeatureInfo(layerName, latlng, wmsUrl = GEOPORTAL_WMS_URL, crs) {
+    const params = buildGeoportalFeatureInfoParams(layerName, latlng, wmsUrl, crs);
     let responseText = await fetchGeoportalInfo(wmsUrl, params);
     let features = parseGeoportalFeatureInfoResponse(responseText);
 
@@ -421,7 +476,7 @@
 
       if (!activeWMS.length && !activeArcGIS.length) return false;
 
-      const wmsPromises = activeWMS.map(({ layerName, wmsUrl }) => getGeoportalFeatureInfo(layerName, e.latlng, wmsUrl));
+      const wmsPromises = activeWMS.map(({ layerName, wmsUrl }) => getGeoportalFeatureInfo(layerName, e.latlng, wmsUrl, pickGeoportalCrs(wmsUrl, layerName)));
       const arcgisPromises = activeArcGIS.map(({ layerKey, url, layers }) =>
         fetchArcGISFeatureInfo(url, layers, e.latlng).then(results => results.map(r => ({ ...r, layerName: `${layerKey} — ${r.layerName}` })))
       );
@@ -496,17 +551,20 @@
 
   var GEOPORTAL_LAYER_DATA = [];
 
-  function buildSubtreeFolder(layer, wmsUrl, catTitle) {
+  function buildSubtreeFolder(layer, wmsUrl, catTitle, catId) {
     const children = (layer.children || []).map(child => {
-      GEOPORTAL_LAYER_DATA.push({ id: child.id, label: child.label, category: catTitle, wmsUrl });
+      const realName = child.id;
+      const nodeId = `${catId}::${layer.id}::${realName}`;
+      GEOPORTAL_LAYER_DATA.push({ id: realName, label: child.label, category: catTitle, wmsUrl });
+      geoportalNodeIndex.set(`${wmsUrl}::${realName}`, nodeId);
       return {
-        id: child.id,
+        id: nodeId,
         text: child.label,
-        li_attr: { 'data-level': '2', 'data-wms-url': wmsUrl }
+        li_attr: { 'data-level': '2', 'data-wms-url': wmsUrl, 'data-layer-name': realName }
       };
     });
     return {
-      id: layer.id,
+      id: `${catId}::${layer.id}`,
       text: layer.label,
       children: children,
       state: { opened: false },
@@ -519,6 +577,7 @@
     if (!container) return;
 
     GEOPORTAL_LAYER_DATA = [];
+    geoportalNodeIndex.clear();
 
     const treeData = layersConfig.categories.map(cat => {
       const wmsUrl = layersConfig.sources[cat.source]?.wmsUrl || GEOPORTAL_WMS_URL;
@@ -527,15 +586,27 @@
       if (cat.layers.length && cat.layers[0].type === 'folder') {
         children = cat.layers.map(layer => {
           totalCount += (layer.children || []).length;
-          return buildSubtreeFolder(layer, wmsUrl, cat.title);
+          return buildSubtreeFolder(layer, wmsUrl, cat.title, cat.id);
         });
       } else {
         children = cat.layers.map(layer => {
-          GEOPORTAL_LAYER_DATA.push({ id: layer.id, label: layer.label, category: cat.title, wmsUrl });
+          if (layer.type === 'arcgis') {
+            // Layer ArcGIS REST: id sudah unik, tidak diprefix.
+            GEOPORTAL_LAYER_DATA.push({ id: layer.id, label: layer.label, category: cat.title, wmsUrl });
+            return {
+              id: layer.id,
+              text: layer.label,
+              li_attr: { 'data-level': '1', 'data-wms-url': wmsUrl }
+            };
+          }
+          const realName = layer.id;
+          const nodeId = `${cat.id}::${realName}`;
+          GEOPORTAL_LAYER_DATA.push({ id: realName, label: layer.label, category: cat.title, wmsUrl });
+          geoportalNodeIndex.set(`${wmsUrl}::${realName}`, nodeId);
           return {
-            id: layer.id,
+            id: nodeId,
             text: layer.label,
-            li_attr: { 'data-level': '1', 'data-wms-url': wmsUrl }
+            li_attr: { 'data-level': '1', 'data-wms-url': wmsUrl, 'data-layer-name': realName }
           };
         });
         totalCount = children.length;
@@ -581,11 +652,12 @@
       const node = data.node;
       if (node.children && node.children.length) return;
       const wmsUrl = node.li_attr['data-wms-url'] || GEOPORTAL_WMS_URL;
+      const layerName = node.li_attr['data-layer-name'] || node.id;
 
       if (ARCGIS_SAWAH_CONFIG[node.id]) {
         toggleArcgisSawah(node.id, true);
       } else {
-        toggleGeoportalLayer(node.id, true, wmsUrl);
+        toggleGeoportalLayer(layerName, true, wmsUrl);
       }
     });
 
@@ -593,11 +665,12 @@
       const node = data.node;
       if (node.children && node.children.length) return;
       const wmsUrl = node.li_attr['data-wms-url'] || GEOPORTAL_WMS_URL;
+      const layerName = node.li_attr['data-layer-name'] || node.id;
 
       if (ARCGIS_SAWAH_CONFIG[node.id]) {
         toggleArcgisSawah(node.id, false);
       } else {
-        toggleGeoportalLayer(node.id, false, wmsUrl);
+        toggleGeoportalLayer(layerName, false, wmsUrl);
       }
     });
   }
@@ -607,5 +680,6 @@
     .then(cfg => {
       window.__geoportalLayersConfig = cfg;
       buildGeoportalTree(cfg);
+      Object.values(cfg.sources).forEach(s => loadGeoportalCaps(s.wmsUrl).catch(() => {}));
     })
     .catch(err => console.error('[Geoportal] Gagal memuat geoportal-layers.json:', err));

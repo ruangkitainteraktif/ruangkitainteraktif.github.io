@@ -1,0 +1,6 @@
+name = "geoportal-proxy"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+
+# Setelah deploy, salin URL Worker ke GEOPORTAL_PROXY di assets/js/geoportal.js
+# agar fetch GetCapabilities/WFS/GetFeatureInfo lintas-origin tidak terblokir CORS.
