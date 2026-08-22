@@ -3015,7 +3015,7 @@
 
     /* Panel prakiraan 3 hari BMKG */
     .weather-panel {
-      color: #14213d;
+      color: #fff;
     }
     .weather-hero {
       color: #fff;
@@ -3066,11 +3066,13 @@
       background: rgba(255,255,255,.16);
       text-align: center;
       font-size: 10px;
+      color: #fff;
     }
     .weather-metric strong {
       display: block;
       margin-top: 2px;
       font-size: 11px;
+      color: #fff;
     }
     .weather-insights {
       margin: 14px 0 0;
@@ -3121,8 +3123,12 @@
     }
     .weather-days-title {
       margin: 16px 0 8px;
+      padding: 9px 12px;
+      border-radius: 10px;
       font-size: 14px;
       font-weight: 700;
+      color: #fff;
+      background: #0879bf;
     }
     .weather-days-grid {
       display: grid;
@@ -3143,6 +3149,7 @@
       background: #f4f9fd;
       font-size: 11px;
       font-weight: 700;
+      color: #16466c;
     }
     .weather-day-summary {
       color: #46718f;
@@ -3161,11 +3168,12 @@
       border-radius: 7px;
       text-align: center;
       font-size: 9px;
+      color: #16466c;
     }
     .weather-slot:hover { background: #edf7ff; }
     .weather-slot img { display: block; width: 25px; height: 25px; margin: 2px auto; object-fit: contain; }
     .weather-slot-temp { color: #145b93; font-weight: 700; }
-    .weather-source { color: #567; text-align: right; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .weather-source { color: #567; text-align: center; font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* Temperature Chart */
     .temp-chart-section {
@@ -3843,10 +3851,11 @@
     .cctv-sheet-handle { display: none; }
     .cctv-card-header {
       display: flex; align-items: center; gap: 6px;
-      padding: 8px 10px; background: #eef5fb; border-bottom: 1px solid #e0eaf3;
-      font-size: 12px; font-weight: 600; color: #16466c;
+      padding: 8px 10px; background: #0879bf; border-bottom: 1px solid #066aa8;
+      border-radius: 10px 10px 0 0;
+      font-size: 12px; font-weight: 600; color: #fff;
     }
-    .cctv-card-header svg { color: #0879bf; flex-shrink: 0; }
+    .cctv-card-header svg { color: #fff; flex-shrink: 0; }
     .cctv-card-body { padding: 8px; }
     .cctv-search-body { display: grid; gap: 8px; }
     .cctv-search-body input, .cctv-search-body select {
@@ -4204,6 +4213,29 @@
       0%   { box-shadow: 0 0 0 0 rgba(37,99,235,.55); }
       70%  { box-shadow: 0 0 0 12px rgba(37,99,235,0); }
       100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+    }
+    /* Spinner export MP4 transparan */
+    .gpx-export-spinner {
+      display: none; position: absolute; inset: 0; z-index: 9999;
+      background: rgba(15,23,42,.45);
+      align-items: center; justify-content: center;
+      backdrop-filter: blur(2px);
+    }
+    .gpx-export-spinner.active { display: flex; }
+    .gpx-export-spinner-inner {
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      background: rgba(255,255,255,.92); border-radius: 14px;
+      padding: 28px 36px; box-shadow: 0 8px 32px rgba(0,0,0,.18);
+    }
+    .gpx-export-spinner-svg {
+      width: 44px; height: 44px; color: #2563eb;
+      animation: gpxExportSpin .8s linear infinite;
+    }
+    .gpx-export-spinner-text {
+      font-size: 13px; font-weight: 600; color: #1e293b;
+    }
+    @keyframes gpxExportSpin {
+      to { transform: rotate(360deg); }
     }
     /* Layer WMS point (marker cluster) — popup gaya CCTV */
     .gp-point-icon {

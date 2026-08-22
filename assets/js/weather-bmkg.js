@@ -374,7 +374,7 @@
     const maxTemp = Math.max(...allSlots);
 
     let html = `
-      <section class="weather-panel">
+      <section class="weather-panel" style="color:#fff">
         <div class="weather-hero">
           <p class="weather-hero-location">${escapeHTML(lokasi.desa || 'Wilayah')}, ${escapeHTML(lokasi.kecamatan || '')}</p>
           <p class="weather-hero-region">${escapeHTML(lokasi.kabkota || '')}, ${escapeHTML(lokasi.provinsi || '')}</p>
@@ -383,10 +383,10 @@
             <div><div class="weather-now-temp">${escapeHTML(current.t ?? '-')}°C</div><div class="weather-now-desc">${escapeHTML(current.weather_desc || 'Tidak tersedia')} · ${formatTime(current.local_datetime)}</div></div>
           </div>
           <div class="weather-metrics">
-            <div class="weather-metric">Kelembapan<strong>${escapeHTML(current.hu ?? '-')}%</strong></div>
-            <div class="weather-metric">Angin<strong>${escapeHTML(current.ws ?? '-')} km/j</strong></div>
-            <div class="weather-metric">Awan<strong>${escapeHTML(current.tcc ?? '-')}%</strong></div>
-            <div class="weather-metric">Arah Angin<strong>${escapeHTML(current.wd_to ?? '-')} (${escapeHTML(current.wd ?? '-')})</strong></div>
+            <div class="weather-metric" style="color:#fff">Kelembapan<strong style="color:#fff">${escapeHTML(current.hu ?? '-')}%</strong></div>
+            <div class="weather-metric" style="color:#fff">Angin<strong style="color:#fff">${escapeHTML(current.ws ?? '-')} km/j</strong></div>
+            <div class="weather-metric" style="color:#fff">Awan<strong style="color:#fff">${escapeHTML(current.tcc ?? '-')}%</strong></div>
+            <div class="weather-metric" style="color:#fff">Arah Angin<strong style="color:#fff">${escapeHTML(current.wd_to ?? '-')} (${escapeHTML(current.wd ?? '-')})</strong></div>
           </div>
         </div>
 
@@ -403,7 +403,7 @@
           ${buildTemperatureChart(forecastDays)}
         </div>
 
-        <h4 class="weather-days-title">Prakiraan 3 Hari · per 3 jam</h4>
+        <h4 class="weather-days-title" style="margin:16px 0 8px;padding:9px 12px;border-radius:10px;font-size:14px;font-weight:700;color:#fff;background:#0879bf">Prakiraan 3 Hari · per 3 jam</h4>
         <div class="weather-days-grid">
     `;
 

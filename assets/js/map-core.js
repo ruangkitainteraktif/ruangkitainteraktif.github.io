@@ -191,9 +191,9 @@ L.control.scale({
     'google-maps': 'Google Maps',
     'google-terrain': 'Google Terrain',
     'google-traffic': 'Google Traffic',
-    'modis-terra': 'MODIS Terra (NASA GIBS)',
-    'hillshade-indonesia': 'Hillshade Indonesia (BNPB)',
-    'topografi-pth': 'TOPOGRAFI PTH (BNPB)'
+    'modis-terra': 'Modis Terra',
+    'topografi-pth': 'Hillshade',
+    'hillshade-indonesia': 'Batnas'
   };
   const BasemapControl = L.Control.extend({
     options: { position: 'bottomright' },
@@ -253,9 +253,11 @@ L.control.scale({
           'toggleMaritimeAngin', 'toggleMaritimeGelombang', 'toggleMaritimeSwell', 'toggleMaritimeWindSea',
           'toggleSawahDilindungi', 'toggleSawahNasional50k',
           'toggleBppLayer', 'toggleSawitLayer', 'toggleErosiLayer',
-          'toggleHotspotLayer', 'toggleKawasanHutanLayer',
-          'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer',
-          'toggleModisOverlay', 'toggleViirsOverlay'
+          'toggleHotspotLayer', 'toggleKawasanHutanLayer', 'toggleGambutLayer', 'toggleKhLayer', 'togglePippibLayer',
+          'toggleCuacaMaritimLayer',
+          'toggleSawitNasionalLayer', 'toggleSawitPerkebunanLayer', 'toggleRehabDasLayer', 'togglePerkebunanPl24Layer',
+          'toggleRktnSumateraLayer', 'toggleRktnSulawesiLayer', 'toggleRktnPapuaLayer', 'toggleRktnMalukuLayer', 'toggleRktnKalimantanLayer', 'toggleRktnJawaLayer', 'toggleRktnBaliNtLayer',
+          'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer'
         ];
         toggles.forEach(id => {
           const el = document.getElementById(id);

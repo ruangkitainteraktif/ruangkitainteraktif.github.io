@@ -358,6 +358,7 @@
   let gpxAnimSpeed = 1;
   let gpxAnimLastTs = 0;
   let gpxAnimFinished = false;  // true bila animasi telah sampai ujung (jalur penuh menyala)
+  let gpxAnimTileCache = {};   // cache tile gambar Carto untuk export
   const GPX_PTS_PER_SEC = 50;  // kecepatan dasar poin/detik (1x) — seimbang: ekor komet tetap terlihat (~12 dtk) & putar penuh ~2 menit
   const GPX_COMET_BASE_TAIL = 380;   // jumlah titik ekor komet pada 1x
   const GPX_COMET_SEGMENTS = 32;      // jumlah band → gradien halus kepala→ekor
@@ -635,4 +636,280 @@
     }
     if (gpxAnimTodo) { map.removeLayer(gpxAnimTodo); gpxAnimTodo = null; }
     gpxAnimMarker.setLatLng(track.coords[track.coords.length - 1]);
+  }
+
+  // ==============================================================
+  // EXPORT MP4
+  // ==============================================================
+  const EXPORT_W = 720;
+  const EXPORT_H = 720;
+  const EXPORT_FPS = 30;
+
+  function gpxAnimProject(c, center, zoom, W, H) {
+    var ll = L.latLng(c[0], c[1]);
+    var cl = L.latLng(center[0], center[1]);
+    var world = L.CRS.EPSG3857.latLngToPoint(ll, zoom);
+    var origin = L.CRS.EPSG3857.latLngToPoint(cl, zoom);
+    return { x: world.x - origin.x + W / 2, y: world.y - origin.y + H / 2 };
+  }
+
+  function gpxAnimWarmTiles(bounds, zoom) {
+    var TW = 256;
+    var nw = L.CRS.EPSG3857.latLngToPoint(L.latLng(bounds.getNorth(), bounds.getWest()), zoom);
+    var se = L.CRS.EPSG3857.latLngToPoint(L.latLng(bounds.getSouth(), bounds.getEast()), zoom);
+    var minX = Math.floor(nw.x / TW), maxX = Math.floor(se.x / TW);
+    var minY = Math.floor(nw.y / TW), maxY = Math.floor(se.y / TW);
+    var subs = ['a', 'b', 'c', 'd'];
+    var jobs = [];
+    var count = 0;
+    for (var x = minX; x <= maxX && count < 400; x++) {
+      for (var y = minY; y <= maxY && count < 400; y++) {
+        count++;
+        var s = subs[Math.abs(x + y) % subs.length];
+        var url = 'https://' + s + '.basemaps.cartocdn.com/light_all/' + zoom + '/' + x + '/' + y + '.png';
+        if (gpxAnimTileCache[url]) continue;
+        var img = new Image();
+        img.crossOrigin = 'anonymous';
+        var p = new Promise(function (res) { img.onload = res; img.onerror = res; });
+        img.src = url;
+        gpxAnimTileCache[url] = img;
+        jobs.push(p);
+      }
+    }
+    return Promise.all(jobs);
+  }
+
+  function gpxAnimDrawFrame(ctx, W, H, center, zoom, track, pos, last) {
+    var coords = track.coords;
+    var i = Math.max(0, Math.min(Math.floor(pos), last - 1));
+    var frac = pos - i;
+    var a = coords[i];
+    var b = coords[Math.min(i + 1, last)];
+    var head = [a[0] + (b[0] - a[0]) * frac, a[1] + (b[1] - a[1]) * frac];
+    var isReveal = (pos >= last);
+    var sp = 1;
+    var tailLen = Math.min(Math.round(GPX_COMET_BASE_TAIL * sp), last);
+    var segLen = Math.max(1, tailLen / GPX_COMET_SEGMENTS);
+
+    // background
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillRect(0, 0, W, H);
+
+    // basemap tiles
+    var TW = 256;
+    var nwPx = L.CRS.EPSG3857.latLngToPoint(L.latLng(center[0], center[1]), zoom);
+    for (var key in gpxAnimTileCache) {
+      var m = /light_all\/(\d+)\/(\d+)\/(\d+)\.png$/.exec(key);
+      if (!m) continue;
+      var tx = +m[2], ty = +m[3];
+      var img = gpxAnimTileCache[key];
+      if (!img.complete || !img.naturalWidth) continue;
+      var sx = tx * TW - nwPx.x + W / 2;
+      var sy = ty * TW - nwPx.y + H / 2;
+      ctx.drawImage(img, sx, sy, TW, TW);
+    }
+
+    // faint full path
+    ctx.strokeStyle = '#94a3b8';
+    ctx.globalAlpha = 0.15;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (var p = 0; p < coords.length; p++) {
+      var px = gpxAnimProject(coords[p], center, zoom, W, H);
+      if (p === 0) ctx.moveTo(px.x, px.y); else ctx.lineTo(px.x, px.y);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // comet bands
+    if (!isReveal) {
+      for (var k = 0; k < GPX_COMET_SEGMENTS; k++) {
+        var end = i - Math.round(k * segLen);
+        var start = i - Math.round((k + 1) * segLen);
+        var ss = Math.max(0, start);
+        var ee = Math.max(ss, end);
+        var pts = coords.slice(ss, ee + 1);
+        var style = gpxCometStyle(k);
+        ctx.strokeStyle = style.color;
+        ctx.globalAlpha = style.opacity;
+        ctx.lineWidth = style.weight;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (var q = 0; q < pts.length; q++) {
+          var pp = gpxAnimProject(pts[q], center, zoom, W, H);
+          if (q === 0) ctx.moveTo(pp.x, pp.y); else ctx.lineTo(pp.x, pp.y);
+        }
+        if (k === 0) {
+          var hp = gpxAnimProject(head, center, zoom, W, H);
+          ctx.lineTo(hp.x, hp.y);
+        }
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    } else {
+      for (var k2 = 0; k2 < GPX_COMET_SEGMENTS; k2++) {
+        var style2 = gpxCometStyle(k2);
+        ctx.strokeStyle = style2.color;
+        ctx.globalAlpha = style2.opacity;
+        ctx.lineWidth = style2.weight;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (var q2 = 0; q2 < coords.length; q2++) {
+          var pp2 = gpxAnimProject(coords[q2], center, zoom, W, H);
+          if (q2 === 0) ctx.moveTo(pp2.x, pp2.y); else ctx.lineTo(pp2.x, pp2.y);
+        }
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // marker
+    var mhp = gpxAnimProject(head, center, zoom, W, H);
+    ctx.beginPath();
+    ctx.arc(mhp.x, mhp.y, 9, 0, Math.PI * 2);
+    ctx.fillStyle = '#2563eb';
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
+  }
+
+  function gpxAnimExportMP4() {
+    var sel = document.getElementById('gpxTrackSelect');
+    var tIdx = parseInt(sel.value, 10);
+    if (isNaN(tIdx) || !gpxTracks[tIdx]) {
+      setAlatStatus('Tidak ada track untuk di-export.', true);
+      return;
+    }
+    var track = gpxTracks[tIdx];
+    var bounds = L.latLngBounds(track.coords);
+    var center = bounds.getCenter();
+    var centerArr = [center.lat, center.lng];
+
+    var nw = L.CRS.EPSG3857.latLngToPoint(bounds.getNorthWest(), 0);
+    var se = L.CRS.EPSG3857.latLngToPoint(bounds.getSouthEast(), 0);
+    var dx = Math.abs(se.x - nw.x);
+    var dy = Math.abs(nw.y - se.y);
+    var padX = 0, padY = 0;
+    var zxf = Math.log2(Math.max(1, (EXPORT_W - padX) / Math.max(1, dx)));
+    var zyf = Math.log2(Math.max(1, (EXPORT_H - padY) / Math.max(1, dy)));
+    var exportZoom = Math.round(Math.min(zxf, zyf));
+    exportZoom = Math.max(1, Math.min(exportZoom, 16));
+    var drawZoom = Math.min(exportZoom + 2, 18);
+
+    var sp = document.getElementById('gpxExportSpinner');
+    if (sp) sp.classList.add('active');
+    var btn = document.getElementById('gpxAnimExport');
+    if (btn) btn.disabled = true;
+    setAlatStatus('Memuat tile basemap untuk export…');
+
+    var MAX_DURATION = 30;
+    var len = track.coords.length - 1;
+    var fullSec = len / (GPX_PTS_PER_SEC * gpxAnimSpeed);
+    var dur = Math.min(fullSec, MAX_DURATION);
+    var totalFrames = Math.max(1, Math.round(dur * EXPORT_FPS));
+
+    gpxAnimWarmTiles(bounds, drawZoom).then(function () {
+      setAlatStatus('Rendering ' + totalFrames + ' frame (' + dur.toFixed(1) + ' detik)…');
+
+      var canvas = document.createElement('canvas');
+      canvas.width = EXPORT_W;
+      canvas.height = EXPORT_H;
+      canvas.style.cssText = 'position:fixed;left:0;top:0;width:' + EXPORT_W + 'px;height:' + EXPORT_H + 'px;opacity:0.001;pointer-events:none;z-index:99998;display:block !important;margin:0 !important;padding:0 !important;border:none !important;outline:none !important;float:none !important;';
+      document.body.appendChild(canvas);
+      var ctx = canvas.getContext('2d');
+
+      var stream = canvas.captureStream(0);
+      var vTrack = stream.getVideoTracks()[0];
+
+      var mimeType = 'video/webm;codecs=vp8';
+      if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+        mimeType = 'video/webm;codecs=vp9';
+      }
+
+      var recorder = new MediaRecorder(stream, {
+        mimeType: mimeType,
+        videoBitsPerSecond: 3000000
+      });
+      var chunks = [];
+      recorder.ondataavailable = function (e) {
+        if (e.data && e.data.size > 0) chunks.push(e.data);
+      };
+      recorder.onerror = function () {
+        cleanup();
+        setAlatStatus('Error perekaman video.', true);
+      };
+
+      var frameIdx = 0;
+      var finished = false;
+
+      function cleanup() {
+        if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
+        if (sp) sp.classList.remove('active');
+        if (btn) btn.disabled = false;
+      }
+
+      recorder.onstop = function () {
+        cleanup();
+        if (chunks.length === 0) {
+          setAlatStatus('Export gagal: tidak ada data.', true);
+          return;
+        }
+        var blob = new Blob(chunks, { type: mimeType });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'timeline-animation.webm';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+        setAlatStatus('Export selesai: timeline-animation.webm (' + (blob.size / 1048576).toFixed(1) + ' MB)');
+      };
+
+      recorder.start();
+
+      var frameInterval = 1000 / EXPORT_FPS;
+      var lastTime = 0;
+
+      function tick(timestamp) {
+        if (finished) return;
+
+        if (frameIdx >= totalFrames) {
+          finished = true;
+          setTimeout(function () {
+            if (recorder.state === 'recording') recorder.stop();
+          }, 500);
+          return;
+        }
+
+        if (timestamp - lastTime < frameInterval - 4) {
+          requestAnimationFrame(tick);
+          return;
+        }
+        lastTime = timestamp;
+
+        var pos = (frameIdx / totalFrames) * len;
+        var coords = track.coords;
+        var hi = Math.max(0, Math.min(Math.floor(pos), len - 1));
+        var hfrac = pos - hi;
+        var ha = coords[hi];
+        var hb = coords[Math.min(hi + 1, len)];
+        var headCenter = [ha[0] + (hb[0] - ha[0]) * hfrac, ha[1] + (hb[1] - ha[1]) * hfrac];
+        gpxAnimDrawFrame(ctx, EXPORT_W, EXPORT_H, headCenter, drawZoom, track, pos, len);
+        if (vTrack.requestFrame) vTrack.requestFrame();
+
+        frameIdx++;
+        if (frameIdx % 30 === 0) {
+          setAlatStatus('Export… ' + Math.round(frameIdx / totalFrames * 100) + '% (' + frameIdx + '/' + totalFrames + ')');
+        }
+        requestAnimationFrame(tick);
+      }
+
+      requestAnimationFrame(tick);
+    });
   }

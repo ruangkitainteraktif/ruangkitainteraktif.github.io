@@ -22,9 +22,9 @@
   <title>RUANG KITA | Peta Interaktif & Data Geospasial Indonesia</title>
   <meta name="title" content="RUANG KITA | Peta Interaktif & Data Geospasial Indonesia">
   <meta name="description"
-    content="Platform peta interaktif Indonesia dengan data geospasial lengkap. Akses batas wilayah administrasi, CCTV lalu lintas, cuaca BMKG, gempa bumi real-time, geoportal Jawa Timur & Sukoharjo, analisis pertanian (Geotani), dan alat ukur/gambar GIS.">
+    content="Platform peta interaktif Indonesia dengan data geospasial lengkap. Akses GEONUSA (batas wilayah), GEOWATCH (CCTV lalu lintas), GEOPULSE (cuaca & gempa BMKG, prediksi GFS, maritim InaWaves), GEOPORTAL (Jawa Timur & Sukoharjo), GEOPANGAN (harga pangan PIHPS), GEOTANI (analisis pertanian), dan GEOTOOLS (alat ukur & gambar GIS).">
   <meta name="keywords"
-    content="peta interaktif Indonesia, GIS Indonesia, data geospasial, geoportal, batas wilayah, cuaca BMKG, gempa bumi, CCTV lalu lintas, pertanian, Geotani, peta digital, RUANG KITA">
+    content="RUANG KITA, GEONUSA, GEOTANI, GEOPULSE, GEOPORTAL, GEOPANGAN, GEOWATCH, GEOTOOLS, peta interaktif Indonesia, GIS Indonesia, data geospasial, batas wilayah, cuaca BMKG, gempa bumi, CCTV lalu lintas, pertanian, peta digital">
   <meta name="author" content="RUANG KITA | MAS PANNN">
   <meta name="google-adsense-account" content="ca-pub-7501816933195235">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7501816933195235"
@@ -46,7 +46,7 @@
   <meta property="og:url" content="https://ruangkita.net/">
   <meta property="og:title" content="RUANG KITA | Peta Interaktif & Data Geospasial Indonesia">
   <meta property="og:description"
-    content="Platform peta interaktif Indonesia dengan data geospasial lengkap. Akses batas wilayah, CCTV, cuaca BMKG, gempa bumi, geoportal Jawa Timur & Sukoharjo, serta analisis pertanian secara real-time.">
+    content="Platform peta interaktif Indonesia dengan data geospasial lengkap. Akses GEONUSA, GEOTANI, GEOPULSE, GEOPORTAL, GEOPANGAN, GEOWATCH, dan GEOTOOLS secara real-time.">
   <meta property="og:image" content="https://ruangkita.net/assets/img/share.jpg">
   <meta property="og:image:secure_url" content="https://ruangkita.net/assets/img/share.jpg">
   <meta property="og:image:type" content="image/jpeg">
@@ -59,7 +59,7 @@
   <meta name="twitter:url" content="https://ruangkita.net/">
   <meta name="twitter:title" content="RUANG KITA | Peta Interaktif & Data Geospasial Indonesia">
   <meta name="twitter:description"
-    content="Platform peta interaktif Indonesia dengan data geospasial lengkap. Akses batas wilayah, CCTV, cuaca BMKG, gempa bumi, geoportal, dan analisis pertanian secara real-time.">
+    content="Platform peta interaktif Indonesia dengan data geospasial lengkap. Akses GEONUSA, GEOTANI, GEOPULSE, GEOPORTAL, GEOPANGAN, GEOWATCH, dan GEOTOOLS secara real-time.">
   <meta name="twitter:image" content="https://ruangkita.net/assets/img/share.jpg">
   <meta name="twitter:image:alt" content="RUANG KITA - Peta Interaktif Indonesia">
 
@@ -163,7 +163,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=13">
+  <link rel="stylesheet" href="assets/css/app.css?v=14">
 
 </head>
 
@@ -205,20 +205,28 @@
         <div class="welcome-modal-body">
           <div class="welcome-features-label">Fitur Utama</div>
           <div class="welcome-features-grid">
-            <!-- GEOID - Highlighted -->
+            <!-- GEONUSA - Highlighted -->
             <div class="welcome-feature-card highlighted">
               <div class="welcome-feature-icon icon-geoid">🗺️</div>
               <div class="welcome-feature-info">
-                <div class="welcome-feature-name">GEONUSA — Batas Wilayah</div>
-                <div class="welcome-feature-desc">Pencarian batas wilayah administrasi Provinsi, Kabupaten/Kota, Kecamatan, hingga Desa/Kelurahan. Geolokasi GPS + reverse geocode otomatis dengan data lengkap wilayah.</div>
+                <div class="welcome-feature-name">GEONUSA</div>
+                <div class="welcome-feature-desc">Pencarian batas wilayah administrasi Provinsi, Kabupaten/Kota, Kecamatan, hingga Desa/Kelurahan. Geolokasi GPS dan reverse geocode otomatis dengan data lengkap wilayah.</div>
               </div>
             </div>
             <!-- GEOTANI - Highlighted -->
             <div class="welcome-feature-card highlighted">
               <div class="welcome-feature-icon icon-geotani">🌾</div>
               <div class="welcome-feature-info">
-                <div class="welcome-feature-name">GEOTANI — Analisis Pertanian</div>
-                <div class="welcome-feature-desc">Analisis LBS, KTA, NDVI/NDRE/NDMI crop health scoring, DEM/Terrain (SRTM), Land Cover, Choropleth BPS (18 indikator), Piramida Populasi, dan pencarian BPP & IGT Sawit.</div>
+                <div class="welcome-feature-name">GEOTANI</div>
+                <div class="welcome-feature-desc">Analisis pertanian: LBS, KTA, NDVI/NDRE/NDMI crop health, DEM/Terrain SRTM, Land Cover, pencarian BPP & IGT Sawit.</div>
+              </div>
+            </div>
+            <!-- GEOPULSE -->
+            <div class="welcome-feature-card">
+              <div class="welcome-feature-icon icon-geowx">🌤️</div>
+              <div class="welcome-feature-info">
+                <div class="welcome-feature-name">GEOPULSE</div>
+                <div class="welcome-feature-desc">Subtab Cuaca, Gempa, Kehutanan, Geologi & Forecasting. Cuaca BMKG, gempa real-time, 69 gunung api MAGMA, patahan/likuifaksi/karst, hotspot karhutla NASA FIRMS, prediksi GFS, dan maritim InaWaves.</div>
               </div>
             </div>
             <!-- GEOPORTAL -->
@@ -226,47 +234,31 @@
               <div class="welcome-feature-icon icon-geoportal">📡</div>
               <div class="welcome-feature-info">
                 <div class="welcome-feature-name">GEOPORTAL</div>
-                <div class="welcome-feature-desc">Layer data Pemprov Jawa Timur & Kabupaten Sukoharjo (pendidikan, kesehatan, transportasi, aset daerah).</div>
+                <div class="welcome-feature-desc">Layer data Pemprov Jawa Timur & Kabupaten Sukoharjo, dll.. (pendidikan, kesehatan, transportasi, aset daerah).</div>
+              </div>
+            </div>
+            <!-- GEOPANGAN -->
+            <div class="welcome-feature-card">
+              <div class="welcome-feature-icon icon-geopangan">💰</div>
+              <div class="welcome-feature-info">
+                <div class="welcome-feature-name">GEOPANGAN</div>
+                <div class="welcome-feature-desc">Harga Pangan Nasional (PIHPS Bank Indonesia). Layer Sebaran Pasar Indonesia (Kemendag) dan SPPG (Sismonbgn).</div>
               </div>
             </div>
             <!-- GEOWATCH -->
             <div class="welcome-feature-card">
               <div class="welcome-feature-icon icon-geowatch">🎥</div>
               <div class="welcome-feature-info">
-                <div class="welcome-feature-name">GEOWATCH — CCTV</div>
+                <div class="welcome-feature-name">GEOWATCH</div>
                 <div class="welcome-feature-desc">Monitoring CCTV lalu lintas jalan tol, nasional, dan non-tol dengan video streaming real-time.</div>
               </div>
             </div>
-            <!-- GEOWX -->
-            <div class="welcome-feature-card">
-              <div class="welcome-feature-icon icon-geowx">🌤️</div>
-              <div class="welcome-feature-info">
-                <div class="welcome-feature-name">GEOPULSE — Cuaca & Prediksi</div>
-                <div class="welcome-feature-desc">Prakiraan cuaca BMKG, animasi angin (wind particle), prediksi GFS (angin, kelembapan, hujan, PM2.5), dan analisis maritim (gelombang laut InaWaves).</div>
-              </div>
-            </div>
-            <!-- GEOQUAKE -->
-            <div class="welcome-feature-card">
-              <div class="welcome-feature-icon icon-geoquake">🔴</div>
-              <div class="welcome-feature-info">
-                <div class="welcome-feature-name">GEOQUAKE — Gempa & Geologi</div>
-                <div class="welcome-feature-desc">Data gempa BMKG real-time, 74 gunung api (MAGMA), info geologi (patahan, likuifaksi, karst), gempa NTT 2026 (BNPB), dan hotspot karhutla (NASA FIRMS).</div>
-              </div>
-            </div>
-            <!-- CHOROPLETH -->
-            <div class="welcome-feature-card">
-              <div class="welcome-feature-icon icon-geotani">📊</div>
-              <div class="welcome-feature-info">
-                <div class="welcome-feature-name">CHOROPLETH — Peta Interaktif BPS</div>
-                <div class="welcome-feature-desc">18 indikator demografi per provinsi (populasi, kepadatan, pertumbuhan, urbanisasi, dll) dengan piramida populasi interaktif.</div>
-              </div>
-            </div>
-            <!-- TOOLS -->
+            <!-- GEOTOOLS -->
             <div class="welcome-feature-card">
               <div class="welcome-feature-icon icon-tools">🛠️</div>
               <div class="welcome-feature-info">
-                <div class="welcome-feature-name">GEOTOOLS — Alat Analisis</div>
-                <div class="welcome-feature-desc">Gambar (titik, garis, poligon), ukur jarak & luas, import GeoJSON/SHP, export PDF.</div>
+                <div class="welcome-feature-name">GEOTOOLS</div>
+                <div class="welcome-feature-desc">Gambar (titik, garis, poligon), ukur jarak & luas, import GeoJSON/SHP, animasi GPX/KML, dan export video.</div>
               </div>
             </div>
           </div>
@@ -382,10 +374,6 @@
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           <span>GEOTANI</span>
         </button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-geopangan')">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-          <span>GEOPANGAN</span>
-        </button>
         <button class="tab-btn" onclick="openTab(event, 'tab-gempa'); openGempaSubtabById('gempa-subtab-infocuaca')" style="display:none">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           <span>GEOMET</span>
@@ -397,6 +385,10 @@
         <button class="tab-btn" onclick="openTab(event, 'tab-geoportal')">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
           <span>GEOPORTAL</span>
+        </button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-geopangan')">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          <span>GEOPANGAN</span>
         </button>
         <button class="tab-btn" onclick="openTab(event, 'tab-cctv')">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
@@ -469,7 +461,7 @@
           <div class="cctv-card" style="margin-bottom:12px;">
             <div class="cctv-card-header">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              <span>Cari Wilayah Data</span>
+              <span>Cari Wilayah - Insight</span>
             </div>
             <div class="cctv-card-body">
             <div class="query-box">
@@ -519,8 +511,6 @@
             </div>
             </div>
           </div>
-
-          <hr style="margin: 20px 0 20px; border:0; border-top:1px solid #e8eef3;">
 
         </div>
         <!-- TAB 2: GEOPORTAL -->
@@ -906,7 +896,7 @@
             <div class="cctv-card" style="margin-bottom:12px;">
               <div class="cctv-card-header">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                <span>Cari Wilayah Harga Pangan</span>
+                <span>Cari Wilayah - Harga Pangan</span>
               </div>
               <div class="cctv-card-body">
               <div class="geopangan-field">
@@ -1032,12 +1022,12 @@
 
           <div class="gempa-subtabs">
             
-            <button class="gempa-subtab-btn active" data-subtab="gempa-subtab-infocuaca" onclick="openGempaSubtab(this)">Info Cuaca</button>
-            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-gempa" onclick="openGempaSubtab(this)">Info Gempa</button>
-            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-karhutla" onclick="openGempaSubtab(this)">Info Kehutanan</button>
-            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-gunungapi" onclick="openGempaSubtab(this)">Info Geologi</button>
-            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-prediksicuaca" onclick="openGempaSubtab(this)">Prediksi Cuaca</button>
-            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-maritim" onclick="openGempaSubtab(this)">Prediksi Maritim</button>
+            <button class="gempa-subtab-btn active" data-subtab="gempa-subtab-infocuaca" onclick="openGempaSubtab(this)">Cuaca</button>
+            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-gempa" onclick="openGempaSubtab(this)">Gempa</button>
+            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-karhutla" onclick="openGempaSubtab(this)">Kehutanan</button>
+            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-gunungapi" onclick="openGempaSubtab(this)">Geologi</button>
+            <button class="gempa-subtab-btn" data-subtab="gempa-subtab-prediksicuaca" onclick="openGempaSubtab(this)">Forecasting</button>
+
           </div>
 
           <div id="gempa-subtab-gempa" class="gempa-subtab-panel">
@@ -1148,24 +1138,6 @@
                 <span>Layer Kehutanan</span>
               </div>
               <div class="cctv-card-body cctv-layers">
-              <h4 style="font-size:12px; margin:0 0 6px; color:#668198;">Citra Satelit</h4>
-              <label class="cctv-layer-toggle">
-                <input type="checkbox" id="toggleModisOverlay">
-                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="cctv-layer-info">
-                  <span class="cctv-layer-name">MODIS Terra</span>
-                  <small>Citra reflectance RGB</small>
-                </span>
-              </label>
-              <label class="cctv-layer-toggle">
-                <input type="checkbox" id="toggleViirsOverlay">
-                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="cctv-layer-info">
-                  <span class="cctv-layer-name">VIIRS SNPP</span>
-                  <small>Citra reflectance RGB</small>
-                </span>
-              </label>
-              <hr style="margin: 12px 0 12px; border:0; border-top:1px solid #e8eef3;">
               <label class="cctv-layer-toggle">
                 <input type="checkbox" id="toggleHotspotLayer">
                 <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
@@ -1185,6 +1157,118 @@
                   <small>Batas kawasan hutan dari Geoportal ESDM</small>
                 </span>
               </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleGambutLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Lahan Gambut</span>
+                  <small>Sebaran lahan gambut dari SIMONTANA</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleKhLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Kawasan Hutan (Kemenhut)</span>
+                  <small>Penunjukan kawasan hutan dari SIMONTANA</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="togglePippibLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">PIPPIB 2023 Periode I</span>
+                  <small>Penunjukan PIPPIB gambut/kawasan/primer dari SIMONTANA</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleSawitNasionalLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Sawit Nasional</span>
+                  <small>Persebaran kelapa sawit nasional dari SIMONTANA</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleSawitPerkebunanLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Sawit dan Perkebunan</span>
+                  <small>Sawit dan perkebunan dari SIMONTANA</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleRehabDasLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Rehab DAS</span>
+                  <small>Rehabilitasi DAS dari SIMONTANA</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="togglePerkebunanPl24Layer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Perkebunan PL24</span>
+                  <small>Perkebunan PL24 dari SIMONTANA</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleRktnSumateraLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">RKTN Sumatera</span>
+                  <small>Rencana Kebutuhan Tata Ruang Nasional Sumatera dari SIMONTANA</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleRktnSulawesiLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">RKTN Sulawesi</span>
+                  <small>Rencana Kebutuhan Tata Ruang Nasional Sulawesi dari SIMONTANA</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleRktnPapuaLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">RKTN Papua</span>
+                  <small>Rencana Kebutuhan Tata Ruang Nasional Papua dari SIMONTANA</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleRktnMalukuLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">RKTN Maluku</span>
+                  <small>Rencana Kebutuhan Tata Ruang Nasional Maluku dari SIMONTANA</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleRktnKalimantanLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">RKTN Kalimantan</span>
+                  <small>Rencana Kebutuhan Tata Ruang Nasional Kalimantan dari SIMONTANA</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleRktnJawaLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">RKTN Jawa</span>
+                  <small>Rencana Kebutuhan Tata Ruang Nasional Jawa dari SIMONTANA</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleRktnBaliNtLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">RKTN Bali &amp; NT</span>
+                  <small>Rencana Kebutuhan Tata Ruang Nasional Bali &amp; NT dari SIMONTANA</small>
+                </span>
+              </label>
             </div>
             </div>
             <div id="hotspot-table-container"></div>
@@ -1196,8 +1280,24 @@
           <div id="gempa-subtab-infocuaca" class="gempa-subtab-panel active">
             <div class="cctv-card" style="margin-bottom:12px;">
               <div class="cctv-card-header">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14l9-9 9 9"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
+                <span>Layer Cuaca Maritim</span>
+              </div>
+              <div class="cctv-card-body cctv-layers">
+                <label class="cctv-layer-toggle">
+                  <input type="checkbox" id="toggleCuacaMaritimLayer">
+                  <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">Cuaca Maritim</span>
+                    <small id="cuacaMaritimInfo">Cuaca pelabuhan &amp; perairan — BMKG Maritim</small>
+                  </span>
+                </label>
+              </div>
+            </div>
+            <div class="cctv-card" style="margin-bottom:12px;">
+              <div class="cctv-card-header">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
-                <span>Cari Wilayah untuk Info Cuaca Terkini</span>
+                <span>Cari Wilayah - Cuaca</span>
               </div>
               <div class="cctv-card-body">
               <div class="search-weather-container">
@@ -1206,7 +1306,7 @@
                 <div id="autocompleteResults" class="autocomplete-results"></div>
               </div>
               <div id="weather-content" style="margin-top:20px">
-                <div style="font-size:13px; color:#555; background:#eef7ff; padding:10px; margin-bottom: 100px; border-radius:5px;">
+                <div style="font-size:13px; color:#fff; background:#0a4d8c; padding:10px; margin-bottom: 100px; border-radius:5px;">
                   ℹ️ Pilih lokasi dari pencarian untuk melihat cuaca.
                 </div>
               </div>
@@ -1215,13 +1315,10 @@
           </div>
 
           <div id="gempa-subtab-prediksicuaca" class="gempa-subtab-panel">
-            <h4 style="font-size: 15px; margin-bottom: 5px;">Prediksi Cuaca GFS</h4>
-            <p style="font-size:12px; color:#668198; margin-bottom:12px;">Layer prediksi cuaca dari model GFS BMKG dengan data model run terbaru.</p>
-            <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
             <div class="cctv-card" style="margin-bottom:12px;">
               <div class="cctv-card-header">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
-                <span>Layer Prediksi GFS</span>
+                <span>Layer Prediksi Cuaca</span>
               </div>
               <div class="cctv-card-body cctv-layers">
               <label class="cctv-layer-toggle">
@@ -1274,6 +1371,46 @@
               </label>
             </div>
             </div>
+            <div class="cctv-card" style="margin-bottom:12px;">
+              <div class="cctv-card-header">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20"/><path d="M12 2v20"/><path d="M4.93 4.93l14.14 14.14"/><path d="M19.07 4.93L4.93 19.07"/></svg>
+                <span>Layer Prediksi Maritim</span>
+              </div>
+              <div class="cctv-card-body cctv-layers">
+                <label class="cctv-layer-toggle">
+                  <input type="checkbox" id="toggleMaritimeAngin">
+                  <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">Angin Laut</span>
+                    <small id="maritimeAnginInfo">Wind Speed &amp; Direction</small>
+                  </span>
+                </label>
+                <label class="cctv-layer-toggle">
+                  <input type="checkbox" id="toggleMaritimeGelombang">
+                  <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">Tinggi Gelombang</span>
+                    <small id="maritimeGelombangInfo">Significant Wave Height</small>
+                  </span>
+                </label>
+                <label class="cctv-layer-toggle">
+                  <input type="checkbox" id="toggleMaritimeSwell">
+                  <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">Swell</span>
+                    <small id="maritimeSwellInfo">Primary Swell Direction</small>
+                  </span>
+                </label>
+                <label class="cctv-layer-toggle">
+                  <input type="checkbox" id="toggleMaritimeWindSea">
+                  <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">Gelombang Angin</span>
+                    <small id="maritimeWindSeaInfo">Wind Sea Direction</small>
+                  </span>
+                </label>
+              </div>
+            </div>
             <div class="wind-toggle-row" style="display:none">
               <label class="wind-toggle-label">
                 <input type="checkbox" id="toggleWindAnim">
@@ -1285,52 +1422,6 @@
                 <span id="windTimestamp" class="wind-ts"></span>
                 <button class="wind-btn" id="windNext" title="Frame berikutnya">▶</button>
               </div>
-            </div>
-          </div>
-
-          <div id="gempa-subtab-maritim" class="gempa-subtab-panel">
-            <h4 style="font-size: 15px; margin-bottom: 5px;">Prakiraan Cuaca Maritim</h4>
-            <p style="font-size:12px; color:#668198; margin-bottom:12px;">Layer cuaca laut dari model InaWaves BMKG dengan data model run terbaru.</p>
-            <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
-            <div class="cctv-card">
-              <div class="cctv-card-header">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20"/><path d="M12 2v20"/><path d="M4.93 4.93l14.14 14.14"/><path d="M19.07 4.93L4.93 19.07"/></svg>
-                <span>Layer Maritim</span>
-              </div>
-              <div class="cctv-card-body cctv-layers">
-              <label class="cctv-layer-toggle">
-                <input type="checkbox" id="toggleMaritimeAngin">
-                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="cctv-layer-info">
-                  <span class="cctv-layer-name">Angin Laut</span>
-                  <small id="maritimeAnginInfo">Wind Speed &amp; Direction</small>
-                </span>
-              </label>
-              <label class="cctv-layer-toggle">
-                <input type="checkbox" id="toggleMaritimeGelombang">
-                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="cctv-layer-info">
-                  <span class="cctv-layer-name">Tinggi Gelombang</span>
-                  <small id="maritimeGelombangInfo">Significant Wave Height</small>
-                </span>
-              </label>
-              <label class="cctv-layer-toggle">
-                <input type="checkbox" id="toggleMaritimeSwell">
-                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="cctv-layer-info">
-                  <span class="cctv-layer-name">Swell</span>
-                  <small id="maritimeSwellInfo">Primary Swell Direction</small>
-                </span>
-              </label>
-              <label class="cctv-layer-toggle">
-                <input type="checkbox" id="toggleMaritimeWindSea">
-                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="cctv-layer-info">
-                  <span class="cctv-layer-name">Gelombang Angin</span>
-                  <small id="maritimeWindSeaInfo">Wind Sea Direction</small>
-                </span>
-              </label>
-            </div>
             </div>
           </div>
 
@@ -1650,6 +1741,12 @@
 
     <!-- GPX Track Animation: positioned below the sidebar on desktop and above it on mobile. -->
     <div id="gpxAnimMapOverlay" class="gpx-anim-map-overlay" aria-live="polite">
+      <div id="gpxExportSpinner" class="gpx-export-spinner">
+        <div class="gpx-export-spinner-inner">
+          <svg class="gpx-export-spinner-svg" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="90 150" stroke-dashoffset="0"/></svg>
+          <span class="gpx-export-spinner-text">Export MP4…</span>
+        </div>
+      </div>
       <div id="gpxAnimControls" class="alat-anim-card" style="display:none">
         <div class="alat-anim-header">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -1679,6 +1776,10 @@
             </div>
             <button id="gpxAnimReset" class="alat-anim-btn alat-anim-btn-danger" onclick="gpxAnimStop()">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+            </button>
+            <button id="gpxAnimExport" class="alat-anim-btn" onclick="gpxAnimExportMP4()">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg>
+              <span>Export</span>
             </button>
           </div>
           <div id="gpxAnimInfo" class="gpx-anim-info">Pilih track lalu tekan Play.</div>
@@ -1730,21 +1831,20 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/jstree.min.js"></script>
   <script src="assets/js/map-core.js"></script>
   <script src="assets/js/layer-loading.js"></script>
-  <script src="assets/js/bnpb-hillshade.js"></script>
-  <script src="assets/js/modis-time-slider.js"></script>
-  <script src="assets/js/geoportal.js"></script>
-  <script src="assets/js/geoportal-search.js"></script>
-  <script src="assets/js/sidebar.js"></script>
-  <script src="assets/js/earthquake.js"></script>
-  <script src="assets/js/katalog-gempa.js"></script>
-  <script src="assets/js/sensor-seismic.js"></script>
-  <script src="assets/js/sensor-global.js"></script>
-  <script src="assets/js/history-gempa.js"></script>
-  <script src="assets/js/dem-analysis.js"></script>
-  <script src="assets/js/cctv.js"></script>
-  <script src="assets/js/detail-subtab.js"></script>
-  <script src="assets/js/map-click.js"></script>
-  <script src="assets/js/alat-layers.js"></script>
+<script src="assets/js/bnpb-hillshade.js"></script>
+    <script src="assets/js/modis-time-slider.js"></script>
+    <script src="assets/js/geoportal.js"></script>
+    <script src="assets/js/geoportal-search.js"></script>
+    <script src="assets/js/sidebar.js"></script>
+    <script src="assets/js/earthquake.js"></script>
+    <script src="assets/js/katalog-gempa.js"></script>
+    <script src="assets/js/sensor-seismic.js"></script>
+    <script src="assets/js/sensor-global.js"></script>
+    <script src="assets/js/history-gempa.js"></script>
+    <script src="assets/js/dem-analysis.js"></script>
+    <script src="assets/js/cctv.js"></script>
+    <script src="assets/js/detail-subtab.js"></script>
+    <script src="assets/js/alat-layers.js"></script>
   <script src="assets/js/alat-draw-measure.js"></script>
   <script src="assets/js/app-boot.js"></script>
 
@@ -1776,6 +1876,11 @@
   <script src="assets/js/choropleth.js"></script>
   <script src="assets/js/hotspot.js"></script>
   <script src="assets/js/kawasan-hutan.js"></script>
+  <script src="assets/js/gambut-layer.js"></script>
+  <script src="assets/js/kh-layer.js"></script>
+  <script src="assets/js/pippib-layer.js"></script>
+  <script src="assets/js/dss-layers.js"></script>
+  <script src="assets/js/cuaca-maritim-layer.js"></script>
   <script src="assets/js/modis-viirs-overlay.js"></script>
   <script src="assets/js/fault-layer.js"></script>
   <script src="assets/js/fault-layer-new.js"></script>

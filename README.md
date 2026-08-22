@@ -75,6 +75,14 @@
 
 *Government data layers: East Java Provincial, Sukoharjo Regency, ATR/BPN land parcels, BPS statistics.*
 
+### 💰 GEOPANGAN — Harga Pangan Nasional
+
+- **Harga Pangan Nasional (PIHPS)** — data harga pangan dari Bank Indonesia
+- **Sebaran Pasar Indonesia** — pasar induk, penunjang & eceran (Kemendag)
+- **SPPG Indonesia** — Satuan Pelayanan Pemenuhan Gizi (Sismonbgn)
+
+*National food prices (PIHPS BI), market distribution, and nutrition service points.*
+
 ### 🎥 GEOWATCH — CCTV Lalu Lintas
 
 - Monitoring CCTV jalan tol, jalan nasional, dan jalan non-tol
@@ -85,54 +93,37 @@
 
 *Real-time traffic CCTV monitoring with video streaming.*
 
-### 🌤️ GEOPULSE — Cuaca & Prediksi
+### 🌤️ GEOPULSE — Cuaca, Gempa & Geologi
 
-**Sub-tab: Info Cuaca**
+**Sub-tab: Cuaca**
 - Prakiraan cuaca 3 hari ke depan dari BMKG
 - Grafik prakiraan cuaca 3 hari per 3 jam
 - Pencarian lokasi dengan autocomplete
 - Insight cuaca (ikon, suhu, kelembapan, angin, tutupan awan)
 
-**Sub-tab: Prediksi Cuaca**
-- **Animasi Angin (Wind Particle)** — visualisasi aliran angin real-time
-- **Prediksi GFS** — Grafik animasi prediksi angin, kelembapan, curah hujan, PM2.5, HTH, GsMAP (48 jam ke depan)
-- **Prediksi Maritim** — Analisis gelombang laut (InaWaves API): tinggi gelombang, arus, angin laut, arah gelombang
-- Peta prediksi dengan overlay gelombang dan angin
-
-*BMKG weather forecast, wind particle animation, GFS model predictions, maritime wave analysis (InaWaves).*
-
-### 🔴 GEOQUAKE — Gempa & Info Geologi
-
-**Sub-tab: Info Gempa**
-- Gempa terkini dari BMKG
-- Gempa signifikan (M5.0+)
-- Gempa dirasakan
+**Sub-tab: Gempa**
+- Gempa terkini dari BMKG, gempa signifikan (M5.0+), gempa dirasakan
 - Marker animasi dengan popup detail
 - Zona risiko gempa dan longsor dari **BIG**
+- Gempa NTT 2026 (BNPB), jalur evakuasi, sensor seismik, riwayat & katalog gempa
 
-**Sub-tab: Info Geologi**
-- **Gunung Api** — 74 gunung api berstatus dari MAGMA Indonesia, marker warna berdasarkan level aktivitas
-- **KRB Gunung Api** — Zona bahaya火山 (MapServer) polygon overlay
-- **KRB Titik** — Titik gas vulkanik berbahaya (MapServer) dengan popup detail
-- **Peta Geologi** — Peta geologi nasional (BIG MapServer)
-- **Geostruktur** — Patahan sesar dan lipatan dari BIG
-- **Patahan Aktif 1:50K** — Data patahan aktif detail
-- **Likuifaksi** — Zona kerentanan likuifaksi
-- **Karst** — Lanskap karst nasional
-
-**Sub-tab: Info Bencana**
-- **Gempa NTT 2026** — Data kerusakan gempa dari BNPB (FeatureServer) dengan warna tingkat kerusakan
-- **Jalur Evakuasi** — Rute evakuasi bencana
-- **Sensor Seismic** — Stasiun pemantauan gempa aktif
-- **Sensor Global** — Stasiun pemantauan global
-- **Riwayat Gempa** — Data gempa historis
-- **Katalog Gempa** — Katalog gempa BMKG
-
-**Sub-tab: Info Karhutla**
-- **Hotspot Karhutla** — Titik panas kebakaran hutan dan lahan dari NASA FIRMS via SIPONGI
+**Sub-tab: Kehutanan**
+- Hotspot karhutla dari NASA FIRMS via SIPONGI
 - Heatmap visualisasi kepadatan hotspot
 
-*Real-time earthquakes, volcano monitoring (74 volcanoes), geological hazard layers, BNPB damage data, karhutla hotspot monitoring.*
+**Sub-tab: Geologi**
+- **Gunung Api** — 74 gunung api MAGMA Indonesia
+- **KRB Gunung Api / Titik** — zona bahaya & titik gas vulkanik (MapServer)
+- **Peta Geologi**, **Geostruktur** (patahan & lipatan), **Patahan Aktif 1:50K**
+- **Likuifaksi** & **Karst** nasional (BIG)
+
+**Sub-tab: Forecasting**
+- **Animasi Angin (Wind Particle)** — visualisasi aliran angin real-time
+- **Prediksi GFS** — angin, kelembapan, curah hujan, PM2.5, HTH, GsMAP (48 jam ke depan)
+- **Prediksi Maritim** — gelombang laut InaWaves: tinggi gelombang, arus, arah gelombang
+- Peta prediksi dengan overlay gelombang dan angin
+
+*BMKG weather & earthquakes, volcano monitoring, geological hazards, GFS model, maritime waves (InaWaves), wind particle animation.*
 
 ### 🛠️ GEOTOOLS — Alat Analisis GIS
 
