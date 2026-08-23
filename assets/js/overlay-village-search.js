@@ -13,9 +13,14 @@
     if (loadPromise) return loadPromise;
     loadPromise = (async () => {
       try {
-        const res = await fetch('assets/data/kode_wilayah.json');
-        if (!res.ok) return;
-        const all = await res.json();
+        let all;
+        if (typeof window.KODE_WILAYAH_DATA !== 'undefined' && window.KODE_WILAYAH_DATA) {
+          all = window.KODE_WILAYAH_DATA;
+        } else {
+          const res = await fetch('assets/data/kode_wilayah.json');
+          if (!res.ok) return;
+          all = await res.json();
+        }
         allData = all.filter(item => {
           if (!item.kode) return false;
           const dots = (item.kode.match(/\./g) || []).length;

@@ -25,10 +25,16 @@
   // sehingga konteks administrasi dibentuk dari kode induknya.
   async function loadKemendagriData() {
     try {
-      const response = await fetch('assets/data/kode_wilayah.json');
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      let kemendagriRaw;
+      if (typeof window.KODE_WILAYAH_DATA !== 'undefined' && window.KODE_WILAYAH_DATA) {
+        kemendagriRaw = window.KODE_WILAYAH_DATA;
+      } else {
+        const response = await fetch('assets/data/kode_wilayah.json');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        kemendagriRaw = await response.json();
+      }
 
-      const payload = await response.json();
+      const payload = kemendagriRaw;
       kemendagriData = Array.isArray(payload) ? payload : (payload.value || []);
       if (!Array.isArray(kemendagriData)) throw new Error('Format kode_wilayah.json tidak valid');
 

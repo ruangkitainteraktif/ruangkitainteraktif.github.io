@@ -14,6 +14,7 @@ let geoidSelectedRegency = null;
 let geoidSelectedDistrict = null;
 let geoidWilayahDataPromise = null;
 let geoidBoundaryLayer = null;
+let geoidPointMarker = null;
 let geoidChildBoundaryLayer = null;
 let geoidBoundaryRequestId = 0;
 let geoidChildBoundaryRequestId = 0;
@@ -24,15 +25,28 @@ let lastGeotaniPopupData = null;
 
 async function getGeoidWilayahData() {
   if (!geoidWilayahDataPromise) {
-    geoidWilayahDataPromise = fetch(WILAYAH_LOCAL_DATA_URL)
-      .then(response => {
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return response.json();
-      })
-      .then(data => {
-        if (!Array.isArray(data)) throw new Error('Format kode_wilayah.json tidak valid');
-        return data.filter(item => item && typeof item.kode === 'string' && item.nama);
-      });
+    const local = (typeof window.KODE_WILAYAH_DATA !== 'undefined') ? window.KODE_WILAYAH_DATA : null;
+    if (local) {
+      geoidWilayahDataPromise = Promise.resolve(
+        Array.isArray(local)
+          ? local.filter(item => item && typeof item.kode === 'string' && item.nama)
+          : (local.value || [])
+      );
+    } else {
+      geoidWilayahDataPromise = fetch(WILAYAH_LOCAL_DATA_URL)
+        .then(response => {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return response.json();
+        })
+        .then(data => {
+          if (!Array.isArray(data)) throw new Error('Format kode_wilayah.json tidak valid');
+          return data.filter(item => item && typeof item.kode === 'string' && item.nama);
+        })
+        .catch(err => {
+          geoidWilayahDataPromise = null;
+          throw err;
+        });
+    }
   }
   return geoidWilayahDataPromise;
 }
@@ -319,12 +333,40 @@ async function geocodeAdministrativeArea(selection) {
     outFields: '*',
     maxLocations: '1'
   });
-  const response = await fetch(`https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?${params}`);
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const data = await response.json();
-  const candidate = data.candidates && data.candidates[0];
-  if (!candidate || !candidate.location) return null;
-  return { lat: candidate.location.y, lon: candidate.location.x };
+  try {
+    const response = await fetch(`https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?${params}`);
+    if (!response.ok) return null;
+    const data = await response.json();
+    const candidate = data.candidates && data.candidates[0];
+    if (!candidate || !candidate.location) return null;
+    return { lat: candidate.location.y, lon: candidate.location.x };
+  } catch (e) {
+    console.warn('geocodeAdministrativeArea (ArcGIS) gagal:', e);
+    return null;
+  }
+}
+
+/* ── Map loading overlay for boundary searches (cascading + unified) ── */
+let geoidBoundaryLoadingEl = null;
+let geoidBoundaryLoadingCount = 0;
+function showGeoidBoundaryLoading() {
+  geoidBoundaryLoadingCount++;
+  const mapEl = document.getElementById('map');
+  if (!mapEl) return;
+  if (!geoidBoundaryLoadingEl) {
+    geoidBoundaryLoadingEl = document.createElement('div');
+    geoidBoundaryLoadingEl.className = 'map-loading-overlay geoid-boundary-loading';
+    geoidBoundaryLoadingEl.style.zIndex = '1300';
+    geoidBoundaryLoadingEl.innerHTML = '<div class="map-loading-spinner" role="status" aria-label="Memuat batas wilayah..."></div>';
+    mapEl.appendChild(geoidBoundaryLoadingEl);
+  }
+  geoidBoundaryLoadingEl.classList.add('active');
+}
+function hideGeoidBoundaryLoading() {
+  geoidBoundaryLoadingCount = Math.max(0, geoidBoundaryLoadingCount - 1);
+  if (geoidBoundaryLoadingCount === 0 && geoidBoundaryLoadingEl) {
+    geoidBoundaryLoadingEl.classList.remove('active');
+  }
 }
 
 async function showGeoidBoundary(kode, zoom, options = {}) {
@@ -342,30 +384,124 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
   const level = parts.length;
   const levelNames = { 1: 'Provinsi', 2: 'Kabupaten/Kota', 3: 'Kecamatan', 4: 'Desa/Kelurahan' };
   const label = levelNames[level] || 'Wilayah';
-  const url = `https://wilayah.smartartstudio.my.id/api/boundaries/${kode}`;
+  const isGeotaniMode = window.currentActiveTab === 'tab-geotani';
+  if (geoidPointMarker) { map.removeLayer(geoidPointMarker); geoidPointMarker = null; }
+
+  if (typeof clearGeoidChildBoundaries === 'function') clearGeoidChildBoundaries();
+
+  let features = [];
+  let geomType = 'polygon';
 
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
-    const response = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeout);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    if (!data.path || !data.path.length || requestId !== geoidBoundaryRequestId) return;
+    showGeoidBoundaryLoading();
+    if (level === 4) {
+      // Desa/Kelurahan: BIG layer 4 tidak menyajikan geometri -> gunakan BNPB Batas_Desa.
+      const kodeNum = Number(kode.replace(/\./g, ''));
+      const bnpbUrl = `https://gis.bnpb.go.id/server/rest/services/Basemap/Batas_Desa/MapServer/0/query?where=KODE_DESA_%3D${kodeNum}&f=json&returnGeometry=true&outSR=4326&outFields=*`;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      const response = await fetch(bnpbUrl, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      features = result.features || [];
+      if (!features.length) {
+        // Fallback: titik BMKG bila batas desa tidak tersedia di BNPB.
+        const loc = await geocodeVillageByAdm4(kode);
+        if (loc) {
+          geoidPointMarker = L.circleMarker([loc.lat, loc.lon], {
+            radius: 7, color: '#2563eb', weight: 3, opacity: 0.95, fillColor: '#60a5fa', fillOpacity: 0.4
+          }).addTo(map);
+          map.flyTo([loc.lat, loc.lon], 15, { duration: 1 });
+          return geoidPointMarker;
+        }
+        return null;
+      }
+    } else {
+      // Provinsi / Kabupaten-Kota / Kecamatan: BIG SatuPeta BATAS_WILAYAH (WGS84).
+      let layer, where;
+      if (level === 1) { layer = 2; where = `kdppum = '${kode}'`; }
+      else if (level === 2) { layer = 2; where = `kdpkab = '${kode}'`; }
+      else if (level === 3) { layer = 3; where = `kdcpum = '${kode}'`; }
+      else { return null; }
 
-    geoidBoundaryRawData = { path: data.path, nama: data.nama || 'Wilayah', kode };
-    const rings = data.path.map(ring => ring);
-    const isGeotaniMode = window.currentActiveTab === 'tab-geotani';
-    geoidBoundaryLayer = L.polygon(rings, {
-      color: isGeotaniMode ? '#16a34a' : '#2563eb',
-      weight: 3,
-      opacity: 0.95,
-      fillColor: isGeotaniMode ? '#4ade80' : '#60a5fa',
-      fillOpacity: 0.15,
-      dashArray: '7 5'
-    }).addTo(map);
+      const bigBase = 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/BATAS_WILAYAH/MapServer';
+      const url = `${bigBase}/${layer}/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outFields=namobj&geometryPrecision=5`;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      features = result.features || [];
+    }
 
-    const luasHa = computePolygonAreaHa(data.path);
+    if (!features.length || requestId !== geoidBoundaryRequestId) return null;
+
+    const toLatLngs = (geom) => {
+      if (!geom) return null;
+      if (geom.rings) return geom.rings.map(r => r.map(([x, y]) => [y, x]));
+      if (geom.paths) return geom.paths.map(p => p.map(([x, y]) => [y, x]));
+      return null;
+    };
+
+    const layers = [];
+    let firstGeom = null;
+    let nama = 'Wilayah';
+    let luasHa = 0;
+    const parentFill = (level === 2 || level === 3) ? 0 : 0.15;
+    for (const f of features) {
+      const g = toLatLngs(f.geometry);
+      if (!g) continue;
+      const a = f.attributes || {};
+      if (a.namobj) nama = a.namobj;
+      else if (a.NAMA_KEL) nama = a.NAMA_KEL;
+      if (!firstGeom) firstGeom = g;
+      if (geomType === 'polyline') {
+        layers.push(L.polyline(g, { color: isGeotaniMode ? '#16a34a' : '#2563eb', weight: 3, opacity: 0.95, dashArray: '7 5' }).addTo(map));
+      } else {
+        layers.push(L.polygon(g, { color: isGeotaniMode ? '#16a34a' : '#2563eb', weight: 3, opacity: 0.95, fillColor: isGeotaniMode ? '#4ade80' : '#60a5fa', fillOpacity: parentFill, dashArray: '7 5' }).addTo(map));
+        luasHa += computePolygonAreaHa(g);
+      }
+    }
+    if (!layers.length) return null;
+
+    const batasCount = features.length;
+    // Gunakan nama admin yang dipilih (data wilayah) supaya level provinsi tidak
+    // menampilkan nama satu kabupaten saja.
+    try {
+      const wd = await getGeoidWilayahData();
+      if (Array.isArray(wd)) {
+        const node = wd.find(d => d && d.kode === kode);
+        if (node && node.nama) nama = node.nama;
+      }
+    } catch (e) { /* pertahankan nama dari fitur */ }
+
+    // Untuk kabupaten/kecamatan, gambar juga poligon terisi batas anaknya
+    // (kecamatan untuk kabupaten; desa untuk kecamatan).
+    let childCount = 0;
+    if (level === 2 || level === 3) {
+      try {
+        const childGeoms = await fetchChildBoundaryGeometries(level, kode);
+        childCount = childGeoms.length;
+        for (const g of childGeoms) {
+          layers.push(L.polygon(g, {
+            color: isGeotaniMode ? '#16a34a' : '#2563eb',
+            weight: 1.5, opacity: 0.7,
+            fillColor: isGeotaniMode ? '#4ade80' : '#60a5fa',
+            fillOpacity: 0.15, dashArray: '7 5'
+          }).addTo(map));
+        }
+      } catch (e) { console.warn('Gagal memuat batas anak:', e); }
+    }
+
+    const detailLabel = level === 1 ? 'Jumlah Kabupaten/Kota' : level === 2 ? 'Jumlah Kecamatan' : level === 3 ? 'Jumlah Desa/Kelurahan' : '';
+    const detailCount = level === 1 ? batasCount : childCount;
+
+    geoidBoundaryLayer = L.featureGroup(layers).addTo(map);
+    geoidBoundaryRawData = { path: firstGeom, nama, kode };
+    const data = { nama };
+    const rings = firstGeom;
     const fmtNum = (n) => n.toLocaleString('id-ID', { maximumFractionDigits: 2 });
 
     if (isGeotaniMode) {
@@ -535,11 +671,16 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
                 <span style="color:#64748b;">NDVI (Sentinel-2)</span>
                 <span style="font-weight:600;color:#1e293b;">${ndviLabel}</span>
               </div>
+              ${detailLabel && detailCount > 1 ? `
+              <div style="display:flex;justify-content:space-between;font-size:10px;">
+                <span style="color:#64748b;">${detailLabel}</span>
+                <span style="font-weight:600;color:#1e293b;">${detailCount} wilayah</span>
+              </div>` : ''}
             </div>
           </div>
 
           <div style="padding:8px 14px;background:#f8fafc;display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:8px;color:#94a3b8;">Sumber: BMKG · BIG SatuPeta · Sentinel-2</span>
+             <span style="font-size:8px;color:#94a3b8;">Sumber: BMKG · BIG SatuPeta · BNPB · Sentinel-2</span>
             <div style="display:flex;gap:6px;">
               <button class="geotani-btn-print" onclick="printGeotaniPdf()">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -577,6 +718,11 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
                 <span class="boundary-popup-meta-label">Dalam km²</span>
                 <span class="boundary-popup-meta-value">${fmtNum(luasHa / 100)} km²</span>
               </div>` : ''}
+              ${detailLabel && detailCount > 1 ? `
+              <div class="boundary-popup-meta-item">
+                <span class="boundary-popup-meta-label">${detailLabel}</span>
+                <span class="boundary-popup-meta-value">${detailCount} wilayah</span>
+              </div>` : ''}
             </div>
             </div>
           </div>
@@ -606,6 +752,44 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
         console.warn('Boundary wilayah tidak tersedia:', err);
       }
     }
+  } finally {
+    hideGeoidBoundaryLoading();
+  }
+}
+
+// Ambil geometri poligon anak untuk dril-down batas:
+// - level 2 (Kabupaten) -> seluruh Kecamatan (BIG layer 3, kdcpum LIKE 'kode.%')
+// - level 3 (Kecamatan) -> seluruh Desa/Kelurahan (BNPB, rentang KODE_DESA_)
+async function fetchChildBoundaryGeometries(level, kode) {
+  const toLL = (geom) => {
+    if (!geom) return null;
+    if (geom.rings) return geom.rings.map(r => r.map(([x, y]) => [y, x]));
+    return null;
+  };
+  try {
+    let url;
+    if (level === 2) {
+      const where = `kdcpum LIKE '${kode}.%'`;
+      url = `https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/BATAS_WILAYAH/MapServer/3/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outFields=namobj&geometryPrecision=5`;
+    } else if (level === 3) {
+      const digits = kode.replace(/\./g, '');
+      const lo = Number(digits + '0000');
+      const hi = Number((Number(digits) + 1) + '0000');
+      const where = `KODE_DESA_ >= ${lo} AND KODE_DESA_ < ${hi}`;
+      url = `https://gis.bnpb.go.id/server/rest/services/Basemap/Batas_Desa/MapServer/0/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outSR=4326&outFields=NAMA_KEL`;
+    } else {
+      return [];
+    }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const j = await res.json();
+    return (j.features || []).map(f => toLL(f.geometry)).filter(Boolean);
+  } catch (e) {
+    console.warn('Gagal mengambil batas anak:', e);
+    return [];
   }
 }
 
@@ -670,6 +854,7 @@ async function showGeoidChildBoundaries(parentCode, childDepth) {
   const requestId = ++geoidChildBoundaryRequestId;
   geoidChildBoundaryLoading = true;
   geoidChildBoundaryParentCode = parentCode;
+  showGeoidBoundaryLoading();
 
   try {
     const { children, features, failed } = await fetchGeoidChildBoundaryFeatures(parentCode, childDepth);
@@ -695,6 +880,7 @@ async function showGeoidChildBoundaries(parentCode, childDepth) {
     console.warn('[GEOID] Gagal memuat batas wilayah turunan:', error);
   } finally {
     if (requestId === geoidChildBoundaryRequestId) geoidChildBoundaryLoading = false;
+    hideGeoidBoundaryLoading();
   }
 }
 
@@ -1715,6 +1901,11 @@ async function fetchLuasSawah(kode) {
   }
 }
 
+function setAdmText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.innerText = value || '-';
+}
+
 async function cariLayerWilayah() {
   const sidebar = document.getElementById('sidebar-left');
   if (sidebar && !sidebar.classList.contains('collapsed')) {
@@ -1742,37 +1933,16 @@ async function cariLayerWilayah() {
   }
 
   try {
-    let location = null;
-    if (selection.desa && adm4Code) location = await geocodeVillageByAdm4(adm4Code);
-    if (!location) location = await geocodeAdministrativeArea(selection);
-
-    if (location) {
-      const zoom = selection.desa ? 15 : selection.kecamatan ? 12 : selection.kabkota ? 10 : 7;
-      const isGeotani = window.currentActiveTab === 'tab-geotani';
-      if (isGeotani) {
-        window._lastGeotaniLocation = { ...location, kode: selectedCode };
-        if (selectedCode) showGeoidBoundary(selectedCode, zoom);
-      } else {
-        const marker = showGeoidFlyup(location.lat, location.lon, {
-          desa: selection.desa || selection.kecamatan || selection.kabkota || selection.provinsi,
-          kecamatan: selection.kecamatan || location.kecamatan,
-          kabkota: selection.kabkota || location.kabkota || location.kotkab,
-          provinsi: selection.provinsi || location.provinsi,
-          kode: selectedCode
-        }, zoom);
-        document.getElementById('adm-provinsi').innerText = selection.provinsi || location.provinsi || '-';
-        document.getElementById('adm-kabkota').innerText = selection.kabkota || location.kabkota || location.kotkab || '-';
-        document.getElementById('adm-kecamatan').innerText = selection.kecamatan || location.kecamatan || '-';
-        document.getElementById('adm-desa').innerText = selection.desa || '-';
-        await loadGeoidPopupInsights(marker, { ...location, kode: location.kode || adm4Code });
-        if (typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, selectedCode, location);
-        if (typeof loadLuasWilayahPopup === 'function') await loadLuasWilayahPopup(marker, selectedCode);
-        if (typeof loadCuacaPopup === 'function') await loadCuacaPopup(marker, selectedCode, location.lat, location.lon);
-        if (selectedCode) showGeoidBoundary(selectedCode, zoom);
-      }
-    } else {
-      alert('Koordinat wilayah tidak ditemukan. Coba pilih tingkat wilayah yang lebih rinci.');
+    if (!selectedCode) {
+      alert('Silakan pilih wilayah terlebih dahulu');
+      return;
     }
+    showGeoidBoundary(selectedCode);
+    setAdmText('adm-provinsi', selection.provinsi);
+    setAdmText('adm-kabkota', selection.kabkota);
+    setAdmText('adm-kecamatan', selection.kecamatan);
+    setAdmText('adm-desa', selection.desa);
+    if (window.currentActiveTab === 'tab-geotani') window._lastGeotaniLocation = { kode: selectedCode };
   } catch (err) {
     console.error('Error cari wilayah:', err);
     alert('Gagal mencari wilayah');
@@ -1978,38 +2148,8 @@ async function selectGeoidLocalResult(item, container) {
   if (input) input.value = `${item.desa}, Kec. ${item.kecamatan}`;
   container.style.display = 'none';
 
-  let location = await geocodeVillageByAdm4(item.kode);
-  if (!location) {
-    location = await geocodeAdministrativeArea({
-      desa: item.desa,
-      kecamatan: item.kecamatan,
-      kabkota: item.kabkota,
-      provinsi: item.provinsi
-    });
-  }
-  if (!location) {
-    alert('Koordinat wilayah tidak ditemukan.');
-    return;
-  }
-
-  const zoom = 15;
-  if (window.currentActiveTab === 'tab-geotani') {
-    window._lastGeotaniLocation = { ...location, kode: item.kode };
-    showGeoidBoundary(item.kode, zoom);
-  } else {
-    const marker = showGeoidFlyup(location.lat, location.lon, {
-      desa: item.desa,
-      kecamatan: item.kecamatan,
-      kabkota: item.kabkota,
-      provinsi: item.provinsi,
-      kode: item.kode
-    }, zoom);
-    await loadGeoidPopupInsights(marker, { ...location, kode: item.kode });
-    if (typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, item.kode, location);
-    if (typeof loadLuasWilayahPopup === 'function') await loadLuasWilayahPopup(marker, item.kode);
-    if (typeof loadCuacaPopup === 'function') await loadCuacaPopup(marker, item.kode, location.lat, location.lon);
-    showGeoidBoundary(item.kode, zoom);
-  }
+  showGeoidBoundary(item.kode);
+  if (window.currentActiveTab === 'tab-geotani') window._lastGeotaniLocation = { kode: item.kode };
 }
 
 function findAdm4ByGeocode(desa, kecamatan, kabkota, provinsi) {
@@ -2078,25 +2218,15 @@ async function selectGeoidGeocodeResult(item, container) {
     item.name, item.neighborhood || '', item.subregion || item.region || '', item.region || ''
   );
   const adm4Code = matched ? matched.kode : '';
-
-  const zoom = 16;
-  if (window.currentActiveTab === 'tab-geotani') {
-    window._lastGeotaniLocation = { lat: item.lat, lon: item.lon, kode: adm4Code };
-    if (adm4Code) showGeoidBoundary(adm4Code, zoom);
-  } else {
-    const marker = showGeoidFlyup(item.lat, item.lon, {
-      desa: matched ? matched.desa : item.name,
-      kecamatan: matched ? matched.kecamatan : item.neighborhood || '',
-      kabkota: matched ? matched.kabkota : item.subregion || item.region || '',
-      provinsi: matched ? matched.provinsi : item.region || '',
-      kode: adm4Code
-    }, zoom);
-    await loadGeoidPopupInsights(marker, { lat: item.lat, lon: item.lon, kode: adm4Code });
-    if (adm4Code && typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, adm4Code, { lat: item.lat, lon: item.lon });
-    if (adm4Code && typeof loadLuasWilayahPopup === 'function') await loadLuasWilayahPopup(marker, adm4Code);
-    if (typeof loadCuacaPopup === 'function') await loadCuacaPopup(marker, adm4Code, item.lat, item.lon);
-    if (adm4Code) showGeoidBoundary(adm4Code, zoom);
+  if (!adm4Code) {
+    alert('Wilayah tidak ditemukan di data administratif.');
+    return;
   }
+
+  if (window.currentActiveTab === 'tab-geotani') {
+    window._lastGeotaniLocation = { kode: adm4Code };
+  }
+  showGeoidBoundary(adm4Code);
 }
 
 function setupGeoidDropdowns() {

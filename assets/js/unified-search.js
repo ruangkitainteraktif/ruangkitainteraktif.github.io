@@ -151,25 +151,6 @@
     });
   }
 
-  async function applyUnifiedWilayah(marker, location, item) {
-    if (!marker) return;
-
-    const setText = (id, value) => {
-      const element = document.getElementById(id);
-      if (element) element.innerText = value || '-';
-    };
-    setText('adm-provinsi', item.provinsi);
-    setText('adm-kabkota', item.type === 'kabkot' ? item.name : item.kabkot);
-    setText('adm-kecamatan', item.kecamatan);
-    setText('adm-desa', item.type === 'desa' ? item.name : '-');
-
-    await loadGeoidPopupInsights(marker, { ...location, kode: item.kode });
-    if (typeof loadDukcapilPopulation === 'function') await loadDukcapilPopulation(marker, item.kode, location);
-    if (typeof loadLuasWilayahPopup === 'function') await loadLuasWilayahPopup(marker, item.kode);
-    if (typeof loadCuacaPopup === 'function') await loadCuacaPopup(marker, item.kode, location.lat, location.lon);
-    showGeoidBoundary(item.kode, item.type === 'provinsi' ? 8 : item.type === 'kabkot' ? 11 : item.type === 'kecamatan' ? 13 : 15);
-  }
-
   async function selectUnifiedResult(item) {
     const input = document.getElementById('unifiedSearchInput');
     const results = document.getElementById('unifiedSearchResults');
@@ -184,48 +165,15 @@
       return;
     }
 
-    if (item.type === 'provinsi') {
-      const location = await geocodeAdministrativeArea({ provinsi: item.name });
-      if (!location) { alert('Koordinat wilayah tidak ditemukan.'); return; }
-      const marker = showGeoidFlyup(location.lat, location.lon, { provinsi: item.name, kode: item.kode }, 8);
-      await applyUnifiedWilayah(marker, location, item);
-      return;
-    }
-
-    if (item.type === 'kabkot') {
-      const location = await geocodeAdministrativeArea({ kabkota: item.name, provinsi: item.provinsi });
-      if (!location) { alert('Koordinat wilayah tidak ditemukan.'); return; }
-      const marker = showGeoidFlyup(location.lat, location.lon, { kabkota: item.name, provinsi: item.provinsi, kode: item.kode }, 11);
-      await applyUnifiedWilayah(marker, location, item);
-      return;
-    }
-
-    if (item.type === 'kecamatan') {
-      const location = await geocodeAdministrativeArea({ kecamatan: item.name, kabkota: item.kabkot, provinsi: item.provinsi });
-      if (!location) { alert('Koordinat wilayah tidak ditemukan.'); return; }
-      const marker = showGeoidFlyup(location.lat, location.lon, { kecamatan: item.name, kabkota: item.kabkot, provinsi: item.provinsi, kode: item.kode }, 13);
-      await applyUnifiedWilayah(marker, location, item);
-      return;
-    }
-
-    if (item.type === 'desa') {
-      let location = await geocodeVillageByAdm4(item.kode);
-      if (!location) {
-        location = await geocodeAdministrativeArea({
-          desa: item.name, kecamatan: item.kecamatan, kabkota: item.kabkot, provinsi: item.provinsi
-        });
+    const wilayahTypes = ['provinsi', 'kabkot', 'kecamatan', 'desa'];
+    if (wilayahTypes.includes(item.type)) {
+      showGeoidBoundary(item.kode);
+      if (typeof setAdmText === 'function') {
+        setAdmText('adm-provinsi', item.provinsi);
+        setAdmText('adm-kabkota', item.type === 'kabkot' ? item.name : item.kabkot);
+        setAdmText('adm-kecamatan', item.kecamatan);
+        setAdmText('adm-desa', item.type === 'desa' ? item.name : '-');
       }
-      if (!location) { alert('Koordinat wilayah tidak ditemukan.'); return; }
-
-      const marker = showGeoidFlyup(location.lat, location.lon, {
-        desa: item.name,
-        kecamatan: item.kecamatan,
-        kabkota: item.kabkot,
-        provinsi: item.provinsi,
-        kode: item.kode
-      }, 15);
-
-      await applyUnifiedWilayah(marker, location, item);
     }
   }
 

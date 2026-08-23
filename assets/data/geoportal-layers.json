@@ -46,6 +46,21 @@
     },
     "sumbarprov": {
       "wmsUrl": "https://geoportal.sumbarprov.go.id/geoserver/wms"
+    },
+    "bengkuluprov": {
+      "wmsUrl": "https://geo.bengkuluprov.go.id/geoserver/palapa/ows"
+    },
+    "kalselprov": {
+      "wmsUrl": "https://geoservice.kalselprov.go.id/geoserver/wms"
+    },
+    "mahakamulu": {
+      "wmsUrl": "https://geoserver-geoportal.mahakamulukab.go.id/geoserver/wms"
+    },
+    "kotim": {
+      "wmsUrl": "https://geoportal.kotimkab.go.id/geoserver/wms"
+    },
+    "kuburaya": {
+      "wmsUrl": "https://geoportal.kuburaya.go.id/geoserver/wms"
     }
   },
   "categories": [
@@ -12465,6 +12480,37 @@
       ]
     },
     {
+      "id": "bengkuluprov",
+      "title": "Provinsi Bengkulu",
+      "source": "bengkuluprov",
+      "layers": [
+        {
+          "id": "kawasan_strategis_probkl",
+          "label": "Kawasan Strategis Probkl"
+        },
+        {
+          "id": "pola_ruang_provbkl",
+          "label": "Pola Ruang Provbkl"
+        },
+        {
+          "id": "sistem_infrastruktur_sumber_daya_air_provbkl",
+          "label": "Sistem Infrastruktur Sumber Daya Air Provbkl"
+        },
+        {
+          "id": "sistem_infrastruktur_telekomunikasi_provbkl",
+          "label": "Sistem Infrastruktur Telekomunikasi Provbkl"
+        },
+        {
+          "id": "sistem_jaringan_transportasi_provbkl",
+          "label": "Sistem Jaringan Transportasi Provbkl"
+        },
+        {
+          "id": "sistem_pusat_permukiman_provbkl",
+          "label": "Sistem Pusat Permukiman Provbkl"
+        }
+      ]
+    },
+    {
       "id": "jambiprov",
       "title": "Provinsi Jambi",
       "source": "jambiprov",
@@ -12672,6 +12718,3285 @@
               "label": "Sekolahrakya_tm3_47_2"
             }
           ]
+        }
+      ]
+    },
+    {
+      "id": "kalselprov",
+      "title": "Provinsi Kalimantan Selatan",
+      "source": "kalselprov",
+      "layers": [
+        {
+          "id": "BPBD:08022020_RILIS_1_BANJIR_AR_50K",
+          "label": "08022020 RILIS 1 BANJIR AR 50K"
+        },
+        {
+          "id": "DISLAUTKAN:12_MIL_LAUT_ADMINLAUT_AR_250K",
+          "label": "12 MIL LAUT ADMINLAUT AR 250K"
+        },
+        {
+          "id": "BPBD:170102021_LOKASI_BANJIR_PT_25K",
+          "label": "170102021 LOKASI BANJIR PT 25K"
+        },
+        {
+          "id": "DLH:2023_DD_PERMUKIMAN_AR_50K",
+          "label": "2023 DD PERMUKIMAN AR 50K"
+        },
+        {
+          "id": "DLH:2023_JASLING_PENDUKUNG_REGENERASI_TANAH_AR_50K",
+          "label": "2023 JASLING PENDUKUNG REGENERASI TANAH AR 50K"
+        },
+        {
+          "id": "DLH:2023_JASLING_PENDUKUNG_SIKLUS_HARA_AR_50K",
+          "label": "2023 JASLING PENDUKUNG SIKLUS HARA AR 50K"
+        },
+        {
+          "id": "DLH:2023_JASLING_PENGATURAN_KUALITAS_UDARA_AR_50K",
+          "label": "2023 JASLING PENGATURAN KUALITAS UDARA AR 50K"
+        },
+        {
+          "id": "DLH:2023_JASLING_PENGATURAN_MITIGASI_BENCANA_ALAM_AR_50K",
+          "label": "2023 JASLING PENGATURAN MITIGASI BENCANA ALAM AR 50K"
+        },
+        {
+          "id": "DLH:2023_JASLING_PENGATURAN_PENYERBUKAN_ALAMI_AR_50K",
+          "label": "2023 JASLING PENGATURAN PENYERBUKAN ALAMI AR 50K"
+        },
+        {
+          "id": "DLH:2023_JASLING_PENGATURAN_TATA_ALIRAN_AIR_DAN_BANJIR_AR_50K",
+          "label": "2023 JASLING PENGATURAN TATA ALIRAN AIR DAN BANJIR AR 50K"
+        },
+        {
+          "id": "DLH:2023_JASLING_PENYEDIAAN_AIR_AR_50K",
+          "label": "2023 JASLING PENYEDIAAN AIR AR 50K"
+        },
+        {
+          "id": "DLH:2023_JASLING_PENYEDIAAN_PANGAN_AR_50K",
+          "label": "2023 JASLING PENYEDIAAN PANGAN AR 50K"
+        },
+        {
+          "id": "DLH:2023_JASLING_PENYEDIAAN_SERAT_ENERGI_AR_50K",
+          "label": "2023 JASLING PENYEDIAAN SERAT ENERGI AR 50K"
+        },
+        {
+          "id": "DLH:2023_JASLING_SOSIAL_BUDAYA_REKREASI_AR_50K",
+          "label": "2023 JASLING SOSIAL BUDAYA REKREASI AR 50K"
+        },
+        {
+          "id": "DLH:2023_JASLING_SOSIAL_BUDAYA_WARISAN_BUDAYA_AR_50K",
+          "label": "2023 JASLING SOSIAL BUDAYA WARISAN BUDAYA AR 50K"
+        },
+        {
+          "id": "SIH3:2_pch_2025_08",
+          "label": "2 Pch 2025 08"
+        },
+        {
+          "id": "DISLAUTKAN:4_MIL_LAUT_ADMINLAUT_AR_250K",
+          "label": "4 MIL LAUT ADMINLAUT AR 250K"
+        },
+        {
+          "id": "DPMD:ADMINISTRASIDESA_AR_25K",
+          "label": "ADMINISTRASIDESA AR 25K"
+        },
+        {
+          "id": "DPMD:ADMINISTRASIDESA_AR_5K",
+          "label": "ADMINISTRASIDESA AR 5K"
+        },
+        {
+          "id": "BIROPEMOTDA:ADMINISTRASI_AR_50K",
+          "label": "ADMINISTRASI AR 50K"
+        },
+        {
+          "id": "BIROPEMOTDA:ADMINISTRASI_LN_250K",
+          "label": "ADMINISTRASI LN 250K"
+        },
+        {
+          "id": "BIROPEMOTDA:ADMINISTRASI_PT_250K",
+          "label": "ADMINISTRASI PT 250K"
+        },
+        {
+          "id": "BIROPEMOTDA:ADMINLAUT_AR_50K",
+          "label": "ADMINLAUT AR 50K"
+        },
+        {
+          "id": "DESDM:AGEN_NPSO_DEPOGAS_PT_50K",
+          "label": "AGEN NPSO DEPOGAS PT 50K"
+        },
+        {
+          "id": "DESDM:AGEN_PSO_DEPOGAS_PT_10K",
+          "label": "AGEN PSO DEPOGAS PT 10K"
+        },
+        {
+          "id": "DPKP:AIRBAKU_AR_25K",
+          "label": "AIRBAKU AR 25K"
+        },
+        {
+          "id": "DPUPR:AIRPORT_PT_50K",
+          "label": "AIRPORT PT 50K"
+        },
+        {
+          "id": "BAPPEDA:AIR_LIMBAH_AR_50K",
+          "label": "AIR LIMBAH AR 50K"
+        },
+        {
+          "id": "BAPPEDA:AIR_MINUM_AIRBAKU_PT_50K",
+          "label": "AIR MINUM AIRBAKU PT 50K"
+        },
+        {
+          "id": "DLH:AKASIA_ALTERNATIF_TPA_NERACAFUNGSIKWH_PT_10K",
+          "label": "AKASIA ALTERNATIF TPA NERACAFUNGSIKWH PT 10K"
+        },
+        {
+          "id": "DLH:AKASIA_NERACAFUNGSIKWH_LN_25K",
+          "label": "AKASIA NERACAFUNGSIKWH LN 25K"
+        },
+        {
+          "id": "DLH:AKASIA__GPS_NERACAFUNGSIKWH_PT_10K",
+          "label": "AKASIA GPS NERACAFUNGSIKWH PT 10K"
+        },
+        {
+          "id": "DISLAUTKAN:ALKI_ALURPLAYAR_LN_250K",
+          "label": "ALKI ALURPLAYAR LN 250K"
+        },
+        {
+          "id": "DLH:ALTERNATIF_TPA_PT",
+          "label": "ALTERNATIF TPA PT"
+        },
+        {
+          "id": "DISLAUTKAN:ALURPLAYAR_LN_250K",
+          "label": "ALURPLAYAR LN 250K"
+        },
+        {
+          "id": "SIH3:ANALISIS_CH_082025_DAS1",
+          "label": "ANALISIS CH 082025 DAS1"
+        },
+        {
+          "id": "SIH3:ANALISIS_CH_082025_DAS2",
+          "label": "ANALISIS CH 082025 DAS2"
+        },
+        {
+          "id": "SIH3:ANALISIS_CH_082025_DAS3",
+          "label": "ANALISIS CH 082025 DAS3"
+        },
+        {
+          "id": "SIH3:ANALISIS_SH_082025_DAS2",
+          "label": "ANALISIS SH 082025 DAS2"
+        },
+        {
+          "id": "DISLAUTKAN:ARAH_ARUS_MBARAT_PT_50K",
+          "label": "ARAH ARUS MBARAT PT 50K"
+        },
+        {
+          "id": "DISLAUTKAN:BAGAN_TANCAP_ALATTANGKAP_PT_50K",
+          "label": "BAGAN TANCAP ALATTANGKAP PT 50K"
+        },
+        {
+          "id": "DLH:BALANGAN_BIORETENTION_DTA_DRAINASE_AR_50K",
+          "label": "BALANGAN BIORETENTION DTA DRAINASE AR 50K"
+        },
+        {
+          "id": "DLH:BALANGAN_CONSTRUCTED_WETLAND_DTA_DRAINASE_AR_50K",
+          "label": "BALANGAN CONSTRUCTED WETLAND DTA DRAINASE AR 50K"
+        },
+        {
+          "id": "DLH:BALANGAN_GRASSED_SWALE_DTA_DRAINASE_AR_50K",
+          "label": "BALANGAN GRASSED SWALE DTA DRAINASE AR 50K"
+        },
+        {
+          "id": "DLH:BALANGAN_INFILTRATION_TRENCH_DTA_DRAINASE_AR_50K",
+          "label": "BALANGAN INFILTRATION TRENCH DTA DRAINASE AR 50K"
+        },
+        {
+          "id": "DISLAUTKAN:BANGKAIKAPAL_PT_50K",
+          "label": "BANGKAIKAPAL PT 50K"
+        },
+        {
+          "id": "BAPPEDA:BANJARBAKULA_PENGGUNAANTANAH_AR_50K",
+          "label": "BANJARBAKULA PENGGUNAANTANAH AR 50K"
+        },
+        {
+          "id": "BAPPEDA:BANJARBAKULA_RENCANA_JALAN_STRUKTURTRANSPORTASI_LN_50K",
+          "label": "BANJARBAKULA RENCANA JALAN STRUKTURTRANSPORTASI LN 50K"
+        },
+        {
+          "id": "DPUPR:BANJARBAKULA_STRATEGISTERTENTU_AR_50K",
+          "label": "BANJARBAKULA STRATEGISTERTENTU AR 50K"
+        },
+        {
+          "id": "BAPPEDA:BANJARBAKULA_STRUKTURTRANSPORTASI_LN_50K",
+          "label": "BANJARBAKULA STRUKTURTRANSPORTASI LN 50K"
+        },
+        {
+          "id": "DLH:BANJAR_BIORETENTION_DTA_RIAMKIWA_DRAINASE_AR_50K",
+          "label": "BANJAR BIORETENTION DTA RIAMKIWA DRAINASE AR 50K"
+        },
+        {
+          "id": "DLH:BANJAR_CONSTRUCTED_WETLAND_DTA_RIAMKIWA_DRAINASE_AR_50K",
+          "label": "BANJAR CONSTRUCTED WETLAND DTA RIAMKIWA DRAINASE AR 50K"
+        },
+        {
+          "id": "DLH:BANJAR_GRASSED_SWALE_DTA_RIAMKIWA_DRAINASE_AR_50K",
+          "label": "BANJAR GRASSED SWALE DTA RIAMKIWA DRAINASE AR 50K"
+        },
+        {
+          "id": "DLH:BANJAR_INFILTRATION_TRENCH_DTA_RIAMKIWA_DRAINASE_AR_50K",
+          "label": "BANJAR INFILTRATION TRENCH DTA RIAMKIWA DRAINASE AR 50K"
+        },
+        {
+          "id": "BIROPEMOTDA:BANJAR_KOTABARU_TITIKBATASADM_PT_250K",
+          "label": "BANJAR KOTABARU TITIKBATASADM PT 250K"
+        },
+        {
+          "id": "BIROPEMOTDA:BANJAR_TAPIN_TITIKBATASADM_PT_250K",
+          "label": "BANJAR TAPIN TITIKBATASADM PT 250K"
+        },
+        {
+          "id": "DPUPR:BARANG_DAN_PENUMPANG_RELKA_LN_50K",
+          "label": "BARANG DAN PENUMPANG RELKA LN 50K"
+        },
+        {
+          "id": "DISLAUTKAN:BARAT_KONTURKEDALAMAN_LN_25K",
+          "label": "BARAT KONTURKEDALAMAN LN 25K"
+        },
+        {
+          "id": "DLH:BARITO_KALSEL_DAERAHALIRANSUNGAI_AR_250K",
+          "label": "BARITO KALSEL DAERAHALIRANSUNGAI AR 250K"
+        },
+        {
+          "id": "BAPPEDA:BASISDATA_20210209_BANJIR_AR_50K",
+          "label": "BASISDATA 20210209 BANJIR AR 50K"
+        },
+        {
+          "id": "BAPPEDA:BASISDESA_2021_BANJIR_AR_50K",
+          "label": "BASISDESA 2021 BANJIR AR 50K"
+        },
+        {
+          "id": "DPUPR:BATANG_BANYU_RAWA_AR_50K",
+          "label": "BATANG BANYU RAWA AR 50K"
+        },
+        {
+          "id": "BAPPEDA:BATAS_DESA_ADMINISTRASI_AR_5K",
+          "label": "BATAS DESA ADMINISTRASI AR 5K"
+        },
+        {
+          "id": "DLH:BATAS_DESA_DAS_BARITO_KALSEL_ADMINISTRASI_AR_250K",
+          "label": "BATAS DESA DAS BARITO KALSEL ADMINISTRASI AR 250K"
+        },
+        {
+          "id": "DISDAG:BAWANG_BOMBAI_20220923_AR_5K",
+          "label": "BAWANG BOMBAI 20220923 AR 5K"
+        },
+        {
+          "id": "DISDAG:BAWANG_MERAH_20220923_AR_5K",
+          "label": "BAWANG MERAH 20220923 AR 5K"
+        },
+        {
+          "id": "DISDAG:BAWANG_PRAY_20220923_AR_5K",
+          "label": "BAWANG PRAY 20220923 AR 5K"
+        },
+        {
+          "id": "DISDAG:BAWANG_PUTIH_20220923_AR_5K",
+          "label": "BAWANG PUTIH 20220923 AR 5K"
+        },
+        {
+          "id": "DPUPR:BENDUNGAN_LN_250K",
+          "label": "BENDUNGAN LN 250K"
+        },
+        {
+          "id": "DPUPR:BENDUNGAN_PT_500K",
+          "label": "BENDUNGAN PT 500K"
+        },
+        {
+          "id": "DPUPR:BENDUNGAN_PT_50K",
+          "label": "BENDUNGAN PT 50K"
+        },
+        {
+          "id": "DPUPR:BENDUNG_LN_50K",
+          "label": "BENDUNG LN 50K"
+        },
+        {
+          "id": "DPUPR:BENDUNG_PT_500K",
+          "label": "BENDUNG PT 500K"
+        },
+        {
+          "id": "DISDAG:BERAS_20220923_AR_5K",
+          "label": "BERAS 20220923 AR 5K"
+        },
+        {
+          "id": "BAPPEDA:BINAMARGA_PT_25K",
+          "label": "BINAMARGA PT 25K"
+        },
+        {
+          "id": "BAPPEDA:BPN_IZINLOKASI_AR_10K",
+          "label": "BPN IZINLOKASI AR 10K"
+        },
+        {
+          "id": "DISHUB:BRT_HALTE_PT_10K",
+          "label": "BRT HALTE PT 10K"
+        },
+        {
+          "id": "DISHUB:BRT_JALAN_LN_500K",
+          "label": "BRT JALAN LN 500K"
+        },
+        {
+          "id": "DISHUB:BRT_JALAN_LN_50K",
+          "label": "BRT JALAN LN 50K"
+        },
+        {
+          "id": "DISPERKIM:BSPS_PERUMAHAN_AR_25K",
+          "label": "BSPS PERUMAHAN AR 25K"
+        },
+        {
+          "id": "DISLAUTKAN:BUDIDAYALAUT_AR_50K",
+          "label": "BUDIDAYALAUT AR 50K"
+        },
+        {
+          "id": "DPMD:BUMDESA_NIAGA_AR_10K",
+          "label": "BUMDESA NIAGA AR 10K"
+        },
+        {
+          "id": "SITARI:Bangunan_BagiSadap_HaruyanDayak",
+          "label": "Bangunan BagiSadap HaruyanDayak"
+        },
+        {
+          "id": "SITARI:Bangunan_BagiSadap_Intangan",
+          "label": "Bangunan BagiSadap Intangan"
+        },
+        {
+          "id": "SITARI:Bangunan_BagiSadap_Kahakan",
+          "label": "Bangunan BagiSadap Kahakan"
+        },
+        {
+          "id": "SITARI:Bangunan_BagiSadap_Mangunang",
+          "label": "Bangunan BagiSadap Mangunang"
+        },
+        {
+          "id": "SITARI:Bangunan_Pelengkap_HaruyanDayak",
+          "label": "Bangunan Pelengkap HaruyanDayak"
+        },
+        {
+          "id": "SITARI:Bangunan_Pelengkap_Intangan",
+          "label": "Bangunan Pelengkap Intangan"
+        },
+        {
+          "id": "SITARI:Bangunan_Pelengkap_Kahakan",
+          "label": "Bangunan Pelengkap Kahakan"
+        },
+        {
+          "id": "SITARI:Bangunan_Pelengkap_Mangunang",
+          "label": "Bangunan Pelengkap Mangunang"
+        },
+        {
+          "id": "KAB-TABALONG:Bantuan_TA_2020_PT",
+          "label": "Bantuan TA 2020 PT"
+        },
+        {
+          "id": "DISDAG:CABE_SEGAR_20220923_AR",
+          "label": "CABE SEGAR 20220923 AR"
+        },
+        {
+          "id": "DPUPR:CAHAYABARU_LOKASITRANSMIGRASI_AR_25K",
+          "label": "CAHAYABARU LOKASITRANSMIGRASI AR 25K"
+        },
+        {
+          "id": "DESDM:CEKUNGAIRTANAH_AR_250K",
+          "label": "CEKUNGAIRTANAH AR 250K"
+        },
+        {
+          "id": "BAPPEDA:CIPTA_KARYA_PT_25K",
+          "label": "CIPTA KARYA PT 25K"
+        },
+        {
+          "id": "DPUPR:Cengal_Batulicin_DAERAHALIRANSUNGAI_AR_50K",
+          "label": "Cengal Batulicin DAERAHALIRANSUNGAI AR 50K"
+        },
+        {
+          "id": "DPUPR:DAERAHIRIGASI_AR_10K",
+          "label": "DAERAHIRIGASI AR 10K"
+        },
+        {
+          "id": "DPUPR:DAERAH_IRIGASI_KEWENANGAN_PUSAT_AR_10K",
+          "label": "DAERAH IRIGASI KEWENANGAN PUSAT AR 10K"
+        },
+        {
+          "id": "DISLAUTKAN:DAERAH_RANJAU_INFRAPERIKANAN_LN_50K",
+          "label": "DAERAH RANJAU INFRAPERIKANAN LN 50K"
+        },
+        {
+          "id": "DLH:DAERAH_TANGKAPAN_AIR_KONSERVASISDA_AR_250K",
+          "label": "DAERAH TANGKAPAN AIR KONSERVASISDA AR 250K"
+        },
+        {
+          "id": "DISBUNAK:DAFTAR_PABRIK_UNIVERSAL_INDUSTRI_PT_50K",
+          "label": "DAFTAR PABRIK UNIVERSAL INDUSTRI PT 50K"
+        },
+        {
+          "id": "DISDAG:DAGING_20220923_AR_5K",
+          "label": "DAGING 20220923 AR 5K"
+        },
+        {
+          "id": "DLH:DASARIAN_II_JANUARI_2021_NORMALCURAHUJAN_AR_250K",
+          "label": "DASARIAN II JANUARI 2021 NORMALCURAHUJAN AR 250K"
+        },
+        {
+          "id": "DLH:DASARIAN_I_JANUARI_2021_NORMALCURAHUJAN_AR_250K",
+          "label": "DASARIAN I JANUARI 2021 NORMALCURAHUJAN AR 250K"
+        },
+        {
+          "id": "DLH:DAS_BARITO_JARINGAN_SUNGAI_LN_250K",
+          "label": "DAS BARITO JARINGAN SUNGAI LN 250K"
+        },
+        {
+          "id": "DLH:DAS_BARITO_JASA_LINGKUNGAN_NERACAPENUTUPLAHANKWH_AR_250K",
+          "label": "DAS BARITO JASA LINGKUNGAN NERACAPENUTUPLAHANKWH AR 250K"
+        },
+        {
+          "id": "DLH:DAS_BARITO_JENIS_TANAH_AR_250K",
+          "label": "DAS BARITO JENIS TANAH AR 250K"
+        },
+        {
+          "id": "DLH:DAS_BARITO_KALSEL_NERACAPENUTUPLAHANKWH_AR_250K",
+          "label": "DAS BARITO KALSEL NERACAPENUTUPLAHANKWH AR 250K"
+        },
+        {
+          "id": "DPMD:DATABUMDESA_AR_10K",
+          "label": "DATABUMDESA AR 10K"
+        },
+        {
+          "id": "BAPPEDA:DATA_ANGKUTAN_PERSAMPAHAN_AR_10K",
+          "label": "DATA ANGKUTAN PERSAMPAHAN AR 10K"
+        },
+        {
+          "id": "BAPPEDA:DATA_IPM_2010_AR_50K",
+          "label": "DATA IPM 2010 AR 50K"
+        },
+        {
+          "id": "BAPPEDA:DATA_IPM_2011_AR_50K",
+          "label": "DATA IPM 2011 AR 50K"
+        },
+        {
+          "id": "BAPPEDA:DATA_IPM_2012_AR_50K",
+          "label": "DATA IPM 2012 AR 50K"
+        },
+        {
+          "id": "BAPPEDA:DATA_KEMISKINAN_2011_AR_50K",
+          "label": "DATA KEMISKINAN 2011 AR 50K"
+        },
+        {
+          "id": "BAPPEDA:DATA_KEMISKINAN_2012_AR_50K",
+          "label": "DATA KEMISKINAN 2012 AR 50K"
+        },
+        {
+          "id": "BAPPEDA:DATA_KEPENDUDUKAN_2019_AR_50K",
+          "label": "DATA KEPENDUDUKAN 2019 AR 50K"
+        },
+        {
+          "id": "BAPPEDA:DATA_KEPENDUDUKAN_AR_50K",
+          "label": "DATA KEPENDUDUKAN AR 50K"
+        },
+        {
+          "id": "BAPPEDA:DATA_KESEHATAN_AR_50K",
+          "label": "DATA KESEHATAN AR 50K"
+        },
+        {
+          "id": "DLH:DATA_PEMANTAUAN_2022_2023_DLH_PPKLH",
+          "label": "DATA PEMANTAUAN 2022 2023 DLH PPKLH"
+        },
+        {
+          "id": "BAPPEDA:DATA_PENDIDIKAN_AR_50K",
+          "label": "DATA PENDIDIKAN AR 50K"
+        },
+        {
+          "id": "BAPPEDA:DATA_PEREKONOMIAN_AR_50K",
+          "label": "DATA PEREKONOMIAN AR 50K"
+        },
+        {
+          "id": "BAPPEDA:DATA_PERMUKIMANKUMUH_AR_50K",
+          "label": "DATA PERMUKIMANKUMUH AR 50K"
+        },
+        {
+          "id": "BAPPEDA:DATA_PERUMAHAN_AR_50K",
+          "label": "DATA PERUMAHAN AR 50K"
+        },
+        {
+          "id": "SITARI:DATA_POKTAN_PT",
+          "label": "DATA POKTAN PT"
+        },
+        {
+          "id": "BAPPEDA:DATA_REDUKSI_PERSAMPAHAN_AR_10K",
+          "label": "DATA REDUKSI PERSAMPAHAN AR 10K"
+        },
+        {
+          "id": "BAPPEDA:DATA_SOSIAL_BUDAYA_AR_25K",
+          "label": "DATA SOSIAL BUDAYA AR 25K"
+        },
+        {
+          "id": "DINKES:DBD_2024_PT_50K",
+          "label": "DBD 2024 PT 50K"
+        },
+        {
+          "id": "DLH:DDDTAIR_NERACAAIR_AR_250K",
+          "label": "DDDTAIR NERACAAIR AR 250K"
+        },
+        {
+          "id": "DESDM:DELINEASI_PENDUKUNG_GEOPARK_DAYATARIKPARIWISATA_AR_10K",
+          "label": "DELINEASI PENDUKUNG GEOPARK DAYATARIKPARIWISATA AR 10K"
+        },
+        {
+          "id": "BAPPEDA:DEMOGRAFI_AR_25K",
+          "label": "DEMOGRAFI AR 25K"
+        },
+        {
+          "id": "BAPPEDA:DEMOGRAFI_PT_25K",
+          "label": "DEMOGRAFI PT 25K"
+        },
+        {
+          "id": "DPMD:DESABERSIHDARINARKOBA_AR_10K",
+          "label": "DESABERSIHDARINARKOBA AR 10K"
+        },
+        {
+          "id": "DPMD:DESACERDAS_AR_10K",
+          "label": "DESACERDAS AR 10K"
+        },
+        {
+          "id": "DPMD:DESAINKLUSIP3PD",
+          "label": "DESAINKLUSIP3PD"
+        },
+        {
+          "id": "DPMD:DESAPEDULIKELUARGA_AR_10K",
+          "label": "DESAPEDULIKELUARGA AR 10K"
+        },
+        {
+          "id": "DPMD:DESA_KAMPUNG_KB_AR_10K",
+          "label": "DESA KAMPUNG KB AR 10K"
+        },
+        {
+          "id": "DPMD:DESA_LAYAK_HUNI_AR_10K",
+          "label": "DESA LAYAK HUNI AR 10K"
+        },
+        {
+          "id": "DPMD:DESA_MENGGUNAKAN_JAMBAN_BERSAMA_AR_10K",
+          "label": "DESA MENGGUNAKAN JAMBAN BERSAMA AR 10K"
+        },
+        {
+          "id": "DPMD:DESA_PEDULI_PENDIDIKAN_AR_10K",
+          "label": "DESA PEDULI PENDIDIKAN AR 10K"
+        },
+        {
+          "id": "DPMD:DESA_PERLINDUNGAN_SOSIAL_AR_10K",
+          "label": "DESA PERLINDUNGAN SOSIAL AR 10K"
+        },
+        {
+          "id": "DPMD:DESA_SADAR_HUKUM_AR_10K",
+          "label": "DESA SADAR HUKUM AR 10K"
+        },
+        {
+          "id": "DPMD:DESA_TIPOLOGI_KEHUTANAN_AR_10K",
+          "label": "DESA TIPOLOGI KEHUTANAN AR 10K"
+        },
+        {
+          "id": "DPMD:DESA_TIPOLOGI_PERLADANGAN_AR_10K",
+          "label": "DESA TIPOLOGI PERLADANGAN AR 10K"
+        },
+        {
+          "id": "DPMD:DESA_TIPOLOGI_PESISIR_AR_10K",
+          "label": "DESA TIPOLOGI PESISIR AR 10K"
+        },
+        {
+          "id": "DPMD:DESA_TIPOLOGI_PETERNAKAN_AR_10K",
+          "label": "DESA TIPOLOGI PETERNAKAN AR 10K"
+        },
+        {
+          "id": "BIROPEMOTDA:DESA_TOPONIM_PT_10K",
+          "label": "DESA TOPONIM PT 10K"
+        },
+        {
+          "id": "DPMD:DESA_WISATA_AIR_TERJUN_AR_10K",
+          "label": "DESA WISATA AIR TERJUN AR 10K"
+        },
+        {
+          "id": "DPMD:DESA_WISATA_HUTAN_AR_10K",
+          "label": "DESA WISATA HUTAN AR 10K"
+        },
+        {
+          "id": "DPMD:DESA_WISATA_LAUT_DAN_DANAU_AR_10K",
+          "label": "DESA WISATA LAUT DAN DANAU AR 10K"
+        },
+        {
+          "id": "DPMD:DESA_WISATA_PANTAI_AR_10K",
+          "label": "DESA WISATA PANTAI AR 10K"
+        },
+        {
+          "id": "DPMD:DESA_WISATA_PEGUNUNGAN_AR_10K",
+          "label": "DESA WISATA PEGUNUNGAN AR 10K"
+        },
+        {
+          "id": "DISPAR:DESTINASIPARIWISATA_PT_50K",
+          "label": "DESTINASIPARIWISATA PT 50K"
+        },
+        {
+          "id": "DINKES:DIARE_2024_PT_50K",
+          "label": "DIARE 2024 PT 50K"
+        },
+        {
+          "id": "DLH:DLH_RPPLH_AIR_BERSIH_DDDT_AIRBAKU_AR_50K",
+          "label": "DLH RPPLH AIR BERSIH DDDT AIRBAKU AR 50K"
+        },
+        {
+          "id": "DLH:DLH_RPPLH_BIODIVERSITAS_DDDT_NERACAPENUTUPLAHANKWH_AR_50K",
+          "label": "DLH RPPLH BIODIVERSITAS DDDT NERACAPENUTUPLAHANKWH AR 50K"
+        },
+        {
+          "id": "DLH:DLH_RPPLH_DDDT_POLARUANG_AR_50K",
+          "label": "DLH RPPLH DDDT POLARUANG AR 50K"
+        },
+        {
+          "id": "DLH:DLH_RPPLH_ENERGI_DDDT_NERACAMINERBA_AR_50K",
+          "label": "DLH RPPLH ENERGI DDDT NERACAMINERBA AR 50K"
+        },
+        {
+          "id": "DLH:DLH_RPPLH_ESTETIKA_DDDT_NERACAPENUTUPLAHANKWH_AR_50K",
+          "label": "DLH RPPLH ESTETIKA DDDT NERACAPENUTUPLAHANKWH AR 50K"
+        },
+        {
+          "id": "DLH:DLH_RPPLH_GENETIK_DDDT_POLARUANG_AR_50K",
+          "label": "DLH RPPLH GENETIK DDDT POLARUANG AR 50K"
+        },
+        {
+          "id": "DLH:DLH_RPPLH_HARA_DDDT_TANAH_AR_50K",
+          "label": "DLH RPPLH HARA DDDT TANAH AR 50K"
+        },
+        {
+          "id": "DLH:DLH_RPPLH_IKLIM_DDDT_PRAKIRAANHUJANBULANAN_AR_50K",
+          "label": "DLH RPPLH IKLIM DDDT PRAKIRAANHUJANBULANAN AR 50K"
+        },
+        {
+          "id": "DLH:DLH_RPPLH_KESUBURAN_DDDT_TANAH_AR_50K",
+          "label": "DLH RPPLH KESUBURAN DDDT TANAH AR 50K"
+        },
+        {
+          "id": "DLH:DLH_RPPLH_PETA_RPPLH_TTRH_DDDT_POLARUANG_AR_50K",
+          "label": "DLH RPPLH PETA RPPLH TTRH DDDT POLARUANG AR 50K"
+        },
+        {
+          "id": "DLH:DLH_RPPLH_REKREASI_DDDT_DAYATARIKPARIWISATA_AR_50K",
+          "label": "DLH RPPLH REKREASI DDDT DAYATARIKPARIWISATA AR 50K"
+        },
+        {
+          "id": "DLH:DLH_RPPLH_SERAT_DDDT_SUBSTRAT_AR_50K",
+          "label": "DLH RPPLH SERAT DDDT SUBSTRAT AR 50K"
+        },
+        {
+          "id": "DLH:DLH_RPPLH_TATA_AIR_DDDT_NERACAAIR_AR_50K",
+          "label": "DLH RPPLH TATA AIR DDDT NERACAAIR AR 50K"
+        },
+        {
+          "id": "DISLAUTKAN:DLKR-DLKP_KOTABARU_PELABUHAN_AR_25K",
+          "label": "DLKR-DLKP KOTABARU PELABUHAN AR 25K"
+        },
+        {
+          "id": "DISLAUTKAN:DLKR-DLKP_PELABUHAN_AR_50K",
+          "label": "DLKR-DLKP PELABUHAN AR 50K"
+        },
+        {
+          "id": "BAPPEDA:DRAINASE_AR_50K",
+          "label": "DRAINASE AR 50K"
+        },
+        {
+          "id": "BAPPEDA:DRB_BALANGAN_DAS36_AR_100K",
+          "label": "DRB BALANGAN DAS36 AR 100K"
+        },
+        {
+          "id": "BAPPEDA:DRB_BANJARBARU_DAS36_AR_100K",
+          "label": "DRB BANJARBARU DAS36 AR 100K"
+        },
+        {
+          "id": "BAPPEDA:DRB_HULUSUNGAITENGAH_DAS36_AR_100K",
+          "label": "DRB HULUSUNGAITENGAH DAS36 AR 100K"
+        },
+        {
+          "id": "BAPPEDA:DRB_KOTABARU_DAS36_AR_100K",
+          "label": "DRB KOTABARU DAS36 AR 100K"
+        },
+        {
+          "id": "BAPPEDA:DRB_TABALONG_DAS36_AR_100K",
+          "label": "DRB TABALONG DAS36 AR 100K"
+        },
+        {
+          "id": "DPMD:DSTANGGAPBUDAYA_AR_10K",
+          "label": "DSTANGGAPBUDAYA AR 10K"
+        },
+        {
+          "id": "BAPPEDA:DTKS_AR_25K",
+          "label": "DTKS AR 25K"
+        },
+        {
+          "id": "BAPPEDA:DTKS_Classtering",
+          "label": "DTKS Classtering"
+        },
+        {
+          "id": "BAPPEDA:DTKS_Desil1_PT_25K",
+          "label": "DTKS Desil1 PT 25K"
+        },
+        {
+          "id": "DISLAUTKAN:EKOSISTEM_MANGROVE_AR",
+          "label": "EKOSISTEM MANGROVE AR"
+        },
+        {
+          "id": "DPKP:EXISTING_SAWAH_AR_10K",
+          "label": "EXISTING SAWAH AR 10K"
+        },
+        {
+          "id": "DINSOS:FAKIR_MISKIN_PT",
+          "label": "FAKIR MISKIN PT"
+        },
+        {
+          "id": "DINKES:FASILITAS_AKSES_SANITASI_LAYAK_PT_50K",
+          "label": "FASILITAS AKSES SANITASI LAYAK PT 50K"
+        },
+        {
+          "id": "DISHUB:FASKES_KEAMANAN_PT_10K",
+          "label": "FASKES KEAMANAN PT 10K"
+        },
+        {
+          "id": "DISLAUTKAN:FISHING_GROUND_TIMUR_WPP_PT_50K",
+          "label": "FISHING GROUND TIMUR WPP PT 50K"
+        },
+        {
+          "id": "DLH:FORMASI_EKOREGION_DAS_BARITO_KALSEL_ZONASITN_AR_250K",
+          "label": "FORMASI EKOREGION DAS BARITO KALSEL ZONASITN AR 250K"
+        },
+        {
+          "id": "DLH:FORMASI_EKOREGION_DAS_BARITO_ZONASITN_AR_250K",
+          "label": "FORMASI EKOREGION DAS BARITO ZONASITN AR 250K"
+        },
+        {
+          "id": "DISHUT:GAMBUT_AR_250K",
+          "label": "GAMBUT AR 250K"
+        },
+        {
+          "id": "DISDAG:GARAM_20220923_AR_5K",
+          "label": "GARAM 20220923 AR 5K"
+        },
+        {
+          "id": "BAPPEDA:GARDULISTRIK_PT_50K",
+          "label": "GARDULISTRIK PT 50K"
+        },
+        {
+          "id": "DPUPR:GARDUTELEPON_PT_250K",
+          "label": "GARDUTELEPON PT 250K"
+        },
+        {
+          "id": "DPUPR:GENLISTRIK_PT_25K",
+          "label": "GENLISTRIK PT 25K"
+        },
+        {
+          "id": "DESDM:GENLISTRIK_PT_50K",
+          "label": "GENLISTRIK PT 50K"
+        },
+        {
+          "id": "DESDM:GEOPARK_AMENITAS_GEOSITE_INDUSTRIPARIWISATA_PT_10K",
+          "label": "GEOPARK AMENITAS GEOSITE INDUSTRIPARIWISATA PT 10K"
+        },
+        {
+          "id": "DESDM:GEOPARK_AMENITAS_GEOTOURISM_INDUSTRIPARIWISATA_PT_10K",
+          "label": "GEOPARK AMENITAS GEOTOURISM INDUSTRIPARIWISATA PT 10K"
+        },
+        {
+          "id": "DESDM:GEOPARK_ATRAKSI_GEOSITE_DAYATARIKPARIWISATA_PT_10K",
+          "label": "GEOPARK ATRAKSI GEOSITE DAYATARIKPARIWISATA PT 10K"
+        },
+        {
+          "id": "DESDM:GEOPARK_ATRAKSI_GEOTOURISM_DAYATARIKPARIWISATA_PT_10K",
+          "label": "GEOPARK ATRAKSI GEOTOURISM DAYATARIKPARIWISATA PT 10K"
+        },
+        {
+          "id": "DESDM:GEOPARK_DAYATARIKPARIWISATA_AR_5K",
+          "label": "GEOPARK DAYATARIKPARIWISATA AR 5K"
+        },
+        {
+          "id": "DESDM:GEOPARK_DAYATARIKPARIWISATA_PT_5K",
+          "label": "GEOPARK DAYATARIKPARIWISATA PT 5K"
+        },
+        {
+          "id": "DESDM:GEOPARK_INFRASTRUKTUR_PENDUKUNG_GEOTOURISM_SOSIAL_PT_50K",
+          "label": "GEOPARK INFRASTRUKTUR PENDUKUNG GEOTOURISM SOSIAL PT 50K"
+        },
+        {
+          "id": "DESDM:GEOPARK_ZONA_INTI_GEOSITE_DAYATARIKPARIWISATA_AR_25K",
+          "label": "GEOPARK ZONA INTI GEOSITE DAYATARIKPARIWISATA AR 25K"
+        },
+        {
+          "id": "DESDM:GEOPARK_ZONA_INTI_GEOTOURISM_AR_25K",
+          "label": "GEOPARK ZONA INTI GEOTOURISM AR 25K"
+        },
+        {
+          "id": "DESDM:GEOPARK_ZONA_PENDUKUNG_GEOSITE_DESTINASIPARIWISATA_AR_50K",
+          "label": "GEOPARK ZONA PENDUKUNG GEOSITE DESTINASIPARIWISATA AR 50K"
+        },
+        {
+          "id": "DESDM:GEOPARK_ZONA_PENDUKUNG_GEOTOURISM_AR_50K",
+          "label": "GEOPARK ZONA PENDUKUNG GEOTOURISM AR 50K"
+        },
+        {
+          "id": "DESDM:GEOPARK_ZONA_PENYANGGA_GEOSITE_DESTINASIPARIWISATA_AR_250K",
+          "label": "GEOPARK ZONA PENYANGGA GEOSITE DESTINASIPARIWISATA AR 250K"
+        },
+        {
+          "id": "DESDM:GEOPARK_ZONA_PENYANGGA_GEOTOURISM_DESTINASIPARIWISATA_AR_250K",
+          "label": "GEOPARK ZONA PENYANGGA GEOTOURISM DESTINASIPARIWISATA AR 250K"
+        },
+        {
+          "id": "DESDM:GEOSITE_DAYATARIKPARIWISATA_PT_5K",
+          "label": "GEOSITE DAYATARIKPARIWISATA PT 5K"
+        },
+        {
+          "id": "DESDM:GEOSITE_JALAN_LN_25K",
+          "label": "GEOSITE JALAN LN 25K"
+        },
+        {
+          "id": "DESDM:GEOTOURISM_JALAN_LN_25K",
+          "label": "GEOTOURISM JALAN LN 25K"
+        },
+        {
+          "id": "DISNAKERTRAN:GPSLOKASITRANSMIGRASI_PT_25K",
+          "label": "GPSLOKASITRANSMIGRASI PT 25K"
+        },
+        {
+          "id": "DISDAG:GULA_20220923_AR_5K",
+          "label": "GULA 20220923 AR 5K"
+        },
+        {
+          "id": "DISHUT:Gabung_HPH_IUPHHKHTI_AR_50K",
+          "label": "Gabung HPH IUPHHKHTI AR 50K"
+        },
+        {
+          "id": "DISHUT:Gabung_diss_IUPHHKHTI_AR_50K",
+          "label": "Gabung Diss IUPHHKHTI AR 50K"
+        },
+        {
+          "id": "DISLAUTKAN:HIBAH_2019_PTZ",
+          "label": "HIBAH 2019 PTZ"
+        },
+        {
+          "id": "DISLAUTKAN:HIBAH_ALATTANGKAP_PT_50K",
+          "label": "HIBAH ALATTANGKAP PT 50K"
+        },
+        {
+          "id": "BIROPEMOTDA:HSS-HST_TITIKBATASADM_PT_250K",
+          "label": "HSS-HST TITIKBATASADM PT 250K"
+        },
+        {
+          "id": "DLH:HSS_CONSTRUCTED_WETLAND_DTA_BARABAI_DRAINASE_AR_50K",
+          "label": "HSS CONSTRUCTED WETLAND DTA BARABAI DRAINASE AR 50K"
+        },
+        {
+          "id": "DLH:HSS_GRASSED_SWALE_DTA_BARABAI_DRAINASE_AR_50K",
+          "label": "HSS GRASSED SWALE DTA BARABAI DRAINASE AR 50K"
+        },
+        {
+          "id": "DLH:HSS_INFILTRATION_TRENCH_DTA_BARABAI_DRAINASE_AR_50K",
+          "label": "HSS INFILTRATION TRENCH DTA BARABAI DRAINASE AR 50K"
+        },
+        {
+          "id": "BIROPEMOTDA:HSU_HSS_TITIKBATASADM_PT_250K",
+          "label": "HSU HSS TITIKBATASADM PT 250K"
+        },
+        {
+          "id": "DISHUT:HTI_Update_IUPHHKHTI_AR_50K",
+          "label": "HTI Update IUPHHKHTI AR 50K"
+        },
+        {
+          "id": "DISHUT:HTR_IUPHHKHTR_AR_25K",
+          "label": "HTR IUPHHKHTR AR 25K"
+        },
+        {
+          "id": "DISHUT:HUTANALAM_IUPHHKHA_AR_25K",
+          "label": "HUTANALAM IUPHHKHA AR 25K"
+        },
+        {
+          "id": "DISHUT:HUTANLAHANTINGGI_AR_50K",
+          "label": "HUTANLAHANTINGGI AR 50K"
+        },
+        {
+          "id": "DPMD:IDM_PROGRESS_2023_AR_10K",
+          "label": "IDM PROGRESS 2023 AR 10K"
+        },
+        {
+          "id": "DISDAG:IKANASIN_20220923_AR_5K",
+          "label": "IKANASIN 20220923 AR 5K"
+        },
+        {
+          "id": "DISDAG:IKANSEGAR_20220923_AR_5K",
+          "label": "IKANSEGAR 20220923 AR 5K"
+        },
+        {
+          "id": "DPUPR:INDUSTRI_AR_25K",
+          "label": "INDUSTRI AR 25K"
+        },
+        {
+          "id": "BAPPEDA:INDUSTRI_KECIL_MENENGAH_PT_25K",
+          "label": "INDUSTRI KECIL MENENGAH PT 25K"
+        },
+        {
+          "id": "DISHUT:IPPKH_KALSEL_UPDATE_PENGGUNAANHUTAN_AR_50K",
+          "label": "IPPKH KALSEL UPDATE PENGGUNAANHUTAN AR 50K"
+        },
+        {
+          "id": "DISHUT:IPPKH_Update_PENGGUNAANHUTAN_AR_50K",
+          "label": "IPPKH Update PENGGUNAANHUTAN AR 50K"
+        },
+        {
+          "id": "DPUPR:IRIGASI_LN_250K",
+          "label": "IRIGASI LN 250K"
+        },
+        {
+          "id": "DISHUT:IUPHHKHKM_AR_50K",
+          "label": "IUPHHKHKM AR 50K"
+        },
+        {
+          "id": "DISHUT:IUPHHKHTI_AR_25K",
+          "label": "IUPHHKHTI AR 25K"
+        },
+        {
+          "id": "DISHUT:IUPHHK_ALL_AR",
+          "label": "IUPHHK ALL AR"
+        },
+        {
+          "id": "DISHUT:IUPHHK_Gbung",
+          "label": "IUPHHK Gbung"
+        },
+        {
+          "id": "DISHUT:IUPHHK_HA_AR_25K",
+          "label": "IUPHHK HA AR 25K"
+        },
+        {
+          "id": "DISHUT:IUPHHK_HTR_AR_25K",
+          "label": "IUPHHK HTR AR 25K"
+        },
+        {
+          "id": "DESDM:IUP_KOMODITAS_BATUBARA_KALSEL_AR_500K",
+          "label": "IUP KOMODITAS BATUBARA KALSEL AR 500K"
+        },
+        {
+          "id": "DESDM:IUP_MBLB_IZINLOKASI_AR_5K",
+          "label": "IUP MBLB IZINLOKASI AR 5K"
+        },
+        {
+          "id": "DESDM:IUP_MINERALLOGAM_AR_50K",
+          "label": "IUP MINERALLOGAM AR 50K"
+        },
+        {
+          "id": "DESDM:IUP_MINERAL_BUKAN_LOGAM_DAN_BATUAN_KALSEL_AR_500K",
+          "label": "IUP MINERAL BUKAN LOGAM DAN BATUAN KALSEL AR 500K"
+        },
+        {
+          "id": "DESDM:IUP_PMA_KALSEL_BATUBARA_AR_25K",
+          "label": "IUP PMA KALSEL BATUBARA AR 25K"
+        },
+        {
+          "id": "BAPPEDA:IZINLOKASI_AR_250K",
+          "label": "IZINLOKASI AR 250K"
+        },
+        {
+          "id": "DPKP:J3_FOOD_2024",
+          "label": "J3 FOOD 2024"
+        },
+        {
+          "id": "DPKP:J4_LISTRIK_2024",
+          "label": "J4 LISTRIK 2024"
+        },
+        {
+          "id": "DPKP:J5_AIR_2024",
+          "label": "J5 AIR 2024"
+        },
+        {
+          "id": "DPKP:J6_SAKIT_2024",
+          "label": "J6 SAKIT 2024"
+        },
+        {
+          "id": "DPKP:J8_SEKOLAH_2024",
+          "label": "J8 SEKOLAH 2024"
+        },
+        {
+          "id": "DISDAG:JAGUNG_20220923_AR_5K",
+          "label": "JAGUNG 20220923 AR 5K"
+        },
+        {
+          "id": "DPUPR:JALANPROVINSI_LN_10K",
+          "label": "JALANPROVINSI LN 10K"
+        },
+        {
+          "id": "DPUPR:JALANPROVINSI_STA100M_LN",
+          "label": "JALANPROVINSI STA100M LN"
+        },
+        {
+          "id": "DPUPR:JALAN_LN_50K",
+          "label": "JALAN LN 50K"
+        },
+        {
+          "id": "DISHUB:JALURUTAMA_PERPOTONGAN_JL_PLK_BJM_RELKA_PT_5K",
+          "label": "JALURUTAMA PERPOTONGAN JL PLK BJM RELKA PT 5K"
+        },
+        {
+          "id": "DISHUB:JALURUTAMA_PERPOTONGAN_SUNGAI_PLK_BJM_RELKA_PT_5K",
+          "label": "JALURUTAMA PERPOTONGAN SUNGAI PLK BJM RELKA PT 5K"
+        },
+        {
+          "id": "DISHUB:JALURUTAMA_PLK_PULANGPISAU_KUALAKAPUAS_MRBHN_BJM_RELKA_PT_50K",
+          "label": "JALURUTAMA PLK PULANGPISAU KUALAKAPUAS MRBHN BJM RELKA PT 50K"
+        },
+        {
+          "id": "DISHUB:JALUR_ANJIRPASAR_BJM_RELKA_PT_5K",
+          "label": "JALUR ANJIRPASAR BJM RELKA PT 5K"
+        },
+        {
+          "id": "DISHUB:JALUR_ANJIRPASAR_MARABAHAN_RELKA_PT_5K",
+          "label": "JALUR ANJIRPASAR MARABAHAN RELKA PT 5K"
+        },
+        {
+          "id": "DISHUB:JALUR_ANJIRPASAR_MRBHN_RELKA_LN_5K",
+          "label": "JALUR ANJIRPASAR MRBHN RELKA LN 5K"
+        },
+        {
+          "id": "DISHUB:JALUR_PERPOTONGAN_JL_ANJIRPASAR_MRBHN_RELKA_PT_5K",
+          "label": "JALUR PERPOTONGAN JL ANJIRPASAR MRBHN RELKA PT 5K"
+        },
+        {
+          "id": "DISHUB:JALUR_PERPOTONGAN_SUNGAI_ANJIRPASAR_MRBHN_RELKA_PT_250K",
+          "label": "JALUR PERPOTONGAN SUNGAI ANJIRPASAR MRBHN RELKA PT 250K"
+        },
+        {
+          "id": "DPUPR:JARINGANPERPIPAA_LN_10K",
+          "label": "JARINGANPERPIPAA LN 10K"
+        },
+        {
+          "id": "DPUPR:JARINGANTELKOM_LN_250K",
+          "label": "JARINGANTELKOM LN 250K"
+        },
+        {
+          "id": "DPUPR:JARINGAN_PEMBANGKIT_LISTRIK_GENLISTRIK_PT_250K",
+          "label": "JARINGAN PEMBANGKIT LISTRIK GENLISTRIK PT 250K"
+        },
+        {
+          "id": "DPUPR:JARINGAN_TRANSMISI_LISTRIK_GENLISTRIK_LN_250K",
+          "label": "JARINGAN TRANSMISI LISTRIK GENLISTRIK LN 250K"
+        },
+        {
+          "id": "DPUPR:JARINGAN_TRANSPORTASI_PELABUHAN_PT_250K",
+          "label": "JARINGAN TRANSPORTASI PELABUHAN PT 250K"
+        },
+        {
+          "id": "DPUPR:JARINGAN_TRANSPORTASI_PELABUHAN_PT_50K",
+          "label": "JARINGAN TRANSPORTASI PELABUHAN PT 50K"
+        },
+        {
+          "id": "DLH:JASLINGDDDTPENGATURANTATAALIRANAIR_NERACAPENUTUPLAHANKWH_AR_25K",
+          "label": "JASLINGDDDTPENGATURANTATAALIRANAIR NERACAPENUTUPLAHANKWH AR 25K"
+        },
+        {
+          "id": "DLH:JASLING_DDDT_AIRBERSIH_NERACAPENUTUPLAHANKWH_AR_25K",
+          "label": "JASLING DDDT AIRBERSIH NERACAPENUTUPLAHANKWH AR 25K"
+        },
+        {
+          "id": "DLH:JASLING_DDDT_BIODIVERSITY_NERACAPENUTUPLAHANKWH_AR_25K",
+          "label": "JASLING DDDT BIODIVERSITY NERACAPENUTUPLAHANKWH AR 25K"
+        },
+        {
+          "id": "DLH:JASLING_DDDT_ESTETIKA_NERACALAHAN_AR_25K",
+          "label": "JASLING DDDT ESTETIKA NERACALAHAN AR 25K"
+        },
+        {
+          "id": "DLH:JASLING_DDDT_PANGAN_NERACAPENUTUPLAHANKWH_AR_25K",
+          "label": "JASLING DDDT PANGAN NERACAPENUTUPLAHANKWH AR 25K"
+        },
+        {
+          "id": "DLH:JASLING_DDDT_PENGATURIKLIM",
+          "label": "JASLING DDDT PENGATURIKLIM"
+        },
+        {
+          "id": "DLH:JASLING_DDDT_PENGATURLIMBAH",
+          "label": "JASLING DDDT PENGATURLIMBAH"
+        },
+        {
+          "id": "DLH:JASLING_DDDT_PENGATURMITIGASI",
+          "label": "JASLING DDDT PENGATURMITIGASI"
+        },
+        {
+          "id": "DPMD:JMLHRTRMHALIRNLISTRIK_AR_10K",
+          "label": "JMLHRTRMHALIRNLISTRIK AR 10K"
+        },
+        {
+          "id": "DPUPR:JP_STA_KM_PT",
+          "label": "JP STA KM PT"
+        },
+        {
+          "id": "DPUPR:JTAANJIR_TAMBAN_IRIGASI_LN_50K",
+          "label": "JTAANJIR TAMBAN IRIGASI LN 50K"
+        },
+        {
+          "id": "DPUPR:JTA_IRIGASI_LN_50K",
+          "label": "JTA IRIGASI LN 50K"
+        },
+        {
+          "id": "DISDUKCAPIL:JUMLAHAKTAKELAHIRAN_DITERBITKAN",
+          "label": "JUMLAHAKTAKELAHIRAN DITERBITKAN"
+        },
+        {
+          "id": "DISDUKCAPIL:JUMLAHPENDUDUK_BERDASAR_AGAMA",
+          "label": "JUMLAHPENDUDUK BERDASAR AGAMA"
+        },
+        {
+          "id": "DISDUKCAPIL:JUMLAHPENDUDUK_BERDASAR_PENDIDIKANAKHIR",
+          "label": "JUMLAHPENDUDUK BERDASAR PENDIDIKANAKHIR"
+        },
+        {
+          "id": "DISDUKCAPIL:JUMLAHPENDUDUK_BERDASAR_STATUSPERKAWINAN",
+          "label": "JUMLAHPENDUDUK BERDASAR STATUSPERKAWINAN"
+        },
+        {
+          "id": "DISDUKCAPIL:JUMLAHPENDUDUK_BERDASAR_UMUR",
+          "label": "JUMLAHPENDUDUK BERDASAR UMUR"
+        },
+        {
+          "id": "DISDUKCAPIL:JUMLAHPENDUDUK_MENURUT_JENISKELAMIN",
+          "label": "JUMLAHPENDUDUK MENURUT JENISKELAMIN"
+        },
+        {
+          "id": "DISDUKCAPIL:JUMLAHPENDUDUK_PRODUKTIF",
+          "label": "JUMLAHPENDUDUK PRODUKTIF"
+        },
+        {
+          "id": "DISDUKCAPIL:JUMLAH_AKTACERAI_BERDASAR_AGAMA",
+          "label": "JUMLAH AKTACERAI BERDASAR AGAMA"
+        },
+        {
+          "id": "DISDUKCAPIL:JUMLAH_AKTACERAI_INDIVIDU_DILAPORKAN",
+          "label": "JUMLAH AKTACERAI INDIVIDU DILAPORKAN"
+        },
+        {
+          "id": "DISDUKCAPIL:JUMLAH_KEPALAKELUARGA",
+          "label": "JUMLAH KEPALAKELUARGA"
+        },
+        {
+          "id": "DPMD:JUMLAH_PENDUDUK_TIDAK_MENGGUNAKAN_JAMBAN_AR_10K",
+          "label": "JUMLAH PENDUDUK TIDAK MENGGUNAKAN JAMBAN AR 10K"
+        },
+        {
+          "id": "DPUPR:Jaringan_Transmisi_Mikro",
+          "label": "Jaringan Transmisi Mikro"
+        },
+        {
+          "id": "DPUPR:KABELLISTRIK_LN_50K",
+          "label": "KABELLISTRIK LN 50K"
+        },
+        {
+          "id": "DISLAUTKAN:KABEL_PIPABAWAHLAUT_LN_50K",
+          "label": "KABEL PIPABAWAHLAUT LN 50K"
+        },
+        {
+          "id": "DPUPR:KAB_BALANGAN_JALAN_LN_10K",
+          "label": "KAB BALANGAN JALAN LN 10K"
+        },
+        {
+          "id": "DPUPR:KAB_BANJAR_JALAN_LN_10K",
+          "label": "KAB BANJAR JALAN LN 10K"
+        },
+        {
+          "id": "DPUPR:KAB_BATOLA_JALAN_LN_10K",
+          "label": "KAB BATOLA JALAN LN 10K"
+        },
+        {
+          "id": "DPUPR:KAB_HSS_JALAN_LN_10K",
+          "label": "KAB HSS JALAN LN 10K"
+        },
+        {
+          "id": "DPUPR:KAB_HST_JALAN_LN_10K",
+          "label": "KAB HST JALAN LN 10K"
+        },
+        {
+          "id": "DPUPR:KAB_HSU_JALAN_LN_10K",
+          "label": "KAB HSU JALAN LN 10K"
+        },
+        {
+          "id": "DPUPR:KAB_KOTABARU_JALAN_LN_10K",
+          "label": "KAB KOTABARU JALAN LN 10K"
+        },
+        {
+          "id": "DPUPR:KAB_TABALONG_JALAN_LN_10K",
+          "label": "KAB TABALONG JALAN LN 10K"
+        },
+        {
+          "id": "DPUPR:KAB_TANAHLAUT_JALAN_LN_10K",
+          "label": "KAB TANAHLAUT JALAN LN 10K"
+        },
+        {
+          "id": "DPUPR:KAB_TANBU_JALAN_LN_10K",
+          "label": "KAB TANBU JALAN LN 10K"
+        },
+        {
+          "id": "DPUPR:KAB_TAPIN_JALAN_LN_10K",
+          "label": "KAB TAPIN JALAN LN 10K"
+        },
+        {
+          "id": "DISDAG:KACANG_HIJAU_20220923_AR_5K",
+          "label": "KACANG HIJAU 20220923 AR 5K"
+        },
+        {
+          "id": "DISDAG:KACANG_KEDELAI_20220923_AR_5K",
+          "label": "KACANG KEDELAI 20220923 AR 5K"
+        },
+        {
+          "id": "DISDAG:KACANG_TANAH_20220923_AR",
+          "label": "KACANG TANAH 20220923 AR"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_AIRPORT_PT_25K",
+          "label": "KALSEL AIRPORT PT 25K"
+        },
+        {
+          "id": "PPIIG-ULM:KALSEL_BANJIR_2812021_AR_25K",
+          "label": "KALSEL BANJIR 2812021 AR 25K"
+        },
+        {
+          "id": "DPUPR:KALSEL_DAERAHALIRANSUNGAI_AR_50K",
+          "label": "KALSEL DAERAHALIRANSUNGAI AR 50K"
+        },
+        {
+          "id": "DESDM:KALSEL_GEOSTRUCTURE_AR_250K",
+          "label": "KALSEL GEOSTRUCTURE AR 250K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2019_PENDAPATAN_DESA_AR_10K",
+          "label": "KALSEL IDM 2019 PENDAPATAN DESA AR 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2019_PENDAPATAN_DESA_PT_10K",
+          "label": "KALSEL IDM 2019 PENDAPATAN DESA PT 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2019_SANITASI_AR_10K",
+          "label": "KALSEL IDM 2019 SANITASI AR 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2019_SANITASI_PT_10K",
+          "label": "KALSEL IDM 2019 SANITASI PT 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2019_TELEKOMUNIKASI_AR_10K",
+          "label": "KALSEL IDM 2019 TELEKOMUNIKASI AR 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2019_TELEKOMUNIKASI_PT_10K",
+          "label": "KALSEL IDM 2019 TELEKOMUNIKASI PT 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2020_DEMOGRAFI_AR_10K",
+          "label": "KALSEL IDM 2020 DEMOGRAFI AR 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2020_DEMOGRAFI_PT_10K",
+          "label": "KALSEL IDM 2020 DEMOGRAFI PT 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2020_ENERGI_AR_10K",
+          "label": "KALSEL IDM 2020 ENERGI AR 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2020_ENERGI_PT_10K",
+          "label": "KALSEL IDM 2020 ENERGI PT 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2020_PENDAPATAN_DESA_AR_10K",
+          "label": "KALSEL IDM 2020 PENDAPATAN DESA AR 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2020_PENDAPATAN_DESA_PT_10K",
+          "label": "KALSEL IDM 2020 PENDAPATAN DESA PT 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2020_PERKIM_AR_10K",
+          "label": "KALSEL IDM 2020 PERKIM AR 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2020_SANITASI_AR_10K",
+          "label": "KALSEL IDM 2020 SANITASI AR 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2020_SANITASI_PT_10K",
+          "label": "KALSEL IDM 2020 SANITASI PT 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2020_TELEKOMONIKASI_AR_10K",
+          "label": "KALSEL IDM 2020 TELEKOMONIKASI AR 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2020_TELEKOMONIKASI_PT_10K",
+          "label": "KALSEL IDM 2020 TELEKOMONIKASI PT 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2021_DEMOGRAFI_AR_10K",
+          "label": "KALSEL IDM 2021 DEMOGRAFI AR 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2021_DEMOGRAFI_PT_10K",
+          "label": "KALSEL IDM 2021 DEMOGRAFI PT 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2021_ENERGI_AR_10K",
+          "label": "KALSEL IDM 2021 ENERGI AR 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2021_ENERGI_PT_10K",
+          "label": "KALSEL IDM 2021 ENERGI PT 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2021_PENDAPATAN_DESA_AR_10K",
+          "label": "KALSEL IDM 2021 PENDAPATAN DESA AR 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2021_PENDAPATAN_DESA_PT_10K",
+          "label": "KALSEL IDM 2021 PENDAPATAN DESA PT 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2021_PERKIM_AR_10K",
+          "label": "KALSEL IDM 2021 PERKIM AR 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2021_PERKIM_PT_10K",
+          "label": "KALSEL IDM 2021 PERKIM PT 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2021_SANITASI_AR_10K",
+          "label": "KALSEL IDM 2021 SANITASI AR 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2021_TELEKOMONIKASI_AR_10K",
+          "label": "KALSEL IDM 2021 TELEKOMONIKASI AR 10K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_IDM_2021_TELEKOMONIKA_PT_10K",
+          "label": "KALSEL IDM 2021 TELEKOMONIKA PT 10K"
+        },
+        {
+          "id": "DPUPR:KALSEL_JALAN_LN_10K",
+          "label": "KALSEL JALAN LN 10K"
+        },
+        {
+          "id": "PPIIG-ULM:KALSEL_KEBAKARANHUTLA_2023_AR_50K",
+          "label": "KALSEL KEBAKARANHUTLA 2023 AR 50K"
+        },
+        {
+          "id": "DPUPR:KALSEL_PLAN_PEMERINTAHAN_AR_5K",
+          "label": "KALSEL PLAN PEMERINTAHAN AR 5K"
+        },
+        {
+          "id": "DPUPR:KALSEL_POLARUANG_AR_250K",
+          "label": "KALSEL POLARUANG AR 250K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_Rawan_Karhutla_AR_50K",
+          "label": "KALSEL Rawan Karhutla AR 50K"
+        },
+        {
+          "id": "BAPPEDA:KALSEL_SEBARAN_LOKASI_GARDULISTRIK_PT_50K",
+          "label": "KALSEL SEBARAN LOKASI GARDULISTRIK PT 50K"
+        },
+        {
+          "id": "DLH:KALSEL_Tindakan_Pemberdayaan_Masyarakat_Kebencanaan_AR_250K",
+          "label": "KALSEL Tindakan Pemberdayaan Masyarakat Kebencanaan AR 250K"
+        },
+        {
+          "id": "DLH:KALSEL_Tindakan_Pemberdayaan_Masyarakat_Mata_Pencaharian_AR_250",
+          "label": "KALSEL Tindakan Pemberdayaan Masyarakat Mata Pencaharian AR 250"
+        },
+        {
+          "id": "DLH:KALSEL_Tindakan_Sipil_Teknis_AR_250K",
+          "label": "KALSEL Tindakan Sipil Teknis AR 250K"
+        },
+        {
+          "id": "DLH:KALSEL_Tindakan_Vegetatif_AR_250K",
+          "label": "KALSEL Tindakan Vegetatif AR 250K"
+        },
+        {
+          "id": "DINSOS:KAMPUNG_SIAGA_BENCANA_BANJARBARU_SOSIAL_PT_50K",
+          "label": "KAMPUNG SIAGA BENCANA BANJARBARU SOSIAL PT 50K"
+        },
+        {
+          "id": "DINSOS:KAMPUNG_SIAGA_BENCANA_HSS_SOSIAL_PT_50K",
+          "label": "KAMPUNG SIAGA BENCANA HSS SOSIAL PT 50K"
+        },
+        {
+          "id": "DINSOS:KAMPUNG_SIAGA_BENCANA_HSU_SOSIAL_PT_50K",
+          "label": "KAMPUNG SIAGA BENCANA HSU SOSIAL PT 50K"
+        },
+        {
+          "id": "DINSOS:KAMPUNG_SIAGA_BENCANA_KALSEL_SOSIAL_PT_50K",
+          "label": "KAMPUNG SIAGA BENCANA KALSEL SOSIAL PT 50K"
+        },
+        {
+          "id": "DINSOS:KAMPUNG_SIAGA_BENCANA_TAPIN_SOSIAL_PT_50K",
+          "label": "KAMPUNG SIAGA BENCANA TAPIN SOSIAL PT 50K"
+        },
+        {
+          "id": "DPUPR:KANTOR_PEMERINTAHAN_AR_25K",
+          "label": "KANTOR PEMERINTAHAN AR 25K"
+        },
+        {
+          "id": "DPUPR:KANTOR_PEMERINTAHAN_LN_10K",
+          "label": "KANTOR PEMERINTAHAN LN 10K"
+        },
+        {
+          "id": "DISHUT:KAWASANHUTAN_AR_50K",
+          "label": "KAWASANHUTAN AR 50K"
+        },
+        {
+          "id": "DISPERKIM:KAWASANPERMUKIMAN_PT_10K",
+          "label": "KAWASANPERMUKIMAN PT 10K"
+        },
+        {
+          "id": "DISNAKERTRAN:KAWASANTRANSMIGRASI_AR_50K",
+          "label": "KAWASANTRANSMIGRASI AR 50K"
+        },
+        {
+          "id": "DPMD:KAWASAN_PERDESAAN_AR_10K",
+          "label": "KAWASAN PERDESAAN AR 10K"
+        },
+        {
+          "id": "DPMPTSP:KAYU_GERGJIAN_IUPHHKHTI_AR_50K",
+          "label": "KAYU GERGJIAN IUPHHKHTI AR 50K"
+        },
+        {
+          "id": "SATPOLPPDAMKAR:KEBAKARANGEDPER_TITIK_2024_PT_25K",
+          "label": "KEBAKARANGEDPER TITIK 2024 PT 25K"
+        },
+        {
+          "id": "SATPOLPPDAMKAR:KEBAKARANPENYELAMATAN_2024_PT_25K",
+          "label": "KEBAKARANPENYELAMATAN 2024 PT 25K"
+        },
+        {
+          "id": "BAPPEDA:KECAMATAN_ADMINISTRASI_AR_50K",
+          "label": "KECAMATAN ADMINISTRASI AR 50K"
+        },
+        {
+          "id": "BIROPEMOTDA:KECAMATAN_ADMINISTRASI_PT_25K",
+          "label": "KECAMATAN ADMINISTRASI PT 25K"
+        },
+        {
+          "id": "SATPOLPPDAMKAR:KEJADIAN_KEBAKARANDANPENYELAMATAN_PT_25K_PT",
+          "label": "KEJADIAN KEBAKARANDANPENYELAMATAN PT 25K PT"
+        },
+        {
+          "id": "DPKP:KEMISKINAN_AR_25K",
+          "label": "KEMISKINAN AR 25K"
+        },
+        {
+          "id": "BAPPEDA:KEMISKINAN_DTKS",
+          "label": "KEMISKINAN DTKS"
+        },
+        {
+          "id": "DISDAG:KENTANG_20220923_AR_5K",
+          "label": "KENTANG 20220923 AR 5K"
+        },
+        {
+          "id": "DISDUKCAPIL:KEPENDUDUKAN_BERDASARKAN_AGAMA",
+          "label": "KEPENDUDUKAN BERDASARKAN AGAMA"
+        },
+        {
+          "id": "DISDUKCAPIL:KEPENDUDUKAN_BERDASARKAN_DISABILITAS",
+          "label": "KEPENDUDUKAN BERDASARKAN DISABILITAS"
+        },
+        {
+          "id": "DISDUKCAPIL:KEPENDUDUKAN_BERDASARKAN_GOLONGANDARAH",
+          "label": "KEPENDUDUKAN BERDASARKAN GOLONGANDARAH"
+        },
+        {
+          "id": "DISDUKCAPIL:KEPENDUDUKAN_BERDASARKAN_HUBUNGANKELUARGA",
+          "label": "KEPENDUDUKAN BERDASARKAN HUBUNGANKELUARGA"
+        },
+        {
+          "id": "DISDUKCAPIL:KEPENDUDUKAN_BERDASARKAN_JENISKELAMIN",
+          "label": "KEPENDUDUKAN BERDASARKAN JENISKELAMIN"
+        },
+        {
+          "id": "DISDUKCAPIL:KEPENDUDUKAN_BERDASARKAN_JK_KELOMPOKUMUR",
+          "label": "KEPENDUDUKAN BERDASARKAN JK KELOMPOKUMUR"
+        },
+        {
+          "id": "DISDUKCAPIL:KEPENDUDUKAN_BERDASARKAN_KEPEMILIKAN_KK",
+          "label": "KEPENDUDUKAN BERDASARKAN KEPEMILIKAN KK"
+        },
+        {
+          "id": "DISDUKCAPIL:KEPENDUDUKAN_BERDASARKAN_PEKERJAAN_JENISKELAMIN",
+          "label": "KEPENDUDUKAN BERDASARKAN PEKERJAAN JENISKELAMIN"
+        },
+        {
+          "id": "DISDUKCAPIL:KEPENDUDUKAN_BERDASARKAN_PENDIDIKANDANJENISKELAMIN",
+          "label": "KEPENDUDUKAN BERDASARKAN PENDIDIKANDANJENISKELAMIN"
+        },
+        {
+          "id": "DISDUKCAPIL:KEPENDUDUKAN_BERDASARKAN_STATUSKAWIN",
+          "label": "KEPENDUDUKAN BERDASARKAN STATUSKAWIN"
+        },
+        {
+          "id": "DISLAUTKAN:KERJA_LOKASI_PENANGKAPAN_AR_50K",
+          "label": "KERJA LOKASI PENANGKAPAN AR 50K"
+        },
+        {
+          "id": "BAPPEDA:KESEHATAN_PT_25K",
+          "label": "KESEHATAN PT 25K"
+        },
+        {
+          "id": "DPKP:KETERSEDIAANPANGAN_AR_25K",
+          "label": "KETERSEDIAANPANGAN AR 25K"
+        },
+        {
+          "id": "DPUPR:KEWENANGAN_PROVINSI_DAERAHIRIGASI_AR_10K",
+          "label": "KEWENANGAN PROVINSI DAERAHIRIGASI AR 10K"
+        },
+        {
+          "id": "DISPERKIM:KHUSUS_KAWASANPERMUKIMAN_AR_50K",
+          "label": "KHUSUS KAWASANPERMUKIMAN AR 50K"
+        },
+        {
+          "id": "DPUPR:KKP_AR_50K",
+          "label": "KKP AR 50K"
+        },
+        {
+          "id": "DISHUT:KK_INHUTANI2_KTH_BARAK8_AR",
+          "label": "KK INHUTANI2 KTH BARAK8 AR"
+        },
+        {
+          "id": "DISHUT:KK_INHUTANI2_KTH_BINJAISEJAHTERA_AR",
+          "label": "KK INHUTANI2 KTH BINJAISEJAHTERA AR"
+        },
+        {
+          "id": "DISHUT:KK_INHUTANI2_KTH_BURALINO_AR",
+          "label": "KK INHUTANI2 KTH BURALINO AR"
+        },
+        {
+          "id": "DISHUT:KK_INHUTANI2_KTH_HARMONIS_AR",
+          "label": "KK INHUTANI2 KTH HARMONIS AR"
+        },
+        {
+          "id": "DISHUT:KK_INHUTANI2_KTH_JATUHBANGUN_AR",
+          "label": "KK INHUTANI2 KTH JATUHBANGUN AR"
+        },
+        {
+          "id": "DISHUT:KK_INHUTANI2_KTH_MANDIRI_SEJAHTERA_AR",
+          "label": "KK INHUTANI2 KTH MANDIRI SEJAHTERA AR"
+        },
+        {
+          "id": "DISHUT:KK_INHUTANI2_KTH_PASKEL_AR",
+          "label": "KK INHUTANI2 KTH PASKEL AR"
+        },
+        {
+          "id": "DISHUT:KK_INHUTANI2_KTH_SEJAHTERA_INDAH_AR",
+          "label": "KK INHUTANI2 KTH SEJAHTERA INDAH AR"
+        },
+        {
+          "id": "DISHUT:KK_INHUTANI2_KTH_SIOLA_AR",
+          "label": "KK INHUTANI2 KTH SIOLA AR"
+        },
+        {
+          "id": "DISLAUTKAN:KOLAMAIRBUDIDAYA_AR_50K",
+          "label": "KOLAMAIRBUDIDAYA AR 50K"
+        },
+        {
+          "id": "DISDAG:KOL_20220923_AR_5K",
+          "label": "KOL 20220923 AR 5K"
+        },
+        {
+          "id": "DESDM:KONSERVASI_AKUIFER_BEBAS_TALA_PRODAQ_AR_250K",
+          "label": "KONSERVASI AKUIFER BEBAS TALA PRODAQ AR 250K"
+        },
+        {
+          "id": "DESDM:KONSERVASI_AKUIFER_BEBAS_TANBU_PRODAQ_AR_250K",
+          "label": "KONSERVASI AKUIFER BEBAS TANBU PRODAQ AR 250K"
+        },
+        {
+          "id": "DISLAUTKAN:KONSERVASI_KKP_AR_50K",
+          "label": "KONSERVASI KKP AR 50K"
+        },
+        {
+          "id": "DESDM:KONSERVASI_KOTABARU_CEKUNGAIRTANAH_AR_250K",
+          "label": "KONSERVASI KOTABARU CEKUNGAIRTANAH AR 250K"
+        },
+        {
+          "id": "DPUPR:KONTUR_LN_50K",
+          "label": "KONTUR LN 50K"
+        },
+        {
+          "id": "DISHUB:KORIDOR1_BERANGKAT_HALTE_PT_10K",
+          "label": "KORIDOR1 BERANGKAT HALTE PT 10K"
+        },
+        {
+          "id": "DISHUB:KORIDOR1_PULANG_HALTE_PT_10K",
+          "label": "KORIDOR1 PULANG HALTE PT 10K"
+        },
+        {
+          "id": "DISHUB:KORIDOR2_BERANGKAT_HALTE_PT_10K",
+          "label": "KORIDOR2 BERANGKAT HALTE PT 10K"
+        },
+        {
+          "id": "DISHUB:KORIDOR2_PULANG_HALTE_PT_10K",
+          "label": "KORIDOR2 PULANG HALTE PT 10K"
+        },
+        {
+          "id": "BIROPEMOTDA:KOTABARU-TANAHBUMBU_TITIKBATASADM_PT_250K",
+          "label": "KOTABARU-TANAHBUMBU TITIKBATASADM PT 250K"
+        },
+        {
+          "id": "BIROPEMOTDA:KOTA_ADMINISTRASI_PT_25K",
+          "label": "KOTA ADMINISTRASI PT 25K"
+        },
+        {
+          "id": "DPUPR:KOTA_BANJARBARU_LN_10K",
+          "label": "KOTA BANJARBARU LN 10K"
+        },
+        {
+          "id": "DPUPR:KOTA_BANJARMASIN_JALAN_LN_10K",
+          "label": "KOTA BANJARMASIN JALAN LN 10K"
+        },
+        {
+          "id": "DLH:KUALITAS_AIR_BJM_UTM_POSPANTAUSUNGAI_PT_5K",
+          "label": "KUALITAS AIR BJM UTM POSPANTAUSUNGAI PT 5K"
+        },
+        {
+          "id": "DLH:KUALITAS_AIR_SUNGAI_BARITO_1_UTM_POSPANTAUSUNGAI_PT_5K",
+          "label": "KUALITAS AIR SUNGAI BARITO 1 UTM POSPANTAUSUNGAI PT 5K"
+        },
+        {
+          "id": "DLH:KUALITAS_AIR_SUNGAI_BARITO_2_UTM_POSPANTAUSUNGAI_PT_5K",
+          "label": "KUALITAS AIR SUNGAI BARITO 2 UTM POSPANTAUSUNGAI PT 5K"
+        },
+        {
+          "id": "DLH:KUALITAS_AIR_SUNGAI_NEGARA_UTM_POSPANTAUSUNGAI_PT_5K",
+          "label": "KUALITAS AIR SUNGAI NEGARA UTM POSPANTAUSUNGAI PT 5K"
+        },
+        {
+          "id": "DINSOS:KUBEKALSEL_NIAGA_PT_50K",
+          "label": "KUBEKALSEL NIAGA PT 50K"
+        },
+        {
+          "id": "DINSOS:KUBE_BANJARBARU_NIAGA_PT_50K",
+          "label": "KUBE BANJARBARU NIAGA PT 50K"
+        },
+        {
+          "id": "DINSOS:KUBE_BARITOKUALA_NIAGA_PT_50K",
+          "label": "KUBE BARITOKUALA NIAGA PT 50K"
+        },
+        {
+          "id": "DINSOS:KUBE_HSS_NIAGA_PT_50K",
+          "label": "KUBE HSS NIAGA PT 50K"
+        },
+        {
+          "id": "DINSOS:KUBE_HSU_NIAGA_PT_50K",
+          "label": "KUBE HSU NIAGA PT 50K"
+        },
+        {
+          "id": "DINSOS:KUBE_KTB_NIAGA_PT_50K",
+          "label": "KUBE KTB NIAGA PT 50K"
+        },
+        {
+          "id": "DINSOS:KUBE_TAPIN_NIAGA_PT_50K",
+          "label": "KUBE TAPIN NIAGA PT 50K"
+        },
+        {
+          "id": "DISHUT:KUHKALSEL_PNUNJUKKWSNHUTAN_AR_50K",
+          "label": "KUHKALSEL PNUNJUKKWSNHUTAN AR 50K"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_BALANGAN_KTH_AJUNG_AR",
+          "label": "KULIN KK BALANGAN KTH AJUNG AR"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_BALANGAN_KTH_CAHAYADAYAKPITAP_AR",
+          "label": "KULIN KK BALANGAN KTH CAHAYADAYAKPITAP AR"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_BALANGAN_KTH_LIYUMEMBANGUN_AR",
+          "label": "KULIN KK BALANGAN KTH LIYUMEMBANGUN AR"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_HULUSUNGAI_KTH_BINDANGMAKMUR_AR",
+          "label": "KULIN KK HULUSUNGAI KTH BINDANGMAKMUR AR"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_HULUSUNGAI_KTH_SAHURAIBERSAMA_AR",
+          "label": "KULIN KK HULUSUNGAI KTH SAHURAIBERSAMA AR"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_HULUSUNGAI_KTH_WANAMITRASEJAHTERA_AR",
+          "label": "KULIN KK HULUSUNGAI KTH WANAMITRASEJAHTERA AR"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_KAYUTANGI_KTH_BERSATUMADU_AR",
+          "label": "KULIN KK KAYUTANGI KTH BERSATUMADU AR"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_KAYUTANGI_KTH_MADULESTARI_AR",
+          "label": "KULIN KK KAYUTANGI KTH MADULESTARI AR"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_PT_DWIMAINTIGA_AR",
+          "label": "KULIN KK PT DWIMAINTIGA AR"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_PT_HRB_GAPOKTANKAKAO_AR",
+          "label": "KULIN KK PT HRB GAPOKTANKAKAO AR"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_TABALONG_KTH_GUNUNGBATUAH_AR",
+          "label": "KULIN KK TABALONG KTH GUNUNGBATUAH AR"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_TABALONG_KTH_GUNUNGUWAR_AR",
+          "label": "KULIN KK TABALONG KTH GUNUNGUWAR AR"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_TABALONG_KTH_KANAAN_AR",
+          "label": "KULIN KK TABALONG KTH KANAAN AR"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_TABALONG_KTH_KARAMOBERSINAR_AR",
+          "label": "KULIN KK TABALONG KTH KARAMOBERSINAR AR"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_TABALONG_KTH_LEMBAHPUNDUN_AR",
+          "label": "KULIN KK TABALONG KTH LEMBAHPUNDUN AR"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_TABALONG_KTH_PENEPEHLESTARI_AR",
+          "label": "KULIN KK TABALONG KTH PENEPEHLESTARI AR"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_TABALONG_KTH_SULANGAIJAYA_AR",
+          "label": "KULIN KK TABALONG KTH SULANGAIJAYA AR"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_TABALONG_KTH_TELAGABIDADARI_AR",
+          "label": "KULIN KK TABALONG KTH TELAGABIDADARI AR"
+        },
+        {
+          "id": "DISHUT:KULIN_KK_TABALONG_KTH_WATUMARUNG_AR",
+          "label": "KULIN KK TABALONG KTH WATUMARUNG AR"
+        },
+        {
+          "id": "DPUPR:Kapet_Batulicin_KEK_AR_5K",
+          "label": "Kapet Batulicin KEK AR 5K"
+        },
+        {
+          "id": "DPUPR:Kawasan_Lindung_Laut_Daerah_BLOKKSAKPA_AR_250K",
+          "label": "Kawasan Lindung Laut Daerah BLOKKSAKPA AR 250K"
+        },
+        {
+          "id": "DISHUB:Kereta_Api_line_koord__jalurutama_plk_pulangpisau_kualakapuas_m",
+          "label": "Kereta Api Line Koord Jalurutama Plk Pulangpisau Kualakapuas M"
+        },
+        {
+          "id": "DLH:Kualitas_Air_koor_bjm",
+          "label": "Kualitas Air Koor Bjm"
+        },
+        {
+          "id": "BAPPEDA:LANDUSE_KALSEL_AR_50K",
+          "label": "LANDUSE KALSEL AR 50K"
+        },
+        {
+          "id": "DISLAUTKAN:LAUT_POLARUANG_AR_250K",
+          "label": "LAUT POLARUANG AR 250K"
+        },
+        {
+          "id": "DISLAUTKAN:LIGHT_PT_50K",
+          "label": "LIGHT PT 50K"
+        },
+        {
+          "id": "BIROPEMOTDA:LINES_ALL_RZWP3K_PERDA_2018_LN_50K",
+          "label": "LINES ALL RZWP3K PERDA 2018 LN 50K"
+        },
+        {
+          "id": "DISNAKERTRAN:LOKASITRANSMIGRASI_PT_25K",
+          "label": "LOKASITRANSMIGRASI PT 25K"
+        },
+        {
+          "id": "DPUPR:LOKASI_PELABUHAN_PT_250K",
+          "label": "LOKASI PELABUHAN PT 250K"
+        },
+        {
+          "id": "BAPPEDA:LOKASI_PERKANTORAN_PT_10K",
+          "label": "LOKASI PERKANTORAN PT 10K"
+        },
+        {
+          "id": "DPKP:LP2BSAWAH_AR_50K",
+          "label": "LP2BSAWAH AR 50K"
+        },
+        {
+          "id": "DPKP:LP2B_LADANG_AR_10K",
+          "label": "LP2B LADANG AR 10K"
+        },
+        {
+          "id": "DPKP:LUMBUNG_PANGAN_PT_10K",
+          "label": "LUMBUNG PANGAN PT 10K"
+        },
+        {
+          "id": "DPUPR:MERATUS_KAWASAN_STRATEGIS_AR_50K",
+          "label": "MERATUS KAWASAN STRATEGIS AR 50K"
+        },
+        {
+          "id": "DISDAG:MIE_INSTAN_20220923_AR_5K",
+          "label": "MIE INSTAN 20220923 AR 5K"
+        },
+        {
+          "id": "DISLAUTKAN:MIGRASI_BIOTA_LN_250K",
+          "label": "MIGRASI BIOTA LN 250K"
+        },
+        {
+          "id": "DISDAG:MINYAK_GORENG_20220923_AR_5K",
+          "label": "MINYAK GORENG 20220923 AR 5K"
+        },
+        {
+          "id": "DISDIKBUD:MTS_KALSEL_PENDIDIKAN_PT_25K",
+          "label": "MTS KALSEL PENDIDIKAN PT 25K"
+        },
+        {
+          "id": "DESDM:NON_CEKUNGAN_AIRTANAH_AR_50K",
+          "label": "NON CEKUNGAN AIRTANAH AR 50K"
+        },
+        {
+          "id": "DESDM:NON_CEKUNGAN_AIR_TANAH_AR",
+          "label": "NON CEKUNGAN AIR TANAH AR"
+        },
+        {
+          "id": "DISHUT:NON_PRIMER_KAWASANHUTAN_AR_50K",
+          "label": "NON PRIMER KAWASANHUTAN AR 50K"
+        },
+        {
+          "id": "DISPERKIM:OSM_BUILDINGS_PERUMAHAN_AR_5K",
+          "label": "OSM BUILDINGS PERUMAHAN AR 5K"
+        },
+        {
+          "id": "BAPPEDA:P3K3_JENIS_KELAMIN_SOSIAL_AR_25K",
+          "label": "P3K3 JENIS KELAMIN SOSIAL AR 25K"
+        },
+        {
+          "id": "BAPPEDA:P3K3_KELUARGA_SOSIAL_AR_25K",
+          "label": "P3K3 KELUARGA SOSIAL AR 25K"
+        },
+        {
+          "id": "BAPPEDA:P3K3_KEMISKINAN_SOSIAL_AR_25K",
+          "label": "P3K3 KEMISKINAN SOSIAL AR 25K"
+        },
+        {
+          "id": "BAPPEDA:P3K3_PEKERJAAN_SOSIAL_AR_25K",
+          "label": "P3K3 PEKERJAAN SOSIAL AR 25K"
+        },
+        {
+          "id": "BAPPEDA:P3K3_STATUS_PENDIDIKAN_AR_25K",
+          "label": "P3K3 STATUS PENDIDIKAN AR 25K"
+        },
+        {
+          "id": "BAPPEDA:P3K3_STATUS_PERKAWINAN_SOSIAL_AR_25K",
+          "label": "P3K3 STATUS PERKAWINAN SOSIAL AR 25K"
+        },
+        {
+          "id": "DESDM:PAGATAN_CEKUNGAIRTANAH_AR_250K",
+          "label": "PAGATAN CEKUNGAIRTANAH AR 250K"
+        },
+        {
+          "id": "DINSOS:PANTI_SOSIAL_PT_50K",
+          "label": "PANTI SOSIAL PT 50K"
+        },
+        {
+          "id": "BAPPEDA:PARIWISATA_PT_25K",
+          "label": "PARIWISATA PT 25K"
+        },
+        {
+          "id": "DISNAKERTRAN:PA_LOKASITRANSMIGRASI_LN_1K",
+          "label": "PA LOKASITRANSMIGRASI LN 1K"
+        },
+        {
+          "id": "SIH3:PCH_BWS_Kal_3",
+          "label": "PCH BWS Kal 3"
+        },
+        {
+          "id": "DPUPR:PELABUHAN_PT_50K",
+          "label": "PELABUHAN PT 50K"
+        },
+        {
+          "id": "DISLAUTKAN:PELABUHAN_PT_50K",
+          "label": "PELABUHAN PT 50K"
+        },
+        {
+          "id": "DISHUT:PEMANFAATAN_IUPHHKHTI_AR_50K",
+          "label": "PEMANFAATAN IUPHHKHTI AR 50K"
+        },
+        {
+          "id": "DPUPR:PEMERINTAHAN_LN_10K",
+          "label": "PEMERINTAHAN LN 10K"
+        },
+        {
+          "id": "BAPPEDA:PENDIDIKAN_PT_25K",
+          "label": "PENDIDIKAN PT 25K"
+        },
+        {
+          "id": "DISDIKBUD:PENDIDIKAN_PT_50K",
+          "label": "PENDIDIKAN PT 50K"
+        },
+        {
+          "id": "DISLAUTKAN:PENGAMANPANTAI_LN_50K",
+          "label": "PENGAMANPANTAI LN 50K"
+        },
+        {
+          "id": "DISHUT:PENGGUNAANHUTAN_AR_50K",
+          "label": "PENGGUNAANHUTAN AR 50K"
+        },
+        {
+          "id": "DPUPR:PENGGUNAANTANAH_AR_250K",
+          "label": "PENGGUNAANTANAH AR 250K"
+        },
+        {
+          "id": "DPUPR:PENGGUNAAN_AR_5K",
+          "label": "PENGGUNAAN AR 5K"
+        },
+        {
+          "id": "SATPOLPPDAMKAR:PENYELAMATAN_2024_PT",
+          "label": "PENYELAMATAN 2024 PT"
+        },
+        {
+          "id": "BAPPEDA:PERHUBUNGAN_PT_25K",
+          "label": "PERHUBUNGAN PT 25K"
+        },
+        {
+          "id": "BAPPEDA:PERIKANAN_PT_25K",
+          "label": "PERIKANAN PT 25K"
+        },
+        {
+          "id": "DPUPR:PERKANTORAN_PEMERINTAHAN_PT_5K",
+          "label": "PERKANTORAN PEMERINTAHAN PT 5K"
+        },
+        {
+          "id": "DISBUNAK:PERKEBUNAN_AR_50K",
+          "label": "PERKEBUNAN AR 50K"
+        },
+        {
+          "id": "BAPPEDA:PERKEBUNAN_PT_25K",
+          "label": "PERKEBUNAN PT 25K"
+        },
+        {
+          "id": "DISPERKIM:PERMUKIMANKUMUH_AR_50K",
+          "label": "PERMUKIMANKUMUH AR 50K"
+        },
+        {
+          "id": "DISLAUTKAN:PERMUKIMAN_AR_50K",
+          "label": "PERMUKIMAN AR 50K"
+        },
+        {
+          "id": "BAPPEDA:PERMUKIMAN_DESA_AR_25K",
+          "label": "PERMUKIMAN DESA AR 25K"
+        },
+        {
+          "id": "DISPERKIM:PERMUKIMAN_DESA_AR_50K",
+          "label": "PERMUKIMAN DESA AR 50K"
+        },
+        {
+          "id": "BAPPEDA:PERMUKIMAN_PT_25K",
+          "label": "PERMUKIMAN PT 25K"
+        },
+        {
+          "id": "DPUPR:PERSAMPAHAN_AR_10K",
+          "label": "PERSAMPAHAN AR 10K"
+        },
+        {
+          "id": "BAPPEDA:PERSAMPAHAN_PT_25K",
+          "label": "PERSAMPAHAN PT 25K"
+        },
+        {
+          "id": "DISDUKCAPIL:PERSENTASEANAK_0_18TAHUN_MEMILIKIAKTA",
+          "label": "PERSENTASEANAK 0 18TAHUN MEMILIKIAKTA"
+        },
+        {
+          "id": "DISDUKCAPIL:PERSENTASEKEPEMILIKAN_BUKUNIKAH",
+          "label": "PERSENTASEKEPEMILIKAN BUKUNIKAH"
+        },
+        {
+          "id": "DISDUKCAPIL:PERSENTASEKEPEMILIKAN_IKD",
+          "label": "PERSENTASEKEPEMILIKAN IKD"
+        },
+        {
+          "id": "DISDUKCAPIL:PERSENTASE_AKTAKEMATIAN",
+          "label": "PERSENTASE AKTAKEMATIAN"
+        },
+        {
+          "id": "DISDUKCAPIL:PERSENTASE_AKTAKEMATIAN_TERBIT",
+          "label": "PERSENTASE AKTAKEMATIAN TERBIT"
+        },
+        {
+          "id": "DISDUKCAPIL:PERSENTASE_CAKUPAN_AKTAKELAHIRAN_0_17TAHUN",
+          "label": "PERSENTASE CAKUPAN AKTAKELAHIRAN 0 17TAHUN"
+        },
+        {
+          "id": "DISDUKCAPIL:PERSENTASE_KIA_DITERBITKAN",
+          "label": "PERSENTASE KIA DITERBITKAN"
+        },
+        {
+          "id": "DISDUKCAPIL:PERSENTASE_KTPNASIONAL_BERBASIS_NIK",
+          "label": "PERSENTASE KTPNASIONAL BERBASIS NIK"
+        },
+        {
+          "id": "DPUPR:PERTAHANAN_PT_250K",
+          "label": "PERTAHANAN PT 250K"
+        },
+        {
+          "id": "BAPPEDA:PERTANIAN_PT_25K",
+          "label": "PERTANIAN PT 25K"
+        },
+        {
+          "id": "BAPPEDA:PERTERNAKAN_PT_25K",
+          "label": "PERTERNAKAN PT 25K"
+        },
+        {
+          "id": "KAB-TABALONG:PJU_PT_10K",
+          "label": "PJU PT 10K"
+        },
+        {
+          "id": "DISHUT:PNTPNKWSNHUTAN_AR_250K",
+          "label": "PNTPNKWSNHUTAN AR 250K"
+        },
+        {
+          "id": "DISHUT:PNUNJUKKWSNHUTAN_AR_250K",
+          "label": "PNUNJUKKWSNHUTAN AR 250K"
+        },
+        {
+          "id": "DISBUNAK:POHON_PERKEBUNAN_AR_250K",
+          "label": "POHON PERKEBUNAN AR 250K"
+        },
+        {
+          "id": "BIROPEMOTDA:POI_BANJARMASIN_TOPONIM_PT_10K",
+          "label": "POI BANJARMASIN TOPONIM PT 10K"
+        },
+        {
+          "id": "DPMPTSP:POLYGON_PT_NOGO_PATMOLO",
+          "label": "POLYGON PT NOGO PATMOLO"
+        },
+        {
+          "id": "DPUPR:POSDUGAAIR_PT_50K",
+          "label": "POSDUGAAIR PT 50K"
+        },
+        {
+          "id": "DESDM:POTENSI_MINERALBUKANLOGAM_PT_50K",
+          "label": "POTENSI MINERALBUKANLOGAM PT 50K"
+        },
+        {
+          "id": "DESDM:POTENSI_MINERALLOGAM_PT_50K",
+          "label": "POTENSI MINERALLOGAM PT 50K"
+        },
+        {
+          "id": "BAPPEDA:PRAKIRAANHUJANBULANAN_AR_250K",
+          "label": "PRAKIRAANHUJANBULANAN AR 250K"
+        },
+        {
+          "id": "DPMD:PRODES_2023_AR_10K",
+          "label": "PRODES 2023 AR 10K"
+        },
+        {
+          "id": "DPUPR:PROGRES_PEMERINTAHAN_PT_10K",
+          "label": "PROGRES PEMERINTAHAN PT 10K"
+        },
+        {
+          "id": "BIROPEMOTDA:PROVINSI_ADMINISTRASI_AR_250K",
+          "label": "PROVINSI ADMINISTRASI AR 250K"
+        },
+        {
+          "id": "BIROPEMOTDA:PROVINSI_ADMINISTRASI_LN_250K",
+          "label": "PROVINSI ADMINISTRASI LN 250K"
+        },
+        {
+          "id": "BIROPEMOTDA:PROVINSI_ADMINISTRASI_LN_25K",
+          "label": "PROVINSI ADMINISTRASI LN 25K"
+        },
+        {
+          "id": "BIROPEMOTDA:PROVINSI_ADMINISTRASI_LN_50K",
+          "label": "PROVINSI ADMINISTRASI LN 50K"
+        },
+        {
+          "id": "DISPERKIM:PSU_AIRBAKU_AR_5K",
+          "label": "PSU AIRBAKU AR 5K"
+        },
+        {
+          "id": "DISPERKIM:PSU_DRAINASE_AR_10K",
+          "label": "PSU DRAINASE AR 10K"
+        },
+        {
+          "id": "DISPERKIM:PSU_JALAN_LN_10K",
+          "label": "PSU JALAN LN 10K"
+        },
+        {
+          "id": "DISPERKIM:PSU_KABELLISTRIK_LN_10K",
+          "label": "PSU KABELLISTRIK LN 10K"
+        },
+        {
+          "id": "DISPERKIM:PSU_PERSAMPAHAN_PT_10K",
+          "label": "PSU PERSAMPAHAN PT 10K"
+        },
+        {
+          "id": "DISPERKIM:PSU_PJU_TIANGLAMPU_PT_5K",
+          "label": "PSU PJU TIANGLAMPU PT 5K"
+        },
+        {
+          "id": "DISPERKIM:PSU_RTNH_AR_10K",
+          "label": "PSU RTNH AR 10K"
+        },
+        {
+          "id": "DISPERKIM:PSU_SARANAIBADAH_PT_10K",
+          "label": "PSU SARANAIBADAH PT 10K"
+        },
+        {
+          "id": "DPUPR:PULAULAUT_JEMBATAN_LN_250K",
+          "label": "PULAULAUT JEMBATAN LN 250K"
+        },
+        {
+          "id": "DPUPR:PULAULAUT_RELKA_LN_2K",
+          "label": "PULAULAUT RELKA LN 2K"
+        },
+        {
+          "id": "DPUPR:PULAU_LAUT_JEMBATAN_LN_50K",
+          "label": "PULAU LAUT JEMBATAN LN 50K"
+        },
+        {
+          "id": "DPUPR:PULAU_LAUT_RELKA_LN_25K",
+          "label": "PULAU LAUT RELKA LN 25K"
+        },
+        {
+          "id": "DISLAUTKAN:Perijinan_KKPRL_PT_1_PT",
+          "label": "Perijinan KKPRL PT 1 PT"
+        },
+        {
+          "id": "DLH:Peta_RPPLH_Iklim_DDDT_AR_50K",
+          "label": "Peta RPPLH Iklim DDDT AR 50K"
+        },
+        {
+          "id": "DLH:Peta_RPPLH_Pangan_DDDT_AR_50K",
+          "label": "Peta RPPLH Pangan DDDT AR 50K"
+        },
+        {
+          "id": "BAPPEDA:Pointof_Interes_BJM_TOPONIM_PT_10K",
+          "label": "Pointof Interes BJM TOPONIM PT 10K"
+        },
+        {
+          "id": "DPUPR:RAWA_AR_50K",
+          "label": "RAWA AR 50K"
+        },
+        {
+          "id": "BAPPEDA:RBI50K_NIAGA_PT",
+          "label": "RBI50K NIAGA PT"
+        },
+        {
+          "id": "DPUPR:RELKA_LN_100K",
+          "label": "RELKA LN 100K"
+        },
+        {
+          "id": "DPUPR:RELKA_LN_250K",
+          "label": "RELKA LN 250K"
+        },
+        {
+          "id": "BAPPEDA:RENCANA_BENDUNGAN_PT_50K",
+          "label": "RENCANA BENDUNGAN PT 50K"
+        },
+        {
+          "id": "DPUPR:RENCANA_SALURAN_SEKUNDER_IRIGASI_LN_50K",
+          "label": "RENCANA SALURAN SEKUNDER IRIGASI LN 50K"
+        },
+        {
+          "id": "BAPPEDA:REVISI2013_INDUSTRI_AR_25K",
+          "label": "REVISI2013 INDUSTRI AR 25K"
+        },
+        {
+          "id": "BAPPEDA:REVISI2013_INDUSTRI_PT_50K",
+          "label": "REVISI2013 INDUSTRI PT 50K"
+        },
+        {
+          "id": "DPUPR:RIAM_KANAN_SAWAH_AR_50K",
+          "label": "RIAM KANAN SAWAH AR 50K"
+        },
+        {
+          "id": "DINSOS:RTLHKALSEL_PERMUKIMANKUMUH_PT_50K",
+          "label": "RTLHKALSEL PERMUKIMANKUMUH PT 50K"
+        },
+        {
+          "id": "DINSOS:RTLH_BANJARBARU_PERMUKIMANKUMUH_PT_50K",
+          "label": "RTLH BANJARBARU PERMUKIMANKUMUH PT 50K"
+        },
+        {
+          "id": "DINSOS:RTLH_BARITOKUALA_PERMUKIMANKUMUH_PT_50K",
+          "label": "RTLH BARITOKUALA PERMUKIMANKUMUH PT 50K"
+        },
+        {
+          "id": "DISPERKIM:RTLH_BNBA_KAWASANPERMUKIMAN_AR_5K",
+          "label": "RTLH BNBA KAWASANPERMUKIMAN AR 5K"
+        },
+        {
+          "id": "DINSOS:RTLH_HSS_PERMUKIMANKUMUH_PT_50K",
+          "label": "RTLH HSS PERMUKIMANKUMUH PT 50K"
+        },
+        {
+          "id": "DISPERKIM:RTLH_KAWASANPERMUKIMAN_AR_50K",
+          "label": "RTLH KAWASANPERMUKIMAN AR 50K"
+        },
+        {
+          "id": "DINSOS:RTLH_KTB_PERMUKIMANKUMUH_PT_50K",
+          "label": "RTLH KTB PERMUKIMANKUMUH PT 50K"
+        },
+        {
+          "id": "DINSOS:RTLH_TAPIN_PERMUKIMANKUMUH_PT_50K",
+          "label": "RTLH TAPIN PERMUKIMANKUMUH PT 50K"
+        },
+        {
+          "id": "BAPPEDA:RUMAHSAKIT_PT_50K",
+          "label": "RUMAHSAKIT PT 50K"
+        },
+        {
+          "id": "DINKES:RUMAHSAKIT_PT_5K",
+          "label": "RUMAHSAKIT PT 5K"
+        },
+        {
+          "id": "DISPERKIM:RUMAHUMUM_KAWASANPERMUKIMAN_AR_50K",
+          "label": "RUMAHUMUM KAWASANPERMUKIMAN AR 50K"
+        },
+        {
+          "id": "DISPERKIM:RUMAH_BEDAKAN_BJMUTARA_PERUMAHAN_AR_10K",
+          "label": "RUMAH BEDAKAN BJMUTARA PERUMAHAN AR 10K"
+        },
+        {
+          "id": "DISPERKIM:RUMAH_KOMERSIAL_KAWASANPERMUKIMAN_AR_5K",
+          "label": "RUMAH KOMERSIAL KAWASANPERMUKIMAN AR 5K"
+        },
+        {
+          "id": "DISPERKIM:RUMAH_KOS_BJMUTARA_PERUMAHAN_AR_10K",
+          "label": "RUMAH KOS BJMUTARA PERUMAHAN AR 10K"
+        },
+        {
+          "id": "DISPERKIM:RUMAH_SEWA_2_TANAHLAUT_PERUMAHAN_PT_10K",
+          "label": "RUMAH SEWA 2 TANAHLAUT PERUMAHAN PT 10K"
+        },
+        {
+          "id": "DISPERKIM:RUMAH_SEWA_BANJARBARU_PERUMAHAN_PT_10K",
+          "label": "RUMAH SEWA BANJARBARU PERUMAHAN PT 10K"
+        },
+        {
+          "id": "DISPERKIM:RUMAH_SEWA_BANJAR_PERUMAHAN_PT_10K",
+          "label": "RUMAH SEWA BANJAR PERUMAHAN PT 10K"
+        },
+        {
+          "id": "DISPERKIM:RUMAH_SEWA_BATOLA_PERUMAHAN_PT_10K",
+          "label": "RUMAH SEWA BATOLA PERUMAHAN PT 10K"
+        },
+        {
+          "id": "DISPERKIM:RUMAH_SEWA_TANAHLAUT_PERUMAHAN_PT_10K",
+          "label": "RUMAH SEWA TANAHLAUT PERUMAHAN PT 10K"
+        },
+        {
+          "id": "DISPERKIM:RUMAH_SEWA_TUNGGAL_BJMUTARA_PERUMAHAN_AR_10K",
+          "label": "RUMAH SEWA TUNGGAL BJMUTARA PERUMAHAN AR 10K"
+        },
+        {
+          "id": "DISPERKIM:RUMAH_SUSUN_KAWASANPERMUKIMAN_PT_10K",
+          "label": "RUMAH SUSUN KAWASANPERMUKIMAN PT 10K"
+        },
+        {
+          "id": "DISPERKIM:RUMAH_SWADAYA_KAWASANPERMUKIMAN_AR_50K",
+          "label": "RUMAH SWADAYA KAWASANPERMUKIMAN AR 50K"
+        },
+        {
+          "id": "BAPPEDA:RUSUNAWA_PERUMAHAN_PT_50K",
+          "label": "RUSUNAWA PERUMAHAN PT 50K"
+        },
+        {
+          "id": "DISLAUTKAN:Rehabilitasi_Terumbu_Karang_PT",
+          "label": "Rehabilitasi Terumbu Karang PT"
+        },
+        {
+          "id": "BAPPEDA:SARPRAS_PUBLIK_PT_25K",
+          "label": "SARPRAS PUBLIK PT 25K"
+        },
+        {
+          "id": "DISDIKBUD:SATUANPENDIDIKAN_PT_25K",
+          "label": "SATUANPENDIDIKAN PT 25K"
+        },
+        {
+          "id": "BAPPEDA:SAWAH_AR_50K",
+          "label": "SAWAH AR 50K"
+        },
+        {
+          "id": "DPKP:SAWAH_AR_5K",
+          "label": "SAWAH AR 5K"
+        },
+        {
+          "id": "DISDIKBUD:SD_KALSEL_PENDIDIKAN_PT_25K",
+          "label": "SD KALSEL PENDIDIKAN PT 25K"
+        },
+        {
+          "id": "DPMD:SEBARANTMMD_AR_10K",
+          "label": "SEBARANTMMD AR 10K"
+        },
+        {
+          "id": "DLH:SEBARAN_PROKLIM_2023_PT",
+          "label": "SEBARAN PROKLIM 2023 PT"
+        },
+        {
+          "id": "SIH3:SH_DASARIAN",
+          "label": "SH DASARIAN"
+        },
+        {
+          "id": "DISDAG:SINGKONG_20220923_AR_5K",
+          "label": "SINGKONG 20220923 AR 5K"
+        },
+        {
+          "id": "DPUPR:SISTEM_JARINGAN_PELABUHAN_PT_250K",
+          "label": "SISTEM JARINGAN PELABUHAN PT 250K"
+        },
+        {
+          "id": "DLH:SISTEM_LAHAN_DAS_BARITO_NERACAPENUTUPLAHANKWH_AR_50K",
+          "label": "SISTEM LAHAN DAS BARITO NERACAPENUTUPLAHANKWH AR 50K"
+        },
+        {
+          "id": "DESDM:SITUSGEOPARK_DAYATARIKPARIWISATA_AR_10K",
+          "label": "SITUSGEOPARK DAYATARIKPARIWISATA AR 10K"
+        },
+        {
+          "id": "DLH:SKENARIO_0_2_TAHUNAN_MODEL_BANJIR_AR_250K",
+          "label": "SKENARIO 0 2 TAHUNAN MODEL BANJIR AR 250K"
+        },
+        {
+          "id": "DLH:SKENARIO_0_50_TAHUNAN_MODEL_BANJIR_AR_250K",
+          "label": "SKENARIO 0 50 TAHUNAN MODEL BANJIR AR 250K"
+        },
+        {
+          "id": "DLH:SKENARIO_0_JANUARI_MODEL_BANJIR_AR_250K",
+          "label": "SKENARIO 0 JANUARI MODEL BANJIR AR 250K"
+        },
+        {
+          "id": "DLH:SKENARIO_1_2_TAHUNAN_MODEL_BANJIR_AR_250K",
+          "label": "SKENARIO 1 2 TAHUNAN MODEL BANJIR AR 250K"
+        },
+        {
+          "id": "DLH:SKENARIO_1_50_TAHUNAN_MODEL_BANJIR_AR_250K",
+          "label": "SKENARIO 1 50 TAHUNAN MODEL BANJIR AR 250K"
+        },
+        {
+          "id": "DLH:SKENARIO_1_JANUARI_MODEL_BANJIR_AR_250K",
+          "label": "SKENARIO 1 JANUARI MODEL BANJIR AR 250K"
+        },
+        {
+          "id": "DLH:SKENARIO_2_2_TAHUNAN_MODEL_BANJIR_AR_250K",
+          "label": "SKENARIO 2 2 TAHUNAN MODEL BANJIR AR 250K"
+        },
+        {
+          "id": "DLH:SKENARIO_2_50_TAHUNAN_MODEL_BANJIR_AR_250K",
+          "label": "SKENARIO 2 50 TAHUNAN MODEL BANJIR AR 250K"
+        },
+        {
+          "id": "DLH:SKENARIO_2_JANUARI_MODEL_BANJIR_AR_250K",
+          "label": "SKENARIO 2 JANUARI MODEL BANJIR AR 250K"
+        },
+        {
+          "id": "DLH:SKENARIO_3_50_TAHUNAN_MODEL_BANJIR_AR_250K",
+          "label": "SKENARIO 3 50 TAHUNAN MODEL BANJIR AR 250K"
+        },
+        {
+          "id": "DLH:SKENARIO_3_JANUARI_MODEL_BANJIR_AR_250K",
+          "label": "SKENARIO 3 JANUARI MODEL BANJIR AR 250K"
+        },
+        {
+          "id": "DPUPR:SK__JALAN_2018",
+          "label": "SK JALAN 2018"
+        },
+        {
+          "id": "DISDIKBUD:SLB_KALSEL_PENDIDIKAN_PT_25K",
+          "label": "SLB KALSEL PENDIDIKAN PT 25K"
+        },
+        {
+          "id": "DISDIKBUD:SMA_KALSEL_PENDIDIKAN_PT_25K",
+          "label": "SMA KALSEL PENDIDIKAN PT 25K"
+        },
+        {
+          "id": "DISDIKBUD:SMK_KALSEL_PENDIDIKAN_PT_25K",
+          "label": "SMK KALSEL PENDIDIKAN PT 25K"
+        },
+        {
+          "id": "DISDIKBUD:SMP_KALSEL_PENDIDIKAN_PT_25K",
+          "label": "SMP KALSEL PENDIDIKAN PT 25K"
+        },
+        {
+          "id": "BAPPEDA:SPAM_HIDRANUMUM_PT_50K",
+          "label": "SPAM HIDRANUMUM PT 50K"
+        },
+        {
+          "id": "DESDM:SPBE_PT_5K",
+          "label": "SPBE PT 5K"
+        },
+        {
+          "id": "BAPPEDA:SPBU_PT_50K",
+          "label": "SPBU PT 50K"
+        },
+        {
+          "id": "DESDM:SPBU_PT_5K",
+          "label": "SPBU PT 5K"
+        },
+        {
+          "id": "DISHUB:STASIUNKA_PT_10K",
+          "label": "STASIUNKA PT 10K"
+        },
+        {
+          "id": "DLH:STATUS_MUTU_AIR_PT_50K",
+          "label": "STATUS MUTU AIR PT 50K"
+        },
+        {
+          "id": "DISHUB:STA_TRASE_AL_1_RELKA_LN_250K",
+          "label": "STA TRASE AL 1 RELKA LN 250K"
+        },
+        {
+          "id": "DISHUB:STA_TRASE_AL_2_RELKA_LN_10K",
+          "label": "STA TRASE AL 2 RELKA LN 10K"
+        },
+        {
+          "id": "DISHUB:STA_TRASE_AL_3_RELKA_LN_50K",
+          "label": "STA TRASE AL 3 RELKA LN 50K"
+        },
+        {
+          "id": "DPUPR:STRUKTURINFRASTRUKTUR_PT_25K",
+          "label": "STRUKTURINFRASTRUKTUR PT 25K"
+        },
+        {
+          "id": "DINKES:STUNTING_ANALISASEBARAN_AR_50K",
+          "label": "STUNTING ANALISASEBARAN AR 50K"
+        },
+        {
+          "id": "DINKES:STUNTING_PT_50K",
+          "label": "STUNTING PT 50K"
+        },
+        {
+          "id": "DPUPR:SUBDAS_DAERAHALIRANSUNGAI_AR_50K",
+          "label": "SUBDAS DAERAHALIRANSUNGAI AR 50K"
+        },
+        {
+          "id": "DPUPR:SUMBER_DAYA_AIR_BENDUNGAN_PT_250K",
+          "label": "SUMBER DAYA AIR BENDUNGAN PT 250K"
+        },
+        {
+          "id": "BAPPEDA:SUMBER_DAYA_AIR_PT_25K",
+          "label": "SUMBER DAYA AIR PT 25K"
+        },
+        {
+          "id": "DESDM:SUMUR_BOR_BANJARBARU_AIRTANAH_PT_25K",
+          "label": "SUMUR BOR BANJARBARU AIRTANAH PT 25K"
+        },
+        {
+          "id": "DESDM:SUMUR_BOR_BANTUAN_KESDM_PRODAQ_PT_250K",
+          "label": "SUMUR BOR BANTUAN KESDM PRODAQ PT 250K"
+        },
+        {
+          "id": "DESDM:SUMUR_BOR_KAB_BANJAR_PRODAQ_PT_250K",
+          "label": "SUMUR BOR KAB BANJAR PRODAQ PT 250K"
+        },
+        {
+          "id": "DESDM:SUMUR_BOR_KAB_TALA_PRODAQ_PT_250K",
+          "label": "SUMUR BOR KAB TALA PRODAQ PT 250K"
+        },
+        {
+          "id": "DESDM:SUMUR_RESAPAN_PRODAQ_PT_250K",
+          "label": "SUMUR RESAPAN PRODAQ PT 250K"
+        },
+        {
+          "id": "DPUPR:SUNGAI_LN_50K",
+          "label": "SUNGAI LN 50K"
+        },
+        {
+          "id": "DPUPR:SWARANGAN_PELABUHAN_PT_250K",
+          "label": "SWARANGAN PELABUHAN PT 250K"
+        },
+        {
+          "id": "DPUPR:Saluran_Pembuang_Rehab_IRIGASI_LN_50K",
+          "label": "Saluran Pembuang Rehab IRIGASI LN 50K"
+        },
+        {
+          "id": "DPUPR:Sistem_Jaringan_Transportasi_Sungai",
+          "label": "Sistem Jaringan Transportasi Sungai"
+        },
+        {
+          "id": "DPUPR:Sungai_AR_250K",
+          "label": "Sungai AR 250K"
+        },
+        {
+          "id": "BIROPEMOTDA:TABALONG_BARTIM_TITIKBATASADM_PT_250K",
+          "label": "TABALONG BARTIM TITIKBATASADM PT 250K"
+        },
+        {
+          "id": "DISLAUTKAN:TAMBAK_AR_50K",
+          "label": "TAMBAK AR 50K"
+        },
+        {
+          "id": "DISLAUTKAN:TAMBAK_PT_5K",
+          "label": "TAMBAK PT 5K"
+        },
+        {
+          "id": "DLH:TANAHLAUT_BATIKURAU_BIORENTATION_DTA_DRAINASE_AR_50K",
+          "label": "TANAHLAUT BATIKURAU BIORENTATION DTA DRAINASE AR 50K"
+        },
+        {
+          "id": "DLH:TANAHLAUT_BATIKURAU_CONSTRUCTED_WETLAND_DTA_DRAINASE_AR_50K",
+          "label": "TANAHLAUT BATIKURAU CONSTRUCTED WETLAND DTA DRAINASE AR 50K"
+        },
+        {
+          "id": "DLH:TANAHLAUT_BATIKURAU_GRASSED_SWALE_DTA_DRAINASE_AR_50K",
+          "label": "TANAHLAUT BATIKURAU GRASSED SWALE DTA DRAINASE AR 50K"
+        },
+        {
+          "id": "DLH:TANAHLAUT_BATIKURAU_INFILTRATION_TRENCH_DTA_DRAINASE_AR_50K",
+          "label": "TANAHLAUT BATIKURAU INFILTRATION TRENCH DTA DRAINASE AR 50K"
+        },
+        {
+          "id": "DLH:TANAH_TNI",
+          "label": "TANAH TNI"
+        },
+        {
+          "id": "DISHUB:TANJUNG_WARUKIN_AIRPORT_LN_50K",
+          "label": "TANJUNG WARUKIN AIRPORT LN 50K"
+        },
+        {
+          "id": "DISHUB:TANJUNG_WARUKIN_AIRPORT_PT_500K",
+          "label": "TANJUNG WARUKIN AIRPORT PT 500K"
+        },
+        {
+          "id": "DISHUB:TANJUNG_WARUKIN_AIRPORT_PT_50K",
+          "label": "TANJUNG WARUKIN AIRPORT PT 50K"
+        },
+        {
+          "id": "DISHUB:TANJUNG_WARUKIN_PERLUASAN_AIRPORT_AR_50K",
+          "label": "TANJUNG WARUKIN PERLUASAN AIRPORT AR 50K"
+        },
+        {
+          "id": "DPUPR:TAPIN_SAWAH_AR_50K",
+          "label": "TAPIN SAWAH AR 50K"
+        },
+        {
+          "id": "DINKES:TBC_PT_50K",
+          "label": "TBC PT 50K"
+        },
+        {
+          "id": "DISDAG:TELOR_20220923_AR_5K",
+          "label": "TELOR 20220923 AR 5K"
+        },
+        {
+          "id": "DISDAG:TERIGU_20220923_AR_5K",
+          "label": "TERIGU 20220923 AR 5K"
+        },
+        {
+          "id": "DPUPR:TERMINALBUS_PT_250K",
+          "label": "TERMINALBUS PT 250K"
+        },
+        {
+          "id": "DPUPR:TERMINALBUS_PT_50K",
+          "label": "TERMINALBUS PT 50K"
+        },
+        {
+          "id": "BAPPEDA:TERMINALKHUHUS_PELABUHAN_AR_50K",
+          "label": "TERMINALKHUHUS PELABUHAN AR 50K"
+        },
+        {
+          "id": "DISLAUTKAN:TERUMBU_KARANG_AR",
+          "label": "TERUMBU KARANG AR"
+        },
+        {
+          "id": "DISHUB:TIANGLAMPU_PT_5K",
+          "label": "TIANGLAMPU PT 5K"
+        },
+        {
+          "id": "DISLAUTKAN:TIMUR_KONTURKEDALAMAN_LN_250K",
+          "label": "TIMUR KONTURKEDALAMAN LN 250K"
+        },
+        {
+          "id": "DPMD:TIPOLOGI_PERINDUSTRIAN_AR_10K",
+          "label": "TIPOLOGI PERINDUSTRIAN AR 10K"
+        },
+        {
+          "id": "DLH:TITIK_RWNBANJIR_2020_PT_50K",
+          "label": "TITIK RWNBANJIR 2020 PT 50K"
+        },
+        {
+          "id": "DISDAG:TOMAT_20220923_AR_5K",
+          "label": "TOMAT 20220923 AR 5K"
+        },
+        {
+          "id": "BAPPEDA:TPA_PERSAMPAHAN_PT_50K",
+          "label": "TPA PERSAMPAHAN PT 50K"
+        },
+        {
+          "id": "DLH:TPA_REGIONAL_PERSAMPAHAN_AR_10K",
+          "label": "TPA REGIONAL PERSAMPAHAN AR 10K"
+        },
+        {
+          "id": "DLH:TPA_REGIONAL_PERSAMPAHAN_AR_5K",
+          "label": "TPA REGIONAL PERSAMPAHAN AR 5K"
+        },
+        {
+          "id": "DLH:TPA_REGIONAL_PERSAMPAHAN_PT_10K",
+          "label": "TPA REGIONAL PERSAMPAHAN PT 10K"
+        },
+        {
+          "id": "DPUPR:TPA_STRUKTURPRASARANA_AR_250K",
+          "label": "TPA STRUKTURPRASARANA AR 250K"
+        },
+        {
+          "id": "DISNAKERTRAN:TRANSIMIGRASI_2_D5_KALSEL2_LOKTRANS_2_AR",
+          "label": "TRANSIMIGRASI 2 D5 KALSEL2 LOKTRANS 2 AR"
+        },
+        {
+          "id": "DISNAKERTRAN:TRANSIMIGRASI_2_D5_KALSEL2_LOKTRANS_AR",
+          "label": "TRANSIMIGRASI 2 D5 KALSEL2 LOKTRANS AR"
+        },
+        {
+          "id": "DISNAKERTRAN:TRANSIMIGRASI_2_DS5_KALSEL2_HPL_AR",
+          "label": "TRANSIMIGRASI 2 DS5 KALSEL2 HPL AR"
+        },
+        {
+          "id": "DPUPR:TRANSPORTASI_UDARA_AIRPORT_PT_50K",
+          "label": "TRANSPORTASI UDARA AIRPORT PT 50K"
+        },
+        {
+          "id": "SATPOLPPDAMKAR:TRANTIBUMLINMAS_2024",
+          "label": "TRANTIBUMLINMAS 2024"
+        },
+        {
+          "id": "SATPOLPPDAMKAR:TRANTIBUMLINMAS__KONSOS_PT_25K",
+          "label": "TRANTIBUMLINMAS KONSOS PT 25K"
+        },
+        {
+          "id": "DPMPTSP:Titik_Izin_Pemakaian_Sumur_Dalam_Provinsi",
+          "label": "Titik Izin Pemakaian Sumur Dalam Provinsi"
+        },
+        {
+          "id": "KAB-TABALONG:Toponimi_Tabalong_50k_PT",
+          "label": "Toponimi Tabalong 50k PT"
+        },
+        {
+          "id": "DPUPR:Trase_Saluran_Amandit_IRIGASI_LN_50K",
+          "label": "Trase Saluran Amandit IRIGASI LN 50K"
+        },
+        {
+          "id": "DISKOPUMK:UMKM_NIAGA_AR_250K",
+          "label": "UMKM NIAGA AR 250K"
+        },
+        {
+          "id": "DESDM:UPDATE_GENLISTRIK_PT_50K",
+          "label": "UPDATE GENLISTRIK PT 50K"
+        },
+        {
+          "id": "DISDAG:WORTEL_20220923_AR_5K",
+          "label": "WORTEL 20220923 AR 5K"
+        },
+        {
+          "id": "BAPPEDA:ZONA_PASAR_RADIUS_500_NIAGA_AR_25K",
+          "label": "ZONA PASAR RADIUS 500 NIAGA AR 25K"
+        },
+        {
+          "id": "DPMD:administrasi_ar_indeksdesa",
+          "label": "Administrasi Ar Indeksdesa"
+        },
+        {
+          "id": "DPMD:administrasi_ar_kalsel_2026",
+          "label": "Administrasi Ar Kalsel 2026"
+        },
+        {
+          "id": "BIROPEMOTDA:administrasi_ln",
+          "label": "Administrasi Ln"
+        },
+        {
+          "id": "SIH3:aktual_ch_bulanan_april_2026_bmkg_kalsel",
+          "label": "Aktual Ch Bulanan April 2026 Bmkg Kalsel"
+        },
+        {
+          "id": "SIH3:aktual_ch_bulanan_april_bmkg_kalteng",
+          "label": "Aktual Ch Bulanan April Bmkg Kalteng"
+        },
+        {
+          "id": "SIH3:aktual_ch_bulanan_juli_2026_bmkg_kalteng",
+          "label": "Aktual Ch Bulanan Juli 2026 Bmkg Kalteng"
+        },
+        {
+          "id": "SIH3:aktual_ch_bulanan_juni_2026_bmkg_kalteng",
+          "label": "Aktual Ch Bulanan Juni 2026 Bmkg Kalteng"
+        },
+        {
+          "id": "SIH3:aktual_ch_bulanan_mei_2026_bmkg_kalteng",
+          "label": "Aktual Ch Bulanan Mei 2026 Bmkg Kalteng"
+        },
+        {
+          "id": "SIH3:alat_otomatis_2025",
+          "label": "Alat Otomatis 2025"
+        },
+        {
+          "id": "SIH3:analisishujanbulanan_ar",
+          "label": "Analisishujanbulanan Ar"
+        },
+        {
+          "id": "SIH3:analisishujanbulanan_ar_2026",
+          "label": "Analisishujanbulanan Ar 2026"
+        },
+        {
+          "id": "BPKAD:asettanahbmn_ar_asetbangunanpemprovkalsel_5k_2026",
+          "label": "Asettanahbmn Ar Asetbangunanpemprovkalsel 5k 2026"
+        },
+        {
+          "id": "SIH3:awlr_atab_bws",
+          "label": "Awlr Atab Bws"
+        },
+        {
+          "id": "SIH3:awlr",
+          "label": "Awlr"
+        },
+        {
+          "id": "SIH3:badan_air_garis_sempadan_sungai_kecamatan_banjarmasin_utara",
+          "label": "Badan Air Garis Sempadan Sungai Kecamatan Banjarmasin Utara"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_01_04_2020_pagi",
+          "label": "Covid 19 Kalsel 01 04 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_01_04_2020_sore",
+          "label": "Covid 19 Kalsel 01 04 2020 Sore"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_02_04_2020_pagi",
+          "label": "Covid 19 Kalsel 02 04 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_02_04_2020_sore",
+          "label": "Covid 19 Kalsel 02 04 2020 Sore"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_03_04_2020_pagi",
+          "label": "Covid 19 Kalsel 03 04 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_03_04_2020_sore",
+          "label": "Covid 19 Kalsel 03 04 2020 Sore"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_04_04_2020_pagi",
+          "label": "Covid 19 Kalsel 04 04 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_04_04_2020_sore",
+          "label": "Covid 19 Kalsel 04 04 2020 Sore"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_05_04_2020_pagi",
+          "label": "Covid 19 Kalsel 05 04 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_05_04_2020_sore",
+          "label": "Covid 19 Kalsel 05 04 2020 Sore"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_06_04_2020_pagi",
+          "label": "Covid 19 Kalsel 06 04 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_06_04_2020_sore",
+          "label": "Covid 19 Kalsel 06 04 2020 Sore"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_07_04_2020_pagi",
+          "label": "Covid 19 Kalsel 07 04 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_07_04_2020_sore",
+          "label": "Covid 19 Kalsel 07 04 2020 Sore"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_08_04_2020_pagi",
+          "label": "Covid 19 Kalsel 08 04 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_08_04_2020_sore",
+          "label": "Covid 19 Kalsel 08 04 2020 Sore"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_09_04_2020_pagi",
+          "label": "Covid 19 Kalsel 09 04 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_09_04_2020_sore",
+          "label": "Covid 19 Kalsel 09 04 2020 Sore"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_10_04_2020_pagi",
+          "label": "Covid 19 Kalsel 10 04 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_11_04_2020_pagi",
+          "label": "Covid 19 Kalsel 11 04 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_11_04_2020_sore",
+          "label": "Covid 19 Kalsel 11 04 2020 Sore"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_12_04_2020_pagi",
+          "label": "Covid 19 Kalsel 12 04 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_13_04_2020_pagi",
+          "label": "Covid 19 Kalsel 13 04 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_14_04_2020_pagi",
+          "label": "Covid 19 Kalsel 14 04 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_15_04_2020_pagi",
+          "label": "Covid 19 Kalsel 15 04 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_16_04_2020_pagi",
+          "label": "Covid 19 Kalsel 16 04 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_16_04_2020_sore",
+          "label": "Covid 19 Kalsel 16 04 2020 Sore"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_17_04_2020_pagi",
+          "label": "Covid 19 Kalsel 17 04 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_17_04_2020_sore",
+          "label": "Covid 19 Kalsel 17 04 2020 Sore"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_18_04_2020_pagi",
+          "label": "Covid 19 Kalsel 18 04 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_18_04_2020_sore",
+          "label": "Covid 19 Kalsel 18 04 2020 Sore"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_19_04_2020_sore",
+          "label": "Covid 19 Kalsel 19 04 2020 Sore"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_26_03_2020_pagi",
+          "label": "Covid 19 Kalsel 26 03 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_26_03_2020_sore",
+          "label": "Covid 19 Kalsel 26 03 2020 Sore"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_27_03_2020_pagi",
+          "label": "Covid 19 Kalsel 27 03 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_28_03_2020_pagi",
+          "label": "Covid 19 Kalsel 28 03 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_28_03_2020_sore",
+          "label": "Covid 19 Kalsel 28 03 2020 Sore"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_29_03_2020_pagi",
+          "label": "Covid 19 Kalsel 29 03 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_29_03_2020_sore",
+          "label": "Covid 19 Kalsel 29 03 2020 Sore"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_30_03_2020_pagi",
+          "label": "Covid 19 Kalsel 30 03 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_30_03_2020_sore",
+          "label": "Covid 19 Kalsel 30 03 2020 Sore"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_31_03_2020_pagi",
+          "label": "Covid 19 Kalsel 31 03 2020 Pagi"
+        },
+        {
+          "id": "DINKES:covid_19_kalsel_31_03_2020_sore",
+          "label": "Covid 19 Kalsel 31 03 2020 Sore"
+        },
+        {
+          "id": "DLH:d3tlh_lahan_2026",
+          "label": "D3tlh Lahan 2026"
+        },
+        {
+          "id": "SIH3:daerahaliransungai_ar",
+          "label": "Daerahaliransungai Ar"
+        },
+        {
+          "id": "DESDM:genlistrik_pt_2023",
+          "label": "Genlistrik Pt 2023"
+        },
+        {
+          "id": "DESDM:genlistrik_pt_2024",
+          "label": "Genlistrik Pt 2024"
+        },
+        {
+          "id": "SATPOLPPDAMKAR:hankam_pt_poskamling_2026",
+          "label": "Hankam Pt Poskamling 2026"
+        },
+        {
+          "id": "DISHUB:jalan_ln",
+          "label": "Jalan Ln"
+        },
+        {
+          "id": "DISHUB:jalan_ln_2026",
+          "label": "Jalan Ln 2026"
+        },
+        {
+          "id": "DISHUB:jalan_ln_2026_2026_2026",
+          "label": "Jalan Ln 2026 2026 2026"
+        },
+        {
+          "id": "DISHUB:jalan_ln_kecelakaan",
+          "label": "Jalan Ln Kecelakaan"
+        },
+        {
+          "id": "DPUPR:jalan_ln_prov_kalsel_2024",
+          "label": "Jalan Ln Prov Kalsel 2024"
+        },
+        {
+          "id": "DPUPR:jalan_ln_prov_kalsel_2025",
+          "label": "Jalan Ln Prov Kalsel 2025"
+        },
+        {
+          "id": "DPUPR:jalan_ln_prov_kalsel_2026",
+          "label": "Jalan Ln Prov Kalsel 2026"
+        },
+        {
+          "id": "DPUPR:jembatan_pt_prov_kalsel_2024",
+          "label": "Jembatan Pt Prov Kalsel 2024"
+        },
+        {
+          "id": "DPUPR:jembatan_pt_prov_kalsel_2025",
+          "label": "Jembatan Pt Prov Kalsel 2025"
+        },
+        {
+          "id": "DPUPR:kawasan_metropolitan_banjarbakula",
+          "label": "Kawasan Metropolitan Banjarbakula"
+        },
+        {
+          "id": "GEOPARK:kawasangeopark_ar_50k",
+          "label": "Kawasangeopark Ar 50k"
+        },
+        {
+          "id": "DISHUT:kawasanhutan_ar_sk_10879_2025",
+          "label": "Kawasanhutan Ar Sk 10879 2025"
+        },
+        {
+          "id": "DISHUT:kawasanhutan_sk_1240_tahun_2023",
+          "label": "Kawasanhutan Sk 1240 Tahun 2023"
+        },
+        {
+          "id": "DISPERKIM:kawasanpermukiman_pt",
+          "label": "Kawasanpermukiman Pt"
+        },
+        {
+          "id": "SATPOLPPDAMKAR:kebakarangedper_pt_2025",
+          "label": "Kebakarangedper Pt 2025"
+        },
+        {
+          "id": "DISDUKCAPIL:kependudukan_berdasarkan_agama_2024",
+          "label": "Kependudukan Berdasarkan Agama 2024"
+        },
+        {
+          "id": "SATPOLPPDAMKAR:konsos_penyelamatan_pt",
+          "label": "Konsos Penyelamatan Pt"
+        },
+        {
+          "id": "DISHUT:lahan_kritis_ar_50k_2024",
+          "label": "Lahan Kritis Ar 50k 2024"
+        },
+        {
+          "id": "SIH3:lokasi_pda",
+          "label": "Lokasi Pda"
+        },
+        {
+          "id": "DISHUT:neracapenutuplahankwh_ar",
+          "label": "Neracapenutuplahankwh Ar"
+        },
+        {
+          "id": "DPMD:niaga_pt_peta_bumdes",
+          "label": "Niaga Pt Peta Bumdes"
+        },
+        {
+          "id": "SIH3:pch_bmkg_kalsel",
+          "label": "Pch Bmkg Kalsel"
+        },
+        {
+          "id": "SIH3:pch_bmkg_kalteng",
+          "label": "Pch Bmkg Kalteng"
+        },
+        {
+          "id": "SIH3:pch_bpdas_barito",
+          "label": "Pch Bpdas Barito"
+        },
+        {
+          "id": "SIH3:pch_bws_manual",
+          "label": "Pch Bws Manual"
+        },
+        {
+          "id": "SIH3:pch_pt_pupr_2026_manual",
+          "label": "Pch Pt Pupr 2026 Manual"
+        },
+        {
+          "id": "SIH3:pch_pupr_kalteng",
+          "label": "Pch Pupr Kalteng"
+        },
+        {
+          "id": "SIH3:pda_bws_manual",
+          "label": "Pda Bws Manual"
+        },
+        {
+          "id": "SIH3:pda_pln",
+          "label": "Pda Pln"
+        },
+        {
+          "id": "SIH3:pda_pupr_kalsel",
+          "label": "Pda Pupr Kalsel"
+        },
+        {
+          "id": "SIH3:pda_pupr_kalsel_2026_manual",
+          "label": "Pda Pupr Kalsel 2026 Manual"
+        },
+        {
+          "id": "SIH3:pda_pupr_kalteng",
+          "label": "Pda Pupr Kalteng"
+        },
+        {
+          "id": "BAPPEDA:pemerintahan_pt_rkpd",
+          "label": "Pemerintahan Pt Rkpd"
+        },
+        {
+          "id": "BAPPEDA:pemerintahan_pt_rkpd_2026",
+          "label": "Pemerintahan Pt Rkpd 2026"
+        },
+        {
+          "id": "SIH3:ph_kalteng_2025",
+          "label": "Ph Kalteng 2025"
+        },
+        {
+          "id": "DISHUT:piaps_rev_x_ar_250k",
+          "label": "Piaps Rev X Ar 250k"
+        },
+        {
+          "id": "DISHUT:pippib_periode_1_tahun_2026_ar",
+          "label": "Pippib Periode 1 Tahun 2026 Ar"
+        },
+        {
+          "id": "SIH3:pkl_bpdas_barito_",
+          "label": "Pkl Bpdas Barito"
+        },
+        {
+          "id": "SIH3:pkl_bws_manual",
+          "label": "Pkl Bws Manual"
+        },
+        {
+          "id": "SIH3:pkl_pupr_kalteng_",
+          "label": "Pkl Pupr Kalteng"
+        },
+        {
+          "id": "SIH3:pos_duga_air",
+          "label": "Pos Duga Air"
+        },
+        {
+          "id": "SIH3:pos_hidrologi_pln",
+          "label": "Pos Hidrologi Pln"
+        },
+        {
+          "id": "SIH3:pos_kekeruhan_pupr_kalsel",
+          "label": "Pos Kekeruhan Pupr Kalsel"
+        },
+        {
+          "id": "SIH3:pos_pasut_pupr_bjm",
+          "label": "Pos Pasut Pupr Bjm"
+        },
+        {
+          "id": "SIH3:pos_pasut_puprbjm",
+          "label": "Pos Pasut Puprbjm"
+        },
+        {
+          "id": "SIH3:pos_sumur_bor_esdm_kalsel",
+          "label": "Pos Sumur Bor Esdm Kalsel"
+        },
+        {
+          "id": "SIH3:pos_sumur_pantau_esdm_kalsel",
+          "label": "Pos Sumur Pantau Esdm Kalsel"
+        },
+        {
+          "id": "SIH3:pos_titik_kualitas_air_dlh_kalsel",
+          "label": "Pos Titik Kualitas Air Dlh Kalsel"
+        },
+        {
+          "id": "SIH3:pos_titik_kualitas_air_pln",
+          "label": "Pos Titik Kualitas Air Pln"
+        },
+        {
+          "id": "SIH3:pos_titik_pantau_dlh_prov_kalteng",
+          "label": "Pos Titik Pantau Dlh Prov Kalteng"
+        },
+        {
+          "id": "DLH:posdugaair_pt_2025",
+          "label": "Posdugaair Pt 2025"
+        },
+        {
+          "id": "DPUPR:posdugaair_pt_50k_2026",
+          "label": "Posdugaair Pt 50k 2026"
+        },
+        {
+          "id": "SIH3:posdugaair_pt_bws",
+          "label": "Posdugaair Pt Bws"
+        },
+        {
+          "id": "SIH3:poshidrologi_pt",
+          "label": "Poshidrologi Pt"
+        },
+        {
+          "id": "SIH3:poshujan_pt",
+          "label": "Poshujan Pt"
+        },
+        {
+          "id": "SIH3:poshujan_pt_2026",
+          "label": "Poshujan Pt 2026"
+        },
+        {
+          "id": "SIH3:poshujan_pt_50k_puprkalsel",
+          "label": "Poshujan Pt 50k Puprkalsel"
+        },
+        {
+          "id": "SIH3:poshujan_pt_BARITO",
+          "label": "Poshujan Pt BARITO"
+        },
+        {
+          "id": "SIH3:poshujan_pt_bpdasbarito",
+          "label": "Poshujan Pt Bpdasbarito"
+        },
+        {
+          "id": "SIH3:poshujan_pt_pupr",
+          "label": "Poshujan Pt Pupr"
+        },
+        {
+          "id": "SIH3:posklimatologi_pt_bws",
+          "label": "Posklimatologi Pt Bws"
+        },
+        {
+          "id": "SIH3:prediksi_ch_bulanan_juli_2026_bmkg_kalteng",
+          "label": "Prediksi Ch Bulanan Juli 2026 Bmkg Kalteng"
+        },
+        {
+          "id": "SIH3:prediksi_ch_bulanan_juni_2026_bmkg_kalsel",
+          "label": "Prediksi Ch Bulanan Juni 2026 Bmkg Kalsel"
+        },
+        {
+          "id": "SIH3:prediksi_ch_bulanan_juni_2026_bmkg_kalteng",
+          "label": "Prediksi Ch Bulanan Juni 2026 Bmkg Kalteng"
+        },
+        {
+          "id": "SIH3:prediksi_ch_bulanan_september_2026",
+          "label": "Prediksi Ch Bulanan September 2026"
+        },
+        {
+          "id": "DINKES:puskesmas_pt",
+          "label": "Puskesmas Pt"
+        },
+        {
+          "id": "SIH3:raster_to_polygon",
+          "label": "Raster To Polygon"
+        },
+        {
+          "id": "SATPOLPPDAMKAR:rawan_trantibumlinmas_2025",
+          "label": "Rawan Trantibumlinmas 2025"
+        },
+        {
+          "id": "SIH3:rtp_082025",
+          "label": "Rtp 082025"
+        },
+        {
+          "id": "GEOPARK:rutebarat_ln_50k",
+          "label": "Rutebarat Ln 50k"
+        },
+        {
+          "id": "GEOPARK:ruteselatan_ln_50k",
+          "label": "Ruteselatan Ln 50k"
+        },
+        {
+          "id": "GEOPARK:rutetimur_ln_50k",
+          "label": "Rutetimur Ln 50k"
+        },
+        {
+          "id": "GEOPARK:ruteutara_ln_50k",
+          "label": "Ruteutara Ln 50k"
+        },
+        {
+          "id": "DISPORA:saranaolahrag_pt",
+          "label": "Saranaolahrag Pt"
+        },
+        {
+          "id": "DISDIKBUD:satuan_pendidikan_lengkap",
+          "label": "Satuan Pendidikan Lengkap"
+        },
+        {
+          "id": "DPKP:sawah_ar",
+          "label": "Sawah Ar"
+        },
+        {
+          "id": "SIH3:sh_rtp_082025",
+          "label": "Sh Rtp 082025"
+        },
+        {
+          "id": "GEOPARK:situsrutebarat_pt_50k",
+          "label": "Situsrutebarat Pt 50k"
+        },
+        {
+          "id": "GEOPARK:situsruteselatan_pt_50k",
+          "label": "Situsruteselatan Pt 50k"
+        },
+        {
+          "id": "GEOPARK:situsrutetimur_pt_50k",
+          "label": "Situsrutetimur Pt 50k"
+        },
+        {
+          "id": "GEOPARK:situsruteutara_pt_50k",
+          "label": "Situsruteutara Pt 50k"
+        },
+        {
+          "id": "DPUPR:spam_jdu_batola_ln_50k",
+          "label": "Spam Jdu Batola Ln 50k"
+        },
+        {
+          "id": "DPUPR:strukturpermukiman_kalsel_pt_250k",
+          "label": "Strukturpermukiman Kalsel Pt 250k"
+        },
+        {
+          "id": "SATPOLPPDAMKAR:trantibumlinmas_konsos_pt_2025",
+          "label": "Trantibumlinmas Konsos Pt 2025"
+        },
+        {
+          "id": "SATPOLPPDAMKAR:trantibumlinmas_konsos_pt_2026",
+          "label": "Trantibumlinmas Konsos Pt 2026"
+        },
+        {
+          "id": "SIH3:watershed1_polygon_merge1",
+          "label": "Watershed1 Polygon Merge1"
+        },
+        {
+          "id": "SIH3:ws_barito_",
+          "label": "Ws Barito"
         }
       ]
     },
@@ -17125,6 +20450,859 @@
           "id": "geonode:tps_utm_48s",
           "label": "tps utm 48s",
           "swatch": "geo-admin"
+        }
+      ]
+    },
+    {
+      "id": "mahakamulu",
+      "title": "Kabupaten Mahakam Ulu",
+      "source": "mahakamulu",
+      "layers": [
+        {
+          "id": "geoportal:Curah_Hujan_AR",
+          "label": "Curah Hujan AR"
+        },
+        {
+          "id": "polygon",
+          "label": "Polygon"
+        },
+        {
+          "id": "geoportal:DAYA_DUKUNG_AIR",
+          "label": "DAYA DUKUNG AIR"
+        },
+        {
+          "id": "geoportal:DAYA_DUKUNG_FUNGSI_LINDUNG",
+          "label": "DAYA DUKUNG FUNGSI LINDUNG"
+        },
+        {
+          "id": "geoportal:DAYA_DUKUNG_LAHAN",
+          "label": "DAYA DUKUNG LAHAN"
+        },
+        {
+          "id": "geoportal:DAYA_DUKUNG_PERTANIAN",
+          "label": "DAYA DUKUNG PERTANIAN"
+        },
+        {
+          "id": "geoportal:DAYA_TAMPUNG_PENDUDUK",
+          "label": "DAYA TAMPUNG PENDUDUK"
+        },
+        {
+          "id": "geoportal:Daerah_Aliran_Sungai_AR",
+          "label": "Daerah Aliran Sungai AR"
+        },
+        {
+          "id": "geoportal:Geologi_AR",
+          "label": "Geologi AR"
+        },
+        {
+          "id": "geoportal:Hidrogeologi_Litologi_AR",
+          "label": "Hidrogeologi Litologi AR"
+        },
+        {
+          "id": "geoportal:Hidrogeologi_Produktivitas_Akuifer_AR",
+          "label": "Hidrogeologi Produktivitas Akuifer AR"
+        },
+        {
+          "id": "geoportal:IUPHHKHA_AR",
+          "label": "IUPHHKHA AR"
+        },
+        {
+          "id": "geoportal:Izin_Usaha_Bidang_Perkebunan_AR",
+          "label": "Izin Usaha Bidang Perkebunan AR"
+        },
+        {
+          "id": "geoportal:Jaringan_Infrastruktur_Transportasi_LN",
+          "label": "Jaringan Infrastruktur Transportasi LN"
+        },
+        {
+          "id": "line",
+          "label": "Line"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Jaringan_Infrastruktur_Transportasi_LN_1771123991",
+          "label": "Jaringan Infrastruktur Transportasi LN 1771123991"
+        },
+        {
+          "id": "generic",
+          "label": "Generic"
+        },
+        {
+          "id": "geoportal:Jaringan_dan_Infrastruktur_Air_Limbah_PT",
+          "label": "Jaringan Dan Infrastruktur Air Limbah PT"
+        },
+        {
+          "id": "point",
+          "label": "Point"
+        },
+        {
+          "id": "geoportal:Jaringan_dan_Infrastruktur_Air_Minum_LN",
+          "label": "Jaringan Dan Infrastruktur Air Minum LN"
+        },
+        {
+          "id": "geoportal:Jaringan_dan_Infrastruktur_Air_Minum_PT",
+          "label": "Jaringan Dan Infrastruktur Air Minum PT"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Jaringan_dan_Infrastruktur_Air_Minum_PT_1771123229",
+          "label": "Jaringan Dan Infrastruktur Air Minum PT 1771123229"
+        },
+        {
+          "id": "geoportal:Jaringan_dan_Infrastruktur_Energi_LN",
+          "label": "Jaringan Dan Infrastruktur Energi LN"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Jaringan_dan_Infrastruktur_Energi_LN_1771123362",
+          "label": "Jaringan Dan Infrastruktur Energi LN 1771123362"
+        },
+        {
+          "id": "geoportal:Jaringan_dan_Infrastruktur_Energi_PT",
+          "label": "Jaringan Dan Infrastruktur Energi PT"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Jaringan_dan_Infrastruktur_Energi_PT_1771123638",
+          "label": "Jaringan Dan Infrastruktur Energi PT 1771123638"
+        },
+        {
+          "id": "geoportal:Jaringan_dan_Infrastruktur_Persampahan_PT",
+          "label": "Jaringan Dan Infrastruktur Persampahan PT"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Jaringan_dan_Infrastruktur_Persampahan_PT_1771123791",
+          "label": "Jaringan Dan Infrastruktur Persampahan PT 1771123791"
+        },
+        {
+          "id": "geoportal:Jaringan_dan_Infrastruktur_SDA_LN",
+          "label": "Jaringan Dan Infrastruktur SDA LN"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Jaringan_dan_Infrastruktur_SDA_LN_1771123918",
+          "label": "Jaringan Dan Infrastruktur SDA LN 1771123918"
+        },
+        {
+          "id": "geoportal:Jaringan_dan_Infrastruktur_SDA_PT",
+          "label": "Jaringan Dan Infrastruktur SDA PT"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Jaringan_dan_Infrastruktur_SDA_PT_1771123931",
+          "label": "Jaringan Dan Infrastruktur SDA PT 1771123931"
+        },
+        {
+          "id": "geoportal:Jaringan_dan_Infrastruktur_Telekomunikasi_PT",
+          "label": "Jaringan Dan Infrastruktur Telekomunikasi PT"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Jaringan_dan_Infrastruktur_Telekomunikasi_PT_1771123979",
+          "label": "Jaringan Dan Infrastruktur Telekomunikasi PT 1771123979"
+        },
+        {
+          "id": "geoportal:Jenis_Tanah_AR",
+          "label": "Jenis Tanah AR"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Jenis_Tanah_AR_1771124004",
+          "label": "Jenis Tanah AR 1771124004"
+        },
+        {
+          "id": "geoportal:KERENTANAN_IKLIM",
+          "label": "KERENTANAN IKLIM"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:KERENTANAN_IKLIM_1771124170",
+          "label": "KERENTANAN IKLIM 1771124170"
+        },
+        {
+          "id": "geoportal:KERENTANAN_IKLIM_AR",
+          "label": "KERENTANAN IKLIM AR"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:KERENTANAN_IKLIM_AR_1771124181",
+          "label": "KERENTANAN IKLIM AR 1771124181"
+        },
+        {
+          "id": "geoportal:Kantong Badak_AR",
+          "label": "Kantong Badak AR"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Kantong_Badak_AR_1771124022",
+          "label": "Kantong Badak AR 1771124022"
+        },
+        {
+          "id": "geoportal:Kawasan_Bentang_Alam_Karst_AR",
+          "label": "Kawasan Bentang Alam Karst AR"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Kawasan_Bentang_Alam_Karst_AR_1771124061",
+          "label": "Kawasan Bentang Alam Karst AR 1771124061"
+        },
+        {
+          "id": "geoportal:Kawasan_Permukiman_Kumuh",
+          "label": "Kawasan Permukiman Kumuh"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Kawasan_Permukiman_Kumuh_1771124157",
+          "label": "Kawasan Permukiman Kumuh 1771124157"
+        },
+        {
+          "id": "geoportal:Ketersediaan_Air_AR",
+          "label": "Ketersediaan Air AR"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Ketersediaan_Air_AR_1771124194",
+          "label": "Ketersediaan Air AR 1771124194"
+        },
+        {
+          "id": "geoportal:LCP2B_AR",
+          "label": "LCP2B AR"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:LCP2B_AR_1771124210",
+          "label": "LCP2B AR 1771124210"
+        },
+        {
+          "id": "geoportal:LCP2B_Mahulu",
+          "label": "LCP2B Mahulu"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:LCP2B_Mahulu_1771124267",
+          "label": "LCP2B Mahulu 1771124267"
+        },
+        {
+          "id": "geoportal:LP2B_AR",
+          "label": "LP2B AR"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:LP2B_AR_1771124295",
+          "label": "LP2B AR 1771124295"
+        },
+        {
+          "id": "geoportal:LP2B_Mahulu",
+          "label": "LP2B Mahulu"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:LP2B_Mahulu_1771124306",
+          "label": "LP2B Mahulu 1771124306"
+        },
+        {
+          "id": "geoportal:Pelepasan Kawasan Hutan_AR",
+          "label": "Pelepasan Kawasan Hutan AR"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Pelepasan_Kawasan_Hutan_AR_1771124319",
+          "label": "Pelepasan Kawasan Hutan AR 1771124319"
+        },
+        {
+          "id": "geoportal:Penetapan Kawasan Strategis",
+          "label": "Penetapan Kawasan Strategis"
+        },
+        {
+          "id": "geoportal:Penetapan_Kawasan_Hutan_AR",
+          "label": "Penetapan Kawasan Hutan AR"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Penetapan_Kawasan_Hutan_AR_1771124345",
+          "label": "Penetapan Kawasan Hutan AR 1771124345"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Penetapan_Kawasan_Strategis_1771124334",
+          "label": "Penetapan Kawasan Strategis 1771124334"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Persetujuan_Pengelolaan_Hutan_Desa_AR_1771124401",
+          "label": "Persetujuan Pengelolaan Hutan Desa AR 1771124401"
+        },
+        {
+          "id": "geoportal:Persetujuan_Pengelolaan_Hutan_Desaa_AR",
+          "label": "Persetujuan Pengelolaan Hutan Desaa AR"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Pertambangan_1772500670",
+          "label": "Pertambangan 1772500670"
+        },
+        {
+          "id": "geoportal:Peta Hak Atas Tanah Kab",
+          "label": "Peta Hak Atas Tanah Kab"
+        },
+        {
+          "id": "geoportal:Peta Indikatif Penyelesaian Penguasaan Tanah_AR",
+          "label": "Peta Indikatif Penyelesaian Penguasaan Tanah AR"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Peta_Hak_Atas_Tanah_Kabupaten_1771124426",
+          "label": "Peta Hak Atas Tanah Kabupaten 1771124426"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Peta_Indikatif_Penyelesaian_Penguasaan_Tanah_AR_1771124462",
+          "label": "Peta Indikatif Penyelesaian Penguasaan Tanah AR 1771124462"
+        },
+        {
+          "id": "geoportal:Rencana Pola Ruang",
+          "label": "Rencana Pola Ruang"
+        },
+        {
+          "id": "geoportal:Sistem Infrastruktur Prasarana Lainnya",
+          "label": "Sistem Infrastruktur Prasarana Lainnya"
+        },
+        {
+          "id": "geoportal:Sistem Infrastruktur Sumber Daya Air",
+          "label": "Sistem Infrastruktur Sumber Daya Air"
+        },
+        {
+          "id": "geoportal:Sistem Infrastruktur Telekomunikasi",
+          "label": "Sistem Infrastruktur Telekomunikasi"
+        },
+        {
+          "id": "geoportal:Sistem Infrastruktur Transportasi",
+          "label": "Sistem Infrastruktur Transportasi"
+        },
+        {
+          "id": "geoportal:Sistem Jaringan Energi",
+          "label": "Sistem Jaringan Energi"
+        },
+        {
+          "id": "geoportal:Sistem Jaringan Prasarana Lainnya",
+          "label": "Sistem Jaringan Prasarana Lainnya"
+        },
+        {
+          "id": "geoportal:Sistem Jaringan Sumber Daya Air",
+          "label": "Sistem Jaringan Sumber Daya Air"
+        },
+        {
+          "id": "geoportal:Sistem Jaringan Telekomunikasi",
+          "label": "Sistem Jaringan Telekomunikasi"
+        },
+        {
+          "id": "geoportal:Sistem Jaringan Transportasi",
+          "label": "Sistem Jaringan Transportasi"
+        },
+        {
+          "id": "geoportal:Sistem Pusat Permukiman",
+          "label": "Sistem Pusat Permukiman"
+        },
+        {
+          "id": "geoportal:Sistem_Infrastruktur_Energi",
+          "label": "Sistem Infrastruktur Energi"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Sistem_Infrastruktur_Energi_1771124776",
+          "label": "Sistem Infrastruktur Energi 1771124776"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Sistem_Infrastruktur_Prasarana_Lainnya_1771124561",
+          "label": "Sistem Infrastruktur Prasarana Lainnya 1771124561"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Sistem_Infrastruktur_Sumber_Daya_Air_1771124578",
+          "label": "Sistem Infrastruktur Sumber Daya Air 1771124578"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Sistem_Infrastruktur_Telekomunikasi_1771124592",
+          "label": "Sistem Infrastruktur Telekomunikasi 1771124592"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Sistem_Infrastruktur_Transportasi_1771124608",
+          "label": "Sistem Infrastruktur Transportasi 1771124608"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Sistem_Jaringan_Energi_1771124627",
+          "label": "Sistem Jaringan Energi 1771124627"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Sistem_Jaringan_Prasarana_Lainnya_1771124646",
+          "label": "Sistem Jaringan Prasarana Lainnya 1771124646"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Sistem_Jaringan_Sumber_Daya_Air_1771124706",
+          "label": "Sistem Jaringan Sumber Daya Air 1771124706"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Sistem_Jaringan_Telekomunikasi_1771124720",
+          "label": "Sistem Jaringan Telekomunikasi 1771124720"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Sistem_Jaringan_Transportasi_1771124741",
+          "label": "Sistem Jaringan Transportasi 1771124741"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Sistem_Pusat_Permukiman_1771124761",
+          "label": "Sistem Pusat Permukiman 1771124761"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Suhu_Udara_1771124789",
+          "label": "Suhu Udara 1771124789"
+        },
+        {
+          "id": "geoportal:Suhu_Udara_AR",
+          "label": "Suhu Udara AR"
+        },
+        {
+          "id": "geoportal:Toponim_Laham",
+          "label": "Toponim Laham"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Toponim_Laham_1771124800",
+          "label": "Toponim Laham 1771124800"
+        },
+        {
+          "id": "geoportal:Wilayah Izin Usaha Pertambangan_AR",
+          "label": "Wilayah Izin Usaha Pertambangan AR"
+        },
+        {
+          "id": "geoportal:Wilayah Kerja Migas Konvensional",
+          "label": "Wilayah Kerja Migas Konvensional"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:Wilayah_Kerja_Migas_Konvensional_1771229818",
+          "label": "Wilayah Kerja Migas Konvensional 1771229818"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:curahhujanar_1771073685",
+          "label": "Curahhujanar 1771073685"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:daerahaliransungaiar_1771073775",
+          "label": "Daerahaliransungaiar 1771073775"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:dayadukungairar_1771073969",
+          "label": "Dayadukungairar 1771073969"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:dayadukungfungsilindungar_1771073992",
+          "label": "Dayadukungfungsilindungar 1771073992"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:dayadukunglahan_1771074009",
+          "label": "Dayadukunglahan 1771074009"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:dayadukungpertanian_1771074074",
+          "label": "Dayadukungpertanian 1771074074"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:geologi_1771120422",
+          "label": "Geologi 1771120422"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:hidrogeologilitologiar_1771120500",
+          "label": "Hidrogeologilitologiar 1771120500"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:hidrogeologiproduktivitasakuiferar_1771120544",
+          "label": "Hidrogeologiproduktivitasakuiferar 1771120544"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:iupkhh_1771122744",
+          "label": "Iupkhh 1771122744"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:izinusahabidangperkebunanar_1771120609",
+          "label": "Izinusahabidangperkebunanar 1771120609"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:jaringandaninfrastrukturairlimbahpt_1771120999",
+          "label": "Jaringandaninfrastrukturairlimbahpt 1771120999"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:jaringandaninfrastrukturairminumln_1771122863",
+          "label": "Jaringandaninfrastrukturairminumln 1771122863"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:pos_wasdal_dinas_perhubungan_1785893228",
+          "label": "Pos Wasdal Dinas Perhubungan 1785893228"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:rumah_sakit_1785987616",
+          "label": "Rumah Sakit 1785987616"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:sisteminfrastrukturenergi_1771074574",
+          "label": "Sisteminfrastrukturenergi 1771074574"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:suhuudara_1771074480",
+          "label": "Suhuudara 1771074480"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:toponomilaham_1771074352",
+          "label": "Toponomilaham 1771074352"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:wilayahizinusahapertambanganar_1771074283",
+          "label": "Wilayahizinusahapertambanganar 1771074283"
+        },
+        {
+          "id": "GEOPORTAL_MAHULU:wilayahkerjamigaskonvensional_1771074236",
+          "label": "Wilayahkerjamigaskonvensional 1771074236"
+        }
+      ]
+    },
+    {
+      "id": "kotim",
+      "title": "Kabupaten Kotawaringin Timur",
+      "source": "kotim",
+      "layers": [
+        {
+          "id": "geonode:6202_50kb_ar_geologi_kotawaringintimur",
+          "label": "6202 50kb Ar Geologi Kotawaringintimur"
+        },
+        {
+          "id": "geonode:_6202_kawasanperkotaancempagahulu_2024",
+          "label": "6202 Kawasanperkotaancempagahulu 2024"
+        },
+        {
+          "id": "geonode:administrasikecamatan_ar",
+          "label": "Administrasikecamatan Ar"
+        },
+        {
+          "id": "geonode:alur_migrasi_biota_laut",
+          "label": "Alur Migrasi Biota Laut"
+        },
+        {
+          "id": "geonode:daerahaliransungai_ar",
+          "label": "Daerahaliransungai Ar"
+        },
+        {
+          "id": "geonode:danau_ar",
+          "label": "Danau Ar"
+        },
+        {
+          "id": "geonode:jembatan_pt_50k",
+          "label": "Jembatan Pt 50k"
+        },
+        {
+          "id": "geonode:kemiskinan_ekstrim_kotim_p1_802394ac334bcf9c18b2d89f0e92cc6c",
+          "label": "Kemiskinan Ekstrim Kotim P1 802394ac334bcf9c18b2d89f0e92cc6c"
+        },
+        {
+          "id": "geonode:kepemilikantanah_ar",
+          "label": "Kepemilikantanah Ar"
+        },
+        {
+          "id": "geonode:peta_sumur_air_tanah_kabkotim",
+          "label": "Peta Sumur Air Tanah Kabkotim"
+        },
+        {
+          "id": "geonode:point_bendungan_kabkotim",
+          "label": "Point Bendungan Kabkotim"
+        },
+        {
+          "id": "geonode:point_ipal_iplt_kabkotim",
+          "label": "Point Ipal Iplt Kabkotim"
+        },
+        {
+          "id": "geonode:point_peta_sebaran_pembangkit_listrik_kabkotim",
+          "label": "Point Peta Sebaran Pembangkit Listrik Kabkotim"
+        },
+        {
+          "id": "geonode:point_sbnp_kabkotim",
+          "label": "Point Sbnp Kabkotim"
+        },
+        {
+          "id": "geonode:point_sebaran_kantor_bumd_kabkotim",
+          "label": "Point Sebaran Kantor Bumd Kabkotim"
+        },
+        {
+          "id": "geonode:point_sebaran_lokasi_cagar_budaya_kabkotim",
+          "label": "Point Sebaran Lokasi Cagar Budaya Kabkotim"
+        },
+        {
+          "id": "geonode:poly_batas_kotim",
+          "label": "Poly Batas Kotim"
+        },
+        {
+          "id": "geonode:poly_batas_kotim_284a85ae7ae6d91dee24da05d83ceda1",
+          "label": "Poly Batas Kotim 284a85ae7ae6d91dee24da05d83ceda1"
+        },
+        {
+          "id": "geonode:poly_cat_kabkotim",
+          "label": "Poly Cat Kabkotim"
+        },
+        {
+          "id": "geonode:poly_empang_kabkotim",
+          "label": "Poly Empang Kabkotim"
+        },
+        {
+          "id": "geonode:poly_kawasan_cagar_budaya_kabkotim",
+          "label": "Poly Kawasan Cagar Budaya Kabkotim"
+        },
+        {
+          "id": "geonode:poly_peta_lokasi_pembangkit_kabkotim",
+          "label": "Poly Peta Lokasi Pembangkit Kabkotim"
+        },
+        {
+          "id": "geonode:poly_rawa_kabkotim",
+          "label": "Poly Rawa Kabkotim"
+        },
+        {
+          "id": "geonode:poly_rprph_kabkotim",
+          "label": "Poly Rprph Kabkotim"
+        },
+        {
+          "id": "geonode:poly_sungai_kabkotim",
+          "label": "Poly Sungai Kabkotim"
+        },
+        {
+          "id": "geonode:poly_sungai_kabkotim_943756b572160427ab8de8b4ce1d6756",
+          "label": "Poly Sungai Kabkotim 943756b572160427ab8de8b4ce1d6756"
+        },
+        {
+          "id": "geonode:poly_zona_likuefaksi_kotim",
+          "label": "Poly Zona Likuefaksi Kotim"
+        },
+        {
+          "id": "geonode:rdtr2",
+          "label": "Rdtr2"
+        },
+        {
+          "id": "geonode:rencana_pola_ruang_cc2f36f7f8445ed3866244d3d72bba37",
+          "label": "Rencana Pola Ruang Cc2f36f7f8445ed3866244d3d72bba37"
+        },
+        {
+          "id": "geonode:rpwp3k_kotim",
+          "label": "Rpwp3k Kotim"
+        },
+        {
+          "id": "geonode:sungai_line",
+          "label": "Sungai Line"
+        },
+        {
+          "id": "geonode:zonanilaitanah_ar",
+          "label": "Zonanilaitanah Ar"
+        }
+      ]
+    },
+    {
+      "id": "kuburaya",
+      "title": "Kabupaten Kubu Raya",
+      "source": "kuburaya",
+      "layers": [
+        {
+          "id": "geoinformasi_old:ProfilSekolah2025Terbaru",
+          "label": "ProfilSekolah2025Terbaru"
+        },
+        {
+          "id": "geonode:administrasi_ar_desa",
+          "label": "Administrasi Ar Desa"
+        },
+        {
+          "id": "geonode:administrasi_ar_kec",
+          "label": "Administrasi Ar Kec"
+        },
+        {
+          "id": "geonode:administrasi_ln_kec",
+          "label": "Administrasi Ln Kec"
+        },
+        {
+          "id": "geonode:administrasi_ln_kuburaya",
+          "label": "Administrasi Ln Kuburaya"
+        },
+        {
+          "id": "geonode:adminitrasi_ar_kuburaya",
+          "label": "Adminitrasi Ar Kuburaya"
+        },
+        {
+          "id": "geonode:agrikebun_ar_50k",
+          "label": "Agrikebun Ar 50k"
+        },
+        {
+          "id": "geonode:agriladang_ar_50k",
+          "label": "Agriladang Ar 50k"
+        },
+        {
+          "id": "geonode:agrisawah_ar_50k",
+          "label": "Agrisawah Ar 50k"
+        },
+        {
+          "id": "geonode:airport_pt",
+          "label": "Airport Pt"
+        },
+        {
+          "id": "geonode:alur_migrasi_penyu",
+          "label": "Alur Migrasi Penyu"
+        },
+        {
+          "id": "geonode:apotek_pt_50k",
+          "label": "Apotek Pt 50k"
+        },
+        {
+          "id": "geonode:bangunankkr_ar_50k",
+          "label": "Bangunankkr Ar 50k"
+        },
+        {
+          "id": "geonode:bathy_ln_3",
+          "label": "Bathy Ln 3"
+        },
+        {
+          "id": "geonode:danaukkr_ar_50k",
+          "label": "Danaukkr Ar 50k"
+        },
+        {
+          "id": "geonode:das_kkr_2024",
+          "label": "Das Kkr 2024"
+        },
+        {
+          "id": "geonode:garis_sempadan_bangunan",
+          "label": "Garis Sempadan Bangunan"
+        },
+        {
+          "id": "geonode:garispantai_ln",
+          "label": "Garispantai Ln"
+        },
+        {
+          "id": "geonode:geologi_ar_25k",
+          "label": "Geologi Ar 25k"
+        },
+        {
+          "id": "geonode:hen_jenispertaniankuburaya_ar_50k_new",
+          "label": "Hen Jenispertaniankuburaya Ar 50k New"
+        },
+        {
+          "id": "geonode:jalan_2024",
+          "label": "Jalan 2024"
+        },
+        {
+          "id": "geonode:jalanporos_ln",
+          "label": "Jalanporos Ln"
+        },
+        {
+          "id": "geonode:jaringan_jalan250k",
+          "label": "Jaringan Jalan250k"
+        },
+        {
+          "id": "geonode:jembatan50k_pt_kkr",
+          "label": "Jembatan50k Pt Kkr"
+        },
+        {
+          "id": "geonode:jenistanahkuburaya_ar_50k",
+          "label": "Jenistanahkuburaya Ar 50k"
+        },
+        {
+          "id": "geonode:jumlah_penduduk",
+          "label": "Jumlah Penduduk"
+        },
+        {
+          "id": "geonode:kantorkecamatan_pt_50k",
+          "label": "Kantorkecamatan Pt 50k"
+        },
+        {
+          "id": "geonode:kawasan_permukiman",
+          "label": "Kawasan Permukiman"
+        },
+        {
+          "id": "geonode:kepadatan_penduduk",
+          "label": "Kepadatan Penduduk"
+        },
+        {
+          "id": "geonode:kepadatan_penduduk_sem1_2024_11605c6cec0746aef52a1092b3603486",
+          "label": "Kepadatan Penduduk Sem1 2024 11605c6cec0746aef52a1092b3603486"
+        },
+        {
+          "id": "geonode:khg_ar_50k",
+          "label": "Khg Ar 50k"
+        },
+        {
+          "id": "geonode:kolam_air_budidaya_ar_5k_fix",
+          "label": "Kolam Air Budidaya Ar 5k Fix"
+        },
+        {
+          "id": "geonode:kontur50k_ln_kkr",
+          "label": "Kontur50k Ln Kkr"
+        },
+        {
+          "id": "geonode:kontur_ln",
+          "label": "Kontur Ln"
+        },
+        {
+          "id": "geonode:lahanbakusawahkuburaya_ar",
+          "label": "Lahanbakusawahkuburaya Ar"
+        },
+        {
+          "id": "geonode:simple___c6db64e0-83f1-11f1-9148-2ba957d16f0f",
+          "label": "Simple C6db64e0-83f1-11f1-9148-2ba957d16f0f"
+        },
+        {
+          "id": "geonode:lahansawahyangdilindungikuburaya_ar",
+          "label": "Lahansawahyangdilindungikuburaya Ar"
+        },
+        {
+          "id": "geonode:fill___ecbee640-8406-11f1-ba0e-a5d31ebf7c00",
+          "label": "Fill Ecbee640-8406-11f1-Ba0e-A5d31ebf7c00"
+        },
+        {
+          "id": "geonode:menaratelepon_ar_50k_10f62879eecb175b3f432c439e656c64",
+          "label": "Menaratelepon Ar 50k 10f62879eecb175b3f432c439e656c64"
+        },
+        {
+          "id": "geonode:pasartradisional_pt_25k",
+          "label": "Pasartradisional Pt 25k"
+        },
+        {
+          "id": "geonode:pelabuhan",
+          "label": "Pelabuhan"
+        },
+        {
+          "id": "geonode:pemerintahan_desa_pt50k",
+          "label": "Pemerintahan Desa Pt50k"
+        },
+        {
+          "id": "geonode:penginapan_pt_25k",
+          "label": "Penginapan Pt 25k"
+        },
+        {
+          "id": "geonode:perbankan_pt_25k",
+          "label": "Perbankan Pt 25k"
+        },
+        {
+          "id": "geonode:pola_ruang_rdtr",
+          "label": "Pola Ruang Rdtr"
+        },
+        {
+          "id": "geonode:pola_ruang_rtrw_kabupaten_kubu_raya948414ca236d5",
+          "label": "Pola Ruang Rtrw Kabupaten Kubu Raya948414ca236d5"
+        },
+        {
+          "id": "geonode:pulaukkr_pt_25k",
+          "label": "Pulaukkr Pt 25k"
+        },
+        {
+          "id": "geonode:rasio_jk",
+          "label": "Rasio Jk"
+        },
+        {
+          "id": "geonode:sebaran_dermaga_kabupate_kubu_raya",
+          "label": "Sebaran Dermaga Kabupate Kubu Raya"
+        },
+        {
+          "id": "geonode:sebaran_puskesmas_pt50k",
+          "label": "Sebaran Puskesmas Pt50k"
+        },
+        {
+          "id": "geonode:segmen_kondisi",
+          "label": "Segmen Kondisi"
+        },
+        {
+          "id": "geonode:sppg_pt_kuburaya",
+          "label": "Sppg Pt Kuburaya"
+        },
+        {
+          "id": "geonode:circle___c9cf4e50-1123-11f1-90dd-6db446e3cd64",
+          "label": "Circle C9cf4e50-1123-11f1-90dd-6db446e3cd64"
+        },
+        {
+          "id": "geonode:telekomunikasi_tower",
+          "label": "Telekomunikasi Tower"
+        },
+        {
+          "id": "geonode:terminal",
+          "label": "Terminal"
+        },
+        {
+          "id": "geonode:toponimi_pt_25k",
+          "label": "Toponimi Pt 25k"
+        },
+        {
+          "id": "geonode:tutupanlahan_ar_50k",
+          "label": "Tutupanlahan Ar 50k"
         }
       ]
     }

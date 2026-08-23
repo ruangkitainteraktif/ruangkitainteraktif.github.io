@@ -370,9 +370,9 @@
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
           <span>GEONUSA</span>
         </button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-geotani')">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          <span>GEOTANI</span>
+        <button class="tab-btn" onclick="openTab(event, 'tab-geoportal')">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+          <span>GEOPORTAL</span>
         </button>
         <button class="tab-btn" onclick="openTab(event, 'tab-gempa'); openGempaSubtabById('gempa-subtab-infocuaca')" style="display:none">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -382,9 +382,9 @@
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
           <span>GEOPULSE</span>
         </button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-geoportal')">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-          <span>GEOPORTAL</span>
+        <button class="tab-btn" onclick="openTab(event, 'tab-geotani')">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>GEOTANI</span>
         </button>
         <button class="tab-btn" onclick="openTab(event, 'tab-geopangan')">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
@@ -451,12 +451,6 @@
             </div>
           </div>
           <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
-          <h4 style="font-size: 13px; margin-bottom: 10px; display:none;">Pencarian Cepat</h4>
-          <div class="geoid-search-container" style="display:none;">
-            <input type="text" id="geoidSearchInput" class="geoid-search-input" placeholder="🔍 Cari Desa/Kelurahan..."
-              autocomplete="off" />
-            <div id="geoidAutocompleteResults" class="geoid-autocomplete-results"></div>
-          </div>
 
           <div class="cctv-card">
             <div class="cctv-card-header">
@@ -1854,6 +1848,7 @@
   <script src="assets/js/ndvi-analysis.js"></script>
   <script src="assets/js/landcover-analysis.js"></script>
   <script src="assets/js/dukcapil-population.js"></script>
+  <script src="assets/data/kode_wilayah.js"></script>
   <script src="assets/js/geoid-wilayah.js"></script>
   <script src="assets/js/weather-data.js"></script>
   <script src="assets/js/weather-bmkg.js"></script>
