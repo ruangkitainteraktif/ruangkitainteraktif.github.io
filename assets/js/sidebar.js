@@ -89,6 +89,7 @@
             }
           }
         }
+        applyCctvSearchVisibility();
       }
     }
 
@@ -106,6 +107,7 @@
         if (sheet && sheet.parentElement !== document.body) {
           document.body.appendChild(sheet);
         }
+        applyCctvSearchVisibility();
         if (sidebar && !sidebar.classList.contains('collapsed')) {
           sidebar.classList.add('collapsed');
           setToggleIcon(true);
@@ -121,11 +123,7 @@
     const unifiedSearch = document.getElementById('unifiedSearch');
     const insightCards = document.getElementById('mapInsightCards');
 
-    if (tabId === 'tab-geoid') {
-      if (unifiedSearch) unifiedSearch.style.display = 'block';
-    } else {
-      if (unifiedSearch) unifiedSearch.style.display = 'none';
-    }
+    if (unifiedSearch) unifiedSearch.style.display = 'block';
     if (insightCards) insightCards.style.display = 'none';
 
     if (tabId !== 'tab-alat') {
@@ -205,3 +203,13 @@
   window.openGempaSubtabById = openGempaSubtabById;
   window.openGempaSubtab = openGempaSubtab;
   window.openGeoidSubtab = openGeoidSubtab;
+
+  function applyCctvSearchVisibility() {
+    var sheet = document.getElementById('cctv-search-sheet');
+    if (!sheet) return;
+    var cctvSearch = sheet.querySelector('.cctv-autocomplete');
+    if (!cctvSearch) return;
+    cctvSearch.style.display = (window.innerWidth <= 768) ? 'none' : '';
+  }
+
+  window.addEventListener('resize', applyCctvSearchVisibility);

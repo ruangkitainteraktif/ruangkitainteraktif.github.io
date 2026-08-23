@@ -2026,7 +2026,7 @@ window.printGeotaniPdf = async function() {
       sidebar.classList.add('collapsed');
       hiddenEls.push({ el: sidebar, cls: 'collapsed', remove: false });
     }
-    const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .leaflet-control-scale, .detail-panel-btn, #detail-panel');
+    const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .leaflet-control-scale, .detail-panel-btn, #detail-panel, .geotani-btn-print, .basemap-btn, .basemap-control-wrap, .basemap-dropdown');
     overlays.forEach(el => {
       if (el && getComputedStyle(el).display !== 'none') {
         el.style.setProperty('display', 'none', 'important');
@@ -2040,9 +2040,24 @@ window.printGeotaniPdf = async function() {
     map.invalidateSize();
     await new Promise(r => setTimeout(r, 300));
 
+    const frameAspect = mapFrameW / mapFrameH;
+    const mapSize = map.getSize();
+    const containerAspect = mapSize.x / mapSize.y;
+
     if (geoidBoundaryLayer) {
-      const bounds = geoidBoundaryLayer.getBounds();
+      let bounds = geoidBoundaryLayer.getBounds();
       if (bounds.isValid()) {
+        if (containerAspect > frameAspect) {
+          const f = (containerAspect / frameAspect - 1) / 2;
+          const s = bounds.getSouth(), n = bounds.getNorth();
+          const span = n - s;
+          bounds = L.latLngBounds([s - span * f, bounds.getWest()], [n + span * f, bounds.getEast()]);
+        } else {
+          const f = (frameAspect / containerAspect - 1) / 2;
+          const w = bounds.getWest(), e = bounds.getEast();
+          const span = e - w;
+          bounds = L.latLngBounds([bounds.getSouth(), w - span * f], [bounds.getNorth(), e + span * f]);
+        }
         map.fitBounds(bounds, { maxZoom: 16, duration: 0 });
       }
     }
@@ -2110,108 +2125,89 @@ window.printGeotaniPdf = async function() {
     pdf.setLineWidth(0.3);
     pdf.rect(mapFrameX, mapFrameY, mapFrameW, mapFrameH);
 
-    const leafletContainer = document.querySelector('.leaflet-container');
-    if (leafletContainer) {
-      map.getRenderer(map).options.padding = 0;
-      map.invalidateSize();
-      await new Promise(r => setTimeout(r, 200));
-      const mapCanvas = await html2canvas(leafletContainer, { useCORS: true, allowTaint: true, scale: 2, logging: false, backgroundColor: '#e8e8e8' });
-      const mapImg = mapCanvas.toDataURL('image/jpeg', 0.92);
-      const imgAspect = mapCanvas.width / mapCanvas.height;
-      const frameAspect = mapFrameW / mapFrameH;
-      let drawW, drawH, drawX, drawY;
-      if (imgAspect > frameAspect) {
-        drawW = mapFrameW;
-        drawH = mapFrameW / imgAspect;
-        drawX = mapFrameX;
-        drawY = mapFrameY + (mapFrameH - drawH) / 2;
-      } else {
-        drawH = mapFrameH;
-        drawW = mapFrameH * imgAspect;
-        drawX = mapFrameX + (mapFrameW - drawW) / 2;
-        drawY = mapFrameY;
+      const mapBounds = map.getBounds();
+      const latMin = mapBounds.getSouth();
+      const latMax = mapBounds.getNorth();
+      const lonMin = mapBounds.getWest();
+      const lonMax = mapBounds.getEast();
+      const latRange = latMax - latMin;
+      const lonRange = lonMax - lonMin;
+      const latInterval = calcInterval(latRange, 6);
+      const lonInterval = calcInterval(lonRange, 8);
+
+      let effLatMin, effLatMax, effLonMin, effLonMax;
+      const leafletContainer = document.querySelector('.leaflet-container');
+      if (leafletContainer) {
+        map.getRenderer(map).options.padding = 0;
+        map.invalidateSize();
+        await new Promise(r => setTimeout(r, 200));
+        const mapCanvas = await html2canvas(leafletContainer, { useCORS: true, allowTaint: true, scale: 2, logging: false, backgroundColor: '#e8e8e8' });
+        const mapImg = mapCanvas.toDataURL('image/jpeg', 0.92);
+        const imgAspect = mapCanvas.width / mapCanvas.height;
+    const frameAspect = 185 / 164;
+        let drawW, drawH, drawX, drawY;
+        if (imgAspect > frameAspect) {
+          drawH = mapFrameH;
+          drawW = mapFrameH * imgAspect;
+          drawX = mapFrameX + (mapFrameW - drawW) / 2;
+          drawY = mapFrameY;
+          const cropFrac = 1 - frameAspect / imgAspect;
+          const cx = (lonMin + lonMax) / 2;
+          const half = (lonMax - lonMin) / 2;
+          const newHalf = half / (1 - cropFrac);
+          effLonMin = cx - newHalf; effLonMax = cx + newHalf;
+          effLatMin = latMin; effLatMax = latMax;
+        } else {
+          drawW = mapFrameW;
+          drawH = mapFrameW / imgAspect;
+          drawX = mapFrameX;
+          drawY = mapFrameY + (mapFrameH - drawH) / 2;
+          const cropFrac = 1 - imgAspect / frameAspect;
+          const cy = (latMin + latMax) / 2;
+          const half = (latMax - latMin) / 2;
+          const newHalf = half / (1 - cropFrac);
+          effLatMin = cy - newHalf; effLatMax = cy + newHalf;
+          effLonMin = lonMin; effLonMax = lonMax;
+        }
+        pdf.addImage(mapImg, 'JPEG', drawX, drawY, drawW, drawH);
+        pdf.setDrawColor(22, 163, 74);
+        pdf.setLineWidth(0.3);
+        pdf.rect(mapFrameX, mapFrameY, mapFrameW, mapFrameH);
       }
-      pdf.addImage(mapImg, 'JPEG', drawX, drawY, drawW, drawH);
-    }
 
-    const mapBounds = map.getBounds();
-    const latMin = mapBounds.getSouth();
-    const latMax = mapBounds.getNorth();
-    const lonMin = mapBounds.getWest();
-    const lonMax = mapBounds.getEast();
-    const latRange = latMax - latMin;
-    const lonRange = lonMax - lonMin;
-    const latInterval = calcInterval(latRange, 6);
-    const lonInterval = calcInterval(lonRange, 8);
+      const gLatMin = (effLatMin != null) ? effLatMin : latMin;
+      const gLatMax = (effLatMax != null) ? effLatMax : latMax;
+      const gLonMin = (effLonMin != null) ? effLonMin : lonMin;
+      const gLonMax = (effLonMax != null) ? effLonMax : lonMax;
+      const gLatRange = gLatMax - gLatMin;
+      const gLonRange = gLonMax - gLonMin;
 
-    pdf.setDrawColor(180, 180, 180);
-    pdf.setLineWidth(0.15);
-    pdf.setFontSize(6);
-    pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(80, 80, 80);
+      pdf.setDrawColor(180, 180, 180);
+      pdf.setLineWidth(0.15);
+      pdf.setFontSize(6);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(80, 80, 80);
 
-    const latStart = Math.ceil(latMin / latInterval) * latInterval;
-    for (let lat = latStart; lat <= latMax; lat += latInterval) {
-      const ratio = (lat - latMin) / latRange;
-      const py = mapFrameY + mapFrameH - ratio * mapFrameH;
-      pdf.setLineDashPattern([1.5, 1.5], 0);
-      pdf.line(mapFrameX, py, mapFrameX + mapFrameW, py);
-      pdf.setLineDashPattern([], 0);
-      pdf.text(lat.toFixed(latInterval < 0.1 ? 2 : 1) + '°', mapFrameX - 1, py + 1.5, { align: 'right' });
-    }
-    const lonStart = Math.ceil(lonMin / lonInterval) * lonInterval;
-    for (let lon = lonStart; lon <= lonMax; lon += lonInterval) {
-      const ratio = (lon - lonMin) / lonRange;
-      const px = mapFrameX + ratio * mapFrameW;
-      pdf.setLineDashPattern([1.5, 1.5], 0);
-      pdf.line(px, mapFrameY, px, mapFrameY + mapFrameH);
-      pdf.setLineDashPattern([], 0);
-      pdf.text(lon.toFixed(lonInterval < 0.1 ? 2 : 1) + '°', px, mapFrameY + mapFrameH + 3.5, { align: 'center' });
-    }
+      const latStart = Math.ceil(gLatMin / latInterval) * latInterval;
+      for (let lat = latStart; lat <= gLatMax; lat += latInterval) {
+        const ratio = (lat - gLatMin) / gLatRange;
+        const gpy = mapFrameY + mapFrameH - ratio * mapFrameH;
+        pdf.setLineDashPattern([1.5, 1.5], 0);
+        pdf.line(mapFrameX, gpy, mapFrameX + mapFrameW, gpy);
+        pdf.setLineDashPattern([], 0);
+        pdf.text(lat.toFixed(latInterval < 0.1 ? 2 : 1) + '°', mapFrameX - 1, gpy + 1.5, { align: 'right' });
+      }
+      const lonStart = Math.ceil(gLonMin / lonInterval) * lonInterval;
+      for (let lon = lonStart; lon <= gLonMax; lon += lonInterval) {
+        const ratio = (lon - gLonMin) / gLonRange;
+        const gpx = mapFrameX + ratio * mapFrameW;
+        pdf.setLineDashPattern([1.5, 1.5], 0);
+        pdf.line(gpx, mapFrameY, gpx, mapFrameY + mapFrameH);
+        pdf.setLineDashPattern([], 0);
+        pdf.text(lon.toFixed(lonInterval < 0.1 ? 2 : 1) + '°', gpx, mapFrameY + mapFrameH + 3.5, { align: 'center' });
+      }
 
-    const naX = mapFrameX + mapFrameW - 14;
-    const naY = mapFrameY + 6;
-    const naSize = 8;
-    const naCx = naX + naSize / 2;
-    pdf.setFillColor(22, 163, 74);
-    pdf.triangle(naCx, naY, naCx - naSize / 2, naY + naSize, naCx + naSize / 2, naY + naSize, 'F');
-    pdf.setFillColor(255, 255, 255);
-    pdf.triangle(naCx, naY + naSize * 0.35, naCx - naSize * 0.25, naY + naSize, naCx + naSize * 0.25, naY + naSize, 'F');
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(7);
-    pdf.setTextColor(22, 163, 74);
-    pdf.text('N', naCx, naY - 1.5, { align: 'center' });
-
-    const sbX = mapFrameX + 6;
-    const sbY = mapFrameY + mapFrameH - 10;
-    const sbW = 50;
-    const sbH = 3;
-    const centerLat = (latMin + latMax) / 2;
-    const metersPerDegLat = 111132.92 - 559.82 * Math.cos(2 * centerLat * Math.PI / 180);
-    const metersPerPixel = (latRange * metersPerDegLat) / mapFrameH;
-    const sbMeters = sbW * metersPerPixel;
-    let sbLabelUnit = 'm';
-    let sbValue = Math.round(sbMeters);
-    if (sbMeters >= 1000) { sbValue = Math.round(sbMeters / 1000); sbLabelUnit = 'km'; }
-    const actualMeters = sbLabelUnit === 'km' ? sbValue * 1000 : sbValue;
-    const actualW = actualMeters / metersPerPixel;
-
-    pdf.setFillColor(255, 255, 255);
-    pdf.setDrawColor(22, 163, 74);
-    pdf.setLineWidth(0.2);
-    pdf.rect(sbX, sbY, actualW, sbH, 'FD');
-    pdf.setFillColor(22, 163, 74);
-    pdf.rect(sbX, sbY, actualW / 2, sbH, 'F');
-    pdf.setFillColor(255, 255, 255);
-    pdf.rect(sbX + actualW / 2, sbY, actualW / 4, sbH, 'F');
-    pdf.setFillColor(22, 163, 74);
-    pdf.rect(sbX + actualW * 3 / 4, sbY, actualW / 4, sbH, 'F');
-    pdf.setFontSize(5.5);
-    pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(55, 65, 81);
-    pdf.text('0', sbX, sbY - 1);
-    pdf.text(String(sbValue), sbX + actualW / 2, sbY - 1, { align: 'center' });
-    pdf.text(sbValue * 2 + ' ' + sbLabelUnit, sbX + actualW, sbY - 1, { align: 'center' });
+      // Arah Utara & Skala dipindah ke kolom kanan.
 
     const geotaniLegend = [
       { label: 'Sawah', color: '#22c55e', desc: 'Lahan baku sawah' },
@@ -2254,6 +2250,9 @@ window.printGeotaniPdf = async function() {
     pdf.text('INFORMASI WILAYAH', panelX + 4, py);
     py += 6;
 
+    const panelReserve = 40;
+    const blockTop = mapFrameY + panelH - panelReserve;
+
     const cardW = panelW - 8;
     const cardH = 14;
     pdf.setFillColor(240, 253, 244);
@@ -2287,6 +2286,7 @@ window.printGeotaniPdf = async function() {
       ['NDVI (Sentinel-2)', ndviMean != null ? Number(ndviMean).toFixed(4) : '-']
     ];
     for (const [infoLabel, value] of infoLines) {
+      if (py > blockTop - 2) break;
       pdf.setFontSize(5.5);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(100, 116, 139);
@@ -2312,6 +2312,7 @@ window.printGeotaniPdf = async function() {
       ['Kualitas', 'Batas Desa/Kelurahan (BIG)']
     ];
     for (const [metaLabel, value] of metaLines) {
+      if (py > blockTop - 2) break;
       pdf.setFontSize(5.5);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(100, 116, 139);
@@ -2350,6 +2351,7 @@ window.printGeotaniPdf = async function() {
         ['Vector', cvss.vector || '-']
       ];
       for (const [cvssLabel, value] of cvssLines) {
+        if (py > blockTop - 2) break;
         pdf.setFontSize(5.5);
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(100, 116, 139);
@@ -2361,6 +2363,62 @@ window.printGeotaniPdf = async function() {
         py += lines.length * 3 + 2;
       }
     }
+
+    // --- Arah Utara & Skala (kolom kanan, gaya modern) ---
+    const sLatMin = (effLatMin != null) ? effLatMin : latMin;
+    const sLatMax = (effLatMax != null) ? effLatMax : latMax;
+    const centerLatS = (sLatMin + sLatMax) / 2;
+    const mPerDegS = 111132.92 - 559.82 * Math.cos(2 * centerLatS * Math.PI / 180);
+    const mPerPxS = ((sLatMax - sLatMin) * mPerDegS) / mapFrameH;
+
+    const naCX = panelX + panelW / 2, naCY = blockTop + 12, naR = 9;
+    pdf.setDrawColor(22, 163, 74);
+    pdf.setLineWidth(0.3);
+    if (typeof pdf.circle === 'function') pdf.circle(naCX, naCY, naR);
+    pdf.setFillColor(22, 163, 74);
+    pdf.triangle(naCX, naCY - naR + 1.5, naCX - 2.8, naCY, naCX + 2.8, naCY, 'F');
+    pdf.setDrawColor(148, 163, 184);
+    pdf.setLineWidth(0.3);
+    pdf.triangle(naCX, naCY + naR - 1.5, naCX - 2.8, naCY, naCX + 2.8, naCY);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(6);
+    pdf.setTextColor(22, 163, 74);
+    pdf.text('N', naCX, naCY - naR - 2, { align: 'center' });
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(5.5);
+    pdf.setTextColor(100, 116, 139);
+    pdf.text('UTARA', naCX, naCY + naR + 3, { align: 'center' });
+
+    const sbPixelLen = 44;
+    const rawM = sbPixelLen * mPerPxS;
+    const tM = Math.pow(10, Math.floor(Math.log10(rawM)));
+    const nrm = rawM / tM;
+    const niceM = (nrm <= 1.5) ? 1 * tM : (nrm <= 3.5) ? 2 * tM : (nrm <= 7.5) ? 5 * tM : 10 * tM;
+    const niceW = niceM / mPerPxS;
+    const sbLX = panelX + (panelW - niceW) / 2;
+    const sbBY = naCY + naR + 9;
+    pdf.setDrawColor(22, 163, 74);
+    pdf.setLineWidth(0.3);
+    pdf.line(sbLX, sbBY, sbLX + niceW, sbBY);
+    pdf.line(sbLX, sbBY - 1.3, sbLX, sbBY + 1.3);
+    pdf.line(sbLX + niceW / 2, sbBY - 1.3, sbLX + niceW / 2, sbBY + 1.3);
+    pdf.line(sbLX + niceW, sbBY - 1.3, sbLX + niceW, sbBY + 1.3);
+    const sbH2 = 1.8;
+    pdf.setDrawColor(22, 163, 74);
+    pdf.setLineWidth(0.2);
+    pdf.setFillColor(22, 163, 74);
+    pdf.rect(sbLX, sbBY - sbH2 / 2, niceW / 2, sbH2, 'FD');
+    pdf.setFillColor(220, 224, 230);
+    pdf.rect(sbLX + niceW / 2, sbBY - sbH2 / 2, niceW / 2, sbH2, 'FD');
+    const sbUnitS = niceM >= 1000 ? (niceM / 1000) + ' km' : niceM + ' m';
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(5.5);
+    pdf.setTextColor(55, 65, 81);
+    pdf.text('0', sbLX, sbBY - 2.4, { align: 'center' });
+    pdf.text(sbUnitS, sbLX + niceW, sbBY - 2.4, { align: 'center' });
+    pdf.setFontSize(5.5);
+    pdf.setTextColor(100, 116, 139);
+    pdf.text('SKALA', sbLX, sbBY + 3);
 
     const bottomY = pageH - margin - 2;
     pdf.setDrawColor(200, 200, 200);

@@ -2,7 +2,7 @@
   "sources": {
     "temanggung": {
       "wmsUrl": "https://geoportal.temanggungkab.go.id/geoserver/wms",
-      "label": "Kab. Temanggung"
+      "label": "Kabupaten Temanggung"
     },
     "sukoharjo": {
       "wmsUrl": "https://pisda.sukoharjokab.go.id/geoserver/ows",

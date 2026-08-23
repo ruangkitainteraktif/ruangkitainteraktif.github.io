@@ -683,3 +683,420 @@
       Object.values(cfg.sources).forEach(s => loadGeoportalCaps(s.wmsUrl).catch(() => {}));
     })
     .catch(err => console.error('[Geoportal] Gagal memuat geoportal-layers.json:', err));
+
+  function showPrintLoading() {
+    let el = document.getElementById('print-loading-overlay');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'print-loading-overlay';
+      el.className = 'print-status-overlay';
+      const box = document.createElement('div');
+      box.className = 'print-status-box';
+      const spin = document.createElement('div');
+      spin.className = 'print-spinner';
+      const txt = document.createElement('div');
+      txt.className = 'print-status-text';
+      txt.textContent = 'Sedang memproses cetak peta…';
+      box.appendChild(spin);
+      box.appendChild(txt);
+      el.appendChild(box);
+      document.body.appendChild(el);
+    }
+    el.style.display = 'flex';
+  }
+  function hidePrintLoading() {
+    const el = document.getElementById('print-loading-overlay');
+    if (el) el.style.display = 'none';
+  }
+  function showPrintError(message) {
+    let el = document.getElementById('print-error-overlay');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'print-error-overlay';
+      el.className = 'print-status-overlay';
+      const box = document.createElement('div');
+      box.className = 'print-error-box';
+      const icon = document.createElement('div');
+      icon.className = 'print-error-icon';
+      icon.textContent = '!';
+      const txt = document.createElement('div');
+      txt.className = 'print-status-text';
+      txt.id = 'print-error-text';
+      box.appendChild(icon);
+      box.appendChild(txt);
+      el.appendChild(box);
+      document.body.appendChild(el);
+    }
+    el.querySelector('#print-error-text').textContent = 'Gagal mencetak peta: ' + (message || 'Terjadi kesalahan.');
+    el.style.display = 'flex';
+    clearTimeout(el._hideTimer);
+    el._hideTimer = setTimeout(() => { el.style.display = 'none'; }, 4500);
+  }
+
+  window.printGeoportalMap = async function () {
+    const btn = document.querySelector('.geoportal-print-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = window.GEOPORTAL_PRINT_SPINNER || '⏳'; }
+    showPrintLoading();
+
+    const hiddenEls = [];
+
+    try {
+      map.closePopup();
+
+      const arcgisLabels = {
+        'arcgis-sawah-2023': 'Sawah 2023 (Kementan)',
+        'arcgis-sawah-2019': 'LBS 2019 (Kementan)',
+        'arcgis-kawasan-padi': 'Kawasan Padi (Kementan)',
+        'arcgis-kawasan-jagung': 'Kawasan Jagung (Kementan)',
+        'arcgis-kawasan-kedelai': 'Kawasan Kedelai (Kementan)'
+      };
+
+      const labelMap = {};
+      const categoryMap = {};
+      if (typeof GEOPORTAL_LAYER_DATA !== 'undefined' && Array.isArray(GEOPORTAL_LAYER_DATA)) {
+        GEOPORTAL_LAYER_DATA.forEach(d => {
+          if (d && d.id) {
+            if (!labelMap[d.id]) labelMap[d.id] = d.label || d.id;
+            if (!categoryMap[d.id] && d.category) categoryMap[d.id] = d.category;
+          }
+        });
+      }
+      function dispName(layerName) {
+        const lbl = labelMap[layerName] || layerName;
+        const cat = categoryMap[layerName] || '';
+        return cat ? cat + ' — ' + lbl : lbl;
+      }
+
+      const titleNames = [];
+      getActiveGeoportalLayers().forEach(a => titleNames.push(dispName(a.layerName)));
+      getActiveArcgisLayers().forEach(a => titleNames.push(arcgisLabels[a.layerKey] || a.layerKey));
+      let titleText;
+      if (titleNames.length === 0) titleText = 'Peta Geoportal';
+      else if (titleNames.length === 1) titleText = titleNames[0];
+      else titleText = titleNames.slice(0, 3).join(', ') + (titleNames.length > 3 ? ` (+${titleNames.length - 3})` : '');
+
+      const sidebar = document.getElementById('sidebar-left');
+      if (sidebar && !sidebar.classList.contains('collapsed')) {
+        sidebar.classList.add('collapsed');
+        hiddenEls.push({ restore: () => sidebar.classList.remove('collapsed') });
+      }
+
+      const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .geoportal-print-btn, .basemap-btn, .basemap-control-wrap, .leaflet-control-scale, .detail-panel-btn, #detail-panel');
+      overlays.forEach(el => {
+        if (el && getComputedStyle(el).display !== 'none') {
+          const prev = el.style.display;
+          el.style.setProperty('display', 'none', 'important');
+          hiddenEls.push({ restore: () => { el.style.display = prev; } });
+        }
+      });
+
+      const prevBasemap = (typeof currentBasemapName !== 'undefined') ? currentBasemapName : null;
+      if (typeof setBaseMap === 'function' && prevBasemap !== 'esri-satellite') {
+        setBaseMap('esri-satellite');
+      }
+
+      if (typeof getGeoportalLayerBBox === 'function') {
+        let minLat = 90, minLng = 180, maxLat = -90, maxLng = -180, found = false;
+        const gpLayers = getActiveGeoportalLayers();
+        for (const a of gpLayers) {
+          try {
+            const bbox = await getGeoportalLayerBBox(a.wmsUrl, a.layerName);
+            if (bbox) {
+              minLat = Math.min(minLat, bbox.south); minLng = Math.min(minLng, bbox.west);
+              maxLat = Math.max(maxLat, bbox.north); maxLng = Math.max(maxLng, bbox.east);
+              found = true;
+            }
+          } catch (e) { /* abaikan */ }
+        }
+        const agLayers = getActiveArcgisLayers();
+        for (const a of agLayers) {
+          const lyr = arcgisSawahLayers[a.layerKey];
+          if (lyr && typeof lyr.getBounds === 'function') {
+            const b = lyr.getBounds();
+            if (b && b.isValid()) {
+              const sw = b.getSouthWest(), ne = b.getNorthEast();
+              minLat = Math.min(minLat, sw.lat); minLng = Math.min(minLng, sw.lng);
+              maxLat = Math.max(maxLat, ne.lat); maxLng = Math.max(maxLng, ne.lng);
+              found = true;
+            }
+          }
+        }
+        if (found) {
+          map.fitBounds([[minLat, minLng], [maxLat, maxLng]], { maxZoom: 16, padding: [20, 20], duration: 0 });
+          await new Promise(r => setTimeout(r, 1500));
+        }
+      }
+
+      map.invalidateSize();
+      await new Promise(r => setTimeout(r, 400));
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const pageW = 297, pageH = 210, margin = 8;
+      const titleH = 14, bottomStripH = 14;
+      const mapFrameX = margin;
+      const mapFrameY = margin + titleH + 2;
+      const mapFrameW = 185;
+      const mapFrameH = pageH - margin * 2 - titleH - 2 - bottomStripH;
+      const panelX = mapFrameX + mapFrameW + 4;
+      const panelW = pageW - panelX - margin;
+      const panelH = mapFrameH;
+
+      pdf.setDrawColor(30, 41, 59);
+      pdf.setLineWidth(0.4);
+      pdf.rect(margin, margin, pageW - margin * 2, pageH - margin * 2);
+
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(margin, margin + titleH, pageW - margin, margin + titleH);
+
+      const now = new Date();
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(12);
+      pdf.setTextColor(30, 41, 59);
+      pdf.text(titleText, margin + 2, margin + titleH / 2, { baseline: 'middle' });
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(100, 116, 139);
+      const dateFormatted = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+      pdf.text(dateFormatted, pageW - margin - 2, margin + 5, { align: 'right' });
+      const bmName = (typeof currentBasemapName !== 'undefined' && currentBasemapName) ? currentBasemapName : '-';
+      pdf.text('Basemap: ' + bmName, pageW - margin - 2, margin + 9, { align: 'right' });
+      pdf.setFontSize(7);
+      pdf.setTextColor(150, 150, 150);
+      pdf.text('WGS84 / EPSG:4326', pageW - margin - 2, margin + 12, { align: 'right' });
+
+      pdf.setDrawColor(55, 65, 81);
+      pdf.setLineWidth(0.3);
+      pdf.rect(mapFrameX, mapFrameY, mapFrameW, mapFrameH);
+
+      let mCX = mapFrameX + mapFrameW / 2, mCY = mapFrameY + mapFrameH / 2;
+      let effLonMin = null, effLonMax = null, effLatMin = null, effLatMax = null;
+      try {
+        const leafletContainer = document.querySelector('.leaflet-container');
+        if (leafletContainer) {
+          map.invalidateSize();
+          await new Promise(r => setTimeout(r, 200));
+          const mapCanvas = await html2canvas(leafletContainer, { useCORS: true, allowTaint: true, scale: 2, logging: false, backgroundColor: '#e8e8e8' });
+
+          const canvasAspect = mapCanvas.width / mapCanvas.height;
+          const frameAspect = mapFrameW / mapFrameH;
+          let cropX, cropY, cropW, cropH;
+          if (canvasAspect > frameAspect) {
+            cropH = mapCanvas.height;
+            cropW = cropH * frameAspect;
+            cropX = (mapCanvas.width - cropW) / 2;
+            cropY = 0;
+          } else {
+            cropW = mapCanvas.width;
+            cropH = cropW / frameAspect;
+            cropX = 0;
+            cropY = (mapCanvas.height - cropH) / 2;
+          }
+          const c = document.createElement('canvas');
+          c.width = Math.round(cropW);
+          c.height = Math.round(cropH);
+          c.getContext('2d').drawImage(mapCanvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+          const mapImg = c.toDataURL('image/jpeg', 0.92);
+          pdf.addImage(mapImg, 'JPEG', mapFrameX, mapFrameY, mapFrameW, mapFrameH);
+          mCX = mapFrameX + mapFrameW / 2;
+          mCY = mapFrameY + mapFrameH / 2;
+
+          const vb = map.getBounds();
+          const lonMin = vb.getWest(), lonMax = vb.getEast();
+          const latMin = vb.getSouth(), latMax = vb.getNorth();
+          const fx = cropW / mapCanvas.width, fy = cropH / mapCanvas.height;
+          effLonMin = lonMin + (lonMax - lonMin) * (0.5 - fx / 2);
+          effLonMax = lonMin + (lonMax - lonMin) * (0.5 + fx / 2);
+          effLatMax = latMax - (latMax - latMin) * (0.5 - fy / 2);
+          effLatMin = latMax - (latMax - latMin) * (0.5 + fy / 2);
+        }
+      } catch (e) {
+        console.warn('[PrintGeoportal] Gagal menangkap peta (layer tanpa CORS?):', e);
+      }
+
+      pdf.setDrawColor(55, 65, 81);
+      pdf.setLineWidth(0.3);
+      pdf.rect(mapFrameX, mapFrameY, mapFrameW, mapFrameH, 'S');
+
+      try {
+        pdf.saveGraphicsState();
+        if (typeof pdf.GState === 'function') {
+          pdf.setGState(new pdf.GState({ opacity: 0.6 }));
+          pdf.setTextColor(255, 255, 255);
+        } else {
+          pdf.setTextColor(255, 255, 255);
+        }
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(28);
+        pdf.text('PREVIEW', mCX, mCY - 9, { align: 'center', baseline: 'middle' });
+        pdf.setFontSize(22);
+        pdf.text('RUANGKITA PRO', mCX, mCY + 1, { align: 'center', baseline: 'middle' });
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        pdf.text('ruangkita.net', mCX, mCY + 11, { align: 'center', baseline: 'middle' });
+        pdf.restoreGraphicsState();
+      } catch (e) {
+        console.warn('[PrintGeoportal] Watermark gagal:', e);
+      }
+
+      const mapBounds = map.getBounds();
+      const latMin = (effLatMin != null) ? effLatMin : mapBounds.getSouth();
+      const latMax = (effLatMax != null) ? effLatMax : mapBounds.getNorth();
+      const lonMin = (effLonMin != null) ? effLonMin : mapBounds.getWest();
+      const lonMax = (effLonMax != null) ? effLonMax : mapBounds.getEast();
+
+      function calcInterval(range, targetLines) {
+        const raw = range / targetLines;
+        const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+        const norm = raw / mag;
+        if (norm <= 1.5) return mag;
+        if (norm <= 3.5) return 2 * mag;
+        if (norm <= 7.5) return 5 * mag;
+        return 10 * mag;
+      }
+
+      const latRange = latMax - latMin, lonRange = lonMax - lonMin;
+      const latInterval = calcInterval(latRange, 6), lonInterval = calcInterval(lonRange, 8);
+      pdf.setDrawColor(180, 180, 180);
+      pdf.setLineWidth(0.15);
+      pdf.setFontSize(6);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(80, 80, 80);
+
+      const latStart = Math.ceil(latMin / latInterval) * latInterval;
+      for (let lat = latStart; lat <= latMax; lat += latInterval) {
+        const ratio = (lat - latMin) / latRange;
+        const py = mapFrameY + mapFrameH - ratio * mapFrameH;
+        pdf.setLineDashPattern([1.5, 1.5], 0);
+        pdf.line(mapFrameX, py, mapFrameX + mapFrameW, py);
+        pdf.setLineDashPattern([], 0);
+        const label = lat.toFixed(latInterval < 0.1 ? 2 : 1) + '°';
+        pdf.text(label, mapFrameX - 1, py + 1.5, { align: 'right' });
+      }
+
+      const lonStart = Math.ceil(lonMin / lonInterval) * lonInterval;
+      for (let lon = lonStart; lon <= lonMax; lon += lonInterval) {
+        const ratio = (lon - lonMin) / lonRange;
+        const px = mapFrameX + ratio * mapFrameW;
+        pdf.setLineDashPattern([1.5, 1.5], 0);
+        pdf.line(px, mapFrameY, px, mapFrameY + mapFrameH);
+        pdf.setLineDashPattern([], 0);
+        const label = lon.toFixed(lonInterval < 0.1 ? 2 : 1) + '°';
+        pdf.text(label, px, mapFrameY + mapFrameH + 3.5, { align: 'center' });
+      }
+
+      // Skala & Arah Utara dipindah ke kolom LAYER AKTIF (gaya modern ArcGIS Pro).
+
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(panelX, mapFrameY, panelX, mapFrameY + panelH);
+      const activeNames = [];
+      getActiveGeoportalLayers().forEach(a => { activeNames.push(dispName(a.layerName)); });
+      getActiveArcgisLayers().forEach(a => { activeNames.push(arcgisLabels[a.layerKey] || a.layerKey); });
+      const headTitle = activeNames.length ? activeNames.join(' / ') : 'LAYER AKTIF';
+      let py = mapFrameY + 4;
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(9);
+      pdf.setTextColor(30, 41, 59);
+      pdf.text(headTitle, panelX + 4, py, { maxWidth: panelW - 8 });
+      py += 6;
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(panelX + 4, py, panelX + panelW - 4, py);
+      py += 4;
+
+      // --- Arah Utara & Skala (atas kolom, gaya modern ArcGIS Pro) ---
+      const sLatMin = (effLatMin != null) ? effLatMin : latMin;
+      const sLatMax = (effLatMax != null) ? effLatMax : latMax;
+      const centerLatS = (sLatMin + sLatMax) / 2;
+      const mPerDegS = 111132.92 - 559.82 * Math.cos(2 * centerLatS * Math.PI / 180);
+      const mPerPxS = ((sLatMax - sLatMin) * mPerDegS) / mapFrameH;
+
+      const naCX = panelX + panelW / 2, naCY = py + 11, naR = 9;
+      pdf.setDrawColor(30, 41, 59);
+      pdf.setLineWidth(0.3);
+      if (typeof pdf.circle === 'function') pdf.circle(naCX, naCY, naR);
+      pdf.setFillColor(30, 41, 59);
+      pdf.triangle(naCX, naCY - naR + 1.5, naCX - 2.8, naCY, naCX + 2.8, naCY, 'F');
+      pdf.setDrawColor(148, 163, 184);
+      pdf.setLineWidth(0.3);
+      pdf.triangle(naCX, naCY + naR - 1.5, naCX - 2.8, naCY, naCX + 2.8, naCY);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(6);
+      pdf.setTextColor(30, 41, 59);
+      pdf.text('N', naCX, naCY - naR - 2, { align: 'center' });
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(5.5);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text('UTARA', naCX, naCY + naR + 3, { align: 'center' });
+
+      const sbPixelLen = 44;
+      const rawM = sbPixelLen * mPerPxS;
+      const tM = Math.pow(10, Math.floor(Math.log10(rawM)));
+      const nrm = rawM / tM;
+      const niceM = (nrm <= 1.5) ? 1 * tM : (nrm <= 3.5) ? 2 * tM : (nrm <= 7.5) ? 5 * tM : 10 * tM;
+      const niceW = niceM / mPerPxS;
+      const sbLX = panelX + (panelW - niceW) / 2;
+      const sbBY = naCY + naR + 9;
+      pdf.setDrawColor(30, 41, 59);
+      pdf.setLineWidth(0.3);
+      pdf.line(sbLX, sbBY, sbLX + niceW, sbBY);
+      pdf.line(sbLX, sbBY - 1.3, sbLX, sbBY + 1.3);
+      pdf.line(sbLX + niceW / 2, sbBY - 1.3, sbLX + niceW / 2, sbBY + 1.3);
+      pdf.line(sbLX + niceW, sbBY - 1.3, sbLX + niceW, sbBY + 1.3);
+      const sbH = 1.8;
+      pdf.setDrawColor(30, 41, 59);
+      pdf.setLineWidth(0.2);
+      pdf.setFillColor(30, 41, 59);
+      pdf.rect(sbLX, sbBY - sbH / 2, niceW / 2, sbH, 'FD');
+      pdf.setFillColor(220, 224, 230);
+      pdf.rect(sbLX + niceW / 2, sbBY - sbH / 2, niceW / 2, sbH, 'FD');
+      const sbUnit = niceM >= 1000 ? (niceM / 1000) + ' km' : niceM + ' m';
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(5.5);
+      pdf.setTextColor(55, 65, 81);
+      pdf.text('0', sbLX, sbBY - 2.4, { align: 'center' });
+      pdf.text(sbUnit, sbLX + niceW, sbBY - 2.4, { align: 'center' });
+      pdf.setFontSize(5.5);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text('SKALA', sbLX, sbBY + 3);
+
+      py = sbBY + 8;
+
+      pdf.setFontSize(7);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(55, 65, 81);
+      if (activeNames.length === 0) {
+        pdf.setTextColor(150, 150, 150);
+        pdf.text('Tidak ada layer aktif', panelX + 4, py + 3);
+      } else {
+        activeNames.forEach(nm => {
+          if (nm === headTitle) return;
+          if (py > mapFrameY + panelH - 4) return;
+          const txt = '• ' + nm;
+          const lines = pdf.splitTextToSize(txt, panelW - 8);
+          lines.forEach(ln => { pdf.text(ln, panelX + 4, py + 3); py += 4; });
+          py += 1;
+        });
+      }
+
+      const dateStr = `${String(now.getDate()).padStart(2, '0')}${String(now.getMonth() + 1).padStart(2, '0')}${now.getFullYear()}`;
+      pdf.save(`Peta_Geoportal_${dateStr}.pdf`);
+    } catch (err) {
+      console.error('[PrintGeoportal] Gagal membuat PDF:', err);
+      showPrintError(err && err.message ? err.message : String(err));
+    } finally {
+      hidePrintLoading();
+      if (btn) { btn.disabled = false; btn.innerHTML = window.GEOPORTAL_PRINT_ICON || '🖨'; }
+      try {
+        hiddenEls.forEach(h => { if (h.restore) { try { h.restore(); } catch (e) {} } });
+      } catch (e) {}
+      try {
+        if (prevBasemap && prevBasemap.indexOf('google') === 0 && typeof setBaseMap === 'function') {
+          setBaseMap(prevBasemap);
+        }
+      } catch (e) {}
+      try { map.invalidateSize(); } catch (e) {}
+    }
+  };

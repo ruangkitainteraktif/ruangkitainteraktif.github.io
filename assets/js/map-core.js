@@ -451,6 +451,28 @@ L.control.scale({
   });
   new ResetLayersControl().addTo(map);
 
+  // Ikon cetak & spinner (outline tebal) — dipakai ulang di tombol & saat proses
+  window.GEOPORTAL_PRINT_ICON = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M9 18h6"/></svg>';
+  window.GEOPORTAL_PRINT_SPINNER = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9" opacity="0.9"/><path d="M12 3a9 9 0 0 1 9 9" opacity="0.25"/></svg>';
+
+  // Print Map Control (global, di bawah reset)
+  const PrintMapControl = L.Control.extend({
+    options: { position: 'bottomright' },
+    onAdd() {
+      const btn = L.DomUtil.create('button', 'geoportal-print-btn');
+      btn.innerHTML = window.GEOPORTAL_PRINT_ICON;
+      btn.title = 'Cetak peta (semua layer aktif)';
+      btn.setAttribute('aria-label', 'Cetak peta');
+      L.DomEvent.disableClickPropagation(btn);
+      L.DomEvent.disableScrollPropagation(btn);
+      btn.addEventListener('click', () => {
+        if (typeof window.printGeoportalMap === 'function') window.printGeoportalMap();
+      });
+      return btn;
+    }
+  });
+  new PrintMapControl().addTo(map);
+
   let selectedWilayahId = "3313000000";
   let selectedRtrId = "001";
   let mapClickMarker = null;
