@@ -95,6 +95,9 @@
 
     if (tabId !== 'tab-geoportal') closeGeoportalModal();
 
+    if (typeof renderGeoportalLegend === 'function') setTimeout(renderGeoportalLegend, 50);
+    if (typeof window.updateGeoportalPrintVisibility === 'function') window.updateGeoportalPrintVisibility();
+
     if (tabId === 'tab-gempa') {
       var gempaGempaPanel = document.getElementById('gempa-subtab-gempa');
       if (gempaGempaPanel && gempaGempaPanel.classList.contains('active')) loadEarthquakeData();

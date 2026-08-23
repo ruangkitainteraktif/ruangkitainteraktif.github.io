@@ -72,6 +72,9 @@
   // diprefix dengan id kategori agar tidak tabrakan di jsTree.
   const geoportalNodeIndex = new Map();
 
+  // CacheKey layer yang dirender sebagai marker cluster titik (bukan WMS raster).
+  const geoportalPointLayerKeys = new Set();
+
   // Cek apakah checkbox layer geoportal masih aktif.
   function isGeoportalCheckboxActive(layerName, wmsUrl) {
     // Check jsTree state first
@@ -233,6 +236,7 @@
             map.removeLayer(current);
           }
           geoportalLayers.set(cacheKey, clusterLayer);
+          geoportalPointLayerKeys.add(cacheKey);
           if (isGeoportalCheckboxActive(layerName, wmsUrl) && !map.hasLayer(clusterLayer)) {
             clusterLayer.addTo(map);
             flyToGeoportalLayer(clusterLayer, wmsUrl, layerName);
@@ -248,6 +252,7 @@
     } else {
       map.removeLayer(layer);
     }
+    scheduleRenderGeoportalLegend();
   }
 
   function getActiveGeoportalLayers() {
@@ -440,6 +445,113 @@
       });
   }
 
+  // ===================== Legenda Dinamis Geoportal =====================
+  const ARCGIS_LAYER_LABELS = {
+    'arcgis-sawah-2023': 'Sawah 2023 (Kementan)',
+    'arcgis-sawah-2019': 'LBS 2019 (Kementan)',
+    'arcgis-kawasan-padi': 'Kawasan Padi (Kementan)',
+    'arcgis-kawasan-jagung': 'Kawasan Jagung (Kementan)',
+    'arcgis-kawasan-kedelai': 'Kawasan Kedelai (Kementan)'
+  };
+
+  function buildGeoportalLegendGraphicUrl(wmsUrl, layerName) {
+    return wmsUrl + '?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetLegendGraphic&FORMAT=image%2Fpng' +
+      '&LAYER=' + encodeURIComponent(resolveGeoportalLayerName(layerName)) +
+      '&LEGEND_OPTIONS=fontAntiAliasing:true;forceLabels:on';
+  }
+
+  function geoportalLabelFor(layerName) {
+    let lbl = layerName, cat = '';
+    if (Array.isArray(GEOPORTAL_LAYER_DATA)) {
+      for (const d of GEOPORTAL_LAYER_DATA) {
+        if (d && d.id === layerName) { lbl = d.label || layerName; cat = d.category || ''; break; }
+      }
+    }
+    return cat ? cat + ' — ' + lbl : lbl;
+  }
+
+  function getGeoportalLegendItems() {
+    const items = [];
+    getActiveGeoportalLayers().forEach(a => {
+      const isPoint = geoportalPointLayerKeys.has(`${a.wmsUrl}::${a.layerName}`);
+      items.push({ kind: isPoint ? 'point' : 'wms', label: geoportalLabelFor(a.layerName), wmsUrl: a.wmsUrl, layerName: a.layerName });
+    });
+    getActiveArcgisLayers().forEach(a => {
+      items.push({ kind: 'arcgis', label: ARCGIS_LAYER_LABELS[a.layerKey] || a.layerKey });
+    });
+    return items;
+  }
+
+  const GeoportalLegendControl = L.Control.extend({
+    options: { position: 'bottomleft' },
+    onAdd() {
+      this._container = L.DomUtil.create('div', 'geoportal-legend leaflet-bar');
+      L.DomEvent.disableClickPropagation(this._container);
+      L.DomEvent.disableScrollPropagation(this._container);
+      this._container.style.display = 'none';
+      return this._container;
+    }
+  });
+  let geoportalLegendCtrl = null;
+  let geoportalLegendSig = '';
+
+  function renderGeoportalLegend() {
+    if (!geoportalLegendCtrl) {
+      if (typeof map === 'undefined' || !map) return;
+      try { geoportalLegendCtrl = new GeoportalLegendControl().addTo(map); } catch (e) { return; }
+    }
+    const el = geoportalLegendCtrl._container;
+    if (!el) return;
+    const isGpTab = window.currentActiveTab === 'tab-geoportal';
+    const items = isGpTab ? getGeoportalLegendItems() : [];
+    if (!items.length) {
+      geoportalLegendSig = '';
+      el.style.display = 'none';
+      el.innerHTML = '';
+      return;
+    }
+    const sig = items.map(i => i.kind + ':' + i.label + ':' + (i.wmsUrl || '')).join('|');
+    if (sig === geoportalLegendSig && el.style.display !== 'none') return;
+    geoportalLegendSig = sig;
+    let html = '<div class="geoportal-legend-title">Legenda</div>';
+    items.forEach(it => {
+      const safeLbl = (typeof escapeBMKGHTML === 'function') ? escapeBMKGHTML(it.label) : it.label;
+      if (it.kind === 'wms') {
+        html += '<div class="geoportal-legend-item">' +
+          '<div class="geoportal-legend-label">' + safeLbl + '</div>' +
+          '<img class="geoportal-legend-img" alt="" src="' +
+          buildGeoportalLegendGraphicUrl(it.wmsUrl, it.layerName) + '"></div>';
+      } else {
+        html += '<div class="geoportal-legend-item geoportal-legend-row">' +
+          '<span class="geoportal-legend-swatch' + (it.kind === 'point' ? ' point' : '') + '"></span>' +
+          '<span class="geoportal-legend-label">' + safeLbl + '</span></div>';
+      }
+    });
+    el.innerHTML = html;
+    el.querySelectorAll('img.geoportal-legend-img').forEach(img => {
+      img.addEventListener('error', () => {
+        const item = img.closest('.geoportal-legend-item');
+        if (item) {
+          item.classList.add('img-fail');
+          const sw = document.createElement('span');
+          sw.className = 'geoportal-legend-swatch';
+          img.replaceWith(sw);
+        }
+      });
+    });
+    el.style.display = 'block';
+  }
+
+  let __gpLegendTimer = null;
+  function scheduleRenderGeoportalLegend() {
+    clearTimeout(__gpLegendTimer);
+    __gpLegendTimer = setTimeout(renderGeoportalLegend, 200);
+  }
+
+  if (typeof map !== 'undefined' && map && typeof map.on === 'function') {
+    map.on('layeradd layerremove', scheduleRenderGeoportalLegend);
+  }
+
   function buildArcGISIdentifyParams(url, layers, latlng) {
     const bounds = map.getBounds();
     const sw = bounds.getSouthWest();
@@ -532,7 +644,7 @@
     if (!config) return;
 
     if (visible) {
-      if (arcgisSawahLayers[layerKey]) { map.addLayer(arcgisSawahLayers[layerKey]); return; }
+      if (arcgisSawahLayers[layerKey]) { map.addLayer(arcgisSawahLayers[layerKey]); scheduleRenderGeoportalLegend(); return; }
       try {
         arcgisSawahLayers[layerKey] = L.esri.dynamicMapLayer({
           url: config.url,
@@ -547,6 +659,7 @@
         map.removeLayer(arcgisSawahLayers[layerKey]);
       }
     }
+    scheduleRenderGeoportalLegend();
   }
 
   var GEOPORTAL_LAYER_DATA = [];
@@ -781,7 +894,7 @@
         hiddenEls.push({ restore: () => sidebar.classList.remove('collapsed') });
       }
 
-      const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .geoportal-print-btn, .basemap-btn, .basemap-control-wrap, .leaflet-control-scale, .detail-panel-btn, #detail-panel');
+      const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .geoportal-print-btn, .geoportal-legend, .basemap-btn, .basemap-control-wrap, .leaflet-control-scale, .detail-panel-btn, #detail-panel');
       overlays.forEach(el => {
         if (el && getComputedStyle(el).display !== 'none') {
           const prev = el.style.display;
@@ -986,6 +1099,42 @@
         pdf.text(label, px, mapFrameY + mapFrameH + 3.5, { align: 'center' });
       }
 
+      // --- Kumpulkan & muat grafik legenda (GetLegendGraphic) untuk layer aktif ---
+      const legendItems = [];
+      getActiveGeoportalLayers().forEach(a => {
+        const isPoint = geoportalPointLayerKeys.has(`${a.wmsUrl}::${a.layerName}`);
+        legendItems.push({ kind: isPoint ? 'point' : 'wms', label: dispName(a.layerName), wmsUrl: a.wmsUrl, layerName: a.layerName });
+      });
+      getActiveArcgisLayers().forEach(a => {
+        legendItems.push({ kind: 'arcgis', label: arcgisLabels[a.layerKey] || a.layerKey });
+      });
+      async function loadLegendGraphic(url) {
+        try {
+          const res = await fetch(url, { mode: 'cors' });
+          if (!res.ok) return null;
+          const blob = await res.blob();
+          if (!blob || !blob.type || blob.type.indexOf('image') !== 0) return null;
+          const dataUrl = await new Promise((resolve, reject) => {
+            const fr = new FileReader();
+            fr.onload = () => resolve(fr.result);
+            fr.onerror = reject;
+            fr.readAsDataURL(blob);
+          });
+          const im = await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = dataUrl;
+          });
+          return { dataUrl, w: im.naturalWidth, h: im.naturalHeight };
+        } catch (e) { return null; }
+      }
+      await Promise.all(legendItems.map(async it => {
+        if (it.kind !== 'wms') return;
+        const r = await loadLegendGraphic(buildGeoportalLegendGraphicUrl(it.wmsUrl, it.layerName));
+        if (r && r.w > 2 && r.h > 2) { it.img = r.dataUrl; it.iw = r.w; it.ih = r.h; }
+      }));
+
       // Skala & Arah Utara dipindah ke kolom LAYER AKTIF (gaya modern ArcGIS Pro).
 
       pdf.setDrawColor(200, 200, 200);
@@ -1064,20 +1213,55 @@
 
       py = sbBY + 8;
 
-      pdf.setFontSize(7);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(55, 65, 81);
-      if (activeNames.length === 0) {
+      // --- Legenda (garis pemisah + jarak agar rapi) ---
+      py += 4;
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+      pdf.line(panelX + 4, py, panelX + panelW - 4, py);
+      py += 5;
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(6.5);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text('LEGENDA', panelX + 4, py + 3);
+      py += 6;
+
+      if (legendItems.length === 0) {
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(6.5);
         pdf.setTextColor(150, 150, 150);
         pdf.text('Tidak ada layer aktif', panelX + 4, py + 3);
       } else {
-        activeNames.forEach(nm => {
-          if (nm === headTitle) return;
-          if (py > mapFrameY + panelH - 4) return;
-          const txt = '• ' + nm;
-          const lines = pdf.splitTextToSize(txt, panelW - 8);
-          lines.forEach(ln => { pdf.text(ln, panelX + 4, py + 3); py += 4; });
-          py += 1;
+        const MM_PER_PX = 25.4 / 96;
+        legendItems.forEach(it => {
+          const txtLines = pdf.splitTextToSize(it.label, panelW - 10);
+          const hasImg = it.kind === 'wms' && it.img;
+          let imgW, imgH;
+          if (hasImg) {
+            imgW = it.iw * MM_PER_PX; imgH = it.ih * MM_PER_PX;
+            const maxW = panelW - 12, maxH = 16;
+            if (imgW > maxW) { imgH *= maxW / imgW; imgW = maxW; }
+            if (imgH > maxH) { imgW *= maxH / imgH; imgH = maxH; }
+          } else {
+            imgW = 6; imgH = 4.4;
+          }
+          const rowH = txtLines.length * 3 + 1.5 + imgH + 2;
+          if (py + rowH > mapFrameY + panelH - 3) return;
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(6.5);
+          pdf.setTextColor(55, 65, 81);
+          txtLines.forEach(ln => { pdf.text(ln, panelX + 4, py + 2.5); py += 3; });
+          py += 1.5;
+          if (hasImg) {
+            try { pdf.addImage(it.img, 'PNG', panelX + 4, py, imgW, imgH); } catch (e) {}
+          } else if (it.kind === 'point') {
+            pdf.setFillColor(231, 76, 60);
+            pdf.circle(panelX + 6, py + 2.2, 1.8, 'F');
+          } else {
+            pdf.setFillColor(100, 116, 139);
+            pdf.roundedRect(panelX + 4, py + 0.3, 6, imgH - 0.6, 0.8, 0.8, 'F');
+          }
+          py += imgH + 2;
         });
       }
 

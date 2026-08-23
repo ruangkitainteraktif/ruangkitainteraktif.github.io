@@ -176,7 +176,7 @@
       width: 46px !important;
       height: 46px !important;
       margin: 12px !important;
-      margin-top: 0 !important;
+      margin-bottom: 0 !important;
       border: 1px solid rgba(255,255,255,.86) !important;
       border-radius: 50% !important;
       background: linear-gradient(145deg, #ffffff, #e9f7fc) !important;
@@ -311,6 +311,63 @@
     }
     .basemap-option:hover {
       background: #f1f5f9;
+    }
+    .geoportal-legend {
+      background: rgba(255,255,255,.96);
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(15,23,42,.16);
+      padding: 8px 10px;
+      max-width: 240px;
+      max-height: 260px;
+      overflow-y: auto;
+      font-family: inherit;
+    }
+    .geoportal-legend-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #1e293b;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 5px;
+      margin-bottom: 6px;
+    }
+    .geoportal-legend-item {
+      margin-bottom: 7px;
+    }
+    .geoportal-legend-item:last-child {
+      margin-bottom: 0;
+    }
+    .geoportal-legend-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .geoportal-legend-label {
+      font-size: 10.5px;
+      line-height: 1.35;
+      color: #475569;
+      word-break: break-word;
+    }
+    .geoportal-legend-img {
+      display: block;
+      max-width: 100%;
+      max-height: 110px;
+      margin-top: 3px;
+      image-rendering: auto;
+    }
+    .geoportal-legend-swatch {
+      flex: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      background: #64748b;
+      display: inline-block;
+    }
+    .geoportal-legend-swatch.point {
+      border-radius: 50%;
+      background: #e74c3c;
     }
     .basemap-option.active {
       color: #0879bf;
