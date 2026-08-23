@@ -186,5 +186,22 @@
     if (btn) openGempaSubtab(btn);
   }
 
+  function openGeoidSubtab(btn) {
+    var subtabId = btn.getAttribute('data-subtab');
+    if (!subtabId) return;
+
+    var tabs = btn.parentElement.querySelectorAll('.geoid-subtab-btn');
+    for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+    btn.classList.add('active');
+
+    var panels = document.querySelectorAll('.geoid-subtab-panel');
+    for (var j = 0; j < panels.length; j++) panels[j].classList.remove('active');
+    var target = document.getElementById(subtabId);
+    if (target) target.classList.add('active');
+
+    if (typeof map !== 'undefined' && map) setTimeout(function () { map.invalidateSize(); }, 200);
+  }
+
   window.openGempaSubtabById = openGempaSubtabById;
   window.openGempaSubtab = openGempaSubtab;
+  window.openGeoidSubtab = openGeoidSubtab;

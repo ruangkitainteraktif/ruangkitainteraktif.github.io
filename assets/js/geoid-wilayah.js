@@ -9,9 +9,6 @@ const GEOID_PROVINCE_FALLBACK = [
   ['91', 'Papua Barat'], ['92', 'Papua'], ['93', 'Papua Selatan'], ['94', 'Papua Tengah'], ['95', 'Papua Pegunungan'], ['96', 'Papua Barat Daya']
 ].map(([code, name]) => ({ code, name }));
 
-let geoidSelectedProvince = null;
-let geoidSelectedRegency = null;
-let geoidSelectedDistrict = null;
 let geoidWilayahDataPromise = null;
 let geoidBoundaryLayer = null;
 let geoidPointMarker = null;
@@ -150,69 +147,15 @@ function computeAgriculturalCvss(sawahPct, erosiKelas, ndviMean) {
   return { score: roundedScore, severity, color, vector, insight, prioritas: prioritas.join(' + ') };
 }
 
-function getGeoidSelection() {
-  const fields = [
-    ['pilihDesa', 'desa'],
-    ['pilihKecamatan', 'kecamatan'],
-    ['pilihKabupaten', 'kabkota'],
-    ['pilihProvinsi', 'provinsi']
-  ];
 
-  const result = {};
-  fields.forEach(([id, key]) => {
-    const select = document.getElementById(id);
-    const option = select && select.options[select.selectedIndex];
-    if (option && option.value) result[key] = option.dataset.name || option.textContent.trim();
-  });
-  return result;
-}
-
-function updateApplyWilayahButton() {
-  const btn = document.getElementById('applyWilayah');
-  if (!btn) return;
-
-  const selection = getGeoidSelection();
-  btn.disabled = !Object.keys(selection).length;
-  btn.textContent = 'Cari Wilayah';
-}
-
-function resetGeoidSelect(select, placeholder, disabled = true) {
-  select.innerHTML = `<option value="">${placeholder}</option>`;
-  select.disabled = disabled;
-}
-
-function renderGeoidProvinces(provinces) {
-  const select = document.getElementById('pilihProvinsi');
-  if (!select) {
-    console.error('pilihProvinsi element not found');
-    return;
-  }
-
-  select.innerHTML = '<option value="">Pilih Provinsi</option>';
-  provinces.forEach(province => {
-    const option = document.createElement('option');
-    option.value = province.code;
-    option.textContent = province.name;
-    option.dataset.name = province.name;
-    option.dataset.regenciesUrl = province.regencies_url;
-    select.appendChild(option);
-  });
-}
 
 async function loadGeoidProvinces() {
-  const select = document.getElementById('pilihProvinsi');
-  if (select) select.innerHTML = '<option value="">Memuat provinsi...</option>';
-
   try {
     const data = await getGeoidWilayahData();
-    const provinces = getWilayahChildren(data, '', 1)
-      .map(item => ({ code: item.kode, name: item.nama }));
-    if (!provinces.length) throw new Error('Data provinsi tidak ditemukan');
-    renderGeoidProvinces(provinces);
+    if (!getWilayahChildren(data, '', 1).length) throw new Error('Data provinsi tidak ditemukan');
     populateGeoidSummaryCards(data);
   } catch (err) {
     console.warn('kode_wilayah.json tidak dapat dimuat; memakai data cadangan:', err);
-    renderGeoidProvinces(GEOID_PROVINCE_FALLBACK);
   }
 }
 
@@ -233,76 +176,7 @@ function populateGeoidSummaryCards(data) {
   set('geoidCountDesa', counts.desa);
 }
 
-async function loadGeoidRegencies(provinceCode) {
-  try {
-    const data = await getGeoidWilayahData();
-    const regencies = getWilayahChildren(data, provinceCode, 2);
 
-    const select = document.getElementById('pilihKabupaten');
-    if (!select) return;
-
-    select.innerHTML = '<option value="">Pilih Kabupaten/Kota</option>';
-    select.disabled = false;
-
-    regencies.forEach(regency => {
-      const option = document.createElement('option');
-      option.value = regency.kode;
-      option.textContent = regency.nama;
-      option.dataset.name = regency.nama;
-      select.appendChild(option);
-    });
-  } catch (err) {
-    console.error('Gagal memuat kabupaten:', err);
-  }
-}
-
-async function loadGeoidDistricts(regencyCode) {
-  try {
-    const data = await getGeoidWilayahData();
-    const districts = getWilayahChildren(data, regencyCode, 3);
-
-    const select = document.getElementById('pilihKecamatan');
-    if (!select) return;
-
-    select.innerHTML = '<option value="">Pilih Kecamatan</option>';
-    select.disabled = false;
-
-    districts.forEach(district => {
-      const option = document.createElement('option');
-      option.value = district.kode;
-      option.textContent = district.nama;
-      option.dataset.name = district.nama;
-      select.appendChild(option);
-    });
-  } catch (err) {
-    console.error('Gagal memuat kecamatan:', err);
-  }
-}
-
-async function loadGeoidVillages(districtCode) {
-  try {
-    const data = await getGeoidWilayahData();
-    const villages = getWilayahChildren(data, districtCode, 4);
-
-    const select = document.getElementById('pilihDesa');
-    if (!select) return;
-
-    select.innerHTML = '<option value="">Pilih Desa</option>';
-    select.disabled = false;
-
-    villages.forEach(village => {
-      const option = document.createElement('option');
-      option.value = village.kode;
-      option.textContent = village.nama;
-      option.dataset.code = village.kode;
-      option.dataset.formattedCode = village.kode;
-      option.dataset.name = village.nama;
-      select.appendChild(option);
-    });
-  } catch (err) {
-    console.error('Gagal memuat desa:', err);
-  }
-}
 
 async function geocodeVillageByAdm4(adm4Code) {
   try {
@@ -743,9 +617,12 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
                 <span class="boundary-popup-meta-label">${detailLabel}</span>
                 <span class="boundary-popup-meta-value">${detailCount} wilayah</span>
               </div>` : ''}
-            </div>
-            </div>
-          </div>
+             </div>
+             <div style="padding:10px 14px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:center;">
+               <button type="button" onclick="showDukcapilDetail('${escapeGeoidHtml(kode)}')" style="border:0;background:#2563eb;color:#fff;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;">Data Penduduk</button>
+             </div>
+             </div>
+           </div>
         `;
       geoidBoundaryLayer.bindPopup(boundaryPopupHtml, { maxWidth: 300, className: 'boundary-leaflet-popup' });
     }
@@ -823,86 +700,6 @@ function clearGeoidChildBoundaries() {
   geoidChildBoundaryLayer = null;
 }
 
-const geoidWait = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-async function fetchGeoidChildBoundaryFeature(child, retries = 3) {
-  let lastError = null;
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20000);
-    try {
-      const response = await fetch(`https://wilayah.smartartstudio.my.id/api/boundaries/${child.kode}`, { signal: controller.signal });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const boundary = await response.json();
-      if (!boundary?.path?.length) throw new Error('Geometri batas tidak tersedia');
-      const collection = boundaryPathToGeoJSON(boundary.path, {
-        nama: boundary.nama || child.nama,
-        kode: child.kode
-      });
-      return { feature: collection.features[0], error: null };
-    } catch (error) {
-      lastError = error;
-      if (attempt < retries) await geoidWait(500 * attempt);
-    } finally {
-      clearTimeout(timeout);
-    }
-  }
-  return { feature: null, error: lastError || new Error('Tidak dapat memuat batas wilayah') };
-}
-
-async function fetchGeoidChildBoundaryFeatures(parentCode, childDepth, concurrency = 4) {
-  const data = await getGeoidWilayahData();
-  const children = getWilayahChildren(data, parentCode, childDepth);
-  const features = [];
-  const failed = [];
-  let nextIndex = 0;
-  const worker = async () => {
-    while (nextIndex < children.length) {
-      const child = children[nextIndex++];
-      const { feature, error } = await fetchGeoidChildBoundaryFeature(child);
-      if (feature) features.push(feature);
-      else failed.push({ child, error });
-    }
-  };
-  await Promise.all(Array.from({ length: Math.min(concurrency, children.length) }, worker));
-  return { children, features, failed };
-}
-
-async function showGeoidChildBoundaries(parentCode, childDepth) {
-  if (!parentCode || typeof map === 'undefined' || !map) return;
-  clearGeoidChildBoundaries();
-  const requestId = ++geoidChildBoundaryRequestId;
-  geoidChildBoundaryLoading = true;
-  geoidChildBoundaryParentCode = parentCode;
-  showGeoidBoundaryLoading();
-
-  try {
-    const { children, features, failed } = await fetchGeoidChildBoundaryFeatures(parentCode, childDepth);
-    if (!children.length || requestId !== geoidChildBoundaryRequestId) return;
-    if (requestId !== geoidChildBoundaryRequestId || !features.length) return;
-
-    geoidChildBoundaryLayer = L.geoJSON({ type: 'FeatureCollection', features }, {
-      style: {
-        color: '#0f766e',
-        weight: 1.25,
-        opacity: 0.9,
-        fillColor: '#2dd4bf',
-        fillOpacity: 0.04
-      },
-      onEachFeature: (feature, layer) => {
-        const { nama, kode } = feature.properties || {};
-        layer.bindPopup(`<div class="boundary-popup"><div class="boundary-popup-header"><div class="boundary-popup-badge"><span class="boundary-popup-badge-dot"></span>Batas Wilayah</div><strong>${escapeGeoidHtml(nama || 'Wilayah')}</strong><span>${escapeGeoidHtml(kode || '')}</span></div></div>`, { maxWidth: 260, className: 'boundary-leaflet-popup' });
-      }
-    }).addTo(map);
-    geoidChildBoundaryLayer.bringToFront();
-    if (failed.length) console.warn(`[GEOID] ${failed.length}/${children.length} batas turunan gagal dimuat setelah percobaan ulang.`, failed);
-  } catch (error) {
-    console.warn('[GEOID] Gagal memuat batas wilayah turunan:', error);
-  } finally {
-    if (requestId === geoidChildBoundaryRequestId) geoidChildBoundaryLoading = false;
-    hideGeoidBoundaryLoading();
-  }
-}
 
 function getActiveBoundaryKode() {
   return window._lastGeotaniLocation?.kode
@@ -1926,53 +1723,7 @@ function setAdmText(id, value) {
   if (el) el.innerText = value || '-';
 }
 
-async function cariLayerWilayah() {
-  const sidebar = document.getElementById('sidebar-left');
-  if (sidebar && !sidebar.classList.contains('collapsed')) {
-    sidebar.classList.add('collapsed');
-    const toggleBtn = document.getElementById('toggleBtn');
-    if (toggleBtn) setToggleIcon(true);
-    setTimeout(() => map.invalidateSize(), 300);
-  }
 
-  const selection = getGeoidSelection();
-  if (!Object.keys(selection).length) {
-    alert('Silakan pilih wilayah terlebih dahulu');
-    return;
-  }
-
-  const desaSelect = document.getElementById('pilihDesa');
-  const selectedVillage = desaSelect && desaSelect.options[desaSelect.selectedIndex];
-  const adm4Code = selectedVillage && selectedVillage.value;
-  const selectedCode = adm4Code || document.getElementById('pilihKecamatan')?.value || document.getElementById('pilihKabupaten')?.value || document.getElementById('pilihProvinsi')?.value;
-
-  const btn = document.getElementById('applyWilayah');
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = 'Mencari...';
-  }
-
-  try {
-    if (!selectedCode) {
-      alert('Silakan pilih wilayah terlebih dahulu');
-      return;
-    }
-    showGeoidBoundary(selectedCode);
-    setAdmText('adm-provinsi', selection.provinsi);
-    setAdmText('adm-kabkota', selection.kabkota);
-    setAdmText('adm-kecamatan', selection.kecamatan);
-    setAdmText('adm-desa', selection.desa);
-    if (window.currentActiveTab === 'tab-geotani') window._lastGeotaniLocation = { kode: selectedCode };
-  } catch (err) {
-    console.error('Error cari wilayah:', err);
-    alert('Gagal mencari wilayah');
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = 'Cari Wilayah';
-    }
-  }
-}
 
 let geoidSearchLocations = [];
 let geoidSearchTimer;
@@ -2249,58 +2000,7 @@ async function selectGeoidGeocodeResult(item, container) {
   showGeoidBoundary(adm4Code);
 }
 
-function setupGeoidDropdowns() {
-  const provinsiSelect = document.getElementById('pilihProvinsi');
-  const kabupatenSelect = document.getElementById('pilihKabupaten');
-  const kecamatanSelect = document.getElementById('pilihKecamatan');
-  const desaSelect = document.getElementById('pilihDesa');
 
-  if (!provinsiSelect || !kabupatenSelect || !kecamatanSelect || !desaSelect) return;
-
-  provinsiSelect.addEventListener('change', function() {
-    geoidSelectedProvince = this.value;
-    resetGeoidSelect(kabupatenSelect, 'Pilih Kabupaten/Kota', !this.value);
-    resetGeoidSelect(kecamatanSelect, 'Pilih Kabupaten/Kota');
-    resetGeoidSelect(desaSelect, 'Pilih Kecamatan');
-    updateApplyWilayahButton();
-
-    if (this.value) {
-      loadGeoidRegencies(this.value);
-      showGeoidChildBoundaries(this.value, 2);
-    } else {
-      clearGeoidChildBoundaries();
-    }
-  });
-
-  kabupatenSelect.addEventListener('change', function() {
-    geoidSelectedRegency = this.value;
-    resetGeoidSelect(kecamatanSelect, 'Pilih Kecamatan', !this.value);
-    resetGeoidSelect(desaSelect, 'Pilih Kecamatan');
-    updateApplyWilayahButton();
-
-    if (this.value) {
-      loadGeoidDistricts(this.value);
-      showGeoidChildBoundaries(this.value, 3);
-    } else {
-      clearGeoidChildBoundaries();
-    }
-  });
-
-  kecamatanSelect.addEventListener('change', function() {
-    geoidSelectedDistrict = this.value;
-    resetGeoidSelect(desaSelect, 'Pilih Desa', !this.value);
-    updateApplyWilayahButton();
-
-    if (this.value) {
-      loadGeoidVillages(this.value);
-      showGeoidChildBoundaries(this.value, 4);
-    } else {
-      clearGeoidChildBoundaries();
-    }
-  });
-
-  desaSelect.addEventListener('change', updateApplyWilayahButton);
-}
 
 window.printGeotaniPdf = async function() {
   if (!lastGeotaniPopupData) {
@@ -2696,7 +2396,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const geoidTab = document.getElementById('tab-geoid');
   if (geoidTab) {
     loadGeoidProvinces();
-    setupGeoidDropdowns();
     setupGeoidSearch();
     buildGeoidSearchIndex();
   }

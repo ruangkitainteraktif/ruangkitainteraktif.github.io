@@ -424,7 +424,7 @@
 
   /* ── Indicator Dropdown (all 18 indicators) ── */
   function renderIndicatorDropdown(container, onChange) {
-    let html = `<select id="indicator-select" style="width:100%;padding:6px 8px;font-size:9px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;color:#334155;margin-bottom:8px;cursor:pointer;">`;
+    let html = `<select id="indicator-select" style="width:100%;padding:11px 12px;font-size:12px;font-weight:600;border:2px solid #0ea5e9;border-radius:8px;background:#f0f9ff;color:#0c4a6e;margin-bottom:10px;cursor:pointer;box-shadow:0 1px 3px rgba(14,165,233,0.18);">`;
     html += `<option value="jumlah">Jumlah Penduduk</option>`;
     html += `<option value="laju">Laju Pertumbuhan</option>`;
     for (const k of kelompokOrder) {
@@ -517,19 +517,12 @@
 
   /* ── Main Render ── */
   async function renderPopulationChart() {
-    const panelBody = document.querySelector('#detail-panel .panel-body');
-    if (!panelBody) return;
+    const statsCard = document.getElementById('geoidStatsCard');
+    const indicatorCard = document.getElementById('geoidIndicatorCard');
+    if (!statsCard || !indicatorCard) return;
 
-    let chartContainer = document.getElementById('population-chart-container');
-    if (!chartContainer) {
-      chartContainer = document.createElement('div');
-      chartContainer.id = 'population-chart-container';
-      chartContainer.className = 'population-chart-box';
-      panelBody.insertBefore(chartContainer, panelBody.firstChild);
-    }
-
-    chartContainer.innerHTML = '<div style="text-align:center;padding:15px;color:#94a3b8;font-size:10px;">Memuat data kependudukan...</div>';
-    chartContainer.style.display = 'block';
+    statsCard.innerHTML = '<div style="text-align:center;padding:15px;color:#94a3b8;font-size:10px;">Memuat data kependudukan...</div>';
+    indicatorCard.innerHTML = '<div style="text-align:center;padding:15px;color:#94a3b8;font-size:10px;">Memuat data kependudukan...</div>';
 
     const [disUmur, genData, rankJson, lajuJson, tfrJson, imrJson, rjkJson, rkJson, lansiaJson] = await Promise.all([
       loadDisUmur(), loadGen(), loadRank(), loadLaju(),
@@ -537,7 +530,8 @@
     ]);
 
     if (!disUmur || !disUmur.dimensi_data) {
-      chartContainer.innerHTML = '<div style="text-align:center;padding:15px;color:#ef4444;font-size:10px;">Gagal memuat data kependudukan</div>';
+      statsCard.innerHTML = '<div style="text-align:center;padding:15px;color:#ef4444;font-size:10px;">Gagal memuat data kependudukan</div>';
+      indicatorCard.innerHTML = '';
       return;
     }
 
@@ -555,7 +549,7 @@
       { label: 'Persentase Lansia', value: getIndicatorNational(lansiaJson), unit: '%', color: '#059669' },
     ];
 
-    function buildHTML() {
+    function buildStatsHTML() {
       const summaryHTML = summaryCards.map(c => {
         const val = c.value !== null ? c.value : '-';
         return `<div style="flex:1;min-width:80px;border:1px solid #e5e7eb;border-radius:6px;padding:8px 6px;text-align:center;background:#fff;">
@@ -566,8 +560,8 @@
       }).join('');
 
       return `<div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <span style="font-size:10px;font-weight:700;color:#1e293b;">Kependudukan Indonesia</span>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #e2e8f0;">
+          <span style="font-size:13px;font-weight:700;color:#1e293b;">Kependudukan Indonesia</span>
           <span style="font-size:7px;color:#94a3b8;">BPS SUPAS 2025</span>
         </div>
 
@@ -579,28 +573,34 @@
 
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">${summaryHTML}</div>
 
-        <div style="margin-bottom:8px;">
-          <div style="font-size:8px;font-weight:600;color:#475569;margin-bottom:3px;">Piramida Penduduk</div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:11px;font-weight:700;color:#1e293b;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0;">Piramida Penduduk</div>
           <div id="pyramid-chart"></div>
         </div>
 
-        <div style="margin-bottom:8px;">
-          <div style="font-size:8px;font-weight:600;color:#475569;margin-bottom:3px;">Persentase Menurut Generasi</div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:11px;font-weight:700;color:#1e293b;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0;">Persentase Menurut Generasi</div>
           <div id="generation-chart"></div>
-        </div>
-
-        <div id="indicator-dropdown"></div>
-
-        <div id="indicator-chart"></div>
-
-        <div id="indicator-table-container">
-          <div style="font-size:8px;font-weight:600;color:#475569;margin-bottom:3px;" id="indicator-table-title">Peringkat Provinsi (Jumlah Penduduk)</div>
-          <div id="ranking-table"></div>
         </div>
       </div>`;
     }
 
-    chartContainer.innerHTML = buildHTML();
+    function buildIndicatorHTML() {
+      return `<div style="margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:#0c4a6e;margin-bottom:8px;">Pilih Indikator Penduduk</div>
+          <div id="indicator-dropdown"></div>
+        </div>
+
+        <div id="indicator-chart"></div>
+
+        <div id="indicator-table-container">
+          <div style="font-size:11px;font-weight:700;color:#1e293b;margin-bottom:6px;" id="indicator-table-title">Peringkat Provinsi (Jumlah Penduduk)</div>
+          <div id="ranking-table"></div>
+        </div>`;
+    }
+
+    statsCard.innerHTML = buildStatsHTML();
+    indicatorCard.innerHTML = buildIndicatorHTML();
 
     renderIndicatorDropdown(document.getElementById('indicator-dropdown'), async function (e) {
       const val = e.target.value;

@@ -432,78 +432,38 @@
         <div id="tab-geoid" class="tab-content active">
           <h4 style="font-size:15px; margin-bottom:4px;">GeoNusa Analysis</h4>
           <p style="font-size:13px; color:#668198; margin-bottom:20px;">Pilih wilayah untuk menampilkan insight.</p>
-          <div id="geoidSummaryCards" class="geoid-summary-cards">
-            <div class="geoid-summary-box geoid-summary-prov">
-              <span class="geoid-summary-count" id="geoidCountProv" style="font-size:22px;font-weight:700;line-height:1;">–</span>
-              <span class="geoid-summary-label">Provinsi</span>
-            </div>
-            <div class="geoid-summary-box geoid-summary-kab">
-              <span class="geoid-summary-count" id="geoidCountKab" style="font-size:22px;font-weight:700;line-height:1;">–</span>
-              <span class="geoid-summary-label">Kab/Kota</span>
-            </div>
-            <div class="geoid-summary-box geoid-summary-kec">
-              <span class="geoid-summary-count" id="geoidCountKec" style="font-size:22px;font-weight:700;line-height:1;">–</span>
-              <span class="geoid-summary-label">Kecamatan</span>
-            </div>
-            <div class="geoid-summary-box geoid-summary-desa">
-              <span class="geoid-summary-count" id="geoidCountDesa" style="font-size:22px;font-weight:700;line-height:1;">–</span>
-              <span class="geoid-summary-label">Desa/Kel</span>
-            </div>
+
+          <div class="geoid-subtabs">
+            <button class="geoid-subtab-btn active" data-subtab="geoid-subtab-statistik" onclick="openGeoidSubtab(this)">Statistik Indonesia</button>
+            <button class="geoid-subtab-btn" data-subtab="geoid-subtab-indikator" onclick="openGeoidSubtab(this)">Indikator Penduduk</button>
           </div>
-          <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
 
-          <div class="cctv-card">
-            <div class="cctv-card-header">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              <span>Cari Wilayah - Insight</span>
+          <div id="geoid-subtab-statistik" class="geoid-subtab-panel active">
+            <div id="geoidSummaryCards" class="geoid-summary-cards">
+              <div class="geoid-summary-box geoid-summary-prov">
+                <span class="geoid-summary-count" id="geoidCountProv" style="font-size:20px;font-weight:700;line-height:1;">–</span>
+                <span class="geoid-summary-label">Provinsi</span>
+              </div>
+              <div class="geoid-summary-box geoid-summary-kab">
+                <span class="geoid-summary-count" id="geoidCountKab" style="font-size:20px;font-weight:700;line-height:1;">–</span>
+                <span class="geoid-summary-label">Kab/Kota</span>
+              </div>
+              <div class="geoid-summary-box geoid-summary-kec">
+                <span class="geoid-summary-count" id="geoidCountKec" style="font-size:20px;font-weight:700;line-height:1;">–</span>
+                <span class="geoid-summary-label">Kecamatan</span>
+              </div>
+              <div class="geoid-summary-box geoid-summary-desa">
+                <span class="geoid-summary-count" id="geoidCountDesa" style="font-size:20px;font-weight:700;line-height:1;">–</span>
+                <span class="geoid-summary-label">Desa/Kel</span>
+              </div>
             </div>
-            <div class="cctv-card-body">
-            <div class="query-box">
-              <div class="form-group">
-                <label for="pilihProvinsi">Pilih <b>Provinsi</b></label>
-                <select id="pilihProvinsi">
-                  <option value=""></option>
-                </select>
-              </div>
+            <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
 
-              <div class="form-group">
-                <label for="pilihKabupaten">Pilih <b>Kabupaten/Kota</b></label>
-                <select id="pilihKabupaten" disabled>
-                  <option value="">Pilih Provinsi</option>
-                </select>
-              </div>
+            <div id="geoidStatsCard" class="geoid-population-card"></div>
+          </div>
 
-              <div class="form-group">
-                <label for="pilihKecamatan">Pilih <b>Kecamatan</b></label>
-                <select id="pilihKecamatan" disabled>
-                  <option value="">Pilih Kab/Kota</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="pilihDesa">Pilih <b>Desa</b></label>
-                <select id="pilihDesa" disabled>
-                  <option value="">Pilih Kecamatan</option>
-                </select>
-              </div>
-
-              <div class="geoid-data-toggles">
-                <label class="geoid-check">
-                  <input id="geoidToggleKemendagri" type="checkbox" checked>
-                  <svg class="geoid-check-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><polyline points="9 12 11 14 15 10"/></svg>
-                  <span>KEMENDAGRI</span>
-                </label>
-                <label class="geoid-check">
-                  <input id="geoidToggleBps" type="checkbox" checked>
-                  <svg class="geoid-check-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><polyline points="9 12 11 14 15 10"/></svg>
-                  <span>BPS</span>
-                </label>
-              </div>
-
-              <button id="applyWilayah" class="btn-wilayah-apply" type="button" disabled onclick="cariLayerWilayah()">Cari
-                Wilayah</button>
-            </div>
-            </div>
+          <div id="geoid-subtab-indikator" class="geoid-subtab-panel">
+            <div id="geoidIndicatorCard" class="geoid-indicator-card"></div>
           </div>
 
         </div>

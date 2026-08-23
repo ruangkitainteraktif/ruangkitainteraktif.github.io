@@ -88,6 +88,7 @@
         <div style="margin-top:12px;padding:10px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;"><div style="font-size:10px;font-weight:700;color:#334155;margin-bottom:8px;">PENDIDIKAN TERAKHIR</div><div style="display:grid;gap:5px;font-size:10px;">${educationChart}</div></div>
         <div style="margin-top:12px;padding:10px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;"><div style="font-size:10px;font-weight:700;color:#334155;margin-bottom:8px;">GOLONGAN DARAH</div><div style="display:grid;gap:5px;font-size:10px;">${bloodChart}</div></div>
         <div style="margin-top:12px;padding:10px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;"><div style="font-size:10px;font-weight:700;color:#334155;margin-bottom:3px;">PEKERJAAN</div><div style="font-size:8px;color:#94a3b8;margin-bottom:8px;">Kategori mengikuti kode pada dataset Dukcapil lokal.</div><div style="display:grid;gap:5px;font-size:10px;">${jobChart}</div></div>
+        <div style="margin-top:12px;padding:10px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;font-size:9px;color:#64748b;line-height:1.5;text-align:center;">Peta yang ditampilkan merupakan peta indikatif, data yang ditampilkan merupakan agregat data kependudukan dari DKB 2024 Semester 2</div>
       </div>`;
   }
 
@@ -113,5 +114,12 @@
       document.getElementById('dukcapilPopulationDetail')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     return data;
+  };
+
+  window.showDukcapilDetail = async function (kode) {
+    const data = await getDukcapilPopulation(kode);
+    renderDetail(data, kode);
+    if (typeof toggleDetailPanel === 'function') toggleDetailPanel(true);
+    document.getElementById('dukcapilPopulationDetail')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 })();
