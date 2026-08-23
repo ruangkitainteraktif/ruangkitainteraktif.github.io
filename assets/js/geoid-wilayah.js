@@ -426,7 +426,7 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
       else { return null; }
 
       const bigBase = 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/BATAS_WILAYAH/MapServer';
-      const url = `${bigBase}/${layer}/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outFields=namobj&geometryPrecision=5`;
+      const url = `${bigBase}/${layer}/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outFields=namobj,kdpkab,kdcpum&geometryPrecision=5`;
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
       const response = await fetch(url, { signal: controller.signal });
@@ -454,19 +454,39 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
       const g = toLatLngs(f.geometry);
       if (!g) continue;
       const a = f.attributes || {};
-      if (a.namobj) nama = a.namobj;
-      else if (a.NAMA_KEL) nama = a.NAMA_KEL;
+      const kdp = (a.kdpkab != null ? a.kdpkab : '').toString().trim();
+      // Level 1: fitur tanpa kdpkab adalah batas provinsi (parent/outline),
+      // sedangkan fitur ber-kdpkab adalah kabupaten/kota (child, terisi).
+      let isParent = true;
+      let fFill = parentFill;
+      if (level === 1) {
+        isParent = (kdp === '');
+        fFill = isParent ? 0 : 0.15;
+      } else if (level === 2 || level === 3) {
+        isParent = true;
+        fFill = 0;
+      }
+      if (a.namobj && (level !== 1 || isParent)) nama = a.namobj;
+      else if (a.NAMA_KEL && (level !== 1 || isParent)) nama = a.NAMA_KEL;
       if (!firstGeom) firstGeom = g;
+      // Untuk level 1, luas diakumulasikan dari fitur kabupaten/kota (child),
+      // bukan dari fitur batas provinsi yang geometri/luasnya degeneratif.
+      const includeArea = !(level === 1 && kdp === '');
       if (geomType === 'polyline') {
         layers.push(L.polyline(g, { color: isGeotaniMode ? '#16a34a' : '#2563eb', weight: 3, opacity: 0.95, dashArray: '7 5' }).addTo(map));
       } else {
-        layers.push(L.polygon(g, { color: isGeotaniMode ? '#16a34a' : '#2563eb', weight: 3, opacity: 0.95, fillColor: isGeotaniMode ? '#4ade80' : '#60a5fa', fillOpacity: parentFill, dashArray: '7 5' }).addTo(map));
-        luasHa += computePolygonAreaHa(g);
+        layers.push(L.polygon(g, { color: isGeotaniMode ? '#16a34a' : '#2563eb', weight: 3, opacity: 0.95, fillColor: isGeotaniMode ? '#4ade80' : '#60a5fa', fillOpacity: fFill, dashArray: '7 5' }).addTo(map));
+        if (includeArea) {
+          const lw = (a.luaswh != null && !isNaN(parseFloat(a.luaswh))) ? parseFloat(a.luaswh) * 100 : computePolygonAreaHa(g);
+          luasHa += lw;
+        }
       }
     }
     if (!layers.length) return null;
 
-    const batasCount = features.length;
+    const batasCount = level === 1
+      ? features.filter(f => { const k = (f.attributes && f.attributes.kdpkab != null ? f.attributes.kdpkab : '').toString().trim(); return k !== ''; }).length
+      : features.length;
     // Gunakan nama admin yang dipilih (data wilayah) supaya level provinsi tidak
     // menampilkan nama satu kabupaten saja.
     try {
