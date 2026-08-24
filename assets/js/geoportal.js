@@ -903,42 +903,7 @@
         }
       });
 
-      const prevBasemap = (typeof currentBasemapName !== 'undefined') ? currentBasemapName : null;
-      if (typeof setBaseMap === 'function' && prevBasemap !== 'esri-satellite') {
-        setBaseMap('esri-satellite');
-      }
-
-      if (typeof getGeoportalLayerBBox === 'function') {
-        let minLat = 90, minLng = 180, maxLat = -90, maxLng = -180, found = false;
-        const gpLayers = getActiveGeoportalLayers();
-        for (const a of gpLayers) {
-          try {
-            const bbox = await getGeoportalLayerBBox(a.wmsUrl, a.layerName);
-            if (bbox) {
-              minLat = Math.min(minLat, bbox.south); minLng = Math.min(minLng, bbox.west);
-              maxLat = Math.max(maxLat, bbox.north); maxLng = Math.max(maxLng, bbox.east);
-              found = true;
-            }
-          } catch (e) { /* abaikan */ }
-        }
-        const agLayers = getActiveArcgisLayers();
-        for (const a of agLayers) {
-          const lyr = arcgisSawahLayers[a.layerKey];
-          if (lyr && typeof lyr.getBounds === 'function') {
-            const b = lyr.getBounds();
-            if (b && b.isValid()) {
-              const sw = b.getSouthWest(), ne = b.getNorthEast();
-              minLat = Math.min(minLat, sw.lat); minLng = Math.min(minLng, sw.lng);
-              maxLat = Math.max(maxLat, ne.lat); maxLng = Math.max(maxLng, ne.lng);
-              found = true;
-            }
-          }
-        }
-        if (found) {
-          map.fitBounds([[minLat, minLng], [maxLat, maxLng]], { maxZoom: 16, padding: [20, 20], duration: 0 });
-          await new Promise(r => setTimeout(r, 1500));
-        }
-      }
+      // Gunakan basemap & zoom yang sedang tampil di layar (tanpa pergantian basemap).
 
       map.invalidateSize();
       await new Promise(r => setTimeout(r, 400));
@@ -990,7 +955,7 @@
         if (leafletContainer) {
           map.invalidateSize();
           await new Promise(r => setTimeout(r, 200));
-          const mapCanvas = await html2canvas(leafletContainer, { useCORS: true, allowTaint: true, scale: 2, logging: false, backgroundColor: '#e8e8e8' });
+          const mapCanvas = await html2canvas(leafletContainer, { useCORS: true, allowTaint: false, scale: 2, logging: false, backgroundColor: '#e8e8e8' });
 
           const canvasAspect = mapCanvas.width / mapCanvas.height;
           const frameAspect = mapFrameW / mapFrameH;
@@ -1275,11 +1240,6 @@
       if (btn) { btn.disabled = false; btn.innerHTML = window.GEOPORTAL_PRINT_ICON || '🖨'; }
       try {
         hiddenEls.forEach(h => { if (h.restore) { try { h.restore(); } catch (e) {} } });
-      } catch (e) {}
-      try {
-        if (prevBasemap && prevBasemap.indexOf('google') === 0 && typeof setBaseMap === 'function') {
-          setBaseMap(prevBasemap);
-        }
       } catch (e) {}
       try { map.invalidateSize(); } catch (e) {}
     }

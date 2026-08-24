@@ -1,5 +1,14 @@
 {
   "sources": {
+    "tanahbumbu": {
+      "wmsUrl": "https://geoportal.tanahbumbukab.go.id/geoserver/ows"
+    },
+    "kaltara": {
+      "wmsUrl": "https://gis.khasanahkonsultama.id/geoserver/ows"
+    },
+    "hstkab": {
+      "wmsUrl": "https://geoportal.hstkab.go.id/geoserver/ows"
+    },
     "temanggung": {
       "wmsUrl": "https://geoportal.temanggungkab.go.id/geoserver/wms",
       "label": "Kabupaten Temanggung"
@@ -16001,6 +16010,489 @@
       ]
     },
     {
+      "id": "kaltara",
+      "title": "Provinsi Kalimantan Utara",
+      "source": "kaltara",
+      "layers": [
+        {
+          "id": "kaltara:Jaringan Transportasi",
+          "label": "Jaringan Transportasi"
+        },
+        {
+          "id": "kaltara:Outline2",
+          "label": "Outline2"
+        },
+        {
+          "id": "kaltara:Pola Ruang",
+          "label": "Pola Ruang"
+        },
+        {
+          "id": "kaltara:Provinsi Kaltara",
+          "label": "Provinsi Kaltara"
+        },
+        {
+          "id": "kaltara:SR telkomunikasi",
+          "label": "Sr Telkomunikasi"
+        },
+        {
+          "id": "kaltara:SR_jaringan_energi",
+          "label": "Sr Jaringan Energi"
+        },
+        {
+          "id": "kaltara:Sistem Jaringan Energi",
+          "label": "Sistem Jaringan Energi"
+        },
+        {
+          "id": "kaltara:Sistem Perkotaan",
+          "label": "Sistem Perkotaan"
+        },
+        {
+          "id": "kaltara:Struktur Ruang 2025",
+          "label": "Struktur Ruang 2025"
+        },
+        {
+          "id": "kaltara:Struktur_Ruang _2017",
+          "label": "Struktur Ruang  2017"
+        },
+        {
+          "id": "kaltara:Sumberdaya Air",
+          "label": "Sumberdaya Air"
+        },
+        {
+          "id": "kaltara:Wilayah_Kab_Kota",
+          "label": "Wilayah Kab Kota"
+        },
+        {
+          "id": "kaltara:2017_Admin_Provinsi_indonesia",
+          "label": "2017 Admin Provinsi Indonesia"
+        },
+        {
+          "id": "kaltara:2017_Batas_Kabupaten_Definitif",
+          "label": "2017 Batas Kabupaten Definitif"
+        },
+        {
+          "id": "kaltara:2017_Batas_Kabupaten_Indikatif",
+          "label": "2017 Batas Kabupaten Indikatif"
+        },
+        {
+          "id": "kaltara:2017_Batas_Negara",
+          "label": "2017 Batas Negara"
+        },
+        {
+          "id": "kaltara:2017_Batas_Perairan",
+          "label": "2017 Batas Perairan"
+        },
+        {
+          "id": "kaltara:2017_Danau",
+          "label": "2017 Danau"
+        },
+        {
+          "id": "kaltara:2017_Garis_Pantai",
+          "label": "2017 Garis Pantai"
+        },
+        {
+          "id": "kaltara:2017_INDEKS_RBI_KALTARA_250",
+          "label": "2017 Indeks Rbi Kaltara 250"
+        },
+        {
+          "id": "kaltara:2017_Ibukota_Kabupaten",
+          "label": "2017 Ibukota Kabupaten"
+        },
+        {
+          "id": "kaltara:2017_Ibukota_Provinsi",
+          "label": "2017 Ibukota Provinsi"
+        },
+        {
+          "id": "kaltara:2017_Kawasan_Strategis",
+          "label": "2017 Kawasan Strategis"
+        },
+        {
+          "id": "kaltara:2017_Laut",
+          "label": "2017 Laut"
+        },
+        {
+          "id": "kaltara:2017_Outline2",
+          "label": "2017 Outline2"
+        },
+        {
+          "id": "kaltara:2017_Pulau_Kalimantan",
+          "label": "2017 Pulau Kalimantan"
+        },
+        {
+          "id": "kaltara:2017_Rencana_Bandar_Udara",
+          "label": "2017 Rencana Bandar Udara"
+        },
+        {
+          "id": "kaltara:2017_Rencana_Jaringan_Jalan",
+          "label": "2017 Rencana Jaringan Jalan"
+        },
+        {
+          "id": "kaltara:2017_Rencana_Jaringan_Pipa_Gas",
+          "label": "2017 Rencana Jaringan Pipa Gas"
+        },
+        {
+          "id": "kaltara:2017_Rencana_Jembatan",
+          "label": "2017 Rencana Jembatan"
+        },
+        {
+          "id": "kaltara:2017_Rencana_Pelabuhan_Sungai",
+          "label": "2017 Rencana Pelabuhan Sungai"
+        },
+        {
+          "id": "kaltara:2017_Rencana_Sistem_Perkotaan",
+          "label": "2017 Rencana Sistem Perkotaan"
+        },
+        {
+          "id": "kaltara:2017_Sistem_Perkotaan",
+          "label": "2017 Sistem Perkotaan"
+        },
+        {
+          "id": "kaltara:2017_Sungai",
+          "label": "2017 Sungai"
+        },
+        {
+          "id": "kaltara:2017_Sungai_Besar",
+          "label": "2017 Sungai Besar"
+        },
+        {
+          "id": "kaltara:2017_Toponimi_Pulau_Pulau",
+          "label": "2017 Toponimi Pulau Pulau"
+        },
+        {
+          "id": "kaltara:2017_Wilayah_Admin_Kab_Kaltara",
+          "label": "2017 Wilayah Admin Kab Kaltara"
+        },
+        {
+          "id": "kaltara:2017_Wilayah_Admin_Kab_Kaltara_fix",
+          "label": "2017 Wilayah Admin Kab Kaltara Fix"
+        },
+        {
+          "id": "kaltara:2017_Wilayah_Admin_Kaltara",
+          "label": "2017 Wilayah Admin Kaltara"
+        },
+        {
+          "id": "kaltara:Admin_KabKota_Prov",
+          "label": "Admin Kabkota Prov"
+        },
+        {
+          "id": "kaltara:BIG_Batas_Desa(BIG)",
+          "label": "Big Batas Desa(Big)"
+        },
+        {
+          "id": "kaltara:BIG_Perairan_Kaltara",
+          "label": "Big Perairan Kaltara"
+        },
+        {
+          "id": "kaltara:BIG_Toponim_Kaltara",
+          "label": "Big Toponim Kaltara"
+        },
+        {
+          "id": "kaltara:KSNT_AR_KalimantanUtara_2025",
+          "label": "Ksnt Ar Kalimantanutara 2025"
+        },
+        {
+          "id": "kaltara:KS_AR_Kabupaten_Nunukan_2024",
+          "label": "Ks Ar Kabupaten Nunukan 2024"
+        },
+        {
+          "id": "kaltara:KS_AR_PR_KalimantanUtara_2025",
+          "label": "Ks Ar Pr Kalimantanutara 2025"
+        },
+        {
+          "id": "kaltara:KS_AR_Tarakan_2021",
+          "label": "Ks Ar Tarakan 2021"
+        },
+        {
+          "id": "kaltara:KS_Kalimantanutara_2025",
+          "label": "Ks Kalimantanutara 2025"
+        },
+        {
+          "id": "kaltara:PR_AR_KSNT_KalimantanUtara_2025",
+          "label": "Pr Ar Ksnt Kalimantanutara 2025"
+        },
+        {
+          "id": "kaltara:PR_AR_Kabupaten_Nunukan_2024",
+          "label": "Pr Ar Kabupaten Nunukan 2024"
+        },
+        {
+          "id": "kaltara:PR_AR_KalimantanUtara_2025",
+          "label": "Pr Ar Kalimantanutara 2025"
+        },
+        {
+          "id": "kaltara:PR_Bulungan_2020",
+          "label": "Pr Bulungan 2020"
+        },
+        {
+          "id": "kaltara:PR_KAWASAN_KESELAMATAN_OPERASIONAL_PENERBANGAN",
+          "label": "Pr Kawasan Keselamatan Operasional Penerbangan"
+        },
+        {
+          "id": "kaltara:PR_KAWASAN_PERTANIANPANGAN_BERKELANJUTAN",
+          "label": "Pr Kawasan Pertanianpangan Berkelanjutan"
+        },
+        {
+          "id": "kaltara:PR_KAWASAN_RAWAN_BENCANA_DI_KAWASAN_PERUNTUKAN_BUDIDAYA",
+          "label": "Pr Kawasan Rawan Bencana Di Kawasan Peruntukan Budidaya"
+        },
+        {
+          "id": "kaltara:PR_KT_Tarakan_2021",
+          "label": "Pr Kt Tarakan 2021"
+        },
+        {
+          "id": "kaltara:Rencana_Jaringan_Rel_Kereta_Api_2017",
+          "label": "Rencana Jaringan Rel Kereta Api 2017"
+        },
+        {
+          "id": "kaltara:Rencana_Jaringan_Transmisi_Listrik_2017",
+          "label": "Rencana Jaringan Transmisi Listrik 2017"
+        },
+        {
+          "id": "kaltara:Rencana_Pembangkit_Listrik_Gardu_Induk_2017",
+          "label": "Rencana Pembangkit Listrik Gardu Induk 2017"
+        },
+        {
+          "id": "kaltara:Rencana_Pola_Ruang_4D",
+          "label": "Rencana Pola Ruang 4D"
+        },
+        {
+          "id": "kaltara:Rencana_Stasiun_Kereta_Api_2017",
+          "label": "Rencana Stasiun Kereta Api 2017"
+        },
+        {
+          "id": "kaltara:Rencana_Tata_Pelabuhan",
+          "label": "Rencana Tata Pelabuhan"
+        },
+        {
+          "id": "kaltara:Rencana_Terminal_2017",
+          "label": "Rencana Terminal 2017"
+        },
+        {
+          "id": "kaltara:SR_LN_Energi_Bulungan_2020",
+          "label": "Sr Ln Energi Bulungan 2020"
+        },
+        {
+          "id": "kaltara:SR_LN_Energi_Kabupaten_Nunukan_2024",
+          "label": "Sr Ln Energi Kabupaten Nunukan 2024"
+        },
+        {
+          "id": "kaltara:SR_LN_Energi_KalimantanUtara_2025",
+          "label": "Sr Ln Energi Kalimantanutara 2025"
+        },
+        {
+          "id": "kaltara:SR_LN_Energi_Tana_Tidung_2023",
+          "label": "Sr Ln Energi Tana Tidung 2023"
+        },
+        {
+          "id": "kaltara:SR_LN_Energi_Tarakan_2021",
+          "label": "Sr Ln Energi Tarakan 2021"
+        },
+        {
+          "id": "kaltara:SR_LN_Infrastruktur_Tarakan_2021",
+          "label": "Sr Ln Infrastruktur Tarakan 2021"
+        },
+        {
+          "id": "kaltara:SR_LN_Lainnya_Bulungan_2020",
+          "label": "Sr Ln Lainnya Bulungan 2020"
+        },
+        {
+          "id": "kaltara:SR_LN_PrasaranaLain_Kabupaten_Nunukan_2024",
+          "label": "Sr Ln Prasaranalain Kabupaten Nunukan 2024"
+        },
+        {
+          "id": "kaltara:SR_LN_PrasaranaLain_KalimantanUtara_2025",
+          "label": "Sr Ln Prasaranalain Kalimantanutara 2025"
+        },
+        {
+          "id": "kaltara:SR_LN_PrasaranaLain_Tana_2023",
+          "label": "Sr Ln Prasaranalain Tana 2023"
+        },
+        {
+          "id": "kaltara:SR_LN_SDA_Kabupaten_Nunukan_2024",
+          "label": "Sr Ln Sda Kabupaten Nunukan 2024"
+        },
+        {
+          "id": "kaltara:SR_LN_SDA_KalimantanUtara_2025",
+          "label": "Sr Ln Sda Kalimantanutara 2025"
+        },
+        {
+          "id": "kaltara:SR_LN_SDA_Tana_Tidung_2023",
+          "label": "Sr Ln Sda Tana Tidung 2023"
+        },
+        {
+          "id": "kaltara:SR_LN_SDA_Tarakan_2021",
+          "label": "Sr Ln Sda Tarakan 2021"
+        },
+        {
+          "id": "kaltara:SR_LN_Telekomunikasi_Kabupaten_Nunukan_2024",
+          "label": "Sr Ln Telekomunikasi Kabupaten Nunukan 2024"
+        },
+        {
+          "id": "kaltara:SR_LN_Telekomunikasi_KalimantanUtara_2025",
+          "label": "Sr Ln Telekomunikasi Kalimantanutara 2025"
+        },
+        {
+          "id": "kaltara:SR_LN_Telekomunikasi_Tarakan_2021",
+          "label": "Sr Ln Telekomunikasi Tarakan 2021"
+        },
+        {
+          "id": "kaltara:SR_LN_Transportasi_Bulungan_2020",
+          "label": "Sr Ln Transportasi Bulungan 2020"
+        },
+        {
+          "id": "kaltara:SR_LN_Transportasi_Kabupaten_Nunukan_2024",
+          "label": "Sr Ln Transportasi Kabupaten Nunukan 2024"
+        },
+        {
+          "id": "kaltara:SR_LN_Transportasi_KalimantanUtara_2025",
+          "label": "Sr Ln Transportasi Kalimantanutara 2025"
+        },
+        {
+          "id": "kaltara:SR_LN_Transportasi_Tana_Tidung_2023",
+          "label": "Sr Ln Transportasi Tana Tidung 2023"
+        },
+        {
+          "id": "kaltara:SR_PT_Energi_Kabupaten_Nunukan_2024",
+          "label": "Sr Pt Energi Kabupaten Nunukan 2024"
+        },
+        {
+          "id": "kaltara:SR_PT_Energi_KalimantanUtara_2025",
+          "label": "Sr Pt Energi Kalimantanutara 2025"
+        },
+        {
+          "id": "kaltara:SR_PT_Energi_Tana_Tidung_2023",
+          "label": "Sr Pt Energi Tana Tidung 2023"
+        },
+        {
+          "id": "kaltara:SR_PT_Energi_Tarakan_2021",
+          "label": "Sr Pt Energi Tarakan 2021"
+        },
+        {
+          "id": "kaltara:SR_PT_Infrastruktur_Tarakan_2021",
+          "label": "Sr Pt Infrastruktur Tarakan 2021"
+        },
+        {
+          "id": "kaltara:SR_PT_Lainnya_Bulungan_2020",
+          "label": "Sr Pt Lainnya Bulungan 2020"
+        },
+        {
+          "id": "kaltara:SR_PT_Perkotaan_Bulungan_2020",
+          "label": "Sr Pt Perkotaan Bulungan 2020"
+        },
+        {
+          "id": "kaltara:SR_PT_PrasaranaLain_Kabupaten_Nunukan_2024",
+          "label": "Sr Pt Prasaranalain Kabupaten Nunukan 2024"
+        },
+        {
+          "id": "kaltara:SR_PT_PrasaranaLain_KalimantanUtara_2025",
+          "label": "Sr Pt Prasaranalain Kalimantanutara 2025"
+        },
+        {
+          "id": "kaltara:SR_PT_PrasaranaLain_Tana_Tidung_2023",
+          "label": "Sr Pt Prasaranalain Tana Tidung 2023"
+        },
+        {
+          "id": "kaltara:SR_PT_PusatPermukiman_Kabupaten_Nunukan_2024",
+          "label": "Sr Pt Pusatpermukiman Kabupaten Nunukan 2024"
+        },
+        {
+          "id": "kaltara:SR_PT_PusatPermukiman_KalimantanUtara_2025",
+          "label": "Sr Pt Pusatpermukiman Kalimantanutara 2025"
+        },
+        {
+          "id": "kaltara:SR_PT_PusatPermukiman_TanaTidung_2023",
+          "label": "Sr Pt Pusatpermukiman Tanatidung 2023"
+        },
+        {
+          "id": "kaltara:SR_PT_SDA_Kabupaten_Nunukan_2024",
+          "label": "Sr Pt Sda Kabupaten Nunukan 2024"
+        },
+        {
+          "id": "kaltara:SR_PT_SDA_KalimantanUtara_2025",
+          "label": "Sr Pt Sda Kalimantanutara 2025"
+        },
+        {
+          "id": "kaltara:SR_PT_SDA_Tana_Tidung_2023",
+          "label": "Sr Pt Sda Tana Tidung 2023"
+        },
+        {
+          "id": "kaltara:SR_PT_SDA_Tarakan_2021",
+          "label": "Sr Pt Sda Tarakan 2021"
+        },
+        {
+          "id": "kaltara:SR_PT_Telekomunikasi_Kabupaten_Nunukan_2024",
+          "label": "Sr Pt Telekomunikasi Kabupaten Nunukan 2024"
+        },
+        {
+          "id": "kaltara:SR_PT_Telekomunikasi_KalimantanUtara_2025",
+          "label": "Sr Pt Telekomunikasi Kalimantanutara 2025"
+        },
+        {
+          "id": "kaltara:SR_PT_Transportasi_Bulungan_2020",
+          "label": "Sr Pt Transportasi Bulungan 2020"
+        },
+        {
+          "id": "kaltara:SR_PT_Transportasi_Kabupaten_Nunukan_2024",
+          "label": "Sr Pt Transportasi Kabupaten Nunukan 2024"
+        },
+        {
+          "id": "kaltara:SR_PT_Transportasi_KalimantanUtara_2025",
+          "label": "Sr Pt Transportasi Kalimantanutara 2025"
+        },
+        {
+          "id": "kaltara:Toponimi_Pulau_Pulau",
+          "label": "Toponimi Pulau Pulau"
+        },
+        {
+          "id": "kaltara:WilayahBulungan",
+          "label": "Wilayahbulungan"
+        },
+        {
+          "id": "kaltara:WilayahNunukan",
+          "label": "Wilayahnunukan"
+        },
+        {
+          "id": "kaltara:WilayahTanaTidung",
+          "label": "Wilayahtanatidung"
+        },
+        {
+          "id": "kaltara:WilayahTarakan",
+          "label": "Wilayahtarakan"
+        },
+        {
+          "id": "kaltara:_SR_PT_PusatPelayanan_Tarakan_2021",
+          "label": "Sr Pt Pusatpelayanan Tarakan 2021"
+        },
+        {
+          "id": "kaltara:database_2023",
+          "label": "Database 2023"
+        },
+        {
+          "id": "kaltara:database_2024",
+          "label": "Database 2024"
+        },
+        {
+          "id": "kaltara:database_2025",
+          "label": "Database 2025"
+        },
+        {
+          "id": "kaltara:kawasan_strategis",
+          "label": "Kawasan Strategis"
+        },
+        {
+          "id": "kaltara:pengelola_hutan_2017_kaltara",
+          "label": "Pengelola Hutan 2017 Kaltara"
+        },
+        {
+          "id": "kaltara:rtrw_pr",
+          "label": "Rtrw Pr"
+        },
+        {
+          "id": "kaltara:wilayahMalinau",
+          "label": "Wilayahmalinau"
+        }
+      ]
+    },
+    {
       "id": "temanggung",
       "title": "Kabupaten Temanggung",
       "source": "temanggung",
@@ -21303,6 +21795,512 @@
         {
           "id": "geonode:tutupanlahan_ar_50k",
           "label": "Tutupanlahan Ar 50k"
+        }
+      ]
+      },
+    {
+      "id": "hstkab",
+      "title": "Kabupaten Hulu Sungai Tengah",
+      "source": "hstkab",
+      "layers": [
+        {
+          "id": "BAGPEM:BA_Desa_HST_AR_10K",
+          "label": "Administrasi Desa Hst Ar 10K"
+        },
+        {
+          "id": "BAGPEM:BA_Kecamatan_HST_AR_25K",
+          "label": "Administrasi Kecamatan Hst Ar 25K"
+        },
+        {
+          "id": "DISTAN:GD01060040",
+          "label": "Kantor Bpp Hst Utm50s"
+        },
+        {
+          "id": "BAGPEM:HST_LN",
+          "label": "Administrasi Hst Ln 50K"
+        },
+        {
+          "id": "DLHP:Infrastruktur_Persampahan_PT",
+          "label": "Infrastruktur Persampahan 2024 Pt 10K"
+        },
+        {
+          "id": "DISDUKCAPIL:Kepadatan_Penduduk_2023_Smst_1_AR",
+          "label": "Kepadatan Penduduk 2023 Semester 1"
+        },
+        {
+          "id": "BAPPERIDA:area_berisiko_persampahan_2023_ar_25k",
+          "label": "Area_Berisiko_Persampahan_2023_Ar_25K"
+        },
+        {
+          "id": "BAKESBANGPOL:bakesbangpol_sekolah_sd",
+          "label": "Bakesbangpol Sekolah Sd"
+        },
+        {
+          "id": "DPUPR:bangunan_gedung_negara_pt_50k",
+          "label": "Bangunan Gedung Negara Pt 50K"
+        },
+        {
+          "id": "BPBD:banjir_hst_2024_pt_25k",
+          "label": "Banjir Hst 2024 Pt 25K"
+        },
+        {
+          "id": "DLHP:baru_adiwiyata",
+          "label": "Sekolah Adiwiyata 2025 Pt 25K"
+        },
+        {
+          "id": "BPKPD:bmd_hst_2025_pt_25k",
+          "label": "Bmd_Hst_2025_Pt_25K"
+        },
+        {
+          "id": "BPKPD:bmd_luar_kab_2025_pt_25k",
+          "label": "Bmd_Luar_Kab_2025_Pt_25K"
+        },
+        {
+          "id": "BPKPD:bmd_luar_prov_2025_pt_25k",
+          "label": "Bmd_Luar_Prov_2025_Pt_25K"
+        },
+        {
+          "id": "BPBD-DAMKAR:bpk_pt_25k",
+          "label": "Bpk_Pt_25K"
+        },
+        {
+          "id": "DPMD:bumdes_jul24_pt_25k",
+          "label": "Bumdes Jul24 Pt 25K"
+        },
+        {
+          "id": "DPMD:bumdes_sept25_pt_25k",
+          "label": "Bumdes Sept25 Pt 25K"
+        },
+        {
+          "id": "DISDIK:cagar_budaya_pt_10k",
+          "label": "Cagar_Budaya_Pt_10K"
+        },
+        {
+          "id": "BPBD:cuaca_ekstrim_hst_2024_pt_25k",
+          "label": "Cuaca Ekstrim Hst 2024 Pt 25K"
+        },
+        {
+          "id": "BAPPERIDA:dapur_mbg_2025_pt_10k",
+          "label": "Dapur_Mbg_2025_Pt_10K"
+        },
+        {
+          "id": "BAKESBANGPOL:data_tps_desa_2024_ar_25k",
+          "label": "Data_Tps_Desa_2024_Ar_25K"
+        },
+        {
+          "id": "DISPORAPAR:destinasi_pariwisata",
+          "label": "Destinasi Pariwisata Pt 50K"
+        },
+        {
+          "id": "DPMD:epdeskel_hst_2024_ar_25k",
+          "label": "Epdeskel Hst 2024 Ar 25K"
+        },
+        {
+          "id": "DINKES:faskes_tk_1_pt_25k",
+          "label": "Faskes_Tk_1_Pt_25K"
+        },
+        {
+          "id": "DINKES:faspenkes_pt_25k",
+          "label": "Faspenkes_Pt_25K"
+        },
+        {
+          "id": "DISTAN:gapoktan_pt_25k",
+          "label": "Gapoktan Pt 25K"
+        },
+        {
+          "id": "BAPPERIDA:geologi_hst_ar_50k",
+          "label": "Geologi_Hst_Ar_50K"
+        },
+        {
+          "id": "BPBD-DAMKAR:hotspot_viirs_snpp_23_pt_100k",
+          "label": "Hotspot_Viirs_Snpp_23_Pt_100K"
+        },
+        {
+          "id": "BPBD-DAMKAR:hotspot_viirs_snpp_24_pt_100k",
+          "label": "Hotspot_Viirs_Snpp_24_Pt_100K"
+        },
+        {
+          "id": "BPBD-DAMKAR:hotspot_viirs_snpp_25_pt_100k",
+          "label": "Hotspot_Viirs_Snpp_25_Pt_100K"
+        },
+        {
+          "id": "BPBD-DAMKAR:infrastruktur_bpk_pt_25k",
+          "label": "Infrastruktur_Bpk_Pt_25K"
+        },
+        {
+          "id": "DINKES:infsankes_pt_25k",
+          "label": "Infsankes_Pt_25K"
+        },
+        {
+          "id": "BAPPERIDA:jangkauan_dapur_mbg_3km_ar_25k",
+          "label": "Jangkauan_Dapur_Mbg_3Km_Ar_25K"
+        },
+        {
+          "id": "BAPPERIDA:jangkauan_dapur_mbg_6km_ar_25k",
+          "label": "Jangkauan_Dapur_Mbg_6Km_Ar_25K"
+        },
+        {
+          "id": "DPUPR:jaringan_drainase__ln_250k",
+          "label": "Jaringan Drainase  Ln 250K"
+        },
+        {
+          "id": "DPUPR:jaringan_jalan_ln_250k",
+          "label": "Jaringan Jalan Ln 250K"
+        },
+        {
+          "id": "DPUPR:jaringan_kanal_ln_250k",
+          "label": "Jaringan Kanal Ln 250K"
+        },
+        {
+          "id": "DPUPR:jaringan_sungai_ln_250k",
+          "label": "Jaringan Sungai Ln 250K"
+        },
+        {
+          "id": "DPUPR:jembatan_hst_pt_250k",
+          "label": "Jembatan Hst Pt 250K"
+        },
+        {
+          "id": "BAPPERIDA:jenis_tanah_ar_50k",
+          "label": "Jenis_Tanah_Ar_50K"
+        },
+        {
+          "id": "DINSOSPPKBPPA:kampung_siaga_bancana_ar_25k",
+          "label": "Kampung_Siaga_Bancana_Ar_25K"
+        },
+        {
+          "id": "BPBD:karhutla_hst_2024_pt_25k",
+          "label": "Karhutla Hst 2024 Pt 25K"
+        },
+        {
+          "id": "DINKES:kasus_penyakit_2023_ar_25k",
+          "label": "Kasus_Penyakit_2023_Ar_25K"
+        },
+        {
+          "id": "DISPERKIM:kawasan_permukiman_ar_50k",
+          "label": "Kawasan Permukiman Ar 50K"
+        },
+        {
+          "id": "DISTAN:kawasan_peternakan_utm50s",
+          "label": "Kawasan Peternakan Utm50s"
+        },
+        {
+          "id": "BPBD-DAMKAR:kejadian_karhutla_2025_pt_10k",
+          "label": "Kejadian_Karhutla_2025_Pt_10K"
+        },
+        {
+          "id": "BAPPERIDA:kemiringan_lereng_ar_25k",
+          "label": "Kemiringan_Lereng_Ar_25K"
+        },
+        {
+          "id": "BAPPERIDA:ketinggian_ar_10k",
+          "label": "Ketinggian_Ar_10K"
+        },
+        {
+          "id": "DISPERINTKKOPUMKM:koperasi_pt_25k",
+          "label": "Koperasi_Pt_25K"
+        },
+        {
+          "id": "DISTAN:lahan_baku_sawah_ar_2024",
+          "label": "Lahan Baku Sawah"
+        },
+        {
+          "id": "BAPPERIDA:layanan_sppg_pt_10k",
+          "label": "Layanan_Sppg_Pt_10K"
+        },
+        {
+          "id": "DINSOSPPKBPPA:lksa_pt_25k",
+          "label": "Lksa_Pt_25K"
+        },
+        {
+          "id": "DISPERKIM:lokasi_perumahan_2425_pt_50k",
+          "label": "Lokasi Perumahan 2425 Pt 50K"
+        },
+        {
+          "id": "BAPPERIDA:lokus_stunting_2023_ar_25k",
+          "label": "Lokus_Stunting_2023_Ar_25K"
+        },
+        {
+          "id": "DINSOSPPKBPPA:makam_pahlawan_pt_25k",
+          "label": "Makam_Pahlawan_Pt_25K"
+        },
+        {
+          "id": "DISKOMINFO:menara_telkom_pt_10k",
+          "label": "Menara Telkom Pt 10K"
+        },
+        {
+          "id": "BPPRD:pajak_hiburan_utm50s",
+          "label": "Pbjt Jasa Kesenian Dan Hiburan"
+        },
+        {
+          "id": "BPPRD:pajak_hotel_hst",
+          "label": "Bpjt Perhotelan"
+        },
+        {
+          "id": "BPPRD:pajakmakanminum4",
+          "label": "Pbjt Makanan Dan/Atau Minuman"
+        },
+        {
+          "id": "DISDAG:pasar_tradisional_pt_25k",
+          "label": "Pasar_Tradisional_Pt_25K"
+        },
+        {
+          "id": "DISDIK:paud_dikmas_10k_pt",
+          "label": "Paud Dikmas 10K Pt"
+        },
+        {
+          "id": "DISDIK:paud_dikmas_pt_10k",
+          "label": "Paud_Dikmas_Pt_10K"
+        },
+        {
+          "id": "BPKPD:pbjt_makanan_minuman_2025_pt_25k",
+          "label": "Pbjt_Makanan_Minuman_2025_Pt_25K"
+        },
+        {
+          "id": "DPMD:perdes_hst_1_2025_ar_25k",
+          "label": "Perkembangan Desa 2025 Ar 25K"
+        },
+        {
+          "id": "DPMPTSPTK:perizinan_2021_pt_50k",
+          "label": "Perizinan 2021 Pt 50K"
+        },
+        {
+          "id": "DPMPTSPTK:perizinan_2022_pt_50k",
+          "label": "Perizinan 2022 Pt 50K"
+        },
+        {
+          "id": "DPMPTSPTK:perizinan_2023_pt_50k",
+          "label": "Perizinan 2023 Pt 50K"
+        },
+        {
+          "id": "DKPP:pokdakan_poklahsar_pokmaswas_hst1",
+          "label": "Pokdakan Poklahsar Pokmaswas Hst Pt 25K"
+        },
+        {
+          "id": "DISTAN:poktan_hst_utm",
+          "label": "Poktan Hst Utm"
+        },
+        {
+          "id": "DISPORAPAR:prasarana_olahraga",
+          "label": "Prasarana Olahraga"
+        },
+        {
+          "id": "DINKES:pus_kb_aktif_ar_25k",
+          "label": "Pus_Kb_Aktif_2023_Ar_25K"
+        },
+        {
+          "id": "DKPP:rekap_bantuan_p3ke_2024_fix",
+          "label": "Rekap Bantuan P3ke 2024 Pt 25K"
+        },
+        {
+          "id": "BPPRD:retribusi_daerah2",
+          "label": "Retribusi Daerah"
+        },
+        {
+          "id": "DISTAN:rph_duriangantang_50s",
+          "label": "Rph Duriangantang 50S"
+        },
+        {
+          "id": "BAPPERIDA:rpkp_agroforestry_wisata_ar_25k",
+          "label": "Rpkp_Agroforestry_Wisata_Ar_25K"
+        },
+        {
+          "id": "DLHP:sarana_prasarana_persampahan_2025",
+          "label": "Sarana Prasarana Persampahan 2025 Pt 25K"
+        },
+        {
+          "id": "DISDIK:sd_mi_pt_10k",
+          "label": "Sd_Mi_Pt_10K"
+        },
+        {
+          "id": "BAKESBANGPOL:sekretariat_parpol_pt_25k",
+          "label": "Sekretariat_Parpol_Pt_25K"
+        },
+        {
+          "id": "BAKESBANGPOL:sekretariat_partai_politik_utm50s",
+          "label": "Sekretariat Partai Politik Utm50s"
+        },
+        {
+          "id": "DISDIK:sma_smk_ma_slb_pt_10k",
+          "label": "Sma_Smk_Ma_Slb_Pt_10K"
+        },
+        {
+          "id": "DISDIK:smp_mts_pt_10k",
+          "label": "Smp_Mts_Pt_10K"
+        },
+        {
+          "id": "DINSOSPPKBPPA:stunting_2024_ar_25k",
+          "label": "Stunting_2024_Ar_25K"
+        },
+        {
+          "id": "DPUPR:sungai_ln_250k",
+          "label": "Sungai Ln 250K"
+        },
+        {
+          "id": "BAGPEM:titikbatasadm_pt3",
+          "label": "Titikbatasadm Pt3"
+        },
+        {
+          "id": "DINKES:wilker_puskesmas_ar_25k",
+          "label": "Wilker_Puskesmas_Ar_25K"
+        }
+      ]
+    },
+    {
+      "id": "tanahbumbu",
+      "title": "Kabupaten Tanah Bumbu",
+      "source": "tanahbumbu",
+      "layers": [
+        {
+          "id": "SekretariatSJIG:administrasi_ar_bwp",
+          "label": "Peta Bagian Wilayah Perkotaan"
+        },
+        {
+          "id": "SekretariatSJIG:administrasi_kecamatan_ar",
+          "label": "Peta Batas Administrasi Kecamatan"
+        },
+        {
+          "id": "SekretariatSJIG:administrasi_kecamatan_ln",
+          "label": "Peta Batas Admnistrasi Kecamatan"
+        },
+        {
+          "id": "DISNAKERTRANS:blk_pt_50k",
+          "label": "Blk Pt 50K"
+        },
+        {
+          "id": "SekretariatSJIG:cekungairtanah_ar",
+          "label": "Peta Cekungan Air Tanah Pagatan"
+        },
+        {
+          "id": "SekretariatSJIG:daerahaliransungai_ar",
+          "label": "Peta Daerah Aliran Sungai"
+        },
+        {
+          "id": "BANKESBANGPOL:dpc_parpol_pt",
+          "label": "Dpc Parpol Pt"
+        },
+        {
+          "id": "DKPP:fsva_ar",
+          "label": "Peta Ketahanan Dan Kerentanan Pangan (Food Security And Vulnerability Atlas)"
+        },
+        {
+          "id": "SekretariatSJIG:genlistrik_pt",
+          "label": "Peta Lokasi Pembangkit Listrik"
+        },
+        {
+          "id": "SekretariatSJIG:hals_sanitasi_pt_2024_jombang",
+          "label": "Hals Sanitasi Pt 2024 Jombang"
+        },
+        {
+          "id": "SekretariatSJIG:hals_sanitasi_pt_gunungtinggi_2024",
+          "label": "Peta Program Hals Sanitasi"
+        },
+        {
+          "id": "SekretariatSJIG:hals_sanitasi_pt_kampung_baru_2024",
+          "label": "Hals Sanitasi Pt Kampung Baru 2024"
+        },
+        {
+          "id": "SekretariatSJIG:hals_sanitasi_pt_maju_bersama_2024",
+          "label": "Hals Sanitasi Pt Maju Bersama 2024"
+        },
+        {
+          "id": "SekretariatSJIG:hals_sanitasi_pt_manunggal_2024",
+          "label": "Hals Sanitasi Pt Manunggal 2024"
+        },
+        {
+          "id": "SekretariatSJIG:hals_sanitasi_pt_sariutama_2024",
+          "label": "Hals Sanitasi Pt Sariutama 2024"
+        },
+        {
+          "id": "SekretariatSJIG:hals_sanitasi_pt_satui_barat_2024",
+          "label": "Hals Sanitasi Pt Satui Barat 2024"
+        },
+        {
+          "id": "SekretariatSJIG:hals_sanitasi_pt_sejahtera_mulia_2024",
+          "label": "Hals Sanitasi Pt Sejahtera Mulia 2024"
+        },
+        {
+          "id": "SekretariatSJIG:hals_sanitasi_pt_sepunggur_2024",
+          "label": "Hals Sanitasi Pt Sepunggur 2024"
+        },
+        {
+          "id": "SekretariatSJIG:hals_sanitasi_pt_sumber_arum_2024",
+          "label": "Hals Sanitasi Pt Sumber Arum 2024"
+        },
+        {
+          "id": "SekretariatSJIG:hals_sanitasi_pt_sumber_makmur_2024",
+          "label": "Hals Sanitasi Pt Sumber Makmur 2024"
+        },
+        {
+          "id": "SekretariatSJIG:hals_sanitasi_pt_tri_mulya_2024",
+          "label": "Hals Sanitasi Pt Tri Mulya 2024"
+        },
+        {
+          "id": "BAPPEDALITBANG:irigasi_ln",
+          "label": "Peta Rencana Pengembangan Jaringan Infrastruktur Kawasan Agropolitan"
+        },
+        {
+          "id": "geoportal:jalurpelabuhan",
+          "label": "Jalur Pelabuhan"
+        },
+        {
+          "id": "BAPPEDALITBANG:jembatan_pt",
+          "label": "Peta Rencana Pengembangan Infrastruktur Kawasan Agropolitan"
+        },
+        {
+          "id": "SekretariatSJIG:kabellistrik_ln",
+          "label": "Peta Jaringan Kabel Listrik"
+        },
+        {
+          "id": "SekretariatSJIG:kawasanhutan_ar_rtrw_2017",
+          "label": "Peta Kawasan Hutan"
+        },
+        {
+          "id": "SekretariatSJIG:kawasanstrategis_ar_rtrw2017",
+          "label": "Peta Kawasan Strategis"
+        },
+        {
+          "id": "ADMIN:kota_kalsel",
+          "label": "Kota Kalsel"
+        },
+        {
+          "id": "BANKESBANGPOL:paskibraka_tanbu_2025_pt",
+          "label": "Paskibraka Tanbu 2025 Pt"
+        },
+        {
+          "id": "DISDIK:pendidikan_pt",
+          "label": "Peta Sebaran Lokasi Pendidikan"
+        },
+        {
+          "id": "DPMPTSP:potensi_investasi_tanah_bumbu_AR_50K",
+          "label": "Potensi Investasi"
+        },
+        {
+          "id": "BAPPEDALITBANG:rencana_halte_pt_2023",
+          "label": "Peta Rencana Halte"
+        },
+        {
+          "id": "BAPPEDALITBANG:rencana_relka_ln_2023",
+          "label": "Peta Rencana Rel Kereta Api"
+        },
+        {
+          "id": "BAPPEDALITBANG:rencana_terminal_pt_2023",
+          "label": "Peta Rencana Terminal Bus"
+        },
+        {
+          "id": "PUPR:rtrw_2023",
+          "label": "Rtrw 2023"
+        },
+        {
+          "id": "DISDIK:sekolahsd_pt",
+          "label": "Sekolahsd Pt"
+        },
+        {
+          "id": "SekretariatSJIG:strategistertentu_ar",
+          "label": "Peta Taman Wisata Alam"
+        },
+        {
+          "id": "SekretariatSJIG:strategistertentu_ar_2026",
+          "label": "Peta Cagar Alam"
         }
       ]
     }
