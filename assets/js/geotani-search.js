@@ -5,6 +5,12 @@
 
     var treeData = [
       {
+        id: 'grp-ksa-bps', text: 'Lahan Baku Sawah (KSA BPS)', children: [
+          { id: 'bps-lbs-2024', text: 'LBS Nasional 2024', li_attr: { 'data-toggle': 'wmts' } },
+          { id: 'bps-lbs', text: 'LBS Nasional', li_attr: { 'data-toggle': 'wmts' } }
+        ], state: { opened: true }, li_attr: { 'data-level': '0' }
+      },
+      {
         id: 'grp-ksp', text: 'Lahan Baku Sawah (KSP BIG)', children: [
           { id: 'toggleSawahDilindungi', text: 'LSD 50K', li_attr: { 'data-toggle': 'special' } },
           { id: 'toggleSawahNasional50k', text: 'LBS 50K', li_attr: { 'data-toggle': 'special' } }
@@ -74,6 +80,10 @@
   }
 
   function geotaniToggleLayer(layerId, visible, toggleType) {
+    if (toggleType === 'wmts') {
+      toggleBpsWmts(layerId, visible);
+      return;
+    }
     if (toggleType === 'arcgis') {
       toggleArcgisSawah(layerId, visible);
     } else {

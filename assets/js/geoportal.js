@@ -27,7 +27,7 @@
   async function buildGeoportalPointCluster(layerName, wmsUrl) {
     const wfsUrl = wfsUrlFromWmsUrl(wmsUrl);
     const resolvedName = resolveGeoportalLayerName(layerName);
-    const detectUrl = `${wfsUrl}?service=WFS&version=1.1.0&request=GetFeature&typeNames=${encodeURIComponent(resolvedName)}&outputFormat=application/json&count=1`;
+    const detectUrl = `${wfsUrl}?service=WFS&version=1.1.0&request=GetFeature&typeNames=${encodeURIComponent(resolvedName)}&outputFormat=application/json&count=1&srsName=EPSG:4326`;
 
     const detectRes = await geoFetch(detectUrl);
     if (!detectRes.ok) throw new Error(`WFS HTTP ${detectRes.status}`);
@@ -35,7 +35,7 @@
     const geomType = detectData.features?.[0]?.geometry?.type;
     if (geomType !== 'Point' && geomType !== 'MultiPoint') return null;
 
-    const fullUrl = `${wfsUrl}?service=WFS&version=1.1.0&request=GetFeature&typeNames=${encodeURIComponent(resolvedName)}&outputFormat=application/json`;
+    const fullUrl = `${wfsUrl}?service=WFS&version=1.1.0&request=GetFeature&typeNames=${encodeURIComponent(resolvedName)}&outputFormat=application/json&srsName=EPSG:4326`;
     const fullRes = await geoFetch(fullUrl);
     if (!fullRes.ok) throw new Error(`WFS HTTP ${fullRes.status}`);
     const fullData = await fullRes.json();
@@ -49,6 +49,7 @@
       const coords = feature.geometry.type === 'MultiPoint' ? feature.geometry.coordinates : [feature.geometry.coordinates];
       coords.forEach(([lng, lat]) => {
         if (typeof lng !== 'number' || typeof lat !== 'number') return;
+        if (Math.abs(lng) > 180 || Math.abs(lat) > 90) return;
         const props = feature.properties || {};
         const title = props.nama_obyek || props.nama || props.name || '';
         const marker = L.marker([lat, lng], {
@@ -74,6 +75,74 @@
 
   // CacheKey layer yang dirender sebagai marker cluster titik (bukan WMS raster).
   const geoportalPointLayerKeys = new Set();
+
+  // ===================== Deteksi server WMS bermasalah =====================
+  // Melacak kegagalan tile per wmsUrl (mis. sertifikat SSL kedaluwarsa /
+  // server mati) dan menampilkan badge pada kategori/layer terkait di tree.
+  const geoportalServerStatus = new Map();
+  const GEO_SERVER_FAIL_THRESHOLD = 3;
+  let __gpBadgeTimer = null;
+
+  function isGeoportalServerDown(wmsUrl) {
+    const st = geoportalServerStatus.get(wmsUrl);
+    return !!(st && st.down);
+  }
+
+  function scheduleUpdateGeoportalServerBadges() {
+    clearTimeout(__gpBadgeTimer);
+    __gpBadgeTimer = setTimeout(updateGeoportalServerBadges, 400);
+  }
+
+  function markGeoportalServerOk(wmsUrl) {
+    const st = geoportalServerStatus.get(wmsUrl);
+    const wasDown = !!(st && st.down);
+    geoportalServerStatus.set(wmsUrl, { errors: 0, down: false });
+    if (wasDown) scheduleUpdateGeoportalServerBadges();
+  }
+
+  function markGeoportalServerError(wmsUrl) {
+    const st = geoportalServerStatus.get(wmsUrl) || { errors: 0, down: false };
+    st.errors += 1;
+    if (!st.down && st.errors >= GEO_SERVER_FAIL_THRESHOLD) {
+      st.down = true;
+      console.warn('[Geoportal] Server tampak tidak tersedia:', wmsUrl);
+      scheduleUpdateGeoportalServerBadges();
+    }
+    geoportalServerStatus.set(wmsUrl, st);
+  }
+
+  function updateGeoportalServerBadges() {
+    const container = document.getElementById('geoportalLayerList');
+    if (!container) return;
+    let inst = null;
+    try {
+      if (typeof window.$ !== 'undefined' && $(container).data('jstree')) inst = $(container).jstree(true);
+    } catch (e) { inst = null; }
+    container.querySelectorAll('li[data-wms-url][data-level="1"]').forEach(li => {
+      const url = li.getAttribute('data-wms-url') || '';
+      let checked = false;
+      if (inst && li.id) {
+        try {
+          const nd = inst.get_node(li.id);
+          checked = !!(nd && inst.is_checked(nd));
+        } catch (e) { checked = false; }
+      }
+      if (!checked) checked = li.classList.contains('jstree-checked');
+      const bad = isGeoportalServerDown(url) && checked;
+      const anchor = li.querySelector(':scope > a.jstree-anchor');
+      if (!anchor) return;
+      let badge = anchor.querySelector(':scope > .geoportal-server-badge');
+      if (bad && !badge) {
+        badge = document.createElement('span');
+        badge.className = 'geoportal-server-badge';
+        badge.textContent = 'Error';
+        badge.title = 'Tile dari server ini gagal dimuat (kemungkinan sertifikat SSL kedaluwarsa atau server sedang mati).';
+        anchor.appendChild(badge);
+      } else if (!bad && badge) {
+        badge.remove();
+      }
+    });
+  }
 
   // Cek apakah checkbox layer geoportal masih aktif.
   function isGeoportalCheckboxActive(layerName, wmsUrl) {
@@ -204,8 +273,12 @@
       opacity: .82,
       crs: crs
     });
+    layer.on('tileload', function () {
+      markGeoportalServerOk(wmsUrl);
+    });
     layer.on('tileerror', function (e) {
       console.warn('[Geoportal] WMS tile error:', { layerName, resolvedName, wmsUrl, tileUrl: e.tile?.src });
+      markGeoportalServerError(wmsUrl);
     });
     return layer;
   }
@@ -637,6 +710,38 @@
     'arcgis-kawasan-jagung': { url: 'https://sig02.pertanian.go.id/server/rest/services/Kawasan/Peta_Kawasan_Jagung/MapServer', layers: [0] },
     'arcgis-kawasan-kedelai': { url: 'https://sig02.pertanian.go.id/server/rest/services/Kawasan/Peta_Kawasan_Kedelai/MapServer', layers: [0] }
   };
+
+  // WMTS KSA BPS (GeoWebCache, grid WebMercatorQuad = XYZ standar)
+  const BPS_WMTS_CONFIG = {
+    'bps-lbs-2024': { layer: 'ksa:lbs_2024' },
+    'bps-lbs': { layer: 'ksa:lbs' }
+  };
+  const bpsWmtsLayers = {};
+  const BPS_WMTS_ERROR_TILE =
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+
+  function toggleBpsWmts(layerKey, visible) {
+    const cfg = BPS_WMTS_CONFIG[layerKey];
+    if (!cfg) return;
+    if (visible) {
+      if (!bpsWmtsLayers[layerKey]) {
+        bpsWmtsLayers[layerKey] = L.tileLayer(
+          'https://geoserver.bps.go.id/gwc/service/wmts?layer=' + encodeURIComponent(cfg.layer) +
+          '&style=&tilematrixset=WebMercatorQuad&Service=WMTS&Request=GetTile&Version=1.0.0' +
+          '&Format=image/png&TileMatrix={z}&TileCol={x}&TileRow={y}',
+          {
+            opacity: 0.85,
+            bounds: [[-10.93, 95.0], [5.75, 140.9]],
+            errorTileUrl: BPS_WMTS_ERROR_TILE,
+            attribution: 'KSA BPS'
+          }
+        );
+      }
+      if (!map.hasLayer(bpsWmtsLayers[layerKey])) map.addLayer(bpsWmtsLayers[layerKey]);
+    } else if (bpsWmtsLayers[layerKey] && map.hasLayer(bpsWmtsLayers[layerKey])) {
+      map.removeLayer(bpsWmtsLayers[layerKey]);
+    }
+  }
   const arcgisSawahLayers = {};
 
   function toggleArcgisSawah(layerKey, visible) {
@@ -729,7 +834,7 @@
         text: cat.title + ' <span class="layer-count-badge">' + totalCount + '</span>',
         children: children,
         state: { opened: false },
-        li_attr: { 'data-level': '0' }
+        li_attr: { 'data-level': '0', 'data-wms-url': wmsUrl }
       };
     });
 
@@ -760,10 +865,17 @@
     });
 
     window.__geoportalTreeReady = true;
+    setTimeout(updateGeoportalServerBadges, 600);
+    setTimeout(updateGeoportalServerBadges, 2500);
+
+    $(container).on('redraw.jstree open_node.jstree close_node.jstree search.jstree', function () {
+      scheduleUpdateGeoportalServerBadges();
+    });
 
     $(container).on('check_node.jstree', function (e, data) {
       const node = data.node;
       if (node.children && node.children.length) return;
+      scheduleUpdateGeoportalServerBadges();
       const wmsUrl = node.li_attr['data-wms-url'] || GEOPORTAL_WMS_URL;
       const layerName = node.li_attr['data-layer-name'] || node.id;
 
@@ -777,6 +889,7 @@
     $(container).on('uncheck_node.jstree', function (e, data) {
       const node = data.node;
       if (node.children && node.children.length) return;
+      scheduleUpdateGeoportalServerBadges();
       const wmsUrl = node.li_attr['data-wms-url'] || GEOPORTAL_WMS_URL;
       const layerName = node.li_attr['data-layer-name'] || node.id;
 

@@ -369,6 +369,20 @@
       border-radius: 50%;
       background: #e74c3c;
     }
+    .geoportal-server-badge {
+      display: inline-block;
+      margin-left: 7px;
+      padding: 1px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 1.5;
+      color: #b91c1c;
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+      border-radius: 9px;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
     .basemap-option.active {
       color: #0879bf;
       font-weight: 700;
