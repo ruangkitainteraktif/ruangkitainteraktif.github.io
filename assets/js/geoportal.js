@@ -568,6 +568,42 @@
   let geoportalLegendCtrl = null;
   let geoportalLegendSig = '';
 
+  function getSt2023LegendItems() {
+    return getActiveBpsSt2023Layers().map(({ layerName }) => ({
+      kind: 'wms',
+      label: st2023LabelFor(layerName),
+      wmsUrl: BPS_ST2023_WMS_URL,
+      layerName
+    }));
+  }
+
+  function isMapLayerActive(layer) {
+    return !!(layer && map.hasLayer(layer));
+  }
+
+  function getGeotaniLegendItems() {
+    const items = getSt2023LegendItems();
+    try {
+      if (isMapLayerActive(bpsTutupanLahanState.layer)) {
+        items.push({ kind: 'wms', label: 'Tutupan Lahan 100 m', wmsUrl: 'https://geoserver.bps.go.id/tutupan_lahan/wms', layerName: 'tutupan_lahan:tutupan_lahan_100m' });
+      }
+      Object.keys(bpsWmtsLayers).forEach(key => {
+        if (!isMapLayerActive(bpsWmtsLayers[key])) return;
+        if (key === 'bps-lbs-2024') items.push({ kind: 'wms', label: 'LBS Nasional 2024', wmsUrl: 'https://geoserver.bps.go.id/ksa/wms', layerName: 'ksa:lbs_2024' });
+      });
+      if (isMapLayerActive(sawahDilindungiLayer)) {
+        items.push({ kind: 'swatch', color: '#ffaa00', label: 'LSD 50K (BIG)' });
+      }
+      if (isMapLayerActive(sawahNasionalLayer)) {
+        items.push({ kind: 'swatch', color: '#e6fcc0', label: 'LBS 50K (BIG)' });
+      }
+      if (isMapLayerActive(erosiLayer)) {
+        items.push({ kind: 'swatch', color: '#94a3b8', label: 'Peta Rawan Erosi (BIG)' });
+      }
+    } catch (e) { /* layer modul lain belum siap */ }
+    return items;
+  }
+
   function renderGeoportalLegend() {
     if (!geoportalLegendCtrl) {
       if (typeof map === 'undefined' || !map) return;
@@ -576,7 +612,10 @@
     const el = geoportalLegendCtrl._container;
     if (!el) return;
     const isGpTab = window.currentActiveTab === 'tab-geoportal';
-    const items = isGpTab ? getGeoportalLegendItems() : [];
+    const isGeotaniTab = window.currentActiveTab === 'tab-geotani';
+    let items = [];
+    if (isGpTab) items = getGeoportalLegendItems();
+    else if (isGeotaniTab) items = getGeotaniLegendItems();
     if (!items.length) {
       geoportalLegendSig = '';
       el.style.display = 'none';
@@ -595,8 +634,9 @@
           '<img class="geoportal-legend-img" alt="" src="' +
           buildGeoportalLegendGraphicUrl(it.wmsUrl, it.layerName) + '"></div>';
       } else {
+        const swStyle = it.color ? ' style="background:' + it.color + ';border:1px solid rgba(15,23,42,.25)"' : '';
         html += '<div class="geoportal-legend-item geoportal-legend-row">' +
-          '<span class="geoportal-legend-swatch' + (it.kind === 'point' ? ' point' : '') + '"></span>' +
+          '<span class="geoportal-legend-swatch' + (it.kind === 'point' ? ' point' : '') + '"' + swStyle + '></span>' +
           '<span class="geoportal-legend-label">' + safeLbl + '</span></div>';
       }
     });
@@ -658,14 +698,30 @@
     try {
       const activeWMS = getActiveGeoportalLayers();
       const activeArcGIS = getActiveArcgisLayers();
+      const activeSt2023 = getActiveBpsSt2023Layers();
 
-      if (!activeWMS.length && !activeArcGIS.length) return false;
+      if (!activeWMS.length && !activeArcGIS.length && !activeSt2023.length) return false;
 
       const wmsPromises = activeWMS.map(({ layerName, wmsUrl }) => getGeoportalFeatureInfo(layerName, e.latlng, wmsUrl, pickGeoportalCrs(wmsUrl, layerName)));
       const arcgisPromises = activeArcGIS.map(({ layerKey, url, layers }) =>
         fetchArcGISFeatureInfo(url, layers, e.latlng).then(results => results.map(r => ({ ...r, layerName: `${layerKey} — ${r.layerName}` })))
       );
-      const results = await Promise.allSettled([...wmsPromises, ...arcgisPromises]);
+      const st2023Promises = activeSt2023.map(({ layerName }) =>
+        getGeoportalFeatureInfo(layerName, e.latlng, BPS_ST2023_WMS_URL, pickGeoportalCrs(BPS_ST2023_WMS_URL, layerName))
+          .then(results => results.map(r => ({ ...r, layerName: `${st2023LabelFor(layerName)} — ${r.layerName}` })))
+      );
+      const geotaniPromises = [];
+      if (window.currentActiveTab === 'tab-geotani') {
+        try {
+          if (isMapLayerActive(erosiLayer)) {
+            geotaniPromises.push(
+              fetchArcGISFeatureInfo('https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/KEHUTANAN/MapServer', ['14'], e.latlng)
+                .then(rs => rs.map(r => ({ ...r, layerName: `Peta Rawan Erosi — ${r.layerName}` })))
+            );
+          }
+        } catch (e2) { /* erosi module belum siap */ }
+      }
+      const results = await Promise.allSettled([...wmsPromises, ...arcgisPromises, ...st2023Promises, ...geotaniPromises]);
       const features = results.filter(result => result.status === 'fulfilled').flatMap(result => result.value);
       const failed = results.filter(result => result.status === 'rejected');
       if (failed.length) console.warn('Sebagian GetFeatureInfo gagal:', failed);
@@ -688,7 +744,13 @@
   // kliknya. Capture listener memastikan GetFeatureInfo tetap dipanggil untuk
   // semua layer Geoportal aktif, termasuk polygon.
   map.getContainer().addEventListener('click', async function (event) {
-    if (window.currentActiveTab !== 'tab-geoportal') return;
+    const tab = window.currentActiveTab;
+    if (tab !== 'tab-geoportal' && tab !== 'tab-geotani') return;
+    if (tab === 'tab-geotani') {
+      let hasManaged = getActiveBpsSt2023Layers().length > 0;
+      try { hasManaged = hasManaged || isMapLayerActive(erosiLayer); } catch (e) {}
+      if (!hasManaged) return;
+    }
     if (event.target.closest?.('.leaflet-control')) return;
 
     event.__geoportalFeatureInfoCaptured = true;
@@ -713,8 +775,7 @@
 
   // WMTS KSA BPS (GeoWebCache, grid WebMercatorQuad = XYZ standar)
   const BPS_WMTS_CONFIG = {
-    'bps-lbs-2024': { layer: 'ksa:lbs_2024' },
-    'bps-lbs': { layer: 'ksa:lbs' }
+    'bps-lbs-2024': { layer: 'ksa:lbs_2024' }
   };
   const bpsWmtsLayers = {};
   const BPS_WMTS_ERROR_TILE =
@@ -740,6 +801,105 @@
       if (!map.hasLayer(bpsWmtsLayers[layerKey])) map.addLayer(bpsWmtsLayers[layerKey]);
     } else if (bpsWmtsLayers[layerKey] && map.hasLayer(bpsWmtsLayers[layerKey])) {
       map.removeLayer(bpsWmtsLayers[layerKey]);
+    }
+  }
+
+  // WMS ST2023 (Sensus Pertanian 2023, KSA BPS) — tab Geotani
+  const BPS_ST2023_WMS_URL = 'https://geoserver.bps.go.id/st2023/wms';
+  const bpsSt2023Layers = {};
+  const ST2023_LABELS = {
+    'st2023:batas_desa': 'Batas Desa',
+    'st2023:batas_kecamatan': 'Batas Kecamatan',
+    'st2023:batas_kabupaten': 'Batas Kabupaten',
+    'st2023:batas_provinsi': 'Batas Provinsi',
+    'st2023:dasymetric_utp': 'Dasymetric UTP (Dasar)',
+    'st2023:dasymetric_utp_tp': 'Dasymetric UTP Tanaman Pangan',
+    'st2023:dasymetric_utp_horti': 'Dasymetric UTP Hortikultura',
+    'st2023:dasymetric_utp_holti': 'Dasymetric UTP Holtikultura',
+    'st2023:dasymetric_utp_hutan': 'Dasymetric UTP Hutan',
+    'st2023:dasymetric_utp_ikan': 'Dasymetric UTP Perikanan',
+    'st2023:dasymetric_utp_kebun': 'Dasymetric UTP Perkebunan',
+    'st2023:dasymetric_utp_milenial': 'Dasymetric UTP Petani Milenial',
+    'st2023:dasymetric_utp_ternak': 'Dasymetric UTP Peternakan',
+    'st2023:dasymetric_utp_urban': 'Dasymetric UTP Urban',
+    'st2023:geotagging': 'Geotagging (Semua)',
+    'st2023:geotagging_tanaman_pangan': 'Geotagging Tanaman Pangan',
+    'st2023:geotagging_hortikultura': 'Geotagging Hortikultura',
+    'st2023:geotagging_kebun': 'Geotagging Perkebunan',
+    'st2023:geotagging_hutan': 'Geotagging Hutan',
+    'st2023:geotagging_ikan': 'Geotagging Perikanan',
+    'st2023:geotagging_ternak': 'Geotagging Peternakan',
+    'st2023:infrastruktur_pertanian': 'Infrastruktur Pertanian',
+    'st2023:gurem_lahan_vw': 'Gurem Lahan'
+  };
+  function st2023UtpIhkLabel(layerName) {
+    const m = layerName.match(/utp_ihk_(\d+)/);
+    return m ? 'UTP IHK ' + String(Number(m[1])).padStart(2, '0') : layerName;
+  }
+  function st2023LabelFor(layerName) {
+    if (ST2023_LABELS[layerName]) return ST2023_LABELS[layerName];
+    if (/utp_ihk_/.test(layerName)) return st2023UtpIhkLabel(layerName);
+    const short = layerName.replace(/^st2023:/, '');
+    return ST2023_LABELS['st2023:' + short] || short;
+  }
+  function getActiveBpsSt2023Layers() {
+    return Object.entries(bpsSt2023Layers)
+      .filter(([, layer]) => layer && map.hasLayer(layer))
+      .map(([layerName, layer]) => ({ layerName, layer }));
+  }
+
+  function toggleBpsSt2023Layer(layerName, visible) {
+    if (!layerName) return;
+    if (visible) {
+      loadGeoportalCaps(BPS_ST2023_WMS_URL).catch(() => {});
+      if (!bpsSt2023Layers[layerName]) {
+        bpsSt2023Layers[layerName] = L.tileLayer.wms(
+          'https://geoserver.bps.go.id/st2023/wms',
+          {
+            layers: layerName,
+            format: 'image/png',
+            transparent: true,
+            version: '1.1.1',
+            opacity: 0.85,
+            attribution: 'ST2023 BPS'
+          }
+        );
+        bpsSt2023Layers[layerName].on('tileerror', function (e) {
+          console.warn('[Geotani] ST2023 tile error:', e.tile && e.tile.src);
+        });
+      }
+      if (!map.hasLayer(bpsSt2023Layers[layerName])) map.addLayer(bpsSt2023Layers[layerName]);
+      scheduleRenderGeoportalLegend();
+    } else if (bpsSt2023Layers[layerName] && map.hasLayer(bpsSt2023Layers[layerName])) {
+      map.removeLayer(bpsSt2023Layers[layerName]);
+      scheduleRenderGeoportalLegend();
+    }
+  }
+
+  // WMS Tutupan Lahan 100m (KSA BPS) — tab Geotani
+  const bpsTutupanLahanState = { layer: null };
+
+  function toggleBpsTutupanLahan(visible) {
+    if (visible) {
+      if (!bpsTutupanLahanState.layer) {
+        bpsTutupanLahanState.layer = L.tileLayer.wms(
+          'https://geoserver.bps.go.id/tutupan_lahan/wms',
+          {
+            layers: 'tutupan_lahan:tutupan_lahan_100m',
+            format: 'image/png',
+            transparent: true,
+            version: '1.1.1',
+            opacity: 0.85,
+            attribution: 'KSA BPS'
+          }
+        );
+        bpsTutupanLahanState.layer.on('tileerror', function (e) {
+          console.warn('[Geotani] Tutupan Lahan tile error:', e.tile && e.tile.src);
+        });
+      }
+      if (!map.hasLayer(bpsTutupanLahanState.layer)) map.addLayer(bpsTutupanLahanState.layer);
+    } else if (bpsTutupanLahanState.layer && map.hasLayer(bpsTutupanLahanState.layer)) {
+      map.removeLayer(bpsTutupanLahanState.layer);
     }
   }
   const arcgisSawahLayers = {};
