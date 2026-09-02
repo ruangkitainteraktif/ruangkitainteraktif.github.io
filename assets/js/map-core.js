@@ -31,19 +31,29 @@ L.control.scale({
       maxZoom: 19,
       attribution: 'Mas Pannn'
     }),
-    'google-terrain': L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
-      maxZoom: 19,
-      attribution: 'Mas Pannn'
-    }),
-    'google-traffic': L.tileLayer('https://mt0.google.com/vt?lyrs=s@159000000,traffic|seconds_into_week:-1&style=3&x={x}&y={y}&z={z}', {
-      maxZoom: 19,
-      attribution: 'Mas Pannn'
-    }),
     'modis-terra': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/{Time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', {
       maxZoom: 12,
       minZoom: 0,
       attribution: 'NASA GIBS',
       Time: new Date().toISOString().slice(0, 10)
+    }),
+    'airvisual-pm25': L.tileLayer('https://osm.airvisual.net/cog/pm25/tiles/{z}/{x}/{y}.png', {
+      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual'
+    }),
+    'airvisual-pm10': L.tileLayer('https://osm.airvisual.net/cog/pm10/tiles/{z}/{x}/{y}.png', {
+      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual'
+    }),
+    'airvisual-o3': L.tileLayer('https://osm.airvisual.net/cog/o3/tiles/{z}/{x}/{y}.png', {
+      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual'
+    }),
+    'airvisual-no2': L.tileLayer('https://osm.airvisual.net/cog/no2/tiles/{z}/{x}/{y}.png', {
+      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual'
+    }),
+    'airvisual-so2': L.tileLayer('https://osm.airvisual.net/cog/so2/tiles/{z}/{x}/{y}.png', {
+      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual'
+    }),
+    'airvisual-co': L.tileLayer('https://osm.airvisual.net/cog/co/tiles/{z}/{x}/{y}.png', {
+      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual'
     })
   };
 
@@ -173,17 +183,33 @@ L.control.scale({
   });
   new DetailPanelControl().addTo(map);
 
+  // Hillshade & Batnas toggle (geologi layers)
+  document.addEventListener('DOMContentLoaded', function () {
+    var hsCb = document.getElementById('toggleHillshade');
+    var btCb = document.getElementById('toggleBatnas');
+    if (hsCb) hsCb.addEventListener('change', function () {
+      if (typeof bnpbHillshade === 'undefined') return;
+      if (this.checked) bnpbHillshade.show(); else bnpbHillshade.hide();
+    });
+    if (btCb) btCb.addEventListener('change', function () {
+      if (typeof bnpbHillshade === 'undefined') return;
+      if (this.checked) bnpbHillshade.showPth(); else bnpbHillshade.hidePth();
+    });
+  });
+
   // Basemap Control
   const basemapLabels = {
     'osm': 'Open Street Map',
     'rupabumi': 'Rupabumi Indonesia',
     'esri-satellite': 'Esri Satellite',
-    'google-terrain': 'Google Terrain',
-    'google-traffic': 'Google Traffic',
     'google-maps': 'Google Maps',
-    'topografi-pth': 'Hillshade',
-    'hillshade-indonesia': 'Batnas',
-    'modis-terra': 'Modis Terra'
+    'modis-terra': 'Modis Terra',
+    'airvisual-pm25': 'PM2.5 (AirVisual)',
+    'airvisual-pm10': 'PM10 (AirVisual)',
+    'airvisual-o3': 'O3 - Ozone (AirVisual)',
+    'airvisual-no2': 'NO2 (AirVisual)',
+    'airvisual-so2': 'SO2 (AirVisual)',
+    'airvisual-co': 'CO (AirVisual)'
   };
   const BasemapControl = L.Control.extend({
     options: { position: 'bottomright' },
@@ -223,6 +249,157 @@ L.control.scale({
     }
   });
   new BasemapControl().addTo(map);
+
+  // AirVisual Legend Control
+  const AIRVISUAL_LEGEND_DATA = {
+    'airvisual-pm25': {
+      title: 'PM2.5 (μg/m³)',
+      stops: [
+        { label: 'Good', range: '0-12', color: '#00e400' },
+        { label: 'Moderate', range: '12.1-35.4', color: '#ffff00' },
+        { label: 'Unhealthy (Sensitive)', range: '35.5-55.4', color: '#ff7e00' },
+        { label: 'Unhealthy', range: '55.5-150.4', color: '#ff0000' },
+        { label: 'Very Unhealthy', range: '150.5-250.4', color: '#8f3f97' },
+        { label: 'Hazardous', range: '250.5+', color: '#7e0023' }
+      ]
+    },
+    'airvisual-pm10': {
+      title: 'PM10 (μg/m³)',
+      stops: [
+        { label: 'Good', range: '0-54', color: '#00e400' },
+        { label: 'Moderate', range: '55-154', color: '#ffff00' },
+        { label: 'Unhealthy (Sensitive)', range: '155-254', color: '#ff7e00' },
+        { label: 'Unhealthy', range: '255-354', color: '#ff0000' },
+        { label: 'Very Unhealthy', range: '355-424', color: '#8f3f97' },
+        { label: 'Hazardous', range: '425+', color: '#7e0023' }
+      ]
+    },
+    'airvisual-o3': {
+      title: 'O₃ (ppb)',
+      stops: [
+        { label: 'Good', range: '0-54', color: '#00e400' },
+        { label: 'Moderate', range: '55-70', color: '#ffff00' },
+        { label: 'Unhealthy (Sensitive)', range: '71-85', color: '#ff7e00' },
+        { label: 'Unhealthy', range: '86-105', color: '#ff0000' },
+        { label: 'Very Unhealthy', range: '106-200', color: '#8f3f97' },
+        { label: 'Hazardous', range: '201+', color: '#7e0023' }
+      ]
+    },
+    'airvisual-no2': {
+      title: 'NO₂ (ppb)',
+      stops: [
+        { label: 'Good', range: '0-53', color: '#00e400' },
+        { label: 'Moderate', range: '54-100', color: '#ffff00' },
+        { label: 'Unhealthy (Sensitive)', range: '101-360', color: '#ff7e00' },
+        { label: 'Unhealthy', range: '361-649', color: '#ff0000' },
+        { label: 'Very Unhealthy', range: '650-1249', color: '#8f3f97' },
+        { label: 'Hazardous', range: '1250+', color: '#7e0023' }
+      ]
+    },
+    'airvisual-so2': {
+      title: 'SO₂ (ppb)',
+      stops: [
+        { label: 'Good', range: '0-35', color: '#00e400' },
+        { label: 'Moderate', range: '36-75', color: '#ffff00' },
+        { label: 'Unhealthy (Sensitive)', range: '76-185', color: '#ff7e00' },
+        { label: 'Unhealthy', range: '186-304', color: '#ff0000' },
+        { label: 'Very Unhealthy', range: '305-604', color: '#8f3f97' },
+        { label: 'Hazardous', range: '605+', color: '#7e0023' }
+      ]
+    },
+    'airvisual-co': {
+      title: 'CO (ppm)',
+      stops: [
+        { label: 'Good', range: '0-4.4', color: '#00e400' },
+        { label: 'Moderate', range: '4.5-9.4', color: '#ffff00' },
+        { label: 'Unhealthy (Sensitive)', range: '9.5-12.4', color: '#ff7e00' },
+        { label: 'Unhealthy', range: '12.5-15.4', color: '#ff0000' },
+        { label: 'Very Unhealthy', range: '15.5-30.4', color: '#8f3f97' },
+        { label: 'Hazardous', range: '30.5+', color: '#7e0023' }
+      ]
+    }
+  };
+
+  function buildLegendHtml(key) {
+    var d = AIRVISUAL_LEGEND_DATA[key];
+    if (!d) return '';
+    var html = '<div class="airvisual-legend-title">' + d.title + '</div>';
+    html += '<div class="airvisual-legend-items">';
+    for (var i = 0; i < d.stops.length; i++) {
+      var s = d.stops[i];
+      html += '<div class="airvisual-legend-item">' +
+        '<span class="airvisual-legend-swatch" style="background:' + s.color + '"></span>' +
+        '<span class="airvisual-legend-label">' + s.range + ' - ' + s.label + '</span>' +
+        '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  var _airvisualLegendControl = null;
+
+  function showAirVisualLegend(key) {
+    hideAirVisualLegend();
+    var LegendControl = L.Control.extend({
+      options: { position: 'bottomleft' },
+      onAdd: function () {
+        var el = L.DomUtil.create('div', 'airvisual-legend leaflet-bar');
+        L.DomEvent.disableClickPropagation(el);
+        L.DomEvent.disableScrollPropagation(el);
+        el.innerHTML = buildLegendHtml(key);
+        return el;
+      }
+    });
+    _airvisualLegendControl = new LegendControl();
+    _airvisualLegendControl.addTo(map);
+  }
+
+  function hideAirVisualLegend() {
+    if (_airvisualLegendControl) {
+      map.removeControl(_airvisualLegendControl);
+      _airvisualLegendControl = null;
+    }
+  }
+
+  // Province boundary layer for AirVisual
+  var _provinsiAirvisualLayer = null;
+
+  function loadProvinsiAirvisual() {
+    if (_provinsiAirvisualLayer) { _provinsiAirvisualLayer.addTo(map); return; }
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'assets/data/bps/geojson/provinsi.geojson', true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          var geojson = JSON.parse(xhr.responseText);
+          _provinsiAirvisualLayer = L.geoJSON(geojson, {
+            style: { color: '#ffffff', weight: 1.5, opacity: 0.8, fillColor: '#ffffff', fillOpacity: 0 },
+            interactive: false
+          }).addTo(map);
+        } catch (e) {
+          console.error('[AirVisual] Gagal load provinsi GeoJSON:', e);
+        }
+      }
+    };
+    xhr.send();
+  }
+
+  function removeProvinsiAirvisual() {
+    if (_provinsiAirvisualLayer && map.hasLayer(_provinsiAirvisualLayer)) {
+      map.removeLayer(_provinsiAirvisualLayer);
+    }
+  }
+
+  map.on('basemapchanged', function (e) {
+    if (e.basemap && e.basemap.indexOf('airvisual-') === 0) {
+      showAirVisualLegend(e.basemap);
+      loadProvinsiAirvisual();
+    } else {
+      hideAirVisualLegend();
+      removeProvinsiAirvisual();
+    }
+  });
 
   // Reset Layers Control
   const ResetLayersControl = L.Control.extend({
@@ -346,6 +523,8 @@ L.control.scale({
         if (typeof modisTimeSliderCleanup === 'function') modisTimeSliderCleanup();
         if (typeof modisViirsOverlayCleanup === 'function') modisViirsOverlayCleanup();
         if (typeof cuacaMaritimCleanup === 'function') cuacaMaritimCleanup();
+        if (typeof hideAirVisualLegend === 'function') hideAirVisualLegend();
+        if (typeof removeProvinsiAirvisual === 'function') removeProvinsiAirvisual();
 
         // Bersihkan layer sensor & katalog gempa
         document.querySelectorAll('#toggleKatalogGempa, #toggleSensorSeismic, #toggleSensorGlobal, #toggleHistoryGempa').forEach(function (cb) {
@@ -427,7 +606,17 @@ L.control.scale({
 
         // 10b. Reset hillshade & PTH overlays
         if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.cleanupAll();
-        baseBasemapName = 'google-maps';
+        var hsCb = document.getElementById('toggleHillshade');
+        var btCb = document.getElementById('toggleBatnas');
+        if (hsCb) hsCb.checked = false;
+        if (btCb) btCb.checked = false;
+        setBaseMap('google-maps');
+        currentBasemapName = 'google-maps';
+        var bmOpt = document.querySelector('.basemap-option[data-value="google-maps"]');
+        if (bmOpt) {
+          document.querySelectorAll('.basemap-option').forEach(function(o) { o.classList.remove('active'); });
+          bmOpt.classList.add('active');
+        }
 
         // 11. Reset detail panel
         const detailPanel = document.getElementById('detail-panel');

@@ -1393,7 +1393,7 @@
             <div class="cctv-card">
               <div class="cctv-card-header">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                <span>Layer Geologi Indonesia</span>
+                <span>Layer Geologi</span>
               </div>
               <div class="cctv-card-body cctv-layers">
               <label class="cctv-layer-toggle">
@@ -1461,6 +1461,22 @@
                   <small>Delineasi KBAK dan sebaran batugamping</small>
                 </span>
               </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleHillshade">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Hillshade</span>
+                  <small>Shaded relief Indonesia</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleBatnas">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Batnas</span>
+                  <small>Batimetri nasional</small>
+                </span>
+              </label>
               <div style="border-top:1px solid #e8eef3;margin:6px 0;"></div>
               <label class="cctv-layer-toggle">
                 <input type="checkbox" id="toggleGertanLayer">
@@ -1471,22 +1487,6 @@
                 </span>
               </label>
             </div>
-            </div>
-            <div style="margin-top:10px;">
-              <div style="display:flex;flex-wrap:wrap;gap:6px;font-size:11px;">
-                <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block;"></span> Normal</span>
-                <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block;"></span> Waspada</span>
-                <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#ea580c;display:inline-block;"></span> Siaga</span>
-                <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#dc2626;display:inline-block;"></span> Awas</span>
-                <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block;"></span> Zona Rendah</span>
-                <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block;"></span> Zona Menengah</span>
-                <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#dc2626;display:inline-block;"></span> Zona Tinggi</span>
-              </div>
-            </div>
-            <div id="volcano-content" style="margin-top:12px">
-              <div style="font-size:13px; color:#555; background:#eef7ff; padding:10px; border-radius:5px;">
-                Centang layer untuk menampilkan layer di peta.
-              </div>
             </div>
           </div>
         </div>

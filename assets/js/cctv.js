@@ -58,7 +58,7 @@
     for (const item of cctvData) { if (item.searchText.includes(query)) { matches.push(item); if (matches.length === 8) break; } }
     list.replaceChildren(...matches.map(item => {
       const option = document.createElement('button'); option.type = 'button'; option.textContent = `${item.name} — ${item.area}`;
-      option.addEventListener('click', () => { input.value = item.name; document.getElementById('cctvAreaFilter').value = item.area; list.style.display = 'none'; renderCctvList(); });
+      option.addEventListener('click', () => { input.value = item.name; document.getElementById('cctvAreaFilter').value = item.area; list.style.display = 'none'; renderCctvList(); map.flyTo([item.lat, item.lon], 16, { duration: 0.5 }); });
       return option;
     }));
     list.style.display = matches.length ? 'block' : 'none';
@@ -136,7 +136,14 @@
     modal.classList.add('open');
   }
 
-  document.getElementById('cctvAreaFilter').addEventListener('change', renderCctvList);
+  document.getElementById('cctvAreaFilter').addEventListener('change', () => {
+    renderCctvList();
+    const items = getCctvFiltered();
+    if (items.length > 0) {
+      const bounds = L.latLngBounds(items.map(i => [i.lat, i.lon]));
+      map.fitBounds(bounds.pad(0.15), { maxZoom: 16, duration: 0.5 });
+    }
+  });
   document.getElementById('cctvSearchInput').addEventListener('input', () => { renderCctvAutocomplete(); renderCctvList(); });
 
   // Toggle Jalan Tol Layer

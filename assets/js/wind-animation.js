@@ -260,7 +260,7 @@
       window.addEventListener('resize', this._onResize);
       map.on('moveend zoomend', this._onMove, this);
 
-      compositeTiles().then(() => { initParticles(); animate(); });
+      compositeTiles().then(() => { initParticles(); isPlaying = true; animate(); });
     },
     onRemove(map) {
       stopAnimation();
@@ -302,8 +302,15 @@
     try {
       const res = await fetch(WIND_API_URL);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      windMeta = await res.json();
-      if (!windMeta.keyframes?.length) throw new Error('Tidak ada keyframe');
+      const raw = await res.json();
+
+      const v = (raw.variables && raw.variables[0]) || raw;
+      windMeta = {
+        keyframes: v.keyframes || [],
+        minzoom: (v.metadata && v.metadata.minzoom) || 3,
+        maxzoom: (v.metadata && v.metadata.maxzoom) || 3
+      };
+      if (!windMeta.keyframes.length) throw new Error('Tidak ada keyframe');
 
       const now = new Date();
       let closest = 0;

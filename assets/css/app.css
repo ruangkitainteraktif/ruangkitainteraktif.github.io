@@ -298,8 +298,21 @@
       box-shadow: 0 8px 28px rgba(0,0,0,.18);
       padding: 6px 0;
       min-width: 180px;
+      max-height: 50vh;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 transparent;
       z-index: 10000;
-      overflow: hidden;
+    }
+    .basemap-dropdown::-webkit-scrollbar {
+      width: 4px;
+    }
+    .basemap-dropdown::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .basemap-dropdown::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 2px;
     }
     .basemap-option {
       padding: 8px 14px;
@@ -4872,6 +4885,7 @@
       color: #333;
       line-height: 1.4;
       backdrop-filter: blur(4px);
+      z-index: 999;
     }
     .leaflet-control-scale-line {
       border-color: #333;
@@ -4889,6 +4903,54 @@
       border-bottom: none;
       margin-top: 2px;
       padding-top: 2px;
+    }
+
+    /* ── AirVisual Legend ── */
+    .airvisual-legend.leaflet-bar {
+      background: rgba(255,255,255,.96);
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(15,23,42,.16);
+      padding: 8px 10px;
+      max-width: 240px;
+      max-height: 260px;
+      overflow-y: auto;
+      font-family: inherit;
+    }
+    .airvisual-legend-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #1e293b;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 5px;
+      margin-bottom: 6px;
+    }
+    .airvisual-legend-items {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .airvisual-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .airvisual-legend-swatch {
+      flex: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      background: #64748b;
+      display: inline-block;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+    .airvisual-legend-label {
+      font-size: 10.5px;
+      line-height: 1.35;
+      color: #475569;
+      word-break: break-word;
     }
 
     /* ==================== WELCOME FEATURE MODAL ==================== */
