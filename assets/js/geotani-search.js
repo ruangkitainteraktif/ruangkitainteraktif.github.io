@@ -72,46 +72,46 @@
       {
         id: 'grp-ksa-bps', text: 'Lahan Baku Sawah (KSA BPS)', children: [
           { id: 'bps-lbs-2024', text: 'LBS Nasional 2024', li_attr: { 'data-toggle': 'wmts' } }
-        ], state: { opened: true }, li_attr: { 'data-level': '0' }
+        ], state: { opened: false }, li_attr: { 'data-level': '0' }
       },
       {
         id: 'grp-ksp', text: 'Lahan Baku Sawah (KSP BIG)', children: [
           { id: 'toggleSawahDilindungi', text: 'LSD 50K', li_attr: { 'data-toggle': 'special' } },
           { id: 'toggleSawahNasional50k', text: 'LBS 50K', li_attr: { 'data-toggle': 'special' } }
-        ], state: { opened: true }, li_attr: { 'data-level': '0' }
+        ], state: { opened: false }, li_attr: { 'data-level': '0' }
       },
       {
         id: 'grp-kementan', text: 'Lahan Baku Sawah (KEMENTAN)', children: [
           { id: 'arcgis-sawah-2023', text: 'LBS 2023', li_attr: { 'data-toggle': 'arcgis' } },
           { id: 'arcgis-sawah-2019', text: 'LBS 2019', li_attr: { 'data-toggle': 'arcgis' } }
-        ], state: { opened: true }, li_attr: { 'data-level': '0' }
+        ], state: { opened: false }, li_attr: { 'data-level': '0' }
       },
       {
         id: 'grp-tl-bps', text: 'Tutupan Lahan (KSA BPS)', children: [
           { id: 'toggleBpsTutupanLahan', text: 'Peta Tutupan Lahan 100 m', li_attr: { 'data-toggle': 'special' } }
-        ], state: { opened: true }, li_attr: { 'data-level': '0' }
+        ], state: { opened: false }, li_attr: { 'data-level': '0' }
       },
       {
         id: 'grp-kta', text: 'Peta Rawan Erosi (BIG)', children: [
           { id: 'toggleErosiLayer', text: 'Peta Rawan Erosi (BIG)', li_attr: { 'data-toggle': 'special' } }
-        ], state: { opened: true }, li_attr: { 'data-level': '0' }
+        ], state: { opened: false }, li_attr: { 'data-level': '0' }
       },
       {
         id: 'grp-kawasan', text: 'Kawasan Pertanian', children: [
           { id: 'arcgis-kawasan-padi', text: 'Kawasan Padi', li_attr: { 'data-toggle': 'arcgis' } },
           { id: 'arcgis-kawasan-jagung', text: 'Kawasan Jagung', li_attr: { 'data-toggle': 'arcgis' } },
           { id: 'arcgis-kawasan-kedelai', text: 'Kawasan Kedelai', li_attr: { 'data-toggle': 'arcgis' } }
-        ], state: { opened: true }, li_attr: { 'data-level': '0' }
+        ], state: { opened: false }, li_attr: { 'data-level': '0' }
       },
       {
         id: 'grp-bpp', text: 'Balai Penyuluhan Pertanian', children: [
           { id: 'toggleBppLayer', text: 'BPP', li_attr: { 'data-toggle': 'special' } }
-        ], state: { opened: true }, li_attr: { 'data-level': '0' }
+        ], state: { opened: false }, li_attr: { 'data-level': '0' }
       },
       {
         id: 'grp-sawit', text: 'IGT Sawit', children: [
           { id: 'toggleSawitLayer', text: 'IGT Sawit 2023', li_attr: { 'data-toggle': 'special' } }
-        ], state: { opened: true }, li_attr: { 'data-level': '0' }
+        ], state: { opened: false }, li_attr: { 'data-level': '0' }
       }
     ];
 

@@ -455,6 +455,25 @@ L.control.scale({
           geotaniTree.uncheck_all();
         }
 
+        // 3b-1. Matikan semua BPS/KSA WMS layers dari Geotani
+        if (typeof bpsSt2023Layers !== 'undefined') {
+          Object.keys(bpsSt2023Layers).forEach(function (key) {
+            if (bpsSt2023Layers[key] && map.hasLayer(bpsSt2023Layers[key])) {
+              map.removeLayer(bpsSt2023Layers[key]);
+            }
+          });
+        }
+        if (typeof bpsWmtsLayers !== 'undefined') {
+          Object.keys(bpsWmtsLayers).forEach(function (key) {
+            if (bpsWmtsLayers[key] && map.hasLayer(bpsWmtsLayers[key])) {
+              map.removeLayer(bpsWmtsLayers[key]);
+            }
+          });
+        }
+        if (typeof bpsTutupanLahanState !== 'undefined' && bpsTutupanLahanState.layer && map.hasLayer(bpsTutupanLahanState.layer)) {
+          map.removeLayer(bpsTutupanLahanState.layer);
+        }
+
         // 3c. Uncheck geoportal jsTree nodes
         var geoportalTree = $('#geoportalLayerList').jstree(true);
         if (geoportalTree) {
