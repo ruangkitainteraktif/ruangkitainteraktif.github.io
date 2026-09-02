@@ -42,7 +42,7 @@
     status.textContent = `${items.length} CCTV ditemukan · ${markerCount} marker ditampilkan di peta${items.length > markerCount ? ' (dibatasi untuk performa)' : ''}.`;
     results.replaceChildren(...items.slice(0, 50).map(item => {
       const card = document.createElement('button');
-      card.type = 'button'; card.className = 'cctv-card';
+      card.type = 'button'; card.className = 'cctv-card cctv-result-item';
       card.innerHTML = `<strong>${escapeBMKGHTML(item.name)}</strong><small>${escapeBMKGHTML(item.area)}</small>`;
       card.addEventListener('click', () => { map.flyTo([item.lat, item.lon], 16, { duration: .5 }); openCctvModal(item.id); });
       return card;

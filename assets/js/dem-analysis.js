@@ -671,6 +671,13 @@
     if (cb) cb.checked = false;
     var wrap = document.getElementById('demnasToggleWrap');
     if (wrap) wrap.style.display = 'none';
+    var clearButton = document.getElementById('btnClearDem');
+    if (clearButton) clearButton.style.display = 'none';
+    var reportContainer = document.getElementById('dem-report-container');
+    if (reportContainer) {
+      reportContainer.innerHTML = '';
+      reportContainer.style.display = 'none';
+    }
   }
 
   /* ── Report card HTML ── */

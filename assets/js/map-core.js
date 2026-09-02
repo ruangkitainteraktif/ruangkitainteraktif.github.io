@@ -15,10 +15,6 @@ L.control.scale({
 }).addTo(map);
 
   const baseTileLayers = {
-    'carto-light': L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      maxZoom: 19,
-      attribution: 'Mas Pannn'
-    }),
     'osm': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: 'Mas Pannn'
@@ -29,10 +25,6 @@ L.control.scale({
     }),
     'rupabumi': L.tileLayer('https://geoservices.big.go.id/rbi/rest/services/BASEMAP/Rupabumi_Indonesia/MapServer/tile/{z}/{y}/{x}?blankTile=false', {
       maxZoom: 18,
-      attribution: 'Mas Pannn'
-    }),
-    'carto-dark': L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      maxZoom: 19,
       attribution: 'Mas Pannn'
     }),
     'google-maps': L.tileLayer('https://mt0.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
@@ -183,8 +175,6 @@ L.control.scale({
 
   // Basemap Control
   const basemapLabels = {
-    'carto-light': 'Carto Light',
-    'carto-dark': 'Carto Dark',
     'osm': 'Open Street Map',
     'esri-satellite': 'Esri Satellite',
     'rupabumi': 'Rupabumi Indonesia',
@@ -321,6 +311,7 @@ L.control.scale({
         if (typeof clearLbsAnalysis === 'function') clearLbsAnalysis();
         if (typeof clearNdviAnalysis === 'function') clearNdviAnalysis();
         if (typeof clearLandcoverAnalysis === 'function') clearLandcoverAnalysis();
+        if (typeof clearDemOverlay === 'function') clearDemOverlay();
 
         // 5d. Bersihkan file yang dimuat lewat Alat Analisis, termasuk GPX/KML
         // serta marker, jejak, dan kartu Animasi Track.

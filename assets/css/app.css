@@ -2140,7 +2140,9 @@
       .geotani-btn-print { width: 100%; justify-content: center; }
 
       #sidebar-left {
-      width: 310px;
+        width: 310px;
+        /* Tetap tampil di atas bottom sheet CCTV pada mode mobile. */
+        z-index: 1200;
       }
 
       #cctv-search-sheet {
@@ -2155,7 +2157,10 @@
         z-index: 1100;
         transform: translateY(100%);
         transition: transform 0.3s ease-in-out;
-        overflow-y: auto;
+        /* Scroll hanya pada daftar hasil CCTV, bukan seluruh bottom sheet. */
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
         margin-top: 0;
         background: #fff;
         box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
@@ -2184,13 +2189,24 @@
         border-radius: 2px;
         background: #c4d5e3;
       }
-      #cctv-search-sheet .cctv-card {
+      #cctv-search-sheet > .cctv-card {
         margin: 0 15px 10px;
         border-radius: 10px;
       }
       #cctv-search-sheet #cctvStatus,
       #cctv-search-sheet #cctvResults {
         padding: 0 15px;
+      }
+      #cctv-search-sheet #cctvResults {
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: none;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      #cctv-search-sheet #cctvResults .cctv-result-item {
+        box-sizing: border-box;
+        margin: 0;
       }
 
       #detail-panel {
@@ -4024,6 +4040,32 @@
     .cctv-card:hover { border-color: #1494ca; background: #f3fbff; }
     .cctv-card strong { display: block; overflow: hidden; color: #16466c; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
     .cctv-card small { display: block; margin-top: 4px; color: #668198; font-size: 9px; }
+    .cctv-card.cctv-result-item {
+      position: relative;
+      width: 100%;
+      min-height: 62px;
+      padding: 11px 38px 11px 13px;
+      border: 1px solid #dfeaf2;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #ffffff, #f4faff);
+      box-shadow: 0 2px 8px rgba(24, 73, 111, .06);
+      text-align: left;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+    .cctv-result-item::after {
+      content: '›';
+      position: absolute;
+      top: 50%;
+      right: 14px;
+      color: #0879bf;
+      font-size: 24px;
+      font-weight: 300;
+      line-height: 1;
+      transform: translateY(-50%);
+    }
+    .cctv-result-item strong { color: #123f63; font-size: 12px; font-weight: 700; }
+    .cctv-result-item small { margin-top: 5px; color: #6b8295; font-size: 10px; }
+    .cctv-card.cctv-result-item:hover { border-color: #72c9eb; background: #effaff; box-shadow: 0 5px 14px rgba(8, 121, 191, .13); transform: translateY(-1px); }
     .cctv-autocomplete { position: relative; }
     .cctv-autocomplete-list { position: absolute; top: calc(100% + 2px); z-index: 1005; display: none; width: 100%; max-height: 180px; overflow-y: auto; border: 1px solid #cee1ef; border-radius: 8px; background: #fff; box-shadow: 0 7px 15px rgba(17,59,91,.13); }
     .cctv-autocomplete-list button { display: block; width: 100%; padding: 8px; border: 0; border-bottom: 1px solid #eef4f8; background: #fff; color: #244b6e; cursor: pointer; font-size: 10px; text-align: left; }
@@ -4044,22 +4086,33 @@
     }
     #cctv-search-sheet { margin-top: 10px; }
     .cctv-sheet-handle { display: none; }
+    .cctv-search-card {
+      position: relative;
+      z-index: 3;
+      padding: 0;
+      border: 1px solid #d9e8f2;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 8px 20px rgba(22, 70, 108, .08);
+      overflow: visible;
+    }
     .cctv-card-header {
       display: flex; align-items: center; gap: 6px;
-      padding: 8px 10px; background: #0879bf; border-bottom: 1px solid #066aa8;
-      border-radius: 10px 10px 0 0;
-      font-size: 12px; font-weight: 600; color: #fff;
+      padding: 10px 12px; background: linear-gradient(110deg, #066aa8, #1198c7); border-bottom: 1px solid #066aa8;
+      border-radius: 13px 13px 0 0;
+      font-size: 12px; font-weight: 700; color: #fff;
     }
     .cctv-card-header svg { color: #fff; flex-shrink: 0; }
-    .cctv-card-body { padding: 8px; }
-    .cctv-search-body { display: grid; gap: 8px; }
+    .cctv-search-card .cctv-card-body { padding: 12px; }
+    .cctv-search-body { display: grid; gap: 10px; }
     .cctv-search-body input, .cctv-search-body select {
-      width: 100%; height: 36px; padding: 6px 10px; margin-bottom: 0;
-      border: 1px solid #dce6ef; border-radius: 8px; font-size: 11px;
-      background: #fff; color: #333; box-sizing: border-box;
+      width: 100%; height: 40px; padding: 7px 11px; margin-bottom: 0;
+      border: 1px solid #d5e3ed; border-radius: 9px; font-size: 12px;
+      background: #f8fbfd; color: #23445f; box-sizing: border-box;
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
     }
     .cctv-search-body input:focus, .cctv-search-body select:focus {
-      outline: none; border-color: #0879bf;
+      outline: none; border-color: #1494ca; background: #fff; box-shadow: 0 0 0 3px rgba(20, 148, 202, .12);
     }
 
     /* CCTV Layer Toggle */

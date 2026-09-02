@@ -327,8 +327,8 @@
           return;
         }
         gpxCollectTracks(geojson);
-        // Saat Muat & Animasi: basemap → Carto Light, zoom 15
-        if (typeof setBaseMap === 'function') setBaseMap('carto-light');
+        // Saat Muat & Animasi: basemap → Google Maps, zoom 15
+        if (typeof setBaseMap === 'function') setBaseMap('google-maps');
         map.setZoom(8);
         setAlatStatus('Timeline dimuat (' + geojson.features[0].geometry.coordinates.length + ' titik). Tekan Play untuk memutar animasi.');
       } catch (e) {

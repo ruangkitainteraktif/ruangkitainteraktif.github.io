@@ -10,6 +10,7 @@
   var BPS_INFLASI_BULANAN_URL_126 = 'https://webapi.bps.go.id/v1/api/list/model/data/lang/ind/domain/0000/var/2262/th/126/key/4c135b6a06a97bd32fd0476067e0a5dd';
 
   var PROXY_LIST = [
+    function (url) { return 'https://api.cors.syrins.tech/?url=' + encodeURIComponent(url); },
     function (url) { return 'https://corsproxy.io/?url=' + encodeURIComponent(url); },
     function (url) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url); }
   ];
@@ -167,13 +168,19 @@
   /* ── Fetch with proxy fallback ── */
   async function fetchWithProxy(url) {
     try {
-      var res = await fetch(url);
+      var controller = new AbortController();
+      var timer = setTimeout(function () { controller.abort(); }, 8000);
+      var res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timer);
       if (res.ok) return await res.json();
     } catch (e) { /* CORS blocked, try proxies */ }
 
     for (var i = 0; i < PROXY_LIST.length; i++) {
       try {
-        var res = await fetch(PROXY_LIST[i](url), { cache: 'no-store' });
+        var controller = new AbortController();
+        var timer = setTimeout(function () { controller.abort(); }, 8000);
+        var res = await fetch(PROXY_LIST[i](url), { cache: 'no-store', signal: controller.signal });
+        clearTimeout(timer);
         if (res.ok) return await res.json();
       } catch (e) { /* try next */ }
     }

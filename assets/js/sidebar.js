@@ -135,13 +135,7 @@
     }
 
     if (typeof setBaseMap === 'function') {
-      if (tabId === 'tab-geoid') {
-        if (typeof currentBasemapName !== 'undefined' && currentBasemapName !== 'google-maps') setBaseMap('google-maps');
-      } else if (tabId === 'tab-geotani' || tabId === 'tab-gempa' || tabId === 'tab-geoportal') {
-        if (typeof currentBasemapName !== 'undefined' && currentBasemapName !== 'esri-satellite') setBaseMap('esri-satellite');
-      } else {
-        if (typeof currentBasemapName !== 'undefined' && currentBasemapName !== 'carto-light') setBaseMap('carto-light');
-      }
+      if (typeof currentBasemapName !== 'undefined' && currentBasemapName !== 'google-maps') setBaseMap('google-maps');
     }
   }
 
