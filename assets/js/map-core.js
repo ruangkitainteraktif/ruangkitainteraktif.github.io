@@ -176,14 +176,14 @@ L.control.scale({
   // Basemap Control
   const basemapLabels = {
     'osm': 'Open Street Map',
-    'esri-satellite': 'Esri Satellite',
     'rupabumi': 'Rupabumi Indonesia',
-    'google-maps': 'Google Maps',
+    'esri-satellite': 'Esri Satellite',
     'google-terrain': 'Google Terrain',
     'google-traffic': 'Google Traffic',
-    'modis-terra': 'Modis Terra',
+    'google-maps': 'Google Maps',
     'topografi-pth': 'Hillshade',
-    'hillshade-indonesia': 'Batnas'
+    'hillshade-indonesia': 'Batnas',
+    'modis-terra': 'Modis Terra'
   };
   const BasemapControl = L.Control.extend({
     options: { position: 'bottomright' },
@@ -244,7 +244,7 @@ L.control.scale({
           'toggleSawahDilindungi', 'toggleSawahNasional50k',
           'toggleBppLayer', 'toggleSawitLayer', 'toggleErosiLayer',
           'toggleHotspotLayer', 'toggleKawasanHutanLayer', 'toggleGambutLayer', 'toggleKhLayer', 'togglePippibLayer',
-          'toggleCuacaMaritimLayer',
+          'toggleCuacaPelabuhanLayer', 'toggleCuacaPerairanLayer',
           'toggleSawitNasionalLayer', 'toggleSawitPerkebunanLayer', 'toggleRehabDasLayer', 'togglePerkebunanPl24Layer',
           'toggleRktnSumateraLayer', 'toggleRktnSulawesiLayer', 'toggleRktnPapuaLayer', 'toggleRktnMalukuLayer', 'toggleRktnKalimantanLayer', 'toggleRktnJawaLayer', 'toggleRktnBaliNtLayer',
           'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer'
@@ -345,6 +345,7 @@ L.control.scale({
         if (typeof kawasanHutanCleanup === 'function') kawasanHutanCleanup();
         if (typeof modisTimeSliderCleanup === 'function') modisTimeSliderCleanup();
         if (typeof modisViirsOverlayCleanup === 'function') modisViirsOverlayCleanup();
+        if (typeof cuacaMaritimCleanup === 'function') cuacaMaritimCleanup();
 
         // Bersihkan layer sensor & katalog gempa
         document.querySelectorAll('#toggleKatalogGempa, #toggleSensorSeismic, #toggleSensorGlobal, #toggleHistoryGempa').forEach(function (cb) {

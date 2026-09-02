@@ -1,14 +1,13 @@
 /* ── Layer Cuaca Maritim (BMKG Maritim) ──
-   Satu wrapper menggabungkan Cuaca Pelabuhan (marker) + Cuaca Perairan (polygon).
-   Toggle tunggal: toggleCuacaMaritimLayer */
+   Dua wrapper terpisah: Cuaca Pelabuhan (marker) + Cuaca Perairan (polygon).
+   Toggle terpisah: toggleCuacaPerairanLayer, toggleCuacaPelabuhanLayer */
 (function () {
   'use strict';
 
-  var PEL_BASE = 'https://peta-maritim.bmkg.go.id/public_api/pelabuhan';
-  var PEL_MANIFEST = PEL_BASE + '_list';
-  var PER_BASE = 'https://peta-maritim.bmkg.go.id/public_api/perairan';
-  var PER_MANIFEST = PER_BASE + '_list';
-  var WILAYAH_GEOJSON = 'https://peta-maritim.bmkg.go.id/public_api/static/wilayah_perairan.json';
+  var API_BASE = 'https://maritim.bmkg.go.id/marine2026-data/';
+  var PELABUHAN_GEOJSON = API_BASE + 'meta/pelabuhan.json';
+  var PERAIRAN_INDEX = API_BASE + 'meta/area_province.json';
+  var WILAYAH_GEOJSON = API_BASE + 'meta/wilmetos.min.geojson';
 
   var WAVE_COLOR = {
     'Tenang': '#2e7d32',
@@ -20,8 +19,8 @@
   };
   var DEFAULT_COLOR = '#90a4ae';
 
-  var group = null;
-  var loaded = false, loading = false;
+  var pelGroup = null, pelLoaded = false, pelLoading = false;
+  var perGroup = null, perLoaded = false, perLoading = false;
   var geojson = null, weatherByCode = null;
 
   function esc(v) {
@@ -41,10 +40,74 @@
   }
 
   function fetchJson(url) {
-    return fetch(url, { mode: 'cors' }).then(function (r) {
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, 10000);
+    return fetch(url, { mode: 'cors', signal: controller.signal }).then(function (r) {
+      clearTimeout(timer);
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
+    }).catch(function (e) {
+      clearTimeout(timer);
+      throw e;
     });
+  }
+
+  function firstForecast(value, depth) {
+    if (depth > 5 || value == null) return {};
+    if (Array.isArray(value)) return firstForecast(value[0], depth + 1);
+    if (typeof value !== 'object') return {};
+    if (value.weather || value.weather_desc || value.wave_cat || value.wave_height || value.wind_speed) return value;
+    var preferred = ['forecast_day1', 'forecast', 'data', 'items', 'weather'];
+    for (var i = 0; i < preferred.length; i++) {
+      if (value[preferred[i]]) {
+        var result = firstForecast(value[preferred[i]], depth + 1);
+        if (Object.keys(result).length) return result;
+      }
+    }
+    var keys = Object.keys(value);
+    for (var j = 0; j < keys.length; j++) {
+      var nested = firstForecast(value[keys[j]], depth + 1);
+      if (Object.keys(nested).length) return nested;
+    }
+    return {};
+  }
+
+  function normaliseForecast(payload) {
+    var raw = firstForecast(payload, 0);
+    return {
+      weather: raw.weather || raw.weather_desc || raw.weather_text || '',
+      weather_desc: raw.weather_desc || raw.description || '',
+      wave_cat: raw.wave_cat || raw.wave_category || (raw.wave && raw.wave.category) || '',
+      wave_desc: raw.wave_desc || raw.wave_height || (raw.wave && raw.wave.height) || '',
+      wind_from: raw.wind_from || raw.wind_direction || (raw.wind && raw.wind.from) || '',
+      wind_to: raw.wind_to || raw.wind_direction_to || (raw.wind && raw.wind.to) || '',
+      wind_speed_min: raw.wind_speed_min || raw.wind_speed || (raw.wind && raw.wind.speed) || '',
+      wind_speed_max: raw.wind_speed_max || raw.wind_speed || (raw.wind && raw.wind.speed) || '',
+      current_from: raw.current_from || (raw.current && raw.current.from) || '',
+      current_to: raw.current_to || (raw.current && raw.current.to) || '',
+      current_speed_min: raw.current_speed_min || (raw.current && raw.current.speed) || '',
+      current_speed_max: raw.current_speed_max || (raw.current && raw.current.speed) || '',
+      visibility: raw.visibility || '', temp_min: raw.temp_min || raw.temperature || '', temp_max: raw.temp_max || raw.temperature || '',
+      rh_min: raw.rh_min || raw.humidity || '', rh_max: raw.rh_max || raw.humidity || '',
+      warning_desc: raw.warning_desc || raw.warning || '', valid_from: raw.valid_from || raw.datetime || raw.time || '', valid_to: raw.valid_to || ''
+    };
+  }
+
+  function fetchAll(items, worker, onProgress) {
+    var total = items.length, done = 0, cursor = 0, results = [];
+    var workers = Math.min(12, total);
+    function next() {
+      var index = cursor++;
+      if (index >= total) return Promise.resolve();
+      return worker(items[index]).then(function (value) { if (value) results.push(value); }).catch(function (error) {
+        console.warn('[Cuaca Maritim] data gagal dimuat', items[index], error);
+      }).then(function () {
+        done++;
+        if (onProgress) onProgress(done, total);
+        return next();
+      });
+    }
+    return Promise.all(Array.from({ length: workers }, next)).then(function () { return results; });
   }
 
   function portIcon(color) {
@@ -55,35 +118,19 @@
     return L.divIcon({ html: html, className: 'cuaca-port-divicon', iconSize: [22, 22], iconAnchor: [11, 11], popupAnchor: [0, -12] });
   }
 
+  /* ── Pelabuhan ── */
   function loadPelabuhan(onProgress) {
-    return fetchJson(PEL_MANIFEST).then(function (manifest) {
-      var files = (manifest && manifest.files) ? manifest.files : [];
-      var total = files.length, done = 0, results = [];
-      return Promise.all(files.map(function (f) {
-        return fetchJson(PEL_BASE + '/' + f.name).then(function (p) { results.push(p); }).catch(function (e) {
-          console.warn('[Cuaca Maritim] pelabuhan gagal', f.name, e);
-        }).then(function () { done++; if (onProgress) onProgress(done, total); });
-      })).then(function () { return results; });
-    });
-  }
-
-  function loadPerairanGeojson() {
-    if (geojson) return Promise.resolve(geojson);
-    return fetchJson(WILAYAH_GEOJSON).then(function (g) { geojson = g; return g; });
-  }
-
-  function loadPerairanWeather(onProgress) {
-    return fetchJson(PER_MANIFEST).then(function (manifest) {
-      var files = (manifest && manifest.files) ? manifest.files : [];
-      var total = files.length, done = 0;
-      weatherByCode = {};
-      return Promise.all(files.map(function (f) {
-        return fetchJson(PER_BASE + '/' + f.name).then(function (reg) {
-          if (reg && reg.code && reg.data && reg.data[0]) weatherByCode[reg.code] = reg.data[0];
-        }).catch(function (e) {
-          console.warn('[Cuaca Maritim] perairan gagal', f.name, e);
-        }).then(function () { done++; if (onProgress) onProgress(done, total); });
-      }));
+    return fetchJson(PELABUHAN_GEOJSON).then(function (collection) {
+      var ports = (collection && collection.features ? collection.features : []).map(function (feature) {
+        var props = feature.properties || {}, coords = feature.geometry && feature.geometry.coordinates;
+        return { code: props.code, name: props.name, longitude: coords && coords[0], latitude: coords && coords[1] };
+      }).filter(function (port) { return port.code && Number.isFinite(port.latitude) && Number.isFinite(port.longitude); });
+      return fetchAll(ports, function (port) {
+        return fetchJson(API_BASE + 'pelabuhan/' + encodeURIComponent(port.code) + '.json').then(function (payload) {
+          port.data = [normaliseForecast(payload)];
+          return port;
+        });
+      }, onProgress);
     });
   }
 
@@ -98,20 +145,6 @@
       g.addLayer(m);
     });
     return g;
-  }
-
-  function buildPerairanGroup() {
-    return L.geoJSON(geojson, {
-      style: function (feature) {
-        var code = feature.properties.WP_1;
-        var w = weatherByCode && weatherByCode[code];
-        var color = WAVE_COLOR[w && w.wave_cat] || DEFAULT_COLOR;
-        return { color: '#1f78ff', weight: 1, opacity: 0.85, fillColor: color, fillOpacity: 0.35 };
-      },
-      onEachFeature: function (feature, layer) {
-        layer.bindPopup(maritimPopupHtml(feature), { maxWidth: 360, className: 'agol-leaflet-popup' });
-      }
-    });
   }
 
   function pelabuhanPopup(p) {
@@ -141,8 +174,45 @@
     return html;
   }
 
+  /* ── Perairan ── */
+  function loadPerairanGeojson() {
+    if (geojson) return Promise.resolve(geojson);
+    return fetchJson(WILAYAH_GEOJSON).then(function (g) { geojson = g; return g; });
+  }
+
+  function loadPerairanWeather(onProgress) {
+    return fetchJson(PERAIRAN_INDEX).then(function (manifest) {
+      var areas = [];
+      (manifest && manifest.data ? manifest.data : []).forEach(function (province) {
+        (province.areas || []).forEach(function (area) { if (area.id) areas.push(area); });
+      });
+      weatherByCode = {};
+      return fetchAll(areas, function (area) {
+        return fetchJson(API_BASE + 'perairan/' + encodeURIComponent(area.id) + '.json').then(function (payload) {
+          weatherByCode[area.id] = normaliseForecast(payload);
+          weatherByCode[area.id].name = area.name;
+          return area;
+        });
+      }, onProgress);
+    });
+  }
+
+  function buildPerairanGroup() {
+    return L.geoJSON(geojson, {
+      style: function (feature) {
+        var code = feature.properties.ID_MAR;
+        var w = weatherByCode && weatherByCode[code];
+        var color = WAVE_COLOR[w && w.wave_cat] || DEFAULT_COLOR;
+        return { color: '#1f78ff', weight: 1, opacity: 0.85, fillColor: color, fillOpacity: 0.35 };
+      },
+      onEachFeature: function (feature, layer) {
+        layer.bindPopup(maritimPopupHtml(feature), { maxWidth: 360, className: 'agol-leaflet-popup' });
+      }
+    });
+  }
+
   function maritimPopupHtml(feature) {
-    var code = feature.properties.WP_1;
+    var code = feature.properties.ID_MAR;
     var w = weatherByCode && weatherByCode[code];
     var name = (w && w.name) || feature.properties.WP_IMM || feature.properties.WPIMM || code;
     var color = WAVE_COLOR[w && w.wave_cat] || DEFAULT_COLOR;
@@ -170,49 +240,91 @@
     return html;
   }
 
+  /* ── Info text ── */
   function setInfo(txt) {
     var el = document.getElementById('cuacaMaritimInfo');
     if (el) el.textContent = txt;
   }
 
-  function enable() {
-    if (group && !map.hasLayer(group)) { group.addTo(map); return; }
-    if (loaded && group) { group.addTo(map); return; }
-    if (loading) return;
-    loading = true;
-    setInfo('Memuat data cuaca maritim…');
-    Promise.all([
-      loadPelabuhan(function (d, t) { setInfo('Memuat pelabuhan… ' + d + '/' + t); }),
-      loadPerairanGeojson().then(function () {
-        return loadPerairanWeather(function (d, t) { setInfo('Memuat perairan… ' + d + '/' + t); });
-      })
-    ]).then(function (res) {
-      var pelGroup = buildPelabuhanGroup(res[0]);
-      var perGroup = buildPerairanGroup();
-      group = L.layerGroup([perGroup, pelGroup]);
-      group.addTo(map);
-      loaded = true;
-      loading = false;
-      setInfo('Cuaca maritim: ' + res[0].length + ' pelabuhan, ' + Object.keys(weatherByCode).length + ' perairan — BMKG Maritim');
+  /* ── Enable / Disable Pelabuhan ── */
+  function enablePelabuhan() {
+    if (pelGroup && !map.hasLayer(pelGroup)) { pelGroup.addTo(map); return; }
+    if (pelLoaded && pelGroup) { pelGroup.addTo(map); return; }
+    if (pelLoading) return;
+    pelLoading = true;
+    setInfo('Memuat pelabuhan…');
+    loadPelabuhan(function (d, t) { setInfo('Memuat pelabuhan… ' + d + '/' + t); }).then(function (ports) {
+      pelGroup = buildPelabuhanGroup(ports);
+      pelGroup.addTo(map);
+      pelLoaded = true;
+      pelLoading = false;
+      setInfo('Cuaca pelabuhan: ' + ports.length + ' stasiun — BMKG Maritim');
     }).catch(function (e) {
-      loading = false;
-      setInfo('Gagal memuat data cuaca maritim (BMKG).');
-      console.error('[Cuaca Maritim]', e);
+      pelLoading = false;
+      setInfo('Gagal memuat data cuaca pelabuhan.');
+      console.error('[Cuaca Maritim] pelabuhan gagal:', e);
     });
   }
 
-  function disable() {
-    if (group && map.hasLayer(group)) map.removeLayer(group);
+  function disablePelabuhan() {
+    if (pelGroup && map.hasLayer(pelGroup)) map.removeLayer(pelGroup);
+    pelLoading = false;
   }
 
+  /* ── Enable / Disable Perairan ── */
+  function enablePerairan() {
+    if (perGroup && !map.hasLayer(perGroup)) { perGroup.addTo(map); return; }
+    if (perLoaded && perGroup) { perGroup.addTo(map); return; }
+    if (perLoading) return;
+    perLoading = true;
+    setInfo('Memuat perairan…');
+    loadPerairanGeojson().then(function () {
+      return loadPerairanWeather(function (d, t) { setInfo('Memuat perairan… ' + d + '/' + t); });
+    }).then(function () {
+      perGroup = buildPerairanGroup();
+      perGroup.addTo(map);
+      perLoaded = true;
+      perLoading = false;
+      setInfo('Cuaca perairan: ' + Object.keys(weatherByCode).length + ' wilayah — BMKG Maritim');
+    }).catch(function (e) {
+      perLoading = false;
+      setInfo('Gagal memuat data cuaca perairan.');
+      console.error('[Cuaca Maritim] perairan gagal:', e);
+    });
+  }
+
+  function disablePerairan() {
+    if (perGroup && map.hasLayer(perGroup)) map.removeLayer(perGroup);
+    perLoading = false;
+  }
+
+  /* ── Event binding ── */
   document.addEventListener('DOMContentLoaded', function () {
-    var cb = document.getElementById('toggleCuacaMaritimLayer');
-    if (cb) cb.addEventListener('change', function () { if (this.checked) enable(); else disable(); });
+    var cbPerairan = document.getElementById('toggleCuacaPerairanLayer');
+    var cbPelabuhan = document.getElementById('toggleCuacaPelabuhanLayer');
+
+    if (cbPerairan) {
+      cbPerairan.addEventListener('change', function () {
+        if (this.checked) enablePerairan(); else disablePerairan();
+      });
+    }
+    if (cbPelabuhan) {
+      cbPelabuhan.addEventListener('change', function () {
+        if (this.checked) enablePelabuhan(); else disablePelabuhan();
+      });
+    }
   });
 
+  /* ── Cleanup (called by reset layers) ── */
   window.cuacaMaritimCleanup = function () {
-    disable();
-    var cb = document.getElementById('toggleCuacaMaritimLayer');
-    if (cb) cb.checked = false;
+    disablePelabuhan();
+    disablePerairan();
+    pelGroup = null; pelLoaded = false;
+    perGroup = null; perLoaded = false;
+    var cb1 = document.getElementById('toggleCuacaPerairanLayer');
+    var cb2 = document.getElementById('toggleCuacaPelabuhanLayer');
+    if (cb1) cb1.checked = false;
+    if (cb2) cb2.checked = false;
+    setInfo('Cuaca pelabuhan & perairan — BMKG Maritim');
   };
 })();
