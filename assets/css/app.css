@@ -818,7 +818,7 @@
     .gp-leaflet-popup .leaflet-popup-content { width: auto !important; margin: 0; }
     .gp-leaflet-popup .leaflet-popup-tip { box-shadow: 4px 4px 12px rgba(16, 163, 127, .15); }
 
-    .gp-popup { width: 280px; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1e293b; background: #fff; max-height: 60vh; overflow-x: hidden; overflow-y: auto; display: flex; flex-direction: column; }
+    .gp-popup { width: 280px; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1e293b; background: #fff; max-height: 40vh; overflow-x: hidden; overflow-y: auto; display: flex; flex-direction: column; }
 
     .gp-popup-head {
       position: relative; padding: 18px 16px 14px;
