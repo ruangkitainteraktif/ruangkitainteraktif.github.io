@@ -150,6 +150,8 @@
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.5/dist/hls.min.js"></script>
   <!-- Esri Leaflet Plugin untuk ArcGIS FeatureServer -->
   <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
+  <!-- Protomaps Leaflet untuk PMTiles vector tiles -->
+  <script src="https://unpkg.com/protomaps-leaflet@5.0.0/dist/protomaps-leaflet.js"></script>
   <!-- shpjs untuk membaca file SHP -->
   <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.js"></script>
   <!-- shp-write untuk membuat unduhan SHP batas wilayah -->
@@ -1106,6 +1108,38 @@
                 </button>
               </label>
               <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleConcessionsLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Konsesi (GFW)</span>
+                  <small>HGU sawit, HTI pulpwood, kayu, tambang</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleProtectedLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Kawasan Konservasi (WDPA)</span>
+                  <small>TN, CA, SM, HL, moratorium</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleMangroveLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Mangrove (GMW v3)</span>
+                  <small>Sebaran mangrove global 2020</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="togglePeatlandLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Lahan Gambut (GFW)</span>
+                  <small>Sebaran lahan gambut Indonesia</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
                 <input type="checkbox" id="toggleKawasanHutanLayer">
                 <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
                 <span class="cctv-layer-info">
@@ -1862,6 +1896,7 @@
   <script src="assets/js/patahan-aktif.js"></script>
   <script src="assets/js/likuifaksi.js"></script>
   <script src="assets/js/karst.js"></script>
+  <script src="assets/js/concessions-layer.js"></script>
   <script src="assets/js/geopangan.js"></script>
   <script src="assets/js/about.js"></script>
   <script src="assets/js/population-chart.js"></script>

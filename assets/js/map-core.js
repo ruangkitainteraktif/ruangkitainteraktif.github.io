@@ -424,7 +424,8 @@ L.control.scale({
           'toggleCuacaPelabuhanLayer', 'toggleCuacaPerairanLayer',
           'toggleSawitNasionalLayer', 'toggleSawitPerkebunanLayer', 'toggleRehabDasLayer', 'togglePerkebunanPl24Layer',
           'toggleRktnSumateraLayer', 'toggleRktnSulawesiLayer', 'toggleRktnPapuaLayer', 'toggleRktnMalukuLayer', 'toggleRktnKalimantanLayer', 'toggleRktnJawaLayer', 'toggleRktnBaliNtLayer',
-          'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer'
+          'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer',
+          'toggleConcessionsLayer', 'toggleProtectedLayer', 'toggleMangroveLayer', 'togglePeatlandLayer'
         ];
         toggles.forEach(id => {
           const el = document.getElementById(id);
@@ -523,6 +524,7 @@ L.control.scale({
         if (typeof modisTimeSliderCleanup === 'function') modisTimeSliderCleanup();
         if (typeof modisViirsOverlayCleanup === 'function') modisViirsOverlayCleanup();
         if (typeof cuacaMaritimCleanup === 'function') cuacaMaritimCleanup();
+        if (typeof pmtilesCleanup === 'function') pmtilesCleanup();
         if (typeof hideAirVisualLegend === 'function') hideAirVisualLegend();
         if (typeof removeProvinsiAirvisual === 'function') removeProvinsiAirvisual();
 
