@@ -92,6 +92,23 @@
       background: rgba(255,255,255,.95);
     }
     .unified-search-icon { color: #5f6368; flex-shrink: 0; opacity: .7; }
+
+    /* ruangkita-mark inside search bar */
+    .unified-search .ruangkita-mark {
+      display: grid;
+      grid-template-columns: repeat(2, 10px);
+      grid-template-rows: repeat(2, 10px);
+      gap: 2px;
+      padding: 0;
+      border: none;
+      border-radius: 0;
+      background: none;
+      transform: none;
+      opacity: 1;
+    }
+    .unified-search .ruangkita-mark i {
+      border-radius: 2px;
+    }
     .unified-search-input {
       flex: 1; border: 0; outline: none; background: transparent;
       font-size: 14px; color: #202124; font-family: 'Google Sans', 'Segoe UI', sans-serif;
@@ -1049,6 +1066,68 @@
       color: #10b981;
       font-weight: 600;
     }
+
+    /* ── Quick Layer Toolbar ── */
+    .quick-layer-bar {
+      position: absolute;
+      top: 68px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      max-width: min(640px, calc(100% - 32px));
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+    }
+    .quick-layer-bar::-webkit-scrollbar { display: none; }
+    .ql-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 10px;
+      border: 1px solid #e3edf5;
+      border-radius: 20px;
+      background: #fff;
+      color: #5f6368;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-family: 'Google Sans', 'Segoe UI', sans-serif;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .ql-btn svg { flex-shrink: 0; }
+    .ql-btn:hover { border-color: #c4d5e3; background: #f8fbfe; }
+    .ql-btn.active { color: #fff; border-color: transparent; }
+    #qlHotspot.active   { background: #dc2626; }
+    #qlPm25.active      { background: #7c3aed; }
+    #qlKonsesi.active   { background: #ea580c; }
+    #qlPelabuhan.active { background: #0284c7; }
+    #qlPerairan.active  { background: #0891b2; }
+    #qlGambut.active    { background: #6d4c41; }
+    #qlSawit.active     { background: #16a34a; }
+    #qlGunungApi.active { background: #b91c1c; }
+
+    /* quick layer badge */
+    .ql-badge {
+      position: absolute;
+      top: -4px;
+      right: -6px;
+      padding: 1px 4px;
+      font-size: 7px;
+      font-weight: 700;
+      color: #fff;
+      background: #dc2626;
+      border-radius: 6px;
+      line-height: 1.2;
+      letter-spacing: .02em;
+    }
+    .ql-btn { position: relative; }
 
     /* SIDEBAR KIRI */
     #sidebar-left {
@@ -2063,6 +2142,17 @@
       .insight-quake-main { gap: 6px; }
       .insight-quake-meta { font-size: 9px; }
 
+      .quick-layer-bar {
+        width: calc(100% - 24px);
+        padding: 3px;
+        gap: 3px;
+      }
+      .ql-btn {
+        padding: 5px 8px;
+        font-size: 9px;
+      }
+      .ql-btn svg { width: 14px; height: 14px; }
+
       .geoid-leaflet-popup { 
         max-width: calc(100vw - 40px) !important;
         width: auto !important;
@@ -2220,6 +2310,67 @@
       #cctv-search-sheet #cctvResults .cctv-result-item {
         box-sizing: border-box;
         margin: 0;
+      }
+
+      /* ── Hotspot Bottom Sheet (Mobile: dari bawah, 50vh) ── */
+      #hotspot-sheet {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        height: 35vh; height: 35dvh;
+        width: 100%;
+        border-radius: 16px 16px 0 0;
+        z-index: 1100;
+        transform: translateY(100%);
+        transition: transform 0.3s ease-in-out;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 -4px 20px rgba(0,0,0,.15);
+        visibility: hidden;
+      }
+      #hotspot-sheet.sheet-open { transform: translateY(0); visibility: visible; }
+
+      #hotspot-sheet .hs-sheet-handle {
+        position: sticky; top: 0; z-index: 2;
+        display: flex; justify-content: center; align-items: center;
+        padding: 10px 0 6px;
+        cursor: grab;
+        -webkit-user-select: none; user-select: none;
+        background: #fff;
+      }
+      #hotspot-sheet .hs-sheet-handle::after {
+        content: '';
+        width: 36px; height: 4px;
+        border-radius: 2px;
+        background: #c4d5e3;
+      }
+
+      .hs-sheet-head {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0 16px 10px;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .hs-sheet-title {
+        display: flex; align-items: center; gap: 6px;
+        font-size: 13px; font-weight: 700; color: #1e293b;
+      }
+      .hs-sheet-close {
+        width: 28px; height: 28px;
+        display: flex; align-items: center; justify-content: center;
+        border: 0; border-radius: 50%;
+        background: #f1f5f9; color: #64748b;
+        font-size: 16px; cursor: pointer;
+        transition: background .15s;
+      }
+      .hs-sheet-close:hover { background: #e2e8f0; }
+
+      .hs-sheet-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 12px 16px 20px;
       }
 
       #detail-panel {
@@ -4099,6 +4250,79 @@
     }
     #cctv-search-sheet { margin-top: 10px; }
     .cctv-sheet-handle { display: none; }
+
+    /* ── Hotspot Sidebar (Desktop: kanan) ── */
+    #hotspot-sheet {
+      display: flex;
+      position: fixed;
+      top: 76px;
+      right: 16px;
+      bottom: 16px;
+      left: auto;
+      width: min(380px, calc(100vw - 32px));
+      height: auto;
+      border-radius: 16px;
+      z-index: 1100;
+      transform: translateX(calc(100% + 24px));
+      transition: transform 0.3s ease-in-out;
+      flex-direction: column;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 8px 28px rgba(15, 23, 42, .2);
+      visibility: hidden;
+    }
+    #hotspot-sheet.sheet-open { transform: translateX(0); visibility: visible; }
+    #hotspot-sheet .hs-sheet-handle { display: none; }
+    #hotspot-sheet .hs-sheet-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    #hotspot-sheet .hs-sheet-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #1e293b;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    #hotspot-sheet .hs-sheet-close {
+      width: 28px;
+      height: 28px;
+      border: 0;
+      border-radius: 50%;
+      background: #f1f5f9;
+      color: #64748b;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    #hotspot-sheet .hs-sheet-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 12px 16px 20px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    @media (max-width: 768px) {
+      #hotspot-sheet {
+        top: auto;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 35vh;
+        height: 35dvh;
+        border-radius: 16px 16px 0 0;
+        transform: translateY(100%);
+        box-shadow: 0 -4px 20px rgba(0,0,0,.15);
+      }
+      #hotspot-sheet.sheet-open { transform: translateY(0); }
+      #hotspot-sheet .hs-sheet-handle { display: flex; }
+      #hotspot-sheet .hs-sheet-head { padding: 0 16px 10px; }
+    }
     .cctv-search-card {
       position: relative;
       z-index: 3;

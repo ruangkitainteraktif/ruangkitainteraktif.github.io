@@ -701,3 +701,60 @@ L.control.scale({
   const BPS_WMS_URL = 'https://geoserver.bps.go.id/ows';
   const KLATEN_WMS_URL = 'https://geoportal.klaten.go.id/geoserver/wms';
   const CIREBON_WMS_URL = 'https://geoserver.cirebonkota.go.id/geoserver/wms';
+
+  /* ═══════════════════════════════════════════════════════
+     QUICK LAYER TOOLBAR
+     ═══════════════════════════════════════════════════════ */
+  (function initQuickLayerBar() {
+    var cfg = {
+      qlHotspot:   { type: 'sheet' },
+      qlPm25:      { target: 'airvisual-pm25',              type: 'basemap' },
+      qlKonsesi:   { target: 'toggleConcessionsLayer',      type: 'checkbox' },
+      qlPelabuhan: { target: 'toggleCuacaPelabuhanLayer',   type: 'checkbox' },
+      qlPerairan:  { target: 'toggleCuacaPerairanLayer',    type: 'checkbox' },
+      qlGambut:    { target: 'togglePeatlandLayer',         type: 'checkbox' },
+      qlSawit:     { target: 'toggleSawitNasionalLayer',    type: 'checkbox' },
+      qlGunungApi: { target: 'toggleVolcanoLayer',          type: 'checkbox' }
+    };
+
+    function syncToolbarState() {
+      Object.keys(cfg).forEach(function (btnId) {
+        var btn = document.getElementById(btnId);
+        var c = cfg[btnId];
+        if (!btn) return;
+        if (c.type === 'sheet') {
+          var sheet = document.getElementById('hotspot-sheet');
+          btn.classList.toggle('active', !!(sheet && sheet.classList.contains('sheet-open')));
+        } else if (c.type === 'checkbox') {
+          var cb = document.getElementById(c.target);
+          btn.classList.toggle('active', !!(cb && cb.checked));
+        } else {
+          btn.classList.toggle('active', currentBasemapName === c.target);
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      Object.keys(cfg).forEach(function (btnId) {
+        var btn = document.getElementById(btnId);
+        var c = cfg[btnId];
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+          if (c.type === 'sheet') {
+            if (typeof toggleHotspotSheet === 'function') toggleHotspotSheet();
+          } else if (c.type === 'checkbox') {
+            var cb = document.getElementById(c.target);
+            if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); }
+          } else {
+            if (currentBasemapName === c.target) setBaseMap('google-maps');
+            else setBaseMap(c.target);
+          }
+          syncToolbarState();
+        });
+      });
+      syncToolbarState();
+    });
+
+    /* re-sync setiap 800ms supaya tombol selalu sinkron */
+    setInterval(syncToolbarState, 800);
+  })();

@@ -186,6 +186,7 @@
 
       createHotspotLegend(hotspotFeatures.length, high, medium, low);
       renderHotspotSummaryCard(high, medium, low);
+      if (typeof window.renderHotspotSheetContent === 'function') window.renderHotspotSheetContent();
 
       if (typeof window.loadHotspotTable === 'function') window.loadHotspotTable();
       if (typeof window.loadHotspotBar === 'function') window.loadHotspotBar();
@@ -303,6 +304,7 @@
 
   window.showHotspotLayer = showHotspotLayer;
   window.hideHotspotLayer = hideHotspotLayer;
+  window.getHotspotFeatures = function () { return hotspotFeatures; };
 })();
 
 /* ── Luas Kebakaran Chart ── */
@@ -877,3 +879,272 @@
   window.loadHotspotBar = loadData;
   window.clearHotspotBar = clearBar;
 })();
+
+/* ═══════════════════════════════════════════════════════
+   HOTSPOT BOTTOM SHEET
+   ═══════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var sheetOpen = false;
+
+  function toggleHotspotSheet() {
+    var sheet = document.getElementById('hotspot-sheet');
+    if (!sheet) return;
+
+    sheetOpen = !sheetOpen;
+
+    if (sheetOpen) {
+      sheet.classList.add('sheet-open');
+      if (typeof showHotspotLayer === 'function') showHotspotLayer();
+      renderSheetContent();
+    } else {
+      sheet.classList.remove('sheet-open');
+      if (typeof hideHotspotLayer === 'function') hideHotspotLayer();
+    }
+  }
+
+  window.toggleHotspotSheet = toggleHotspotSheet;
+  window.renderHotspotSheetContent = renderSheetContent;
+
+  function renderSheetContent() {
+    renderSheetSummary();
+    renderSheetTable();
+    renderSheetLuas();
+    renderSheetCo2();
+  }
+
+  /* ── Summary Card ── */
+  function renderSheetSummary() {
+    var container = document.getElementById('hs-sheet-summary');
+    if (!container) return;
+
+    var features = typeof window.getHotspotFeatures === 'function' ? window.getHotspotFeatures() : [];
+    if (!features.length) {
+      container.innerHTML = '<div style="text-align:center;padding:16px;color:#64748b;font-size:11px;">Memuat data hotspot...</div>';
+      return;
+    }
+
+    var high = 0, medium = 0, low = 0;
+    var latest = null;
+    var latestDate = null;
+
+    for (var i = 0; i < features.length; i++) {
+      var p = features[i].properties;
+      if (p.confidence_level === 'high') high++;
+      else if (p.confidence_level === 'medium') medium++;
+      else low++;
+      if (p.date_hotspot) {
+        var d = new Date(p.date_hotspot);
+        if (!latestDate || d > latestDate) { latestDate = d; latest = p; }
+      }
+    }
+
+    var total = high + medium + low;
+    var latestProv = latest ? (latest.nama_provinsi || '-') : '-';
+    var latestKab = latest ? (latest.kabkota || '-') : '-';
+    var latestKec = latest ? (latest.kecamatan || '-') : '-';
+    var latestDesa = latest ? (latest.desa || '-') : '-';
+    var latestSatelit = latest ? (latest.sumber || '-') : '-';
+    var latestConf = latest ? (latest.confidence_level || '-') : '-';
+    var latestDateStr = latest ? (latest.date_hotspot || '-') : '-';
+
+    container.innerHTML =
+      '<div class="hotspot-summary">' +
+        '<div class="hotspot-summary-main">' +
+          '<div class="hotspot-summary-icon">&#x1F525;</div>' +
+          '<div>' +
+            '<h5 class="hotspot-summary-title">Hotspot Karhutla</h5>' +
+            '<div class="hotspot-summary-count">' + total.toLocaleString('id-ID') + ' titik aktif 24 jam</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="hotspot-summary-details">' +
+          '<span>Lokasi<b>' + latestDesa + ', ' + latestKec + '</b></span>' +
+          '<span>Satelit<b>' + latestSatelit + '</b></span>' +
+          '<span>Confidence<b>' + latestConf + '</b></span>' +
+        '</div>' +
+        '<div class="hotspot-summary-waktu">' +
+          '<span>Waktu<b>' + latestDateStr + '</b></span>' +
+        '</div>' +
+      '</div>';
+  }
+
+  /* ── Table ── */
+  function renderSheetTable() {
+    var container = document.getElementById('hs-sheet-table');
+    if (!container) return;
+
+    var features = typeof window.getHotspotFeatures === 'function' ? window.getHotspotFeatures() : [];
+    if (!features.length) return;
+
+    // Aggregate by provinsi
+    var provMap = {};
+    for (var i = 0; i < features.length; i++) {
+      var p = features[i].properties;
+      var prov = p.nama_provinsi || 'Tidak Diketahui';
+      if (!provMap[prov]) provMap[prov] = { total: 0, high: 0, medium: 0, low: 0 };
+      provMap[prov].total++;
+      if (p.confidence_level === 'high') provMap[prov].high++;
+      else if (p.confidence_level === 'medium') provMap[prov].medium++;
+      else provMap[prov].low++;
+    }
+
+    var provs = Object.keys(provMap).sort(function (a, b) { return provMap[b].total - provMap[a].total; });
+
+    var rowsHtml = '';
+    for (var j = 0; j < provs.length; j++) {
+      var d = provMap[provs[j]];
+      rowsHtml +=
+        '<tr>' +
+          '<td style="font-weight:600;color:#1e293b;">' + provs[j] + '</td>' +
+          '<td style="text-align:center;">' + d.total + '</td>' +
+          '<td style="text-align:center;color:#dc2626;">' + d.high + '</td>' +
+          '<td style="text-align:center;color:#f59e0b;">' + d.medium + '</td>' +
+          '<td style="text-align:center;color:#22c55e;">' + d.low + '</td>' +
+        '</tr>';
+    }
+
+    container.innerHTML =
+      '<div class="hs-table-wrap" style="margin-top:12px;">' +
+        '<div class="hs-table-header">' +
+          '<div class="hs-table-title">Sebaran Hotspot per Provinsi</div>' +
+          '<div class="hs-table-total">' + features.length + ' titik</div>' +
+        '</div>' +
+        '<div class="hs-table-scroll" style="max-height:200px;overflow-y:auto;">' +
+          '<table class="hs-table">' +
+            '<thead><tr>' +
+              '<th>Provinsi</th><th style="text-align:center;">Total</th>' +
+              '<th style="text-align:center;">High</th><th style="text-align:center;">Med</th><th style="text-align:center;">Low</th>' +
+            '</tr></thead>' +
+            '<tbody>' + rowsHtml + '</tbody>' +
+          '</table>' +
+        '</div>' +
+      '</div>';
+  }
+
+  /* ── Luas Kebakaran ── */
+  function renderSheetLuas() {
+    var container = document.getElementById('hs-sheet-luas');
+    if (!container) return;
+
+    container.innerHTML = '<div style="text-align:center;padding:8px;color:#94a3b8;font-size:10px;">Memuat...</div>';
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'assets/data/luas-kebakaran.json', true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          var json = JSON.parse(xhr.responseText);
+          buildLuasHtml(container, json.total, json.last);
+        } catch (e) {
+          container.innerHTML = '';
+        }
+      }
+    };
+    xhr.send();
+  }
+
+  function buildLuasHtml(container, totalData, lastUpdate) {
+    if (!totalData || !totalData.length) { container.innerHTML = ''; return; }
+
+    function parseNum(s) { return parseFloat(String(s).replace(/\./g, '').replace(',', '.')) || 0; }
+    function fmtVal(v) { return v >= 1000000 ? (v/1000000).toFixed(1)+' Jt' : v >= 1000 ? (v/1000).toFixed(1)+' Rb' : v.toFixed(0); }
+
+    var years = [], vals = [], max = 0;
+    for (var i = 0; i < totalData.length; i++) {
+      var v = parseNum(totalData[i].total);
+      years.push(String(totalData[i].tahun));
+      vals.push(v);
+      if (v > max) max = v;
+    }
+    if (max === 0) max = 1;
+
+    var bars = '';
+    for (var j = 0; j < years.length; j++) {
+      var pct = (vals[j] / max) * 100;
+      bars += '<div class="luas-chart-bar-wrap">' +
+        '<div class="luas-chart-bar-val">' + fmtVal(vals[j]) + '</div>' +
+        '<div class="luas-chart-bar" style="height:' + Math.max(2, pct) + '%;"></div>' +
+        '<div class="luas-chart-bar-label">' + years[j] + '</div>' +
+      '</div>';
+    }
+
+    container.innerHTML =
+      '<div class="luas-chart">' +
+        '<div class="luas-chart-header">' +
+          '<div class="luas-chart-title">Indikasi Luas Kebakaran</div>' +
+          '<div class="luas-chart-subtitle">Total nasional (ha) &middot; ' + (lastUpdate || '') + '</div>' +
+        '</div>' +
+        '<div class="luas-chart-body"><div class="luas-chart-bars">' + bars + '</div></div>' +
+      '</div>';
+  }
+
+  /* ── CO2 Emissions ── */
+  function renderSheetCo2() {
+    var container = document.getElementById('hs-sheet-co2');
+    if (!container) return;
+
+    container.innerHTML = '<div style="text-align:center;padding:8px;color:#94a3b8;font-size:10px;">Memuat...</div>';
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'assets/data/emisi-co2.json', true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          var json = JSON.parse(xhr.responseText);
+          buildCo2Html(container, json);
+        } catch (e) {
+          container.innerHTML = '';
+        }
+      }
+    };
+    xhr.send();
+  }
+
+  function buildCo2Html(container, json) {
+    if (!json || !json.tahun || !json.data) { container.innerHTML = ''; return; }
+
+    function parseNum(s) { return parseFloat(String(s).replace(/\./g, '').replace(',', '.')) || 0; }
+    function fmtVal(v) { return v >= 1e9 ? (v/1e9).toFixed(1)+' M' : v >= 1e6 ? (v/1e6).toFixed(1)+' Jt' : v >= 1000 ? (v/1000).toFixed(1)+' Rb' : v.toFixed(0); }
+
+    var years = json.tahun.map(String);
+    var totals = [];
+    for (var yi = 0; yi < years.length; yi++) {
+      var sum = 0;
+      var provs = Object.keys(json.data);
+      for (var pi = 0; pi < provs.length; pi++) {
+        var arr = json.data[provs[pi]];
+        for (var di = 0; di < arr.length; di++) {
+          if (String(arr[di].tahun) === years[yi]) sum += parseNum(arr[di].luas);
+        }
+      }
+      totals.push(sum);
+    }
+
+    var max = 0;
+    for (var k = 0; k < totals.length; k++) { if (totals[k] > max) max = totals[k]; }
+    if (max === 0) max = 1;
+
+    var bars = '';
+    for (var j = 0; j < years.length; j++) {
+      var pct = (totals[j] / max) * 100;
+      bars += '<div class="co2-chart-bar-wrap">' +
+        '<div class="co2-chart-bar-val">' + fmtVal(totals[j]) + '</div>' +
+        '<div class="co2-chart-bar" style="height:' + Math.max(2, pct) + '%;"></div>' +
+        '<div class="co2-chart-bar-label">' + years[j] + '</div>' +
+      '</div>';
+    }
+
+    container.innerHTML =
+      '<div class="co2-chart">' +
+        '<div class="co2-chart-header">' +
+          '<div class="co2-chart-title">Emisi CO2 Karhutla</div>' +
+          '<div class="co2-chart-subtitle">Total nasional (ha)</div>' +
+        '</div>' +
+        '<div class="co2-chart-body"><div class="co2-chart-bars">' + bars + '</div></div>' +
+      '</div>';
+  }
+
+  })();
