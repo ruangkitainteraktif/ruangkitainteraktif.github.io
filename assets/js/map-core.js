@@ -64,25 +64,16 @@ L.control.scale({
       minZoom: 0,
       attribution: 'NASA GIBS',
       Time: new Date().toISOString().slice(0, 10)
-    }),
-    'airvisual-pm25': L.tileLayer('https://osm.airvisual.net/cog/pm25/tiles/{z}/{x}/{y}.png', {
-      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'Mas Pannn'
-    }),
-    'airvisual-pm10': L.tileLayer('https://osm.airvisual.net/cog/pm10/tiles/{z}/{x}/{y}.png', {
-      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'Mas Pannn'
-    }),
-    'airvisual-o3': L.tileLayer('https://osm.airvisual.net/cog/o3/tiles/{z}/{x}/{y}.png', {
-      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'Mas Pannn'
-    }),
-    'airvisual-no2': L.tileLayer('https://osm.airvisual.net/cog/no2/tiles/{z}/{x}/{y}.png', {
-      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'Mas Pannn'
-    }),
-    'airvisual-so2': L.tileLayer('https://osm.airvisual.net/cog/so2/tiles/{z}/{x}/{y}.png', {
-      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'Mas Pannn'
-    }),
-    'airvisual-co': L.tileLayer('https://osm.airvisual.net/cog/co/tiles/{z}/{x}/{y}.png', {
-      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'Mas Pannn'
     })
+  };
+
+  const airVisualLayers = {
+    'airvisual-pm25': L.tileLayer('https://osm.airvisual.net/cog/pm25/tiles/{z}/{x}/{y}.png', { maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual' }),
+    'airvisual-pm10': L.tileLayer('https://osm.airvisual.net/cog/pm10/tiles/{z}/{x}/{y}.png', { maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual' }),
+    'airvisual-o3': L.tileLayer('https://osm.airvisual.net/cog/o3/tiles/{z}/{x}/{y}.png', { maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual' }),
+    'airvisual-no2': L.tileLayer('https://osm.airvisual.net/cog/no2/tiles/{z}/{x}/{y}.png', { maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual' }),
+    'airvisual-so2': L.tileLayer('https://osm.airvisual.net/cog/so2/tiles/{z}/{x}/{y}.png', { maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual' }),
+    'airvisual-co': L.tileLayer('https://osm.airvisual.net/cog/co/tiles/{z}/{x}/{y}.png', { maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual' })
   };
 
   let currentBasemapName = 'google-maps';
@@ -237,14 +228,7 @@ L.control.scale({
     'esri-shaded-relief': 'Esri Shaded Relief',
     'esri-physical': 'Esri Physical',
     'esri-natgeo': 'Esri National Geographic',
-    'google-maps': 'Google Maps',
-    'modis-terra': 'Modis Terra',
-    'airvisual-pm25': 'PM2.5 (AirVisual)',
-    'airvisual-pm10': 'PM10 (AirVisual)',
-    'airvisual-o3': 'O3 - Ozone (AirVisual)',
-    'airvisual-no2': 'NO2 (AirVisual)',
-    'airvisual-so2': 'SO2 (AirVisual)',
-    'airvisual-co': 'CO (AirVisual)'
+    'google-maps': 'Google Maps'
   };
   const BasemapControl = L.Control.extend({
     options: { position: 'bottomright' },
@@ -426,14 +410,37 @@ L.control.scale({
     }
   }
 
-  map.on('basemapchanged', function (e) {
-    if (e.basemap && e.basemap.indexOf('airvisual-') === 0) {
-      showAirVisualLegend(e.basemap);
-      loadProvinsiAirvisual();
-    } else {
+  var _activeAirVisualLayerKey = null;
+
+  function refreshAirVisualPresentation() {
+    var activeKeys = Object.keys(airVisualLayers).filter(function (key) { return map.hasLayer(airVisualLayers[key]); });
+    if (!activeKeys.length) {
+      _activeAirVisualLayerKey = null;
       hideAirVisualLegend();
       removeProvinsiAirvisual();
+      return;
     }
+    if (activeKeys.indexOf(_activeAirVisualLayerKey) === -1) _activeAirVisualLayerKey = activeKeys[0];
+    showAirVisualLegend(_activeAirVisualLayerKey);
+    loadProvinsiAirvisual();
+  }
+
+  function toggleAirVisualLayer(key, visible) {
+    var layer = airVisualLayers[key];
+    if (!layer) return;
+    if (visible) {
+      layer.addTo(map);
+      _activeAirVisualLayerKey = key;
+    } else if (map.hasLayer(layer)) {
+      map.removeLayer(layer);
+    }
+    refreshAirVisualPresentation();
+  }
+
+  document.querySelectorAll('[data-airvisual-layer]').forEach(function (input) {
+    input.addEventListener('change', function () {
+      toggleAirVisualLayer(this.dataset.airvisualLayer, this.checked);
+    });
   });
 
   // Reset Layers Control
@@ -581,6 +588,11 @@ L.control.scale({
         if (typeof pmtilesCleanup === 'function') pmtilesCleanup();
         if (typeof hideAirVisualLegend === 'function') hideAirVisualLegend();
         if (typeof removeProvinsiAirvisual === 'function') removeProvinsiAirvisual();
+        Object.keys(airVisualLayers).forEach(function (key) {
+          if (map.hasLayer(airVisualLayers[key])) map.removeLayer(airVisualLayers[key]);
+        });
+        document.querySelectorAll('[data-airvisual-layer]').forEach(function (input) { input.checked = false; });
+        _activeAirVisualLayerKey = null;
 
         // Bersihkan layer sensor & katalog gempa
         document.querySelectorAll('#toggleKatalogGempa, #toggleSensorSeismic, #toggleSensorGlobal, #toggleHistoryGempa').forEach(function (cb) {
@@ -743,8 +755,9 @@ L.control.scale({
   (function initQuickLayerBar() {
     var cfg = {
       qlHotspot:   { type: 'sheet' },
-      qlPm25:      { target: 'airvisual-pm25',              type: 'basemap' },
+      qlPm25:      { target: 'toggleAirVisualPm25',         type: 'checkbox' },
       qlWind:      { target: 'toggleWindAnim',              type: 'checkbox' },
+      qlModisTerra:{ target: 'modis-terra',                 type: 'basemap' },
       qlKonsesi:   { target: 'toggleConcessionsLayer',      type: 'checkbox' },
       qlPelabuhan: { target: 'toggleCuacaPelabuhanLayer',   type: 'checkbox' },
       qlPerairan:  { target: 'toggleCuacaPerairanLayer',    type: 'checkbox' },

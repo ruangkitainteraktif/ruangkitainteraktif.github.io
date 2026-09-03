@@ -306,7 +306,7 @@
         <span class="ql-badge">NEW</span>
       </button>
       <button type="button" class="ql-btn" id="qlPm25" title="PM2.5 AirVisual">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
         </svg>
         <span>PM2.5</span>
@@ -319,6 +319,13 @@
           <path d="M3 16h7"/>
         </svg>
         <span>Angin</span>
+      </button>
+      <button type="button" class="ql-btn" id="qlModisTerra" title="Citra satelit MODIS Terra">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="8"/>
+          <path d="M4 12h16M12 4c2.2 2.2 3.3 4.9 3.3 8S14.2 17.8 12 20M12 4c-2.2 2.2-3.3 4.9-3.3 8S9.8 17.8 12 20"/>
+        </svg>
+        <span>MODIS Terra</span>
       </button>
       <button type="button" class="ql-btn" id="qlKonsesi" title="Konsesi (GFW)">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1327,7 +1334,7 @@
             <div class="cctv-card" style="margin-bottom:12px;">
               <div class="cctv-card-header">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14l9-9 9 9"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-                <span>Layer Cuaca Maritim</span>
+                <span>Layer Cuaca</span>
               </div>
               <div class="cctv-card-body cctv-layers">
                 <label class="cctv-layer-toggle">
@@ -1351,6 +1358,20 @@
             <div class="cctv-card" style="margin-bottom:12px;">
               <div class="cctv-card-header">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
+                <span>Kualitas Udara</span>
+              </div>
+              <div class="cctv-card-body cctv-layers">
+                <label class="cctv-layer-toggle"><input type="checkbox" id="toggleAirVisualPm25" data-airvisual-layer="airvisual-pm25"><span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="cctv-layer-info"><span class="cctv-layer-name">PM2.5</span><small>Partikel halus PM2.5 dari AirVisual</small></span></label>
+                <label class="cctv-layer-toggle"><input type="checkbox" data-airvisual-layer="airvisual-pm10"><span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="cctv-layer-info"><span class="cctv-layer-name">PM10</span><small>Partikel kasar PM10 dari AirVisual</small></span></label>
+                <label class="cctv-layer-toggle"><input type="checkbox" data-airvisual-layer="airvisual-o3"><span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="cctv-layer-info"><span class="cctv-layer-name">O3 (Ozon)</span><small>Konsentrasi ozon dari AirVisual</small></span></label>
+                <label class="cctv-layer-toggle"><input type="checkbox" data-airvisual-layer="airvisual-no2"><span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="cctv-layer-info"><span class="cctv-layer-name">NO2</span><small>Nitrogen dioksida dari AirVisual</small></span></label>
+                <label class="cctv-layer-toggle"><input type="checkbox" data-airvisual-layer="airvisual-so2"><span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="cctv-layer-info"><span class="cctv-layer-name">SO2</span><small>Sulfur dioksida dari AirVisual</small></span></label>
+                <label class="cctv-layer-toggle"><input type="checkbox" data-airvisual-layer="airvisual-co"><span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="cctv-layer-info"><span class="cctv-layer-name">CO</span><small>Karbon monoksida dari AirVisual</small></span></label>
+              </div>
+            </div>
+            <div class="cctv-card" style="margin-bottom:12px;">
+              <div class="cctv-card-header">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 0 0 0-10z"/></svg>
                 <span>Cari Wilayah - Cuaca</span>
               </div>
               <div class="cctv-card-body">
