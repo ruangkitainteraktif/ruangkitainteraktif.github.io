@@ -4255,11 +4255,11 @@
     #hotspot-sheet {
       display: flex;
       position: fixed;
-      top: 76px;
-      right: 16px;
-      bottom: 16px;
+      top: 120px;
+      right: 74px;
+      bottom: 12px;
       left: auto;
-      width: min(380px, calc(100vw - 32px));
+      width: min(380px, calc(100vw - 106px));
       height: auto;
       border-radius: 16px;
       z-index: 1100;
@@ -4272,6 +4272,11 @@
       visibility: hidden;
     }
     #hotspot-sheet.sheet-open { transform: translateX(0); visibility: visible; }
+
+    /* Jauhkan kontrol Lokasi Saya, Reset, dan Print dari sidebar Hotspot saat terbuka. */
+    body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .leaflet-bottom.leaflet-right {
+      right: calc(min(380px, calc(100vw - 106px)) + 90px);
+    }
     #hotspot-sheet .hs-sheet-handle { display: none; }
     #hotspot-sheet .hs-sheet-head {
       display: flex;
@@ -4298,12 +4303,40 @@
       cursor: pointer;
       font-size: 16px;
     }
+    #hotspot-sheet .hs-sheet-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #hotspot-sheet .hs-sheet-minimize {
+      display: grid;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: #f1f5f9;
+      color: #64748b;
+      cursor: pointer;
+    }
     #hotspot-sheet .hs-sheet-body {
       flex: 1 1 auto;
       min-height: 0;
       overflow-y: auto;
       padding: 12px 16px 20px;
       -webkit-overflow-scrolling: touch;
+    }
+    @media (min-width: 769px) {
+      #hotspot-sheet.sheet-minimized {
+        top: auto;
+        right: auto;
+        bottom: 12px;
+        left: 50%;
+        width: min(330px, calc(100vw - 24px));
+        height: 52px;
+        transform: translateX(-50%);
+      }
+      #hotspot-sheet.sheet-minimized .hs-sheet-body { display: none; }
     }
 
     @media (max-width: 768px) {
@@ -4320,8 +4353,28 @@
         box-shadow: 0 -4px 20px rgba(0,0,0,.15);
       }
       #hotspot-sheet.sheet-open { transform: translateY(0); }
+      body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .leaflet-bottom.leaflet-right {
+        right: 0;
+        bottom: calc(35dvh + 12px);
+      }
       #hotspot-sheet .hs-sheet-handle { display: flex; }
       #hotspot-sheet .hs-sheet-head { padding: 0 16px 10px; }
+      #hotspot-sheet.sheet-minimized {
+        right: auto;
+        bottom: 12px;
+        left: 50%;
+        width: min(330px, calc(100vw - 24px));
+        height: 52px;
+        transform: translateX(-50%);
+      }
+      #hotspot-sheet.sheet-minimized .hs-sheet-handle,
+      #hotspot-sheet.sheet-minimized .hs-sheet-body { display: none; }
+      #hotspot-sheet.sheet-minimized .hs-sheet-head {
+        min-height: 52px;
+        box-sizing: border-box;
+        padding: 10px 16px;
+        border-bottom: 0;
+      }
     }
     .cctv-search-card {
       position: relative;
@@ -5101,11 +5154,11 @@
       border: none;
       box-shadow: 0 2px 8px rgba(0,0,0,0.18);
       border-radius:5px;
-      padding: 5px 5px;
-      left: 5px;
-      bottom: 5px;
+      padding: 3px 4px;
+      left: 4px;
+      bottom: 4px;
       font-family: "Avenir Next", "Segoe UI", sans-serif;
-      font-size: 11px;
+      font-size: 9px;
       color: #333;
       line-height: 1.4;
       backdrop-filter: blur(4px);
@@ -5113,20 +5166,20 @@
     }
     .leaflet-control-scale-line {
       border-color: #333;
-      border-width: 2px 0 0 0;
+      border-width: 1px 0 0 0;
       border-style: solid;
-      padding-top: 3px;
-      margin-top: 4px;
+      padding-top: 2px;
+      margin-top: 2px;
       color: #333;
-      font-size: 11px;
+      font-size: 9px;
       font-weight: 500;
       text-align: center;
     }
     .leaflet-control-scale-line:not(:first-child) {
       border-top-width: 1px;
       border-bottom: none;
-      margin-top: 2px;
-      padding-top: 2px;
+      margin-top: 1px;
+      padding-top: 1px;
     }
 
     /* ── AirVisual Legend ── */
@@ -5399,6 +5452,10 @@
       border: 1px solid #e5e7eb;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       min-width: 160px;
+    }
+
+    @media (max-width: 768px) {
+      .hotspot-legend-karhutla { display: none; }
     }
 
     .hotspot-legend-title {

@@ -368,7 +368,12 @@
           </svg>
           <span>Hotspot Karhutla</span>
         </div>
-        <button class="hs-sheet-close" onclick="toggleHotspotSheet()" type="button">&times;</button>
+        <div class="hs-sheet-actions">
+          <button class="hs-sheet-minimize" onclick="toggleHotspotMinimize()" type="button" aria-label="Minimalkan panel Hotspot" title="Minimalkan panel">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/></svg>
+          </button>
+          <button class="hs-sheet-close" onclick="toggleHotspotSheet()" type="button" aria-label="Tutup panel Hotspot">&times;</button>
+        </div>
       </div>
       <div class="hs-sheet-body">
         <div id="hs-sheet-summary"></div>

@@ -54,7 +54,7 @@
     var LegendControl = L.Control.extend({
       options: { position: 'bottomleft' },
       onAdd: function () {
-        var div = L.DomUtil.create('div', 'hotspot-legend');
+        var div = L.DomUtil.create('div', 'hotspot-legend hotspot-legend-karhutla');
         L.DomEvent.disableClickPropagation(div);
 
         div.innerHTML =
@@ -887,6 +887,7 @@
   'use strict';
 
   var sheetOpen = false;
+  var sheetMinimized = false;
 
   function toggleHotspotSheet() {
     var sheet = document.getElementById('hotspot-sheet');
@@ -896,15 +897,42 @@
 
     if (sheetOpen) {
       sheet.classList.add('sheet-open');
+      document.body.classList.add('hotspot-sheet-open');
+      document.body.classList.remove('hotspot-sheet-minimized');
       if (typeof showHotspotLayer === 'function') showHotspotLayer();
       renderSheetContent();
     } else {
       sheet.classList.remove('sheet-open');
+      sheet.classList.remove('sheet-minimized');
+      sheetMinimized = false;
+      document.body.classList.remove('hotspot-sheet-open', 'hotspot-sheet-minimized');
+      var minimizeButton = sheet.querySelector('.hs-sheet-minimize');
+      if (minimizeButton) {
+        minimizeButton.setAttribute('aria-label', 'Minimalkan panel Hotspot');
+        minimizeButton.title = 'Minimalkan panel Hotspot';
+      }
       if (typeof hideHotspotLayer === 'function') hideHotspotLayer();
     }
   }
 
+  function toggleHotspotMinimize() {
+    var sheet = document.getElementById('hotspot-sheet');
+    if (!sheet || !sheetOpen) return;
+
+    sheetMinimized = !sheetMinimized;
+    sheet.classList.toggle('sheet-minimized', sheetMinimized);
+    document.body.classList.toggle('hotspot-sheet-minimized', sheetMinimized);
+
+    var button = sheet.querySelector('.hs-sheet-minimize');
+    if (button) {
+      var label = sheetMinimized ? 'Perluas panel Hotspot' : 'Minimalkan panel Hotspot';
+      button.setAttribute('aria-label', label);
+      button.title = label;
+    }
+  }
+
   window.toggleHotspotSheet = toggleHotspotSheet;
+  window.toggleHotspotMinimize = toggleHotspotMinimize;
   window.renderHotspotSheetContent = renderSheetContent;
 
   function renderSheetContent() {

@@ -9,7 +9,7 @@
 
 L.control.scale({
   position: 'bottomleft',
-  maxWidth: 200,
+  maxWidth: 120,
   metric: true,
   imperial: false
 }).addTo(map);
