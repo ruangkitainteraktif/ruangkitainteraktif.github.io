@@ -69,8 +69,15 @@
     }
   }
 
+  function ensureBottomCenterControlCorner() {
+    if (map._controlCorners.bottomcenter) return;
+    map._controlCorners.bottomcenter = L.DomUtil.create('div', 'leaflet-bottom leaflet-center', map._controlContainer);
+  }
+
+  ensureBottomCenterControlCorner();
+
   var ModisTimeSliderControl = L.Control.extend({
-    options: { position: 'bottomleft' },
+    options: { position: 'bottomcenter' },
     onAdd: function () {
       var wrap = L.DomUtil.create('div', 'modis-time-slider-wrap');
       L.DomEvent.disableClickPropagation(wrap);

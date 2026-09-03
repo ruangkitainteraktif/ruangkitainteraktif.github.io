@@ -431,9 +431,19 @@
       border-radius: 28px;
       padding: 6px 12px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-      left: 0px;
-      bottom: 5px;
       transition: opacity 0.2s, transform 0.2s;
+    }
+    .leaflet-bottom.leaflet-center {
+      left: 50%;
+      bottom: 12px;
+      display: flex;
+      width: auto;
+      transform: translateX(-50%);
+    }
+    .leaflet-center .leaflet-control {
+      float: none;
+      clear: none;
+      margin: 0;
     }
     .modis-ts-btn {
       display: grid;
@@ -503,6 +513,20 @@
       min-width: 72px;
       text-align: center;
       letter-spacing: -0.01em;
+    }
+    @media (max-width: 768px) {
+      .leaflet-bottom.leaflet-center {
+        top: 112px;
+        bottom: auto;
+      }
+      .modis-time-slider-wrap {
+        width: min(280px, calc(100vw - 160px));
+        gap: 4px;
+        padding: 4px 8px;
+      }
+      .modis-ts-slider-wrap { min-width: 0; max-width: none; }
+      .modis-ts-btn { width: 24px; height: 24px; }
+      .modis-ts-date { min-width: 62px; font-size: 10px; }
     }
 
     .toggle-insight-btn {
