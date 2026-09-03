@@ -709,6 +709,7 @@ L.control.scale({
     var cfg = {
       qlHotspot:   { type: 'sheet' },
       qlPm25:      { target: 'airvisual-pm25',              type: 'basemap' },
+      qlWind:      { target: 'toggleWindAnim',              type: 'checkbox' },
       qlKonsesi:   { target: 'toggleConcessionsLayer',      type: 'checkbox' },
       qlPelabuhan: { target: 'toggleCuacaPelabuhanLayer',   type: 'checkbox' },
       qlPerairan:  { target: 'toggleCuacaPerairanLayer',    type: 'checkbox' },

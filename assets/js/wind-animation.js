@@ -1,363 +1,168 @@
 (function () {
-  const WIND_API_URL = 'https://bmkg-sus.geo.id/windmap/ecmwf/1000';
-  const WIND_MIN = -50, WIND_MAX = 50;
-  const PARTICLE_BASE = 3500;
-  const SPEED_FACTOR = 0.25;
-  const FADE_OPACITY = 0.93;
+  'use strict';
 
+  const API_URL = 'https://api.open-meteo.com/v1/forecast';
+  const GRID_COLUMNS = 9;
+  const GRID_ROWS = 7;
+  const PARTICLE_COUNT = 520;
+  const PARTICLE_LIFETIME = 90;
+  const REFRESH_DELAY = 350;
   let windLayer = null;
-  let windMeta = null;
-  let currentFrameIndex = 0;
-  let isPlaying = false;
-  let pCanvas, pCtx;
-  let windImageData = null;
-  let windW = 0, windH = 0;
+  let canvas = null;
+  let context = null;
   let particles = [];
-  let animId = null;
-  let windReady = false;
-  let tileLayer = null;
+  let windSamples = [];
+  let animationId = null;
+  let refreshTimer = null;
+  let active = false;
+  let requestId = 0;
+  let lastFrame = 0;
 
-  // Tile bounds cache for current frame
-  let tileStartX = 0, tileStartY = 0, tileZoom = 3;
-
-  function windFromPixel(r, g) {
-    return {
-      u: (r / 255) * (WIND_MAX - WIND_MIN) + WIND_MIN,
-      v: (g / 255) * (WIND_MAX - WIND_MIN) + WIND_MIN
-    };
+  function setStatus(message) {
+    const timestamp = document.getElementById('windTimestamp');
+    if (timestamp) timestamp.textContent = message;
   }
 
-  function loadTileImage(url) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error('Tile load failed'));
-      img.src = url;
+  function resizeCanvas() {
+    if (!canvas) return;
+    const size = map.getSize();
+    canvas.width = size.x;
+    canvas.height = size.y;
+  }
+
+  function createParticle() {
+    const size = map.getSize();
+    return { x: Math.random() * size.x, y: Math.random() * size.y, previousX: 0, previousY: 0,
+      age: Math.floor(Math.random() * PARTICLE_LIFETIME), maxAge: PARTICLE_LIFETIME };
+  }
+
+  function resetParticles() { particles = Array.from({ length: PARTICLE_COUNT }, createParticle); }
+
+  function buildGridCoordinates() {
+    const bounds = map.getBounds();
+    const south = Math.max(-85, bounds.getSouth());
+    const north = Math.min(85, bounds.getNorth());
+    const west = bounds.getWest(), east = bounds.getEast();
+    const coordinates = [];
+    for (let row = 0; row < GRID_ROWS; row++) {
+      const lat = south + ((north - south) * row / (GRID_ROWS - 1));
+      for (let column = 0; column < GRID_COLUMNS; column++) {
+        coordinates.push({ lat, lng: west + ((east - west) * column / (GRID_COLUMNS - 1)) });
+      }
+    }
+    return coordinates;
+  }
+
+  async function loadWindData() {
+    const coordinates = buildGridCoordinates();
+    const thisRequest = ++requestId;
+    setStatus('Memuat data angin Open-Meteo…');
+    const params = new URLSearchParams({
+      latitude: coordinates.map(point => point.lat.toFixed(4)).join(','),
+      longitude: coordinates.map(point => point.lng.toFixed(4)).join(','),
+      current: 'wind_speed_10m,wind_direction_10m', wind_speed_unit: 'ms', timezone: 'auto'
     });
+    const response = await fetch(`${API_URL}?${params}`);
+    if (!response.ok) throw new Error(`Open-Meteo HTTP ${response.status}`);
+    const payload = await response.json();
+    const rows = Array.isArray(payload) ? payload : [payload];
+    if (!active || thisRequest !== requestId) return;
+    windSamples = rows.map((item, index) => {
+      const current = item.current || {};
+      const direction = Number(current.wind_direction_10m), speed = Number(current.wind_speed_10m);
+      // Weather services express direction as the wind's origin; particles travel in the opposite direction.
+      const radians = (direction + 180) * Math.PI / 180;
+      return { lat: coordinates[index].lat, lng: coordinates[index].lng,
+        u: Number.isFinite(speed) ? speed * Math.sin(radians) : 0,
+        v: Number.isFinite(speed) ? speed * Math.cos(radians) : 0 };
+    }).filter(sample => Number.isFinite(sample.u) && Number.isFinite(sample.v));
+    const sampleTime = rows[0]?.current?.time;
+    setStatus(sampleTime ? `Open-Meteo · ${sampleTime.replace('T', ' ')}` : 'Open-Meteo · data terkini');
+    resetParticles();
   }
 
-  async function compositeTiles() {
-    if (!windMeta || !windMeta.keyframes) return false;
-    const keyframe = windMeta.keyframes[currentFrameIndex];
-    if (!keyframe) return false;
+  function velocityAt(latlng) {
+    if (!windSamples.length) return null;
+    let u = 0, v = 0, totalWeight = 0;
+    for (const sample of windSamples) {
+      const distanceSquared = (sample.lat - latlng.lat) ** 2 + (sample.lng - latlng.lng) ** 2;
+      const weight = 1 / Math.max(distanceSquared, 0.0001);
+      u += sample.u * weight; v += sample.v * weight; totalWeight += weight;
+    }
+    return { u: u / totalWeight, v: v / totalWeight };
+  }
 
-    const z = windMeta.minzoom || 3;
-    const n = Math.pow(2, z);
-    const tileSize = 512;
-
-    const bounds = map.getBounds();
-    const nwLat = bounds.getNorth(), nwLng = bounds.getWest();
-    const seLat = bounds.getSouth(), seLng = bounds.getEast();
-
-    const nwTileX = Math.floor((nwLng + 180) / 360 * n);
-    const nwTileY = Math.floor((1 - Math.log(Math.tan(nwLat * Math.PI / 180) + 1 / Math.cos(nwLat * Math.PI / 180)) / Math.PI) / 2 * n);
-    const seTileX = Math.floor((seLng + 180) / 360 * n);
-    const seTileY = Math.floor((1 - Math.log(Math.tan(seLat * Math.PI / 180) + 1 / Math.cos(seLat * Math.PI / 180)) / Math.PI) / 2 * n);
-
-    const pad = 1;
-    const startX = Math.max(0, nwTileX - pad);
-    const endX = Math.min(n - 1, seTileX + pad);
-    const startY = Math.max(0, nwTileY - pad);
-    const endY = Math.min(n - 1, seTileY + pad);
-
-    tileStartX = startX;
-    tileStartY = startY;
-    tileZoom = z;
-
-    const cols = endX - startX + 1;
-    const rows = endY - startY + 1;
-    windW = cols * tileSize;
-    windH = rows * tileSize;
-
-    const compCanvas = document.createElement('canvas');
-    compCanvas.width = windW;
-    compCanvas.height = windH;
-    const compCtx = compCanvas.getContext('2d');
-
-    let corsOk = true;
-
-    const promises = [];
-    for (let y = startY; y <= endY; y++) {
-      for (let x = startX; x <= endX; x++) {
-        const url = `${keyframe.id}/${z}/${x}/${y}.png`;
-        promises.push(
-          loadTileImage(url)
-            .then(img => {
-              const dx = (x - startX) * tileSize;
-              const dy = (y - startY) * tileSize;
-              compCtx.drawImage(img, dx, dy, tileSize, tileSize);
-            })
-            .catch(() => { corsOk = false; })
-        );
+  function drawFrame(now) {
+    if (!active || !context || !canvas) return;
+    animationId = requestAnimationFrame(drawFrame);
+    const elapsed = Math.min(2, Math.max(0.4, (now - lastFrame) / 16.67 || 1));
+    lastFrame = now;
+    const size = map.getSize();
+    context.globalCompositeOperation = 'destination-out';
+    context.fillStyle = 'rgba(0, 0, 0, 0.10)';
+    context.fillRect(0, 0, size.x, size.y);
+    context.globalCompositeOperation = 'source-over';
+    for (const particle of particles) {
+      const velocity = velocityAt(map.containerPointToLatLng([particle.x, particle.y]));
+      particle.previousX = particle.x; particle.previousY = particle.y; particle.age -= elapsed;
+      if (!velocity || particle.age <= 0) { Object.assign(particle, createParticle()); continue; }
+      const speed = Math.hypot(velocity.u, velocity.v), scale = 0.8 * elapsed;
+      particle.x += velocity.u * scale; particle.y -= velocity.v * scale;
+      if (particle.x < -8 || particle.x > size.x + 8 || particle.y < -8 || particle.y > size.y + 8 || speed < 0.15) {
+        Object.assign(particle, createParticle()); continue;
       }
-    }
-
-    await Promise.all(promises);
-
-    // Try reading pixel data
-    if (corsOk) {
-      try {
-        const test = compCtx.getImageData(0, 0, 1, 1);
-        if (test.data[3] > 0) {
-          windImageData = compCtx.getImageData(0, 0, windW, windH);
-          windReady = true;
-          return true;
-        }
-      } catch (e) {
-        corsOk = false;
-      }
-    }
-
-    // CORS failed — just display tiles as regular Leaflet tile layer
-    windReady = false;
-    windImageData = null;
-    showWindTiles(keyframe, z);
-    return false;
-  }
-
-  function showWindTiles(keyframe, z) {
-    if (tileLayer) { map.removeLayer(tileLayer); tileLayer = null; }
-    const urlTemplate = `${keyframe.id}/${z}/{x}/{y}.png`;
-    tileLayer = L.tileLayer(urlTemplate, {
-      tileSize: 512,
-      opacity: 0.7,
-      maxZoom: 5,
-      attribution: 'BMKG Wind'
-    }).addTo(map);
-  }
-
-  function getWindVelocity(lat, lng) {
-    if (!windImageData) return null;
-    const z = tileZoom;
-    const n = Math.pow(2, z);
-    const tileSize = 512;
-
-    const fx = (lng + 180) / 360 * n;
-    const latRad = lat * Math.PI / 180;
-    const fy = (1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n;
-
-    const px = (fx - tileStartX) * tileSize;
-    const py = (fy - tileStartY) * tileSize;
-
-    const ix = Math.floor(px);
-    const iy = Math.floor(py);
-    if (ix < 0 || ix >= windW || iy < 0 || iy >= windH) return null;
-
-    const i = (iy * windW + ix) * 4;
-    const r = windImageData.data[i];
-    const g = windImageData.data[i + 1];
-    const a = windImageData.data[i + 3];
-    if (a === 0 || (r === 0 && g === 0)) return null;
-    return windFromPixel(r, g);
-  }
-
-  function createParticle(bounds) {
-    const sw = bounds.getSouthWest();
-    const ne = bounds.getNorthEast();
-    return {
-      lat: sw.lat + Math.random() * (ne.lat - sw.lat),
-      lng: sw.lng + Math.random() * (ne.lng - sw.lng),
-      prevLat: 0, prevLng: 0,
-      age: Math.floor(Math.random() * 60) + 20,
-      maxAge: 80
-    };
-  }
-
-  function initParticles() {
-    particles = [];
-    const bounds = map.getBounds();
-    const n = Math.floor(PARTICLE_BASE * (map.getZoom() / 5));
-    for (let i = 0; i < n; i++) {
-      const p = createParticle(bounds);
-      p.prevLat = p.lat;
-      p.prevLng = p.lng;
-      particles.push(p);
+      context.beginPath();
+      context.lineWidth = Math.min(1.8, 0.8 + speed / 18);
+      context.strokeStyle = `rgba(112, 225, 255, ${Math.min(0.9, 0.25 + speed / 18)})`;
+      context.moveTo(particle.previousX, particle.previousY); context.lineTo(particle.x, particle.y); context.stroke();
     }
   }
 
-  function latLngToCanvas(lat, lng) {
-    const bounds = map.getBounds();
-    const sz = map.getSize();
-    return {
-      x: (lng - bounds.getWest()) / (bounds.getEast() - bounds.getWest()) * sz.x,
-      y: (bounds.getNorth() - lat) / (bounds.getNorth() - bounds.getSouth()) * sz.y
-    };
-  }
-
-  function animate() {
-    if (!isPlaying || !pCtx) return;
-    animId = requestAnimationFrame(animate);
-
-    const sz = map.getSize();
-    pCtx.globalCompositeOperation = 'destination-out';
-    pCtx.fillStyle = `rgba(0,0,0,${1 - FADE_OPACITY})`;
-    pCtx.fillRect(0, 0, sz.x, sz.y);
-    pCtx.globalCompositeOperation = 'source-over';
-
-    if (!windReady) return;
-
-    const bounds = map.getBounds();
-    pCtx.lineWidth = 1.2;
-
-    for (let i = 0; i < particles.length; i++) {
-      const p = particles[i];
-      const vel = getWindVelocity(p.lat, p.lng);
-
-      if (vel) {
-        const speed = Math.sqrt(vel.u * vel.u + vel.v * vel.v);
-        p.prevLat = p.lat;
-        p.prevLng = p.lng;
-        p.lat += vel.v * SPEED_FACTOR * 0.001;
-        p.lng += vel.u * SPEED_FACTOR * 0.001;
-        p.age--;
-
-        if (p.age <= 0 || p.lng < -180 || p.lng > 180 || p.lat < -85 || p.lat > 85 || speed < 0.5) {
-          Object.assign(p, createParticle(bounds));
-          p.prevLat = p.lat;
-          p.prevLng = p.lng;
-          continue;
-        }
-
-        const from = latLngToCanvas(p.prevLat, p.prevLng);
-        const to = latLngToCanvas(p.lat, p.lng);
-
-        if (from.x >= -10 && from.x <= sz.x + 10 && from.y >= -10 && from.y <= sz.y + 10) {
-          const alpha = Math.min(1, speed / 12) * 0.85;
-          let r, g, b;
-          if (speed < 3) { r = 100; g = 180; b = 255; }
-          else if (speed < 8) { r = 50; g = 220; b = 120; }
-          else if (speed < 15) { r = 255; g = 220; b = 50; }
-          else { r = 255; g = 80; b = 50; }
-          pCtx.strokeStyle = `rgba(${r},${g},${b},${alpha})`;
-          pCtx.beginPath();
-          pCtx.moveTo(from.x, from.y);
-          pCtx.lineTo(to.x, to.y);
-          pCtx.stroke();
-        }
-      } else {
-        Object.assign(p, createParticle(bounds));
-        p.prevLat = p.lat;
-        p.prevLng = p.lng;
-      }
-    }
+  function scheduleRefresh() {
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(() => loadWindData().catch(error => {
+      console.error('Open-Meteo wind layer:', error);
+      if (active) setStatus('Data angin tidak tersedia');
+    }), REFRESH_DELAY);
   }
 
   const WindLayer = L.Layer.extend({
-    onAdd(map) {
-      this._map = map;
-      pCanvas = document.createElement('canvas');
-      pCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:600;';
-      map.getContainer().appendChild(pCanvas);
-      pCtx = pCanvas.getContext('2d');
-      pCanvas.width = map.getSize().x;
-      pCanvas.height = map.getSize().y;
-
-      this._onResize = () => {
-        if (pCanvas) { pCanvas.width = map.getSize().x; pCanvas.height = map.getSize().y; }
-      };
-      this._onMove = () => { compositeTiles(); };
-      window.addEventListener('resize', this._onResize);
-      map.on('moveend zoomend', this._onMove, this);
-
-      compositeTiles().then(() => { initParticles(); isPlaying = true; animate(); });
+    onAdd() {
+      canvas = document.createElement('canvas');
+      canvas.className = 'leaflet-wind-particles';
+      canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:600;';
+      map.getContainer().appendChild(canvas); context = canvas.getContext('2d'); resizeCanvas();
+      this.onResize = resizeCanvas; this.onMoveEnd = scheduleRefresh;
+      map.on('resize', this.onResize); map.on('moveend zoomend', this.onMoveEnd);
+      active = true;
+      loadWindData().catch(error => { console.error('Open-Meteo wind layer:', error); setStatus('Data angin tidak tersedia'); });
+      lastFrame = performance.now(); animationId = requestAnimationFrame(drawFrame);
     },
-    onRemove(map) {
-      stopAnimation();
-      window.removeEventListener('resize', this._onResize);
-      map.off('moveend zoomend', this._onMove, this);
-      if (tileLayer) { map.removeLayer(tileLayer); tileLayer = null; }
-      if (pCanvas && pCanvas.parentNode) pCanvas.parentNode.removeChild(pCanvas);
-      pCanvas = null; pCtx = null;
-      windImageData = null; windReady = false;
+    onRemove() {
+      active = false; requestId++; clearTimeout(refreshTimer); cancelAnimationFrame(animationId);
+      map.off('resize', this.onResize); map.off('moveend zoomend', this.onMoveEnd);
+      canvas?.remove(); canvas = null; context = null; particles = []; windSamples = [];
     }
   });
 
-  function startAnimation() {
-    if (isPlaying) return;
-    isPlaying = true;
-    compositeTiles().then(() => {
-      initParticles();
-      if (isPlaying) animate();
-    });
-  }
-
-  function stopAnimation() {
-    isPlaying = false;
-    if (animId) { cancelAnimationFrame(animId); animId = null; }
-    particles = [];
-    windImageData = null;
-    windReady = false;
-    if (pCtx && pCanvas) pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
-  }
-
-  function updateTimestamp() {
-    const el = document.getElementById('windTimestamp');
-    if (el && windMeta?.keyframes?.[currentFrameIndex]) {
-      el.textContent = windMeta.keyframes[currentFrameIndex].timestamp.replace('T', ' ').slice(0, 16) + ' UTC';
-    }
-  }
-
-  window.initWindAnimation = async function () {
-    try {
-      const res = await fetch(WIND_API_URL);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const raw = await res.json();
-
-      const v = (raw.variables && raw.variables[0]) || raw;
-      windMeta = {
-        keyframes: v.keyframes || [],
-        minzoom: (v.metadata && v.metadata.minzoom) || 3,
-        maxzoom: (v.metadata && v.metadata.maxzoom) || 3
-      };
-      if (!windMeta.keyframes.length) throw new Error('Tidak ada keyframe');
-
-      const now = new Date();
-      let closest = 0;
-      windMeta.keyframes.forEach((kf, i) => {
-        if (Math.abs(new Date(kf.timestamp) - now) < Math.abs(new Date(windMeta.keyframes[closest].timestamp) - now)) closest = i;
-      });
-      currentFrameIndex = closest;
-
-      if (!windLayer) {
-        windLayer = new WindLayer();
-        windLayer.addTo(map);
-      } else {
-        compositeTiles();
-      }
-      updateTimestamp();
-    } catch (err) {
-      console.error('Wind animation error:', err);
-    }
+  window.initWindAnimation = function () {
+    if (!windLayer) windLayer = new WindLayer();
+    if (!map.hasLayer(windLayer)) windLayer.addTo(map);
   };
-
   window.toggleWindAnimation = function (show) {
-    if (show) {
-      window.initWindAnimation();
-    } else {
-      if (windLayer) { map.removeLayer(windLayer); windLayer = null; }
-      stopAnimation();
-      if (tileLayer) { map.removeLayer(tileLayer); tileLayer = null; }
-    }
+    if (show) window.initWindAnimation();
+    else if (windLayer && map.hasLayer(windLayer)) map.removeLayer(windLayer);
   };
-
-  window.stepWindFrame = function (dir) {
-    if (!windMeta?.keyframes) return;
-    currentFrameIndex = (currentFrameIndex + dir + windMeta.keyframes.length) % windMeta.keyframes.length;
-    compositeTiles().then(() => updateTimestamp());
-  };
+  window.stepWindFrame = function () { scheduleRefresh(); };
 
   document.addEventListener('DOMContentLoaded', () => {
     const toggle = document.getElementById('toggleWindAnim');
     const controls = document.getElementById('windControls');
-    if (toggle) {
-      toggle.addEventListener('change', () => {
-        const show = toggle.checked;
-        if (controls) controls.style.display = show ? 'flex' : 'none';
-        window.toggleWindAnimation(show);
-      });
-    }
-    document.getElementById('windPrev')?.addEventListener('click', () => window.stepWindFrame(-1));
-    document.getElementById('windNext')?.addEventListener('click', () => window.stepWindFrame(1));
+    if (toggle) toggle.addEventListener('change', () => {
+      if (controls) controls.style.display = toggle.checked ? 'flex' : 'none';
+      window.toggleWindAnimation(toggle.checked);
+    });
+    document.getElementById('windPrev')?.addEventListener('click', window.stepWindFrame);
+    document.getElementById('windNext')?.addEventListener('click', window.stepWindFrame);
   });
 })();
