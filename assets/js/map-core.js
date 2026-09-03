@@ -23,6 +23,34 @@ L.control.scale({
       maxZoom: 19,
       attribution: 'Mas Pannn'
     }),
+    'esri-dark-gray': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: 'Esri'
+    }),
+    'esri-topo': L.tileLayer('https://server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: 'Esri'
+    }),
+    'esri-terrain': L.tileLayer('https://server.arcgisonline.com/arcgis/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 13,
+      attribution: 'Esri'
+    }),
+    'esri-street': L.tileLayer('https://server.arcgisonline.com/arcgis/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: 'Esri'
+    }),
+    'esri-shaded-relief': L.tileLayer('https://server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 13,
+      attribution: 'Esri'
+    }),
+    'esri-physical': L.tileLayer('https://server.arcgisonline.com/arcgis/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 8,
+      attribution: 'Esri'
+    }),
+    'esri-natgeo': L.tileLayer('https://server.arcgisonline.com/arcgis/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 16,
+      attribution: 'Esri'
+    }),
     'rupabumi': L.tileLayer('https://geoservices.big.go.id/rbi/rest/services/BASEMAP/Rupabumi_Indonesia/MapServer/tile/{z}/{y}/{x}?blankTile=false', {
       maxZoom: 18,
       attribution: 'Mas Pannn'
@@ -38,22 +66,22 @@ L.control.scale({
       Time: new Date().toISOString().slice(0, 10)
     }),
     'airvisual-pm25': L.tileLayer('https://osm.airvisual.net/cog/pm25/tiles/{z}/{x}/{y}.png', {
-      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual'
+      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'Mas Pannn'
     }),
     'airvisual-pm10': L.tileLayer('https://osm.airvisual.net/cog/pm10/tiles/{z}/{x}/{y}.png', {
-      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual'
+      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'Mas Pannn'
     }),
     'airvisual-o3': L.tileLayer('https://osm.airvisual.net/cog/o3/tiles/{z}/{x}/{y}.png', {
-      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual'
+      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'Mas Pannn'
     }),
     'airvisual-no2': L.tileLayer('https://osm.airvisual.net/cog/no2/tiles/{z}/{x}/{y}.png', {
-      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual'
+      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'Mas Pannn'
     }),
     'airvisual-so2': L.tileLayer('https://osm.airvisual.net/cog/so2/tiles/{z}/{x}/{y}.png', {
-      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual'
+      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'Mas Pannn'
     }),
     'airvisual-co': L.tileLayer('https://osm.airvisual.net/cog/co/tiles/{z}/{x}/{y}.png', {
-      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual'
+      maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'Mas Pannn'
     })
   };
 
@@ -202,6 +230,13 @@ L.control.scale({
     'osm': 'Open Street Map',
     'rupabumi': 'Rupabumi Indonesia',
     'esri-satellite': 'Esri Satellite',
+    'esri-dark-gray': 'Esri Dark Gray',
+    'esri-topo': 'Esri Topographic',
+    'esri-terrain': 'Esri Terrain',
+    'esri-street': 'Esri Street',
+    'esri-shaded-relief': 'Esri Shaded Relief',
+    'esri-physical': 'Esri Physical',
+    'esri-natgeo': 'Esri National Geographic',
     'google-maps': 'Google Maps',
     'modis-terra': 'Modis Terra',
     'airvisual-pm25': 'PM2.5 (AirVisual)',

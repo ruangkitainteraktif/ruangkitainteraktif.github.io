@@ -1077,12 +1077,14 @@
       display: flex;
       gap: 4px;
       padding: 4px;
-      max-width: min(640px, calc(100% - 32px));
+      width: min(420px, calc(100% - 32px));
       overflow-x: auto;
       overflow-y: hidden;
-      scrollbar-width: none;
+      scrollbar-width: thin;
+      scrollbar-color: #9fb3c8 transparent;
     }
-    .quick-layer-bar::-webkit-scrollbar { display: none; }
+    .quick-layer-bar::-webkit-scrollbar { height: 6px; }
+    .quick-layer-bar::-webkit-scrollbar-thumb { border-radius: 999px; background: #9fb3c8; }
     .ql-btn {
       display: flex;
       align-items: center;
@@ -1881,6 +1883,12 @@
       pointer-events: none;
     }
 
+    /* Panel detail administrasi dinonaktifkan dari antarmuka peta. */
+    #detail-panel,
+    body .detail-panel-btn {
+      display: none !important;
+    }
+
     /* Tombol Panel Detail Administrasi */
     .detail-panel-btn {
       display: grid;
@@ -2147,7 +2155,9 @@
         width: calc(100% - 24px);
         padding: 3px;
         gap: 3px;
+        scrollbar-width: none;
       }
+      .quick-layer-bar::-webkit-scrollbar { display: none; }
       .ql-btn {
         padding: 5px 8px;
         font-size: 9px;
@@ -4257,7 +4267,7 @@
       display: flex;
       position: fixed;
       top: 120px;
-      right: 74px;
+      right: 12px;
       bottom: 12px;
       left: auto;
       width: min(380px, calc(100vw - 106px));
@@ -4276,7 +4286,7 @@
 
     /* Jauhkan kontrol Lokasi Saya, Reset, dan Print dari sidebar Hotspot saat terbuka. */
     body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .leaflet-bottom.leaflet-right {
-      right: calc(min(380px, calc(100vw - 106px)) + 90px);
+      right: calc(min(380px, calc(100vw - 106px)) + 28px);
     }
     #hotspot-sheet .hs-sheet-handle { display: none; }
     #hotspot-sheet .hs-sheet-head {
