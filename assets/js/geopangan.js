@@ -75,8 +75,91 @@
   var inflasiCache = null;
   var sebaranPasarLayer = null;
   var sppgLayer = null;
+  var commodityItemsCache = null;
+  var gpCommodityCompareCache = {};
 
   function $(id) { return document.getElementById(id); }
+
+  /* ── Mobile table sheet ──
+     The existing result/table nodes are moved (not recreated), preserving all
+     table event listeners for search, sorting, pagination, and CSV export. */
+  var gpSheetOpen = false;
+  var gpSheetMinimized = false;
+
+  function moveGeopanganContent(toSheet) {
+    var result = $('geopanganResult');
+    var table = $('geopanganTable');
+    var destination = toSheet ? $('geopangan-sheet-content') : $('geopangan-table-home');
+    if (!destination || !result || !table) return;
+    destination.appendChild(result);
+    destination.appendChild(table);
+  }
+
+  function openGeopanganSheet() {
+    var sheet = $('geopangan-sheet');
+    if (!sheet) return;
+    moveGeopanganContent(true);
+    gpSheetOpen = true;
+    gpSheetMinimized = false;
+    sheet.classList.add('sheet-open');
+    sheet.classList.remove('sheet-minimized');
+    document.body.classList.add('geopangan-sheet-open');
+    document.body.classList.remove('geopangan-sheet-minimized');
+  }
+
+  function toggleGeopanganSheet() {
+    var sheet = $('geopangan-sheet');
+    if (!sheet || !gpSheetOpen) return;
+    // Closing the results panel ends the GeoPangan session and removes every
+    // related overlay from the map (price choropleth, legend, markets, SPPG).
+    if (typeof window.clearGeopanganLayers === 'function') window.clearGeopanganLayers();
+    gpSheetOpen = false;
+    gpSheetMinimized = false;
+    sheet.classList.remove('sheet-open', 'sheet-minimized');
+    document.body.classList.remove('geopangan-sheet-open', 'geopangan-sheet-minimized');
+  }
+
+  function toggleGeopanganMinimize() {
+    var sheet = $('geopangan-sheet');
+    if (!sheet || !gpSheetOpen) return;
+    gpSheetMinimized = !gpSheetMinimized;
+    sheet.classList.toggle('sheet-minimized', gpSheetMinimized);
+    document.body.classList.toggle('geopangan-sheet-minimized', gpSheetMinimized);
+    var button = sheet.querySelector('.gp-sheet-minimize');
+    if (button) {
+      var label = gpSheetMinimized ? 'Perluas panel Harga Pangan' : 'Minimalkan panel Harga Pangan';
+      button.setAttribute('aria-label', label);
+      button.title = label;
+    }
+  }
+
+  window.openGeopanganSheet = openGeopanganSheet;
+  window.toggleGeopanganSheet = toggleGeopanganSheet;
+  window.toggleGeopanganMinimize = toggleGeopanganMinimize;
+
+  function hideSidebarForGeopangan() {
+    var sidebar = $('sidebar-left');
+    if (!sidebar || sidebar.classList.contains('collapsed')) return;
+    // Reuse the main toggle so the button icon and Leaflet map size stay in sync.
+    if (typeof window.toggleSidebar === 'function') {
+      window.toggleSidebar();
+    } else {
+      sidebar.classList.add('collapsed');
+      if (typeof map !== 'undefined') setTimeout(function () { map.invalidateSize(); }, 300);
+    }
+  }
+
+  function setGeopanganLoading(visible) {
+    var overlay = $('geopanganLoadingOverlay');
+    if (visible && !overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'geopanganLoadingOverlay';
+      overlay.className = 'gp-map-loading';
+      overlay.innerHTML = '<div><span class="geopangan-spinner"></span><span>Memuat data harga...</span></div>';
+      document.body.appendChild(overlay);
+    }
+    if (overlay) overlay.classList.toggle('active', visible);
+  }
 
   var MONTH_LABELS = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
@@ -194,6 +277,7 @@
     try {
       var json = await fetchWithProxy(COMMODITY_URL);
       var items = json.data || [];
+      commodityItemsCache = items;
       var cats = {};
       var catOrder = [];
       items.forEach(function (c) {
@@ -251,8 +335,11 @@
 
   /* ── Fetch price data from BI API ── */
   async function fetchPriceData() {
+    return fetchPriceDataForCommodity($('geopanganCommodity') ? $('geopanganCommodity').value : 'com_1');
+  }
+
+  async function fetchPriceDataForCommodity(commodity) {
     var priceType = $('geopanganPriceType') ? $('geopanganPriceType').value : '1';
-    var commodity = $('geopanganCommodity') ? $('geopanganCommodity').value : 'com_1';
     var provinceId = $('geopanganProvince') ? $('geopanganProvince').value : '';
     var startDate = $('geopanganDateStart') ? $('geopanganDateStart').value : '';
     var endDate = $('geopanganDateEnd') ? $('geopanganDateEnd').value : '';
@@ -402,10 +489,158 @@
 
   /* ── Dynamic Table: Harga Pangan Per Provinsi ── */
   var _gpTableState = { sortKey: 'price', sortDir: 'desc', page: 1, search: '', rows: [], last7Labels: [] };
+  var gpComparisonChart = null;
+  var GP_COMPARE_COLORS = ['#047857', '#2563eb', '#d97706'];
+
+  function getGpComparisonChange(values) {
+    var valid = values.filter(function (v) { return v !== null && v !== undefined; });
+    if (valid.length < 2) return null;
+    return { amount: valid[valid.length - 1] - valid[0], percent: ((valid[valid.length - 1] - valid[0]) / valid[0]) * 100 };
+  }
+
+  function renderGpComparison(rows, labels) {
+    var panel = $('gpComparisonPanel');
+    if (!panel) return;
+    var selected = [1, 2, 3].map(function (n) { return $('gpCompareProvince' + n).value; }).filter(Boolean);
+    var compared = selected.map(function (name) {
+      return rows.filter(function (row) { return row.name === name; })[0];
+    }).filter(Boolean);
+    var cards = compared.map(function (row, index) {
+      var change = getGpComparisonChange(row.daily7);
+      var changeClass = !change || change.amount === 0 ? 'stable' : (change.amount > 0 ? 'up' : 'down');
+      var changeText = !change ? 'Data tren belum cukup' :
+        (change.amount > 0 ? '+' : '') + 'Rp ' + change.amount.toLocaleString('id-ID') +
+        ' (' + (change.percent > 0 ? '+' : '') + change.percent.toFixed(1).replace('.', ',') + '%)';
+      return '<article class="gp-compare-card">' +
+        '<span class="gp-compare-dot" style="background:' + GP_COMPARE_COLORS[index] + '"></span>' +
+        '<div><strong>' + row.name + '</strong><span>Harga terakhir</span></div>' +
+        '<b>Rp ' + row.price.toLocaleString('id-ID') + '</b>' +
+        '<em class="gp-compare-change ' + changeClass + '">' + changeText + '</em>' +
+      '</article>';
+    }).join('');
+    panel.querySelector('#gpComparisonCards').innerHTML = cards || '<p class="gp-compare-empty">Pilih satu hingga tiga provinsi untuk membandingkan harga dan tren.</p>';
+
+    var canvas = $('gpComparisonChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+    if (gpComparisonChart) { gpComparisonChart.destroy(); gpComparisonChart = null; }
+    if (!compared.length) return;
+    gpComparisonChart = new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: compared.map(function (row, index) {
+          return { label: row.name, data: row.daily7, borderColor: GP_COMPARE_COLORS[index], backgroundColor: GP_COMPARE_COLORS[index] + '18', borderWidth: 2, tension: .3, spanGaps: true, pointRadius: 3, pointHoverRadius: 4, fill: false };
+        })
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 9, usePointStyle: true, pointStyle: 'circle', font: { size: 10 } } }, tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': Rp ' + c.parsed.y.toLocaleString('id-ID'); } } } },
+        scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } }, y: { ticks: { font: { size: 10 }, callback: function (v) { return 'Rp' + Number(v).toLocaleString('id-ID'); } }, grid: { color: '#edf2f7' } } }
+      }
+    });
+  }
+
+  function getGpSelectedRegions() {
+    return [1, 2, 3].map(function (n) { return $('gpCompareProvince' + n).value; }).filter(Boolean);
+  }
+
+  async function getGpCommodityItems() {
+    if (commodityItemsCache) return commodityItemsCache.filter(function (item) { return item.cat_id; });
+    var json = await fetchWithProxy(COMMODITY_URL);
+    commodityItemsCache = json.data || [];
+    return commodityItemsCache.filter(function (item) { return item.cat_id; });
+  }
+
+  function clearGpCommodityComparison() {
+    var result = $('gpCommodityComparisonResult');
+    var status = $('gpCommodityComparisonStatus');
+    if (result) result.innerHTML = '';
+    if (status) status.textContent = '';
+  }
+
+  async function loadGpCommodityComparison() {
+    var regions = getGpSelectedRegions();
+    var result = $('gpCommodityComparisonResult');
+    var status = $('gpCommodityComparisonStatus');
+    var button = $('gpCommodityComparisonBtn');
+    if (!regions.length || !result) return;
+    if (button) button.disabled = true;
+    if (status) status.textContent = 'Memuat harga tiap komoditas...';
+    result.innerHTML = '<div class="gp-commodity-loading"><span class="geopangan-spinner"></span> Mengambil data dari PIHPS Bank Indonesia.</div>';
+    try {
+      var items = await getGpCommodityItems();
+      var priceType = $('geopanganPriceType') ? $('geopanganPriceType').value : '1';
+      var province = $('geopanganProvince') ? $('geopanganProvince').value : '';
+      var start = $('geopanganDateStart') ? $('geopanganDateStart').value : '';
+      var end = $('geopanganDateEnd') ? $('geopanganDateEnd').value : '';
+      var cursor = 0;
+      var output = new Array(items.length);
+      // Batasi empat permintaan bersamaan agar API/proxy publik tidak dibebani.
+      async function worker() {
+        while (cursor < items.length) {
+          var index = cursor++;
+          var item = items[index];
+          var cacheKey = [priceType, province, start, end, item.id].join('|');
+          try {
+            var data = gpCommodityCompareCache[cacheKey] || await fetchPriceDataForCommodity(item.id);
+            gpCommodityCompareCache[cacheKey] = data;
+            var priceMap = buildPriceMap(data).priceMap;
+            output[index] = { name: item.name, prices: regions.map(function (region) { return priceMap[normalize(region)] || null; }) };
+          } catch (e) {
+            output[index] = { name: item.name, prices: regions.map(function () { return null; }) };
+          }
+        }
+      }
+      await Promise.all([worker(), worker(), worker(), worker()]);
+      result.innerHTML =
+        '<div class="gp-commodity-table-scroll"><table class="gp-commodity-table"><thead><tr><th>Komoditas</th>' +
+        regions.map(function (region) { return '<th>' + region + '</th>'; }).join('') +
+        '</tr></thead><tbody>' + output.map(function (row) {
+          return '<tr><td>' + row.name + '</td>' + row.prices.map(function (price) { return '<td>' + (price === null ? '-' : 'Rp ' + price.toLocaleString('id-ID')) + '</td>'; }).join('') + '</tr>';
+        }).join('') + '</tbody></table></div>';
+      if (status) status.textContent = items.length + ' komoditas dimuat untuk ' + regions.length + ' wilayah.';
+    } catch (e) {
+      result.innerHTML = '<p class="gp-commodity-error">Gagal memuat perbandingan komoditas. Silakan coba lagi.</p>';
+      if (status) status.textContent = '';
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }
+
+  function setupGpComparison(container, rows, labels) {
+    var commodityEl = $('geopanganCommodity');
+    var commodityName = commodityEl && commodityEl.selectedOptions[0] ? commodityEl.selectedOptions[0].textContent : 'Komoditas terpilih';
+    var options = '<option value="">Pilih wilayah</option>' + rows.slice().sort(function (a, b) { return a.name.localeCompare(b.name); }).map(function (row) {
+      return '<option value="' + row.name + '">' + row.name + '</option>';
+    }).join('');
+    var defaultRows = rows.slice().sort(function (a, b) { return a.name.localeCompare(b.name); }).slice(0, 3);
+    container.insertAdjacentHTML('afterbegin',
+      '<section id="gpComparisonPanel" class="gp-comparison" aria-label="Perbandingan harga antar wilayah">' +
+        '<div class="gp-comparison-head"><div><h5>Perbandingan Harga &amp; Tren Wilayah</h5><p>Komoditas: <b>' + commodityName + '</b> &middot; Bandingkan hingga 3 provinsi pada periode yang dipilih.</p></div><span>MAKS. 3 WILAYAH</span></div>' +
+        '<div class="gp-compare-selects">' + [1, 2, 3].map(function (n) { return '<select id="gpCompareProvince' + n + '" aria-label="Wilayah perbandingan ' + n + '">' + options + '</select>'; }).join('') + '</div>' +
+        '<div id="gpComparisonCards" class="gp-comparison-cards"></div>' +
+        '<div class="gp-comparison-chart"><canvas id="gpComparisonChart"></canvas></div>' +
+        '<div class="gp-commodity-comparison"><div><strong>Harga per Komoditas</strong><small>Bandingkan semua komoditas pada wilayah terpilih.</small></div><button id="gpCommodityComparisonBtn" type="button">Muat semua komoditas</button></div>' +
+        '<p id="gpCommodityComparisonStatus" class="gp-commodity-status"></p><div id="gpCommodityComparisonResult"></div>' +
+      '</section>');
+    defaultRows.forEach(function (row, index) { $('gpCompareProvince' + (index + 1)).value = row.name; });
+    [1, 2, 3].forEach(function (n) {
+      $('gpCompareProvince' + n).addEventListener('change', function () {
+        var values = [1, 2, 3].map(function (i) { return $('gpCompareProvince' + i).value; }).filter(Boolean);
+        if (new Set(values).size !== values.length) { this.value = ''; }
+        renderGpComparison(rows, labels);
+        clearGpCommodityComparison();
+      });
+    });
+    $('gpCommodityComparisonBtn').addEventListener('click', loadGpCommodityComparison);
+    renderGpComparison(rows, labels);
+  }
 
   function renderGeopanganTable(data, priceMap, dailyMap, dateLabels, latestDate) {
     var container = $('geopanganTable');
     if (!container) return;
+    var commodityEl = $('geopanganCommodity');
+    var commodityName = commodityEl && commodityEl.selectedOptions[0] ? commodityEl.selectedOptions[0].textContent : 'Komoditas terpilih';
 
     var rows = [];
     data.filter(function (r) { return r.level === 1; }).forEach(function (r) {
@@ -436,7 +671,7 @@
 
     container.innerHTML =
       '<div class="gp-table-wrap">' +
-        '<div class="gp-table-title">Harga Pangan Per Provinsi</div>' +
+        '<div class="gp-table-title">Harga Pangan Per Provinsi <span>&middot; ' + commodityName + '</span></div>' +
         '<div class="gp-table-header">' +
           '<div class="gp-table-actions">' +
             '<input type="text" id="gpTableSearch" class="gp-table-search" placeholder="Cari provinsi..." autocomplete="off" />' +
@@ -457,6 +692,8 @@
         '</div>' +
         '<div id="gpTablePagination" class="gp-pagination"></div>' +
       '</div>';
+
+    setupGpComparison(container, rows, last7Labels);
 
     container.querySelector('#gpTableSearch').addEventListener('input', function (e) {
       _gpTableState.search = e.target.value.toLowerCase();
@@ -623,10 +860,13 @@
 
   /* ── Main: load and display ── */
   async function loadAndDisplay() {
+    hideSidebarForGeopangan();
+    openGeopanganSheet();
     var resultEl = $('geopanganResult');
     var loadBtn = $('geopanganLoadBtn');
     if (loadBtn) loadBtn.disabled = true;
-    if (resultEl) resultEl.innerHTML = '<div class="geopangan-loading"><div class="geopangan-spinner"></div><span>Memuat data harga...</span></div>';
+    setGeopanganLoading(true);
+    if (resultEl) resultEl.innerHTML = '<div class="geopangan-loading"><span>Menyiapkan hasil...</span></div>';
 
     try {
       var results = await Promise.all([fetchPriceData(), loadGeoJSON(), fetchInflasiData()]);
@@ -882,6 +1122,7 @@
       console.error('[Geopangan] Error:', e);
       if (resultEl) resultEl.innerHTML = '<div class="geopangan-loading"><span style="color:#dc2626;">Gagal memuat data. Cek koneksi internet lalu coba lagi.</span></div>';
     } finally {
+      setGeopanganLoading(false);
       if (loadBtn) loadBtn.disabled = false;
     }
   }
@@ -909,6 +1150,7 @@
     if (resultEl) resultEl.innerHTML = '';
     var tableEl = $('geopanganTable');
     if (tableEl) tableEl.innerHTML = '';
+    if (gpComparisonChart) { gpComparisonChart.destroy(); gpComparisonChart = null; }
   };
 
   /* ── Sebaran Pasar Layer (BAPPENAS / Kementerian Perdagangan) ── */

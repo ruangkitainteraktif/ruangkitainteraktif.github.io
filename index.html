@@ -398,6 +398,26 @@
       </div>
     </div>
 
+    <!-- GEOPANGAN BOTTOM SHEET (mobile: hasil tabel harga) -->
+    <div id="geopangan-sheet" aria-label="Tabel Harga Pangan">
+      <div class="gp-sheet-handle" onclick="toggleGeopanganSheet()"></div>
+      <div class="gp-sheet-head">
+        <div class="gp-sheet-title">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#0b5cab" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3h18l-2 13H5L3 3z"/><line x1="3" y1="3" x2="1" y2="1"/><circle cx="9" cy="21" r="1"/><circle cx="17" cy="21" r="1"/>
+          </svg>
+          <span>Harga Pangan</span>
+        </div>
+        <div class="gp-sheet-actions">
+          <button class="gp-sheet-minimize" onclick="toggleGeopanganMinimize()" type="button" aria-label="Minimalkan panel Harga Pangan" title="Minimalkan panel">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/></svg>
+          </button>
+          <button class="gp-sheet-close" onclick="toggleGeopanganSheet()" type="button" aria-label="Tutup panel Harga Pangan">&times;</button>
+        </div>
+      </div>
+      <div id="geopangan-sheet-content" class="gp-sheet-body"></div>
+    </div>
+
     <!-- BACKDROP OVERLAY (MOBILE ONLY) -->
     <div id="modal-backdrop" onclick="onBackdropClick()"></div>
     <div id="cctvModal" class="cctv-modal" role="dialog" aria-modal="true" aria-labelledby="cctvModalTitle"
@@ -462,13 +482,13 @@
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
           <span>GEOPULSE</span>
         </button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-geotani')">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          <span>GEOTANI</span>
-        </button>
         <button class="tab-btn" onclick="openTab(event, 'tab-geopangan')">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
           <span>GEOPANGAN</span>
+        </button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-geotani')">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>GEOTANI</span>
         </button>
         <button class="tab-btn" onclick="openTab(event, 'tab-cctv')">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
@@ -973,8 +993,10 @@
             </div>
           </div>
 
-          <div id="geopanganResult"></div>
-          <div id="geopanganTable"></div>
+          <div id="geopangan-table-home">
+            <div id="geopanganResult"></div>
+            <div id="geopanganTable"></div>
+          </div>
         </div>
 
         <!-- TAB 3: CCTV -->
