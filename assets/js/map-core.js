@@ -538,6 +538,10 @@ L.control.scale({
           erosiLayer = null;
         }
 
+        // 4c. Matikan VIIRS NOAA-20 & ECMWF Fire layers
+        toggleViirsNoaa20Layer(false);
+        toggleEcmwfFireLayer(false);
+
         // 5. Matikan GeoID boundary layer
         if (typeof geoidBoundaryLayer !== 'undefined' && geoidBoundaryLayer && map.hasLayer(geoidBoundaryLayer)) {
           map.removeLayer(geoidBoundaryLayer);
@@ -750,6 +754,172 @@ L.control.scale({
   const KLATEN_WMS_URL = 'https://geoportal.klaten.go.id/geoserver/wms';
   const CIREBON_WMS_URL = 'https://geoserver.cirebonkota.go.id/geoserver/wms';
 
+  /* ── VIIRS NOAA-20 Thermal Anomalies (NASA GIBS WMS) ── */
+  var viirsNoaa20Layer = null;
+
+  function toggleViirsNoaa20Layer(show) {
+    if (show) {
+      if (viirsNoaa20Layer && map.hasLayer(viirsNoaa20Layer)) return;
+      if (typeof LayerLoading !== 'undefined') LayerLoading.show();
+      var today = new Date().toISOString().slice(0, 10);
+      viirsNoaa20Layer = L.tileLayer.wms(
+        'https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi',
+        {
+          layers: 'VIIRS_NOAA20_Thermal_Anomalies_375m_All',
+          format: 'image/png',
+          transparent: true,
+          crs: L.CRS.EPSG3857,
+          time: today,
+          attribution: 'NASA GIBS VIIRS NOAA-20'
+        }
+      );
+      viirsNoaa20Layer.addTo(map);
+    } else {
+      if (viirsNoaa20Layer && map.hasLayer(viirsNoaa20Layer)) map.removeLayer(viirsNoaa20Layer);
+      viirsNoaa20Layer = null;
+    }
+  }
+
+  /* ── ECMWF Fire Composition (ECMWF WMS) ── */
+  var ecmwfFireLayer = null;
+  var ecmwfFireLegendCtrl = null;
+
+  var EcmwfFireLegendControl = L.Control.extend({
+    options: { position: 'bottomleft' },
+    onAdd: function () {
+      var div = L.DomUtil.create('div', 'ecmwf-fire-legend');
+      L.DomEvent.disableClickPropagation(div);
+      div.innerHTML =
+        '<div class="ecmwf-fire-legend-title">ECMWF Fire Composition</div>' +
+        '<img class="ecmwf-fire-legend-img" alt="Legend" ' +
+          'src="https://eccharts.ecmwf.int/wms/?token=public&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetLegendGraphic&FORMAT=image%2Fpng&LAYER=composition_fire">' +
+        '<div class="ecmwf-fire-legend-source">Sumber: ECMWF CAMS</div>';
+      var img = div.querySelector('.ecmwf-fire-legend-img');
+      if (img) {
+        img.onerror = function () {
+          img.style.display = 'none';
+        };
+      }
+      return div;
+    }
+  });
+
+  function showEcmwfFireLegend() {
+    if (ecmwfFireLegendCtrl) return;
+    ecmwfFireLegendCtrl = new EcmwfFireLegendControl();
+    ecmwfFireLegendCtrl.addTo(map);
+  }
+
+  function hideEcmwfFireLegend() {
+    if (!ecmwfFireLegendCtrl) return;
+    map.removeControl(ecmwfFireLegendCtrl);
+    ecmwfFireLegendCtrl = null;
+  }
+
+  function toggleEcmwfFireLayer(show) {
+    if (show) {
+      if (ecmwfFireLayer && map.hasLayer(ecmwfFireLayer)) return;
+      if (typeof LayerLoading !== 'undefined') LayerLoading.show();
+      ecmwfFireLayer = L.tileLayer.wms(
+        'https://eccharts.ecmwf.int/wms/?token=public',
+        {
+          layers: 'composition_fire',
+          format: 'image/png',
+          transparent: true,
+          version: '1.3.0',
+          attribution: 'ECMWF'
+        }
+      );
+      ecmwfFireLayer.on('load', function () {
+        if (typeof LayerLoading !== 'undefined') LayerLoading.hide();
+      });
+      ecmwfFireLayer.on('error', function () {
+        if (typeof LayerLoading !== 'undefined') LayerLoading.hide();
+      });
+      ecmwfFireLayer.addTo(map);
+      showEcmwfFireLegend();
+    } else {
+      if (ecmwfFireLayer && map.hasLayer(ecmwfFireLayer)) map.removeLayer(ecmwfFireLayer);
+      ecmwfFireLayer = null;
+      hideEcmwfFireLegend();
+    }
+  }
+
+  /* ── ECMWF Fire GetFeatureInfo ── */
+  async function fetchEcmwfFireInfo(latlng) {
+    try {
+      var bounds = map.getBounds();
+      var size = map.getSize();
+      var point = map.latLngToContainerPoint(latlng, map.getZoom());
+      var projection = map.options?.crs || L.CRS.EPSG3857;
+      var sw = projection.project(bounds.getSouthWest());
+      var ne = projection.project(bounds.getNorthEast());
+      var srs = projection.code || 'EPSG:3857';
+
+      var params = new URLSearchParams({
+        SERVICE: 'WMS',
+        VERSION: '1.3.0',
+        REQUEST: 'GetFeatureInfo',
+        LAYERS: 'composition_fire',
+        QUERY_LAYERS: 'composition_fire',
+        INFO_FORMAT: 'application/json',
+        FEATURE_COUNT: '10',
+        BBOX: sw.x + ',' + sw.y + ',' + ne.x + ',' + ne.y,
+        WIDTH: String(size.x),
+        HEIGHT: String(size.y),
+        CRS: srs,
+        I: String(Math.round(point.x)),
+        J: String(Math.round(point.y))
+      });
+
+      var url = 'https://eccharts.ecmwf.int/wms/?token=public&' + params.toString();
+      var resp = await fetch(url);
+      if (!resp.ok) return null;
+      var text = await resp.text();
+      if (!text || !text.trim().startsWith('{')) return null;
+      var data = JSON.parse(text);
+      return data?.features || [];
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function buildEcmwfFirePopupHtml(features) {
+    if (!features || !features.length) return null;
+    var html = '<div class="ecmwf-fire-popup">' +
+      '<div class="ecmwf-fire-popup-title">ECMWF Fire Composition</div>';
+    features.forEach(function (f) {
+      var props = f.properties || {};
+      var keys = Object.keys(props);
+      if (keys.length) {
+        html += '<div class="ecmwf-fire-popup-props">';
+        keys.forEach(function (k) {
+          var v = props[k];
+          if (v == null || v === '') return;
+          if (typeof v === 'number') v = v.toFixed(4);
+          html += '<div class="ecmwf-fire-popup-row">' +
+            '<span class="ecmwf-fire-popup-key">' + k.replace(/_/g, ' ') + '</span>' +
+            '<span class="ecmwf-fire-popup-val">' + v + '</span></div>';
+        });
+        html += '</div>';
+      }
+    });
+    html += '</div>';
+    return html;
+  }
+
+  map.on('click', async function (e) {
+    if (!ecmwfFireLayer || !map.hasLayer(ecmwfFireLayer)) return;
+    var features = await fetchEcmwfFireInfo(e.latlng);
+    var html = buildEcmwfFirePopupHtml(features);
+    if (html) {
+      L.popup({ maxWidth: 300, className: 'ecmwf-fire-popup-wrap' })
+        .setLatLng(e.latlng)
+        .setContent(html)
+        .openOn(map);
+    }
+  });
+
   /* ═══════════════════════════════════════════════════════
      QUICK LAYER TOOLBAR
      ═══════════════════════════════════════════════════════ */
@@ -758,7 +928,9 @@ L.control.scale({
       qlHotspot:   { type: 'sheet' },
       qlPm25:      { target: 'toggleAirVisualPm25',         type: 'checkbox' },
       qlWind:      { target: 'toggleWindAnim',              type: 'checkbox' },
+      qlEcmwfFire: { type: 'toggle-fn',                    fn: toggleEcmwfFireLayer },
       qlModisTerra:{ target: 'modis-terra',                 type: 'basemap' },
+      qlViirsNoaa20:{ type: 'toggle-fn',                    fn: toggleViirsNoaa20Layer },
       qlKonsesi:   { target: 'toggleConcessionsLayer',      type: 'checkbox' },
       qlPelabuhan: { target: 'toggleCuacaPelabuhanLayer',   type: 'checkbox' },
       qlPerairan:  { target: 'toggleCuacaPerairanLayer',    type: 'checkbox' },
@@ -778,6 +950,9 @@ L.control.scale({
         } else if (c.type === 'checkbox') {
           var cb = document.getElementById(c.target);
           btn.classList.toggle('active', !!(cb && cb.checked));
+        } else if (c.type === 'toggle-fn') {
+          var layer = c.fn === toggleViirsNoaa20Layer ? viirsNoaa20Layer : ecmwfFireLayer;
+          btn.classList.toggle('active', !!(layer && map.hasLayer(layer)));
         } else {
           btn.classList.toggle('active', currentBasemapName === c.target);
         }
@@ -795,6 +970,10 @@ L.control.scale({
           } else if (c.type === 'checkbox') {
             var cb = document.getElementById(c.target);
             if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); }
+          } else if (c.type === 'toggle-fn') {
+            var layer = c.fn === toggleViirsNoaa20Layer ? viirsNoaa20Layer : ecmwfFireLayer;
+            var isOn = !!(layer && map.hasLayer(layer));
+            if (c.fn) c.fn(!isOn);
           } else {
             if (currentBasemapName === c.target) setBaseMap('google-maps');
             else setBaseMap(c.target);

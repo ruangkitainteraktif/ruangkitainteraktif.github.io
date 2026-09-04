@@ -1212,7 +1212,9 @@
     #qlHotspot.active   { background: #dc2626; }
     #qlPm25.active      { background: #7c3aed; }
     #qlWind.active      { background: #0ea5e9; }
+    #qlEcmwfFire.active { background: #f97316; }
     #qlModisTerra.active { background: #16a34a; }
+    #qlViirsNoaa20.active { background: #dc2626; }
     #qlKonsesi.active   { background: #ea580c; }
     #qlPelabuhan.active { background: #0284c7; }
     #qlPerairan.active  { background: #0891b2; }
@@ -5870,6 +5872,69 @@
 
     .hotspot-popup .leaflet-popup-content {
       margin: 10px 12px;
+    }
+
+    /* ── ECMWF Fire Legend & Popup ── */
+    .ecmwf-fire-legend {
+      background: rgba(255,255,255,.95);
+      border-radius: 8px;
+      padding: 10px 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      border: 1px solid #e5e7eb;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-width: 160px;
+      max-width: 240px;
+    }
+    .ecmwf-fire-legend-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 6px;
+    }
+    .ecmwf-fire-legend-img {
+      display: block;
+      max-width: 100%;
+      max-height: 120px;
+      margin-bottom: 4px;
+    }
+    .ecmwf-fire-legend-source {
+      font-size: 8px;
+      color: #94a3b8;
+      font-style: italic;
+    }
+    .ecmwf-fire-popup-wrap .leaflet-popup-content-wrapper {
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+    .ecmwf-fire-popup-wrap .leaflet-popup-content {
+      margin: 10px 12px;
+    }
+    .ecmwf-fire-popup-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 6px;
+    }
+    .ecmwf-fire-popup-props {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .ecmwf-fire-popup-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+    .ecmwf-fire-popup-key {
+      color: #64748b;
+      text-transform: capitalize;
+    }
+    .ecmwf-fire-popup-val {
+      color: #1e293b;
+      font-weight: 600;
+      text-align: right;
     }
 
     /* ── DEM Topography Analysis ── */
