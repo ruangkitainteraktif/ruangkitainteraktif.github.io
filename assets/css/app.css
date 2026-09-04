@@ -1238,18 +1238,19 @@
       left: 0;
       width: 360px;
       height: 100%;
-      background: #ffffff;
-      border-right: 1px solid #e0e0e0;
+      background: rgba(255,255,255,.98);
+      border-right: 1px solid #dce7ef;
       display: flex;
       flex-direction: column;
-      box-shadow: 2px 0 10px rgba(0,0,0,0.15);
+      box-shadow: 10px 0 32px rgba(15, 51, 78, .12);
       z-index: 1000;
-      transition: transform 0.3s ease-in-out;
+      transition: transform .3s ease-in-out, width .3s ease-in-out;
     }
 
     #sidebar-left.collapsed {
       transform: translateX(-100%);
     }
+    #sidebar-left.sidebar-force-hidden { transform: translateX(-100%); }
 
     /* Tombol Toggle Sidebar Kiri */
     .toggle-sidebar-btn {
@@ -1257,27 +1258,27 @@
       top: 50%;
       right: -25px;
       transform: translateY(-50%);
-      width: 25px;
-      height: 70px;
-      background: #0078d4;
+      width: 30px;
+      height: 64px;
+      background: linear-gradient(180deg, #0a73b8, #075890);
       color: white;
       border: none;
-      border-radius: 0 6px 6px 0;
+      border-radius: 0 10px 10px 0;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 14px;
       font-weight: bold;
-      box-shadow: 3px 0 6px rgba(0,0,0,0.15);
+      box-shadow: 4px 4px 12px rgba(15, 51, 78, .18);
       z-index: 1001;
     }
 
     .sidebar-header {
-      padding: 13px 15px;
+      padding: 16px 18px;
       color: #fff;
-      background: linear-gradient(120deg, #063d72, #0878b9 58%, #19a8c8);
-      border-bottom: 3px solid #f1bd27;
+      background: radial-gradient(circle at 92% 0%, rgba(43,190,205,.55), transparent 36%), linear-gradient(135deg, #082f57, #0a6da9 70%, #09849c);
+      border-bottom: 1px solid rgba(255,255,255,.16);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -1317,8 +1318,8 @@
       display: flex;
       width: 100%;
       flex-wrap: nowrap;
-      background: #f4f6f9;
-      border-bottom: 1px solid #e0e0e0;
+      background: #f7fafc;
+      border-bottom: 1px solid #e1ebf1;
       overflow-x: auto;
       overflow-y: hidden;
       -webkit-overflow-scrolling: touch;
@@ -1342,21 +1343,22 @@
       white-space: nowrap;
       scroll-snap-align: start;
       font-weight: 600;
-      color: #666;
+      color: #527088;
       cursor: pointer;
       transition: all 0.2s ease;
     }
-    .tab-btn svg { flex-shrink: 0; opacity: 0.6; transition: opacity .2s; }
+    .tab-btn svg { flex-shrink: 0; opacity: .75; transition: opacity .2s, transform .2s; }
     .tab-btn:hover svg, .tab-btn.active svg { opacity: 1; }
+    .tab-btn:hover svg { transform: scale(1.08); }
 
     .tab-btn.active {
-      color: #0078d4;
+      color: #0673af;
       background: #ffffff;
-      border-bottom: 3px solid #0078d4;
+      border-bottom: 3px solid #0b8fb4;
     }
 
     .sidebar-content {
-      padding: 15px;
+      padding: 16px;
       flex: 1;
       overflow-y: auto;
       font-size: 13px;
@@ -1364,11 +1366,133 @@
       flex-direction: column;
       min-height: 0;
     }
+    .sidebar-header { order: 0; }
+    .app-banner { order: 1; }
+    .sidebar-nav-toggle {
+      order: 2;
+      display: flex;
+      align-items: center;
+      width: calc(100% - 20px);
+      gap: 8px;
+      margin: 2px 10px 0;
+      padding: 10px 12px;
+      border: 1px solid #dce8ee;
+      border-radius: 8px;
+      background: #f8fbfc;
+      color: #47647a;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .03em;
+      text-align: left;
+    }
+    .sidebar-nav-toggle:hover { border-color: #bcdce2; background: #eff9fa; color: #08729c; }
+    .sidebar-nav-toggle-icon { display: grid; place-items: center; }
+    .sidebar-nav-toggle-icon svg, .sidebar-nav-chevron { width: 17px; height: 17px; }
+    .sidebar-nav-chevron { margin-left: auto; transition: transform .2s ease; }
+    #sidebar-left.menu-collapsed .sidebar-nav-chevron { transform: rotate(-90deg); }
+    #sidebar-left.menu-collapsed .tab-menu { display: none; }
+    .tab-menu { order: 3; }
+    .sidebar-content { order: 4; }
+    @media (max-width: 768px) {
+      .sidebar-nav-toggle { min-height: 42px; font-size: 12px; }
+      #sidebar-left .tab-menu {
+        flex-direction: column;
+        gap: 3px;
+        max-height: min(310px, 36vh);
+        padding: 8px 10px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        border-bottom: 0;
+        border-right: 1px solid #e1ebf1;
+        scroll-snap-type: none;
+      }
+      #sidebar-left .tab-menu::-webkit-scrollbar { width: 5px; height: auto; }
+      #sidebar-left .tab-btn {
+        width: 100%;
+        min-width: 0;
+        min-height: 42px;
+        padding: 10px 12px;
+        border: 1px solid transparent;
+        border-radius: 9px;
+        text-align: left;
+      }
+      #sidebar-left .tab-btn.active { border-color: #cae9eb; border-bottom: 1px solid #cae9eb; background: linear-gradient(90deg, #e6f8f7, #f7fcfc); box-shadow: inset 3px 0 #0b9ab0; }
+    }
+
+    /* Desktop navigation: a compact map-dashboard rail when collapsed. */
+    @media (min-width: 769px) {
+      #sidebar-left { width: 352px; }
+      #sidebar-left.collapsed { width: 72px; transform: none; }
+      #sidebar-left.sidebar-force-hidden { transform: translateX(-100%); }
+      #sidebar-left.collapsed .sidebar-header { justify-content: center; padding: 14px 8px; }
+      #sidebar-left.collapsed .ruangkita-brand { justify-content: center; }
+      #sidebar-left.collapsed .ruangkita-name,
+      #sidebar-left.collapsed .app-banner,
+      #sidebar-left.collapsed .sidebar-nav-toggle,
+      #sidebar-left.collapsed .sidebar-content { display: none; }
+
+      #sidebar-left .tab-menu {
+        flex: 0 0 auto;
+        flex-direction: column;
+        gap: 3px;
+        padding: 10px;
+        max-height: min(300px, 38vh);
+        overflow-x: hidden;
+        overflow-y: auto;
+        border-bottom: 0;
+        border-right: 1px solid #e1ebf1;
+      }
+      #sidebar-left .tab-menu::-webkit-scrollbar { width: 5px; height: auto; }
+      #sidebar-left .tab-btn {
+        position: relative;
+        width: 100%;
+        min-width: 0;
+        min-height: 42px;
+        padding: 10px 12px;
+        border: 1px solid transparent;
+        border-radius: 9px;
+        color: #47647a;
+        font-size: 11px;
+        letter-spacing: .01em;
+        text-align: left;
+      }
+      #sidebar-left .tab-btn:hover { border-color: #d9e8ef; background: #eef8fa; color: #08729c; }
+      #sidebar-left .tab-btn.active { border-color: #cae9eb; border-bottom: 1px solid #cae9eb; background: linear-gradient(90deg, #e6f8f7, #f7fcfc); color: #05768a; box-shadow: inset 3px 0 #0b9ab0; }
+      #sidebar-left .tab-btn svg { width: 17px; height: 17px; }
+
+      #sidebar-left.collapsed .tab-menu { align-items: center; padding: 10px 11px; }
+      #sidebar-left.collapsed .tab-btn { width: 48px; height: 46px; min-height: 46px; justify-content: center; padding: 0; }
+      #sidebar-left.collapsed .tab-btn span { display: none; }
+      #sidebar-left.collapsed .tab-btn::after {
+        position: absolute;
+        left: calc(100% + 12px);
+        top: 50%;
+        z-index: 1200;
+        padding: 6px 8px;
+        border-radius: 6px;
+        background: #123c59;
+        box-shadow: 0 5px 16px rgba(15, 51, 78, .18);
+        color: #fff;
+        content: attr(data-label);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        opacity: 0;
+        pointer-events: none;
+        transform: translate(-4px, -50%);
+        transition: opacity .15s ease, transform .15s ease;
+        white-space: nowrap;
+      }
+      #sidebar-left.collapsed .tab-btn:hover::after,
+      #sidebar-left.collapsed .tab-btn:focus-visible::after { opacity: 1; transform: translate(0, -50%); }
+      #sidebar-left.collapsed .toggle-sidebar-btn { right: -30px; }
+    }
 
     /* App Download Banner */
     .app-banner {
       position: relative;
-      margin: 0 10px 8px;
+      margin: 10px 10px 8px;
       padding: 0;
       border-radius: 12px;
       background: linear-gradient(135deg, #0f766e 0%, #0d9488 40%, #14b8a6 100%);

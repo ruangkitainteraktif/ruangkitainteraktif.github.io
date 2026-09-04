@@ -465,40 +465,48 @@
         </div>
       </div>
 
+      <button class="sidebar-nav-toggle" id="sidebarNavToggle" type="button" onclick="toggleSidebarMenu(this)" aria-expanded="true">
+        <span class="sidebar-nav-toggle-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+        </span>
+        <span>Menu Aplikasi</span>
+        <svg class="sidebar-nav-chevron" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+
       <div class="tab-menu">
-        <button class="tab-btn active" onclick="openTab(event, 'tab-geoid')">
+        <button class="tab-btn active" data-label="GEONUSA" aria-label="GEONUSA" onclick="openTab(event, 'tab-geoid')">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
           <span>GEONUSA</span>
         </button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-geoportal')">
+        <button class="tab-btn" data-label="GEOPORTAL" aria-label="GEOPORTAL" onclick="openTab(event, 'tab-geoportal')">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
           <span>GEOPORTAL</span>
         </button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-gempa'); openGempaSubtabById('gempa-subtab-infocuaca')" style="display:none">
+        <button class="tab-btn" data-label="GEOMET" aria-label="GEOMET" onclick="openTab(event, 'tab-gempa'); openGempaSubtabById('gempa-subtab-infocuaca')" style="display:none">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           <span>GEOMET</span>
         </button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-gempa')">
+        <button class="tab-btn" data-label="GEOPULSE" aria-label="GEOPULSE" onclick="openTab(event, 'tab-gempa')">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
           <span>GEOPULSE</span>
         </button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-geopangan')">
+        <button class="tab-btn" data-label="GEOPANGAN" aria-label="GEOPANGAN" onclick="openTab(event, 'tab-geopangan')">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
           <span>GEOPANGAN</span>
         </button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-geotani')">
+        <button class="tab-btn" data-label="GEOTANI" aria-label="GEOTANI" onclick="openTab(event, 'tab-geotani')">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           <span>GEOTANI</span>
         </button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-cctv')">
+        <button class="tab-btn" data-label="GEOWATCH" aria-label="GEOWATCH" onclick="openTab(event, 'tab-cctv')">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
           <span>GEOWATCH</span>
         </button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-alat')">
+        <button class="tab-btn" data-label="GEOTOOLS" aria-label="GEOTOOLS" onclick="openTab(event, 'tab-alat')">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
           <span>GEOTOOLS</span>
         </button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-about')">
+        <button class="tab-btn" data-label="ABOUT" aria-label="ABOUT" onclick="openTab(event, 'tab-about')">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           <span>ABOUT</span>
         </button>

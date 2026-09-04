@@ -8,9 +8,19 @@
   }
   function toggleSidebar() {
     const sidebar = document.getElementById('sidebar-left');
+    // A feature may temporarily hide the whole sidebar (for example GeoPangan).
+    // A direct user toggle always restores the dashboard navigation first.
+    sidebar.classList.remove('sidebar-force-hidden');
     sidebar.classList.toggle('collapsed');
     setToggleIcon(sidebar.classList.contains('collapsed'));
     setTimeout(() => map.invalidateSize(), 300);
+  }
+
+  function toggleSidebarMenu(button) {
+    const sidebar = document.getElementById('sidebar-left');
+    if (!sidebar) return;
+    const collapsed = sidebar.classList.toggle('menu-collapsed');
+    if (button) button.setAttribute('aria-expanded', String(!collapsed));
   }
 
   // Toggle Detail Panel

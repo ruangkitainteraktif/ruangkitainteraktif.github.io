@@ -143,8 +143,9 @@
     // Reuse the main toggle so the button icon and Leaflet map size stay in sync.
     if (typeof window.toggleSidebar === 'function') {
       window.toggleSidebar();
+      sidebar.classList.add('sidebar-force-hidden');
     } else {
-      sidebar.classList.add('collapsed');
+      sidebar.classList.add('collapsed', 'sidebar-force-hidden');
       if (typeof map !== 'undefined') setTimeout(function () { map.invalidateSize(); }, 300);
     }
   }
