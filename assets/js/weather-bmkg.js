@@ -300,7 +300,6 @@
     const badge = (label, icon, warna) => `<span class="wi-badge" style="background:${warna}15; color:${warna}; border:1px solid ${warna}30">${icon} ${escapeHTML(label)}</span>`;
     return `
       <div class="weather-insights">
-        <div class="wi-kalimat">${escapeHTML(c.kalimatAlam)}</div>
         <div class="wi-badges">
           ${badge(c.cuaca.label, c.cuaca.icon, c.cuaca.warna)}
           ${badge(c.suhu.label, c.suhu.icon, c.suhu.warna)}
@@ -374,37 +373,52 @@
     const maxTemp = Math.max(...allSlots);
 
     let html = `
-      <section class="weather-panel" style="color:#fff">
-        <div class="weather-hero">
-          <p class="weather-hero-location">${escapeHTML(lokasi.desa || 'Wilayah')}, ${escapeHTML(lokasi.kecamatan || '')}</p>
-          <p class="weather-hero-region">${escapeHTML(lokasi.kabkota || '')}, ${escapeHTML(lokasi.provinsi || '')}</p>
-          <div class="weather-now">
-            <img src="${escapeHTML(current.image || '')}" alt="${escapeHTML(current.weather_desc || 'Cuaca')}">
-            <div><div class="weather-now-temp">${escapeHTML(current.t ?? '-')}°C</div><div class="weather-now-desc">${escapeHTML(current.weather_desc || 'Tidak tersedia')} · ${formatTime(current.local_datetime)}</div></div>
-          </div>
-          <div class="weather-metrics">
-            <div class="weather-metric" style="color:#fff">Kelembapan<strong style="color:#fff">${escapeHTML(current.hu ?? '-')}%</strong></div>
-            <div class="weather-metric" style="color:#fff">Angin<strong style="color:#fff">${escapeHTML(current.ws ?? '-')} km/j</strong></div>
-            <div class="weather-metric" style="color:#fff">Awan<strong style="color:#fff">${escapeHTML(current.tcc ?? '-')}%</strong></div>
-            <div class="weather-metric" style="color:#fff">Arah Angin<strong style="color:#fff">${escapeHTML(current.wd_to ?? '-')} (${escapeHTML(current.wd ?? '-')})</strong></div>
-          </div>
+      <div class="weather-hero" style="margin-bottom:12px;">
+        <p class="weather-hero-location">${escapeHTML(lokasi.desa || 'Wilayah')}, ${escapeHTML(lokasi.kecamatan || '')}</p>
+        <p class="weather-hero-region">${escapeHTML(lokasi.kabkota || '')}, ${escapeHTML(lokasi.provinsi || '')}</p>
+        <div class="weather-now">
+          <img src="${escapeHTML(current.image || '')}" alt="${escapeHTML(current.weather_desc || 'Cuaca')}">
+          <div><div class="weather-now-temp">${escapeHTML(current.t ?? '-')}°C</div><div class="weather-now-desc">${escapeHTML(current.weather_desc || 'Tidak tersedia')} · ${formatTime(current.local_datetime)}</div></div>
         </div>
+        <div class="weather-metrics">
+          <div class="weather-metric" style="color:#fff">Kelembapan<strong style="color:#fff">${escapeHTML(current.hu ?? '-')}%</strong></div>
+          <div class="weather-metric" style="color:#fff">Angin<strong style="color:#fff">${escapeHTML(current.ws ?? '-')} km/j</strong></div>
+          <div class="weather-metric" style="color:#fff">Awan<strong style="color:#fff">${escapeHTML(current.tcc ?? '-')}%</strong></div>
+          <div class="weather-metric" style="color:#fff">Arah Angin<strong style="color:#fff">${escapeHTML(current.wd_to ?? '-')} (${escapeHTML(current.wd ?? '-')})</strong></div>
+        </div>
+      </div>
 
-        ${buildWeatherInsightsHTML(current)}
+      <div class="search-weather-container" style="margin-bottom:12px;">
+        <input type="text" id="weatherSearchInput" class="search-weather-input"
+          placeholder="🔍 Cari Desa/Kelurahan..." autocomplete="off" />
+        <div id="autocompleteResults" class="autocomplete-results"></div>
+      </div>
 
-        <div class="temp-chart-section">
-          <div class="temp-chart-header">
-            <h4 class="temp-chart-title">Grafik Suhu Prakiraan 3 Hari · per 3 jam</h4>
-            <div class="temp-chart-legend">
-              <span class="temp-chart-legend-item"><span class="temp-chart-legend-dot" style="background:#e74c3c"></span>${maxTemp}°</span>
-              <span class="temp-chart-legend-item"><span class="temp-chart-legend-dot" style="background:#3498db"></span>${minTemp}°</span>
+      <div class="cctv-card" style="margin-bottom:12px;">
+        <div class="cctv-card-header">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>Grafik Suhu Prakiraan 3 Hari</span>
+        </div>
+        <div class="cctv-card-body">
+          <div class="temp-chart-section">
+            <div class="temp-chart-header">
+              <div class="temp-chart-legend">
+                <span class="temp-chart-legend-item"><span class="temp-chart-legend-dot" style="background:#e74c3c"></span>${maxTemp}°</span>
+                <span class="temp-chart-legend-item"><span class="temp-chart-legend-dot" style="background:#3498db"></span>${minTemp}°</span>
+              </div>
             </div>
+            ${buildTemperatureChart(forecastDays)}
           </div>
-          ${buildTemperatureChart(forecastDays)}
         </div>
+      </div>
 
-        <h4 class="weather-days-title" style="margin:16px 0 8px;padding:9px 12px;border-radius:10px;font-size:14px;font-weight:700;color:#fff;background:#0879bf">Prakiraan 3 Hari · per 3 jam</h4>
-        <div class="weather-days-grid">
+      <div class="cctv-card" style="margin-bottom:12px;">
+        <div class="cctv-card-header">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>Prakiraan 3 Hari · per 3 jam</span>
+        </div>
+        <div class="cctv-card-body">
+          <div class="weather-days-grid">
     `;
 
     forecastDays.slice(0, 3).forEach((day, dayIndex) => {
@@ -419,6 +433,7 @@
       `;
     });
 
-    html += `</div><p class="weather-source" style="margin-bottom: 60px">BMKG · diperbarui ${escapeHTML(current.local_datetime || '-')}</p></section>`;
+    html += `</div></div><p class="weather-source" style="margin-bottom: 5px">BMKG · diperbarui ${escapeHTML(current.local_datetime || '-')}</p>`;
     container.innerHTML = html;
+    if (typeof initWeatherSearch === 'function') initWeatherSearch();
   }

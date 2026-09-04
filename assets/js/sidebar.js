@@ -84,6 +84,12 @@
     evt.currentTarget.classList.add("active");
     window.currentActiveTab = tabId;
 
+    // Collapse Menu Aplikasi after selecting a tab
+    var sidebar = document.getElementById('sidebar-left');
+    if (sidebar && !sidebar.classList.contains('menu-collapsed')) {
+      toggleSidebarMenu(document.getElementById('sidebarNavToggle'));
+    }
+
     if (tabId !== 'tab-cctv') {
       var sheet = document.getElementById('cctv-search-sheet');
       if (sheet) {

@@ -453,7 +453,7 @@
     </div>
 
     <!-- SIDEBAR KIRI -->
-    <div id="sidebar-left" class="collapsed">
+    <div id="sidebar-left" class="collapsed menu-collapsed">
       <button class="toggle-sidebar-btn" id="toggleBtn" onclick="toggleSidebar()">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
       </button>
@@ -465,7 +465,7 @@
         </div>
       </div>
 
-      <button class="sidebar-nav-toggle" id="sidebarNavToggle" type="button" onclick="toggleSidebarMenu(this)" aria-expanded="true">
+      <button class="sidebar-nav-toggle" id="sidebarNavToggle" type="button" onclick="toggleSidebarMenu(this)" aria-expanded="false">
         <span class="sidebar-nav-toggle-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
         </span>
@@ -932,33 +932,6 @@
 
             <div class="cctv-card">
               <div class="cctv-card-header">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-5.447-2.724A1 1 0 0 1 3 16.382V5.618a1 1 0 0 1 .553-.894L9 2l6 3 5.447-2.724A1 1 0 0 1 21 3.382v10.764a1 1 0 0 1-.553.894L15 18l-6 3z"/><path d="M9 2v20"/><path d="M15 6v15"/></svg>
-                <span>Layer Market</span>
-              </div>
-              <div class="cctv-card-body cctv-layers">
-              <label class="cctv-layer-toggle">
-                <input type="checkbox" id="toggleSebaranPasar">
-                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="cctv-layer-info">
-                  <span class="cctv-layer-name">Sebaran Pasar Indonesia</span>
-                  <small>Data sebaran pasar induk, penunjang, dan eceran — Kementerian Perdagangan</small>
-                </span>
-              </label>
-              <label class="cctv-layer-toggle">
-                <input type="checkbox" id="toggleSppgLayer">
-                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="cctv-layer-info">
-                  <span class="cctv-layer-name">SPPG Indonesia</span>
-                  <small>Satuan Pelayanan Pemenuhan Gizi - Sismonbgn</small>
-                </span>
-              </label>
-              </div>
-            </div>
-
-            <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
-
-            <div class="cctv-card">
-              <div class="cctv-card-header">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                 <span>Cari Wilayah - Harga Pangan</span>
               </div>
@@ -997,6 +970,33 @@
               </div>
 
               <button id="geopanganLoadBtn" class="geopangan-btn" style="margin-top:4px;">Tampilkan</button>
+              </div>
+            </div>
+
+            <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
+
+            <div class="cctv-card">
+              <div class="cctv-card-header">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-5.447-2.724A1 1 0 0 1 3 16.382V5.618a1 1 0 0 1 .553-.894L9 2l6 3 5.447-2.724A1 1 0 0 1 21 3.382v10.764a1 1 0 0 1-.553.894L15 18l-6 3z"/><path d="M9 2v20"/><path d="M15 6v15"/></svg>
+                <span>Layer Market</span>
+              </div>
+              <div class="cctv-card-body cctv-layers">
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleSebaranPasar">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Sebaran Pasar Indonesia</span>
+                  <small>Data sebaran pasar induk, penunjang, dan eceran — Kementerian Perdagangan</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleSppgLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">SPPG Indonesia</span>
+                  <small>Satuan Pelayanan Pemenuhan Gizi - Sismonbgn</small>
+                </span>
+              </label>
               </div>
             </div>
           </div>
@@ -1098,12 +1098,29 @@
           </div>
 
           <div id="gempa-subtab-gempa" class="gempa-subtab-panel">
-            <div class="cctv-card" style="margin-bottom:12px;">
+            <div id="earthquake-content" class="quake-message" style="margin-bottom:12px;">Buka tab ini untuk memuat data gempabumi BMKG.</div>
+            <div id="weather-search-card" class="cctv-card" style="margin-bottom:12px;">
               <div class="cctv-card-header">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-                <span>Layer Gempa &amp; Patahan</span>
+                <span>Layer Gempa</span>
               </div>
               <div class="cctv-card-body cctv-layers">
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleSignificantMarkers">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">15 Gempa M 5.0+ (BMKG)</span>
+                  <small id="significantMarkersInfo">Gempa signifikan terkini dari BMKG</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleFeltMarkers">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">15 Gempa Dirasakan (BMKG)</span>
+                  <small id="feltMarkersInfo">Gempa yang dirasakan masyarakat dari BMKG</small>
+                </span>
+              </label>
               <label class="cctv-layer-toggle">
                 <input type="checkbox" id="toggleWorldPlatesLayer">
                 <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
@@ -1185,15 +1202,6 @@
                 </span>
               </label>
             </div>
-            </div>
-            <div class="cctv-card" style="margin-bottom:12px;">
-              <div class="cctv-card-header">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                <span>Info Gempa Bumi</span>
-              </div>
-              <div class="cctv-card-body">
-              <div id="earthquake-content" class="quake-message">Buka tab ini untuk memuat data gempabumi BMKG.</div>
-              </div>
             </div>
           </div>
 
@@ -1361,10 +1369,15 @@
           </div>
 
           <div id="gempa-subtab-infocuaca" class="gempa-subtab-panel active">
+            <div id="weather-content">
+              <div style="font-size:13px; color:#fff; background:#0a4d8c; padding:10px; margin-bottom: 100px; border-radius:5px;">
+                ℹ️ Pilih lokasi dari pencarian untuk melihat cuaca.
+              </div>
+            </div>
             <div class="cctv-card" style="margin-bottom:12px;">
               <div class="cctv-card-header">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14l9-9 9 9"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-                <span>Layer Cuaca</span>
+                <span>Layer Cuaca Maritim</span>
               </div>
               <div class="cctv-card-body cctv-layers">
                 <label class="cctv-layer-toggle">
@@ -1397,24 +1410,6 @@
                 <label class="cctv-layer-toggle"><input type="checkbox" data-airvisual-layer="airvisual-no2"><span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="cctv-layer-info"><span class="cctv-layer-name">NO2</span><small>Nitrogen dioksida dari AirVisual</small></span></label>
                 <label class="cctv-layer-toggle"><input type="checkbox" data-airvisual-layer="airvisual-so2"><span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="cctv-layer-info"><span class="cctv-layer-name">SO2</span><small>Sulfur dioksida dari AirVisual</small></span></label>
                 <label class="cctv-layer-toggle"><input type="checkbox" data-airvisual-layer="airvisual-co"><span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="cctv-layer-info"><span class="cctv-layer-name">CO</span><small>Karbon monoksida dari AirVisual</small></span></label>
-              </div>
-            </div>
-            <div class="cctv-card" style="margin-bottom:12px;">
-              <div class="cctv-card-header">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 0 0 0-10z"/></svg>
-                <span>Cari Wilayah - Cuaca</span>
-              </div>
-              <div class="cctv-card-body">
-              <div class="search-weather-container">
-                <input type="text" id="weatherSearchInput" class="search-weather-input"
-                  placeholder="🔍 Cari Desa/Kelurahan..." autocomplete="off" />
-                <div id="autocompleteResults" class="autocomplete-results"></div>
-              </div>
-              <div id="weather-content" style="margin-top:20px">
-                <div style="font-size:13px; color:#fff; background:#0a4d8c; padding:10px; margin-bottom: 100px; border-radius:5px;">
-                  ℹ️ Pilih lokasi dari pencarian untuk melihat cuaca.
-                </div>
-              </div>
               </div>
             </div>
           </div>

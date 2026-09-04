@@ -764,10 +764,15 @@
     .gp-commodity-table td { padding: 6px 7px; border-top: 1px solid #edf3f1; color: #335b72; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
     .gp-commodity-table td:first-child { color: #1e3a5f; font-weight: 600; text-align: left; }
     @media (max-width: 576px) {
-      .gp-compare-selects, .gp-comparison-cards { grid-template-columns: 1fr; }
+      .gp-comparison { height: 50%; overflow-y: auto; }
+      .gp-compare-selects, .gp-comparison-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+      .gp-compare-selects select { font-size: 9px; padding: 5px 4px; }
       .gp-comparison-chart { height: 200px; }
       .gp-commodity-comparison { align-items: flex-start; }
       .gp-commodity-comparison button { max-width: 126px; }
+      .geopangan-sticky-header h4 { margin-bottom: 0; font-size: 13px; }
+      .geopangan-sticky-header p { margin-bottom: 6px; font-size: 11px; }
+      .geopangan-sticky-header .cctv-card { margin-top: 0; }
     }
 
     /* ===== GeoPangan Legend ===== */
@@ -1317,18 +1322,10 @@
     .tab-menu {
       display: flex;
       width: 100%;
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
       background: #f7fafc;
       border-bottom: 1px solid #e1ebf1;
-      overflow-x: auto;
-      overflow-y: hidden;
-      -webkit-overflow-scrolling: touch;
-      overscroll-behavior-x: contain;
-      scroll-snap-type: x proximity;
-      scrollbar-width: thin;
     }
-    .tab-menu::-webkit-scrollbar { height: 4px; }
-    .tab-menu::-webkit-scrollbar-thumb { border-radius: 4px; background: #b7c7d6; }
 
     .tab-btn {
       flex: 0 0 auto;
@@ -1341,7 +1338,6 @@
       background: transparent;
       font-size: 11px;
       white-space: nowrap;
-      scroll-snap-align: start;
       font-weight: 600;
       color: #527088;
       cursor: pointer;
@@ -1399,15 +1395,10 @@
       #sidebar-left .tab-menu {
         flex-direction: column;
         gap: 3px;
-        max-height: min(310px, 36vh);
         padding: 8px 10px;
-        overflow-x: hidden;
-        overflow-y: auto;
         border-bottom: 0;
         border-right: 1px solid #e1ebf1;
-        scroll-snap-type: none;
       }
-      #sidebar-left .tab-menu::-webkit-scrollbar { width: 5px; height: auto; }
       #sidebar-left .tab-btn {
         width: 100%;
         min-width: 0;
@@ -1423,8 +1414,8 @@
     /* Desktop navigation: a compact map-dashboard rail when collapsed. */
     @media (min-width: 769px) {
       #sidebar-left { width: 352px; }
-      #sidebar-left.collapsed { width: 72px; transform: none; }
-      #sidebar-left.sidebar-force-hidden { transform: translateX(-100%); }
+      #sidebar-left.collapsed { transform: translateX(-100%); }
+    #sidebar-left.sidebar-force-hidden { transform: translateX(-100%); }
       #sidebar-left.collapsed .sidebar-header { justify-content: center; padding: 14px 8px; }
       #sidebar-left.collapsed .ruangkita-brand { justify-content: center; }
       #sidebar-left.collapsed .ruangkita-name,
@@ -1437,13 +1428,9 @@
         flex-direction: column;
         gap: 3px;
         padding: 10px;
-        max-height: min(300px, 38vh);
-        overflow-x: hidden;
-        overflow-y: auto;
         border-bottom: 0;
         border-right: 1px solid #e1ebf1;
       }
-      #sidebar-left .tab-menu::-webkit-scrollbar { width: 5px; height: auto; }
       #sidebar-left .tab-btn {
         position: relative;
         width: 100%;
@@ -3690,13 +3677,6 @@
       border: 1px solid #d0e8f5;
       border-radius: 12px;
     }
-    .wi-kalimat {
-      font-size: 12px;
-      color: #37474f;
-      line-height: 1.5;
-      margin-bottom: 10px;
-      font-style: italic;
-    }
     .wi-badges {
       display: flex;
       flex-wrap: wrap;
@@ -3718,10 +3698,6 @@
       background: linear-gradient(135deg, #f0f7ff 0%, #e8f5e9 100%);
       border: 1px solid #d0e8f5;
       border-radius: 0;
-    }
-    .bmkg-popup .wi-kalimat {
-      font-size: 10px;
-      margin-bottom: 6px;
     }
     .bmkg-popup .wi-badges {
       gap: 4px;
@@ -3873,14 +3849,16 @@
     .quake-toolbar h4 { margin: 0; color: #173b5d; font-size: 14px; }
     .quake-refresh { border: 0; border-radius: 7px; padding: 6px 8px; color: #fff; background: #0879bf; cursor: pointer; font-size: 10px; }
     .quake-refresh-wrap { text-align: center; margin: 10px 0 4px; }
-    .quake-latest { overflow: hidden; margin-bottom: 12px; border-radius: 14px; color: #fff; background: linear-gradient(135deg, #a71d2a, #dc3545 62%, #f06e7a); box-shadow: 0 9px 18px rgba(220, 53, 69, .25); }
-    .quake-latest-main { display: flex; gap: 12px; align-items: center; padding: 13px; }
+    .quake-latest { width: 100%; box-sizing: border-box; overflow: hidden; margin-bottom: 12px; padding: 16px; border-radius: 14px; color: #fff; background: linear-gradient(135deg, #a71d2a, #dc3545 58%, #f06e7a); box-shadow: 0 10px 22px rgba(220, 53, 69, .22); }
+    .quake-latest-main { display: flex; gap: 10px; align-items: center; margin: 12px 0; }
     .quake-magnitude { flex: 0 0 54px; height: 54px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.4); border-radius: 50%; background: rgba(0,0,0,.12); font-size: 22px; font-weight: 700; color: #fff; }
     .quake-latest .quake-latest-title { margin: 0 0 4px; font-size: 15px; color: #fff; }
     .quake-latest-place { font-size: 10px; line-height: 1.35; opacity: .95; }
-    .quake-latest-details { display: grid; grid-template-columns: repeat(3, 1fr); background: rgba(0,0,0,.13); }
+    .quake-latest-details { display: grid; grid-template-columns: repeat(2, 1fr); background: rgba(0,0,0,.13); }
     .quake-latest-details span { padding: 7px 5px; border-right: 1px solid rgba(255,255,255,.15); text-align: center; font-size: 9px; }
     .quake-latest-details b { display: block; margin-top: 2px; font-size: 10px; }
+    .quake-latest-potensi { padding: 7px 10px; background: rgba(0,0,0,.13); text-align: center; font-size: 9px; border-top: 1px solid rgba(255,255,255,.15); }
+    .quake-latest-potensi b { margin-left: 4px; font-size: 10px; }
     .quake-section { margin: 10px 0 0 5px; }
     .quake-section-title { display: flex; align-items: center; justify-content: space-between; margin: 0 0 7px; color: #244b6e; font-size: 11px; }
     .quake-count { padding: 2px 6px; border-radius: 99px; color: #0879bf; background: #e8f4fc; font-size: 9px; }
@@ -3891,7 +3869,7 @@
     .quake-card-place { overflow: hidden; color: #183d5e; font-size: 10px; font-weight: 700; line-height: 1.35; }
     .quake-card-meta { margin-top: 3px; color: #668198; font-size: 9px; }
     .quake-card-feel { margin-top: 4px; color: #9a3c27; font-size: 9px; }
-    .quake-attribution { margin: 11px 0 0; color: #71869a; font-size: 6px; text-align: right; margin-bottom: 60px}
+    .quake-attribution { margin: 3px 0 0; color: #71869a; font-size: 6px; text-align: right; margin-bottom: 0}
     .quake-message { padding: 12px; border-radius: 0px; color: #567; background: transparent; font-size: 11px; text-align: center; }
 
     /* Hotspot Summary Card */

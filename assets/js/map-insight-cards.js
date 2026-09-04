@@ -55,6 +55,7 @@
             <div class="insight-quake-place">${escapeGeoidHtml(gempa.Wilayah || 'Lokasi tidak diketahui')}</div>
             <div class="insight-quake-meta">📅 ${escapeGeoidHtml(gempa.Tanggal || '-')} · ⏰ ${escapeGeoidHtml(gempa.Jam || '-')}</div>
             <div class="insight-quake-meta">📏 Kedalaman ${escapeGeoidHtml(gempa.Kedalaman || '-')}</div>
+            <div class="insight-quake-meta" style="color:${bgColor};font-weight:600">⚡ Potensi ${escapeGeoidHtml(gempa.Potensi || '-')}</div>
           </div>
         </div>
       `;
@@ -153,7 +154,6 @@
 
     quakeMarker.bindPopup(popupHtml, { maxWidth: 300, className: 'quake-leaflet-popup' });
     map.setView([lat, lon], Math.max(map.getZoom(), 10), { animate: true, duration: 1 });
-    setTimeout(() => quakeMarker.openPopup(), 1100);
   }
 
   document.addEventListener('DOMContentLoaded', () => {

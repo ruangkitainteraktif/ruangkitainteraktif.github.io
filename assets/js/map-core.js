@@ -595,7 +595,7 @@ L.control.scale({
         _activeAirVisualLayerKey = null;
 
         // Bersihkan layer sensor & katalog gempa
-        document.querySelectorAll('#toggleKatalogGempa, #toggleSensorSeismic, #toggleSensorGlobal, #toggleHistoryGempa').forEach(function (cb) {
+        document.querySelectorAll('#toggleKatalogGempa, #toggleSensorSeismic, #toggleSensorGlobal, #toggleHistoryGempa, #toggleSignificantMarkers, #toggleFeltMarkers').forEach(function (cb) {
           if (cb) cb.checked = false;
         });
         if (typeof isKatalogGempaActive === 'function' && isKatalogGempaActive()) {
@@ -610,6 +610,7 @@ L.control.scale({
         if (typeof isHistoryGempaActive === 'function' && isHistoryGempaActive()) {
           document.getElementById('toggleHistoryGempa')?.dispatchEvent(new Event('change'));
         }
+        if (typeof quakeResetLayers === 'function') quakeResetLayers();
 
         // Bersihkan layer gunung api
         if (document.getElementById('toggleVolcanoLayer')) {

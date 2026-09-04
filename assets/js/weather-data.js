@@ -126,52 +126,56 @@
   loadKemendagriData();
 
   // Autocomplete Listener
-  const weatherSearchInput = document.getElementById('weatherSearchInput');
-  const autocompleteResults = document.getElementById('autocompleteResults');
+  function initWeatherSearch() {
+    const weatherSearchInput = document.getElementById('weatherSearchInput');
+    const autocompleteResults = document.getElementById('autocompleteResults');
+    if (!weatherSearchInput || !autocompleteResults) return;
+    if (weatherSearchInput._bound) return;
+    weatherSearchInput._bound = true;
 
-  weatherSearchInput.addEventListener('input', function() {
-    const input = this;
-    clearTimeout(weatherSearchTimer);
+    weatherSearchInput.addEventListener('input', function() {
+      const input = this;
+      clearTimeout(weatherSearchTimer);
 
-    if (normalizeWeatherSearch(input.value.trim()).length < 2) {
-      autocompleteResults.style.display = 'none';
-      return;
-    }
-
-    weatherSearchTimer = setTimeout(() => {
-      const query = normalizeWeatherSearch(input.value.trim());
-      const matches = [];
-
-      // Berhenti setelah hasil cukup; tidak membuat array baru dari 83 ribu ADM4.
-      for (const item of weatherSearchLocations) {
-        if (item.searchText.includes(query)) {
-          matches.push(item);
-          if (matches.length === WEATHER_SEARCH_LIMIT) break;
-        }
+      if (normalizeWeatherSearch(input.value.trim()).length < 2) {
+        autocompleteResults.style.display = 'none';
+        return;
       }
-      renderAutocompleteResults(matches);
-    }, 120);
-  });
 
-  function renderAutocompleteResults(items) {
-    if (items.length === 0) {
-      autocompleteResults.innerHTML = '<div class="autocomplete-item" style="color:#888;">Lokasi tidak ditemukan...</div>';
-      autocompleteResults.style.display = 'block';
-      return;
-    }
+      weatherSearchTimer = setTimeout(() => {
+        const query = normalizeWeatherSearch(input.value.trim());
+        const matches = [];
 
-    autocompleteResults.replaceChildren(...items.map(item => {
-      const result = document.createElement('div');
-      result.className = 'autocomplete-item';
+        // Berhenti setelah hasil cukup; tidak membuat array baru dari 83 ribu ADM4.
+        for (const item of weatherSearchLocations) {
+          if (item.searchText.includes(query)) {
+            matches.push(item);
+            if (matches.length >= WEATHER_SEARCH_LIMIT) break;
+          }
+        }
+        renderAutocompleteResults(matches);
+      }, 120);
+    });
 
-      const title = document.createElement('strong');
-      title.textContent = item.desa || 'Desa';
-      result.append(title, `, Kec. ${item.kecamatan || '-'}`, document.createElement('br'));
+    function renderAutocompleteResults(items) {
+      if (items.length === 0) {
+        autocompleteResults.innerHTML = '<div class="autocomplete-item" style="color:#888;">Lokasi tidak ditemukan...</div>';
+        autocompleteResults.style.display = 'block';
+        return;
+      }
 
-      const detail = document.createElement('small');
-      detail.style.color = '#777';
-      detail.textContent = `${item.kabkota || '-'}, ${item.provinsi || '-'} (Kode: ${item.kode})`;
-      result.appendChild(detail);
+      autocompleteResults.replaceChildren(...items.map(item => {
+        const result = document.createElement('div');
+        result.className = 'autocomplete-item';
+
+        const title = document.createElement('strong');
+        title.textContent = item.desa || 'Desa';
+        result.append(title, `, Kec. ${item.kecamatan || '-'}`, document.createElement('br'));
+
+        const detail = document.createElement('small');
+        detail.style.color = '#777';
+        detail.textContent = `${item.kabkota || '-'}, ${item.provinsi || '-'} (Kode: ${item.kode})`;
+        result.appendChild(detail);
       result.addEventListener('click', () => selectWeatherLocation(item.kode, item.desa, item.kecamatan));
       return result;
     }));
@@ -191,3 +195,7 @@
       autocompleteResults.style.display = 'none';
     }
   });
+  }
+
+  window.initWeatherSearch = initWeatherSearch;
+  initWeatherSearch();
