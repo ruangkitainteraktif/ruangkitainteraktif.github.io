@@ -5,7 +5,7 @@
 
   // 1. Inisialisasi Peta
   // Pusat awal mengikuti extent layer IGTPR ATR/BPN: BIDANG_JAKARTA_CLP.
-  const map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([-7.249, 112.751], 12);
+  const map = L.map('map', { zoomControl: false, preferCanvas: true, maxZoom: 19, minZoom: 4 }).setView([-7.249, 112.751], 12);
 
 L.control.scale({
   position: 'bottomleft',
