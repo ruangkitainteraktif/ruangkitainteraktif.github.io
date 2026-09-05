@@ -4122,6 +4122,32 @@
     .wind-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
     .wind-legend-unit { font-size: 8px; color: #94a3b8; margin-top: 6px; font-style: italic; }
 
+    /* ── Himawari Legend ── */
+    .himawari-legend {
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 8px;
+      padding: 10px 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.12);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-width: 150px;
+      color: #fff;
+    }
+    .himawari-legend-title { font-size: 10px; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
+    .himawari-legend-bar {
+      height: 10px;
+      border-radius: 5px;
+      background: linear-gradient(90deg, #1a1a2e 0%, #16213e 10%, #0f3460 20%, #1a936f 35%, #88d498 45%, #f6d743 58%, #f77f00 72%, #d62828 85%, #7b0051 100%);
+      margin-bottom: 3px;
+    }
+    .himawari-legend-labels { display: flex; justify-content: space-between; font-size: 7px; color: #94a3b8; margin-bottom: 6px; }
+    .himawari-legend-items { display: flex; flex-direction: column; gap: 3px; }
+    .himawari-legend-item { display: flex; align-items: center; gap: 5px; font-size: 9px; color: #cbd5e1; }
+    .himawari-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.15); }
+    .himawari-legend-unit { font-size: 8px; color: #64748b; margin-top: 6px; font-style: italic; }
+
     /* Wind Popup */
     .wind-popup { width: 310px; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1e293b; background: #fff; overflow: hidden; }
     .wind-popup-head { padding: 12px 14px; color: #fff; background: linear-gradient(135deg, #0ea5e9, #0369a1); }

@@ -8,6 +8,7 @@
   var PROV_GEOJSON_URL = 'assets/data/bps/geojson/provinsi.geojson';
 
   var sliderControl = null;
+  var legendControl = null;
   var currentIndex = 0;
   var timestamps = [];
   var _provLayer = null;
@@ -179,11 +180,48 @@
 
   var _prevMaxZoom = null;
 
+  var HimawariLegend = L.Control.extend({
+    options: { position: 'bottomleft' },
+    onAdd: function () {
+      var div = L.DomUtil.create('div', 'himawari-legend');
+      L.DomEvent.disableClickPropagation(div);
+      div.innerHTML =
+        '<div class="himawari-legend-title">Suhu Puncak Awan (IR 10.4&micro;m)</div>' +
+        '<div class="himawari-legend-bar"></div>' +
+        '<div class="himawari-legend-labels"><span>-80&deg;C</span><span>-60&deg;C</span><span>-40&deg;C</span><span>-20&deg;C</span><span>0&deg;C</span><span>20&deg;C</span></div>' +
+        '<div class="himawari-legend-items">' +
+          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#7b0051;"></span>&le; -80&deg;C — Ekstrem</div>' +
+          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#d62828;"></span>-80 s/d -60&deg;C — Sangat Dingin (Cb)</div>' +
+          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#f77f00;"></span>-60 s/d -40&deg;C — Dingin</div>' +
+          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#f6d743;"></span>-40 s/d -20&deg;C — Sedang</div>' +
+          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#1a936f;"></span>-20 s/d 0&deg;C — Hangat</div>' +
+          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#16213e;"></span>&ge; 0&deg;C — Cerah</div>' +
+        '</div>' +
+        '<div class="himawari-legend-unit">Sumber: BMKG Himawari-9</div>';
+      return div;
+    }
+  });
+
+  function showLegend() {
+    if (!legendControl) {
+      legendControl = new HimawariLegend();
+      legendControl.addTo(map);
+    }
+  }
+
+  function hideLegend() {
+    if (legendControl) {
+      map.removeControl(legendControl);
+      legendControl = null;
+    }
+  }
+
   function showSlider() {
     if (!sliderControl) {
       sliderControl = new BmkgTimeSliderControl();
       sliderControl.addTo(map);
     }
+    showLegend();
     loadProvinsiLayer();
     _prevMaxZoom = map.getMaxZoom();
     map.setMaxZoom(10);
@@ -195,6 +233,7 @@
       map.removeControl(sliderControl);
       sliderControl = null;
     }
+    hideLegend();
     removeProvinsiLayer();
     if (_prevMaxZoom !== null) {
       map.setMaxZoom(_prevMaxZoom);
@@ -204,6 +243,7 @@
 
   function cleanup() {
     hideSlider();
+    hideLegend();
     timestamps = [];
     currentIndex = 0;
     _fetchPromise = null;
