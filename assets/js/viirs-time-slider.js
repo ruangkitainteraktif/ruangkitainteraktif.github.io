@@ -72,7 +72,7 @@
       slider.type = 'range';
       slider.min = String(-DAY_COUNT);
       slider.max = '0';
-      slider.value = '0';
+      slider.value = '-1';
       slider.step = '1';
 
       var nextBtn = L.DomUtil.create('button', 'modis-ts-btn modis-ts-next', wrap);
@@ -80,7 +80,10 @@
       nextBtn.title = 'Hari berikutnya';
 
       var dateDisplay = L.DomUtil.create('div', 'modis-ts-date', wrap);
-      dateDisplay.textContent = formatDate(getToday());
+      dateDisplay.textContent = formatDate(getDateByOffset(-1));
+
+      var timeDisplay = L.DomUtil.create('div', 'modis-ts-time', wrap);
+      timeDisplay.textContent = 'Overpass ~20:30 WIB';
 
       slider.addEventListener('input', function () {
         currentDayOffset = parseInt(this.value, 10);
@@ -147,7 +150,7 @@
         updateViirsUrl(key, yesterday);
       }
     });
-    currentDayOffset = 0;
+    currentDayOffset = -1;
   }
 
   document.addEventListener('DOMContentLoaded', function () {

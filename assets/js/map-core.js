@@ -17,25 +17,6 @@ L.control.scale({
   imperial: false
 }).addTo(map);
 
-  /* ── Himawari helper ── */
-  function getHimawariTime(offsetMin) {
-    var ts = Math.floor(Date.now() / 1000);
-    ts = ts - (ts % 600) - 1800;
-    if (offsetMin) ts += offsetMin * 60;
-    var d = new Date(ts * 1000);
-    var date = d.getUTCFullYear() + '-' +
-      String(d.getUTCMonth() + 1).padStart(2, '0') + '-' +
-      String(d.getUTCDate()).padStart(2, '0');
-    var time = String(d.getUTCHours()).padStart(2, '0') +
-      String(d.getUTCMinutes()).padStart(2, '0');
-    return { date: date, time: time };
-  }
-
-  function getHimawariTileUrl(offsetMin) {
-    var t = getHimawariTime(offsetMin);
-    return 'https://tiles.zoom.earth/geocolor/himawari/' + t.date + '/' + t.time + '/{z}/{y}/{x}.jpg';
-  }
-
   const baseTileLayers = {
     'osm': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -87,11 +68,6 @@ L.control.scale({
       attribution: 'NASA GIBS',
       Time: new Date().toISOString().slice(0, 10)
     }),
-    'himawari': L.tileLayer(getHimawariTileUrl(), {
-      maxZoom: 7,
-      minZoom: 4,
-      attribution: 'JMA Himawari via Zoom Earth'
-    }),
     'viirs-noaa20': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/{Time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpeg', {
       maxZoom: 9,
       minZoom: 0,
@@ -103,6 +79,12 @@ L.control.scale({
       minZoom: 0,
       Time: (function () { var d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })(),
       attribution: 'NASA GIBS'
+    }),
+    'bmkg-himawari': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=EH&baserun=', {
+      maxZoom: 10,
+      minZoom: 3,
+      tms: true,
+      attribution: 'BMKG Himawari-9'
     })
   };
 
@@ -147,14 +129,33 @@ L.control.scale({
       if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.hide();
       if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.hidePth();
       baseBasemapName = name;
-      if (name === 'himawari') {
-        baseTileLayers[name].setUrl(getHimawariTileUrl());
-      } else if (name === 'modis-terra') {
+      if (name === 'modis-terra') {
         baseTileLayers[name].setUrl(getGibsDateUrl('MODIS_Terra_CorrectedReflectance_TrueColor', 'jpg', getYesterdayDate()));
       } else if (name === 'viirs-noaa20') {
         baseTileLayers[name].setUrl(getGibsDateUrl('VIIRS_NOAA20_CorrectedReflectance_TrueColor', 'jpeg', getYesterdayDate()));
       } else if (name === 'viirs-noaa21') {
         baseTileLayers[name].setUrl(getGibsDateUrl('VIIRS_NOAA21_CorrectedReflectance_TrueColor', 'jpeg', getYesterdayDate()));
+      } else if (name === 'bmkg-himawari') {
+        var bmkgLayer = baseTileLayers[name];
+        var bmkgXhr = new XMLHttpRequest();
+        bmkgXhr.open('GET', 'https://satellite.bmkg.go.id/api22/modelrun', true);
+        bmkgXhr.onreadystatechange = function () {
+          if (bmkgXhr.readyState !== 4) return;
+          if (bmkgXhr.status >= 200 && bmkgXhr.status < 300) {
+            try {
+              var data = JSON.parse(bmkgXhr.responseText);
+              var ts = (data.himawari9 || [])[0];
+              if (ts) bmkgLayer.setUrl('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=EH&baserun=' + encodeURIComponent(ts));
+            } catch (e) {}
+          }
+          bmkgLayer.addTo(map);
+          currentBasemapName = name;
+          var sel = document.getElementById('basemapSelect');
+          if (sel) sel.value = name;
+          map.fire('basemapchanged', { basemap: name });
+        };
+        bmkgXhr.send();
+        return;
       }
       baseTileLayers[name].addTo(map);
     }
@@ -295,9 +296,9 @@ L.control.scale({
     'esri-natgeo': 'Esri National Geographic',
     'google-maps': 'Google Maps',
     'modis-terra': 'MODIS Terra (True Color)',
-    'himawari': 'Himawari Satellite',
     'viirs-noaa20': 'VIIRS NOAA-20 (True Color)',
-    'viirs-noaa21': 'VIIRS NOAA-21 (True Color)'
+    'viirs-noaa21': 'VIIRS NOAA-21 (True Color)',
+    'bmkg-himawari': 'Himawari-9 BMKG (IR Enhanced)'
   };
   const BasemapControl = L.Control.extend({
     options: { position: 'bottomright' },

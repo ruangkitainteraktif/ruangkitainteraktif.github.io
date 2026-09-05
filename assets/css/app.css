@@ -44,6 +44,7 @@
       height: 100%;
       width: 100%;
       z-index: 1;
+      background: #000;
     }
 
     /* Kartu Animasi Track berada di bawah sidebar pada desktop. */
@@ -514,6 +515,14 @@
       text-align: center;
       letter-spacing: -0.01em;
     }
+    .modis-ts-time {
+      font-size: 10px;
+      font-weight: 600;
+      color: #64748b;
+      white-space: nowrap;
+      text-align: center;
+      letter-spacing: -0.01em;
+    }
     @media (max-width: 768px) {
       .leaflet-bottom.leaflet-center {
         top: 112px;
@@ -527,10 +536,11 @@
       .modis-ts-slider-wrap { min-width: 0; max-width: none; }
       .modis-ts-btn { width: 24px; height: 24px; }
       .modis-ts-date { min-width: 62px; font-size: 10px; }
+      .modis-ts-time { font-size: 9px; }
     }
 
-    /* ── Himawari Time Slider ── */
-    .himawari-ts-wrap {
+    /* ── BMKG Himawari Time Slider ── */
+    .bmkg-time-slider-wrap {
       display: flex;
       align-items: center;
       gap: 6px;
@@ -543,7 +553,7 @@
       box-shadow: 0 4px 20px rgba(0,0,0,0.12);
       transition: opacity 0.2s, transform 0.2s;
     }
-    .himawari-ts-btn {
+    .bmkg-ts-btn {
       display: grid;
       place-items: center;
       width: 28px;
@@ -551,85 +561,85 @@
       border: none;
       border-radius: 50%;
       background: transparent;
-      color: #475569;
+      color: #dc2626;
       cursor: pointer;
       transition: background 0.15s, color 0.15s;
       flex-shrink: 0;
       padding: 0;
     }
-    .himawari-ts-btn:hover {
-      background: #e2e8f0;
-      color: #0f172a;
+    .bmkg-ts-btn:hover {
+      background: #fee2e2;
+      color: #991b1b;
     }
-    .himawari-ts-btn:active {
-      background: #cbd5e1;
+    .bmkg-ts-btn:active {
+      background: #fecaca;
     }
-    .himawari-ts-slider-wrap {
+    .bmkg-ts-slider-wrap {
       flex: 1;
       min-width: 140px;
       max-width: 220px;
     }
-    .himawari-ts-slider {
+    .bmkg-ts-slider {
       width: 100%;
       height: 4px;
       -webkit-appearance: none;
       appearance: none;
-      background: linear-gradient(90deg, #fed7aa 0%, #f97316 100%);
+      background: linear-gradient(90deg, #fecaca 0%, #dc2626 100%);
       border-radius: 2px;
       outline: none;
       cursor: pointer;
     }
-    .himawari-ts-slider::-webkit-slider-thumb {
+    .bmkg-ts-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
       width: 16px;
       height: 16px;
       border-radius: 50%;
-      background: #f97316;
+      background: #dc2626;
       border: 2px solid #fff;
-      box-shadow: 0 1px 6px rgba(249,115,22,0.4);
+      box-shadow: 0 1px 6px rgba(220,38,38,0.4);
       cursor: pointer;
       transition: transform 0.15s, box-shadow 0.15s;
     }
-    .himawari-ts-slider::-webkit-slider-thumb:hover {
+    .bmkg-ts-slider::-webkit-slider-thumb:hover {
       transform: scale(1.15);
-      box-shadow: 0 2px 10px rgba(249,115,22,0.5);
+      box-shadow: 0 2px 10px rgba(220,38,38,0.5);
     }
-    .himawari-ts-slider::-moz-range-thumb {
+    .bmkg-ts-slider::-moz-range-thumb {
       width: 16px;
       height: 16px;
       border-radius: 50%;
-      background: #f97316;
+      background: #dc2626;
       border: 2px solid #fff;
-      box-shadow: 0 1px 6px rgba(249,115,22,0.4);
+      box-shadow: 0 1px 6px rgba(220,38,38,0.4);
       cursor: pointer;
     }
-    .himawari-ts-time {
+    .bmkg-ts-date {
       font-size: 11px;
       font-weight: 600;
       color: #334155;
       white-space: nowrap;
-      min-width: 68px;
+      min-width: 110px;
       text-align: center;
       letter-spacing: -0.01em;
     }
-    .himawari-ts-date {
+    .bmkg-ts-time {
       font-size: 10px;
-      font-weight: 500;
-      color: #94a3b8;
+      font-weight: 600;
+      color: #64748b;
       white-space: nowrap;
-      min-width: 72px;
       text-align: center;
+      letter-spacing: -0.01em;
     }
     @media (max-width: 768px) {
-      .himawari-ts-wrap {
+      .bmkg-time-slider-wrap {
         width: min(280px, calc(100vw - 160px));
         gap: 4px;
         padding: 4px 8px;
       }
-      .himawari-ts-slider-wrap { min-width: 0; max-width: none; }
-      .himawari-ts-btn { width: 24px; height: 24px; }
-      .himawari-ts-time { min-width: 58px; font-size: 10px; }
-      .himawari-ts-date { min-width: 62px; font-size: 9px; }
+      .bmkg-ts-slider-wrap { min-width: 0; max-width: none; }
+      .bmkg-ts-btn { width: 24px; height: 24px; }
+      .bmkg-ts-date { min-width: 80px; font-size: 10px; }
+      .bmkg-ts-time { font-size: 9px; }
     }
 
     .toggle-insight-btn {
