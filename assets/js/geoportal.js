@@ -1157,7 +1157,7 @@
       getActiveGeoportalLayers().forEach(a => titleNames.push(dispName(a.layerName)));
       getActiveArcgisLayers().forEach(a => titleNames.push(arcgisLabels[a.layerKey] || a.layerKey));
       let titleText;
-      if (titleNames.length === 0) titleText = 'Peta Geoportal';
+      if (titleNames.length === 0) titleText = 'Peta';
       else if (titleNames.length === 1) titleText = titleNames[0];
       else titleText = titleNames.slice(0, 3).join(', ') + (titleNames.length > 3 ? ` (+${titleNames.length - 3})` : '');
 
