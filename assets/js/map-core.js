@@ -97,8 +97,8 @@ L.control.scale({
     'airvisual-co': L.tileLayer('https://osm.airvisual.net/cog/co/tiles/{z}/{x}/{y}.png', { maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual' })
   };
 
-  let currentBasemapName = 'esri-dark-gray';
-  let baseBasemapName = 'esri-dark-gray';
+  let currentBasemapName = 'bmkg-himawari';
+  let baseBasemapName = 'bmkg-himawari';
   let currentRdtrOpacity = 0.8;
 
   function getYesterdayDate() {
@@ -194,13 +194,6 @@ L.control.scale({
   setRdtrOpacity(currentRdtrOpacity);
   setMapLocked(false);
 
-  // Aktifkan ECMWF Fire layer saat pertama kali dibuka
-  map.whenReady(function () {
-    setTimeout(function () {
-      if (typeof toggleEcmwfFireLayer === 'function') toggleEcmwfFireLayer(true);
-    }, 1000);
-  });
-
   L.control.locate({
     position: 'bottomright',
     flyTo: true,
@@ -283,10 +276,9 @@ L.control.scale({
   });
 
   // Basemap Control
-  const basemapLabels = {
+  const vectorBasemapLabels = {
     'osm': 'Open Street Map',
     'rupabumi': 'Rupabumi Indonesia',
-    'esri-satellite': 'Esri Satellite',
     'esri-dark-gray': 'Esri Dark Gray',
     'esri-topo': 'Esri Topographic',
     'esri-terrain': 'Esri Terrain',
@@ -294,50 +286,69 @@ L.control.scale({
     'esri-shaded-relief': 'Esri Shaded Relief',
     'esri-physical': 'Esri Physical',
     'esri-natgeo': 'Esri National Geographic',
-    'google-maps': 'Google Maps',
-    'modis-terra': 'MODIS Terra (True Color)',
-    'viirs-noaa20': 'VIIRS NOAA-20 (True Color)',
-    'viirs-noaa21': 'VIIRS NOAA-21 (True Color)',
-    'bmkg-himawari': 'Himawari-9 BMKG (IR Enhanced)'
+    'google-maps': 'Google Maps'
   };
-  const BasemapControl = L.Control.extend({
-    options: { position: 'bottomright' },
-    onAdd() {
-      const wrap = L.DomUtil.create('div', 'basemap-control-wrap');
-      L.DomEvent.disableClickPropagation(wrap);
-      L.DomEvent.disableScrollPropagation(wrap);
+  const satelliteBasemapLabels = {
+    'esri-satellite': 'Esri Satellite',
+    'modis-terra': 'MODIS Terra',
+    'viirs-noaa20': 'VIIRS NOAA-20',
+    'viirs-noaa21': 'VIIRS NOAA-21',
+    'bmkg-himawari': 'Himawari-9 BMKG'
+  };
 
-      const dropdown = L.DomUtil.create('div', 'basemap-dropdown', wrap);
-      dropdown.style.display = 'none';
-      Object.entries(basemapLabels).forEach(([key, label]) => {
-        const opt = L.DomUtil.create('div', 'basemap-option', dropdown);
-        opt.textContent = label;
-        opt.dataset.value = key;
-        if (key === currentBasemapName) opt.classList.add('active');
-        opt.addEventListener('click', (e) => {
-          e.stopPropagation();
-          setBaseMap(key);
-          dropdown.querySelectorAll('.basemap-option').forEach(o => o.classList.remove('active'));
-          opt.classList.add('active');
-          dropdown.style.display = 'none';
+  function createBasemapControl(labels, btnClass, btnIcon) {
+    return L.Control.extend({
+      options: { position: 'bottomright' },
+      onAdd() {
+        const wrap = L.DomUtil.create('div', 'basemap-control-wrap');
+        L.DomEvent.disableClickPropagation(wrap);
+        L.DomEvent.disableScrollPropagation(wrap);
+
+        const dropdown = L.DomUtil.create('div', 'basemap-dropdown', wrap);
+        dropdown.style.display = 'none';
+        Object.entries(labels).forEach(([key, label]) => {
+          const opt = L.DomUtil.create('div', 'basemap-option', dropdown);
+          opt.textContent = label;
+          opt.dataset.value = key;
+          if (key === currentBasemapName) opt.classList.add('active');
+          opt.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setBaseMap(key);
+            dropdown.querySelectorAll('.basemap-option').forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+            dropdown.style.display = 'none';
+          });
         });
-      });
 
-      const btn = L.DomUtil.create('button', 'basemap-btn', wrap);
-      btn.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>';
-      btn.title = 'Pilih Basemap';
-      btn.setAttribute('aria-label', 'Ganti basemap');
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isVisible = dropdown.style.display === 'block';
-        dropdown.style.display = isVisible ? 'none' : 'block';
-      });
+        const btn = L.DomUtil.create('button', 'basemap-btn ' + btnClass, wrap);
+        btn.innerHTML = btnIcon;
+        btn.title = 'Pilih Basemap';
+        btn.setAttribute('aria-label', 'Ganti basemap');
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isVisible = dropdown.style.display === 'block';
+          dropdown.style.display = isVisible ? 'none' : 'block';
+        });
 
-      document.addEventListener('click', () => { dropdown.style.display = 'none'; });
-      return wrap;
-    }
-  });
-  new BasemapControl().addTo(map);
+        document.addEventListener('click', () => { dropdown.style.display = 'none'; });
+        return wrap;
+      }
+    });
+  }
+
+  const VectorBasemapControl = createBasemapControl(
+    vectorBasemapLabels,
+    'basemap-btn-vector',
+    '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>'
+  );
+  const SatelliteBasemapControl = createBasemapControl(
+    satelliteBasemapLabels,
+    'basemap-btn-satellite',
+    '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>'
+  );
+
+  new VectorBasemapControl().addTo(map);
+  new SatelliteBasemapControl().addTo(map);
 
   // AirVisual Legend Control
   const AIRVISUAL_LEGEND_DATA = {
@@ -514,6 +525,27 @@ L.control.scale({
   });
 
   // Reset Layers Control
+  // Ikon cetak & spinner (outline tebal) — dipakai ulang di tombol & saat proses
+  window.GEOPORTAL_PRINT_ICON = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M9 18h6"/></svg>';
+  window.GEOPORTAL_PRINT_SPINNER = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9" opacity="0.9"/><path d="M12 3a9 9 0 0 1 9 9" opacity="0.25"/></svg>';
+
+  // Print Map Control (global) — tampil di semua tab
+  const PrintMapControl = L.Control.extend({
+    options: { position: 'bottomright' },
+    onAdd() {
+      const btn = L.DomUtil.create('button', 'geoportal-print-btn');
+      btn.innerHTML = window.GEOPORTAL_PRINT_ICON;
+      btn.title = 'Cetak peta (semua layer aktif)';
+      btn.setAttribute('aria-label', 'Cetak peta');
+      L.DomEvent.disableClickPropagation(btn);
+      L.DomEvent.disableScrollPropagation(btn);
+      btn.addEventListener('click', () => {
+        if (typeof window.printGeoportalMap === 'function') window.printGeoportalMap();
+      });
+      return btn;
+    }
+  });
+
   const ResetLayersControl = L.Control.extend({
     options: { position: 'bottomright' },
     onAdd() {
@@ -774,36 +806,8 @@ L.control.scale({
       return btn;
     }
   });
-  new ResetLayersControl().addTo(map);
-
-  // Ikon cetak & spinner (outline tebal) — dipakai ulang di tombol & saat proses
-  window.GEOPORTAL_PRINT_ICON = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M9 18h6"/></svg>';
-  window.GEOPORTAL_PRINT_SPINNER = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9" opacity="0.9"/><path d="M12 3a9 9 0 0 1 9 9" opacity="0.25"/></svg>';
-
-  // Print Map Control (global, di bawah reset) — hanya tampil di tab geoportal
-  const PrintMapControl = L.Control.extend({
-    options: { position: 'bottomright' },
-    onAdd() {
-      const btn = L.DomUtil.create('button', 'geoportal-print-btn');
-      btn.innerHTML = window.GEOPORTAL_PRINT_ICON;
-      btn.title = 'Cetak peta (semua layer aktif)';
-      btn.setAttribute('aria-label', 'Cetak peta');
-      L.DomEvent.disableClickPropagation(btn);
-      L.DomEvent.disableScrollPropagation(btn);
-      btn.addEventListener('click', () => {
-        if (typeof window.printGeoportalMap === 'function') window.printGeoportalMap();
-      });
-      return btn;
-    }
-  });
   window.__geoportalPrintCtrl = new PrintMapControl().addTo(map);
-
-  window.updateGeoportalPrintVisibility = function () {
-    const ctrl = window.__geoportalPrintCtrl;
-    if (!ctrl || !ctrl.getContainer) return;
-    ctrl.getContainer().style.display = (window.currentActiveTab === 'tab-geoportal') ? '' : 'none';
-  };
-  window.updateGeoportalPrintVisibility();
+  new ResetLayersControl().addTo(map);
 
   let selectedWilayahId = "3313000000";
   let selectedRtrId = "001";

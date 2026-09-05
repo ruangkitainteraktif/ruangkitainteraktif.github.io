@@ -110,11 +110,16 @@
       L.DomEvent.disableClickPropagation(wrap);
       L.DomEvent.disableScrollPropagation(wrap);
 
-      var prevBtn = L.DomUtil.create('button', 'bmkg-ts-btn bmkg-ts-prev', wrap);
+      var titleRow = L.DomUtil.create('div', 'bmkg-ts-title', wrap);
+      titleRow.textContent = 'Himawari-9 IR Enhanced';
+
+      var controlsRow = L.DomUtil.create('div', 'bmkg-ts-controls', wrap);
+
+      var prevBtn = L.DomUtil.create('button', 'bmkg-ts-btn bmkg-ts-prev', controlsRow);
       prevBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
       prevBtn.title = 'Sebelumnya';
 
-      var sliderWrap = L.DomUtil.create('div', 'bmkg-ts-slider-wrap', wrap);
+      var sliderWrap = L.DomUtil.create('div', 'bmkg-ts-slider-wrap', controlsRow);
       var slider = L.DomUtil.create('input', 'bmkg-ts-slider', sliderWrap);
       slider.type = 'range';
       slider.min = '0';
@@ -122,15 +127,16 @@
       slider.value = '0';
       slider.step = '1';
 
-      var nextBtn = L.DomUtil.create('button', 'bmkg-ts-btn bmkg-ts-next', wrap);
+      var nextBtn = L.DomUtil.create('button', 'bmkg-ts-btn bmkg-ts-next', controlsRow);
       nextBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
       nextBtn.title = 'Berikutnya';
 
-      var dateDisplay = L.DomUtil.create('div', 'bmkg-ts-date', wrap);
+      var infoRow = L.DomUtil.create('div', 'bmkg-ts-info', wrap);
+      var dateDisplay = L.DomUtil.create('span', 'bmkg-ts-date', infoRow);
       dateDisplay.textContent = 'Memuat...';
 
-      var timeDisplay = L.DomUtil.create('div', 'bmkg-ts-time', wrap);
-      timeDisplay.textContent = 'Update setiap 10 menit';
+      var timeDisplay = L.DomUtil.create('span', 'bmkg-ts-time', infoRow);
+      timeDisplay.textContent = '';
 
       function applyTimestamp() {
         if (timestamps.length === 0) return;

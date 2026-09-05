@@ -83,11 +83,16 @@
       L.DomEvent.disableClickPropagation(wrap);
       L.DomEvent.disableScrollPropagation(wrap);
 
-      var prevBtn = L.DomUtil.create('button', 'modis-ts-btn modis-ts-prev', wrap);
+      var titleRow = L.DomUtil.create('div', 'modis-ts-title', wrap);
+      titleRow.textContent = 'MODIS Terra';
+
+      var controlsRow = L.DomUtil.create('div', 'modis-ts-controls', wrap);
+
+      var prevBtn = L.DomUtil.create('button', 'modis-ts-btn modis-ts-prev', controlsRow);
       prevBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
       prevBtn.title = 'Hari sebelumnya';
 
-      var sliderWrap = L.DomUtil.create('div', 'modis-ts-slider-wrap', wrap);
+      var sliderWrap = L.DomUtil.create('div', 'modis-ts-slider-wrap', controlsRow);
       var slider = L.DomUtil.create('input', 'modis-ts-slider', sliderWrap);
       slider.type = 'range';
       slider.min = String(-DAY_COUNT);
@@ -95,14 +100,15 @@
       slider.value = '-1';
       slider.step = '1';
 
-      var nextBtn = L.DomUtil.create('button', 'modis-ts-btn modis-ts-next', wrap);
+      var nextBtn = L.DomUtil.create('button', 'modis-ts-btn modis-ts-next', controlsRow);
       nextBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
       nextBtn.title = 'Hari berikutnya';
 
-      var dateDisplay = L.DomUtil.create('div', 'modis-ts-date', wrap);
+      var infoRow = L.DomUtil.create('div', 'modis-ts-info', wrap);
+      var dateDisplay = L.DomUtil.create('span', 'modis-ts-date', infoRow);
       dateDisplay.textContent = formatDate(getDateByOffset(-1));
 
-      var timeDisplay = L.DomUtil.create('div', 'modis-ts-time', wrap);
+      var timeDisplay = L.DomUtil.create('span', 'modis-ts-time', infoRow);
       timeDisplay.textContent = 'Overpass ~17:30 WIB';
 
       slider.addEventListener('input', function () {
