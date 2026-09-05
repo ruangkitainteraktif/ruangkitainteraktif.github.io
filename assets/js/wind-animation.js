@@ -106,7 +106,7 @@
       const velocity = velocityAt(map.containerPointToLatLng([particle.x, particle.y]));
       particle.previousX = particle.x; particle.previousY = particle.y; particle.age -= elapsed;
       if (!velocity || particle.age <= 0) { Object.assign(particle, createParticle()); continue; }
-      const speed = Math.hypot(velocity.u, velocity.v), scale = 0.8 * elapsed;
+      const speed = Math.hypot(velocity.u, velocity.v), scale = 0.3 * elapsed;
       particle.x += velocity.u * scale; particle.y -= velocity.v * scale;
       if (particle.x < -8 || particle.x > size.x + 8 || particle.y < -8 || particle.y > size.y + 8 || speed < 0.15) {
         Object.assign(particle, createParticle()); continue;
