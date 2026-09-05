@@ -414,7 +414,7 @@
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#0b5cab" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 3h18l-2 13H5L3 3z"/><line x1="3" y1="3" x2="1" y2="1"/><circle cx="9" cy="21" r="1"/><circle cx="17" cy="21" r="1"/>
           </svg>
-          <span>Harga Pangan</span>
+          <span id="gpSheetTitleText">Harga Pangan</span>
         </div>
         <div class="gp-sheet-actions">
           <button class="gp-sheet-minimize" onclick="toggleGeopanganMinimize()" type="button" aria-label="Minimalkan panel Harga Pangan" title="Minimalkan panel">
@@ -998,6 +998,14 @@
                 </span>
               </label>
               <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleSppgSebaranLayer">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Sebaran SPPG Indonesia</span>
+                  <small>Satuan Pelayanan Pemenuhan Gizi — Ditjen PKH</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
                 <input type="checkbox" id="toggleSppgLayer">
                 <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
                 <span class="cctv-layer-info">
@@ -1012,6 +1020,7 @@
           <div id="geopangan-table-home">
             <div id="geopanganResult"></div>
             <div id="geopanganTable"></div>
+            <div id="sppgSebaranTable"></div>
           </div>
         </div>
 

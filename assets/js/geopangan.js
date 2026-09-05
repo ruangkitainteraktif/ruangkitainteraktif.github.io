@@ -75,6 +75,8 @@
   var inflasiCache = null;
   var sebaranPasarLayer = null;
   var sppgLayer = null;
+  var sppgSebaranLayer = null;
+  var sppgFeaturesCache = null;
   var commodityItemsCache = null;
   var gpCommodityCompareCache = {};
 
@@ -89,10 +91,12 @@
   function moveGeopanganContent(toSheet) {
     var result = $('geopanganResult');
     var table = $('geopanganTable');
+    var sppgTable = $('sppgSebaranTable');
     var destination = toSheet ? $('geopangan-sheet-content') : $('geopangan-table-home');
     if (!destination || !result || !table) return;
     destination.appendChild(result);
     destination.appendChild(table);
+    if (sppgTable) destination.appendChild(sppgTable);
   }
 
   function openGeopanganSheet() {
@@ -859,6 +863,221 @@
     URL.revokeObjectURL(url);
   }
 
+  /* ── SPPG Sebaran Table ── */
+  var _sppgTableState = { sortKey: 'kode', sortDir: 'asc', page: 1, search: '', rows: [] };
+
+  function getFilteredSortedSppgRows() {
+    var s = _sppgTableState;
+    var rows = s.rows;
+    if (s.search) {
+      var q = s.search.toLowerCase();
+      rows = rows.filter(function (r) {
+        return (r.kode || '').toLowerCase().indexOf(q) !== -1 ||
+               (r.nama || '').toLowerCase().indexOf(q) !== -1 ||
+               (r.provinsi || '').toLowerCase().indexOf(q) !== -1 ||
+               (r.kabkota || '').toLowerCase().indexOf(q) !== -1 ||
+               (r.kecamatan || '').toLowerCase().indexOf(q) !== -1;
+      });
+    }
+    var key = s.sortKey;
+    var dir = s.sortDir === 'asc' ? 1 : -1;
+    rows = rows.slice().sort(function (a, b) {
+      var va = a[key] || '';
+      var vb = b[key] || '';
+      if (key === 'no') return (a.no - b.no) * dir;
+      return String(va).localeCompare(String(vb)) * dir;
+    });
+    return rows;
+  }
+
+  function renderSppgTableBody() {
+    var tbody = $('sppgTableBody');
+    if (!tbody) return;
+    var filtered = getFilteredSortedSppgRows();
+    var perPage = 10;
+    var start = (_sppgTableState.page - 1) * perPage;
+    var end = Math.min(start + perPage, filtered.length);
+    var rows = '';
+    for (var i = start; i < end; i++) {
+      var d = filtered[i];
+      rows += '<tr>' +
+        '<td class="sppg-td-no">' + d.no + '</td>' +
+        '<td class="sppg-td-kode">' + (d.kode || '-') + '</td>' +
+        '<td class="sppg-td-name">' + (d.nama || '-') + '</td>' +
+        '<td class="sppg-td-prov">' + (d.provinsi || '-') + '</td>' +
+        '<td class="sppg-td-kab">' + (d.kabkota || '-') + '</td>' +
+        '<td class="sppg-td-kec">' + (d.kecamatan || '-') + '</td>' +
+        '<td class="sppg-td-alamat">' + (d.alamat || '-') + '</td>' +
+        '<td class="sppg-td-tgl">' + (d.tanggal || '-') + '</td>' +
+      '</tr>';
+    }
+    if (filtered.length === 0) {
+      rows = '<tr><td colspan="8" class="sppg-td-empty">Tidak ada data</td></tr>';
+    }
+    tbody.innerHTML = rows;
+  }
+
+  function renderSppgPagination() {
+    var pag = $('sppgTablePagination');
+    if (!pag) return;
+    var filtered = getFilteredSortedSppgRows();
+    var totalPages = Math.ceil(filtered.length / 10);
+    if (totalPages <= 1) { pag.innerHTML = ''; return; }
+    var cp = _sppgTableState.page;
+    var html = '<button class="gp-page-btn" data-page="prev">&laquo;</button>';
+    for (var i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || Math.abs(i - cp) <= 2) {
+        html += '<button class="gp-page-btn' + (i === cp ? ' active' : '') + '" data-page="' + i + '">' + i + '</button>';
+      } else if (Math.abs(i - cp) === 3) {
+        html += '<span class="gp-page-dots">...</span>';
+      }
+    }
+    html += '<button class="gp-page-btn" data-page="next">&raquo;</button>';
+    pag.innerHTML = html;
+
+    var btns = pag.querySelectorAll('.gp-page-btn');
+    for (var b = 0; b < btns.length; b++) {
+      btns[b].addEventListener('click', function () {
+        var pg = this.getAttribute('data-page');
+        if (pg === 'prev') _sppgTableState.page = Math.max(1, _sppgTableState.page - 1);
+        else if (pg === 'next') _sppgTableState.page++;
+        else _sppgTableState.page = parseInt(pg);
+        renderSppgTableBody();
+        renderSppgPagination();
+      });
+    }
+  }
+
+  function updateSppgSortIcons() {
+    var icons = document.querySelectorAll('.sppg-table th[data-sort] .gp-sort-icon');
+    for (var i = 0; i < icons.length; i++) {
+      var th = icons[i].parentElement;
+      var key = th.getAttribute('data-sort');
+      if (key === _sppgTableState.sortKey) {
+        icons[i].textContent = _sppgTableState.sortDir === 'asc' ? ' \u25B2' : ' \u25BC';
+      } else {
+        icons[i].textContent = '';
+      }
+    }
+  }
+
+  function exportSppgCSV() {
+    var rows = getFilteredSortedSppgRows();
+    if (!rows.length) return;
+    var headers = ['No', 'Kode SPPG', 'Nama SPPG', 'Provinsi', 'Kab/Kota', 'Kecamatan', 'Alamat', 'Tanggal Operasional'];
+    var lines = [headers.join(',')];
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var cells = [r.no, '"' + (r.kode || '').replace(/"/g, '""') + '"', '"' + (r.nama || '').replace(/"/g, '""') + '"', '"' + (r.provinsi || '').replace(/"/g, '""') + '"', '"' + (r.kabkota || '').replace(/"/g, '""') + '"', '"' + (r.kecamatan || '').replace(/"/g, '""') + '"', '"' + (r.alamat || '').replace(/"/g, '""') + '"', '"' + (r.tanggal || '').replace(/"/g, '""') + '"'];
+      lines.push(cells.join(','));
+    }
+    var blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0');
+    var yyyy = today.getFullYear();
+    var filename = 'sebaran_sppg_' + yyyy + '-' + mm + '-' + dd + '.csv';
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function renderSppgSebaranTable(features) {
+    var container = $('sppgSebaranTable');
+    if (!container) return;
+    var rows = features.map(function (f, idx) {
+      var p = f.properties || {};
+      return {
+        no: idx + 1,
+        kode: p['Kode SPPG'] || '',
+        nama: p['Nama SPPG'] || '',
+        provinsi: p.Provinsi || '',
+        kabkota: p['Kab/Kota'] || '',
+        kecamatan: p.Kecamata || p.WADMKC || '',
+        alamat: p.Alamat || '',
+        tanggal: p['Tanggal Operasional'] || ''
+      };
+    });
+    _sppgTableState.rows = rows;
+    _sppgTableState.page = 1;
+    _sppgTableState.search = '';
+    _sppgTableState.sortKey = 'kode';
+    _sppgTableState.sortDir = 'asc';
+
+    container.innerHTML =
+      '<div class="sppg-table-wrap">' +
+        '<div class="sppg-table-title">' +
+          '<span class="sppg-badge">SPPG</span> Sebaran SPPG <span>&middot; ' + rows.length + ' lokasi</span>' +
+        '</div>' +
+        '<div class="sppg-table-header">' +
+          '<div class="sppg-table-actions">' +
+            '<input type="text" id="sppgTableSearch" class="sppg-table-search" placeholder="Cari nama, kode, provinsi..." autocomplete="off" />' +
+            '<button id="sppgExportCsv" class="gp-btn-csv" title="Export CSV"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> CSV</button>' +
+          '</div>' +
+          '<div class="sppg-table-info" id="sppgTableInfo"></div>' +
+        '</div>' +
+        '<div class="sppg-table-scroll">' +
+          '<table class="sppg-table">' +
+            '<thead><tr>' +
+              '<th class="sppg-th-no" data-sort="no">No</th>' +
+              '<th data-sort="kode">Kode SPPG <span class="gp-sort-icon"></span></th>' +
+              '<th data-sort="nama">Nama SPPG <span class="gp-sort-icon"></span></th>' +
+              '<th data-sort="provinsi">Provinsi <span class="gp-sort-icon"></span></th>' +
+              '<th data-sort="kabkota">Kab/Kota <span class="gp-sort-icon"></span></th>' +
+              '<th data-sort="kecamatan">Kecamatan <span class="gp-sort-icon"></span></th>' +
+              '<th data-sort="alamat">Alamat <span class="gp-sort-icon"></span></th>' +
+              '<th data-sort="tanggal">Tanggal Operasional <span class="gp-sort-icon"></span></th>' +
+            '</tr></thead>' +
+            '<tbody id="sppgTableBody"></tbody>' +
+          '</table>' +
+        '</div>' +
+        '<div id="sppgTablePagination" class="gp-pagination"></div>' +
+      '</div>';
+
+    var infoEl = $('sppgTableInfo');
+    if (infoEl) infoEl.textContent = rows.length + ' data SPPG';
+
+    container.querySelector('#sppgTableSearch').addEventListener('input', function (e) {
+      _sppgTableState.search = e.target.value;
+      _sppgTableState.page = 1;
+      renderSppgTableBody();
+      renderSppgPagination();
+      var info = $('sppgTableInfo');
+      if (info) {
+        var filtered = getFilteredSortedSppgRows();
+        info.textContent = (filtered.length === rows.length ? rows.length : filtered.length + ' dari ' + rows.length) + ' data SPPG';
+      }
+    });
+
+    var csvBtn = container.querySelector('#sppgExportCsv');
+    if (csvBtn) csvBtn.addEventListener('click', exportSppgCSV);
+
+    var ths = container.querySelectorAll('th[data-sort]');
+    for (var t = 0; t < ths.length; t++) {
+      ths[t].addEventListener('click', function () {
+        var key = this.getAttribute('data-sort');
+        if (key === 'no') return;
+        if (_sppgTableState.sortKey === key) {
+          _sppgTableState.sortDir = _sppgTableState.sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          _sppgTableState.sortKey = key;
+          _sppgTableState.sortDir = 'asc';
+        }
+        _sppgTableState.page = 1;
+        renderSppgTableBody();
+        renderSppgPagination();
+        updateSppgSortIcons();
+      });
+    }
+
+    renderSppgTableBody();
+    renderSppgPagination();
+    updateSppgSortIcons();
+  }
+
   /* ── Main: load and display ── */
   async function loadAndDisplay() {
     hideSidebarForGeopangan();
@@ -1143,16 +1362,34 @@
     if (activeLegend) { map.removeControl(activeLegend); activeLegend = null; }
     if (sebaranPasarLayer && map.hasLayer(sebaranPasarLayer)) { map.removeLayer(sebaranPasarLayer); sebaranPasarLayer = null; }
     if (sppgLayer && map.hasLayer(sppgLayer)) { map.removeLayer(sppgLayer); sppgLayer = null; }
+    if (sppgSebaranLayer && map.hasLayer(sppgSebaranLayer)) { map.removeLayer(sppgSebaranLayer); sppgSebaranLayer = null; }
     var chk = $('toggleSebaranPasar');
     if (chk) chk.checked = false;
     var chkSppg = $('toggleSppgLayer');
     if (chkSppg) chkSppg.checked = false;
+    var chkSppgSebaran = $('toggleSppgSebaranLayer');
+    if (chkSppgSebaran) chkSppgSebaran.checked = false;
     var resultEl = $('geopanganResult');
     if (resultEl) resultEl.innerHTML = '';
     var tableEl = $('geopanganTable');
     if (tableEl) tableEl.innerHTML = '';
+    var sppgTbl = $('sppgSebaranTable');
+    if (sppgTbl) sppgTbl.innerHTML = '';
     if (gpComparisonChart) { gpComparisonChart.destroy(); gpComparisonChart = null; }
+    setGeopanganSheetTitle('Harga Pangan');
   };
+
+  function setGeopanganSheetTitle(title) {
+    var el = $('gpSheetTitleText');
+    if (el) el.textContent = title || 'Harga Pangan';
+  }
+
+  function resetGeopanganSheetTitle() {
+    var anyActive = (sebaranPasarLayer && map.hasLayer(sebaranPasarLayer)) ||
+                    (sppgLayer && map.hasLayer(sppgLayer)) ||
+                    (sppgSebaranLayer && map.hasLayer(sppgSebaranLayer));
+    if (!anyActive) setGeopanganSheetTitle('Harga Pangan');
+  }
 
   /* ── Sebaran Pasar Layer (BAPPENAS / Kementerian Perdagangan) ── */
   var SEBARAN_PASAR_URL = 'https://geospasial.bappenas.go.id/server/rest/services/TRPPB_Sebaran_Pasar_kemendag/MapServer/0';
@@ -1162,37 +1399,62 @@
       if (sebaranPasarLayer && map.hasLayer(sebaranPasarLayer)) {
         map.removeLayer(sebaranPasarLayer);
       }
+      resetGeopanganSheetTitle();
       return;
     }
+    setGeopanganSheetTitle('Sebaran Pasar Indonesia');
     if (sebaranPasarLayer) { sebaranPasarLayer.addTo(map); return; }
-    sebaranPasarLayer = L.esri.featureLayer({
-      url: SEBARAN_PASAR_URL,
-      pointToLayer: function (geojson, latlng) {
-        return L.circleMarker(latlng, {
-          radius: 5,
-          fillColor: '#e67e22',
-          color: '#d35400',
-          weight: 1,
-          opacity: 1,
-          fillOpacity: 0.85
-        });
-      },
-      onEachFeature: function (feature, layer) {
-        var p = feature.properties || {};
-        var name = p.NAMA_PASAR || p.nama_pasar || '-';
-        var jenis = p.JENIS_PASAR || p.jenis_pasar || '-';
-        var kabkota = p.NAMA_KOTA || p.nama_kota || p.NAMA_KAB || p.nama_kab || '-';
-        var provinsi = p.NAMA_PROP || p.nama_prop || '-';
-        layer.bindPopup(
-          '<div style="font-size:12px;line-height:1.6">' +
-            '<strong style="color:#d35400">' + name + '</strong><br>' +
-            'Jenis: ' + jenis + '<br>' +
-            'Kab/Kota: ' + kabkota + '<br>' +
-            'Provinsi: ' + provinsi +
-          '</div>'
-        );
+    sebaranPasarLayer = L.markerClusterGroup({
+      maxClusterRadius: 45,
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false,
+      zoomToBoundsOnClick: true
+    });
+    var queryUrl = SEBARAN_PASAR_URL + '/query?where=1%3D1&outFields=*&f=json&returnGeometry=true&resultRecordCount=5000';
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', queryUrl, true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          var json = JSON.parse(xhr.responseText);
+          var features = json.features || [];
+          for (var i = 0; i < features.length; i++) {
+            var f = features[i];
+            var geom = f.geometry;
+            if (!geom || geom.x === undefined || geom.y === undefined) continue;
+            var latlng = [geom.y, geom.x];
+            var p = f.attributes || {};
+            var marker = L.marker(latlng, {
+              icon: L.divIcon({
+                className: 'pasar-marker-icon',
+                html: '<div style="width:14px;height:14px;background:#e67e22;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.35);"></div>',
+                iconSize: [14, 14],
+                iconAnchor: [7, 7],
+                popupAnchor: [0, -8]
+              })
+            });
+            var name = p.NAMA_PASAR || p.nama_pasar || '-';
+            var jenis = p.JENIS_PASAR || p.jenis_pasar || '-';
+            var kabkota = p.NAMA_KOTA || p.nama_kota || p.NAMA_KAB || p.nama_kab || '-';
+            var provinsi = p.NAMA_PROP || p.nama_prop || '-';
+            marker.bindPopup(
+              '<div style="font-size:12px;line-height:1.6">' +
+                '<strong style="color:#d35400">' + name + '</strong><br>' +
+                'Jenis: ' + jenis + '<br>' +
+                'Kab/Kota: ' + kabkota + '<br>' +
+                'Provinsi: ' + provinsi +
+              '</div>'
+            );
+            sebaranPasarLayer.addLayer(marker);
+          }
+          map.addLayer(sebaranPasarLayer);
+        } catch (e) {
+          console.error('[Geopangan] Gagal load Sebaran Pasar:', e);
+        }
       }
-    }).addTo(map);
+    };
+    xhr.send();
   }
 
   /* ── SPPG Layer (Sismonbgn / Kementerian PUPR) ── */
@@ -1203,8 +1465,10 @@
       if (sppgLayer && map.hasLayer(sppgLayer)) {
         map.removeLayer(sppgLayer);
       }
+      resetGeopanganSheetTitle();
       return;
     }
+    setGeopanganSheetTitle('SPPG Indonesia');
     if (sppgLayer) { sppgLayer.addTo(map); return; }
     var xhr = new XMLHttpRequest();
     xhr.open('GET', SPPG_URL, true);
@@ -1213,30 +1477,115 @@
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           var geojson = JSON.parse(xhr.responseText);
-          sppgLayer = L.geoJSON(geojson, {
-            pointToLayer: function (feature, latlng) {
-              return L.circleMarker(latlng, {
-                radius: 5,
-                fillColor: '#8b5cf6',
-                color: '#6d28d9',
-                weight: 1,
-                opacity: 1,
-                fillOpacity: 0.85
-              });
-            },
-            onEachFeature: function (feature, layer) {
-              var p = feature.properties || {};
-              layer.bindPopup(
-                '<div style="font-size:12px;line-height:1.6">' +
-                  '<strong style="color:#6d28d9">' + (p.name || '-') + '</strong><br>' +
-                  'Kategori: ' + (p.category || '-') + '<br>' +
-                  'Alamat: ' + (p.desc || '-') +
-                '</div>'
-              );
-            }
-          }).addTo(map);
+          sppgLayer = L.markerClusterGroup({
+            maxClusterRadius: 45,
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: false,
+            zoomToBoundsOnClick: true
+          });
+          var features = geojson.features || [];
+          for (var i = 0; i < features.length; i++) {
+            var f = features[i];
+            var coords = f.geometry && f.geometry.coordinates;
+            if (!coords || coords.length < 2) continue;
+            var latlng = [coords[1], coords[0]];
+            var p = f.properties || {};
+            var marker = L.marker(latlng, {
+              icon: L.divIcon({
+                className: 'sppg-marker-icon',
+                html: '<div style="width:14px;height:14px;background:#8b5cf6;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.35);"></div>',
+                iconSize: [14, 14],
+                iconAnchor: [7, 7],
+                popupAnchor: [0, -8]
+              })
+            });
+            marker.bindPopup(
+              '<div style="font-size:12px;line-height:1.6">' +
+                '<strong style="color:#6d28d9">' + (p.name || '-') + '</strong><br>' +
+                'Kategori: ' + (p.category || '-') + '<br>' +
+                'Alamat: ' + (p.desc || '-') +
+              '</div>'
+            );
+            sppgLayer.addLayer(marker);
+          }
+          map.addLayer(sppgLayer);
         } catch (e) {
           console.error('[Geopangan] Gagal load SPPG GeoJSON:', e);
+        }
+      }
+    };
+    xhr.send();
+  }
+
+  /* ── Sebaran SPPG Layer (Ditjen PKH — markercluster) ── */
+  var SPPG_SEBARAN_URL = 'assets/data/SPPG_Sebaran.geojson';
+
+  function toggleSppgSebaran(visible) {
+    console.log('[SPPG Sebaran] toggleSppgSebaran called, visible:', visible);
+    if (!visible) {
+      if (sppgSebaranLayer && map.hasLayer(sppgSebaranLayer)) {
+        map.removeLayer(sppgSebaranLayer);
+      }
+      var sppgTbl = $('sppgSebaranTable');
+      if (sppgTbl) sppgTbl.innerHTML = '';
+      resetGeopanganSheetTitle();
+      return;
+    }
+    hideSidebarForGeopangan();
+    openGeopanganSheet();
+    setGeopanganSheetTitle('Sebaran SPPG Indonesia');
+    if (sppgSebaranLayer) {
+      sppgSebaranLayer.addTo(map);
+      if (sppgFeaturesCache) renderSppgSebaranTable(sppgFeaturesCache);
+      return;
+    }
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', SPPG_SEBARAN_URL, true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          var geojson = JSON.parse(xhr.responseText);
+          console.log('[SPPG Sebaran] Features:', geojson.features ? geojson.features.length : 0);
+          var features = geojson.features || [];
+          sppgFeaturesCache = features;
+          sppgSebaranLayer = L.markerClusterGroup({
+            maxClusterRadius: 45,
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: false,
+            zoomToBoundsOnClick: true
+          });
+          for (var i = 0; i < features.length; i++) {
+            var f = features[i];
+            var coords = f.geometry && f.geometry.coordinates;
+            if (!coords || coords.length < 2) continue;
+            var latlng = [coords[1], coords[0]];
+            var p = f.properties || {};
+            var marker = L.marker(latlng, {
+              icon: L.divIcon({
+                className: 'sppg-marker-icon',
+                html: '<div style="width:16px;height:16px;background:#8b5cf6;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.35);"></div>',
+                iconSize: [16, 16],
+                iconAnchor: [8, 8],
+                popupAnchor: [0, -10]
+              })
+            });
+            marker.bindPopup(
+              '<div style="font-size:12px;line-height:1.6">' +
+                '<strong style="color:#6d28d9">' + (p['Nama SPPG'] || p.name || p.nama || '-') + '</strong><br>' +
+                (p['Kode SPPG'] ? 'Kode: ' + p['Kode SPPG'] + '<br>' : '') +
+                (p.Provinsi ? 'Provinsi: ' + p.Provinsi + '<br>' : '') +
+                (p['Kab/Kota'] ? 'Kab/Kota: ' + p['Kab/Kota'] + '<br>' : '') +
+                (p.Alamat ? 'Alamat: ' + p.Alamat : '') +
+              '</div>'
+            );
+            sppgSebaranLayer.addLayer(marker);
+          }
+          map.addLayer(sppgSebaranLayer);
+          console.log('[SPPG Sebaran] Layer added to map');
+          renderSppgSebaranTable(features);
+        } catch (e) {
+          console.error('[Geopangan] Gagal parse Sebaran SPPG:', e);
         }
       }
     };
@@ -1257,6 +1606,8 @@
     if (chkPasar) chkPasar.addEventListener('change', function () { toggleSebaranPasar(this.checked); });
     var chkSppg = $('toggleSppgLayer');
     if (chkSppg) chkSppg.addEventListener('change', function () { toggleSppg(this.checked); });
+    var chkSppgSebaran = $('toggleSppgSebaranLayer');
+    if (chkSppgSebaran) chkSppgSebaran.addEventListener('change', function () { toggleSppgSebaran(this.checked); });
     if (window.currentActiveTab === 'tab-geopangan') init();
   });
 

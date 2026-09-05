@@ -4,8 +4,11 @@
   }
 
   // 1. Inisialisasi Peta
-  // Pusat awal mengikuti extent layer IGTPR ATR/BPN: BIDANG_JAKARTA_CLP.
-  const map = L.map('map', { zoomControl: false, preferCanvas: true, maxZoom: 19, minZoom: 4 }).setView([-7.249, 112.751], 12);
+  // Pusat awal: Tengah Indonesia (desktop) atau Kalimantan (mobile)
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+  const initialCenter = isMobile ? [-1.5, 116.0] : [-2.5, 118.0];
+  const initialZoom = isMobile ? 5 : 5;
+  const map = L.map('map', { zoomControl: false, preferCanvas: true, maxZoom: 19, minZoom: 4 }).setView(initialCenter, initialZoom);
 
 L.control.scale({
   position: 'bottomleft',
@@ -112,8 +115,8 @@ L.control.scale({
     'airvisual-co': L.tileLayer('https://osm.airvisual.net/cog/co/tiles/{z}/{x}/{y}.png', { maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual' })
   };
 
-  let currentBasemapName = 'google-maps';
-  let baseBasemapName = 'google-maps';
+  let currentBasemapName = 'esri-dark-gray';
+  let baseBasemapName = 'esri-dark-gray';
   let currentRdtrOpacity = 0.8;
 
   function getYesterdayDate() {
@@ -189,6 +192,13 @@ L.control.scale({
   setBaseMap(currentBasemapName);
   setRdtrOpacity(currentRdtrOpacity);
   setMapLocked(false);
+
+  // Aktifkan ECMWF Fire layer saat pertama kali dibuka
+  map.whenReady(function () {
+    setTimeout(function () {
+      if (typeof toggleEcmwfFireLayer === 'function') toggleEcmwfFireLayer(true);
+    }, 1000);
+  });
 
   L.control.locate({
     position: 'bottomright',

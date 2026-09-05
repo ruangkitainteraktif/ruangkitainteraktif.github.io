@@ -1031,6 +1031,37 @@
     .gp-page-btn.active { background: #047857; color: #fff; border-color: #047857; }
     .gp-page-dots { font-size: 11px; color: #94a3b8; padding: 0 2px; }
 
+    /* ===== SPPG Sebaran Table ===== */
+    .sppg-table-wrap { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(109,40,217,.08); border: 1px solid #e9e5f5; margin-top: 12px; }
+    .sppg-table-title { display: flex; align-items: center; gap: 8px; padding: 10px 14px; font-size: 13px; font-weight: 700; color: #1e3a5f; border-bottom: 1px solid #eef2f7; }
+    .sppg-table-title span { color: #8b5cf6; font-weight: 600; }
+    .sppg-table-title .sppg-badge { display: inline-flex; align-items: center; gap: 4px; background: #8b5cf6; color: #fff; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: .4px; }
+    .sppg-table-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; border-bottom: 1px solid #eef2f7; flex-wrap: wrap; }
+    .sppg-table-actions { display: flex; align-items: center; gap: 6px; }
+    .sppg-table-search { width: 180px; padding: 5px 10px; border: 1px solid #d7e2eb; border-radius: 8px; font-size: 11px; outline: none; transition: border-color .15s; }
+    .sppg-table-search:focus { border-color: #8b5cf6; box-shadow: 0 0 0 2px rgba(139,92,246,.15); }
+    .sppg-table-info { font-size: 10px; color: #8b5cf6; font-weight: 600; }
+    .sppg-table-scroll { overflow-x: auto; }
+    .sppg-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .sppg-table thead th { position: sticky; top: 0; background: #8b5cf6; color: #fff; padding: 8px 7px; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: .3px; white-space: nowrap; cursor: pointer; user-select: none; }
+    .sppg-table thead th:first-child { border-radius: 0; }
+    .sppg-table thead th:last-child { border-radius: 0; }
+    .sppg-table thead th.sppg-th-no { width: 30px; text-align: center; cursor: default; }
+    .sppg-table thead th .gp-sort-icon { font-size: 9px; }
+    .sppg-table tbody tr { transition: background .15s; }
+    .sppg-table tbody tr:nth-child(even) { background: #faf8ff; }
+    .sppg-table tbody tr:hover { background: #f3efff; }
+    .sppg-table td { padding: 7px 8px; border-bottom: 1px solid #eef2f7; }
+    .sppg-td-no { text-align: center; color: #94a3b8; font-size: 10px; }
+    .sppg-td-name { font-weight: 600; color: #1e3a5f; white-space: nowrap; }
+    .sppg-td-kode { color: #6d28d9; font-family: monospace; font-size: 10px; white-space: nowrap; }
+    .sppg-td-prov { color: #8b5cf6; font-weight: 600; }
+    .sppg-td-kab { color: #336583; white-space: nowrap; }
+    .sppg-td-kec { color: #64748b; }
+    .sppg-td-alamat { color: #475569; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sppg-td-tgl { color: #059669; font-size: 10px; white-space: nowrap; }
+    .sppg-td-empty { text-align: center; color: #94a3b8; padding: 20px 8px; }
+
     /* ===== GeoPangan Popup ===== */
     .gp-leaflet-popup { max-width: 300px !important; }
     .gp-leaflet-popup .leaflet-popup-content-wrapper {
