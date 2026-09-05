@@ -103,6 +103,16 @@ L.control.scale({
       minZoom: 3,
       tms: true,
       attribution: 'BMKG GK-2A'
+    }),
+    'noaa-true-color': L.tileLayer('https://gis.nnvl.noaa.gov/arcgis/rest/services/TRUE/TRUE_current/ImageServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      minZoom: 0,
+      attribution: 'NOAA NNVL True Color'
+    }),
+    'noaa-goes-ir': L.tileLayer('https://gis.nnvl.noaa.gov/arcgis/rest/services/GOES/GOES_current/ImageServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      minZoom: 0,
+      attribution: 'NOAA NNVL GOES IR'
     })
   };
 
@@ -141,6 +151,35 @@ L.control.scale({
     'bmkg-himawari-hires': 'VS',
     'bmkg-gk2a': 'EH'
   };
+  window._bmkgModelrunCache = null;
+
+  var _noaaBoundaryLayer = null;
+  var NOAA_BASEMAPS = ['noaa-true-color', 'noaa-goes-ir'];
+
+  function loadNoaaBoundary() {
+    if (_noaaBoundaryLayer) { _noaaBoundaryLayer.addTo(map); return; }
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'assets/data/bps/geojson/provinsi.geojson', true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          var geojson = JSON.parse(xhr.responseText);
+          _noaaBoundaryLayer = L.geoJSON(geojson, {
+            style: { color: '#ffeb3b', weight: 2, opacity: 0.8, fillColor: '#ffeb3b', fillOpacity: 0 },
+            interactive: false
+          }).addTo(map);
+        } catch (e) {}
+      }
+    };
+    xhr.send();
+  }
+
+  function removeNoaaBoundary() {
+    if (_noaaBoundaryLayer && map.hasLayer(_noaaBoundaryLayer)) {
+      map.removeLayer(_noaaBoundaryLayer);
+    }
+  }
 
   function setBaseMap(name) {
     var isHillshade = (name === 'hillshade-indonesia');
@@ -161,6 +200,12 @@ L.control.scale({
       if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.hide();
       if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.hidePth();
       baseBasemapName = name;
+      var isNoaa = NOAA_BASEMAPS.indexOf(name) !== -1;
+      if (isNoaa) {
+        loadNoaaBoundary();
+      } else {
+        removeNoaaBoundary();
+      }
       if (name === 'modis-terra') {
         baseTileLayers[name].setUrl(getGibsDateUrl('MODIS_Terra_CorrectedReflectance_TrueColor', 'jpg', getYesterdayDate()));
       } else if (name === 'viirs-noaa20') {
@@ -178,7 +223,8 @@ L.control.scale({
           if (bmkgXhr.status >= 200 && bmkgXhr.status < 300) {
             try {
               var data = JSON.parse(bmkgXhr.responseText);
-              var ts = (data[bmkgModelName] || [])[0];
+              window._bmkgModelrunCache = data;
+              var ts = (data[bmkgModelName] || []).slice().reverse()[0];
               if (ts) bmkgLayer.setUrl('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=' + bmkgModelName + '&param=' + bmkgParam + '&baserun=' + encodeURIComponent(ts));
             } catch (e) {}
           }
@@ -330,7 +376,9 @@ L.control.scale({
     'bmkg-himawari': 'Himawari-9 IR',
     'bmkg-himawari-fd': 'Himawari-9 Full Disk',
     'bmkg-himawari-hires': 'Himawari-9 Hi-Res',
-    'bmkg-gk2a': 'GK-2A'
+    'bmkg-gk2a': 'GK-2A',
+    'noaa-true-color': 'NOAA True Color',
+    'noaa-goes-ir': 'NOAA GOES IR'
   };
 
   function createBasemapControl(labels, btnClass, btnIcon) {

@@ -60,6 +60,14 @@
   function fetchTimestamps(callback) {
     if (_fetchPromise) { _fetchPromise.then(callback); return; }
     _fetchPromise = new Promise(function (resolve) {
+      if (window._bmkgModelrunCache) {
+        var data = window._bmkgModelrunCache;
+        var apiKey = _activeKey ? BMKG_LAYERS[_activeKey].modelname : 'himawari9';
+        var list = (data[apiKey] || []).slice().reverse();
+        timestamps = list;
+        resolve(list);
+        return;
+      }
       var xhr = new XMLHttpRequest();
       xhr.open('GET', MODELRUN_URL, true);
       xhr.onreadystatechange = function () {
