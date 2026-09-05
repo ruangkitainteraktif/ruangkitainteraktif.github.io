@@ -85,6 +85,24 @@ L.control.scale({
       minZoom: 3,
       tms: true,
       attribution: 'BMKG Himawari-9'
+    }),
+    'bmkg-himawari-fd': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9fd&param=EH&baserun=', {
+      maxZoom: 10,
+      minZoom: 3,
+      tms: true,
+      attribution: 'BMKG Himawari-9 FD'
+    }),
+    'bmkg-himawari-hires': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9hires&param=VS&baserun=', {
+      maxZoom: 10,
+      minZoom: 3,
+      tms: true,
+      attribution: 'BMKG Himawari-9 Hi-Res'
+    }),
+    'bmkg-gk2a': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=gk2a&param=EH&baserun=', {
+      maxZoom: 10,
+      minZoom: 3,
+      tms: true,
+      attribution: 'BMKG GK-2A'
     })
   };
 
@@ -111,9 +129,23 @@ L.control.scale({
     return 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/' + layerId + '/default/' + dateStr + '/GoogleMapsCompatible_Level9/{z}/{y}/{x}.' + ext;
   }
 
+  var BMKG_TILETYPE = {
+    'bmkg-himawari': 'himawari9',
+    'bmkg-himawari-fd': 'himawari9fd',
+    'bmkg-himawari-hires': 'himawari9hires',
+    'bmkg-gk2a': 'gk2a'
+  };
+  var BMKG_PARAMS = {
+    'bmkg-himawari': 'EH',
+    'bmkg-himawari-fd': 'EH',
+    'bmkg-himawari-hires': 'VS',
+    'bmkg-gk2a': 'EH'
+  };
+
   function setBaseMap(name) {
     var isHillshade = (name === 'hillshade-indonesia');
     var isPth = (name === 'topografi-pth');
+    var isBmkg = BMKG_TILETYPE.hasOwnProperty(name);
 
     Object.entries(baseTileLayers).forEach(function (entry) {
       if (map.hasLayer(entry[1])) map.removeLayer(entry[1]);
@@ -135,8 +167,10 @@ L.control.scale({
         baseTileLayers[name].setUrl(getGibsDateUrl('VIIRS_NOAA20_CorrectedReflectance_TrueColor', 'jpeg', getYesterdayDate()));
       } else if (name === 'viirs-noaa21') {
         baseTileLayers[name].setUrl(getGibsDateUrl('VIIRS_NOAA21_CorrectedReflectance_TrueColor', 'jpeg', getYesterdayDate()));
-      } else if (name === 'bmkg-himawari') {
+      } else if (isBmkg) {
         var bmkgLayer = baseTileLayers[name];
+        var bmkgModelName = BMKG_TILETYPE[name];
+        var bmkgParam = BMKG_PARAMS[name] || 'EH';
         var bmkgXhr = new XMLHttpRequest();
         bmkgXhr.open('GET', 'https://satellite.bmkg.go.id/api22/modelrun', true);
         bmkgXhr.onreadystatechange = function () {
@@ -144,8 +178,8 @@ L.control.scale({
           if (bmkgXhr.status >= 200 && bmkgXhr.status < 300) {
             try {
               var data = JSON.parse(bmkgXhr.responseText);
-              var ts = (data.himawari9 || [])[0];
-              if (ts) bmkgLayer.setUrl('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=EH&baserun=' + encodeURIComponent(ts));
+              var ts = (data[bmkgModelName] || [])[0];
+              if (ts) bmkgLayer.setUrl('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=' + bmkgModelName + '&param=' + bmkgParam + '&baserun=' + encodeURIComponent(ts));
             } catch (e) {}
           }
           bmkgLayer.addTo(map);
@@ -293,7 +327,10 @@ L.control.scale({
     'modis-terra': 'MODIS Terra',
     'viirs-noaa20': 'VIIRS NOAA-20',
     'viirs-noaa21': 'VIIRS NOAA-21',
-    'bmkg-himawari': 'Himawari-9 BMKG'
+    'bmkg-himawari': 'Himawari-9 IR',
+    'bmkg-himawari-fd': 'Himawari-9 Full Disk',
+    'bmkg-himawari-hires': 'Himawari-9 Hi-Res',
+    'bmkg-gk2a': 'GK-2A'
   };
 
   function createBasemapControl(labels, btnClass, btnIcon) {

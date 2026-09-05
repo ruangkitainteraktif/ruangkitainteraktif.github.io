@@ -1,10 +1,15 @@
-/* ── BMKG Himawari-9 Time Slider — satellite.bmkg.go.id ── */
+/* ── BMKG Himawari/GK-2A Time Slider — satellite.bmkg.go.id ── */
 (function () {
   'use strict';
 
-  var HIMAWARI_KEY = 'bmkg-himawari';
+  var BMKG_LAYERS = {
+    'bmkg-himawari':      { tiletype: 'himawari9', modelname: 'himawari9',    param: 'EH', title: 'Himawari-9 IR Enhanced' },
+    'bmkg-himawari-fd':   { tiletype: 'himawari9', modelname: 'himawari9fd',  param: 'EH', title: 'Himawari-9 Full Disk' },
+    'bmkg-himawari-hires':{ tiletype: 'himawari9', modelname: 'himawari9hires', param: 'VS', title: 'Himawari-9 Hi-Res (Visible)' },
+    'bmkg-gk2a':          { tiletype: 'himawari9', modelname: 'gk2a',         param: 'EH', title: 'GK-2A' }
+  };
   var MODELRUN_URL = 'https://satellite.bmkg.go.id/api22/modelrun';
-  var TILE_URL_BASE = 'https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=EH&baserun=';
+  var TILE_URL_TEMPLATE = 'https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype={tiletype}&modelname={modelname}&param={param}&baserun=';
   var PROV_GEOJSON_URL = 'assets/data/bps/geojson/provinsi.geojson';
 
   var sliderControl = null;
@@ -13,6 +18,7 @@
   var timestamps = [];
   var _provLayer = null;
   var _fetchPromise = null;
+  var _activeKey = null;
 
   var MONTH_NAMES = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -35,10 +41,20 @@
     return formatDateShort(isoStr) + ' ' + formatTime(isoStr);
   }
 
+  function isBmkgLayer(key) {
+    return BMKG_LAYERS.hasOwnProperty(key);
+  }
+
+  function buildTileUrl(tiletype, modelname, param, baserun) {
+    return TILE_URL_TEMPLATE.replace('{tiletype}', tiletype).replace('{modelname}', modelname).replace('{param}', param) + encodeURIComponent(baserun);
+  }
+
   function updateHimawariUrl(baserun) {
-    var layer = baseTileLayers[HIMAWARI_KEY];
-    if (!layer) return;
-    layer.setUrl(TILE_URL_BASE + encodeURIComponent(baserun));
+    if (!_activeKey) return;
+    var layer = baseTileLayers[_activeKey];
+    var info = BMKG_LAYERS[_activeKey];
+    if (!layer || !info) return;
+    layer.setUrl(buildTileUrl(info.tiletype, info.modelname, info.param, baserun));
   }
 
   function fetchTimestamps(callback) {
@@ -51,7 +67,8 @@
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
             var data = JSON.parse(xhr.responseText);
-            var list = (data.himawari9 || []).slice().reverse();
+            var apiKey = _activeKey ? BMKG_LAYERS[_activeKey].modelname : 'himawari9';
+            var list = (data[apiKey] || []).slice().reverse();
             timestamps = list;
             resolve(list);
           } catch (e) {
@@ -111,7 +128,7 @@
       L.DomEvent.disableScrollPropagation(wrap);
 
       var titleRow = L.DomUtil.create('div', 'bmkg-ts-title', wrap);
-      titleRow.textContent = 'Himawari-9 IR Enhanced';
+      titleRow.textContent = BMKG_LAYERS[_activeKey] ? BMKG_LAYERS[_activeKey].title : 'BMKG Satellite';
 
       var controlsRow = L.DomUtil.create('div', 'bmkg-ts-controls', wrap);
 
@@ -191,19 +208,29 @@
     onAdd: function () {
       var div = L.DomUtil.create('div', 'himawari-legend');
       L.DomEvent.disableClickPropagation(div);
-      div.innerHTML =
-        '<div class="himawari-legend-title">Suhu Puncak Awan (IR 10.4&micro;m)</div>' +
-        '<div class="himawari-legend-bar"></div>' +
-        '<div class="himawari-legend-labels"><span>-80&deg;C</span><span>-60&deg;C</span><span>-40&deg;C</span><span>-20&deg;C</span><span>0&deg;C</span><span>20&deg;C</span></div>' +
-        '<div class="himawari-legend-items">' +
-          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#7b0051;"></span>&le; -80&deg;C — Ekstrem</div>' +
-          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#d62828;"></span>-80 s/d -60&deg;C — Sangat Dingin (Cb)</div>' +
-          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#f77f00;"></span>-60 s/d -40&deg;C — Dingin</div>' +
-          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#f6d743;"></span>-40 s/d -20&deg;C — Sedang</div>' +
-          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#1a936f;"></span>-20 s/d 0&deg;C — Hangat</div>' +
-          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#16213e;"></span>&ge; 0&deg;C — Cerah</div>' +
-        '</div>' +
-        '<div class="himawari-legend-unit">Sumber: BMKG Himawari-9</div>';
+      var info = BMKG_LAYERS[_activeKey];
+      var param = info ? info.param : 'EH';
+      if (param === 'VS') {
+        div.innerHTML =
+          '<div class="himawari-legend-title">Visible (0.64&micro;m) — 500m</div>' +
+          '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#000 0%,#fff 100%);"></div>' +
+          '<div class="himawari-legend-labels"><span>Gelap</span><span>Cerah</span></div>' +
+          '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
+      } else {
+        div.innerHTML =
+          '<div class="himawari-legend-title">Suhu Puncak Awan (IR 10.4&micro;m)</div>' +
+          '<div class="himawari-legend-bar"></div>' +
+          '<div class="himawari-legend-labels"><span>-80&deg;C</span><span>-60&deg;C</span><span>-40&deg;C</span><span>-20&deg;C</span><span>0&deg;C</span><span>20&deg;C</span></div>' +
+          '<div class="himawari-legend-items">' +
+            '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#7b0051;"></span>&le; -80&deg;C — Ekstrem</div>' +
+            '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#d62828;"></span>-80 s/d -60&deg;C — Sangat Dingin (Cb)</div>' +
+            '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#f77f00;"></span>-60 s/d -40&deg;C — Dingin</div>' +
+            '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#f6d743;"></span>-40 s/d -20&deg;C — Sedang</div>' +
+            '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#1a936f;"></span>-20 s/d 0&deg;C — Hangat</div>' +
+            '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#16213e;"></span>&ge; 0&deg;C — Cerah</div>' +
+          '</div>' +
+          '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
+      }
       return div;
     }
   });
@@ -247,25 +274,37 @@
     }
   }
 
+  function activateBmkgLayer(key) {
+    _activeKey = key;
+    _fetchPromise = null;
+    timestamps = [];
+    currentIndex = 0;
+    // destroy old slider & legend so title updates
+    hideSlider();
+    fetchTimestamps(function () { showSlider(); });
+  }
+
   function cleanup() {
     hideSlider();
     hideLegend();
     timestamps = [];
     currentIndex = 0;
     _fetchPromise = null;
+    _activeKey = null;
   }
 
   document.addEventListener('DOMContentLoaded', function () {
     map.on('basemapchanged', function (e) {
-      if (e.basemap === HIMAWARI_KEY) {
-        fetchTimestamps(function () { showSlider(); });
+      if (isBmkgLayer(e.basemap)) {
+        activateBmkgLayer(e.basemap);
       } else {
         hideSlider();
+        _activeKey = null;
       }
     });
 
-    if (typeof currentBasemapName !== 'undefined' && currentBasemapName === HIMAWARI_KEY) {
-      fetchTimestamps(function () { showSlider(); });
+    if (typeof currentBasemapName !== 'undefined' && isBmkgLayer(currentBasemapName)) {
+      activateBmkgLayer(currentBasemapName);
     }
   });
 
