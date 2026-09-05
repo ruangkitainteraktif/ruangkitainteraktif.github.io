@@ -12,10 +12,12 @@
       ext: 'jpeg'
     }
   };
+  var PROV_GEOJSON_URL = 'assets/data/bps/geojson/provinsi.geojson';
   var DAY_COUNT = 30;
   var sliderControl = null;
   var currentDayOffset = 0;
   var activeKey = null;
+  var _provLayer = null;
 
   var MONTH_NAMES = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -49,6 +51,31 @@
     var meta = VIIRS_LAYERS[key];
     var newUrl = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/' + meta.id + '/default/' + dateStr + '/GoogleMapsCompatible_Level9/{z}/{y}/{x}.' + meta.ext;
     layer.setUrl(newUrl);
+  }
+
+  function loadProvinsiLayer() {
+    if (_provLayer) { _provLayer.addTo(map); return; }
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', PROV_GEOJSON_URL, true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          var geojson = JSON.parse(xhr.responseText);
+          _provLayer = L.geoJSON(geojson, {
+            style: { color: '#ffffff', weight: 1, opacity: 0.7, fillColor: '#ffffff', fillOpacity: 0 },
+            interactive: false
+          }).addTo(map);
+        } catch (e) {}
+      }
+    };
+    xhr.send();
+  }
+
+  function removeProvinsiLayer() {
+    if (_provLayer && map.hasLayer(_provLayer)) {
+      map.removeLayer(_provLayer);
+    }
   }
 
   function ensureBottomCenterControlCorner() {
@@ -125,6 +152,7 @@
       sliderControl = new ViirsTimeSliderControl();
       sliderControl.addTo(map);
     }
+    loadProvinsiLayer();
     _prevMaxZoom = map.getMaxZoom();
     map.setMaxZoom(9);
     if (map.getZoom() > 9) map.setZoom(6);
@@ -135,6 +163,7 @@
       map.removeControl(sliderControl);
       sliderControl = null;
     }
+    removeProvinsiLayer();
     activeKey = null;
     if (_prevMaxZoom !== null) {
       map.setMaxZoom(_prevMaxZoom);
