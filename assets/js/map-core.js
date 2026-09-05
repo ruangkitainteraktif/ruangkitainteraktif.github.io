@@ -14,6 +14,25 @@ L.control.scale({
   imperial: false
 }).addTo(map);
 
+  /* ── Himawari helper ── */
+  function getHimawariTime(offsetMin) {
+    var ts = Math.floor(Date.now() / 1000);
+    ts = ts - (ts % 600) - 1800;
+    if (offsetMin) ts += offsetMin * 60;
+    var d = new Date(ts * 1000);
+    var date = d.getUTCFullYear() + '-' +
+      String(d.getUTCMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getUTCDate()).padStart(2, '0');
+    var time = String(d.getUTCHours()).padStart(2, '0') +
+      String(d.getUTCMinutes()).padStart(2, '0');
+    return { date: date, time: time };
+  }
+
+  function getHimawariTileUrl(offsetMin) {
+    var t = getHimawariTime(offsetMin);
+    return 'https://tiles.zoom.earth/geocolor/himawari/' + t.date + '/' + t.time + '/{z}/{y}/{x}.jpg';
+  }
+
   const baseTileLayers = {
     'osm': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -64,6 +83,23 @@ L.control.scale({
       minZoom: 0,
       attribution: 'NASA GIBS',
       Time: new Date().toISOString().slice(0, 10)
+    }),
+    'himawari': L.tileLayer(getHimawariTileUrl(), {
+      maxZoom: 7,
+      minZoom: 4,
+      attribution: 'JMA Himawari via Zoom Earth'
+    }),
+    'viirs-noaa20': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/{Time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpeg', {
+      maxZoom: 9,
+      minZoom: 0,
+      Time: (function () { var d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })(),
+      attribution: 'NASA GIBS'
+    }),
+    'viirs-noaa21': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA21_CorrectedReflectance_TrueColor/default/{Time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpeg', {
+      maxZoom: 9,
+      minZoom: 0,
+      Time: (function () { var d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })(),
+      attribution: 'NASA GIBS'
     })
   };
 
@@ -79,6 +115,16 @@ L.control.scale({
   let currentBasemapName = 'google-maps';
   let baseBasemapName = 'google-maps';
   let currentRdtrOpacity = 0.8;
+
+  function getYesterdayDate() {
+    var d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function getGibsDateUrl(layerId, ext, dateStr) {
+    return 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/' + layerId + '/default/' + dateStr + '/GoogleMapsCompatible_Level9/{z}/{y}/{x}.' + ext;
+  }
 
   function setBaseMap(name) {
     var isHillshade = (name === 'hillshade-indonesia');
@@ -98,6 +144,15 @@ L.control.scale({
       if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.hide();
       if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.hidePth();
       baseBasemapName = name;
+      if (name === 'himawari') {
+        baseTileLayers[name].setUrl(getHimawariTileUrl());
+      } else if (name === 'modis-terra') {
+        baseTileLayers[name].setUrl(getGibsDateUrl('MODIS_Terra_CorrectedReflectance_TrueColor', 'jpg', getYesterdayDate()));
+      } else if (name === 'viirs-noaa20') {
+        baseTileLayers[name].setUrl(getGibsDateUrl('VIIRS_NOAA20_CorrectedReflectance_TrueColor', 'jpeg', getYesterdayDate()));
+      } else if (name === 'viirs-noaa21') {
+        baseTileLayers[name].setUrl(getGibsDateUrl('VIIRS_NOAA21_CorrectedReflectance_TrueColor', 'jpeg', getYesterdayDate()));
+      }
       baseTileLayers[name].addTo(map);
     }
 
@@ -228,7 +283,11 @@ L.control.scale({
     'esri-shaded-relief': 'Esri Shaded Relief',
     'esri-physical': 'Esri Physical',
     'esri-natgeo': 'Esri National Geographic',
-    'google-maps': 'Google Maps'
+    'google-maps': 'Google Maps',
+    'modis-terra': 'MODIS Terra (True Color)',
+    'himawari': 'Himawari Satellite',
+    'viirs-noaa20': 'VIIRS NOAA-20 (True Color)',
+    'viirs-noaa21': 'VIIRS NOAA-21 (True Color)'
   };
   const BasemapControl = L.Control.extend({
     options: { position: 'bottomright' },
@@ -587,6 +646,7 @@ L.control.scale({
         if (typeof _worldPlatesLayerCleanup === 'function') _worldPlatesLayerCleanup();
         if (typeof kawasanHutanCleanup === 'function') kawasanHutanCleanup();
         if (typeof modisTimeSliderCleanup === 'function') modisTimeSliderCleanup();
+        if (typeof viirsTimeSliderCleanup === 'function') viirsTimeSliderCleanup();
         if (typeof modisViirsOverlayCleanup === 'function') modisViirsOverlayCleanup();
         if (typeof cuacaMaritimCleanup === 'function') cuacaMaritimCleanup();
         if (typeof pmtilesCleanup === 'function') pmtilesCleanup();
@@ -790,10 +850,10 @@ L.control.scale({
       var div = L.DomUtil.create('div', 'ecmwf-fire-legend');
       L.DomEvent.disableClickPropagation(div);
       div.innerHTML =
-        '<div class="ecmwf-fire-legend-title">ECMWF Fire Composition</div>' +
+        '<div class="ecmwf-fire-legend-title">Fire Radiative Power [W m\u207B\u00B2]</div>' +
         '<img class="ecmwf-fire-legend-img" alt="Legend" ' +
-          'src="https://eccharts.ecmwf.int/wms/?token=public&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetLegendGraphic&FORMAT=image%2Fpng&LAYER=composition_fire">' +
-        '<div class="ecmwf-fire-legend-source">Sumber: ECMWF CAMS</div>';
+          'src="https://eccharts.ecmwf.int/wms/?token=public&request=GetLegend&layers=composition_fire&styles=sh_all_fire&width=350&height=50">' +
+        '<div class="ecmwf-fire-legend-source">Sumber: ECMWF CAMS GFAS</div>';
       var img = div.querySelector('.ecmwf-fire-legend-img');
       if (img) {
         img.onerror = function () {
@@ -845,79 +905,23 @@ L.control.scale({
     }
   }
 
-  /* ── ECMWF Fire GetFeatureInfo ── */
-  async function fetchEcmwfFireInfo(latlng) {
-    try {
-      var bounds = map.getBounds();
-      var size = map.getSize();
-      var point = map.latLngToContainerPoint(latlng, map.getZoom());
-      var projection = map.options?.crs || L.CRS.EPSG3857;
-      var sw = projection.project(bounds.getSouthWest());
-      var ne = projection.project(bounds.getNorthEast());
-      var srs = projection.code || 'EPSG:3857';
-
-      var params = new URLSearchParams({
-        SERVICE: 'WMS',
-        VERSION: '1.3.0',
-        REQUEST: 'GetFeatureInfo',
-        LAYERS: 'composition_fire',
-        QUERY_LAYERS: 'composition_fire',
-        INFO_FORMAT: 'application/json',
-        FEATURE_COUNT: '10',
-        BBOX: sw.x + ',' + sw.y + ',' + ne.x + ',' + ne.y,
-        WIDTH: String(size.x),
-        HEIGHT: String(size.y),
-        CRS: srs,
-        I: String(Math.round(point.x)),
-        J: String(Math.round(point.y))
-      });
-
-      var url = 'https://eccharts.ecmwf.int/wms/?token=public&' + params.toString();
-      var resp = await fetch(url);
-      if (!resp.ok) return null;
-      var text = await resp.text();
-      if (!text || !text.trim().startsWith('{')) return null;
-      var data = JSON.parse(text);
-      return data?.features || [];
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function buildEcmwfFirePopupHtml(features) {
-    if (!features || !features.length) return null;
-    var html = '<div class="ecmwf-fire-popup">' +
-      '<div class="ecmwf-fire-popup-title">ECMWF Fire Composition</div>';
-    features.forEach(function (f) {
-      var props = f.properties || {};
-      var keys = Object.keys(props);
-      if (keys.length) {
-        html += '<div class="ecmwf-fire-popup-props">';
-        keys.forEach(function (k) {
-          var v = props[k];
-          if (v == null || v === '') return;
-          if (typeof v === 'number') v = v.toFixed(4);
-          html += '<div class="ecmwf-fire-popup-row">' +
-            '<span class="ecmwf-fire-popup-key">' + k.replace(/_/g, ' ') + '</span>' +
-            '<span class="ecmwf-fire-popup-val">' + v + '</span></div>';
-        });
-        html += '</div>';
-      }
-    });
-    html += '</div>';
-    return html;
-  }
-
-  map.on('click', async function (e) {
+  map.on('click', function (e) {
     if (!ecmwfFireLayer || !map.hasLayer(ecmwfFireLayer)) return;
-    var features = await fetchEcmwfFireInfo(e.latlng);
-    var html = buildEcmwfFirePopupHtml(features);
-    if (html) {
-      L.popup({ maxWidth: 300, className: 'ecmwf-fire-popup-wrap' })
-        .setLatLng(e.latlng)
-        .setContent(html)
-        .openOn(map);
-    }
+    var lat = e.latlng.lat.toFixed(5);
+    var lng = e.latlng.lng.toFixed(5);
+    var html = '<div class="ecmwf-fire-popup">' +
+      '<div class="ecmwf-fire-popup-title">Fire Radiative Power [W m\u207B\u00B2]</div>' +
+      '<div class="ecmwf-fire-popup-props">' +
+        '<div class="ecmwf-fire-popup-row"><span class="ecmwf-fire-popup-key">Lokasi</span><span class="ecmwf-fire-popup-val">' + lat + ', ' + lng + '</span></div>' +
+        '<div class="ecmwf-fire-popup-row"><span class="ecmwf-fire-popup-key">Sumber</span><span class="ecmwf-fire-popup-val">CAMS GFAS</span></div>' +
+        '<div class="ecmwf-fire-popup-row"><span class="ecmwf-fire-popup-key">Provider</span><span class="ecmwf-fire-popup-val">ECMWF</span></div>' +
+      '</div>' +
+      '<div class="ecmwf-fire-popup-note">Layer ini tidak menyediakan data titik. Gunakan legend untuk membaca intensitas FRP di lokasi klik.</div>' +
+    '</div>';
+    L.popup({ maxWidth: 300, className: 'ecmwf-fire-popup-wrap' })
+      .setLatLng(e.latlng)
+      .setContent(html)
+      .openOn(map);
   });
 
   /* ═══════════════════════════════════════════════════════
@@ -929,7 +933,6 @@ L.control.scale({
       qlPm25:      { target: 'toggleAirVisualPm25',         type: 'checkbox' },
       qlWind:      { target: 'toggleWindAnim',              type: 'checkbox' },
       qlEcmwfFire: { type: 'toggle-fn',                    fn: toggleEcmwfFireLayer },
-      qlModisTerra:{ target: 'modis-terra',                 type: 'basemap' },
       qlViirsNoaa20:{ type: 'toggle-fn',                    fn: toggleViirsNoaa20Layer },
       qlKonsesi:   { target: 'toggleConcessionsLayer',      type: 'checkbox' },
       qlPelabuhan: { target: 'toggleCuacaPelabuhanLayer',   type: 'checkbox' },
