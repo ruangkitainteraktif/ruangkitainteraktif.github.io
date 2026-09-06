@@ -51,7 +51,7 @@
     if (drawControl) map.removeControl(drawControl);
 
     const options = {
-      position: 'topright',
+      position: 'bottomleft',
       draw: {
         marker: type === 'marker',
         polyline: type === 'polyline',
