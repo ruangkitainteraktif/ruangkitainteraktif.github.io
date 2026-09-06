@@ -1201,7 +1201,7 @@
       hiddenEls.push({ restore: () => sidebar.classList.remove('collapsed') });
     }
 
-    const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .geoportal-print-btn, .geoportal-legend, .basemap-btn, .basemap-control-wrap, .leaflet-control-scale, .detail-panel-btn, #detail-panel, .draw-fab-wrap');
+    const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .geoportal-print-btn, .geoportal-legend, .basemap-btn, .basemap-control-wrap, .leaflet-control-scale, .detail-panel-btn, #detail-panel, .draw-fab-wrap, .modis-time-slider-wrap, .bmkg-time-slider-wrap, .legend-wrap, .zoom-control-wrap, .geoid-marker-wrap, .leaflet-control-mouse-position, .wind-legend, .himawari-legend, .s5p-legend, .maritime-legend, .leaflet-control-legend, .bmkg-ts-title, .bmkg-ts-controls, .bmkg-ts-info, .bmkg-ts-slider-wrap, .quick-layer-bar');
     overlays.forEach(el => {
       if (el && getComputedStyle(el).display !== 'none') {
         const prev = el.style.display;
@@ -1771,7 +1771,84 @@
     }
   }
 
-  window.printGeoportalMap = async function () {
+  // ── Print Area Selection (Auto Rectangle Overlay) ──
+  let _printFrame = null;
+  let _printVignette = null;
+  let _printInstruction = null;
+  let _printAreaBtn = null;
+
+  function _removePrintDrawUI() {
+    if (_printFrame) { _printFrame.remove(); _printFrame = null; }
+    if (_printVignette) { _printVignette.remove(); _printVignette = null; }
+    if (_printInstruction) { _printInstruction.remove(); _printInstruction = null; }
+    if (_printAreaBtn) { _printAreaBtn.remove(); _printAreaBtn = null; }
+  }
+
+  function _showPrintOverlay() {
+    // Vignette — dark overlay outside the frame
+    const vig = document.createElement('div');
+    vig.className = 'print-area-vignette';
+    document.body.appendChild(vig);
+    _printVignette = vig;
+
+    // Rectangle frame — aspect ratio matches map frame in PDF (185:164)
+    const frame = document.createElement('div');
+    frame.className = 'print-area-frame';
+    document.body.appendChild(frame);
+    _printFrame = frame;
+
+    // Instruction banner
+    const inst = document.createElement('div');
+    inst.className = 'print-instruction';
+    inst.innerHTML = '<span class="print-instruction-icon">&#9994;</span> Zoom in/out untuk memilih area cetak';
+    document.body.appendChild(inst);
+    _printInstruction = inst;
+  }
+
+  function _showPrintAreaButtons(onPrint) {
+    const wrap = document.createElement('div');
+    wrap.className = 'print-area-buttons';
+
+    const printBtn = document.createElement('button');
+    printBtn.className = 'print-area-btn';
+    printBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v4"/><path d="M18 2v4"/><path d="M6 18v4"/><path d="M18 18v4"/><path d="M2 6h4"/><path d="M2 18h4"/><path d="M18 6h4"/><path d="M18 18h4"/></svg> Cetak Peta';
+    printBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      onPrint();
+    });
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'print-area-cancel';
+    cancelBtn.textContent = 'Batalkan';
+    cancelBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      _removePrintDrawUI();
+    });
+
+    wrap.appendChild(printBtn);
+    wrap.appendChild(cancelBtn);
+    document.body.appendChild(wrap);
+    _printAreaBtn = wrap;
+  }
+
+  window.printGeoportalMap = function () {
+    _removePrintDrawUI();
+    _showPrintOverlay();
+    _showPrintAreaButtons(function() {
+      _removePrintDrawUI();
+      _startPrint();
+    });
+
+    function onEscape(e) {
+      if (e.key === 'Escape') {
+        document.removeEventListener('keydown', onEscape);
+        _removePrintDrawUI();
+      }
+    }
+    document.addEventListener('keydown', onEscape);
+  };
+
+  async function _startPrint() {
     const btn = document.querySelector('.geoportal-print-btn');
     if (btn) { btn.disabled = true; btn.innerHTML = window.GEOPORTAL_PRINT_SPINNER || '\u23F3'; }
     showPrintLoading();
@@ -1786,4 +1863,4 @@
       hidePrintLoading();
       if (btn) { btn.disabled = false; btn.innerHTML = window.GEOPORTAL_PRINT_ICON || '\uD83D\uDCBB'; }
     }
-  };
+  }

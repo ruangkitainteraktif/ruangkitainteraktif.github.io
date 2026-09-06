@@ -150,8 +150,8 @@
     .unified-ac-empty { padding: 14px 16px; text-align: center; color: #5f6368; font-size: 12px; }
 
     /* Tombol lokasi saya (Leaflet Locate Control) */
-    .leaflet-control-locate { margin: 12px !important; border: 0 !important; border-radius: 50% !important; background: transparent !important; box-shadow: 0 10px 28px rgba(8, 63, 102, .24) !important; overflow: hidden; }
-    .leaflet-control-locate a { display: grid !important; width: 46px !important; height: 46px !important; place-items: center; border: 1px solid rgba(255,255,255,.86) !important; border-radius: 50% !important; background: linear-gradient(145deg, #ffffff, #e9f7fc) !important; color: #0879bf !important; text-decoration: none; transition: transform .2s ease, box-shadow .2s ease, background .2s ease; position: relative; }
+    .leaflet-control-locate { margin: 8px !important; border: 0 !important; border-radius: 50% !important; background: transparent !important; box-shadow: 0 6px 18px rgba(8, 63, 102, .2) !important; overflow: hidden; }
+    .leaflet-control-locate a { display: grid !important; width: 38px !important; height: 38px !important; place-items: center; border: 1px solid rgba(255,255,255,.86) !important; border-radius: 50% !important; background: linear-gradient(145deg, #ffffff, #e9f7fc) !important; color: #0879bf !important; text-decoration: none; transition: transform .2s ease, box-shadow .2s ease, background .2s ease; position: relative; }
     .leaflet-control-locate a::before { content: none; }
     .leaflet-control-locate a .leaflet-control-locate-location-arrow,
     .leaflet-control-locate a .leaflet-control-locate-spinner { display: none !important; }
@@ -164,18 +164,18 @@
     .reset-layers-btn {
       display: grid;
       place-items: center;
-      width: 46px !important;
-      height: 46px !important;
-      margin: 12px !important;
+      width: 38px !important;
+      height: 38px !important;
+      margin: 8px !important;
       margin-bottom: 0 !important;
       border: 1px solid rgba(255,255,255,.86) !important;
       border-radius: 50% !important;
       background: linear-gradient(145deg, #ffffff, #e9f7fc) !important;
       color: #0879bf !important;
-      font-size: 22px;
+      font-size: 18px;
       font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 10px 28px rgba(8,63,102,.24) !important;
+      box-shadow: 0 6px 18px rgba(8,63,102,.2) !important;
       transition: transform .2s, box-shadow .2s, background .2s;
     }
     .reset-layers-btn:hover {
@@ -191,23 +191,23 @@
     .geoportal-print-btn {
       display: grid;
       place-items: center;
-      width: 46px !important;
-      height: 46px !important;
-      margin: 12px !important;
+      width: 38px !important;
+      height: 38px !important;
+      margin: 8px !important;
       margin-bottom: 0 !important;
       border: 1px solid rgba(255,255,255,.86) !important;
       border-radius: 50% !important;
       background: linear-gradient(145deg, #ffffff, #e9f7fc) !important;
       color: #0879bf !important;
-      font-size: 20px;
+      font-size: 18px;
       line-height: 1;
       cursor: pointer;
-      box-shadow: 0 10px 28px rgba(8,63,102,.24) !important;
+      box-shadow: 0 6px 18px rgba(8,63,102,.2) !important;
       transition: transform .2s, box-shadow .2s, background .2s;
       padding: 0;
     }
     .geoportal-print-btn::-moz-focus-inner { border: 0; }
-    .geoportal-print-btn svg { width: 22px; height: 22px; display: block; }
+    .geoportal-print-btn svg { width: 18px; height: 18px; display: block; }
     .geoportal-print-btn:disabled svg { animation: print-spin .8s linear infinite; transform-origin: center; }
     .geoportal-print-btn:hover {
       background: linear-gradient(145deg, #ffffff, #d5f3fb) !important;
@@ -284,23 +284,23 @@
     .sat-export-btn {
       display: grid;
       place-items: center;
-      width: 46px !important;
-      height: 46px !important;
-      margin: 12px !important;
+      width: 38px !important;
+      height: 38px !important;
+      margin: 8px !important;
       margin-bottom: 0 !important;
       border: 1px solid rgba(255,255,255,.86) !important;
       border-radius: 50% !important;
       background: linear-gradient(145deg, #ffffff, #e9f7fc) !important;
       color: #0879bf !important;
-      font-size: 20px;
+      font-size: 18px;
       line-height: 1;
       cursor: pointer;
-      box-shadow: 0 10px 28px rgba(8,63,102,.24) !important;
-      transition: transform .2s, box-shadow .2s, background .2s;
+      box-shadow: 0 6px 18px rgba(8,63,102,.2) !important;
+      transition: transform .2s, box-shadow .2s;
       padding: 0;
     }
     .sat-export-btn::-moz-focus-inner { border: 0; }
-    .sat-export-btn svg { width: 20px; height: 20px; display: block; }
+    .sat-export-btn svg { width: 17px; height: 17px; display: block; }
     .sat-export-btn:hover {
       background: linear-gradient(145deg, #ffffff, #d5f3fb) !important;
       box-shadow: inset 0 0 0 1px rgba(8,121,191,.14);
@@ -346,23 +346,23 @@
 
     .basemap-control-wrap {
       position: relative;
-      margin: 12px !important;
+      margin: 8px !important;
       margin-bottom: 0 !important;
     }
     .basemap-btn {
       display: grid;
       place-items: center;
-      width: 46px !important;
-      height: 46px !important;
+      width: 38px !important;
+      height: 38px !important;
       margin: 0 !important;
       border: 1px solid rgba(255,255,255,.86) !important;
       border-radius: 50% !important;
       background: linear-gradient(145deg, #ffffff, #e9f7fc) !important;
       color: #0879bf !important;
-      font-size: 22px;
+      font-size: 18px;
       line-height: 1;
       cursor: pointer;
-      box-shadow: 0 10px 28px rgba(8,63,102,.24) !important;
+      box-shadow: 0 6px 18px rgba(8,63,102,.2) !important;
       transition: transform .2s, box-shadow .2s, background .2s;
       padding: 0;
     }
@@ -383,7 +383,7 @@
     }
     .basemap-dropdown {
       position: absolute;
-      bottom: 54px;
+      bottom: 46px;
       right: 0;
       background: #fff;
       border-radius: 10px;
@@ -523,23 +523,23 @@
     .zoom-control-wrap {
       display: flex;
       flex-direction: column;
-      margin: 12px !important;
+      margin: 8px !important;
       margin-bottom: 0 !important;
       gap: 2px;
     }
     .zoom-control-btn {
       display: grid;
       place-items: center;
-      width: 46px !important;
-      height: 46px !important;
+      width: 38px !important;
+      height: 38px !important;
       border: 1px solid rgba(255,255,255,.86) !important;
       border-radius: 50% !important;
       background: linear-gradient(145deg, #ffffff, #e9f7fc) !important;
       color: #0879bf !important;
-      font-size: 20px;
+      font-size: 18px;
       line-height: 1;
       cursor: pointer;
-      box-shadow: 0 10px 28px rgba(8,63,102,.24) !important;
+      box-shadow: 0 6px 18px rgba(8,63,102,.2) !important;
       transition: transform .2s, box-shadow .2s, background .2s;
       padding: 0;
       margin: 0;
@@ -5929,22 +5929,22 @@
     }
     .draw-fab-wrap {
       position: relative;
-      margin: 12px !important;
+      margin: 8px !important;
       margin-bottom: 0 !important;
     }
     .draw-fab-btn {
       display: grid;
       place-items: center;
-      width: 46px !important;
-      height: 46px !important;
+      width: 38px !important;
+      height: 38px !important;
       margin: 0 !important;
       border: 1px solid rgba(255,255,255,.86) !important;
       border-radius: 50% !important;
       background: linear-gradient(145deg, #ffffff, #e9f7fc) !important;
       color: #0879bf !important;
-      font-size: 20px;
+      font-size: 18px;
       cursor: pointer;
-      box-shadow: 0 10px 28px rgba(8,63,102,.24) !important;
+      box-shadow: 0 6px 18px rgba(8,63,102,.2) !important;
       transition: transform .2s, box-shadow .2s, background .2s;
       position: relative;
       z-index: 1001;
@@ -6885,6 +6885,118 @@
       border: 1px solid rgba(255,255,255,0.15);
     }
     .print-preview-cancel:hover { background: rgba(255,255,255,0.18); }
+
+    /* Print Area Selection — auto rectangle overlay */
+    .print-area-vignette {
+      position: fixed; inset: 0; z-index: 10000;
+      background: rgba(15, 23, 42, 0.55);
+      pointer-events: none;
+      animation: print-area-fadein .3s ease-out;
+    }
+    .print-area-frame {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10001;
+      width: auto; height: 72vh;
+      aspect-ratio: 185 / 164;
+      border: 2.5px dashed rgba(255, 255, 255, 0.85);
+      border-radius: 6px;
+      box-shadow: inset 0 0 20px rgba(8, 121, 191, 0.08),
+                  0 0 32px rgba(8, 121, 191, 0.25);
+      pointer-events: none;
+      animation: print-area-fadein .3s ease-out;
+    }
+    .print-area-frame::before {
+      content: '';
+      position: absolute; inset: -6px;
+      border: 1px solid rgba(8, 183, 216, 0.35);
+      border-radius: 10px;
+      pointer-events: none;
+    }
+    .print-area-buttons {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10001;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: print-area-fadein .3s ease-out;
+    }
+    .print-area-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 28px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #0879bf, #12a7c8);
+      color: #fff;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 24px rgba(8,121,191,0.4);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .print-area-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(8,121,191,0.5);
+    }
+    .print-area-btn:active { transform: scale(0.96); }
+    .print-area-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .print-area-cancel {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.12);
+      color: #e2e8f0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.15);
+      transition: background .2s, transform .2s;
+    }
+    .print-area-cancel:hover {
+      background: rgba(239,68,68,0.15);
+      color: #fca5a5;
+      border-color: rgba(239,68,68,0.3);
+    }
+    .print-area-cancel:active { transform: scale(0.96); }
+
+    .print-instruction {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10001;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #e2e8f0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+      backdrop-filter: blur(8px);
+      animation: print-area-fadein .3s ease-out;
+    }
+    .print-instruction-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    @keyframes print-area-fadein {
+      from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
     .legend-toggle { cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-right: 28px; }
     .legend-toggle-icon { transition: transform .2s; font-size: 13px; color: #e2e8f0; background: rgba(255,255,255,.15); width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; flex-shrink: 0; line-height: 1; border: 1px solid rgba(255,255,255,.1); position: absolute; top: 4px; right: 4px; }
     .legend-toggle-icon:hover { background: rgba(255,255,255,.25); }
