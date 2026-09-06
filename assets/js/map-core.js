@@ -482,6 +482,40 @@ L.control.scale({
   new VectorBasemapControl().addTo(map);
   new SatelliteBasemapControl().addTo(map);
 
+  // Zoom Control
+  const ZoomControl = L.Control.extend({
+    options: { position: 'bottomright' },
+    onAdd: function() {
+      const wrap = L.DomUtil.create('div', 'zoom-control-wrap');
+
+      const zoomIn = L.DomUtil.create('button', 'zoom-control-btn zoom-control-in');
+      zoomIn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+      zoomIn.title = 'Zoom In';
+      zoomIn.setAttribute('aria-label', 'Zoom In');
+      zoomIn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        map.zoomIn();
+      });
+
+      const zoomOut = L.DomUtil.create('button', 'zoom-control-btn zoom-control-out');
+      zoomOut.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+      zoomOut.title = 'Zoom Out';
+      zoomOut.setAttribute('aria-label', 'Zoom Out');
+      zoomOut.addEventListener('click', function(e) {
+        e.stopPropagation();
+        map.zoomOut();
+      });
+
+      L.DomEvent.disableClickPropagation(wrap);
+      L.DomEvent.disableScrollPropagation(wrap);
+
+      wrap.appendChild(zoomIn);
+      wrap.appendChild(zoomOut);
+      return wrap;
+    }
+  });
+  new ZoomControl().addTo(map);
+
   // Draw FAB Control — round button below basemap, expands to show draw/measure tools
   const DrawFABControl = L.Control.extend({
     options: { position: 'bottomright' },

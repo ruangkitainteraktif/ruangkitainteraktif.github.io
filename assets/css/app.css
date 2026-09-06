@@ -518,6 +518,42 @@
     }
     .leaflet-control-attribution { display: none !important; }
     .leaflet-control-scale { display: none !important; }
+
+    /* Zoom Control */
+    .zoom-control-wrap {
+      display: flex;
+      flex-direction: column;
+      margin: 12px !important;
+      margin-bottom: 0 !important;
+      gap: 2px;
+    }
+    .zoom-control-btn {
+      display: grid;
+      place-items: center;
+      width: 46px !important;
+      height: 46px !important;
+      border: 1px solid rgba(255,255,255,.86) !important;
+      border-radius: 50% !important;
+      background: linear-gradient(145deg, #ffffff, #e9f7fc) !important;
+      color: #0879bf !important;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: 0 10px 28px rgba(8,63,102,.24) !important;
+      transition: transform .2s, box-shadow .2s, background .2s;
+      padding: 0;
+      margin: 0;
+    }
+    .zoom-control-btn::-moz-focus-inner { border: 0; }
+    .zoom-control-btn svg { width: 20px; height: 20px; display: block; }
+    .zoom-control-btn:hover {
+      background: linear-gradient(145deg, #ffffff, #d5f3fb) !important;
+      box-shadow: inset 0 0 0 1px rgba(8,121,191,.14);
+      transform: translateY(-2px);
+    }
+    .zoom-control-btn:active {
+      transform: scale(0.95);
+    }
     .leaflet-center .leaflet-control {
       float: none;
       clear: none;
@@ -6799,6 +6835,56 @@
 
     /* Legend collapse toggle */
     .legend-wrap { position: relative; }
+
+    /* ── Print Preview Overlay ── */
+    .print-preview-overlay {
+      position: fixed; inset: 0; z-index: 10000;
+      background: rgba(15, 23, 42, 0.9);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      backdrop-filter: blur(6px);
+    }
+    .print-preview-spinner {
+      width: 36px; height: 36px;
+      border: 3px solid rgba(255,255,255,0.15);
+      border-top-color: #38bdf8;
+      border-radius: 50%;
+      animation: map-spin 0.7s linear infinite;
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    }
+    .print-preview-container {
+      max-width: 92vw; max-height: 78vh;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .print-preview-container canvas {
+      max-width: 92vw; max-height: 78vh;
+      border-radius: 8px;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.5);
+      object-fit: contain;
+    }
+    .print-preview-actions {
+      position: absolute; bottom: 24px;
+      display: flex; gap: 12px; z-index: 10001;
+    }
+    .print-preview-confirm, .print-preview-cancel {
+      padding: 10px 28px; border-radius: 10px;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px; font-weight: 700;
+      cursor: pointer; border: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .print-preview-confirm {
+      background: linear-gradient(135deg, #0879bf, #12a7c8);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(8,121,191,0.35);
+    }
+    .print-preview-confirm:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(8,121,191,0.45); }
+    .print-preview-cancel {
+      background: rgba(255,255,255,0.1);
+      color: #e2e8f0;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .print-preview-cancel:hover { background: rgba(255,255,255,0.18); }
     .legend-toggle { cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-right: 28px; }
     .legend-toggle-icon { transition: transform .2s; font-size: 13px; color: #e2e8f0; background: rgba(255,255,255,.15); width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; flex-shrink: 0; line-height: 1; border: 1px solid rgba(255,255,255,.1); position: absolute; top: 4px; right: 4px; }
     .legend-toggle-icon:hover { background: rgba(255,255,255,.25); }

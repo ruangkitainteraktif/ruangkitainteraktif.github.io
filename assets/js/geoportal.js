@@ -1119,420 +1119,624 @@
     el._hideTimer = setTimeout(() => { el.style.display = 'none'; }, 4500);
   }
 
-  window.printGeoportalMap = async function () {
-    const btn = document.querySelector('.geoportal-print-btn');
-    if (btn) { btn.disabled = true; btn.innerHTML = window.GEOPORTAL_PRINT_SPINNER || '⏳'; }
-    showPrintLoading();
+  /* ── Print helpers ── */
+  const _arcgisLabels = {
+    'arcgis-sawah-2023': 'Sawah 2023 (Kementan)',
+    'arcgis-sawah-2019': 'LBS 2019 (Kementan)',
+    'arcgis-kawasan-padi': 'Kawasan Padi (Kementan)',
+    'arcgis-kawasan-jagung': 'Kawasan Jagung (Kementan)',
+    'arcgis-kawasan-kedelai': 'Kawasan Kedelai (Kementan)'
+  };
 
-    const hiddenEls = [];
-
-    try {
-      map.closePopup();
-
-      const arcgisLabels = {
-        'arcgis-sawah-2023': 'Sawah 2023 (Kementan)',
-        'arcgis-sawah-2019': 'LBS 2019 (Kementan)',
-        'arcgis-kawasan-padi': 'Kawasan Padi (Kementan)',
-        'arcgis-kawasan-jagung': 'Kawasan Jagung (Kementan)',
-        'arcgis-kawasan-kedelai': 'Kawasan Kedelai (Kementan)'
-      };
-
-      const labelMap = {};
-      const categoryMap = {};
-      if (typeof GEOPORTAL_LAYER_DATA !== 'undefined' && Array.isArray(GEOPORTAL_LAYER_DATA)) {
-        GEOPORTAL_LAYER_DATA.forEach(d => {
-          if (d && d.id) {
-            if (!labelMap[d.id]) labelMap[d.id] = d.label || d.id;
-            if (!categoryMap[d.id] && d.category) categoryMap[d.id] = d.category;
-          }
-        });
-      }
-      function dispName(layerName) {
-        const lbl = labelMap[layerName] || layerName;
-        const cat = categoryMap[layerName] || '';
-        return cat ? cat + ' — ' + lbl : lbl;
-      }
-
-      const allBasemapLabels = Object.assign({}, vectorBasemapLabels || {}, satelliteBasemapLabels || {});
-      const bmFriendly = allBasemapLabels[currentBasemapName] || currentBasemapName || 'Peta';
-
-      const titleNames = [];
-      getActiveGeoportalLayers().forEach(a => titleNames.push(dispName(a.layerName)));
-      getActiveArcgisLayers().forEach(a => titleNames.push(arcgisLabels[a.layerKey] || a.layerKey));
-      let titleText;
-      if (titleNames.length === 0) titleText = bmFriendly;
-      else titleText = titleNames.slice(0, 3).join(', ') + (titleNames.length > 3 ? ` (+${titleNames.length - 3})` : '');
-
-      const sidebar = document.getElementById('sidebar-left');
-      if (sidebar && !sidebar.classList.contains('collapsed')) {
-        sidebar.classList.add('collapsed');
-        hiddenEls.push({ restore: () => sidebar.classList.remove('collapsed') });
-      }
-
-      const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .geoportal-print-btn, .geoportal-legend, .basemap-btn, .basemap-control-wrap, .leaflet-control-scale, .detail-panel-btn, #detail-panel, .draw-fab-wrap');
-      overlays.forEach(el => {
-        if (el && getComputedStyle(el).display !== 'none') {
-          const prev = el.style.display;
-          el.style.setProperty('display', 'none', 'important');
-          hiddenEls.push({ restore: () => { el.style.display = prev; } });
+  function _buildLabelMap() {
+    const labelMap = {}, categoryMap = {};
+    if (typeof GEOPORTAL_LAYER_DATA !== 'undefined' && Array.isArray(GEOPORTAL_LAYER_DATA)) {
+      GEOPORTAL_LAYER_DATA.forEach(d => {
+        if (d && d.id) {
+          if (!labelMap[d.id]) labelMap[d.id] = d.label || d.id;
+          if (!categoryMap[d.id] && d.category) categoryMap[d.id] = d.category;
         }
       });
+    }
+    return { labelMap, categoryMap };
+  }
 
-      // Gunakan basemap & zoom yang sedang tampil di layar (tanpa pergantian basemap).
+  function _dispName(labelMap, categoryMap, layerName) {
+    const lbl = labelMap[layerName] || layerName;
+    const cat = categoryMap[layerName] || '';
+    return cat ? cat + ' \u2014 ' + lbl : lbl;
+  }
 
-      map.invalidateSize();
-      await new Promise(r => setTimeout(r, 400));
+  function _calcInterval(range, targetLines) {
+    const raw = range / targetLines;
+    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const norm = raw / mag;
+    if (norm <= 1.5) return mag;
+    if (norm <= 3.5) return 2 * mag;
+    if (norm <= 7.5) return 5 * mag;
+    return 10 * mag;
+  }
 
+  async function _loadLegendGraphic(url) {
+    try {
+      const res = await fetch(url, { mode: 'cors' });
+      if (!res.ok) return null;
+      const blob = await res.blob();
+      if (!blob || !blob.type || blob.type.indexOf('image') !== 0) return null;
+      const dataUrl = await new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(fr.result);
+        fr.onerror = reject;
+        fr.readAsDataURL(blob);
+      });
+      const im = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = dataUrl;
+      });
+      return { dataUrl, w: im.naturalWidth, h: im.naturalHeight };
+    } catch (e) { return null; }
+  }
+
+  /* ── Phase 1: Prepare print data ── */
+  async function preparePrintData() {
+    map.closePopup();
+
+    const { labelMap, categoryMap } = _buildLabelMap();
+    const allBasemapLabels = Object.assign({}, vectorBasemapLabels || {}, satelliteBasemapLabels || {});
+    const bmFriendly = allBasemapLabels[currentBasemapName] || currentBasemapName || 'Peta';
+
+    const titleNames = [];
+    getActiveGeoportalLayers().forEach(a => titleNames.push(_dispName(labelMap, categoryMap, a.layerName)));
+    getActiveArcgisLayers().forEach(a => titleNames.push(_arcgisLabels[a.layerKey] || a.layerKey));
+    let titleText;
+    if (titleNames.length === 0) titleText = bmFriendly;
+    else titleText = titleNames.slice(0, 3).join(', ') + (titleNames.length > 3 ? ` (+${titleNames.length - 3})` : '');
+
+    const sidebar = document.getElementById('sidebar-left');
+    const hiddenEls = [];
+    if (sidebar && !sidebar.classList.contains('collapsed')) {
+      sidebar.classList.add('collapsed');
+      hiddenEls.push({ restore: () => sidebar.classList.remove('collapsed') });
+    }
+
+    const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .geoportal-print-btn, .geoportal-legend, .basemap-btn, .basemap-control-wrap, .leaflet-control-scale, .detail-panel-btn, #detail-panel, .draw-fab-wrap');
+    overlays.forEach(el => {
+      if (el && getComputedStyle(el).display !== 'none') {
+        const prev = el.style.display;
+        el.style.setProperty('display', 'none', 'important');
+        hiddenEls.push({ restore: () => { el.style.display = prev; } });
+      }
+    });
+
+    map.invalidateSize();
+    await new Promise(r => setTimeout(r, 400));
+
+    const pageW = 297, pageH = 210, margin = 8;
+    const titleH = 14, bottomStripH = 14;
+    const mapFrameX = margin;
+    const mapFrameY = margin + titleH + 2;
+    const mapFrameW = 185;
+    const mapFrameH = pageH - margin * 2 - titleH - 2 - bottomStripH;
+    const panelX = mapFrameX + mapFrameW + 4;
+    const panelW = pageW - panelX - margin;
+    const panelH = mapFrameH;
+
+    let mapImg = null;
+    let effLonMin = null, effLonMax = null, effLatMin = null, effLatMax = null;
+    let mCX = mapFrameX + mapFrameW / 2, mCY = mapFrameY + mapFrameH / 2;
+
+    try {
+      const leafletContainer = document.querySelector('.leaflet-container');
+      if (leafletContainer) {
+        map.invalidateSize();
+        await new Promise(r => setTimeout(r, 200));
+        const mapCanvas = await html2canvas(leafletContainer, { useCORS: true, allowTaint: false, scale: 2, logging: false, backgroundColor: '#e8e8e8' });
+        const canvasAspect = mapCanvas.width / mapCanvas.height;
+        const frameAspect = mapFrameW / mapFrameH;
+        let cropX, cropY, cropW, cropH;
+        if (canvasAspect > frameAspect) {
+          cropH = mapCanvas.height; cropW = cropH * frameAspect;
+          cropX = (mapCanvas.width - cropW) / 2; cropY = 0;
+        } else {
+          cropW = mapCanvas.width; cropH = cropW / frameAspect;
+          cropX = 0; cropY = (mapCanvas.height - cropH) / 2;
+        }
+        const c = document.createElement('canvas');
+        c.width = Math.round(cropW); c.height = Math.round(cropH);
+        c.getContext('2d').drawImage(mapCanvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+        mapImg = c.toDataURL('image/jpeg', 0.92);
+
+        const vb = map.getBounds();
+        const lonMin = vb.getWest(), lonMax = vb.getEast();
+        const latMin = vb.getSouth(), latMax = vb.getNorth();
+        const fx = cropW / mapCanvas.width, fy = cropH / mapCanvas.height;
+        effLonMin = lonMin + (lonMax - lonMin) * (0.5 - fx / 2);
+        effLonMax = lonMin + (lonMax - lonMin) * (0.5 + fx / 2);
+        effLatMax = latMax - (latMax - latMin) * (0.5 - fy / 2);
+        effLatMin = latMax - (latMax - latMin) * (0.5 + fy / 2);
+        mCX = mapFrameX + mapFrameW / 2; mCY = mapFrameY + mapFrameH / 2;
+      }
+    } catch (e) {
+      console.warn('[PrintGeoportal] Gagal menangkap peta:', e);
+    }
+
+    const mapBounds = map.getBounds();
+    const latMin = (effLatMin != null) ? effLatMin : mapBounds.getSouth();
+    const latMax = (effLatMax != null) ? effLatMax : mapBounds.getNorth();
+    const lonMin = (effLonMin != null) ? effLonMin : mapBounds.getWest();
+    const lonMax = (effLonMax != null) ? effLonMax : mapBounds.getEast();
+
+    const legendItems = [];
+    getActiveGeoportalLayers().forEach(a => {
+      const isPoint = geoportalPointLayerKeys.has(`${a.wmsUrl}::${a.layerName}`);
+      legendItems.push({ kind: isPoint ? 'point' : 'wms', label: _dispName(labelMap, categoryMap, a.layerName), wmsUrl: a.wmsUrl, layerName: a.layerName });
+    });
+    getActiveArcgisLayers().forEach(a => {
+      legendItems.push({ kind: 'arcgis', label: _arcgisLabels[a.layerKey] || a.layerKey });
+    });
+    await Promise.all(legendItems.map(async it => {
+      if (it.kind !== 'wms') return;
+      const r = await _loadLegendGraphic(buildGeoportalLegendGraphicUrl(it.wmsUrl, it.layerName));
+      if (r && r.w > 2 && r.h > 2) { it.img = r.dataUrl; it.iw = r.w; it.ih = r.h; }
+    }));
+
+    const satLegends = (typeof window.SATELLITE_LEGENDS !== 'undefined') ? window.SATELLITE_LEGENDS : null;
+    const bmLegend = satLegends && satLegends[currentBasemapName] ? satLegends[currentBasemapName] : null;
+
+    const activeNames = [];
+    getActiveGeoportalLayers().forEach(a => activeNames.push(_dispName(labelMap, categoryMap, a.layerName)));
+    getActiveArcgisLayers().forEach(a => activeNames.push(_arcgisLabels[a.layerKey] || a.layerKey));
+
+    return {
+      hiddenEls, titleText, bmFriendly, mapImg, legendItems, bmLegend, activeNames,
+      pageW, pageH, margin, titleH, bottomStripH,
+      mapFrameX, mapFrameY, mapFrameW, mapFrameH,
+      panelX, panelW, panelH, mCX, mCY,
+      latMin, latMax, lonMin, lonMax, now: new Date()
+    };
+  }
+
+  /* ── Phase 2a: Render canvas preview ── */
+  function renderPreviewCanvas(data) {
+    const SCALE = 2;
+    const cW = data.pageW * SCALE;
+    const cH = data.pageH * SCALE;
+    const s = SCALE;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'print-preview-overlay';
+    overlay.innerHTML = '<div class="print-preview-spinner"></div>';
+    document.body.appendChild(overlay);
+
+    const container = document.createElement('div');
+    container.className = 'print-preview-container';
+    const canvas = document.createElement('canvas');
+    canvas.width = cW; canvas.height = cH;
+    container.appendChild(canvas);
+
+    const actions = document.createElement('div');
+    actions.className = 'print-preview-actions';
+    actions.innerHTML = '<button class="print-preview-cancel">\u2715 Batal</button><button class="print-preview-confirm">\uD83D\uDCBB Cetak PDF</button>';
+    overlay.appendChild(container);
+    overlay.appendChild(actions);
+
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, cW, cH);
+
+    ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 0.4 * s;
+    ctx.strokeRect(data.margin * s, data.margin * s, (data.pageW - data.margin * 2) * s, (data.pageH - data.margin * 2) * s);
+
+    ctx.strokeStyle = '#c8c8c8'; ctx.lineWidth = 0.2 * s;
+    ctx.beginPath();
+    ctx.moveTo(data.margin * s, (data.margin + data.titleH) * s);
+    ctx.lineTo((data.pageW - data.margin) * s, (data.margin + data.titleH) * s);
+    ctx.stroke();
+
+    ctx.fillStyle = '#1e293b'; ctx.font = 'bold 12px "Segoe UI", system-ui, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(data.titleText, (data.margin + 2) * s, (data.margin + data.titleH / 2) * s);
+
+    const dateFormatted = data.now.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+    ctx.fillStyle = '#64748b'; ctx.font = '7.5px "Segoe UI", system-ui, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(dateFormatted, (data.pageW - data.margin - 2) * s, (data.margin + 5) * s);
+    ctx.fillText('Basemap: ' + data.bmFriendly, (data.pageW - data.margin - 2) * s, (data.margin + 9) * s);
+    ctx.fillStyle = '#969696'; ctx.font = '7px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText('WGS84 / EPSG:4326', (data.pageW - data.margin - 2) * s, (data.margin + 12) * s);
+    ctx.textAlign = 'left';
+
+    ctx.strokeStyle = '#374151'; ctx.lineWidth = 0.3 * s;
+    ctx.strokeRect(data.mapFrameX * s, data.mapFrameY * s, data.mapFrameW * s, data.mapFrameH * s);
+
+    if (data.mapImg) {
+      const img = new Image();
+      img.onload = function () {
+        ctx.drawImage(img, data.mapFrameX * s, data.mapFrameY * s, data.mapFrameW * s, data.mapFrameH * s);
+        _drawPreviewOverlay(ctx, data, s, cW, cH);
+      };
+      img.src = data.mapImg;
+    } else {
+      _drawPreviewOverlay(ctx, data, s, cW, cH);
+    }
+
+    actions.querySelector('.print-preview-cancel').addEventListener('click', function () {
+      overlay.remove();
+      data.hiddenEls.forEach(h => { if (h.restore) try { h.restore(); } catch (e) {} });
+      try { map.invalidateSize(); } catch (e) {}
+    });
+
+    actions.querySelector('.print-preview-confirm').addEventListener('click', function () {
+      overlay.remove();
+      generatePDF(data);
+    });
+  }
+
+  function _drawPreviewOverlay(ctx, data, s, cW, cH) {
+    const { mapFrameX, mapFrameY, mapFrameW, mapFrameH, panelX, panelW, panelH,
+      margin, pageW, titleH, mCX, mCY, latMin, latMax, lonMin, lonMax, legendItems, bmLegend, activeNames } = data;
+
+    ctx.strokeStyle = '#374151'; ctx.lineWidth = 0.3 * s;
+    ctx.strokeRect(mapFrameX * s, mapFrameY * s, mapFrameW * s, mapFrameH * s);
+
+    ctx.save(); ctx.globalAlpha = 0.6; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = 'bold 28px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText('PREVIEW', mCX * s, (mCY - 9) * s);
+    ctx.font = 'bold 22px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText('RUANGKITA PRO', mCX * s, (mCY + 1) * s);
+    ctx.font = '9px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText('ruangkita.net', mCX * s, (mCY + 11) * s);
+    ctx.restore();
+
+    const latRange = latMax - latMin, lonRange = lonMax - lonMin;
+    const latInterval = _calcInterval(latRange, 6), lonInterval = _calcInterval(lonRange, 8);
+    ctx.strokeStyle = '#b4b4b4'; ctx.lineWidth = 0.15 * s;
+    ctx.setLineDash([1.5 * s, 1.5 * s]);
+    ctx.font = '6px "Segoe UI", system-ui, sans-serif'; ctx.fillStyle = '#505050';
+    const latStart = Math.ceil(latMin / latInterval) * latInterval;
+    for (let lat = latStart; lat <= latMax; lat += latInterval) {
+      const ratio = (lat - latMin) / latRange;
+      const py = mapFrameY + mapFrameH - ratio * mapFrameH;
+      ctx.beginPath(); ctx.moveTo(mapFrameX * s, py * s); ctx.lineTo((mapFrameX + mapFrameW) * s, py * s); ctx.stroke();
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText(lat.toFixed(latInterval < 0.1 ? 2 : 1) + '\u00B0', (mapFrameX - 1) * s, (py + 1.5) * s);
+    }
+    const lonStart = Math.ceil(lonMin / lonInterval) * lonInterval;
+    for (let lon = lonStart; lon <= lonMax; lon += lonInterval) {
+      const ratio = (lon - lonMin) / lonRange;
+      const px = mapFrameX + ratio * mapFrameW;
+      ctx.beginPath(); ctx.moveTo(px * s, mapFrameY * s); ctx.lineTo(px * s, (mapFrameY + mapFrameH) * s); ctx.stroke();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(lon.toFixed(lonInterval < 0.1 ? 2 : 1) + '\u00B0', px * s, (mapFrameY + mapFrameH + 3.5) * s);
+    }
+    ctx.setLineDash([]);
+
+    ctx.strokeStyle = '#c8c8c8'; ctx.lineWidth = 0.2 * s;
+    ctx.beginPath(); ctx.moveTo(panelX * s, mapFrameY * s); ctx.lineTo(panelX * s, (mapFrameY + panelH) * s); ctx.stroke();
+
+    const headTitle = activeNames.length ? activeNames.join(' / ') : 'LAYER AKTIF';
+    let py = mapFrameY + 4;
+    ctx.fillStyle = '#1e293b'; ctx.font = 'bold 9px "Segoe UI", system-ui, sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText(headTitle, (panelX + 4) * s, py * s);
+    py += 6;
+    ctx.strokeStyle = '#c8c8c8'; ctx.lineWidth = 0.2 * s;
+    ctx.beginPath(); ctx.moveTo((panelX + 4) * s, py * s); ctx.lineTo((panelX + panelW - 4) * s, py * s); ctx.stroke();
+    py += 4;
+
+    const sLatMin = (data.latMin != null) ? data.latMin : latMin;
+    const sLatMax = (data.latMax != null) ? data.latMax : latMax;
+    const centerLatS = (sLatMin + sLatMax) / 2;
+    const mPerDegS = 111132.92 - 559.82 * Math.cos(2 * centerLatS * Math.PI / 180);
+    const mPerPxS = ((sLatMax - sLatMin) * mPerDegS) / mapFrameH;
+    const naCX = panelX + panelW / 2, naCY = py + 11, naR = 9;
+    ctx.fillStyle = '#1e293b'; ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 0.3 * s;
+    ctx.beginPath(); ctx.arc(naCX * s, naCY * s, naR * s, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(naCX * s, (naCY - naR + 1.5) * s);
+    ctx.lineTo((naCX - 2.8) * s, naCY * s);
+    ctx.lineTo((naCX + 2.8) * s, naCY * s);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#94a3b8'; ctx.beginPath();
+    ctx.moveTo(naCX * s, (naCY + naR - 1.5) * s);
+    ctx.lineTo((naCX - 2.8) * s, naCY * s);
+    ctx.lineTo((naCX + 2.8) * s, naCY * s);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#1e293b'; ctx.font = 'bold 6px "Segoe UI", system-ui, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText('N', naCX * s, (naCY - naR - 2) * s);
+    ctx.fillStyle = '#64748b'; ctx.font = '5.5px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText('UTARA', naCX * s, (naCY + naR + 3) * s);
+
+    const sbPixelLen = 44;
+    const rawM = sbPixelLen * mPerPxS;
+    const tM = Math.pow(10, Math.floor(Math.log10(rawM)));
+    const nrm = rawM / tM;
+    const niceM = (nrm <= 1.5) ? 1 * tM : (nrm <= 3.5) ? 2 * tM : (nrm <= 7.5) ? 5 * tM : 10 * tM;
+    const niceW = niceM / mPerPxS;
+    const sbLX = panelX + (panelW - niceW) / 2;
+    const sbBY = naCY + naR + 9;
+    const sbH = 1.8;
+    ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 0.3 * s;
+    ctx.beginPath(); ctx.moveTo(sbLX * s, sbBY * s); ctx.lineTo((sbLX + niceW) * s, sbBY * s); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sbLX * s, (sbBY - 1.3) * s); ctx.lineTo(sbLX * s, (sbBY + 1.3) * s); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo((sbLX + niceW / 2) * s, (sbBY - 1.3) * s); ctx.lineTo((sbLX + niceW / 2) * s, (sbBY + 1.3) * s); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo((sbLX + niceW) * s, (sbBY - 1.3) * s); ctx.lineTo((sbLX + niceW) * s, (sbBY + 1.3) * s); ctx.stroke();
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(sbLX * s, (sbBY - sbH / 2) * s, (niceW / 2) * s, sbH * s);
+    ctx.fillStyle = '#dce0e6';
+    ctx.fillRect((sbLX + niceW / 2) * s, (sbBY - sbH / 2) * s, (niceW / 2) * s, sbH * s);
+    const sbUnit = niceM >= 1000 ? (niceM / 1000) + ' km' : niceM + ' m';
+    ctx.fillStyle = '#374151'; ctx.font = '5.5px "Segoe UI", system-ui, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText('0', sbLX * s, (sbBY - 2.4) * s);
+    ctx.fillText(sbUnit, (sbLX + niceW) * s, (sbBY - 2.4) * s);
+    ctx.fillStyle = '#64748b'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText('SKALA', sbLX * s, (sbBY + 3) * s);
+    py = sbBY + 8;
+
+    py += 4;
+    ctx.strokeStyle = '#c8c8c8'; ctx.lineWidth = 0.2 * s;
+    ctx.beginPath(); ctx.moveTo((panelX + 4) * s, py * s); ctx.lineTo((panelX + panelW - 4) * s, py * s); ctx.stroke();
+    py += 5;
+    ctx.fillStyle = '#64748b'; ctx.font = 'bold 6.5px "Segoe UI", system-ui, sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText('LEGENDA', (panelX + 4) * s, (py + 3) * s);
+    py += 6;
+
+    if (bmLegend) {
+      ctx.fillStyle = '#374151'; ctx.font = 'bold 6.5px "Segoe UI", system-ui, sans-serif';
+      ctx.fillText(bmLegend.title + (bmLegend.unit ? ' \u2014 ' + bmLegend.unit : ''), (panelX + 4) * s, (py + 2.5) * s);
+      py += 4.5;
+      const gradX = panelX + 4, gradW = panelW - 20, gradH = 4;
+      const stops = bmLegend.gradient;
+      for (let gx = 0; gx < gradW; gx++) {
+        let t = gx / gradW, c1 = stops[0][1], c2 = stops[stops.length - 1][1];
+        for (let si = 0; si < stops.length - 1; si++) {
+          if (t >= stops[si][0] && t <= stops[si + 1][0]) {
+            const lt = (stops[si + 1][0] === stops[si][0]) ? 0 : (t - stops[si][0]) / (stops[si + 1][0] - stops[si][0]);
+            c1 = stops[si][1]; c2 = stops[si + 1][1];
+            ctx.fillStyle = 'rgb(' + Math.round(c1[0] + (c2[0] - c1[0]) * lt) + ',' + Math.round(c1[1] + (c2[1] - c1[1]) * lt) + ',' + Math.round(c1[2] + (c2[2] - c1[2]) * lt) + ')';
+            break;
+          }
+        }
+        if (t >= stops[stops.length - 1][0]) { const lc = stops[stops.length - 1][1]; ctx.fillStyle = 'rgb(' + lc[0] + ',' + lc[1] + ',' + lc[2] + ')'; }
+        ctx.fillRect((gradX + gx) * s, py * s, 1 * s, gradH * s);
+      }
+      ctx.strokeStyle = '#374151'; ctx.lineWidth = 0.15 * s;
+      ctx.strokeRect(gradX * s, py * s, gradW * s, gradH * s);
+      py += gradH + 1.5;
+      const bmLabels = bmLegend.labels;
+      if (bmLabels && bmLabels.length) {
+        ctx.fillStyle = '#505050'; ctx.font = '5px "Segoe UI", system-ui, sans-serif';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText(bmLabels[0], gradX * s, (py + 1) * s);
+        ctx.textAlign = 'right';
+        ctx.fillText(bmLabels[bmLabels.length - 1], (gradX + gradW) * s, (py + 1) * s);
+        if (bmLabels.length > 2) { ctx.textAlign = 'center'; ctx.fillText(bmLabels[Math.floor(bmLabels.length / 2)], (gradX + gradW / 2) * s, (py + 1) * s); }
+        py += 4;
+      }
+      py += 2;
+    }
+
+    if (legendItems.length === 0 && !bmLegend) {
+      ctx.fillStyle = '#969696'; ctx.font = '6.5px "Segoe UI", system-ui, sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.fillText('Tidak ada layer aktif', (panelX + 4) * s, (py + 3) * s);
+    } else if (legendItems.length > 0) {
+      const MM_PER_PX = 25.4 / 96;
+      legendItems.forEach(it => {
+        const hasImg = it.kind === 'wms' && it.img;
+        let imgW, imgH;
+        if (hasImg) {
+          imgW = it.iw * MM_PER_PX; imgH = it.ih * MM_PER_PX;
+          const maxW = panelW - 12, maxH = 16;
+          if (imgW > maxW) { imgH *= maxW / imgW; imgW = maxW; }
+          if (imgH > maxH) { imgW *= maxH / imgH; imgH = maxH; }
+        } else { imgW = 6; imgH = 4.4; }
+        const txtLines = [it.label];
+        const rowH = txtLines.length * 3 + 1.5 + imgH + 2;
+        if (py + rowH > mapFrameY + panelH - 3) return;
+        ctx.fillStyle = '#374151'; ctx.font = '6.5px "Segoe UI", system-ui, sans-serif';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        txtLines.forEach(ln => { ctx.fillText(ln, (panelX + 4) * s, (py + 2.5) * s); py += 3; });
+        py += 1.5;
+        if (hasImg) {
+          try {
+            const li = new Image(); li.src = it.img;
+            if (li.complete) ctx.drawImage(li, (panelX + 4) * s, py * s, imgW * s, imgH * s);
+          } catch (e) {}
+        } else if (it.kind === 'point') {
+          ctx.fillStyle = '#e74c3c'; ctx.beginPath();
+          ctx.arc((panelX + 6) * s, (py + 2.2) * s, 1.8 * s, 0, Math.PI * 2); ctx.fill();
+        } else {
+          ctx.fillStyle = '#64748b';
+          ctx.beginPath();
+          const rx = (panelX + 4) * s, ry = (py + 0.3) * s, rw = 6 * s, rh = (imgH - 0.6) * s, rr = 0.8 * s;
+          ctx.moveTo(rx + rr, ry); ctx.lineTo(rx + rw - rr, ry); ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + rr);
+          ctx.lineTo(rx + rw, ry + rh - rr); ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - rr, ry + rh);
+          ctx.lineTo(rx + rr, ry + rh); ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - rr);
+          ctx.lineTo(rx, ry + rr); ctx.quadraticCurveTo(rx, ry, rx + rr, ry);
+          ctx.closePath(); ctx.fill();
+        }
+        py += imgH + 2;
+      });
+    }
+
+    canvas.style.display = 'block';
+    const spinner = document.querySelector('.print-preview-spinner');
+    if (spinner) spinner.style.display = 'none';
+  }
+
+  /* ── Phase 2b: Generate PDF ── */
+  async function generatePDF(data) {
+    const btn = document.querySelector('.geoportal-print-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = window.GEOPORTAL_PRINT_SPINNER || '\u23F3'; }
+    showPrintLoading();
+    try {
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-      const pageW = 297, pageH = 210, margin = 8;
-      const titleH = 14, bottomStripH = 14;
-      const mapFrameX = margin;
-      const mapFrameY = margin + titleH + 2;
-      const mapFrameW = 185;
-      const mapFrameH = pageH - margin * 2 - titleH - 2 - bottomStripH;
-      const panelX = mapFrameX + mapFrameW + 4;
-      const panelW = pageW - panelX - margin;
-      const panelH = mapFrameH;
+      const { pageW, pageH, margin, titleH, bottomStripH,
+        mapFrameX, mapFrameY, mapFrameW, mapFrameH,
+        panelX, panelW, panelH, mCX, mCY,
+        latMin, latMax, lonMin, lonMax, now } = data;
 
-      pdf.setDrawColor(30, 41, 59);
-      pdf.setLineWidth(0.4);
+      pdf.setDrawColor(30, 41, 59); pdf.setLineWidth(0.4);
       pdf.rect(margin, margin, pageW - margin * 2, pageH - margin * 2);
-
-      pdf.setDrawColor(200, 200, 200);
-      pdf.setLineWidth(0.2);
+      pdf.setDrawColor(200, 200, 200); pdf.setLineWidth(0.2);
       pdf.line(margin, margin + titleH, pageW - margin, margin + titleH);
 
-      const now = new Date();
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(12);
-      pdf.setTextColor(30, 41, 59);
-      pdf.text(titleText, margin + 2, margin + titleH / 2, { baseline: 'middle' });
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(7.5);
-      pdf.setTextColor(100, 116, 139);
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(12); pdf.setTextColor(30, 41, 59);
+      pdf.text(data.titleText, margin + 2, margin + titleH / 2, { baseline: 'middle' });
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7.5); pdf.setTextColor(100, 116, 139);
       const dateFormatted = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
       pdf.text(dateFormatted, pageW - margin - 2, margin + 5, { align: 'right' });
-      const bmName = bmFriendly;
-      pdf.text('Basemap: ' + bmName, pageW - margin - 2, margin + 9, { align: 'right' });
-      pdf.setFontSize(7);
-      pdf.setTextColor(150, 150, 150);
+      pdf.text('Basemap: ' + data.bmFriendly, pageW - margin - 2, margin + 9, { align: 'right' });
+      pdf.setFontSize(7); pdf.setTextColor(150, 150, 150);
       pdf.text('WGS84 / EPSG:4326', pageW - margin - 2, margin + 12, { align: 'right' });
 
-      pdf.setDrawColor(55, 65, 81);
-      pdf.setLineWidth(0.3);
+      pdf.setDrawColor(55, 65, 81); pdf.setLineWidth(0.3);
       pdf.rect(mapFrameX, mapFrameY, mapFrameW, mapFrameH);
 
-      let mCX = mapFrameX + mapFrameW / 2, mCY = mapFrameY + mapFrameH / 2;
-      let effLonMin = null, effLonMax = null, effLatMin = null, effLatMax = null;
-      try {
-        const leafletContainer = document.querySelector('.leaflet-container');
-        if (leafletContainer) {
-          map.invalidateSize();
-          await new Promise(r => setTimeout(r, 200));
-          const mapCanvas = await html2canvas(leafletContainer, { useCORS: true, allowTaint: false, scale: 2, logging: false, backgroundColor: '#e8e8e8' });
-
-          const canvasAspect = mapCanvas.width / mapCanvas.height;
-          const frameAspect = mapFrameW / mapFrameH;
-          let cropX, cropY, cropW, cropH;
-          if (canvasAspect > frameAspect) {
-            cropH = mapCanvas.height;
-            cropW = cropH * frameAspect;
-            cropX = (mapCanvas.width - cropW) / 2;
-            cropY = 0;
-          } else {
-            cropW = mapCanvas.width;
-            cropH = cropW / frameAspect;
-            cropX = 0;
-            cropY = (mapCanvas.height - cropH) / 2;
-          }
-          const c = document.createElement('canvas');
-          c.width = Math.round(cropW);
-          c.height = Math.round(cropH);
-          c.getContext('2d').drawImage(mapCanvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-          const mapImg = c.toDataURL('image/jpeg', 0.92);
-          pdf.addImage(mapImg, 'JPEG', mapFrameX, mapFrameY, mapFrameW, mapFrameH);
-          mCX = mapFrameX + mapFrameW / 2;
-          mCY = mapFrameY + mapFrameH / 2;
-
-          const vb = map.getBounds();
-          const lonMin = vb.getWest(), lonMax = vb.getEast();
-          const latMin = vb.getSouth(), latMax = vb.getNorth();
-          const fx = cropW / mapCanvas.width, fy = cropH / mapCanvas.height;
-          effLonMin = lonMin + (lonMax - lonMin) * (0.5 - fx / 2);
-          effLonMax = lonMin + (lonMax - lonMin) * (0.5 + fx / 2);
-          effLatMax = latMax - (latMax - latMin) * (0.5 - fy / 2);
-          effLatMin = latMax - (latMax - latMin) * (0.5 + fy / 2);
-        }
-      } catch (e) {
-        console.warn('[PrintGeoportal] Gagal menangkap peta (layer tanpa CORS?):', e);
+      if (data.mapImg) {
+        pdf.addImage(data.mapImg, 'JPEG', mapFrameX, mapFrameY, mapFrameW, mapFrameH);
       }
 
-      pdf.setDrawColor(55, 65, 81);
-      pdf.setLineWidth(0.3);
+      pdf.setDrawColor(55, 65, 81); pdf.setLineWidth(0.3);
       pdf.rect(mapFrameX, mapFrameY, mapFrameW, mapFrameH, 'S');
 
       try {
         pdf.saveGraphicsState();
-        if (typeof pdf.GState === 'function') {
-          pdf.setGState(new pdf.GState({ opacity: 0.6 }));
-          pdf.setTextColor(255, 255, 255);
-        } else {
-          pdf.setTextColor(255, 255, 255);
-        }
-        pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(28);
+        if (typeof pdf.GState === 'function') pdf.setGState(new pdf.GState({ opacity: 0.6 }));
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFont('helvetica', 'bold'); pdf.setFontSize(28);
         pdf.text('PREVIEW', mCX, mCY - 9, { align: 'center', baseline: 'middle' });
         pdf.setFontSize(22);
         pdf.text('RUANGKITA PRO', mCX, mCY + 1, { align: 'center', baseline: 'middle' });
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9);
         pdf.text('ruangkita.net', mCX, mCY + 11, { align: 'center', baseline: 'middle' });
         pdf.restoreGraphicsState();
-      } catch (e) {
-        console.warn('[PrintGeoportal] Watermark gagal:', e);
-      }
-
-      const mapBounds = map.getBounds();
-      const latMin = (effLatMin != null) ? effLatMin : mapBounds.getSouth();
-      const latMax = (effLatMax != null) ? effLatMax : mapBounds.getNorth();
-      const lonMin = (effLonMin != null) ? effLonMin : mapBounds.getWest();
-      const lonMax = (effLonMax != null) ? effLonMax : mapBounds.getEast();
-
-      function calcInterval(range, targetLines) {
-        const raw = range / targetLines;
-        const mag = Math.pow(10, Math.floor(Math.log10(raw)));
-        const norm = raw / mag;
-        if (norm <= 1.5) return mag;
-        if (norm <= 3.5) return 2 * mag;
-        if (norm <= 7.5) return 5 * mag;
-        return 10 * mag;
-      }
+      } catch (e) {}
 
       const latRange = latMax - latMin, lonRange = lonMax - lonMin;
-      const latInterval = calcInterval(latRange, 6), lonInterval = calcInterval(lonRange, 8);
-      pdf.setDrawColor(180, 180, 180);
-      pdf.setLineWidth(0.15);
-      pdf.setFontSize(6);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(80, 80, 80);
-
+      const latInterval = _calcInterval(latRange, 6), lonInterval = _calcInterval(lonRange, 8);
+      pdf.setDrawColor(180, 180, 180); pdf.setLineWidth(0.15);
+      pdf.setFontSize(6); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(80, 80, 80);
       const latStart = Math.ceil(latMin / latInterval) * latInterval;
       for (let lat = latStart; lat <= latMax; lat += latInterval) {
         const ratio = (lat - latMin) / latRange;
         const py = mapFrameY + mapFrameH - ratio * mapFrameH;
-        pdf.setLineDashPattern([1.5, 1.5], 0);
-        pdf.line(mapFrameX, py, mapFrameX + mapFrameW, py);
-        pdf.setLineDashPattern([], 0);
-        const label = lat.toFixed(latInterval < 0.1 ? 2 : 1) + '°';
-        pdf.text(label, mapFrameX - 1, py + 1.5, { align: 'right' });
+        pdf.setLineDashPattern([1.5, 1.5], 0); pdf.line(mapFrameX, py, mapFrameX + mapFrameW, py); pdf.setLineDashPattern([], 0);
+        pdf.text(lat.toFixed(latInterval < 0.1 ? 2 : 1) + '\u00B0', mapFrameX - 1, py + 1.5, { align: 'right' });
       }
-
       const lonStart = Math.ceil(lonMin / lonInterval) * lonInterval;
       for (let lon = lonStart; lon <= lonMax; lon += lonInterval) {
         const ratio = (lon - lonMin) / lonRange;
         const px = mapFrameX + ratio * mapFrameW;
-        pdf.setLineDashPattern([1.5, 1.5], 0);
-        pdf.line(px, mapFrameY, px, mapFrameY + mapFrameH);
-        pdf.setLineDashPattern([], 0);
-        const label = lon.toFixed(lonInterval < 0.1 ? 2 : 1) + '°';
-        pdf.text(label, px, mapFrameY + mapFrameH + 3.5, { align: 'center' });
+        pdf.setLineDashPattern([1.5, 1.5], 0); pdf.line(px, mapFrameY, px, mapFrameY + mapFrameH); pdf.setLineDashPattern([], 0);
+        pdf.text(lon.toFixed(lonInterval < 0.1 ? 2 : 1) + '\u00B0', px, mapFrameY + mapFrameH + 3.5, { align: 'center' });
       }
 
-      // --- Kumpulkan & muat grafik legenda (GetLegendGraphic) untuk layer aktif ---
-      const legendItems = [];
-      getActiveGeoportalLayers().forEach(a => {
-        const isPoint = geoportalPointLayerKeys.has(`${a.wmsUrl}::${a.layerName}`);
-        legendItems.push({ kind: isPoint ? 'point' : 'wms', label: dispName(a.layerName), wmsUrl: a.wmsUrl, layerName: a.layerName });
-      });
-      getActiveArcgisLayers().forEach(a => {
-        legendItems.push({ kind: 'arcgis', label: arcgisLabels[a.layerKey] || a.layerKey });
-      });
-      async function loadLegendGraphic(url) {
-        try {
-          const res = await fetch(url, { mode: 'cors' });
-          if (!res.ok) return null;
-          const blob = await res.blob();
-          if (!blob || !blob.type || blob.type.indexOf('image') !== 0) return null;
-          const dataUrl = await new Promise((resolve, reject) => {
-            const fr = new FileReader();
-            fr.onload = () => resolve(fr.result);
-            fr.onerror = reject;
-            fr.readAsDataURL(blob);
-          });
-          const im = await new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = reject;
-            img.src = dataUrl;
-          });
-          return { dataUrl, w: im.naturalWidth, h: im.naturalHeight };
-        } catch (e) { return null; }
-      }
-      await Promise.all(legendItems.map(async it => {
-        if (it.kind !== 'wms') return;
-        const r = await loadLegendGraphic(buildGeoportalLegendGraphicUrl(it.wmsUrl, it.layerName));
-        if (r && r.w > 2 && r.h > 2) { it.img = r.dataUrl; it.iw = r.w; it.ih = r.h; }
-      }));
-
-      // Skala & Arah Utara dipindah ke kolom LAYER AKTIF (gaya modern ArcGIS Pro).
-
-      pdf.setDrawColor(200, 200, 200);
-      pdf.setLineWidth(0.2);
+      pdf.setDrawColor(200, 200, 200); pdf.setLineWidth(0.2);
       pdf.line(panelX, mapFrameY, panelX, mapFrameY + panelH);
-      const activeNames = [];
-      getActiveGeoportalLayers().forEach(a => { activeNames.push(dispName(a.layerName)); });
-      getActiveArcgisLayers().forEach(a => { activeNames.push(arcgisLabels[a.layerKey] || a.layerKey); });
-      const headTitle = activeNames.length ? activeNames.join(' / ') : 'LAYER AKTIF';
+      const headTitle = data.activeNames.length ? data.activeNames.join(' / ') : 'LAYER AKTIF';
       let py = mapFrameY + 4;
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(9);
-      pdf.setTextColor(30, 41, 59);
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9); pdf.setTextColor(30, 41, 59);
       pdf.text(headTitle, panelX + 4, py, { maxWidth: panelW - 8 });
       py += 6;
-      pdf.setDrawColor(200, 200, 200);
-      pdf.setLineWidth(0.2);
+      pdf.setDrawColor(200, 200, 200); pdf.setLineWidth(0.2);
       pdf.line(panelX + 4, py, panelX + panelW - 4, py);
       py += 4;
 
-      // --- Arah Utara & Skala (atas kolom, gaya modern ArcGIS Pro) ---
-      const sLatMin = (effLatMin != null) ? effLatMin : latMin;
-      const sLatMax = (effLatMax != null) ? effLatMax : latMax;
+      const sLatMin = (data.latMin != null) ? data.latMin : latMin;
+      const sLatMax = (data.latMax != null) ? data.latMax : latMax;
       const centerLatS = (sLatMin + sLatMax) / 2;
       const mPerDegS = 111132.92 - 559.82 * Math.cos(2 * centerLatS * Math.PI / 180);
       const mPerPxS = ((sLatMax - sLatMin) * mPerDegS) / mapFrameH;
-
       const naCX = panelX + panelW / 2, naCY = py + 11, naR = 9;
-      pdf.setDrawColor(30, 41, 59);
-      pdf.setLineWidth(0.3);
+      pdf.setDrawColor(30, 41, 59); pdf.setLineWidth(0.3);
       if (typeof pdf.circle === 'function') pdf.circle(naCX, naCY, naR);
       pdf.setFillColor(30, 41, 59);
       pdf.triangle(naCX, naCY - naR + 1.5, naCX - 2.8, naCY, naCX + 2.8, naCY, 'F');
-      pdf.setDrawColor(148, 163, 184);
-      pdf.setLineWidth(0.3);
+      pdf.setDrawColor(148, 163, 184); pdf.setLineWidth(0.3);
       pdf.triangle(naCX, naCY + naR - 1.5, naCX - 2.8, naCY, naCX + 2.8, naCY);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(6);
-      pdf.setTextColor(30, 41, 59);
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(6); pdf.setTextColor(30, 41, 59);
       pdf.text('N', naCX, naCY - naR - 2, { align: 'center' });
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(5.5);
-      pdf.setTextColor(100, 116, 139);
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(5.5); pdf.setTextColor(100, 116, 139);
       pdf.text('UTARA', naCX, naCY + naR + 3, { align: 'center' });
 
-      const sbPixelLen = 44;
-      const rawM = sbPixelLen * mPerPxS;
+      const sbPixelLen = 44, rawM = sbPixelLen * mPerPxS;
       const tM = Math.pow(10, Math.floor(Math.log10(rawM)));
       const nrm = rawM / tM;
       const niceM = (nrm <= 1.5) ? 1 * tM : (nrm <= 3.5) ? 2 * tM : (nrm <= 7.5) ? 5 * tM : 10 * tM;
       const niceW = niceM / mPerPxS;
-      const sbLX = panelX + (panelW - niceW) / 2;
-      const sbBY = naCY + naR + 9;
-      pdf.setDrawColor(30, 41, 59);
-      pdf.setLineWidth(0.3);
+      const sbLX = panelX + (panelW - niceW) / 2, sbBY = naCY + naR + 9, sbH = 1.8;
+      pdf.setDrawColor(30, 41, 59); pdf.setLineWidth(0.3);
       pdf.line(sbLX, sbBY, sbLX + niceW, sbBY);
       pdf.line(sbLX, sbBY - 1.3, sbLX, sbBY + 1.3);
       pdf.line(sbLX + niceW / 2, sbBY - 1.3, sbLX + niceW / 2, sbBY + 1.3);
       pdf.line(sbLX + niceW, sbBY - 1.3, sbLX + niceW, sbBY + 1.3);
-      const sbH = 1.8;
-      pdf.setDrawColor(30, 41, 59);
       pdf.setLineWidth(0.2);
-      pdf.setFillColor(30, 41, 59);
-      pdf.rect(sbLX, sbBY - sbH / 2, niceW / 2, sbH, 'FD');
-      pdf.setFillColor(220, 224, 230);
-      pdf.rect(sbLX + niceW / 2, sbBY - sbH / 2, niceW / 2, sbH, 'FD');
+      pdf.setFillColor(30, 41, 59); pdf.rect(sbLX, sbBY - sbH / 2, niceW / 2, sbH, 'FD');
+      pdf.setFillColor(220, 224, 230); pdf.rect(sbLX + niceW / 2, sbBY - sbH / 2, niceW / 2, sbH, 'FD');
       const sbUnit = niceM >= 1000 ? (niceM / 1000) + ' km' : niceM + ' m';
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(5.5);
-      pdf.setTextColor(55, 65, 81);
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(5.5); pdf.setTextColor(55, 65, 81);
       pdf.text('0', sbLX, sbBY - 2.4, { align: 'center' });
       pdf.text(sbUnit, sbLX + niceW, sbBY - 2.4, { align: 'center' });
-      pdf.setFontSize(5.5);
       pdf.setTextColor(100, 116, 139);
       pdf.text('SKALA', sbLX, sbBY + 3);
-
       py = sbBY + 8;
 
-      // --- Legenda (garis pemisah + jarak agar rapi) ---
       py += 4;
-      pdf.setDrawColor(200, 200, 200);
-      pdf.setLineWidth(0.2);
+      pdf.setDrawColor(200, 200, 200); pdf.setLineWidth(0.2);
       pdf.line(panelX + 4, py, panelX + panelW - 4, py);
       py += 5;
-
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(6.5);
-      pdf.setTextColor(100, 116, 139);
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(6.5); pdf.setTextColor(100, 116, 139);
       pdf.text('LEGENDA', panelX + 4, py + 3);
       py += 6;
 
-      var satLegends = (typeof window.SATELLITE_LEGENDS !== 'undefined') ? window.SATELLITE_LEGENDS : null;
-      var bmLegend = satLegends && satLegends[currentBasemapName] ? satLegends[currentBasemapName] : null;
-
-      if (bmLegend) {
-        pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(6.5);
-        pdf.setTextColor(55, 65, 81);
-        var bmTitleLines = pdf.splitTextToSize(bmLegend.title + (bmLegend.unit ? ' — ' + bmLegend.unit : ''), panelW - 10);
+      if (data.bmLegend) {
+        const bmLegend = data.bmLegend;
+        pdf.setFont('helvetica', 'bold'); pdf.setFontSize(6.5); pdf.setTextColor(55, 65, 81);
+        const bmTitleLines = pdf.splitTextToSize(bmLegend.title + (bmLegend.unit ? ' \u2014 ' + bmLegend.unit : ''), panelW - 10);
         bmTitleLines.forEach(function (ln) { pdf.text(ln, panelX + 4, py + 2.5); py += 3; });
         py += 1.5;
-
-        var gradX = panelX + 4;
-        var gradW = panelW - 20;
-        var gradH = 4;
-        var stops = bmLegend.gradient;
-        for (var gx = 0; gx < gradW; gx++) {
-          var t = gx / gradW;
-          var c1 = stops[0][1], c2 = stops[stops.length - 1][1];
-          for (var si = 0; si < stops.length - 1; si++) {
+        const gradX = panelX + 4, gradW = panelW - 20, gradH = 4, stops = bmLegend.gradient;
+        for (let gx = 0; gx < gradW; gx++) {
+          let t = gx / gradW, c1 = stops[0][1], c2 = stops[stops.length - 1][1];
+          for (let si = 0; si < stops.length - 1; si++) {
             if (t >= stops[si][0] && t <= stops[si + 1][0]) {
-              var localT = (stops[si + 1][0] === stops[si][0]) ? 0 : (t - stops[si][0]) / (stops[si + 1][0] - stops[si][0]);
-              c1 = stops[si][1];
-              c2 = stops[si + 1][1];
-              var r = Math.round(c1[0] + (c2[0] - c1[0]) * localT);
-              var g = Math.round(c1[1] + (c2[1] - c1[1]) * localT);
-              var b = Math.round(c1[2] + (c2[2] - c1[2]) * localT);
-              pdf.setFillColor(r, g, b);
+              const lt = (stops[si + 1][0] === stops[si][0]) ? 0 : (t - stops[si][0]) / (stops[si + 1][0] - stops[si][0]);
+              c1 = stops[si][1]; c2 = stops[si + 1][1];
+              pdf.setFillColor(Math.round(c1[0] + (c2[0] - c1[0]) * lt), Math.round(c1[1] + (c2[1] - c1[1]) * lt), Math.round(c1[2] + (c2[2] - c1[2]) * lt));
               break;
             }
           }
-          if (t >= stops[stops.length - 1][0]) {
-            var lc = stops[stops.length - 1][1];
-            pdf.setFillColor(lc[0], lc[1], lc[2]);
-          }
+          if (t >= stops[stops.length - 1][0]) { const lc = stops[stops.length - 1][1]; pdf.setFillColor(lc[0], lc[1], lc[2]); }
           pdf.rect(gradX + gx, py, 1, gradH, 'F');
         }
-        pdf.setDrawColor(55, 65, 81);
-        pdf.setLineWidth(0.15);
-        pdf.rect(gradX, py, gradW, gradH, 'S');
+        pdf.setDrawColor(55, 65, 81); pdf.setLineWidth(0.15); pdf.rect(gradX, py, gradW, gradH, 'S');
         py += gradH + 1.5;
-
-        var bmLabels = bmLegend.labels;
+        const bmLabels = bmLegend.labels;
         if (bmLabels && bmLabels.length) {
-          pdf.setFont('helvetica', 'normal');
-          pdf.setFontSize(5);
-          pdf.setTextColor(80, 80, 80);
-          var firstLbl = bmLabels[0];
-          var lastLbl = bmLabels[bmLabels.length - 1];
-          pdf.text(firstLbl, gradX, py + 1);
-          pdf.text(lastLbl, gradX + gradW, py + 1, { align: 'right' });
-          if (bmLabels.length > 2) {
-            var midIdx = Math.floor(bmLabels.length / 2);
-            pdf.text(bmLabels[midIdx], gradX + gradW / 2, py + 1, { align: 'center' });
-          }
+          pdf.setFont('helvetica', 'normal'); pdf.setFontSize(5); pdf.setTextColor(80, 80, 80);
+          pdf.text(bmLabels[0], gradX, py + 1);
+          pdf.text(bmLabels[bmLabels.length - 1], gradX + gradW, py + 1, { align: 'right' });
+          if (bmLabels.length > 2) pdf.text(bmLabels[Math.floor(bmLabels.length / 2)], gradX + gradW / 2, py + 1, { align: 'center' });
           py += 4;
         }
         py += 2;
       }
 
-      if (legendItems.length === 0 && !bmLegend) {
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(6.5);
-        pdf.setTextColor(150, 150, 150);
+      if (data.legendItems.length === 0 && !data.bmLegend) {
+        pdf.setFont('helvetica', 'normal'); pdf.setFontSize(6.5); pdf.setTextColor(150, 150, 150);
         pdf.text('Tidak ada layer aktif', panelX + 4, py + 3);
-      } else if (legendItems.length > 0) {
+      } else if (data.legendItems.length > 0) {
         const MM_PER_PX = 25.4 / 96;
-        legendItems.forEach(it => {
+        data.legendItems.forEach(it => {
           const txtLines = pdf.splitTextToSize(it.label, panelW - 10);
           const hasImg = it.kind === 'wms' && it.img;
           let imgW, imgH;
@@ -1541,25 +1745,15 @@
             const maxW = panelW - 12, maxH = 16;
             if (imgW > maxW) { imgH *= maxW / imgW; imgW = maxW; }
             if (imgH > maxH) { imgW *= maxH / imgH; imgH = maxH; }
-          } else {
-            imgW = 6; imgH = 4.4;
-          }
+          } else { imgW = 6; imgH = 4.4; }
           const rowH = txtLines.length * 3 + 1.5 + imgH + 2;
           if (py + rowH > mapFrameY + panelH - 3) return;
-          pdf.setFont('helvetica', 'normal');
-          pdf.setFontSize(6.5);
-          pdf.setTextColor(55, 65, 81);
+          pdf.setFont('helvetica', 'normal'); pdf.setFontSize(6.5); pdf.setTextColor(55, 65, 81);
           txtLines.forEach(ln => { pdf.text(ln, panelX + 4, py + 2.5); py += 3; });
           py += 1.5;
-          if (hasImg) {
-            try { pdf.addImage(it.img, 'PNG', panelX + 4, py, imgW, imgH); } catch (e) {}
-          } else if (it.kind === 'point') {
-            pdf.setFillColor(231, 76, 60);
-            pdf.circle(panelX + 6, py + 2.2, 1.8, 'F');
-          } else {
-            pdf.setFillColor(100, 116, 139);
-            pdf.roundedRect(panelX + 4, py + 0.3, 6, imgH - 0.6, 0.8, 0.8, 'F');
-          }
+          if (hasImg) { try { pdf.addImage(it.img, 'PNG', panelX + 4, py, imgW, imgH); } catch (e) {} }
+          else if (it.kind === 'point') { pdf.setFillColor(231, 76, 60); pdf.circle(panelX + 6, py + 2.2, 1.8, 'F'); }
+          else { pdf.setFillColor(100, 116, 139); pdf.roundedRect(panelX + 4, py + 0.3, 6, imgH - 0.6, 0.8, 0.8, 'F'); }
           py += imgH + 2;
         });
       }
@@ -1571,10 +1765,25 @@
       showPrintError(err && err.message ? err.message : String(err));
     } finally {
       hidePrintLoading();
-      if (btn) { btn.disabled = false; btn.innerHTML = window.GEOPORTAL_PRINT_ICON || '🖨'; }
-      try {
-        hiddenEls.forEach(h => { if (h.restore) { try { h.restore(); } catch (e) {} } });
-      } catch (e) {}
+      if (btn) { btn.disabled = false; btn.innerHTML = window.GEOPORTAL_PRINT_ICON || '\uD83D\uDCBB'; }
+      data.hiddenEls.forEach(h => { if (h.restore) try { h.restore(); } catch (e) {} });
       try { map.invalidateSize(); } catch (e) {}
+    }
+  }
+
+  window.printGeoportalMap = async function () {
+    const btn = document.querySelector('.geoportal-print-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = window.GEOPORTAL_PRINT_SPINNER || '\u23F3'; }
+    showPrintLoading();
+    try {
+      const data = await preparePrintData();
+      hidePrintLoading();
+      if (btn) { btn.disabled = false; btn.innerHTML = window.GEOPORTAL_PRINT_ICON || '\uD83D\uDCBB'; }
+      renderPreviewCanvas(data);
+    } catch (err) {
+      console.error('[PrintGeoportal] Gagal mempersiapkan data:', err);
+      showPrintError(err && err.message ? err.message : String(err));
+      hidePrintLoading();
+      if (btn) { btn.disabled = false; btn.innerHTML = window.GEOPORTAL_PRINT_ICON || '\uD83D\uDCBB'; }
     }
   };
