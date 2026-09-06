@@ -1400,6 +1400,7 @@
     #qlHotspot.active   { background: #dc2626; }
     #qlPm25.active      { background: #7c3aed; }
     #qlWind.active      { background: #0ea5e9; }
+    #qlHujan.active     { background: #06b6d4; }
     #qlEcmwfFire.active { background: #f97316; }
     #qlViirsNoaa20.active { background: #dc2626; }
     #qlKonsesi.active   { background: #ea580c; }
@@ -4191,6 +4192,13 @@
     .himawari-legend-item { display: flex; align-items: center; gap: 5px; font-size: 9px; color: #cbd5e1; }
     .himawari-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.15); }
     .himawari-legend-unit { font-size: 8px; color: #64748b; margin-top: 6px; font-style: italic; }
+
+    /* S5P Legend */
+    .s5p-legend { background: rgba(15,23,42,.92); border-radius: 8px; padding: 10px 12px; color: #e2e8f0; min-width: 140px; max-width: 200px; backdrop-filter: blur(6px); box-shadow: 0 2px 8px rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.08); }
+    .s5p-legend-title { font-size: 10px; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
+    .s5p-legend-bar { height: 8px; border-radius: 4px; margin-bottom: 4px; border: 1px solid rgba(255,255,255,.1); }
+    .s5p-legend-labels { display: flex; justify-content: space-between; font-size: 7px; color: #94a3b8; margin-bottom: 4px; }
+    .s5p-legend-unit { font-size: 8px; color: #64748b; margin-top: 4px; font-style: italic; }
 
     /* Wind Popup */
     .wind-popup { width: 310px; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1e293b; background: #fff; overflow: hidden; }

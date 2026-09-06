@@ -212,7 +212,7 @@
   }
 
   var _layerMap = {};
-  var _allToggleIds = ['toggleWindRgb', 'toggleRhRgb', 'toggleTp24Rgb', 'togglePm25Rgb', 'toggleHthRgb', 'toggleGsmapRgb', 'toggleMaritimeAngin', 'toggleMaritimeGelombang', 'toggleMaritimeSwell', 'toggleMaritimeWindSea'];
+  var _allToggleIds = ['toggleWindRgb', 'toggleRhRgb', 'toggleTp24Rgb', 'togglePm25Rgb', 'toggleHthRgb', 'toggleMaritimeAngin', 'toggleMaritimeGelombang', 'toggleMaritimeSwell', 'toggleMaritimeWindSea'];
 
   function registerLayer(name, hideFn) { _layerMap[name] = hideFn; }
   function deactivateOthers(except) {

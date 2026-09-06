@@ -110,11 +110,6 @@ L.control.scale({
       tms: true,
       attribution: 'BMKG GK-2A'
     }),
-    'gsmap-rain': L.tileLayer('', {
-      maxZoom: 10,
-      minZoom: 0,
-      attribution: 'GSMaP BMKG InaSIAM'
-    }),
     'noaa-true-color': L.tileLayer('https://gis.nnvl.noaa.gov/arcgis/rest/services/TRUE/TRUE_current/ImageServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
       minZoom: 0,
@@ -124,7 +119,14 @@ L.control.scale({
       maxZoom: 19,
       minZoom: 0,
       attribution: 'NOAA NNVL GOES IR'
-    })
+    }),
+    's5p-cloud-fraction': L.tileLayer('', { maxZoom: 9, tms: true, maxNativeZoom: 6, attribution: 'S5P-PAL Cloud Fraction' }),
+    's5p-no2-tropo': L.tileLayer('', { maxZoom: 9, tms: true, maxNativeZoom: 6, attribution: 'S5P-PAL NO\u2082' }),
+    's5p-ch4': L.tileLayer('', { maxZoom: 9, tms: true, maxNativeZoom: 6, attribution: 'S5P-PAL CH\u2084' }),
+    's5p-hcho': L.tileLayer('', { maxZoom: 9, tms: true, maxNativeZoom: 6, attribution: 'S5P-PAL HCHO' }),
+    's5p-co': L.tileLayer('', { maxZoom: 9, tms: true, maxNativeZoom: 6, attribution: 'S5P-PAL CO' }),
+    's5p-so2': L.tileLayer('', { maxZoom: 9, tms: true, maxNativeZoom: 6, attribution: 'S5P-PAL SO\u2082' }),
+    's5p-o3': L.tileLayer('', { maxZoom: 9, tms: true, maxNativeZoom: 6, attribution: 'S5P-PAL O\u2083' })
   };
 
   const airVisualLayers = {
@@ -136,8 +138,8 @@ L.control.scale({
     'airvisual-co': L.tileLayer('https://osm.airvisual.net/cog/co/tiles/{z}/{x}/{y}.png', { maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual' })
   };
 
-  let currentBasemapName = 'bmkg-himawari';
-  let baseBasemapName = 'bmkg-himawari';
+  let currentBasemapName = 'bmkg-gk2a';
+  let baseBasemapName = 'bmkg-gk2a';
   let currentRdtrOpacity = 0.8;
 
   function getYesterdayDate() {
@@ -166,6 +168,7 @@ L.control.scale({
 
   var _noaaBoundaryLayer = null;
   var NOAA_BASEMAPS = ['noaa-true-color', 'noaa-goes-ir'];
+  var S5P_BASEMAPS = ['s5p-cloud-fraction', 's5p-no2-tropo', 's5p-ch4', 's5p-hcho', 's5p-co', 's5p-so2', 's5p-o3'];
 
   function loadNoaaBoundary() {
     if (_noaaBoundaryLayer) { _noaaBoundaryLayer.addTo(map); return; }
@@ -196,6 +199,7 @@ L.control.scale({
     var isHillshade = (name === 'hillshade-indonesia');
     var isPth = (name === 'topografi-pth');
     var isBmkg = BMKG_TILETYPE.hasOwnProperty(name);
+    var isS5p = S5P_BASEMAPS.indexOf(name) !== -1;
 
     Object.entries(baseTileLayers).forEach(function (entry) {
       if (map.hasLayer(entry[1])) map.removeLayer(entry[1]);
@@ -244,12 +248,8 @@ L.control.scale({
         };
         bmkgXhr.send();
         return;
-      } else if (name === 'gsmap-rain') {
-        var gsmapLayer = baseTileLayers[name];
-        if (satelliteBoundary && name !== 'esri-satellite') satelliteBoundary.show(map);
+      } else if (isS5p) {
         currentBasemapName = name;
-        var sel = document.getElementById('basemapSelect');
-        if (sel) sel.value = name;
         map.fire('basemapchanged', { basemap: name });
         return;
       }
@@ -405,7 +405,13 @@ L.control.scale({
     'bmkg-gk2a': 'GK-2A',
     'noaa-true-color': 'NOAA True Color',
     'noaa-goes-ir': 'NOAA GOES IR',
-    'gsmap-rain': 'GSMaP Rain Rate'
+    's5p-cloud-fraction': 'S5P Cloud Fraction',
+    's5p-no2-tropo': 'S5P NO\u2082 Tropospheric',
+    's5p-ch4': 'S5P CH\u2084',
+    's5p-hcho': 'S5P HCHO',
+    's5p-co': 'S5P CO',
+    's5p-so2': 'S5P SO\u2082',
+    's5p-o3': 'S5P O\u2083'
   };
 
   function createBasemapControl(labels, btnClass, btnIcon) {
@@ -672,7 +678,7 @@ L.control.scale({
         const toggles = [
           'toggleTollRoad', 'toggleNonTollRoad', 'toggleNationalRoad',
           'toggleWindAnim', 'toggleWindRgb', 'toggleRhRgb', 'toggleTp24Rgb',
-          'togglePm25Rgb', 'toggleHthRgb', 'toggleGsmapRgb',
+          'togglePm25Rgb', 'toggleHthRgb',
           'toggleMaritimeAngin', 'toggleMaritimeGelombang', 'toggleMaritimeSwell', 'toggleMaritimeWindSea',
           'toggleSawahDilindungi', 'toggleSawahNasional50k',
           'toggleBppLayer', 'toggleSawitLayer', 'toggleErosiLayer',
@@ -803,7 +809,8 @@ L.control.scale({
         if (typeof modisTimeSliderCleanup === 'function') modisTimeSliderCleanup();
         if (typeof modisAquaTimeSliderCleanup === 'function') modisAquaTimeSliderCleanup();
         if (typeof viirsTimeSliderCleanup === 'function') viirsTimeSliderCleanup();
-        if (typeof gsmapTimeSliderCleanup === 'function') gsmapTimeSliderCleanup();
+        if (typeof cleanupHujanLayer === 'function') cleanupHujanLayer();
+        if (typeof s5pTmsSliderCleanup === 'function') s5pTmsSliderCleanup();
         if (typeof satelliteBoundary !== 'undefined') satelliteBoundary.hide(map);
         if (typeof modisViirsOverlayCleanup === 'function') modisViirsOverlayCleanup();
         if (typeof cuacaMaritimCleanup === 'function') cuacaMaritimCleanup();
@@ -1054,6 +1061,14 @@ L.control.scale({
       .openOn(map);
   });
 
+  function toggleHujanLayer(show) {
+    if (show) {
+      if (typeof activateHujanLayer === 'function') activateHujanLayer();
+    } else {
+      if (typeof cleanupHujanLayer === 'function') cleanupHujanLayer();
+    }
+  }
+
   /* ═══════════════════════════════════════════════════════
      QUICK LAYER TOOLBAR
      ═══════════════════════════════════════════════════════ */
@@ -1062,6 +1077,7 @@ L.control.scale({
       qlHotspot:   { type: 'sheet' },
       qlPm25:      { target: 'toggleAirVisualPm25',         type: 'checkbox' },
       qlWind:      { target: 'toggleWindAnim',              type: 'checkbox' },
+      qlHujan:     { type: 'toggle-fn',                    fn: toggleHujanLayer },
       qlEcmwfFire: { type: 'toggle-fn',                    fn: toggleEcmwfFireLayer },
       qlViirsNoaa20:{ type: 'toggle-fn',                    fn: toggleViirsNoaa20Layer },
       qlKonsesi:   { target: 'toggleConcessionsLayer',      type: 'checkbox' },
@@ -1084,8 +1100,11 @@ L.control.scale({
           var cb = document.getElementById(c.target);
           btn.classList.toggle('active', !!(cb && cb.checked));
         } else if (c.type === 'toggle-fn') {
-          var layer = c.fn === toggleViirsNoaa20Layer ? viirsNoaa20Layer : ecmwfFireLayer;
-          btn.classList.toggle('active', !!(layer && map.hasLayer(layer)));
+          var isOn = false;
+          if (c.fn === toggleViirsNoaa20Layer) isOn = !!(viirsNoaa20Layer && map.hasLayer(viirsNoaa20Layer));
+          else if (c.fn === toggleEcmwfFireLayer) isOn = !!(ecmwfFireLayer && map.hasLayer(ecmwfFireLayer));
+          else if (c.fn === toggleHujanLayer) isOn = typeof isHujanLayerActive === 'function' && isHujanLayerActive();
+          btn.classList.toggle('active', isOn);
         } else {
           btn.classList.toggle('active', currentBasemapName === c.target);
         }
@@ -1104,8 +1123,10 @@ L.control.scale({
             var cb = document.getElementById(c.target);
             if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); }
           } else if (c.type === 'toggle-fn') {
-            var layer = c.fn === toggleViirsNoaa20Layer ? viirsNoaa20Layer : ecmwfFireLayer;
-            var isOn = !!(layer && map.hasLayer(layer));
+            var isOn = false;
+            if (c.fn === toggleViirsNoaa20Layer) isOn = !!(viirsNoaa20Layer && map.hasLayer(viirsNoaa20Layer));
+            else if (c.fn === toggleEcmwfFireLayer) isOn = !!(ecmwfFireLayer && map.hasLayer(ecmwfFireLayer));
+            else if (c.fn === toggleHujanLayer) isOn = typeof isHujanLayerActive === 'function' && isHujanLayerActive();
             if (c.fn) c.fn(!isOn);
           } else {
             if (currentBasemapName === c.target) setBaseMap('google-maps');

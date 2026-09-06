@@ -1,8 +1,7 @@
-/* ── RainViewer Precipitation Time Slider ── */
+/* ── RainViewer Precipitation Time Slider (Quick Layer) ── */
 (function () {
   'use strict';
 
-  var GSMAP_KEY = 'gsmap-rain';
   var API_URL = 'https://api.rainviewer.com/public/weather-maps.json';
   var REFRESH_MS = 10 * 60 * 1000;
 
@@ -13,6 +12,7 @@
   var _fetchPromise = null;
   var _refreshInterval = null;
   var _titleRow = null;
+  var _layer = null;
 
   var MONTH_NAMES = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -40,6 +40,17 @@
 
   function buildTileUrl(host, path) {
     return host + path + '/256/{z}/{x}/{y}/2/1_1.png';
+  }
+
+  function getLayer() {
+    if (!_layer) {
+      _layer = L.tileLayer('', {
+        maxZoom: 10,
+        minZoom: 0,
+        attribution: 'RainViewer'
+      });
+    }
+    return _layer;
   }
 
   function fetchTimestamps(callback) {
@@ -74,9 +85,8 @@
   }
 
   function updateRainUrl(frame) {
-    var layer = baseTileLayers[GSMAP_KEY];
-    if (!layer) return;
-    layer.setUrl(frame.url);
+    var layer = getLayer();
+    if (map.hasLayer(layer)) layer.setUrl(frame.url);
   }
 
   function ensureBottomCenterControlCorner() {
@@ -94,7 +104,7 @@
       L.DomEvent.disableScrollPropagation(wrap);
 
       var titleRow = L.DomUtil.create('div', 'bmkg-ts-title', wrap);
-      titleRow.textContent = 'Precipitation Radar';
+      titleRow.textContent = 'Hujan Radar';
       _titleRow = titleRow;
 
       var controlsRow = L.DomUtil.create('div', 'bmkg-ts-controls', wrap);
@@ -230,12 +240,12 @@
     }
   }
 
-  function activateGsmapLayer() {
+  function activateHujanLayer() {
     radarFrames = [];
     currentIndex = 0;
     _fetchPromise = null;
     hideSlider();
-    var layer = baseTileLayers[GSMAP_KEY];
+    var layer = getLayer();
     if (!map.hasLayer(layer)) layer.addTo(map);
     fetchTimestamps(function () {
       if (radarFrames.length > 0) {
@@ -246,15 +256,20 @@
     });
   }
 
-  function cleanup() {
+  function cleanupHujanLayer() {
     hideSlider();
     hideLegend();
-    var layer = baseTileLayers[GSMAP_KEY];
+    var layer = getLayer();
     if (layer && map.hasLayer(layer)) map.removeLayer(layer);
     radarFrames = [];
     currentIndex = 0;
     _fetchPromise = null;
     stopAutoRefresh();
+  }
+
+  function isHujanLayerActive() {
+    var layer = getLayer();
+    return !!(layer && map.hasLayer(layer));
   }
 
   function startAutoRefresh() {
@@ -283,19 +298,7 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded', function () {
-    map.on('basemapchanged', function (e) {
-      if (e.basemap === GSMAP_KEY) {
-        activateGsmapLayer();
-      } else if (e.basemap !== GSMAP_KEY) {
-        hideSlider();
-      }
-    });
-
-    if (typeof currentBasemapName !== 'undefined' && currentBasemapName === GSMAP_KEY) {
-      activateGsmapLayer();
-    }
-  });
-
-  window.gsmapTimeSliderCleanup = cleanup;
+  window.activateHujanLayer = activateHujanLayer;
+  window.cleanupHujanLayer = cleanupHujanLayer;
+  window.isHujanLayerActive = isHujanLayerActive;
 })();

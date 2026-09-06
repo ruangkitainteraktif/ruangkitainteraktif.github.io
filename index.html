@@ -328,6 +328,14 @@
         </svg>
         <span>Angin</span>
       </button>
+      <button type="button" class="ql-btn" id="qlHujan" title="Hujan Radar">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 13V4a4 4 0 0 0-8 0"/>
+          <path d="M4 14c.6.5 1.2 1 2.5 1C7 15 7 13 9.5 13c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>
+          <path d="M4 20c.6.5 1.2 1 2.5 1C7 21 7 19 9.5 19c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>
+        </svg>
+        <span>Hujan</span>
+      </button>
       <button type="button" class="ql-btn" id="qlEcmwfFire" title="ECMWF Fire Composition">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M12 12c2-2.96 0-7-1-8 0 3.038-1.773 4.739-4 6-1 2 0 4 1 6 1-1 2.5-3 3.5-4.5"/>
@@ -1478,14 +1486,6 @@
                   <small id="hthRgbInfo">Layer hari tanpa hujan BMKG HTH</small>
                 </span>
               </label>
-              <label class="cctv-layer-toggle">
-                <input type="checkbox" id="toggleGsmapRgb">
-                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="cctv-layer-info">
-                  <span class="cctv-layer-name">GsMAP Precipitation</span>
-                  <small id="gsmapRgbInfo">Layer curah hujan GsMAP BMKG</small>
-                </span>
-              </label>
             </div>
             </div>
             <div class="cctv-card" style="margin-bottom:12px;">
@@ -1630,15 +1630,7 @@
                   <small>Batimetri nasional</small>
                 </span>
               </label>
-              <div style="border-top:1px solid #e8eef3;margin:6px 0;"></div>
-              <label class="cctv-layer-toggle">
-                <input type="checkbox" id="toggleGertanLayer">
-                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
-                <span class="cctv-layer-info">
-                  <span class="cctv-layer-name">Gerakan Tanah (PVMBG)</span>
-                  <small id="gertanInfo">Kejadian longsor, aliran, dan jatuhan batu</small>
-                </span>
-              </label>
+            </div>
             </div>
             </div>
           </div>
@@ -1955,6 +1947,7 @@
     <script src="assets/js/modis-aqua-time-slider.js"></script>
     <script src="assets/js/viirs-time-slider.js"></script>
     <script src="assets/js/bmkg-himawari-slider.js"></script>
+    <script src="assets/js/s5p-tms-slider.js"></script>
     <script src="assets/js/gsmap-time-slider.js"></script>
 
     <script src="assets/js/geoportal.js"></script>
@@ -1992,7 +1985,6 @@
   <script src="assets/js/tp24-rgb.js"></script>
   <script src="assets/js/pm25-rgb.js"></script>
   <script src="assets/js/hth-rgb.js"></script>
-  <script src="assets/js/gsmap-rgb.js"></script>
   <script src="assets/js/maritime-rgb.js"></script>
   <script src="assets/js/map-insight-cards.js"></script>
   <script src="assets/js/geotani-search.js"></script>
