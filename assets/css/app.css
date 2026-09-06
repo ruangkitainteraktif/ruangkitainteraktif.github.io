@@ -555,6 +555,9 @@
         top: 112px;
         bottom: auto;
       }
+      .basemap-dropdown {
+        max-height: 35vh;
+      }
       .modis-time-slider-wrap {
         width: min(280px, calc(100vw - 32px));
         padding: 4px 8px;

@@ -110,6 +110,11 @@ L.control.scale({
       tms: true,
       attribution: 'BMKG GK-2A'
     }),
+    'gsmap-rain': L.tileLayer('', {
+      maxZoom: 10,
+      minZoom: 0,
+      attribution: 'GSMaP BMKG InaSIAM'
+    }),
     'noaa-true-color': L.tileLayer('https://gis.nnvl.noaa.gov/arcgis/rest/services/TRUE/TRUE_current/ImageServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
       minZoom: 0,
@@ -238,6 +243,14 @@ L.control.scale({
           map.fire('basemapchanged', { basemap: name });
         };
         bmkgXhr.send();
+        return;
+      } else if (name === 'gsmap-rain') {
+        var gsmapLayer = baseTileLayers[name];
+        if (satelliteBoundary && name !== 'esri-satellite') satelliteBoundary.show(map);
+        currentBasemapName = name;
+        var sel = document.getElementById('basemapSelect');
+        if (sel) sel.value = name;
+        map.fire('basemapchanged', { basemap: name });
         return;
       }
       baseTileLayers[name].addTo(map);
@@ -391,7 +404,8 @@ L.control.scale({
     'bmkg-himawari-hires': 'Himawari-9 Hi-Res',
     'bmkg-gk2a': 'GK-2A',
     'noaa-true-color': 'NOAA True Color',
-    'noaa-goes-ir': 'NOAA GOES IR'
+    'noaa-goes-ir': 'NOAA GOES IR',
+    'gsmap-rain': 'GSMaP Rain Rate'
   };
 
   function createBasemapControl(labels, btnClass, btnIcon) {
@@ -789,6 +803,7 @@ L.control.scale({
         if (typeof modisTimeSliderCleanup === 'function') modisTimeSliderCleanup();
         if (typeof modisAquaTimeSliderCleanup === 'function') modisAquaTimeSliderCleanup();
         if (typeof viirsTimeSliderCleanup === 'function') viirsTimeSliderCleanup();
+        if (typeof gsmapTimeSliderCleanup === 'function') gsmapTimeSliderCleanup();
         if (typeof satelliteBoundary !== 'undefined') satelliteBoundary.hide(map);
         if (typeof modisViirsOverlayCleanup === 'function') modisViirsOverlayCleanup();
         if (typeof cuacaMaritimCleanup === 'function') cuacaMaritimCleanup();

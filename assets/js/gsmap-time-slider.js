@@ -1,34 +1,26 @@
-/* ── BMKG Himawari/GK-2A Time Slider — satellite.bmkg.go.id ── */
+/* ── RainViewer Precipitation Time Slider ── */
 (function () {
   'use strict';
 
-  var BMKG_LAYERS = {
-    'bmkg-himawari':      { tiletype: 'himawari9', modelname: 'himawari9',    param: 'EH', title: 'Himawari-9 IR Enhanced' },
-    'bmkg-himawari-fd':   { tiletype: 'himawari9', modelname: 'himawari9fd',  param: 'EH', title: 'Himawari-9 Full Disk' },
-    'bmkg-himawari-hires':{ tiletype: 'himawari9', modelname: 'himawari9hires', param: 'VS', title: 'Himawari-9 Hi-Res (Visible)' },
-    'bmkg-gk2a':          { tiletype: 'himawari9', modelname: 'gk2a',         param: 'EH', title: 'GK-2A' }
-  };
-
-  var MODELRUN_URL = 'https://satellite.bmkg.go.id/api22/modelrun';
-  var TILE_URL_TEMPLATE = 'https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype={tiletype}&modelname={modelname}&param={param}&baserun=';
+  var GSMAP_KEY = 'gsmap-rain';
+  var API_URL = 'https://api.rainviewer.com/public/weather-maps.json';
+  var REFRESH_MS = 10 * 60 * 1000;
 
   var sliderControl = null;
   var legendControl = null;
   var currentIndex = 0;
-  var timestamps = [];
+  var radarFrames = [];
   var _fetchPromise = null;
-  var _activeKey = null;
   var _refreshInterval = null;
   var _titleRow = null;
-  var REFRESH_MS = 10 * 60 * 1000;
 
   var MONTH_NAMES = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
   ];
 
-  function formatTime(isoStr) {
-    var d = new Date(isoStr);
+  function formatTime(unixTs) {
+    var d = new Date(unixTs * 1000);
     var utcH = d.getUTCHours();
     var utcM = d.getUTCMinutes();
     var wibH = (utcH + 7) % 24;
@@ -37,67 +29,54 @@
     return hh + ':' + mm + ' WIB';
   }
 
-  function formatDateShort(isoStr) {
-    var d = new Date(isoStr);
+  function formatDateShort(unixTs) {
+    var d = new Date(unixTs * 1000);
     return d.getUTCDate() + ' ' + MONTH_NAMES[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
   }
 
-  function formatDateTime(isoStr) {
-    return formatDateShort(isoStr) + ' ' + formatTime(isoStr);
+  function formatDateTime(unixTs) {
+    return formatDateShort(unixTs) + ' ' + formatTime(unixTs);
   }
 
-  function isBmkgLayer(key) {
-    return BMKG_LAYERS.hasOwnProperty(key);
-  }
-
-  function buildTileUrl(tiletype, modelname, param, baserun) {
-    return TILE_URL_TEMPLATE.replace('{tiletype}', tiletype).replace('{modelname}', modelname).replace('{param}', param) + encodeURIComponent(baserun);
-  }
-
-  function updateHimawariUrl(isoTs) {
-    if (!_activeKey) return;
-    var layer = baseTileLayers[_activeKey];
-    if (!layer) return;
-    var info = BMKG_LAYERS[_activeKey];
-    if (!info) return;
-    layer.setUrl(buildTileUrl(info.tiletype, info.modelname, info.param, isoTs));
+  function buildTileUrl(host, path) {
+    return host + path + '/256/{z}/{x}/{y}/2/1_1.png';
   }
 
   function fetchTimestamps(callback) {
     if (_fetchPromise) { _fetchPromise.then(callback); return; }
     _fetchPromise = new Promise(function (resolve) {
-      if (window._bmkgModelrunCache) {
-        var data = window._bmkgModelrunCache;
-        var apiKey = _activeKey ? BMKG_LAYERS[_activeKey].modelname : 'himawari9';
-        var list = (data[apiKey] || []).slice().reverse();
-        timestamps = list;
-        resolve(list);
-        return;
-      }
       var xhr = new XMLHttpRequest();
-      xhr.open('GET', MODELRUN_URL, true);
+      xhr.open('GET', API_URL, true);
       xhr.onreadystatechange = function () {
         if (xhr.readyState !== 4) return;
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
             var data = JSON.parse(xhr.responseText);
-            var apiKey = _activeKey ? BMKG_LAYERS[_activeKey].modelname : 'himawari9';
-            var list = (data[apiKey] || []).slice().reverse();
-            timestamps = list;
-            resolve(list);
+            var host = data.host || '';
+            var past = (data.radar && data.radar.past) ? data.radar.past : [];
+            radarFrames = past.map(function (f) {
+              return { time: f.time, path: f.path, url: buildTileUrl(host, f.path) };
+            });
+            resolve(radarFrames);
           } catch (e) {
-            console.error('[BMKGSlider] Failed to parse modelrun:', e);
-            timestamps = [];
+            console.error('[RainViewer] Failed to parse API:', e);
+            radarFrames = [];
             resolve([]);
           }
         } else {
-          timestamps = [];
+          radarFrames = [];
           resolve([]);
         }
       };
       xhr.send();
     });
     _fetchPromise.then(function () { callback(); });
+  }
+
+  function updateRainUrl(frame) {
+    var layer = baseTileLayers[GSMAP_KEY];
+    if (!layer) return;
+    layer.setUrl(frame.url);
   }
 
   function ensureBottomCenterControlCorner() {
@@ -107,7 +86,7 @@
 
   ensureBottomCenterControlCorner();
 
-  var BmkgTimeSliderControl = L.Control.extend({
+  var RainTimeSliderControl = L.Control.extend({
     options: { position: 'bottomcenter' },
     onAdd: function () {
       var wrap = L.DomUtil.create('div', 'bmkg-time-slider-wrap');
@@ -115,7 +94,7 @@
       L.DomEvent.disableScrollPropagation(wrap);
 
       var titleRow = L.DomUtil.create('div', 'bmkg-ts-title', wrap);
-      titleRow.textContent = BMKG_LAYERS[_activeKey] ? BMKG_LAYERS[_activeKey].title : 'BMKG Satellite';
+      titleRow.textContent = 'Precipitation Radar';
       _titleRow = titleRow;
 
       var controlsRow = L.DomUtil.create('div', 'bmkg-ts-controls', wrap);
@@ -144,10 +123,10 @@
       timeDisplay.textContent = '';
 
       function applyTimestamp() {
-        if (timestamps.length === 0) return;
-        var ts = timestamps[currentIndex];
-        dateDisplay.textContent = formatDateTime(ts);
-        updateHimawariUrl(ts);
+        if (radarFrames.length === 0) return;
+        var frame = radarFrames[currentIndex];
+        dateDisplay.textContent = formatDateTime(frame.time);
+        updateRainUrl(frame);
       }
 
       slider.addEventListener('input', function () {
@@ -167,20 +146,20 @@
       nextBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         var val = parseInt(slider.value, 10);
-        if (val < timestamps.length - 1) {
+        if (val < radarFrames.length - 1) {
           slider.value = String(val + 1);
           slider.dispatchEvent(new Event('input'));
         }
       });
 
       fetchTimestamps(function () {
-        if (timestamps.length === 0) {
+        if (radarFrames.length === 0) {
           dateDisplay.textContent = 'Data tidak tersedia';
           return;
         }
-        slider.max = String(timestamps.length - 1);
-        currentIndex = 0;
-        slider.value = '0';
+        slider.max = String(radarFrames.length - 1);
+        currentIndex = radarFrames.length - 1;
+        slider.value = String(currentIndex);
         applyTimestamp();
       });
 
@@ -192,41 +171,31 @@
 
   var _prevMaxZoom = null;
 
-  var HimawariLegend = L.Control.extend({
+  var RainLegend = L.Control.extend({
     options: { position: 'bottomleft' },
     onAdd: function () {
       var div = L.DomUtil.create('div', 'himawari-legend');
       L.DomEvent.disableClickPropagation(div);
-      var info = BMKG_LAYERS[_activeKey];
-      var param = info ? info.param : 'EH';
-      if (param === 'VS') {
-        div.innerHTML =
-          '<div class="himawari-legend-title">Visible (0.64&micro;m) — 500m</div>' +
-          '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#000 0%,#fff 100%);"></div>' +
-          '<div class="himawari-legend-labels"><span>Gelap</span><span>Cerah</span></div>' +
-          '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
-      } else {
-        div.innerHTML =
-          '<div class="himawari-legend-title">Suhu Puncak Awan (IR 10.4&micro;m)</div>' +
-          '<div class="himawari-legend-bar"></div>' +
-          '<div class="himawari-legend-labels"><span>-80&deg;C</span><span>-60&deg;C</span><span>-40&deg;C</span><span>-20&deg;C</span><span>0&deg;C</span><span>20&deg;C</span></div>' +
-          '<div class="himawari-legend-items">' +
-            '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#7b0051;"></span>&le; -80&deg;C — Ekstrem</div>' +
-            '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#d62828;"></span>-80 s/d -60&deg;C — Sangat Dingin (Cb)</div>' +
-            '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#f77f00;"></span>-60 s/d -40&deg;C — Dingin</div>' +
-            '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#f6d743;"></span>-40 s/d -20&deg;C — Sedang</div>' +
-            '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#1a936f;"></span>-20 s/d 0&deg;C — Hangat</div>' +
-            '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#16213e;"></span>&ge; 0&deg;C — Cerah</div>' +
-          '</div>' +
-          '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
-      }
+      div.innerHTML =
+        '<div class="himawari-legend-title">Intensitas Hujan (Radar)</div>' +
+        '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,transparent,#01b8ff,#00e500,#ffdc00,#ff7100,#ff0000,#b800d6);"></div>' +
+        '<div class="himawari-legend-labels"><span>-</span><span>Ringan</span><span>Sedang</span><span>Deras</span><span>Sangat Deras</span><span>Ekstrem</span></div>' +
+        '<div class="himawari-legend-items">' +
+          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#01b8ff;"></span>&lt; 5 mm/jam — Hujan Ringan</div>' +
+          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#00e500;"></span>5 - 10 mm/jam — Hujan Sedang</div>' +
+          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#ffdc00;"></span>10 - 20 mm/jam — Hujan Deras</div>' +
+          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#ff7100;"></span>20 - 30 mm/jam — Hujan Sangat Deras</div>' +
+          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#ff0000;"></span>30 - 50 mm/jam — Hujan Ekstrem</div>' +
+          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#b800d6;"></span>&gt; 50 mm/jam — Sangat Ekstrem</div>' +
+        '</div>' +
+        '<div class="himawari-legend-unit">Sumber: RainViewer</div>';
       return div;
     }
   });
 
   function showLegend() {
     if (!legendControl) {
-      legendControl = new HimawariLegend();
+      legendControl = new RainLegend();
       legendControl.addTo(map);
     }
   }
@@ -240,13 +209,13 @@
 
   function showSlider() {
     if (!sliderControl) {
-      sliderControl = new BmkgTimeSliderControl();
+      sliderControl = new RainTimeSliderControl();
       sliderControl.addTo(map);
     }
     showLegend();
     _prevMaxZoom = map.getMaxZoom();
-    map.setMaxZoom(10);
-    if (map.getZoom() > 10) map.setZoom(5);
+    map.setMaxZoom(7);
+    if (map.getZoom() > 7) map.setZoom(5);
   }
 
   function hideSlider() {
@@ -261,13 +230,17 @@
     }
   }
 
-  function activateBmkgLayer(key) {
-    _activeKey = key;
-    _fetchPromise = null;
-    timestamps = [];
+  function activateGsmapLayer() {
+    radarFrames = [];
     currentIndex = 0;
+    _fetchPromise = null;
     hideSlider();
+    var layer = baseTileLayers[GSMAP_KEY];
+    if (!map.hasLayer(layer)) layer.addTo(map);
     fetchTimestamps(function () {
+      if (radarFrames.length > 0) {
+        layer.setUrl(radarFrames[radarFrames.length - 1].url);
+      }
       showSlider();
       startAutoRefresh();
     });
@@ -276,29 +249,29 @@
   function cleanup() {
     hideSlider();
     hideLegend();
-    timestamps = [];
+    var layer = baseTileLayers[GSMAP_KEY];
+    if (layer && map.hasLayer(layer)) map.removeLayer(layer);
+    radarFrames = [];
     currentIndex = 0;
     _fetchPromise = null;
-    _activeKey = null;
     stopAutoRefresh();
   }
 
   function startAutoRefresh() {
     stopAutoRefresh();
     _refreshInterval = setInterval(function () {
-      if (!_activeKey) return;
       _fetchPromise = null;
       fetchTimestamps(function () {
-        if (!sliderControl || timestamps.length === 0) return;
+        if (!sliderControl || radarFrames.length === 0) return;
         var slider = sliderControl._slider;
         if (!slider) return;
-        slider.max = String(timestamps.length - 1);
-        if (currentIndex >= timestamps.length) currentIndex = timestamps.length - 1;
+        slider.max = String(radarFrames.length - 1);
+        if (currentIndex >= radarFrames.length) currentIndex = radarFrames.length - 1;
         slider.value = String(currentIndex);
-        var ts = timestamps[currentIndex];
+        var frame = radarFrames[currentIndex];
         var dateEl = sliderControl._dateDisplay;
-        if (dateEl) dateEl.textContent = formatDateTime(ts);
-        updateHimawariUrl(ts);
+        if (dateEl) dateEl.textContent = formatDateTime(frame.time);
+        updateRainUrl(frame);
       });
     }, REFRESH_MS);
   }
@@ -312,18 +285,17 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     map.on('basemapchanged', function (e) {
-      if (isBmkgLayer(e.basemap)) {
-        activateBmkgLayer(e.basemap);
-      } else {
+      if (e.basemap === GSMAP_KEY) {
+        activateGsmapLayer();
+      } else if (e.basemap !== GSMAP_KEY) {
         hideSlider();
-        _activeKey = null;
       }
     });
 
-    if (typeof currentBasemapName !== 'undefined' && isBmkgLayer(currentBasemapName)) {
-      activateBmkgLayer(currentBasemapName);
+    if (typeof currentBasemapName !== 'undefined' && currentBasemapName === GSMAP_KEY) {
+      activateGsmapLayer();
     }
   });
 
-  window.bmkgHimawariSliderCleanup = cleanup;
+  window.gsmapTimeSliderCleanup = cleanup;
 })();
