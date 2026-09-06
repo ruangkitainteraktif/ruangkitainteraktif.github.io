@@ -146,6 +146,7 @@ L.control.scale({
   };
 
   let currentBasemapName = 'bmkg-gk2a';
+  window.currentBasemapName = currentBasemapName;
   let baseBasemapName = 'bmkg-gk2a';
   let currentRdtrOpacity = 0.8;
 
@@ -250,7 +251,9 @@ L.control.scale({
           }
           bmkgLayer.addTo(map);
           if (satelliteBoundary && name !== 'esri-satellite') satelliteBoundary.show(map);
-          currentBasemapName = name;
+    currentBasemapName = name;
+    window.currentBasemapName = name;
+          window.currentBasemapName = name;
           var sel = document.getElementById('basemapSelect');
           if (sel) sel.value = name;
           map.fire('basemapchanged', { basemap: name });
@@ -259,6 +262,7 @@ L.control.scale({
         return;
       } else if (isS5p) {
         currentBasemapName = name;
+        window.currentBasemapName = name;
         map.fire('basemapchanged', { basemap: name });
         return;
       }
@@ -920,6 +924,7 @@ L.control.scale({
         if (btCb) btCb.checked = false;
         setBaseMap('google-maps');
         currentBasemapName = 'google-maps';
+        window.currentBasemapName = 'google-maps';
         var bmOpt = document.querySelector('.basemap-option[data-value="google-maps"]');
         if (bmOpt) {
           document.querySelectorAll('.basemap-option').forEach(function(o) { o.classList.remove('active'); });
