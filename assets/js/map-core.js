@@ -1107,7 +1107,7 @@ L.control.scale({
     }
   }
 
-  map.on('click', function (e) {
+  /* map.on('click', function (e) {
     if (!ecmwfFireLayer || !map.hasLayer(ecmwfFireLayer)) return;
     var lat = e.latlng.lat.toFixed(5);
     var lng = e.latlng.lng.toFixed(5);
@@ -1124,7 +1124,7 @@ L.control.scale({
       .setLatLng(e.latlng)
       .setContent(html)
       .openOn(map);
-  });
+  }); */
 
   function toggleHujanLayer(show) {
     if (show) {

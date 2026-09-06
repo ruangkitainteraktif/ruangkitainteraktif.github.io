@@ -1153,12 +1153,14 @@
         return cat ? cat + ' — ' + lbl : lbl;
       }
 
+      const allBasemapLabels = Object.assign({}, vectorBasemapLabels || {}, satelliteBasemapLabels || {});
+      const bmFriendly = allBasemapLabels[currentBasemapName] || currentBasemapName || 'Peta';
+
       const titleNames = [];
       getActiveGeoportalLayers().forEach(a => titleNames.push(dispName(a.layerName)));
       getActiveArcgisLayers().forEach(a => titleNames.push(arcgisLabels[a.layerKey] || a.layerKey));
       let titleText;
-      if (titleNames.length === 0) titleText = 'Peta';
-      else if (titleNames.length === 1) titleText = titleNames[0];
+      if (titleNames.length === 0) titleText = bmFriendly;
       else titleText = titleNames.slice(0, 3).join(', ') + (titleNames.length > 3 ? ` (+${titleNames.length - 3})` : '');
 
       const sidebar = document.getElementById('sidebar-left');
@@ -1167,7 +1169,7 @@
         hiddenEls.push({ restore: () => sidebar.classList.remove('collapsed') });
       }
 
-      const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .geoportal-print-btn, .geoportal-legend, .basemap-btn, .basemap-control-wrap, .leaflet-control-scale, .detail-panel-btn, #detail-panel');
+      const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .geoportal-print-btn, .geoportal-legend, .basemap-btn, .basemap-control-wrap, .leaflet-control-scale, .detail-panel-btn, #detail-panel, .draw-fab-wrap');
       overlays.forEach(el => {
         if (el && getComputedStyle(el).display !== 'none') {
           const prev = el.style.display;
@@ -1211,7 +1213,7 @@
       pdf.setTextColor(100, 116, 139);
       const dateFormatted = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
       pdf.text(dateFormatted, pageW - margin - 2, margin + 5, { align: 'right' });
-      const bmName = (typeof currentBasemapName !== 'undefined' && currentBasemapName) ? currentBasemapName : '-';
+      const bmName = bmFriendly;
       pdf.text('Basemap: ' + bmName, pageW - margin - 2, margin + 9, { align: 'right' });
       pdf.setFontSize(7);
       pdf.setTextColor(150, 150, 150);
@@ -1464,12 +1466,71 @@
       pdf.text('LEGENDA', panelX + 4, py + 3);
       py += 6;
 
-      if (legendItems.length === 0) {
+      var satLegends = (typeof window.SATELLITE_LEGENDS !== 'undefined') ? window.SATELLITE_LEGENDS : null;
+      var bmLegend = satLegends && satLegends[currentBasemapName] ? satLegends[currentBasemapName] : null;
+
+      if (bmLegend) {
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(6.5);
+        pdf.setTextColor(55, 65, 81);
+        var bmTitleLines = pdf.splitTextToSize(bmLegend.title + (bmLegend.unit ? ' — ' + bmLegend.unit : ''), panelW - 10);
+        bmTitleLines.forEach(function (ln) { pdf.text(ln, panelX + 4, py + 2.5); py += 3; });
+        py += 1.5;
+
+        var gradX = panelX + 4;
+        var gradW = panelW - 20;
+        var gradH = 4;
+        var stops = bmLegend.gradient;
+        for (var gx = 0; gx < gradW; gx++) {
+          var t = gx / gradW;
+          var c1 = stops[0][1], c2 = stops[stops.length - 1][1];
+          for (var si = 0; si < stops.length - 1; si++) {
+            if (t >= stops[si][0] && t <= stops[si + 1][0]) {
+              var localT = (stops[si + 1][0] === stops[si][0]) ? 0 : (t - stops[si][0]) / (stops[si + 1][0] - stops[si][0]);
+              c1 = stops[si][1];
+              c2 = stops[si + 1][1];
+              var r = Math.round(c1[0] + (c2[0] - c1[0]) * localT);
+              var g = Math.round(c1[1] + (c2[1] - c1[1]) * localT);
+              var b = Math.round(c1[2] + (c2[2] - c1[2]) * localT);
+              pdf.setFillColor(r, g, b);
+              break;
+            }
+          }
+          if (t >= stops[stops.length - 1][0]) {
+            var lc = stops[stops.length - 1][1];
+            pdf.setFillColor(lc[0], lc[1], lc[2]);
+          }
+          pdf.rect(gradX + gx, py, 1, gradH, 'F');
+        }
+        pdf.setDrawColor(55, 65, 81);
+        pdf.setLineWidth(0.15);
+        pdf.rect(gradX, py, gradW, gradH, 'S');
+        py += gradH + 1.5;
+
+        var bmLabels = bmLegend.labels;
+        if (bmLabels && bmLabels.length) {
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(5);
+          pdf.setTextColor(80, 80, 80);
+          var firstLbl = bmLabels[0];
+          var lastLbl = bmLabels[bmLabels.length - 1];
+          pdf.text(firstLbl, gradX, py + 1);
+          pdf.text(lastLbl, gradX + gradW, py + 1, { align: 'right' });
+          if (bmLabels.length > 2) {
+            var midIdx = Math.floor(bmLabels.length / 2);
+            pdf.text(bmLabels[midIdx], gradX + gradW / 2, py + 1, { align: 'center' });
+          }
+          py += 4;
+        }
+        py += 2;
+      }
+
+      if (legendItems.length === 0 && !bmLegend) {
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(6.5);
         pdf.setTextColor(150, 150, 150);
         pdf.text('Tidak ada layer aktif', panelX + 4, py + 3);
-      } else {
+      } else if (legendItems.length > 0) {
         const MM_PER_PX = 25.4 / 96;
         legendItems.forEach(it => {
           const txtLines = pdf.splitTextToSize(it.label, panelW - 10);
@@ -1504,7 +1565,7 @@
       }
 
       const dateStr = `${String(now.getDate()).padStart(2, '0')}${String(now.getMonth() + 1).padStart(2, '0')}${now.getFullYear()}`;
-      pdf.save(`Peta_Geoportal_${dateStr}.pdf`);
+      pdf.save(`ruangkita-${currentBasemapName || 'peta'}-${dateStr}.pdf`);
     } catch (err) {
       console.error('[PrintGeoportal] Gagal membuat PDF:', err);
       showPrintError(err && err.message ? err.message : String(err));

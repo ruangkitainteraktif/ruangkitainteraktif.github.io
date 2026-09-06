@@ -2,10 +2,13 @@
 (function () {
   'use strict';
 
-  var EXPORT_W = 2560;
-  var EXPORT_H = 1440;
-  var HEADER_H = 70;
-  var FOOTER_H = 60;
+  function getExportDimensions() {
+    var isMobile = window.innerWidth < 768;
+    if (isMobile) {
+      return { w: 2100, h: 2970, headerH: 60, footerH: 50 };
+    }
+    return { w: 2970, h: 2100, headerH: 70, footerH: 60 };
+  }
   var MAP_PAD = 30;
 
   /* ── Legend data per basemap ── */
@@ -194,33 +197,33 @@
   }
 
   /* ── Draw functions ── */
-  function drawHeader(ctx, title, w) {
+  function drawHeader(ctx, title, w, headerH) {
     ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 0, w, HEADER_H);
+    ctx.fillRect(0, 0, w, headerH);
     ctx.fillStyle = '#e2e8f0';
     ctx.font = 'bold 28px "Segoe UI", system-ui, sans-serif';
     ctx.textBaseline = 'middle';
-    ctx.fillText(title, 40, HEADER_H / 2 - 6);
+    ctx.fillText(title, 40, headerH / 2 - 6);
 
     ctx.fillStyle = '#94a3b8';
     ctx.font = '16px "Segoe UI", system-ui, sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText(formatDateNow(), w - 40, HEADER_H / 2 - 10);
-    ctx.fillText('WGS84 / EPSG:4326', w - 40, HEADER_H / 2 + 12);
+    ctx.fillText(formatDateNow(), w - 40, headerH / 2 - 10);
+    ctx.fillText('WGS84 / EPSG:4326', w - 40, headerH / 2 + 12);
     ctx.textAlign = 'left';
 
     ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(0, HEADER_H);
-    ctx.lineTo(w, HEADER_H);
+    ctx.moveTo(0, headerH);
+    ctx.lineTo(w, headerH);
     ctx.stroke();
   }
 
-  function drawFooter(ctx, source, w, h) {
-    var y = h - FOOTER_H;
+  function drawFooter(ctx, source, w, h, footerH) {
+    var y = h - footerH;
     ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, y, w, FOOTER_H);
+    ctx.fillRect(0, y, w, footerH);
 
     ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 1;
@@ -232,9 +235,9 @@
     ctx.fillStyle = '#64748b';
     ctx.font = '14px "Segoe UI", system-ui, sans-serif';
     ctx.textBaseline = 'middle';
-    ctx.fillText('Sumber: ' + source, 40, y + FOOTER_H / 2);
+    ctx.fillText('Sumber: ' + source, 40, y + footerH / 2);
     ctx.textAlign = 'right';
-    ctx.fillText('Ruang Kita Interaktif', w - 40, y + FOOTER_H / 2);
+    ctx.fillText('Ruang Kita Interaktif', w - 40, y + footerH / 2);
     ctx.textAlign = 'left';
   }
 
@@ -382,51 +385,32 @@
     var data = LEGENDS[key];
     if (!data) return;
 
-    var boxW = 240;
-    var barW = 20;
-    var barH = 180;
-    var pad = 14;
-    var boxH = barH + pad * 2 + 30;
+    var barW = 400;
+    var barH = 30;
+    var gap = 6;
 
-    ctx.fillStyle = 'rgba(15,23,42,0.88)';
-    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-    ctx.lineWidth = 1;
-    roundRect(ctx, x, y, boxW, boxH, 10);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = 'bold 13px "Segoe UI", system-ui, sans-serif';
-    ctx.textBaseline = 'top';
-    ctx.fillText(data.title, x + pad, y + pad);
-
-    var barX = x + pad;
-    var barY = y + pad + 22;
-    for (var i = 0; i < barH; i++) {
-      var t = 1 - i / barH;
+    for (var i = 0; i < barW; i++) {
+      var t = i / barW;
       var c = interpolateColor(data.gradient, t);
       ctx.fillStyle = 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
-      ctx.fillRect(barX, barY + i, barW, 1);
+      ctx.fillRect(x + i, y, 1, barH);
     }
 
-    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
     ctx.lineWidth = 1;
-    ctx.strokeRect(barX, barY, barW, barH);
+    ctx.strokeRect(x, y, barW, barH);
 
-    ctx.fillStyle = '#cbd5e1';
-    ctx.font = '11px "Segoe UI", system-ui, sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '14px "Segoe UI", system-ui, sans-serif';
+    ctx.textBaseline = 'top';
     var labels = data.labels;
     for (var j = 0; j < labels.length; j++) {
-      var ly = barY + (j / (labels.length - 1)) * barH;
-      ctx.fillText(labels[j], barX + barW + 8, ly);
+      var lx = x + (j / (labels.length - 1)) * barW;
+      ctx.textAlign = (j === 0) ? 'left' : (j === labels.length - 1) ? 'right' : 'center';
+      var offset = (j === 0) ? 0 : (j === labels.length - 1) ? 0 : 0;
+      ctx.fillText(labels[j], lx + offset, y + barH + gap);
     }
 
-    ctx.fillStyle = '#64748b';
-    ctx.font = 'italic 10px "Segoe UI", system-ui, sans-serif';
-    ctx.textBaseline = 'top';
-    ctx.fillText(data.unit, x + pad, y + boxH - pad - 4);
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
   }
@@ -476,7 +460,8 @@
         '.wind-legend', '.himawari-legend', '.s5p-legend', '.maritime-legend',
         '.leaflet-control-legend', '.legend-wrap',
         '.bmkg-time-slider-wrap', '.bmkg-ts-title', '.bmkg-ts-controls',
-        '.bmkg-ts-info', '.bmkg-ts-slider-wrap'
+        '.bmkg-ts-info', '.bmkg-ts-slider-wrap',
+        '.draw-fab-wrap'
       ];
       selectors.forEach(function (sel) {
         document.querySelectorAll(sel).forEach(function (el) {
@@ -505,6 +490,12 @@
 
       map.invalidateSize();
       await new Promise(function (r) { setTimeout(r, 300); });
+
+      var dim = getExportDimensions();
+      var EXPORT_W = dim.w;
+      var EXPORT_H = dim.h;
+      var HEADER_H = dim.headerH;
+      var FOOTER_H = dim.footerH;
 
       var leafletContainer = document.querySelector('.leaflet-container');
       var mapCanvas = await html2canvas(leafletContainer, {
@@ -545,6 +536,21 @@
 
       ctx.drawImage(mapCanvas, sx, sy, sw, sh, mapX, mapY, mapW, mapH);
 
+      var mCX = mapX + mapW / 2;
+      var mCY = mapY + mapH / 2;
+      ctx.save();
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold 64px "Segoe UI", system-ui, sans-serif';
+      ctx.fillText('PREVIEW', mCX, mCY - 50);
+      ctx.font = 'bold 44px "Segoe UI", system-ui, sans-serif';
+      ctx.fillText('RUANGKITA PRO', mCX, mCY + 10);
+      ctx.font = '20px "Segoe UI", system-ui, sans-serif';
+      ctx.fillText('ruangkita.net', mCX, mCY + 44);
+      ctx.restore();
+
       var mapBounds = map.getBounds();
       var zoom = map.getZoom();
       drawGrid(ctx, mapBounds, mapX, mapY, mapW, mapH, zoom);
@@ -552,10 +558,9 @@
       var currentName = (typeof currentBasemapName !== 'undefined') ? currentBasemapName : '';
       var labels = (typeof satelliteBasemapLabels !== 'undefined') ? satelliteBasemapLabels : {};
       var title = labels[currentName] || currentName || 'Satellite Imagery';
-      drawHeader(ctx, title, EXPORT_W);
-      drawFooter(ctx, 'BMKG / ESA / NASA / Esri', EXPORT_W, EXPORT_H);
+      drawHeader(ctx, title, EXPORT_W, HEADER_H);
+      drawFooter(ctx, 'BMKG / ESA / NASA / Esri', EXPORT_W, EXPORT_H, FOOTER_H);
 
-      drawScaleBar(ctx, mapBounds, mapX, mapY, mapW, mapH);
       drawNorthArrow(ctx, mapX + mapW - 30, mapY + mapH - 30);
 
       var legendKey = currentName;
@@ -563,14 +568,17 @@
         legendKey = currentName;
       }
       if (LEGENDS[legendKey]) {
-        drawLegend(ctx, legendKey, EXPORT_W - 260, mapY + 20);
+        var legendBarW = 400;
+        var legendX = (EXPORT_W - legendBarW) / 2;
+        var legendY = EXPORT_H - FOOTER_H - 60;
+        drawLegend(ctx, legendKey, legendX, legendY);
       }
 
       canvas.toBlob(function (blob) {
         var url = URL.createObjectURL(blob);
         var a = document.createElement('a');
         var dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-        a.download = 'satellite-' + currentName + '-' + dateStr + '.png';
+        a.download = 'ruangkita-' + currentName + '-' + dateStr + '.png';
         a.href = url;
         document.body.appendChild(a);
         a.click();
@@ -627,5 +635,6 @@
   });
 
   window.SatelliteExport = { exportImage: exportImage };
+  window.SATELLITE_LEGENDS = LEGENDS;
 
 })();
