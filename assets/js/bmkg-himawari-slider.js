@@ -27,9 +27,12 @@
 
   function formatTime(isoStr) {
     var d = new Date(isoStr);
-    var hh = String(d.getUTCHours()).padStart(2, '0');
-    var mm = String(d.getUTCMinutes()).padStart(2, '0');
-    return hh + ':' + mm + ' UTC';
+    var utcH = d.getUTCHours();
+    var utcM = d.getUTCMinutes();
+    var wibH = (utcH + 7) % 24;
+    var hh = String(wibH).padStart(2, '0');
+    var mm = String(utcM).padStart(2, '0');
+    return hh + ':' + mm + ' WIB';
   }
 
   function formatDateShort(isoStr) {
