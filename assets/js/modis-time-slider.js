@@ -3,11 +3,9 @@
   'use strict';
 
   var MODIS_LAYER_KEY = 'modis-terra';
-  var PROV_GEOJSON_URL = 'assets/data/bps/geojson/provinsi.geojson';
   var DAY_COUNT = 30;
   var sliderControl = null;
   var currentDayOffset = 0;
-  var _provModisLayer = null;
 
   var MONTH_NAMES = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -40,33 +38,6 @@
     if (!modisLayer) return;
     var newUrl = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/' + dateStr + '/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg';
     modisLayer.setUrl(newUrl);
-  }
-
-  function loadProvinsiLayer() {
-    if (_provModisLayer) { _provModisLayer.addTo(map); return; }
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', PROV_GEOJSON_URL, true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          var geojson = JSON.parse(xhr.responseText);
-          _provModisLayer = L.geoJSON(geojson, {
-            style: { color: '#ffffff', weight: 1, opacity: 0.7, fillColor: '#ffffff', fillOpacity: 0 },
-            interactive: false
-          }).addTo(map);
-        } catch (e) {
-          console.error('[ModisSlider] Gagal load provinsi GeoJSON:', e);
-        }
-      }
-    };
-    xhr.send();
-  }
-
-  function removeProvinsiLayer() {
-    if (_provModisLayer && map.hasLayer(_provModisLayer)) {
-      map.removeLayer(_provModisLayer);
-    }
   }
 
   function ensureBottomCenterControlCorner() {
@@ -149,7 +120,6 @@
       sliderControl = new ModisTimeSliderControl();
       sliderControl.addTo(map);
     }
-    loadProvinsiLayer();
     _prevMaxZoom = map.getMaxZoom();
     map.setMaxZoom(9);
     if (map.getZoom() > 9) map.setZoom(6);
@@ -160,7 +130,6 @@
       map.removeControl(sliderControl);
       sliderControl = null;
     }
-    removeProvinsiLayer();
     if (_prevMaxZoom !== null) {
       map.setMaxZoom(_prevMaxZoom);
       _prevMaxZoom = null;

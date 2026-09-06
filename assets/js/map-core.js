@@ -206,12 +206,6 @@ L.control.scale({
       if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.hide();
       if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.hidePth();
       baseBasemapName = name;
-      var isNoaa = NOAA_BASEMAPS.indexOf(name) !== -1;
-      if (isNoaa) {
-        loadNoaaBoundary();
-      } else {
-        removeNoaaBoundary();
-      }
       if (name === 'modis-terra') {
         baseTileLayers[name].setUrl(getGibsDateUrl('MODIS_Terra_CorrectedReflectance_TrueColor', 'jpg', getYesterdayDate()));
       } else if (name === 'modis-aqua') {
@@ -237,6 +231,7 @@ L.control.scale({
             } catch (e) {}
           }
           bmkgLayer.addTo(map);
+          if (satelliteBoundary && name !== 'esri-satellite') satelliteBoundary.show(map);
           currentBasemapName = name;
           var sel = document.getElementById('basemapSelect');
           if (sel) sel.value = name;
@@ -246,6 +241,15 @@ L.control.scale({
         return;
       }
       baseTileLayers[name].addTo(map);
+    }
+
+    if (satelliteBoundary) {
+      var isSatellite = satelliteBasemapLabels.hasOwnProperty(name);
+      if (isSatellite && name !== 'esri-satellite') {
+        satelliteBoundary.show(map);
+      } else {
+        satelliteBoundary.hide(map);
+      }
     }
 
     currentBasemapName = name;
@@ -785,6 +789,7 @@ L.control.scale({
         if (typeof modisTimeSliderCleanup === 'function') modisTimeSliderCleanup();
         if (typeof modisAquaTimeSliderCleanup === 'function') modisAquaTimeSliderCleanup();
         if (typeof viirsTimeSliderCleanup === 'function') viirsTimeSliderCleanup();
+        if (typeof satelliteBoundary !== 'undefined') satelliteBoundary.hide(map);
         if (typeof modisViirsOverlayCleanup === 'function') modisViirsOverlayCleanup();
         if (typeof cuacaMaritimCleanup === 'function') cuacaMaritimCleanup();
         if (typeof pmtilesCleanup === 'function') pmtilesCleanup();

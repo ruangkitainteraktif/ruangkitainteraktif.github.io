@@ -10,15 +10,15 @@
   };
   var MODELRUN_URL = 'https://satellite.bmkg.go.id/api22/modelrun';
   var TILE_URL_TEMPLATE = 'https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype={tiletype}&modelname={modelname}&param={param}&baserun=';
-  var PROV_GEOJSON_URL = 'assets/data/bps/geojson/provinsi.geojson';
 
   var sliderControl = null;
   var legendControl = null;
   var currentIndex = 0;
   var timestamps = [];
-  var _provLayer = null;
   var _fetchPromise = null;
   var _activeKey = null;
+  var _refreshInterval = null;
+  var REFRESH_MS = 10 * 60 * 1000;
 
   var MONTH_NAMES = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -95,33 +95,6 @@
       xhr.send();
     });
     _fetchPromise.then(function () { callback(); });
-  }
-
-  function loadProvinsiLayer() {
-    if (_provLayer) { _provLayer.addTo(map); return; }
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', PROV_GEOJSON_URL, true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          var geojson = JSON.parse(xhr.responseText);
-          _provLayer = L.geoJSON(geojson, {
-            style: { color: '#ffffff', weight: 1, opacity: 0.7, fillColor: '#ffffff', fillOpacity: 0 },
-            interactive: false
-          }).addTo(map);
-        } catch (e) {
-          console.error('[BMKGSlider] Failed to load provinsi:', e);
-        }
-      }
-    };
-    xhr.send();
-  }
-
-  function removeProvinsiLayer() {
-    if (_provLayer && map.hasLayer(_provLayer)) {
-      map.removeLayer(_provLayer);
-    }
   }
 
   function ensureBottomCenterControlCorner() {
@@ -208,6 +181,7 @@
       });
 
       wrap._slider = slider;
+      wrap._dateDisplay = dateDisplay;
       return wrap;
     }
   });
@@ -266,7 +240,6 @@
       sliderControl.addTo(map);
     }
     showLegend();
-    loadProvinsiLayer();
     _prevMaxZoom = map.getMaxZoom();
     map.setMaxZoom(10);
     if (map.getZoom() > 10) map.setZoom(5);
@@ -278,7 +251,6 @@
       sliderControl = null;
     }
     hideLegend();
-    removeProvinsiLayer();
     if (_prevMaxZoom !== null) {
       map.setMaxZoom(_prevMaxZoom);
       _prevMaxZoom = null;
@@ -292,7 +264,10 @@
     currentIndex = 0;
     // destroy old slider & legend so title updates
     hideSlider();
-    fetchTimestamps(function () { showSlider(); });
+    fetchTimestamps(function () {
+      showSlider();
+      startAutoRefresh();
+    });
   }
 
   function cleanup() {
@@ -302,6 +277,34 @@
     currentIndex = 0;
     _fetchPromise = null;
     _activeKey = null;
+    stopAutoRefresh();
+  }
+
+  function startAutoRefresh() {
+    stopAutoRefresh();
+    _refreshInterval = setInterval(function () {
+      if (!_activeKey) return;
+      _fetchPromise = null;
+      fetchTimestamps(function () {
+        if (!sliderControl || timestamps.length === 0) return;
+        var slider = sliderControl._slider;
+        if (!slider) return;
+        slider.max = String(timestamps.length - 1);
+        if (currentIndex >= timestamps.length) currentIndex = timestamps.length - 1;
+        slider.value = String(currentIndex);
+        var ts = timestamps[currentIndex];
+        var dateEl = sliderControl._dateDisplay;
+        if (dateEl) dateEl.textContent = formatDateTime(ts);
+        updateHimawariUrl(ts);
+      });
+    }, REFRESH_MS);
+  }
+
+  function stopAutoRefresh() {
+    if (_refreshInterval) {
+      clearInterval(_refreshInterval);
+      _refreshInterval = null;
+    }
   }
 
   document.addEventListener('DOMContentLoaded', function () {
