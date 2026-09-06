@@ -482,6 +482,56 @@ L.control.scale({
   new VectorBasemapControl().addTo(map);
   new SatelliteBasemapControl().addTo(map);
 
+  // Draw FAB Control — round button below basemap, expands to show draw/measure tools
+  const DrawFABControl = L.Control.extend({
+    options: { position: 'bottomright' },
+    onAdd: function() {
+      const wrap = L.DomUtil.create('div', 'draw-fab-wrap');
+
+      const btn = L.DomUtil.create('button', 'draw-fab-btn');
+      btn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
+      btn.title = 'Draw & Measure';
+      btn.setAttribute('aria-label', 'Draw & Measure');
+
+      const panel = L.DomUtil.create('div', 'draw-fab-panel');
+      panel.innerHTML = `
+        <div class="draw-fab-section-title">Draw</div>
+        <div class="draw-fab-row">
+          <button onclick="startDraw('marker')" title="Point"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><span>Point</span></button>
+          <button onclick="startDraw('polyline')" title="Line"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z" transform="rotate(-45 12 12)"/></svg><span>Line</span></button>
+          <button onclick="startDraw('polygon')" title="Polygon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l-8 5v10l8 5 8-5V7z"/></svg><span>Polygon</span></button>
+          <button onclick="startDraw('rectangle')" title="Rectangle"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/></svg><span>Rect</span></button>
+          <button onclick="startDraw('circle')" title="Circle"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg><span>Circle</span></button>
+        </div>
+        <div class="draw-fab-divider"></div>
+        <div class="draw-fab-section-title">Measure</div>
+        <div class="draw-fab-row">
+          <button onclick="startMeasure('distance')" title="Distance"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20"/><path d="M6 8v8"/><path d="M18 8v8"/></svg><span>Distance</span></button>
+          <button onclick="startMeasure('area')" title="Area"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l-8 5v10l8 5 8-5V7z"/><path d="M12 22V12"/><path d="M4 7l8 5 8-5"/></svg><span>Area</span></button>
+        </div>
+        <div class="draw-fab-divider"></div>
+        <div class="draw-fab-row">
+          <button onclick="clearDrawings()" title="Clear All" class="draw-fab-danger"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg><span>Clear</span></button>
+          <button onclick="exportDrawings()" title="Export GeoJSON" class="draw-fab-success"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Export</span></button>
+        </div>
+      `;
+
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        panel.classList.toggle('open');
+        btn.classList.toggle('active');
+      });
+
+      L.DomEvent.disableClickPropagation(wrap);
+      L.DomEvent.disableScrollPropagation(wrap);
+
+      wrap.appendChild(btn);
+      wrap.appendChild(panel);
+      return wrap;
+    }
+  });
+  new DrawFABControl().addTo(map);
+
   // AirVisual Legend Control
   const AIRVISUAL_LEGEND_DATA = {
     'airvisual-pm25': {

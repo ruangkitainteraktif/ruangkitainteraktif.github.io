@@ -1617,15 +1617,15 @@
       flex-direction: column;
       min-height: 0;
     }
-    .sidebar-header { order: 0; }
-    .app-banner { order: 1; }
+    .sidebar-header { order: 0; flex-shrink: 0; }
+    .app-banner { order: 1; flex-shrink: 0; }
     .sidebar-nav-toggle {
       order: 2;
       display: flex;
       align-items: center;
       width: calc(100% - 20px);
       gap: 8px;
-      margin: 2px 10px 0;
+      margin: 4px 10px;
       padding: 10px 12px;
       border: 1px solid #dce8ee;
       border-radius: 8px;
@@ -1636,6 +1636,7 @@
       font-weight: 700;
       letter-spacing: .03em;
       text-align: left;
+      flex-shrink: 0;
     }
     .sidebar-nav-toggle:hover { border-color: #bcdce2; background: #eff9fa; color: #08729c; }
     .sidebar-nav-toggle-icon { display: grid; place-items: center; }
@@ -1648,6 +1649,7 @@
     @media (max-width: 768px) {
       .sidebar-nav-toggle { min-height: 42px; font-size: 12px; }
       #sidebar-left .tab-menu {
+        flex: 0 0 auto;
         flex-direction: column;
         gap: 3px;
         padding: 8px 10px;
@@ -1684,7 +1686,6 @@
         gap: 3px;
         padding: 10px;
         border-bottom: 0;
-        border-right: 1px solid #e1ebf1;
       }
       #sidebar-left .tab-btn {
         position: relative;
@@ -1847,6 +1848,14 @@
       flex: 1;
       min-height: 0;
       overflow: hidden;
+    }
+    #tab-draw.active,
+    #tab-geotools.active {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
     }
 
     .geotani-analysis-nav { display: flex; flex-wrap: nowrap; gap: 4px; padding: 4px; margin: 12px 0 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: thin; }
@@ -2513,34 +2522,57 @@
 
     .geoid-subtabs {
       display: flex;
-      gap: 4px;
+      gap: 0;
       margin-bottom: 14px;
-      background: #f4f6f9;
-      border: 1px solid #e0e0e0;
-      border-radius: 6px;
-      padding: 3px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin;
-      scrollbar-color: #cbd5e1 transparent;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.04);
     }
     .geoid-subtab-btn {
       flex: 1 1 0;
       min-width: 0;
-      padding: 7px 10px;
+      padding: 8px 4px;
       border: none;
-      border-radius: 4px;
+      border-radius: 10px;
       background: transparent;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
-      color: #666;
+      color: #64748b;
       cursor: pointer;
       white-space: nowrap;
       text-align: center;
-      transition: background .15s, color .15s;
+      transition: all .2s ease;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      line-height: 1;
+      position: relative;
     }
-    .geoid-subtab-btn:hover { background: #e8ecf0; color: #334155; }
-    .geoid-subtab-btn.active { background: #fff; color: #0ea5e9; box-shadow: 0 1px 3px rgba(14,165,233,.18); }
+    .geoid-subtab-btn svg { 
+      flex-shrink: 0; 
+      width: 14px; 
+      height: 14px; 
+      opacity: .6; 
+      transition: all .2s ease;
+    }
+    .geoid-subtab-btn:hover { 
+      background: #f1f5f9; 
+      color: #334155; 
+    }
+    .geoid-subtab-btn:hover svg { opacity: .8; }
+    .geoid-subtab-btn.active { 
+      background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); 
+      color: #fff; 
+      box-shadow: 0 2px 8px rgba(8,145,178,.3);
+    }
+    .geoid-subtab-btn.active svg { 
+      opacity: 1; 
+      stroke: #fff;
+    }
     .geoid-subtab-panel { display: none; }
     .geoid-subtab-panel.active { display: block; }
 
@@ -5153,20 +5185,6 @@
     .geotani-empty small { font-size: 10px; }
 
     /* Alat Gambar & Ukur */
-    .alat-section-nav {
-      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px;
-      padding: 5px; margin-bottom: 12px; border: 1px solid #dce8f1; border-radius: 10px; background: #eef5fb;
-    }
-    .alat-section-tab {
-      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px;
-      padding: 7px 9px; border: 0; border-radius: 7px; background: transparent; color: #668198;
-      font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; transition: background .15s, color .15s;
-    }
-    .alat-section-tab:hover { color: #0879bf; }
-    .alat-section-tab.active { background: #fff; color: #0879bf; box-shadow: 0 1px 4px rgba(8,63,102,.12); }
-    .alat-section-tab svg { flex-shrink: 0; }
-    .alat-section-panel { display: none; }
-    .alat-section-panel.active { display: block; }
     /* Susun kartu Gambar dan Ukur & Kelola secara vertikal agar masing-masing
        memakai satu baris penuh pada panel GeoTools. */
     .alat-grid-2 { display: grid; grid-template-columns: 1fr; gap: 10px; }
@@ -5206,62 +5224,133 @@
       line-height: 1.5;
     }
 
-    /* Alat File Tab Card */
-    .alat-file-card {
-      border: 1px solid #e8eef3; border-radius: 10px; background: #f8fbfe;
+    /* Geotools File Panels — Modern Style */
+    #tab-geotools .geoid-subtab-panel.active {
+      display: grid; grid-template-columns: 1fr; gap: 12px; padding-top: 4px;
+    }
+    .geotools-file-card {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 12px;
+      background: #fff;
+      transition: all .2s ease;
+    }
+    .geotools-file-card:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+    .geotools-file-icon {
+      flex-shrink: 0; width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 12px; 
+      background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%); 
+      color: #0891b2;
+      transition: transform .2s ease;
+    }
+    .geotools-file-card:hover .geotools-file-icon { transform: scale(1.05); }
+    .geotools-file-icon--green { 
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); 
+      color: #10b981; 
+    }
+    .geotools-file-icon--orange { 
+      background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); 
+      color: #f97316; 
+    }
+    .geotools-file-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .geotools-file-name { font-size: 13px; font-weight: 700; color: #0f172a; line-height: 1.2; }
+    .geotools-file-desc { font-size: 11px; color: #64748b; line-height: 1.3; }
+    .geotools-file-input {
+      width: 100%; height: 42px; padding: 0 14px;
+      border: 1.5px dashed #cbd5e1; border-radius: 10px;
+      background: #f8fafc; font-size: 12px; color: #475569;
+      box-sizing: border-box; cursor: pointer;
+      transition: all .2s ease;
+      display: flex; align-items: center;
+      margin-top: 8px;
+    }
+    .geotools-file-input:hover { 
+      border-color: #0891b2; 
+      background: #ecfeff;
+    }
+    .geotools-file-input:focus { 
+      outline: none; 
+      border-color: #0891b2; 
+      border-style: solid; 
+      box-shadow: 0 0 0 3px rgba(8,145,178,.12); 
+      background: #fff; 
+    }
+    .geotools-file-input::file-selector-button {
+      background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+      border: none; border-radius: 8px;
+      padding: 10px 16px 8px; font-size: 11px; font-weight: 700; color: #fff;
+      cursor: pointer; margin-right: 12px; transition: all .2s ease;
+      box-shadow: 0 2px 6px rgba(8,145,178,.25);
+    }
+    .geotools-file-input::file-selector-button:hover { 
+      background: linear-gradient(135deg, #0e7490 0%, #155e75 100%); 
+      box-shadow: 0 4px 12px rgba(8,145,178,.35); 
+      transform: translateY(-1px); 
+    }
+    .geotools-btn {
+      width: 100%; height: 44px; padding: 0 16px; font-size: 13px; font-weight: 700;
+      border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+      color: #fff; border: none; cursor: pointer;
+      box-shadow: 0 2px 8px rgba(8,145,178,.25);
+      transition: all .2s ease;
+      text-align: center;
+      line-height: 1;
+      white-space: nowrap;
       overflow: hidden;
+      box-sizing: border-box;
+      flex-direction: row;
     }
-    .alat-file-nav {
-      display: flex; overflow-x: auto; overflow-y: hidden; border-bottom: 1px solid #e0eaf3; background: #eef5fb;
-      -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+    .geotools-btn svg {
+      order: -1;
+      flex-shrink: 0;
     }
-    .alat-file-tab {
-      flex: 0 0 auto; min-width: 88px; display: flex; align-items: center; justify-content: center; gap: 5px;
-      padding: 9px 6px; border: none; background: transparent; color: #6b8299;
-      font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap;
-      border-bottom: 2px solid transparent; transition: all .15s;
+    .geotools-btn:hover { 
+      box-shadow: 0 4px 16px rgba(8,145,178,.35); 
+      transform: translateY(-1px); 
     }
-    .alat-file-tab svg { flex-shrink: 0; }
-    .alat-file-tab:hover { color: #0879bf; background: rgba(8,121,191,.04); }
-    .alat-file-tab.active {
-      color: #0879bf; border-bottom-color: #0879bf; background: #fff;
+    .geotools-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(8,145,178,.25);
     }
-    .alat-file-panels { padding: 10px; }
-    .alat-file-panel { display: none; }
-    .alat-file-panel.active { display: grid; grid-template-columns: 1fr; gap: 8px; }
-    .alat-file-panel .alat-file-input {
-      width: 100%; margin-bottom: 0; height: 36px; padding: 6px 10px;
-      border: 1px solid #dce6ef; border-radius: 8px; font-size: 11px;
-      background: #fff; color: #333; box-sizing: border-box;
+    .geotools-btn--green { 
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      box-shadow: 0 2px 8px rgba(16,185,129,.25);
     }
-    .alat-file-panel .alat-file-input:focus {
-      outline: none; border-color: #0879bf; box-shadow: 0 0 0 2px rgba(8,121,191,.12);
+    .geotools-btn--green:hover { 
+      box-shadow: 0 4px 16px rgba(16,185,129,.35); 
     }
-    .alat-file-panel .alat-file-input::file-selector-button {
-      background: #eef5fb; border: 1px solid #d0dfe9; border-radius: 6px;
-      padding: 4px 10px; font-size: 10px; font-weight: 600; color: #0879bf;
-      cursor: pointer; margin-right: 8px; transition: all .15s;
+    .geotools-btn--orange { 
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      box-shadow: 0 2px 8px rgba(249,115,22,.25);
     }
-    .alat-file-panel .alat-file-input::file-selector-button:hover {
-      background: #d5eaf8; border-color: #0879bf;
+    .geotools-btn--orange:hover { 
+      box-shadow: 0 4px 16px rgba(249,115,22,.35); 
     }
-    .alat-file-panel .btn-apply {
-      width: 100%; height: 36px; padding: 0; font-size: 11px;
-      border-radius: 8px;
+
+    /* Timeline Steps */
+    .geotools-steps {
+      padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 10px;
+      background: #f8fafc;
+    }
+    .geotools-steps-title { font-size: 12px; font-weight: 700; color: #0f172a; margin-bottom: 10px; }
+    .geotools-step {
+      display: flex; align-items: flex-start; gap: 10px; padding: 6px 0;
+      font-size: 12px; color: #475569; line-height: 1.5;
+    }
+    .geotools-step-num {
+      flex-shrink: 0; width: 20px; height: 20px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; 
+      background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%); 
+      color: #0891b2;
+      font-size: 11px; font-weight: 700;
+      border: 1px solid #a5f3fc;
     }
     .alat-file-hint { color: #668198; font-size: 10px; line-height: 1.35; }
-
-    @media (max-width: 600px) {
-      .alat-file-card {
-        overflow: hidden;
-      }
-      .alat-file-nav {
-        scrollbar-width: thin;
-      }
-      .alat-file-tab {
-        padding-inline: 12px;
-      }
-    }
 
     /* Alat Analisis GeoJSON/SHP */
     .alat-file-input {
@@ -5795,6 +5884,110 @@
       backdrop-filter: blur(4px);
       z-index: 999;
     }
+
+    /* Floating Draw Toolbar — FAB Style */
+    .leaflet-draw-toolbar-wrap {
+      display: none !important;
+    }
+    .draw-fab-wrap {
+      position: relative;
+      margin: 12px !important;
+      margin-bottom: 0 !important;
+    }
+    .draw-fab-btn {
+      display: grid;
+      place-items: center;
+      width: 46px !important;
+      height: 46px !important;
+      margin: 0 !important;
+      border: 1px solid rgba(255,255,255,.86) !important;
+      border-radius: 50% !important;
+      background: linear-gradient(145deg, #ffffff, #e9f7fc) !important;
+      color: #0879bf !important;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 10px 28px rgba(8,63,102,.24) !important;
+      transition: transform .2s, box-shadow .2s, background .2s;
+      position: relative;
+      z-index: 1001;
+      padding: 0;
+    }
+    .draw-fab-btn:hover {
+      background: linear-gradient(145deg, #ffffff, #d5f3fb) !important;
+      box-shadow: inset 0 0 0 1px rgba(8,121,191,.14);
+      transform: translateY(-2px);
+    }
+    .draw-fab-btn.active {
+      background: linear-gradient(145deg, #0879bf, #12a7c8) !important;
+      color: #fff !important;
+      transform: scale(0.95);
+    }
+    .draw-fab-panel {
+      position: absolute;
+      bottom: 62px;
+      right: 0;
+      width: 200px;
+      background: rgba(255,255,255,0.97);
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.18);
+      padding: 10px;
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: none;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .2s, transform .2s;
+    }
+    .draw-fab-panel.open {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .draw-fab-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 6px;
+    }
+    .draw-fab-row {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .draw-fab-row button {
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 7px 4px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      cursor: pointer;
+      color: #475569;
+      font-size: 9px;
+      font-weight: 600;
+      transition: all .15s;
+    }
+    .draw-fab-row button:hover {
+      background: #f1f5f9;
+      color: #0891b2;
+    }
+    .draw-fab-row button svg { flex-shrink: 0; }
+    .draw-fab-divider {
+      height: 1px;
+      background: #e2e8f0;
+      margin: 8px 0;
+    }
+    .draw-fab-danger { color: #ef4444 !important; }
+    .draw-fab-danger:hover { background: #fef2f2 !important; color: #dc2626 !important; }
+    .draw-fab-success { color: #10b981 !important; }
+    .draw-fab-success:hover { background: #ecfdf5 !important; color: #059669 !important; }
     .leaflet-control-scale-line {
       border-color: #333;
       border-width: 1px 0 0 0;

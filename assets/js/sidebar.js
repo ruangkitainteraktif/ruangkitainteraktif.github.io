@@ -144,7 +144,7 @@
     if (unifiedSearch) unifiedSearch.style.display = 'block';
     if (insightCards) insightCards.style.display = 'none';
 
-    if (tabId !== 'tab-alat') {
+    if (tabId !== 'tab-draw' && tabId !== 'tab-geotools') {
       removeDrawControl();
       stopMeasureMode();
     }

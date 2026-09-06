@@ -62,7 +62,7 @@
     }
 
     // Nonaktifkan popup geoid di tab alat, gempa, dan geopangan
-    if (activeTab === 'tab-alat' || activeTab === 'tab-gempa' || activeTab === 'tab-geopangan') return;
+    if (activeTab === 'tab-draw' || activeTab === 'tab-geotools' || activeTab === 'tab-gempa' || activeTab === 'tab-geopangan') return;
 
     // GeoTani tidak memakai reverse geocoding. Saat area kosong dalam cakupan
     // hasil irisan diklik, tampilkan popup batas wilayah analisis aktif.

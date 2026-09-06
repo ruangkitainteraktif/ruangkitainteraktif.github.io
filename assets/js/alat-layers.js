@@ -10,28 +10,9 @@
     status.style.color = isError ? '#c0392b' : '#567';
   }
 
-  function alatFileTabSwitch(btn, panelId) {
-    btn.closest('.alat-file-card').querySelectorAll('.alat-file-tab').forEach(t => t.classList.remove('active'));
-    btn.closest('.alat-file-card').querySelectorAll('.alat-file-panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(panelId).classList.add('active');
-  }
-
   function alatSectionTabSwitch(btn, panelId) {
-    const toolsTab = btn.closest('#tab-alat');
-    toolsTab.querySelectorAll('.alat-section-tab').forEach(tab => {
-      tab.classList.remove('active');
-      tab.setAttribute('aria-selected', 'false');
-    });
-    toolsTab.querySelectorAll('.alat-section-panel').forEach(panel => panel.classList.remove('active'));
-    btn.classList.add('active');
-    btn.setAttribute('aria-selected', 'true');
-    toolsTab.querySelector(`#${panelId}`).classList.add('active');
-
-    if (panelId === 'alat-section-file') {
-      if (typeof removeDrawControl === 'function') removeDrawControl();
-      if (typeof stopMeasureMode === 'function') stopMeasureMode();
-    }
+    if (typeof removeDrawControl === 'function') removeDrawControl();
+    if (typeof stopMeasureMode === 'function') stopMeasureMode();
   }
 
   function renderAlatLayerList() {
