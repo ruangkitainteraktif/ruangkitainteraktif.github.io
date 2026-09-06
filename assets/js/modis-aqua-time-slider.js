@@ -1,13 +1,13 @@
-/* ── MODIS Terra Time Slider — NASA GIBS WMTS ── */
+/* ── MODIS Aqua Time Slider — NASA GIBS WMTS ── */
 (function () {
   'use strict';
 
-  var MODIS_LAYER_KEY = 'modis-terra';
+  var MODIS_AQUA_LAYER_KEY = 'modis-aqua';
   var PROV_GEOJSON_URL = 'assets/data/bps/geojson/provinsi.geojson';
   var DAY_COUNT = 30;
   var sliderControl = null;
   var currentDayOffset = 0;
-  var _provModisLayer = null;
+  var _provModisAquaLayer = null;
 
   var MONTH_NAMES = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -35,15 +35,15 @@
     return d;
   }
 
-  function updateModisUrl(dateStr) {
-    var modisLayer = baseTileLayers[MODIS_LAYER_KEY];
-    if (!modisLayer) return;
-    var newUrl = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/' + dateStr + '/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg';
-    modisLayer.setUrl(newUrl);
+  function updateModisAquaUrl(dateStr) {
+    var modisAquaLayer = baseTileLayers[MODIS_AQUA_LAYER_KEY];
+    if (!modisAquaLayer) return;
+    var newUrl = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Aqua_CorrectedReflectance_TrueColor/default/' + dateStr + '/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg';
+    modisAquaLayer.setUrl(newUrl);
   }
 
   function loadProvinsiLayer() {
-    if (_provModisLayer) { _provModisLayer.addTo(map); return; }
+    if (_provModisAquaLayer) { _provModisAquaLayer.addTo(map); return; }
     var xhr = new XMLHttpRequest();
     xhr.open('GET', PROV_GEOJSON_URL, true);
     xhr.onreadystatechange = function () {
@@ -51,12 +51,12 @@
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           var geojson = JSON.parse(xhr.responseText);
-          _provModisLayer = L.geoJSON(geojson, {
+          _provModisAquaLayer = L.geoJSON(geojson, {
             style: { color: '#ffffff', weight: 1, opacity: 0.7, fillColor: '#ffffff', fillOpacity: 0 },
             interactive: false
           }).addTo(map);
         } catch (e) {
-          console.error('[ModisSlider] Gagal load provinsi GeoJSON:', e);
+          console.error('[ModisAquaSlider] Gagal load provinsi GeoJSON:', e);
         }
       }
     };
@@ -64,8 +64,8 @@
   }
 
   function removeProvinsiLayer() {
-    if (_provModisLayer && map.hasLayer(_provModisLayer)) {
-      map.removeLayer(_provModisLayer);
+    if (_provModisAquaLayer && map.hasLayer(_provModisAquaLayer)) {
+      map.removeLayer(_provModisAquaLayer);
     }
   }
 
@@ -76,7 +76,7 @@
 
   ensureBottomCenterControlCorner();
 
-  var ModisTimeSliderControl = L.Control.extend({
+  var ModisAquaTimeSliderControl = L.Control.extend({
     options: { position: 'bottomcenter' },
     onAdd: function () {
       var wrap = L.DomUtil.create('div', 'modis-time-slider-wrap');
@@ -84,7 +84,7 @@
       L.DomEvent.disableScrollPropagation(wrap);
 
       var titleRow = L.DomUtil.create('div', 'modis-ts-title', wrap);
-      titleRow.textContent = 'MODIS Terra';
+      titleRow.textContent = 'MODIS Aqua';
 
       var controlsRow = L.DomUtil.create('div', 'modis-ts-controls', wrap);
 
@@ -109,14 +109,14 @@
       dateDisplay.textContent = formatDate(getDateByOffset(-1));
 
       var timeDisplay = L.DomUtil.create('span', 'modis-ts-time', infoRow);
-      timeDisplay.textContent = 'Overpass ~10:30 WIB';
+      timeDisplay.textContent = 'Overpass ~13:30 WIB';
 
       slider.addEventListener('input', function () {
         currentDayOffset = parseInt(this.value, 10);
         var d = getDateByOffset(currentDayOffset);
         var dateStr = formatISO(d);
         dateDisplay.textContent = formatDate(d);
-        updateModisUrl(dateStr);
+        updateModisAquaUrl(dateStr);
       });
 
       prevBtn.addEventListener('click', function (e) {
@@ -146,7 +146,7 @@
 
   function showSlider() {
     if (!sliderControl) {
-      sliderControl = new ModisTimeSliderControl();
+      sliderControl = new ModisAquaTimeSliderControl();
       sliderControl.addTo(map);
     }
     loadProvinsiLayer();
@@ -169,26 +169,26 @@
 
   function cleanup() {
     hideSlider();
-    if (typeof baseTileLayers !== 'undefined' && baseTileLayers[MODIS_LAYER_KEY]) {
+    if (typeof baseTileLayers !== 'undefined' && baseTileLayers[MODIS_AQUA_LAYER_KEY]) {
       var today = formatISO(getDateByOffset(-1));
-      updateModisUrl(today);
+      updateModisAquaUrl(today);
     }
     currentDayOffset = -1;
   }
 
   document.addEventListener('DOMContentLoaded', function () {
     map.on('basemapchanged', function (e) {
-      if (e.basemap === MODIS_LAYER_KEY) {
+      if (e.basemap === MODIS_AQUA_LAYER_KEY) {
         showSlider();
       } else {
         hideSlider();
       }
     });
 
-    if (typeof currentBasemapName !== 'undefined' && currentBasemapName === MODIS_LAYER_KEY) {
+    if (typeof currentBasemapName !== 'undefined' && currentBasemapName === MODIS_AQUA_LAYER_KEY) {
       showSlider();
     }
   });
 
-  window.modisTimeSliderCleanup = cleanup;
+  window.modisAquaTimeSliderCleanup = cleanup;
 })();

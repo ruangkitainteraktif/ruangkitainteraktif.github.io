@@ -68,6 +68,12 @@ L.control.scale({
       attribution: 'NASA GIBS',
       Time: new Date().toISOString().slice(0, 10)
     }),
+    'modis-aqua': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Aqua_CorrectedReflectance_TrueColor/default/{Time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', {
+      maxZoom: 12,
+      minZoom: 0,
+      attribution: 'NASA GIBS',
+      Time: new Date().toISOString().slice(0, 10)
+    }),
     'viirs-noaa20': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/{Time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpeg', {
       maxZoom: 9,
       minZoom: 0,
@@ -208,6 +214,8 @@ L.control.scale({
       }
       if (name === 'modis-terra') {
         baseTileLayers[name].setUrl(getGibsDateUrl('MODIS_Terra_CorrectedReflectance_TrueColor', 'jpg', getYesterdayDate()));
+      } else if (name === 'modis-aqua') {
+        baseTileLayers[name].setUrl(getGibsDateUrl('MODIS_Aqua_CorrectedReflectance_TrueColor', 'jpg', getYesterdayDate()));
       } else if (name === 'viirs-noaa20') {
         baseTileLayers[name].setUrl(getGibsDateUrl('VIIRS_NOAA20_CorrectedReflectance_TrueColor', 'jpeg', getYesterdayDate()));
       } else if (name === 'viirs-noaa21') {
@@ -371,6 +379,7 @@ L.control.scale({
   const satelliteBasemapLabels = {
     'esri-satellite': 'Esri Satellite',
     'modis-terra': 'MODIS Terra',
+    'modis-aqua': 'MODIS Aqua',
     'viirs-noaa20': 'VIIRS NOAA-20',
     'viirs-noaa21': 'VIIRS NOAA-21',
     'bmkg-himawari': 'Himawari-9 IR',
@@ -774,6 +783,7 @@ L.control.scale({
         if (typeof _worldPlatesLayerCleanup === 'function') _worldPlatesLayerCleanup();
         if (typeof kawasanHutanCleanup === 'function') kawasanHutanCleanup();
         if (typeof modisTimeSliderCleanup === 'function') modisTimeSliderCleanup();
+        if (typeof modisAquaTimeSliderCleanup === 'function') modisAquaTimeSliderCleanup();
         if (typeof viirsTimeSliderCleanup === 'function') viirsTimeSliderCleanup();
         if (typeof modisViirsOverlayCleanup === 'function') modisViirsOverlayCleanup();
         if (typeof cuacaMaritimCleanup === 'function') cuacaMaritimCleanup();
