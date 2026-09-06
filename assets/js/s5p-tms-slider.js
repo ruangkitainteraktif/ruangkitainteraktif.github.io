@@ -208,7 +208,7 @@
       L.DomEvent.disableScrollPropagation(div);
       var info = S5P_PRODUCTS[_activeKey];
       div.innerHTML = LEGEND_HTML[info ? info.colorScale : 'cloud-fraction'] || '';
-      return div;
+      return window.createLegendWithToggle(div);
     }
   });
 

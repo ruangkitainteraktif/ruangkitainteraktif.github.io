@@ -110,6 +110,13 @@ L.control.scale({
       tms: true,
       attribution: 'BMKG GK-2A'
     }),
+    'bmkg-gk2a-wv': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=gk2a&param=WV&baserun=', {
+      maxZoom: 10,
+      minZoom: 3,
+      maxNativeZoom: 3,
+      tms: true,
+      attribution: 'BMKG GK-2A Water Vapor'
+    }),
     'noaa-true-color': L.tileLayer('https://gis.nnvl.noaa.gov/arcgis/rest/services/TRUE/TRUE_current/ImageServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
       minZoom: 0,
@@ -156,13 +163,15 @@ L.control.scale({
     'bmkg-himawari': 'himawari9',
     'bmkg-himawari-fd': 'himawari9fd',
     'bmkg-himawari-hires': 'himawari9hires',
-    'bmkg-gk2a': 'gk2a'
+    'bmkg-gk2a': 'gk2a',
+    'bmkg-gk2a-wv': 'gk2a'
   };
   var BMKG_PARAMS = {
     'bmkg-himawari': 'EH',
     'bmkg-himawari-fd': 'EH',
     'bmkg-himawari-hires': 'VS',
-    'bmkg-gk2a': 'EH'
+    'bmkg-gk2a': 'EH',
+    'bmkg-gk2a-wv': 'WV'
   };
   window._bmkgModelrunCache = null;
 
@@ -403,6 +412,7 @@ L.control.scale({
     'bmkg-himawari-fd': 'Himawari-9 Full Disk',
     'bmkg-himawari-hires': 'Himawari-9 Hi-Res',
     'bmkg-gk2a': 'GK-2A',
+    'bmkg-gk2a-wv': 'GK-2A Water Vapor',
     'noaa-true-color': 'NOAA True Color',
     'noaa-goes-ir': 'NOAA GOES IR',
     's5p-cloud-fraction': 'S5P Cloud Fraction',
@@ -1141,3 +1151,21 @@ L.control.scale({
     /* re-sync setiap 800ms supaya tombol selalu sinkron */
     setInterval(syncToolbarState, 800);
   })();
+
+  window.createLegendWithToggle = function (container) {
+    var wrap = document.createElement('div');
+    wrap.className = 'legend-wrap';
+    var title = container.querySelector('[class$="-legend-title"]');
+    if (title) {
+      title.classList.add('legend-toggle');
+      var icon = document.createElement('span');
+      icon.className = 'legend-toggle-icon';
+      icon.textContent = '\u25BE';
+      title.appendChild(icon);
+      title.addEventListener('click', function () {
+        wrap.classList.toggle('legend-collapsed');
+      });
+    }
+    wrap.appendChild(container);
+    return wrap;
+  };

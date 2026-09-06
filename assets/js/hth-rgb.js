@@ -26,7 +26,7 @@
           '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#991b1b;"></span>> 30 — Kekeringan</div>' +
         '</div>' +
         '<div class="wind-legend-unit">Sumber: BMKG HTH</div>';
-      return div;
+      return window.createLegendWithToggle(div);
     }
   });
 

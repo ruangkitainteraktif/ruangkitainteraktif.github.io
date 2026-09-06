@@ -23,7 +23,7 @@
           '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#ff5032;"></span>≥ 15 — Strong</div>' +
         '</div>' +
         '<div class="wind-legend-unit">Sumber: BMKG GFS</div>';
-      return div;
+      return window.createLegendWithToggle(div);
     }
   });
 

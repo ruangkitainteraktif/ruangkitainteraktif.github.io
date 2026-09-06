@@ -23,7 +23,7 @@
           '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#7c3aed;"></span>> 80 — Sangat Lembap</div>' +
         '</div>' +
         '<div class="wind-legend-unit">Sumber: BMKG GFS</div>';
-      return div;
+      return window.createLegendWithToggle(div);
     }
   });
 

@@ -27,7 +27,7 @@
           '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#7f1d1d;"></span>> 500 — Berbahaya</div>' +
         '</div>' +
         '<div class="wind-legend-unit">Sumber: BMKG PCM PM2.5</div>';
-      return div;
+      return window.createLegendWithToggle(div);
     }
   });
 

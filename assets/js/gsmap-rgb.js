@@ -26,7 +26,7 @@
           '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#1e3a5f;"></span>> 50 — Hujan Ekstrem</div>' +
         '</div>' +
         '<div class="wind-legend-unit">Sumber: BMKG GsMAP</div>';
-      return div;
+      return window.createLegendWithToggle(div);
     }
   });
 

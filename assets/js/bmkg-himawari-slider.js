@@ -6,7 +6,8 @@
     'bmkg-himawari':      { tiletype: 'himawari9', modelname: 'himawari9',    param: 'EH', title: 'Himawari-9 IR Enhanced' },
     'bmkg-himawari-fd':   { tiletype: 'himawari9', modelname: 'himawari9fd',  param: 'EH', title: 'Himawari-9 Full Disk' },
     'bmkg-himawari-hires':{ tiletype: 'himawari9', modelname: 'himawari9hires', param: 'VS', title: 'Himawari-9 Hi-Res (Visible)' },
-    'bmkg-gk2a':          { tiletype: 'himawari9', modelname: 'gk2a',         param: 'EH', title: 'GK-2A' }
+    'bmkg-gk2a':          { tiletype: 'himawari9', modelname: 'gk2a',         param: 'EH', title: 'GK-2A' },
+    'bmkg-gk2a-wv':       { tiletype: 'himawari9', modelname: 'gk2a',         param: 'WV', title: 'GK-2A Water Vapor' }
   };
 
   var MODELRUN_URL = 'https://satellite.bmkg.go.id/api22/modelrun';
@@ -179,8 +180,8 @@
           return;
         }
         slider.max = String(timestamps.length - 1);
-        currentIndex = 0;
-        slider.value = '0';
+        currentIndex = timestamps.length - 1;
+        slider.value = String(currentIndex);
         applyTimestamp();
       });
 
@@ -205,6 +206,12 @@
           '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#000 0%,#fff 100%);"></div>' +
           '<div class="himawari-legend-labels"><span>Gelap</span><span>Cerah</span></div>' +
           '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
+      } else if (param === 'WV') {
+        div.innerHTML =
+          '<div class="himawari-legend-title">Uap Air (WV 6.3&micro;m)</div>' +
+          '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#1a1a2e,#16213e,#0f3460,#1a936f,#53a8b6,#b6d7e8,#ffffff);"></div>' +
+          '<div class="himawari-legend-labels"><span>Kering</span><span>Lembab</span><span>Sangat Lembab</span></div>' +
+          '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
       } else {
         div.innerHTML =
           '<div class="himawari-legend-title">Suhu Puncak Awan (IR 10.4&micro;m)</div>' +
@@ -220,7 +227,7 @@
           '</div>' +
           '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
       }
-      return div;
+      return window.createLegendWithToggle(div);
     }
   });
 
@@ -268,8 +275,8 @@
     currentIndex = 0;
     hideSlider();
     fetchTimestamps(function () {
+      currentIndex = 0;
       showSlider();
-      startAutoRefresh();
     });
   }
 

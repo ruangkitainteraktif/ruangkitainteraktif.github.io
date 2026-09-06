@@ -208,7 +208,7 @@
       });
       html += '<div class="maritime-legend-source">Sumber: BMKG</div>';
       div.innerHTML = html;
-      return div;
+      return window.createLegendWithToggle(div);
     }
   });
 

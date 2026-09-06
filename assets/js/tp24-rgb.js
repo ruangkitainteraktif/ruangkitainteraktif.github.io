@@ -13,16 +13,17 @@
       L.DomEvent.disableClickPropagation(div);
       div.innerHTML =
         '<div class="wind-legend-title">Curah Hujan 24 Jam (mm)</div>' +
-        '<div class="wind-legend-bar" style="background:linear-gradient(to right,#fde047,#fb923c,#ef4444,#991b1b)"></div>' +
-        '<div class="wind-legend-labels"><span>0</span><span>5</span><span>20</span><span>50</span><span>100</span></div>' +
+        '<div class="wind-legend-bar" style="background:linear-gradient(to right,#3b82f6,#22c55e,#eab308,#f97316,#ef4444)"></div>' +
+        '<div class="wind-legend-labels"><span>0</span><span>0.5</span><span>5</span><span>20</span><span>50</span><span>100</span></div>' +
         '<div class="wind-legend-items">' +
-          '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#fde047;"></span>0 – 5 — Ringan</div>' +
-          '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#fb923c;"></span>5 – 20 — Sedang</div>' +
-          '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#ef4444;"></span>20 – 50 — Lebat</div>' +
-          '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#991b1b;"></span>> 50 — Sangat Lebat</div>' +
+          '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#3b82f6;"></span>0.5 – 5 — Ringan</div>' +
+          '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#22c55e;"></span>5 – 20 — Sedang</div>' +
+          '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#eab308;"></span>20 – 50 — Lebat</div>' +
+          '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#f97316;"></span>50 – 100 — Sangat Lebat</div>' +
+          '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#ef4444;"></span>> 100 — Ekstrem</div>' +
         '</div>' +
         '<div class="wind-legend-unit">Sumber: BMKG GFS</div>';
-      return div;
+      return window.createLegendWithToggle(div);
     }
   });
 
@@ -34,10 +35,11 @@
 
   function getPrecipCategory(mm) {
     if (mm <= 0) return { label: 'Tidak Hujan', color: '#a3a3a3', bg: '#f5f5f5', icon: '☀️' };
-    if (mm <= 5) return { label: 'Ringan', color: '#f59e0b', bg: '#fffbeb', icon: '🌦️' };
-    if (mm <= 20) return { label: 'Sedang', color: '#f97316', bg: '#fff7ed', icon: '🌧️' };
-    if (mm <= 50) return { label: 'Lebat', color: '#ef4444', bg: '#fef2f2', icon: '⛈️' };
-    return { label: 'Sangat Lebat', color: '#991b1b', bg: '#fef2f2', icon: '🌊' };
+    if (mm <= 5) return { label: 'Ringan', color: '#3b82f6', bg: '#eff6ff', icon: '🌦️' };
+    if (mm <= 20) return { label: 'Sedang', color: '#22c55e', bg: '#f0fdf4', icon: '🌧️' };
+    if (mm <= 50) return { label: 'Lebat', color: '#eab308', bg: '#fefce8', icon: '🌧️' };
+    if (mm <= 100) return { label: 'Sangat Lebat', color: '#f97316', bg: '#fff7ed', icon: '⛈️' };
+    return { label: 'Ekstrem', color: '#ef4444', bg: '#fef2f2', icon: '🌊' };
   }
 
   function buildPopupHtml(lat, lon, lokasi, cuaca) {

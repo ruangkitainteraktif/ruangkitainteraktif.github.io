@@ -199,7 +199,7 @@
           '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#b800d6;"></span>&gt; 50 mm/jam — Sangat Ekstrem</div>' +
         '</div>' +
         '<div class="himawari-legend-unit">Sumber: RainViewer</div>';
-      return div;
+      return window.createLegendWithToggle(div);
     }
   });
 

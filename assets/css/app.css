@@ -6539,3 +6539,23 @@
     }
     @keyframes map-spin { to { transform: rotate(360deg); } }
 
+    /* Legend collapse toggle */
+    .legend-wrap { position: relative; }
+    .legend-toggle { cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-right: 28px; }
+    .legend-toggle-icon { transition: transform .2s; font-size: 13px; color: #e2e8f0; background: rgba(255,255,255,.15); width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; flex-shrink: 0; line-height: 1; border: 1px solid rgba(255,255,255,.1); position: absolute; top: 4px; right: 4px; }
+    .legend-toggle-icon:hover { background: rgba(255,255,255,.25); }
+    .legend-wrap.legend-collapsed .wind-legend-bar,
+    .legend-wrap.legend-collapsed .wind-legend-labels,
+    .legend-wrap.legend-collapsed .wind-legend-items,
+    .legend-wrap.legend-collapsed .wind-legend-unit,
+    .legend-wrap.legend-collapsed .himawari-legend-bar,
+    .legend-wrap.legend-collapsed .himawari-legend-labels,
+    .legend-wrap.legend-collapsed .himawari-legend-items,
+    .legend-wrap.legend-collapsed .himawari-legend-unit,
+    .legend-wrap.legend-collapsed .s5p-legend-bar,
+    .legend-wrap.legend-collapsed .s5p-legend-labels,
+    .legend-wrap.legend-collapsed .s5p-legend-unit,
+    .legend-wrap.legend-collapsed .maritime-legend-row,
+    .legend-wrap.legend-collapsed .maritime-legend-source { display: none !important; }
+    .legend-wrap.legend-collapsed .legend-toggle-icon { transform: rotate(-90deg); }
+
