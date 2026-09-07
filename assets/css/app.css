@@ -6997,6 +6997,61 @@
       from { opacity: 0; transform: translateX(-50%) translateY(12px); }
       to { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
+
+    /* ── Responsive Print Overlay & Preview (Mobile ≤480px) ── */
+    @media (max-width: 480px) {
+      .print-area-frame {
+        height: 48vh;
+        max-width: 85vw;
+      }
+      .print-area-buttons {
+        top: 12px;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: 92vw;
+      }
+      .print-area-btn {
+        padding: 9px 16px;
+        font-size: 13px;
+        border-radius: 10px;
+        gap: 6px;
+      }
+      .print-area-btn svg { width: 16px; height: 16px; }
+      .print-area-cancel {
+        padding: 9px 14px;
+        font-size: 13px;
+        border-radius: 10px;
+      }
+      .print-instruction {
+        bottom: 60px;
+        padding: 10px 16px;
+        font-size: 12px;
+        white-space: normal;
+        text-align: center;
+        max-width: 88vw;
+        gap: 8px;
+      }
+      .print-instruction-icon { font-size: 16px; }
+      .print-preview-actions {
+        bottom: 12px;
+        gap: 8px;
+      }
+      .print-preview-confirm,
+      .print-preview-cancel {
+        padding: 8px 16px;
+        font-size: 13px;
+        border-radius: 8px;
+      }
+      .print-preview-container {
+        max-width: 96vw;
+        max-height: 70vh;
+      }
+      .print-preview-container canvas {
+        max-width: 96vw;
+        max-height: 70vh;
+      }
+    }
     .legend-toggle { cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-right: 28px; }
     .legend-toggle-icon { transition: transform .2s; font-size: 13px; color: #e2e8f0; background: rgba(255,255,255,.15); width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; flex-shrink: 0; line-height: 1; border: 1px solid rgba(255,255,255,.1); position: absolute; top: 4px; right: 4px; }
     .legend-toggle-icon:hover { background: rgba(255,255,255,.25); }
