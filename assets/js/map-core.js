@@ -375,6 +375,56 @@ L.control.scale({
   setRdtrOpacity(currentRdtrOpacity);
   setMapLocked(false);
 
+  /* ── FAB Menu Control (paling bawah) ── */
+  const MapFABControl = L.Control.extend({
+    options: { position: 'bottomright' },
+    onAdd: function () {
+      var wrap = L.DomUtil.create('div', 'map-fab-wrap');
+      var items = L.DomUtil.create('div', 'map-fab-items');
+      var btn = L.DomUtil.create('button', 'map-fab-btn');
+      btn.innerHTML = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>';
+      btn.title = 'Menu Alat';
+      L.DomEvent.disableClickPropagation(wrap);
+      L.DomEvent.disableScrollPropagation(wrap);
+      btn.addEventListener('click', function () {
+        wrap.classList.toggle('map-fab-open');
+        var ctrlContainer = wrap.closest('.leaflet-bottom.leaflet-right');
+        if (ctrlContainer) ctrlContainer.classList.toggle('map-fab-active');
+      });
+      wrap.appendChild(items);
+      wrap.appendChild(btn);
+      return wrap;
+    }
+  });
+  var __fabCtrl = new MapFABControl().addTo(map);
+  var __fabItems = null;
+
+  function moveToFAB(selector, title) {
+    var el = document.querySelector(selector);
+    if (!el) return;
+    if (!__fabItems) __fabItems = document.querySelector('.map-fab-items');
+    if (!__fabItems) return;
+    var item = L.DomUtil.create('button', 'map-fab-item');
+    item.title = title;
+    item.appendChild(el);
+    __fabItems.appendChild(item);
+    if (el.style.display === 'none') item.style.display = 'none';
+    item.addEventListener('click', function (e) {
+      e.stopPropagation();
+      el.click();
+    });
+  }
+
+  function closeFAB() {
+    var w = document.querySelector('.map-fab-wrap');
+    if (w) {
+      w.classList.remove('map-fab-open');
+      var ctrlContainer = w.closest('.leaflet-bottom.leaflet-right');
+      if (ctrlContainer) ctrlContainer.classList.remove('map-fab-active');
+    }
+  }
+  map.on('click', closeFAB);
+
   L.control.locate({
     position: 'bottomright',
     flyTo: true,
@@ -505,6 +555,11 @@ L.control.scale({
             dropdown.querySelectorAll('.basemap-option').forEach(o => o.classList.remove('active'));
             opt.classList.add('active');
             dropdown.style.display = 'none';
+            if (dropdown._inBody) {
+              dropdown._inBody = false;
+              document.body.removeChild(dropdown);
+              wrap.appendChild(dropdown);
+            }
           });
         });
 
@@ -515,10 +570,38 @@ L.control.scale({
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
           const isVisible = dropdown.style.display === 'block';
-          dropdown.style.display = isVisible ? 'none' : 'block';
+          if (isVisible) {
+            dropdown.style.display = 'none';
+            if (dropdown._inBody) {
+              dropdown._inBody = false;
+              document.body.removeChild(dropdown);
+              wrap.appendChild(dropdown);
+            }
+          } else {
+            var inFAB = wrap.closest('.map-fab-item');
+            if (inFAB) {
+              var rect = btn.getBoundingClientRect();
+              document.body.appendChild(dropdown);
+              dropdown._inBody = true;
+              dropdown.style.position = 'fixed';
+              dropdown.style.bottom = 'auto';
+              dropdown.style.right = 'auto';
+              dropdown.style.left = (rect.left - dropdown.offsetWidth - 56) + 'px';
+              dropdown.style.top = rect.top + 'px';
+              dropdown.style.zIndex = '99999';
+            }
+            dropdown.style.display = 'block';
+          }
         });
 
-        document.addEventListener('click', () => { dropdown.style.display = 'none'; });
+        document.addEventListener('click', () => {
+          dropdown.style.display = 'none';
+          if (dropdown._inBody) {
+            dropdown._inBody = false;
+            document.body.removeChild(dropdown);
+            wrap.appendChild(dropdown);
+          }
+        });
         return wrap;
       }
     });
@@ -1084,6 +1167,16 @@ L.control.scale({
   });
   window.__geoportalPrintCtrl = new PrintMapControl().addTo(map);
   new ResetLayersControl().addTo(map);
+
+  /* ── Pindahkan tombol ke dalam FAB ── */
+  setTimeout(function () {
+    moveToFAB('.basemap-btn-vector', 'Basemap Vektor');
+    moveToFAB('.basemap-btn-satellite', 'Basemap Satelit');
+    moveToFAB('.draw-fab-wrap', 'Gambar & Ukur');
+    moveToFAB('.geoportal-print-btn', 'Cetak Peta');
+    moveToFAB('.reset-layers-btn', 'Reset Layer');
+    moveToFAB('.sat-export-btn', 'Export PNG');
+  }, 300);
 
   let selectedWilayahId = "3313000000";
   let selectedRtrId = "001";

@@ -150,6 +150,137 @@
     .unified-ac-empty { padding: 14px 16px; text-align: center; color: #5f6368; font-size: 12px; }
 
     /* Tombol lokasi saya (Leaflet Locate Control) */
+    /* ── Map FAB Menu ── */
+    .map-fab-wrap {
+      position: relative;
+      margin: 8px !important;
+      z-index: 99999;
+      overflow: visible;
+    }
+    .map-fab-btn {
+      display: grid;
+      place-items: center;
+      width: 56px !important;
+      height: 56px !important;
+      border: 1px solid rgba(255,255,255,.86) !important;
+      border-radius: 50% !important;
+      background: linear-gradient(145deg, #0a73b8, #075890) !important;
+      color: #fff !important;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(8,63,102,.3) !important;
+      transition: transform .2s, box-shadow .2s;
+      z-index: 1003;
+      position: relative;
+    }
+    .map-fab-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 8px 24px rgba(8,63,102,.4) !important;
+    }
+    .map-fab-btn svg { transition: transform .3s ease; }
+    .map-fab-open .map-fab-btn svg { transform: rotate(45deg); }
+
+    .map-fab-items {
+      position: absolute;
+      bottom: 64px;
+      right: 4px;
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      gap: 10px;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity .25s ease, transform .25s ease;
+      z-index: 99999;
+    }
+    .map-fab-open .map-fab-items {
+      pointer-events: auto;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .map-fab-active .leaflet-control-locate,
+    .map-fab-active .zoom-control-wrap {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transform: scale(0.8);
+      transition: opacity .2s, transform .2s;
+    }
+    .map-fab-item {
+      width: 44px !important;
+      height: 44px !important;
+      border: 1px solid rgba(255,255,255,.86) !important;
+      border-radius: 50% !important;
+      background: linear-gradient(145deg, #ffffff, #e9f7fc) !important;
+      color: #0879bf !important;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(8,63,102,.2) !important;
+      transition: transform .2s, box-shadow .2s, background .2s, opacity .2s;
+      display: grid;
+      place-items: center;
+      opacity: 0;
+      transform: scale(0.5) translateY(10px);
+      position: relative;
+      overflow: visible;
+    }
+    .map-fab-open .map-fab-item {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+    .map-fab-open .map-fab-item:nth-child(1) { transition-delay: .05s; }
+    .map-fab-open .map-fab-item:nth-child(2) { transition-delay: .1s; }
+    .map-fab-open .map-fab-item:nth-child(3) { transition-delay: .15s; }
+    .map-fab-open .map-fab-item:nth-child(4) { transition-delay: .2s; }
+    .map-fab-open .map-fab-item:nth-child(5) { transition-delay: .25s; }
+    .map-fab-open .map-fab-item:nth-child(6) { transition-delay: .3s; }
+    .map-fab-item:hover {
+      background: linear-gradient(145deg, #ffffff, #d5f3fb) !important;
+      box-shadow: inset 0 0 0 1px rgba(8,121,191,.14) !important;
+      transform: scale(1.1) !important;
+    }
+    .map-fab-item[title]::after {
+      content: attr(title);
+      position: absolute;
+      right: calc(100% + 8px);
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: #123c59;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 600;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .15s;
+    }
+    .map-fab-item:hover[title]::after { opacity: 1; }
+    .map-fab-item .reset-layers-btn,
+    .map-fab-item .geoportal-print-btn,
+    .map-fab-item .sat-export-btn,
+    .map-fab-item .draw-fab-btn,
+    .map-fab-item .basemap-btn {
+      width: 100% !important;
+      height: 100% !important;
+      margin: 0 !important;
+      border: none !important;
+      border-radius: 50% !important;
+      box-shadow: none !important;
+    }
+    .map-fab-item .basemap-control-wrap {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+    .map-fab-item .basemap-dropdown {
+      z-index: 99999;
+    }
+    .map-fab-item .draw-fab-panel {
+      bottom: auto;
+      top: 0;
+      right: calc(100% + 12px);
+    }
+
     .leaflet-control-locate { margin: 8px !important; border: 0 !important; border-radius: 50% !important; background: transparent !important; box-shadow: 0 6px 18px rgba(8, 63, 102, .2) !important; overflow: hidden; }
     .leaflet-control-locate a { display: grid !important; width: 38px !important; height: 38px !important; place-items: center; border: 1px solid rgba(255,255,255,.86) !important; border-radius: 50% !important; background: linear-gradient(145deg, #ffffff, #e9f7fc) !important; color: #0879bf !important; text-decoration: none; transition: transform .2s ease, box-shadow .2s ease, background .2s ease; position: relative; }
     .leaflet-control-locate a::before { content: none; }
@@ -346,8 +477,8 @@
 
     .basemap-control-wrap {
       position: relative;
-      margin: 8px !important;
-      margin-bottom: 0 !important;
+      margin: 0 !important;
+      overflow: visible;
     }
     .basemap-btn {
       display: grid;
@@ -5901,8 +6032,8 @@
     }
     .draw-fab-wrap {
       position: relative;
-      margin: 8px !important;
-      margin-bottom: 0 !important;
+      margin: 0 !important;
+      overflow: visible;
     }
     .draw-fab-btn {
       display: grid;
@@ -5943,7 +6074,7 @@
       box-shadow: 0 8px 30px rgba(0,0,0,.18);
       padding: 10px;
       backdrop-filter: blur(8px);
-      z-index: 1000;
+      z-index: 10000;
       display: none;
       opacity: 0;
       transform: translateY(8px);

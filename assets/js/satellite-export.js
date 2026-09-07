@@ -551,16 +551,17 @@
     return typeof satelliteBasemapLabels !== 'undefined' && satelliteBasemapLabels.hasOwnProperty(name);
   }
 
-  document.addEventListener('DOMContentLoaded', function () {
-    if (typeof map !== 'undefined') {
-      new SatExportControl().addTo(map);
-      map.on('basemapchanged', function (e) {
-        if (_exportBtn) {
-          _exportBtn.style.display = isSatelliteBasemap(e.basemap) ? '' : 'none';
-        }
-      });
-    }
-  });
+  if (typeof map !== 'undefined') {
+    new SatExportControl().addTo(map);
+    map.on('basemapchanged', function (e) {
+      if (_exportBtn) {
+        var show = isSatelliteBasemap(e.basemap);
+        _exportBtn.style.display = show ? '' : 'none';
+        var fabItem = _exportBtn.closest('.map-fab-item');
+        if (fabItem) fabItem.style.display = show ? '' : 'none';
+      }
+    });
+  }
 
   window.SatelliteExport = { exportImage: exportImage };
   window.SATELLITE_LEGENDS = LEGENDS;
