@@ -1764,7 +1764,7 @@
     /* Tombol Toggle Sidebar Kiri */
     .toggle-sidebar-btn {
       position: absolute;
-      bottom: 70vh;
+      bottom: 72vh;
       right: -30px;
       width: 30px;
       height: 64px;
@@ -5337,6 +5337,9 @@
         padding: 10px 16px;
         border-bottom: 0;
       }
+
+      /* ── Sembunyikan Zoom Control di Mobile ── */
+      .zoom-control-wrap { display: none !important; }
 
       /* ── GeoTools Bottom Sheet (Mobile) ── */
       #geotools-sheet {
