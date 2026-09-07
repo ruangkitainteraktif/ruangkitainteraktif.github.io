@@ -1164,19 +1164,20 @@ L.control.scale({
     moveToFAB('.draw-fab-wrap', 'Gambar & Ukur');
     moveToFAB('.geoportal-print-btn', 'Cetak Peta');
     moveToFAB('.sat-export-btn', 'Export PNG');
+    createGeotoolsFAB();
+    moveToFAB('.reset-layers-btn', 'Reset Layer');
+    moveToFAB('.leaflet-control-locate', 'Lokasi Saya');
 
-    /* ── Reset Layer di atas zoom control ── */
-    var resetBtn = document.querySelector('.reset-layers-btn');
+    /* ── Zoom Control di bawah tengah ── */
     var zoomWrap = document.querySelector('.zoom-control-wrap');
-    if (resetBtn && zoomWrap) {
-      var zoomParent = zoomWrap.closest('.leaflet-control') || zoomWrap.parentElement;
-      if (zoomParent) {
-        resetBtn.style.position = 'relative';
-        resetBtn.style.margin = '8px 8px 0 8px';
-        resetBtn.style.width = '38px';
-        resetBtn.style.height = '38px';
-        zoomParent.insertBefore(resetBtn, zoomWrap);
-      }
+    if (zoomWrap) {
+      zoomWrap.style.position = 'fixed';
+      zoomWrap.style.bottom = '16px';
+      zoomWrap.style.left = '50%';
+      zoomWrap.style.transform = 'translateX(-50%)';
+      zoomWrap.style.zIndex = '999';
+      zoomWrap.style.flexDirection = 'row';
+      zoomWrap.style.gap = '2px';
     }
   }, 300);
 
@@ -1408,6 +1409,73 @@ L.control.scale({
     wrap.appendChild(container);
     return wrap;
   };
+
+  /* ═══════════════════════════════════════
+     GeoTools Bottom Sheet (FAB)
+     ═══════════════════════════════════════ */
+
+  var _geotoolsSheetOpen = false;
+
+  function openGeotoolsSheet() {
+    var sheet = document.getElementById('geotools-sheet');
+    var body = document.getElementById('geotoolsSheetBody');
+    var tabContent = document.getElementById('tab-geotools');
+    if (!sheet || !body || !tabContent) return;
+    if (!sheet.dataset.moved) {
+      while (tabContent.firstChild) body.appendChild(tabContent.firstChild);
+      sheet.dataset.moved = '1';
+    }
+    sheet.classList.add('gs-sheet-open');
+    _geotoolsSheetOpen = true;
+  }
+
+  function closeGeotoolsSheet() {
+    var sheet = document.getElementById('geotools-sheet');
+    var body = document.getElementById('geotoolsSheetBody');
+    var tabContent = document.getElementById('tab-geotools');
+    if (!sheet || !body || !tabContent) return;
+    sheet.classList.remove('gs-sheet-open', 'gs-sheet-minimized');
+    _geotoolsSheetOpen = false;
+    if (sheet.dataset.moved) {
+      while (body.firstChild) tabContent.appendChild(body.firstChild);
+      delete sheet.dataset.moved;
+    }
+  }
+  window.closeGeotoolsSheet = closeGeotoolsSheet;
+
+  var _geotoolsMinimized = false;
+
+  function minimizeGeotoolsSheet() {
+    var sheet = document.getElementById('geotools-sheet');
+    if (!sheet) return;
+    _geotoolsMinimized = !_geotoolsMinimized;
+    sheet.classList.toggle('gs-sheet-minimized', _geotoolsMinimized);
+    sheet.classList.toggle('gs-sheet-open', !_geotoolsMinimized);
+  }
+  window.minimizeGeotoolsSheet = minimizeGeotoolsSheet;
+
+  function restoreGeotoolsSheet() {
+    var sheet = document.getElementById('geotools-sheet');
+    if (!sheet) return;
+    _geotoolsMinimized = false;
+    sheet.classList.remove('gs-sheet-minimized');
+    sheet.classList.add('gs-sheet-open');
+  }
+  window.restoreGeotoolsSheet = restoreGeotoolsSheet;
+
+  /* ── GeoTools FAB Button ── */
+  function createGeotoolsFAB() {
+    if (!__fabItems) __fabItems = document.querySelector('.map-fab-items');
+    if (!__fabItems) return;
+    var item = L.DomUtil.create('button', 'map-fab-item geotools-sheet-btn');
+    item.title = 'GeoTools';
+    item.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>';
+    __fabItems.appendChild(item);
+    item.addEventListener('click', function (e) {
+      e.stopPropagation();
+      openGeotoolsSheet();
+    });
+  }
 
   /* ═══════════════════════════════════════
      Layer Catalog Dropdown
@@ -1653,6 +1721,10 @@ L.control.scale({
     });
 
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && _layerCatalogOpen) closeLayerCatalog();
+      if (e.key === 'Escape') {
+        if (_layerCatalogOpen) closeLayerCatalog();
+        if (_geotoolsMinimized) { minimizeGeotoolsSheet(); }
+        else if (_geotoolsSheetOpen) closeGeotoolsSheet();
+      }
     });
   });

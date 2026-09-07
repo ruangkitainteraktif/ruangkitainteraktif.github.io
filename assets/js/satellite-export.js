@@ -391,7 +391,8 @@
         '.bmkg-ts-info', '.bmkg-ts-slider-wrap',
         '.draw-fab-wrap',
         '.map-fab-item', '.map-fab-menu', '.map-fab-overlay', '.map-fab-btn',
-        '.layer-catalog-dropdown', '.layer-catalog-btn'
+        '.layer-catalog-dropdown', '.layer-catalog-btn',
+        '#geotools-sheet'
       ];
       selectors.forEach(function (sel) {
         document.querySelectorAll(sel).forEach(function (el) {

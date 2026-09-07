@@ -288,7 +288,7 @@
     <div class="unified-search" id="unifiedSearch">
       <div class="unified-search-inner">
         <div class="ruangkita-mark unified-search-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-        <input type="text" id="unifiedSearchInput" class="unified-search-input" placeholder="Cari disini"
+        <input type="text" id="unifiedSearchInput" class="unified-search-input" placeholder="Cari wilayah"
           autocomplete="off" />
         <button type="button" id="unifiedSearchClear" class="unified-search-clear" style="display:none">&times;</button>
         <button type="button" id="layerCatalogBtn" class="layer-catalog-btn" title="Tambah Layer">
@@ -436,6 +436,24 @@
         </div>
       </div>
       <div id="geopangan-sheet-content" class="gp-sheet-body"></div>
+    </div>
+
+    <!-- GEOTOOLS BOTTOM SHEET -->
+    <div id="geotools-sheet">
+      <div class="gs-sheet-handle"></div>
+      <div class="gs-sheet-head">
+        <span class="gs-sheet-title" onclick="if(document.getElementById('geotools-sheet').classList.contains('gs-sheet-minimized')) restoreGeotoolsSheet()">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          GeoTools
+        </span>
+        <div class="gs-sheet-actions">
+          <button class="gs-sheet-minimize" type="button" aria-label="Minimalkan" onclick="minimizeGeotoolsSheet()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <button class="gs-sheet-close" type="button" aria-label="Tutup" onclick="closeGeotoolsSheet()">×</button>
+        </div>
+      </div>
+      <div class="gs-sheet-body" id="geotoolsSheetBody"></div>
     </div>
 
     <!-- BACKDROP OVERLAY (MOBILE ONLY) -->
@@ -1102,9 +1120,6 @@
 
         <!-- TAB: GEOTOOLS -->
         <div id="tab-geotools" class="tab-content">
-          <h4 style="font-size:15px; margin-bottom:5px;">GeoTools</h4>
-          <p style="font-size:13px; color:#668198; margin-bottom:20px;">Alat geospasial tambahan.</p>
-
           <div class="geoid-subtabs">
             <button class="geoid-subtab-btn" data-subtab="alat-tab-shp" onclick="openGeoidSubtab(this)">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 18l9 4 9-4"/></svg>

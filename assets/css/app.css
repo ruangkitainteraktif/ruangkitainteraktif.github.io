@@ -265,14 +265,6 @@
       opacity: 1;
       transform: translateY(0);
     }
-    .map-fab-active .leaflet-control-locate,
-    .map-fab-active .zoom-control-wrap,
-    .map-fab-active .reset-layers-btn {
-      opacity: 0 !important;
-      pointer-events: none !important;
-      transform: scale(0.8);
-      transition: opacity .2s, transform .2s;
-    }
     .map-fab-item {
       width: 44px !important;
       height: 44px !important;
@@ -300,6 +292,8 @@
     .map-fab-open .map-fab-item:nth-child(4) { transition-delay: .2s; }
     .map-fab-open .map-fab-item:nth-child(5) { transition-delay: .25s; }
     .map-fab-open .map-fab-item:nth-child(6) { transition-delay: .3s; }
+    .map-fab-open .map-fab-item:nth-child(7) { transition-delay: .35s; }
+    .map-fab-open .map-fab-item:nth-child(8) { transition-delay: .4s; }
     .map-fab-item:hover {
       background: linear-gradient(145deg, #ffffff, #d5f3fb) !important;
       box-shadow: inset 0 0 0 1px rgba(8,121,191,.14) !important;
@@ -327,7 +321,9 @@
     .map-fab-item .geoportal-print-btn,
     .map-fab-item .sat-export-btn,
     .map-fab-item .draw-fab-btn,
-    .map-fab-item .basemap-btn {
+    .map-fab-item .basemap-btn,
+    .map-fab-item .leaflet-control-locate,
+    .map-fab-item .leaflet-control-locate a {
       width: 100% !important;
       height: 100% !important;
       margin: 0 !important;
@@ -733,22 +729,30 @@
     /* Zoom Control */
     .zoom-control-wrap {
       display: flex;
-      flex-direction: column;
-      margin: 8px !important;
-      margin-bottom: 0 !important;
+      flex-direction: row;
+      margin: 0 !important;
       gap: 2px;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 4px 14px rgba(8,63,102,.18);
+      border: 1px solid rgba(255,255,255,.86);
     }
     .zoom-control-btn {
       display: grid;
       place-items: center;
-      width: 38px !important;
-      height: 38px !important;
-      border: 1px solid rgba(255,255,255,.86) !important;
-      border-radius: 50% !important;
+      width: 44px !important;
+      height: 44px !important;
+      border: none !important;
+      border-radius: 0 !important;
       background: linear-gradient(145deg, #ffffff, #e9f7fc) !important;
       color: #0879bf !important;
       font-size: 18px;
       line-height: 1;
+      cursor: pointer;
+      transition: background .15s, transform .15s;
+    }
+    .zoom-control-in { border-radius: 24px 0 0 24px !important; }
+    .zoom-control-out { border-radius: 0 24px 24px 0 !important; }
       cursor: pointer;
       box-shadow: 0 6px 18px rgba(8,63,102,.2) !important;
       transition: transform .2s, box-shadow .2s, background .2s;
@@ -5183,6 +5187,67 @@
       #geopangan-sheet.sheet-minimized { top: auto; right: auto; bottom: 12px; left: 50%; width: min(330px, calc(100vw - 24px)); height: 52px; transform: translateX(-50%); }
       #geopangan-sheet.sheet-minimized .gp-sheet-body { display: none; }
     }
+
+    /* ── GeoTools Bottom Sheet (Desktop) ── */
+    #geotools-sheet {
+      position: fixed; top: 120px; right: 12px; bottom: 12px;
+      width: min(380px, calc(100vw - 106px));
+      border-radius: 16px; z-index: 1100;
+      background: #fff;
+      box-shadow: 0 8px 32px rgba(0,0,0,.18);
+      transform: translateX(calc(100% + 24px));
+      visibility: hidden;
+      transition: transform .3s ease-in-out, visibility .3s;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    #geotools-sheet.gs-sheet-open { transform: translateX(0); visibility: visible; }
+    #geotools-sheet .gs-sheet-handle { display: none; }
+    #geotools-sheet .gs-sheet-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px 10px; border-bottom: 1px solid #e8eef3; flex-shrink: 0;
+    }
+    #geotools-sheet .gs-sheet-title {
+      display: flex; align-items: center; gap: 6px;
+      color: #1e293b; font-size: 13px; font-weight: 700;
+    }
+    #geotools-sheet .gs-sheet-close {
+      display: grid; width: 28px; height: 28px; place-items: center;
+      border: 0; border-radius: 50%; background: #f1f5f9; color: #64748b;
+      cursor: pointer; font-size: 16px;
+    }
+    #geotools-sheet .gs-sheet-actions {
+      display: flex; align-items: center; gap: 6px;
+    }
+    #geotools-sheet .gs-sheet-minimize {
+      display: grid; width: 28px; height: 28px; place-items: center;
+      border: 0; border-radius: 50%; background: #f1f5f9; color: #64748b;
+      cursor: pointer; transition: background .15s;
+    }
+    #geotools-sheet .gs-sheet-minimize:hover { background: #e2e8f0; }
+    #geotools-sheet.gs-sheet-minimized {
+      top: auto; right: auto; bottom: 12px; left: 50%;
+      width: min(330px, calc(100vw - 24px));
+      height: 52px;
+      border-radius: 26px;
+      transform: translateX(-50%);
+      visibility: visible;
+    }
+    #geotools-sheet.gs-sheet-minimized .gs-sheet-handle,
+    #geotools-sheet.gs-sheet-minimized .gs-sheet-body { display: none; }
+    #geotools-sheet.gs-sheet-minimized .gs-sheet-head {
+      min-height: 52px; box-sizing: border-box;
+      padding: 10px 16px; border-bottom: 0;
+    }
+    #geotools-sheet.gs-sheet-minimized .gs-sheet-title { cursor: pointer; }
+    #geotools-sheet .gs-sheet-body {
+      flex: 1 1 auto; min-height: 0; overflow-y: auto;
+      padding: 12px 16px 16px; -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin; scrollbar-color: #c1c7d0 transparent;
+    }
+    #geotools-sheet .gs-sheet-body::-webkit-scrollbar { width: 5px; }
+    #geotools-sheet .gs-sheet-body::-webkit-scrollbar-track { background: transparent; }
+    #geotools-sheet .gs-sheet-body::-webkit-scrollbar-thumb { background: #c1c7d0; border-radius: 3px; }
+
     @media (max-width: 768px) {
       #geopangan-sheet {
         top: auto;
@@ -5271,6 +5336,32 @@
         box-sizing: border-box;
         padding: 10px 16px;
         border-bottom: 0;
+      }
+
+      /* ── GeoTools Bottom Sheet (Mobile) ── */
+      #geotools-sheet {
+        top: auto; right: 0; bottom: 0; left: 0;
+        width: 100%; height: 50vh; height: 50dvh;
+        border-radius: 18px 18px 0 0;
+        transform: translateY(100%);
+      }
+      #geotools-sheet.gs-sheet-open { transform: translateY(0); visibility: visible; }
+      #geotools-sheet .gs-sheet-handle {
+        display: flex; width: 36px; height: 4px;
+        margin: 8px auto 6px; flex-shrink: 0;
+        border-radius: 999px; background: #d1d5db;
+      }
+      #geotools-sheet .gs-sheet-head {
+        padding: 4px 16px 10px;
+      }
+      #geotools-sheet .gs-sheet-body {
+        padding: 8px 12px 20px;
+      }
+      #geotools-sheet.gs-sheet-minimized {
+        top: auto; right: 0; bottom: 0; left: 0;
+        width: 100%; height: 52px;
+        border-radius: 18px 18px 0 0;
+        transform: translateY(0);
       }
     }
 
