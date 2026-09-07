@@ -1408,3 +1408,251 @@ L.control.scale({
     wrap.appendChild(container);
     return wrap;
   };
+
+  /* ═══════════════════════════════════════
+     Layer Catalog Dropdown
+     ═══════════════════════════════════════ */
+
+  var LAYER_CATALOG_DATA = [
+    {
+      cat: 'Gempa & Bencana',
+      layers: [
+        { id: 'toggleSignificantMarkers', label: '15 Gempa M 5.0+ (BMKG)' },
+        { id: 'toggleFeltMarkers', label: '15 Gempa Dirasakan (BMKG)' },
+        { id: 'toggleWorldPlatesLayer', label: 'Zona Patahan Dunia (USGS)' },
+        { id: 'toggleFaultLayer', label: 'Patahan Indonesia (BNPB)' },
+        { id: 'toggleFaultLayerNew', label: 'Patahan Indonesia Baru (PUSGEN 2024)' },
+        { id: 'toggleGempaNTT', label: 'Gempa NTT 2026 (BNPB)' },
+        { id: 'toggleFiniteFaultNTT', label: 'Finite Fault NTT 2026 (BNPB)' },
+        { id: 'toggleJalurEvakuasi', label: 'Jalur Evakuasi (BNPB)' },
+        { id: 'toggleHistoryGempa', label: 'Riwayat Gempa BMKG' },
+        { id: 'toggleKatalogGempa', label: 'Katalog Gempa BMKG' },
+        { id: 'toggleSensorSeismic', label: 'Sensor Seismic BMKG' },
+        { id: 'toggleSensorGlobal', label: 'Sensor Global (GEOFON)' }
+      ]
+    },
+    {
+      cat: 'Kehutanan',
+      layers: [
+        { id: 'toggleConcessionsLayer', label: 'Konsesi (GFW)' },
+        { id: 'toggleProtectedLayer', label: 'Kawasan Konservasi (WDPA)' },
+        { id: 'toggleMangroveLayer', label: 'Mangrove (GMW v3)' },
+        { id: 'togglePeatlandLayer', label: 'Lahan Gambut (GFW)' },
+        { id: 'toggleKawasanHutanLayer', label: 'Kawasan Hutan (ESDM)' },
+        { id: 'toggleGambutLayer', label: 'Lahan Gambut (SIMONTANA)' },
+        { id: 'toggleKhLayer', label: 'Kawasan Hutan (Kemenhut)' },
+        { id: 'togglePippibLayer', label: 'PIPPIB 2023 Periode I' },
+        { id: 'toggleSawitNasionalLayer', label: 'Sawit Nasional' },
+        { id: 'toggleSawitPerkebunanLayer', label: 'Sawit dan Perkebunan' },
+        { id: 'toggleRehabDasLayer', label: 'Rehab DAS' },
+        { id: 'togglePerkebunanPl24Layer', label: 'Perkebunan PL24' },
+        { id: 'toggleRktnSumateraLayer', label: 'RKTN Sumatera' },
+        { id: 'toggleRktnSulawesiLayer', label: 'RKTN Sulawesi' },
+        { id: 'toggleRktnPapuaLayer', label: 'RKTN Papua' },
+        { id: 'toggleRktnMalukuLayer', label: 'RKTN Maluku' },
+        { id: 'toggleRktnKalimantanLayer', label: 'RKTN Kalimantan' },
+        { id: 'toggleRktnJawaLayer', label: 'RKTN Jawa' },
+        { id: 'toggleRktnBaliNtLayer', label: 'RKTN Bali & NT' }
+      ]
+    },
+    {
+      cat: 'Cuaca & Maritim',
+      layers: [
+        { id: 'toggleCuacaPerairanLayer', label: 'Cuaca Perairan (BMKG)' },
+        { id: 'toggleCuacaPelabuhanLayer', label: 'Cuaca Pelabuhan (BMKG)' },
+        { id: 'toggleMaritimeAngin', label: 'Angin Laut (Wind Speed)' },
+        { id: 'toggleMaritimeGelombang', label: 'Tinggi Gelombang' },
+        { id: 'toggleMaritimeSwell', label: 'Swell (Primary Swell)' },
+        { id: 'toggleMaritimeWindSea', label: 'Gelombang Angin (Wind Sea)' }
+      ]
+    },
+    {
+      cat: 'Prediksi Cuaca',
+      layers: [
+        { id: 'toggleWindRgb', label: 'Wind Speed and Direction (GFS)' },
+        { id: 'toggleRhRgb', label: 'Relative Humidity (GFS)' },
+        { id: 'toggleTp24Rgb', label: 'Total Precipitation 24 Jam (GFS)' },
+        { id: 'togglePm25Rgb', label: 'PM2.5 Air Quality (BMKG PCM)' },
+        { id: 'toggleHthRgb', label: 'Hari Tanpa Hujan (BMKG HTH)' },
+        { id: 'toggleWindAnim', label: 'Animasi Angin (Wind Particle)' }
+      ]
+    },
+    {
+      cat: 'Kualitas Udara',
+      layers: [
+        { id: 'toggleAirVisualPm25', label: 'PM2.5 (AirVisual)' },
+        { id: 'toggleAirVisualPm10', label: 'PM10 (AirVisual)', dataAttr: 'airvisual-pm10' },
+        { id: 'toggleAirVisualO3', label: 'O3 - Ozon (AirVisual)', dataAttr: 'airvisual-o3' },
+        { id: 'toggleAirVisualNo2', label: 'NO2 - Nitrogen Dioksida (AirVisual)', dataAttr: 'airvisual-no2' },
+        { id: 'toggleAirVisualSo2', label: 'SO2 - Sulfur Dioksida (AirVisual)', dataAttr: 'airvisual-so2' },
+        { id: 'toggleAirVisualCo', label: 'CO - Karbon Monoksida (AirVisual)', dataAttr: 'airvisual-co' }
+      ]
+    },
+    {
+      cat: 'Geologi',
+      layers: [
+        { id: 'toggleVolcanoLayer', label: 'Gunung Api Indonesia (PVMBG)' },
+        { id: 'toggleKrbGunungApi', label: 'Kawasan Rawan Bencana Gunung Api (BIG)' },
+        { id: 'toggleKrbTitik', label: 'Gas Vulkanik Gunung Api (BIG)' },
+        { id: 'togglePetaGeologi', label: 'Peta Geologi (BIG)' },
+        { id: 'toggleGeostruktur', label: 'Geologi Geostruktur (BIG)' },
+        { id: 'togglePatahanAktif', label: 'Patahan Aktif 1:50K (BIG)' },
+        { id: 'toggleLikuifaksi', label: 'Kerentanan Likuifaksi (BIG)' },
+        { id: 'toggleKarst', label: 'Kawasan Bentang Alam Karst (BIG)' },
+        { id: 'toggleHillshade', label: 'Hillshade' },
+        { id: 'toggleBatnas', label: 'Batnas (Batimetri)' }
+      ]
+    },
+    {
+      cat: 'Jalan',
+      layers: [
+        { id: 'toggleTollRoad', label: 'Jalan Tol Pulau Jawa' },
+        { id: 'toggleNationalRoad', label: 'Jalan Nasional' },
+        { id: 'toggleNonTollRoad', label: 'Jalan Non Tol (BIG)' }
+      ]
+    },
+    {
+      cat: 'Market & SPPG',
+      layers: [
+        { id: 'toggleSebaranPasar', label: 'Sebaran Pasar Indonesia' },
+        { id: 'toggleSppgSebaranLayer', label: 'Sebaran SPPG Indonesia' },
+        { id: 'toggleSppgLayer', label: 'SPPG Indonesia' }
+      ]
+    },
+    {
+      cat: 'Terrain & Lainnya',
+      layers: [
+        { id: 'toggleDemnasOverlay', label: 'Terrain Overlay (SRTM)' }
+      ]
+    }
+  ];
+
+  var _layerCatalogOpen = false;
+
+  function toggleLayerCatalog() {
+    var dd = document.getElementById('layerCatalogDropdown');
+    var btn = document.getElementById('layerCatalogBtn');
+    if (!dd || !btn) return;
+    _layerCatalogOpen = !_layerCatalogOpen;
+    dd.classList.toggle('open', _layerCatalogOpen);
+    btn.classList.toggle('active', _layerCatalogOpen);
+    if (_layerCatalogOpen && !dd.dataset.built) {
+      buildLayerCatalog(dd);
+      dd.dataset.built = '1';
+    }
+    if (_layerCatalogOpen) syncLayerCatalogState();
+  }
+  window.toggleLayerCatalog = toggleLayerCatalog;
+
+  function closeLayerCatalog() {
+    var dd = document.getElementById('layerCatalogDropdown');
+    var btn = document.getElementById('layerCatalogBtn');
+    if (dd) dd.classList.remove('open');
+    if (btn) btn.classList.remove('active');
+    _layerCatalogOpen = false;
+  }
+  window.closeLayerCatalog = closeLayerCatalog;
+
+  function findLayerById(id) {
+    var el = document.getElementById(id);
+    if (el) return el;
+    for (var i = 0; i < LAYER_CATALOG_DATA.length; i++) {
+      for (var j = 0; j < LAYER_CATALOG_DATA[i].layers.length; j++) {
+        var l = LAYER_CATALOG_DATA[i].layers[j];
+        if (l.id === id && l.dataAttr) {
+          return document.querySelector('[data-airvisual-layer="' + l.dataAttr + '"]');
+        }
+      }
+    }
+    return null;
+  }
+
+  function syncLayerCatalogState() {
+    document.querySelectorAll('.lc-item input[type="checkbox"]').forEach(function(cb) {
+      var el = findLayerById(cb.dataset.layerId);
+      cb.checked = el ? el.checked : false;
+    });
+  }
+
+  function buildLayerCatalog(container) {
+    var html = '<input type="text" class="lc-search" placeholder="Cari layer..." />';
+    LAYER_CATALOG_DATA.forEach(function(cat, ci) {
+      var checked = cat.layers.filter(function(l) {
+        var el = findLayerById(l.id);
+        return el && el.checked;
+      }).length;
+      html += '<div class="lc-category open" data-ci="' + ci + '">';
+      html += '<button class="lc-cat-header" type="button">';
+      html += '<svg class="lc-cat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
+      html += '<span class="lc-cat-title">' + cat.cat + '</span>';
+      html += '<span class="lc-cat-count">' + checked + ' / ' + cat.layers.length + '</span>';
+      html += '</button>';
+      html += '<div class="lc-items">';
+      cat.layers.forEach(function(l) {
+        var el = findLayerById(l.id);
+        var isChecked = el ? el.checked : false;
+        html += '<div class="lc-item">';
+        html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
+        html += '<label for="lc_' + l.id + '">' + l.label + '</label>';
+        html += '</div>';
+      });
+      html += '</div></div>';
+    });
+    container.innerHTML = html;
+
+    container.querySelectorAll('.lc-cat-header').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        btn.closest('.lc-category').classList.toggle('open');
+      });
+    });
+
+    container.querySelectorAll('.lc-item input[type="checkbox"]').forEach(function(cb) {
+      cb.addEventListener('change', function() {
+        var el = findLayerById(cb.dataset.layerId);
+        if (el) {
+          el.checked = cb.checked;
+          el.dispatchEvent(new Event('change'));
+        }
+        updateCatCount(cb.closest('.lc-category'));
+      });
+    });
+
+    var searchInput = container.querySelector('.lc-search');
+    if (searchInput) {
+      searchInput.addEventListener('input', function() {
+        var q = searchInput.value.toLowerCase();
+        container.querySelectorAll('.lc-item').forEach(function(item) {
+          var text = item.querySelector('label').textContent.toLowerCase();
+          item.style.display = text.indexOf(q) !== -1 ? '' : 'none';
+        });
+        container.querySelectorAll('.lc-category').forEach(function(cat) {
+          var visible = cat.querySelectorAll('.lc-item[style=""], .lc-item:not([style])');
+          cat.style.display = visible.length === 0 && q ? 'none' : '';
+          if (q) cat.classList.add('open');
+        });
+      });
+    }
+  }
+
+  function updateCatCount(catEl) {
+    if (!catEl) return;
+    var total = catEl.querySelectorAll('.lc-item').length;
+    var checked = catEl.querySelectorAll('.lc-item input:checked').length;
+    var countEl = catEl.querySelector('.lc-cat-count');
+    if (countEl) countEl.textContent = checked + ' / ' + total;
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('layerCatalogBtn');
+    if (btn) btn.addEventListener('click', function(e) { e.stopPropagation(); toggleLayerCatalog(); });
+
+    document.addEventListener('click', function(e) {
+      if (_layerCatalogOpen && !e.target.closest('.layer-catalog-dropdown') && !e.target.closest('.layer-catalog-btn')) {
+        closeLayerCatalog();
+      }
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && _layerCatalogOpen) closeLayerCatalog();
+    });
+  });

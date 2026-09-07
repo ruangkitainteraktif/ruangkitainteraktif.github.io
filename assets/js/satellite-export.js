@@ -390,7 +390,8 @@
         '.bmkg-time-slider-wrap', '.bmkg-ts-title', '.bmkg-ts-controls',
         '.bmkg-ts-info', '.bmkg-ts-slider-wrap',
         '.draw-fab-wrap',
-        '.map-fab-item', '.map-fab-menu', '.map-fab-overlay', '.map-fab-btn'
+        '.map-fab-item', '.map-fab-menu', '.map-fab-overlay', '.map-fab-btn',
+        '.layer-catalog-dropdown', '.layer-catalog-btn'
       ];
       selectors.forEach(function (sel) {
         document.querySelectorAll(sel).forEach(function (el) {
