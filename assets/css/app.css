@@ -199,7 +199,8 @@
       transform: translateY(0);
     }
     .map-fab-active .leaflet-control-locate,
-    .map-fab-active .zoom-control-wrap {
+    .map-fab-active .zoom-control-wrap,
+    .map-fab-active .reset-layers-btn {
       opacity: 0 !important;
       pointer-events: none !important;
       transform: scale(0.8);
@@ -271,14 +272,6 @@
       width: 100%;
       height: 100%;
       margin: 0;
-    }
-    .map-fab-item .basemap-dropdown {
-      z-index: 99999;
-    }
-    .map-fab-item .draw-fab-panel {
-      bottom: auto;
-      top: 0;
-      right: calc(100% + 12px);
     }
 
     .leaflet-control-locate { margin: 8px !important; border: 0 !important; border-radius: 50% !important; background: transparent !important; box-shadow: 0 6px 18px rgba(8, 63, 102, .2) !important; overflow: hidden; }
@@ -503,50 +496,75 @@
       box-shadow: inset 0 0 0 1px rgba(8,121,191,.14);
       transform: translateY(-2px);
     }
-    .basemap-btn-satellite {
-      background: linear-gradient(145deg, #ffffff, #fef3c7) !important;
-      color: #b45309 !important;
-      border-color: rgba(251,191,36,.6) !important;
+    /* ── Basemap Modal ── */
+    .basemap-modal {
+      position: fixed; inset: 0; z-index: 3000;
+      display: none; align-items: center; justify-content: center;
+      padding: 18px;
+      background: rgba(3,19,34,.68);
+      backdrop-filter: blur(6px);
     }
-    .basemap-btn-satellite:hover {
-      background: linear-gradient(145deg, #ffffff, #fde68a) !important;
-      box-shadow: inset 0 0 0 1px rgba(180,83,9,.14);
-    }
-    .basemap-dropdown {
-      position: absolute;
-      bottom: 46px;
-      right: 0;
+    .basemap-modal.open { display: flex; }
+    .basemap-modal-dialog {
+      display: flex; flex-direction: column;
+      width: min(520px, 100%);
+      max-height: min(80vh, 600px);
+      overflow: hidden;
+      border-radius: 16px;
       background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 8px 28px rgba(0,0,0,.18);
-      padding: 6px 0;
-      min-width: 180px;
-      max-height: 50vh;
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: #cbd5e1 transparent;
-      z-index: 10000;
+      box-shadow: 0 22px 64px rgba(0,0,0,.45);
     }
-    .basemap-dropdown::-webkit-scrollbar {
-      width: 4px;
+    .basemap-modal-head {
+      flex: 0 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 16px; color: #fff;
+      background: linear-gradient(135deg, #0b5cab, #0879bf 58%, #12a7c8);
     }
-    .basemap-dropdown::-webkit-scrollbar-track {
-      background: transparent;
+    .basemap-modal-title { font-size: 14px; font-weight: 700; }
+    .basemap-modal-close {
+      width: 32px; height: 32px; border: 0; border-radius: 50%;
+      color: #fff; background: rgba(255,255,255,.16); cursor: pointer;
+      font-size: 18px; transition: background .2s, transform .2s;
     }
-    .basemap-dropdown::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 2px;
+    .basemap-modal-close:hover { background: rgba(255,255,255,.32); transform: rotate(90deg); }
+    .basemap-modal-body {
+      flex: 1; overflow-y: auto; padding: 14px;
+      overscroll-behavior: contain;
+      scrollbar-width: thin; scrollbar-color: #b7c7d6 transparent;
     }
-    .basemap-option {
-      padding: 8px 14px;
-      font-size: 12px;
-      color: #334155;
-      cursor: pointer;
-      transition: background .15s;
-      white-space: nowrap;
+    .basemap-modal-body::-webkit-scrollbar { width: 5px; }
+    .basemap-modal-body::-webkit-scrollbar-track { background: transparent; }
+    .basemap-modal-body::-webkit-scrollbar-thumb { background: #b7c7d6; border-radius: 3px; }
+    .basemap-modal-section-title {
+      font-size: 11px; font-weight: 700; color: #64748b;
+      text-transform: uppercase; letter-spacing: .05em;
+      margin: 0 0 8px; padding-left: 2px;
     }
-    .basemap-option:hover {
-      background: #f1f5f9;
+    .basemap-modal-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 8px; margin-bottom: 16px;
+    }
+    .basemap-modal-option {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border: 1.5px solid #e2e8f0;
+      border-radius: 10px; background: #f8fafc;
+      cursor: pointer; transition: all .15s ease;
+    }
+    .basemap-modal-option:hover { border-color: #0891b2; background: #ecfeff; }
+    .basemap-modal-option.active {
+      border-color: #0891b2; background: #e0f7fa;
+      box-shadow: 0 0 0 2px rgba(8,145,178,.15);
+    }
+    .basemap-modal-option-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: grid; place-items: center; flex-shrink: 0;
+      background: #e0f2fe; color: #0284c7; font-size: 14px;
+    }
+    .basemap-modal-option.active .basemap-modal-option-icon {
+      background: #0891b2; color: #fff;
+    }
+    .basemap-modal-option-label {
+      font-size: 12px; font-weight: 600; color: #1e293b; line-height: 1.3;
     }
     .geoportal-legend {
       background: rgba(255,255,255,.96);
@@ -618,11 +636,6 @@
       border-radius: 9px;
       vertical-align: middle;
       white-space: nowrap;
-    }
-    .basemap-option.active {
-      color: #0879bf;
-      font-weight: 700;
-      background: #eff6ff;
     }
 
     /* ── MODIS Time Slider ── */
@@ -788,9 +801,6 @@
       .leaflet-bottom.leaflet-center {
         top: 112px;
         bottom: auto;
-      }
-      .basemap-dropdown {
-        max-height: 35vh;
       }
       .modis-time-slider-wrap {
         width: min(280px, calc(100vw - 32px));
@@ -1009,7 +1019,6 @@
       flex: 1;
       min-height: 0;
       overflow-x: hidden;
-      overflow-y: auto;
       margin-right: -15px;
       padding-right: 15px;
     }
@@ -2022,7 +2031,6 @@
       flex-direction: column;
       flex: 1;
       min-height: 0;
-      overflow-y: auto;
     }
 
     .geotani-analysis-nav { display: flex; flex-wrap: nowrap; gap: 4px; padding: 4px; margin: 12px 0 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: thin; }
@@ -6063,72 +6071,6 @@
       color: #fff !important;
       transform: scale(0.95);
     }
-    .draw-fab-panel {
-      position: absolute;
-      bottom: 62px;
-      right: 0;
-      width: 200px;
-      background: rgba(255,255,255,0.97);
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      box-shadow: 0 8px 30px rgba(0,0,0,.18);
-      padding: 10px;
-      backdrop-filter: blur(8px);
-      z-index: 10000;
-      display: none;
-      opacity: 0;
-      transform: translateY(8px);
-      transition: opacity .2s, transform .2s;
-    }
-    .draw-fab-panel.open {
-      display: block;
-      opacity: 1;
-      transform: translateY(0);
-    }
-    .draw-fab-section-title {
-      font-size: 10px;
-      font-weight: 700;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: .5px;
-      margin-bottom: 6px;
-    }
-    .draw-fab-row {
-      display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
-    }
-    .draw-fab-row button {
-      flex: 1 1 0;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      padding: 7px 4px;
-      border: none;
-      border-radius: 8px;
-      background: transparent;
-      cursor: pointer;
-      color: #475569;
-      font-size: 9px;
-      font-weight: 600;
-      transition: all .15s;
-    }
-    .draw-fab-row button:hover {
-      background: #f1f5f9;
-      color: #0891b2;
-    }
-    .draw-fab-row button svg { flex-shrink: 0; }
-    .draw-fab-divider {
-      height: 1px;
-      background: #e2e8f0;
-      margin: 8px 0;
-    }
-    .draw-fab-danger { color: #ef4444 !important; }
-    .draw-fab-danger:hover { background: #fef2f2 !important; color: #dc2626 !important; }
-    .draw-fab-success { color: #10b981 !important; }
-    .draw-fab-success:hover { background: #ecfdf5 !important; color: #059669 !important; }
     .leaflet-control-scale-line {
       border-color: #333;
       border-width: 1px 0 0 0;

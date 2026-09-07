@@ -2026,7 +2026,7 @@ window.printGeotaniPdf = async function() {
       sidebar.classList.add('collapsed');
       hiddenEls.push({ el: sidebar, cls: 'collapsed', remove: false });
     }
-    const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .leaflet-control-scale, .detail-panel-btn, #detail-panel, .geotani-btn-print, .basemap-btn, .basemap-control-wrap, .basemap-dropdown');
+    const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .leaflet-control-scale, .detail-panel-btn, #detail-panel, .geotani-btn-print, .basemap-btn, .basemap-control-wrap');
     overlays.forEach(el => {
       if (el && getComputedStyle(el).display !== 'none') {
         el.style.setProperty('display', 'none', 'important');

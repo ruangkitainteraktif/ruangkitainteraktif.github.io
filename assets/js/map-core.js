@@ -534,73 +534,83 @@ L.control.scale({
     'noaa-goes-ir': 'NOAA GOES IR'
   };
 
-  function createBasemapControl(labels, btnClass, btnIcon) {
+  /* ── Basemap Modal ── */
+  function openBasemapModal(focusType) {
+    var modal = document.getElementById('basemapModal');
+    if (!modal) return;
+    modal.querySelectorAll('.basemap-modal-option').forEach(function(opt) {
+      opt.classList.toggle('active', opt.dataset.value === currentBasemapName);
+    });
+    if (focusType) {
+      var section = modal.querySelector('[data-section="' + focusType + '"]');
+      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    modal.classList.add('open');
+  }
+  window.openBasemapModal = openBasemapModal;
+
+  function closeBasemapModal() {
+    var modal = document.getElementById('basemapModal');
+    if (modal) modal.classList.remove('open');
+  }
+  window.closeBasemapModal = closeBasemapModal;
+
+  function buildBasemapModal() {
+    var body = document.querySelector('.basemap-modal-body');
+    if (!body) return;
+    var sections = [
+      { type: 'vector', title: 'Basemap Vektor', labels: vectorBasemapLabels, icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>' },
+      { type: 'satellite', title: 'Basemap Satelit', labels: satelliteBasemapLabels, icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>' }
+    ];
+    sections.forEach(function(sec) {
+      var title = document.createElement('div');
+      title.className = 'basemap-modal-section-title';
+      title.textContent = sec.title;
+      title.dataset.section = sec.type;
+      body.appendChild(title);
+      var grid = document.createElement('div');
+      grid.className = 'basemap-modal-grid';
+      Object.entries(sec.labels).forEach(function(entry) {
+        var key = entry[0], label = entry[1];
+        var opt = document.createElement('div');
+        opt.className = 'basemap-modal-option';
+        opt.dataset.value = key;
+        if (key === currentBasemapName) opt.classList.add('active');
+        var icon = document.createElement('div');
+        icon.className = 'basemap-modal-option-icon';
+        icon.innerHTML = sec.icon;
+        var lbl = document.createElement('span');
+        lbl.className = 'basemap-modal-option-label';
+        lbl.textContent = label;
+        opt.appendChild(icon);
+        opt.appendChild(lbl);
+        opt.addEventListener('click', function() {
+          setBaseMap(key);
+          document.querySelectorAll('.basemap-modal-option').forEach(function(o) {
+            o.classList.toggle('active', o.dataset.value === key);
+          });
+          closeBasemapModal();
+        });
+        grid.appendChild(opt);
+      });
+      body.appendChild(grid);
+    });
+  }
+
+  function createBasemapControl(labels, btnClass, btnIcon, modalType) {
     return L.Control.extend({
       options: { position: 'bottomright' },
       onAdd() {
         const wrap = L.DomUtil.create('div', 'basemap-control-wrap');
         L.DomEvent.disableClickPropagation(wrap);
         L.DomEvent.disableScrollPropagation(wrap);
-
-        const dropdown = L.DomUtil.create('div', 'basemap-dropdown', wrap);
-        dropdown.style.display = 'none';
-        Object.entries(labels).forEach(([key, label]) => {
-          const opt = L.DomUtil.create('div', 'basemap-option', dropdown);
-          opt.textContent = label;
-          opt.dataset.value = key;
-          if (key === currentBasemapName) opt.classList.add('active');
-          opt.addEventListener('click', (e) => {
-            e.stopPropagation();
-            setBaseMap(key);
-            dropdown.querySelectorAll('.basemap-option').forEach(o => o.classList.remove('active'));
-            opt.classList.add('active');
-            dropdown.style.display = 'none';
-            if (dropdown._inBody) {
-              dropdown._inBody = false;
-              document.body.removeChild(dropdown);
-              wrap.appendChild(dropdown);
-            }
-          });
-        });
-
         const btn = L.DomUtil.create('button', 'basemap-btn ' + btnClass, wrap);
         btn.innerHTML = btnIcon;
         btn.title = 'Pilih Basemap';
         btn.setAttribute('aria-label', 'Ganti basemap');
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
-          const isVisible = dropdown.style.display === 'block';
-          if (isVisible) {
-            dropdown.style.display = 'none';
-            if (dropdown._inBody) {
-              dropdown._inBody = false;
-              document.body.removeChild(dropdown);
-              wrap.appendChild(dropdown);
-            }
-          } else {
-            var inFAB = wrap.closest('.map-fab-item');
-            if (inFAB) {
-              var rect = btn.getBoundingClientRect();
-              document.body.appendChild(dropdown);
-              dropdown._inBody = true;
-              dropdown.style.position = 'fixed';
-              dropdown.style.bottom = 'auto';
-              dropdown.style.right = 'auto';
-              dropdown.style.left = (rect.left - dropdown.offsetWidth - 56) + 'px';
-              dropdown.style.top = rect.top + 'px';
-              dropdown.style.zIndex = '99999';
-            }
-            dropdown.style.display = 'block';
-          }
-        });
-
-        document.addEventListener('click', () => {
-          dropdown.style.display = 'none';
-          if (dropdown._inBody) {
-            dropdown._inBody = false;
-            document.body.removeChild(dropdown);
-            wrap.appendChild(dropdown);
-          }
+          openBasemapModal(modalType);
         });
         return wrap;
       }
@@ -610,16 +620,12 @@ L.control.scale({
   const VectorBasemapControl = createBasemapControl(
     vectorBasemapLabels,
     'basemap-btn-vector',
-    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>'
-  );
-  const SatelliteBasemapControl = createBasemapControl(
-    satelliteBasemapLabels,
-    'basemap-btn-satellite',
-    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>'
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>',
+    'vector'
   );
 
   new VectorBasemapControl().addTo(map);
-  new SatelliteBasemapControl().addTo(map);
+  buildBasemapModal();
 
   // Zoom Control
   const ZoomControl = L.Control.extend({
@@ -656,50 +662,33 @@ L.control.scale({
   new ZoomControl().addTo(map);
 
   // Draw FAB Control — round button below basemap, expands to show draw/measure tools
+  function openDrawModal() {
+    var modal = document.getElementById('drawModal');
+    if (modal) modal.classList.add('open');
+  }
+  window.openDrawModal = openDrawModal;
+
+  function closeDrawModal() {
+    var modal = document.getElementById('drawModal');
+    if (modal) modal.classList.remove('open');
+  }
+  window.closeDrawModal = closeDrawModal;
+
   const DrawFABControl = L.Control.extend({
     options: { position: 'bottomright' },
     onAdd: function() {
       const wrap = L.DomUtil.create('div', 'draw-fab-wrap');
-
       const btn = L.DomUtil.create('button', 'draw-fab-btn');
       btn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
       btn.title = 'Draw & Measure';
       btn.setAttribute('aria-label', 'Draw & Measure');
-
-      const panel = L.DomUtil.create('div', 'draw-fab-panel');
-      panel.innerHTML = `
-        <div class="draw-fab-section-title">Draw</div>
-        <div class="draw-fab-row">
-          <button onclick="startDraw('marker')" title="Point"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><span>Point</span></button>
-          <button onclick="startDraw('polyline')" title="Line"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z" transform="rotate(-45 12 12)"/></svg><span>Line</span></button>
-          <button onclick="startDraw('polygon')" title="Polygon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l-8 5v10l8 5 8-5V7z"/></svg><span>Polygon</span></button>
-          <button onclick="startDraw('rectangle')" title="Rectangle"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/></svg><span>Rect</span></button>
-          <button onclick="startDraw('circle')" title="Circle"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg><span>Circle</span></button>
-        </div>
-        <div class="draw-fab-divider"></div>
-        <div class="draw-fab-section-title">Measure</div>
-        <div class="draw-fab-row">
-          <button onclick="startMeasure('distance')" title="Distance"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20"/><path d="M6 8v8"/><path d="M18 8v8"/></svg><span>Distance</span></button>
-          <button onclick="startMeasure('area')" title="Area"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l-8 5v10l8 5 8-5V7z"/><path d="M12 22V12"/><path d="M4 7l8 5 8-5"/></svg><span>Area</span></button>
-        </div>
-        <div class="draw-fab-divider"></div>
-        <div class="draw-fab-row">
-          <button onclick="clearDrawings()" title="Clear All" class="draw-fab-danger"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg><span>Clear</span></button>
-          <button onclick="exportDrawings()" title="Export GeoJSON" class="draw-fab-success"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Export</span></button>
-        </div>
-      `;
-
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
-        panel.classList.toggle('open');
-        btn.classList.toggle('active');
+        openDrawModal();
       });
-
       L.DomEvent.disableClickPropagation(wrap);
       L.DomEvent.disableScrollPropagation(wrap);
-
       wrap.appendChild(btn);
-      wrap.appendChild(panel);
       return wrap;
     }
   });
@@ -1147,11 +1136,12 @@ L.control.scale({
         setBaseMap('google-maps');
         currentBasemapName = 'google-maps';
         window.currentBasemapName = 'google-maps';
-        var bmOpt = document.querySelector('.basemap-option[data-value="google-maps"]');
-        if (bmOpt) {
-          document.querySelectorAll('.basemap-option').forEach(function(o) { o.classList.remove('active'); });
-          bmOpt.classList.add('active');
-        }
+        document.querySelectorAll('.basemap-modal-option').forEach(function(o) {
+          o.classList.toggle('active', o.dataset.value === 'google-maps');
+        });
+
+        // 10b. Bersihkan drawing & measure
+        if (typeof clearDrawings === 'function') clearDrawings();
 
         // 11. Reset detail panel
         const detailPanel = document.getElementById('detail-panel');
@@ -1170,12 +1160,24 @@ L.control.scale({
 
   /* ── Pindahkan tombol ke dalam FAB ── */
   setTimeout(function () {
-    moveToFAB('.basemap-btn-vector', 'Basemap Vektor');
-    moveToFAB('.basemap-btn-satellite', 'Basemap Satelit');
+    moveToFAB('.basemap-btn-vector', 'Basemap');
     moveToFAB('.draw-fab-wrap', 'Gambar & Ukur');
     moveToFAB('.geoportal-print-btn', 'Cetak Peta');
-    moveToFAB('.reset-layers-btn', 'Reset Layer');
     moveToFAB('.sat-export-btn', 'Export PNG');
+
+    /* ── Reset Layer di atas zoom control ── */
+    var resetBtn = document.querySelector('.reset-layers-btn');
+    var zoomWrap = document.querySelector('.zoom-control-wrap');
+    if (resetBtn && zoomWrap) {
+      var zoomParent = zoomWrap.closest('.leaflet-control') || zoomWrap.parentElement;
+      if (zoomParent) {
+        resetBtn.style.position = 'relative';
+        resetBtn.style.margin = '8px 8px 0 8px';
+        resetBtn.style.width = '38px';
+        resetBtn.style.height = '38px';
+        zoomParent.insertBefore(resetBtn, zoomWrap);
+      }
+    }
   }, 300);
 
   let selectedWilayahId = "3313000000";

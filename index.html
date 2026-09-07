@@ -468,6 +468,74 @@
       </div>
     </div>
 
+    <!-- BASEMAP MODAL -->
+    <div id="basemapModal" class="basemap-modal" onclick="if(event.target===this) closeBasemapModal()">
+      <div class="basemap-modal-dialog">
+        <div class="basemap-modal-head">
+          <span class="basemap-modal-title">Pilih Basemap</span>
+          <button class="basemap-modal-close" onclick="closeBasemapModal()">&#xd7;</button>
+        </div>
+        <div class="basemap-modal-body"></div>
+      </div>
+    </div>
+
+    <!-- DRAW & MEASURE MODAL -->
+    <div id="drawModal" class="basemap-modal" onclick="if(event.target===this) closeDrawModal()">
+      <div class="basemap-modal-dialog">
+        <div class="basemap-modal-head">
+          <span class="basemap-modal-title">Gambar & Ukur</span>
+          <button class="basemap-modal-close" onclick="closeDrawModal()">&#xd7;</button>
+        </div>
+        <div class="basemap-modal-body">
+          <div class="basemap-modal-section-title">Draw</div>
+          <div class="basemap-modal-grid">
+            <div class="basemap-modal-option" onclick="startDraw('marker'); closeDrawModal()">
+              <div class="basemap-modal-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+              <span class="basemap-modal-option-label">Point</span>
+            </div>
+            <div class="basemap-modal-option" onclick="startDraw('polyline'); closeDrawModal()">
+              <div class="basemap-modal-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z" transform="rotate(-45 12 12)"/></svg></div>
+              <span class="basemap-modal-option-label">Line</span>
+            </div>
+            <div class="basemap-modal-option" onclick="startDraw('polygon'); closeDrawModal()">
+              <div class="basemap-modal-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l-8 5v10l8 5 8-5V7z"/></svg></div>
+              <span class="basemap-modal-option-label">Polygon</span>
+            </div>
+            <div class="basemap-modal-option" onclick="startDraw('rectangle'); closeDrawModal()">
+              <div class="basemap-modal-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/></svg></div>
+              <span class="basemap-modal-option-label">Rectangle</span>
+            </div>
+            <div class="basemap-modal-option" onclick="startDraw('circle'); closeDrawModal()">
+              <div class="basemap-modal-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg></div>
+              <span class="basemap-modal-option-label">Circle</span>
+            </div>
+          </div>
+          <div class="basemap-modal-section-title">Measure</div>
+          <div class="basemap-modal-grid">
+            <div class="basemap-modal-option" onclick="startMeasure('distance'); closeDrawModal()">
+              <div class="basemap-modal-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20"/><path d="M6 8v8"/><path d="M18 8v8"/></svg></div>
+              <span class="basemap-modal-option-label">Distance</span>
+            </div>
+            <div class="basemap-modal-option" onclick="startMeasure('area'); closeDrawModal()">
+              <div class="basemap-modal-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l-8 5v10l8 5 8-5V7z"/><path d="M12 22V12"/><path d="M4 7l8 5 8-5"/></svg></div>
+              <span class="basemap-modal-option-label">Area</span>
+            </div>
+          </div>
+          <div class="basemap-modal-section-title">Actions</div>
+          <div class="basemap-modal-grid">
+            <div class="basemap-modal-option" onclick="clearDrawings(); closeDrawModal()">
+              <div class="basemap-modal-option-icon" style="background:#fee2e2;color:#dc2626"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></div>
+              <span class="basemap-modal-option-label">Clear All</span>
+            </div>
+            <div class="basemap-modal-option" onclick="exportDrawings(); closeDrawModal()">
+              <div class="basemap-modal-option-icon" style="background:#dcfce7;color:#16a34a"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+              <span class="basemap-modal-option-label">Export GeoJSON</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- SIDEBAR KIRI -->
     <div id="sidebar-left" class="collapsed menu-collapsed">
       <button class="toggle-sidebar-btn" id="toggleBtn" onclick="toggleSidebar()">

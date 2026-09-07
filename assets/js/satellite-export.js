@@ -389,7 +389,8 @@
         '.leaflet-control-legend', '.legend-wrap',
         '.bmkg-time-slider-wrap', '.bmkg-ts-title', '.bmkg-ts-controls',
         '.bmkg-ts-info', '.bmkg-ts-slider-wrap',
-        '.draw-fab-wrap'
+        '.draw-fab-wrap',
+        '.map-fab-item', '.map-fab-menu', '.map-fab-overlay', '.map-fab-btn'
       ];
       selectors.forEach(function (sel) {
         document.querySelectorAll(sel).forEach(function (el) {
@@ -538,7 +539,6 @@
       btn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
       btn.title = 'Export citra satelit (PNG)';
       btn.setAttribute('aria-label', 'Export citra satelit');
-      btn.style.display = 'none';
       L.DomEvent.disableClickPropagation(btn);
       L.DomEvent.disableScrollPropagation(btn);
       btn.addEventListener('click', exportImage);
@@ -553,14 +553,6 @@
 
   if (typeof map !== 'undefined') {
     new SatExportControl().addTo(map);
-    map.on('basemapchanged', function (e) {
-      if (_exportBtn) {
-        var show = isSatelliteBasemap(e.basemap);
-        _exportBtn.style.display = show ? '' : 'none';
-        var fabItem = _exportBtn.closest('.map-fab-item');
-        if (fabItem) fabItem.style.display = show ? '' : 'none';
-      }
-    });
   }
 
   window.SatelliteExport = { exportImage: exportImage };
