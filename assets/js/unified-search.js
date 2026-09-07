@@ -167,6 +167,7 @@
 
     const wilayahTypes = ['provinsi', 'kabkot', 'kecamatan', 'desa'];
     if (wilayahTypes.includes(item.type)) {
+      if (typeof currentBasemapName !== 'undefined' && currentBasemapName !== 'google-maps' && typeof setBaseMap === 'function') setBaseMap('google-maps');
       showGeoidBoundary(item.kode);
       if (typeof setAdmText === 'function') {
         setAdmText('adm-provinsi', item.provinsi);

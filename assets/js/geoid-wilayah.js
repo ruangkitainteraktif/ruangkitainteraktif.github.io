@@ -617,9 +617,10 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
                 <span class="boundary-popup-meta-value">${detailCount} wilayah</span>
               </div>` : ''}
              </div>
-             <div style="padding:10px 14px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:center;">
-               <button type="button" onclick="showDukcapilDetail('${escapeGeoidHtml(kode)}')" style="border:0;background:#2563eb;color:#fff;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;">Data Penduduk</button>
-             </div>
+             <div style="padding:10px 14px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;gap:8px;justify-content:center;">
+                <button type="button" onclick="showDukcapilDetail('${escapeGeoidHtml(kode)}')" style="border:0;background:#2563eb;color:#fff;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;">Data Penduduk</button>
+                <button type="button" onclick="downloadBoundaryGeoJSON('${escapeGeoidHtml(kode)}')" style="border:0;background:#059669;color:#fff;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;">Download GeoJSON</button>
+              </div>
              </div>
            </div>
         `;
@@ -797,6 +798,81 @@ async function downloadBoundarySHP() {
   }
 }
 window.downloadBoundarySHP = downloadBoundarySHP;
+
+async function downloadBoundaryGeoJSON(kode) {
+  if (!kode) {
+    alert('Tidak ada data batas wilayah untuk diunduh.');
+    return;
+  }
+  const parts = kode.split('.');
+  const level = parts.length;
+  const levelNames = { 1: 'Provinsi', 2: 'Kabupaten/Kota', 3: 'Kecamatan', 4: 'Desa/Kelurahan' };
+  const label = levelNames[level] || 'Wilayah';
+
+  const bigBase = 'https://geoservices.big.go.id/gis/rest/services/BAPANAS/Batas_Administrasi/MapServer';
+
+  try {
+    const allFeatures = [];
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+
+    async function queryBig(layer, where, outFields) {
+      const url = `${bigBase}/${layer}/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outSR=4326&outFields=${outFields}&geometryPrecision=5`;
+      const response = await fetch(url, { signal: controller.signal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      return (result.features || []).map(f => ({
+        type: 'Feature',
+        properties: f.attributes || {},
+        geometry: f.geometry?.rings
+          ? { type: 'Polygon', coordinates: f.geometry.rings }
+          : null
+      })).filter(f => f.geometry);
+    }
+
+    if (level === 1) {
+      const kabFeatures = await queryBig(0, `KDPPUM = '${kode}'`, 'KDPKAB,NAMOBJ,WADMKK,WADMPR,LUASWH');
+      allFeatures.push(...kabFeatures);
+      const kecFeatures = await queryBig(1, `KDPPUM = '${kode}'`, 'KDCPUM,NAMOBJ,WADMKK,WADMPR,LUASWH');
+      allFeatures.push(...kecFeatures);
+    } else if (level === 2) {
+      const kabFeatures = await queryBig(0, `KDPKAB = '${kode}'`, 'KDPKAB,NAMOBJ,WADMKK,WADMPR,LUASWH');
+      allFeatures.push(...kabFeatures);
+      const kecFeatures = await queryBig(1, `KDPKAB = '${kode}'`, 'KDCPUM,NAMOBJ,WADMKK,WADMPR,LUASWH');
+      allFeatures.push(...kecFeatures);
+    } else if (level === 3) {
+      const features = await queryBig(2, `KDEPUM LIKE '${kode}.%'`, 'KDEPUM,NAMOBJ,WADMKD,WADMKK,WADMPR,LUASWH');
+      allFeatures.push(...features);
+    } else if (level === 4) {
+      const features = await queryBig(2, `KDEPUM = '${kode}'`, 'KDEPUM,NAMOBJ,WADMKD,WADMKK,WADMPR,LUASWH');
+      allFeatures.push(...features);
+    }
+
+    clearTimeout(timeout);
+
+    if (!allFeatures.length) {
+      alert('Tidak ada fitur geometri untuk diunduh.');
+      return;
+    }
+
+    const geojson = { type: 'FeatureCollection', features: allFeatures };
+    const levelSlug = { 1: 'provinsi', 2: 'kabupaten', 3: 'kecamatan', 4: 'desa' };
+    const fileName = `ruangkita_batas_wilayah_${levelSlug[level] || 'wilayah'}.geojson`;
+    const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/geo+json' });
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    console.error('Gagal mengunduh GeoJSON:', error);
+    alert(`Gagal mengunduh GeoJSON: ${error.message}`);
+  }
+}
+window.downloadBoundaryGeoJSON = downloadBoundaryGeoJSON;
 
 function injectDownloadBtn(marker) {
   try {
