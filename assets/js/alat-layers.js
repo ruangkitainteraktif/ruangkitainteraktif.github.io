@@ -894,3 +894,54 @@
       requestAnimationFrame(tick);
     });
   }
+
+  /* ── Dropzone init ── */
+  (function initDropzones() {
+    var DROPZONES = [
+      { inputId: 'shpFileInput',    filenameId: null },
+      { inputId: 'geojsonFileInput', filenameId: null },
+      { inputId: 'gpxFileInput',    filenameId: null },
+      { inputId: 'timelineFileInput', filenameId: null },
+      { inputId: 'kmzFileInput',    filenameId: null }
+    ];
+
+    function updateFilename(input) {
+      var label = input.closest('.geotools-dropzone');
+      if (!label) return;
+      var nameEl = label.querySelector('.geotools-dropzone-filename');
+      if (!nameEl) return;
+      if (input.files && input.files.length > 0) {
+        var names = Array.from(input.files).map(function(f) { return f.name; });
+        nameEl.textContent = names.join(', ');
+        nameEl.classList.add('has-file');
+      } else {
+        nameEl.textContent = 'Tidak ada file yang dipilih';
+        nameEl.classList.remove('has-file');
+      }
+    }
+
+    DROPZONES.forEach(function(dz) {
+      var input = document.getElementById(dz.inputId);
+      if (!input) return;
+      var label = input.closest('.geotools-dropzone');
+      if (!label) return;
+
+      input.addEventListener('change', function() { updateFilename(input); });
+
+      label.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        label.classList.add('dragover');
+      });
+      label.addEventListener('dragleave', function() {
+        label.classList.remove('dragover');
+      });
+      label.addEventListener('drop', function(e) {
+        e.preventDefault();
+        label.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+          input.files = e.dataTransfer.files;
+          updateFilename(input);
+        }
+      });
+    });
+  })();

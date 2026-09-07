@@ -1553,9 +1553,8 @@
     /* Tombol Toggle Sidebar Kiri */
     .toggle-sidebar-btn {
       position: absolute;
-      top: 50%;
-      right: -25px;
-      transform: translateY(-50%);
+      bottom: 70vh;
+      right: -30px;
       width: 30px;
       height: 64px;
       background: linear-gradient(180deg, #0a73b8, #075890);
@@ -5258,68 +5257,49 @@
     #tab-geotools .geoid-subtab-panel.active {
       display: grid; grid-template-columns: 1fr; gap: 12px; padding-top: 4px;
     }
-    .geotools-file-card {
-      display: flex; align-items: center; gap: 12px;
-      padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 12px;
-      background: #fff;
-      transition: all .2s ease;
+    .geotools-dropzone {
+      display: flex; flex-direction: column; gap: 0;
+      border: 2px dashed #cbd5e1; border-radius: 12px;
+      background: #f8fafc; cursor: pointer;
+      transition: all .2s ease; text-align: center;
+      padding: 20px 14px 14px;
     }
-    .geotools-file-card:hover {
-      border-color: #cbd5e1;
-      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    .geotools-dropzone:hover {
+      border-color: #0891b2; background: #ecfeff;
     }
-    .geotools-file-icon {
-      flex-shrink: 0; width: 44px; height: 44px;
+    .geotools-dropzone.dragover {
+      border-color: #0891b2; background: #ecfeff;
+      border-style: solid;
+      box-shadow: 0 0 0 3px rgba(8,145,178,.12);
+    }
+    .geotools-dropzone-input { display: none; }
+    .geotools-dropzone-content { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .geotools-dropzone-icon {
+      width: 44px; height: 44px;
       display: flex; align-items: center; justify-content: center;
-      border-radius: 12px; 
-      background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%); 
+      border-radius: 12px;
+      background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
       color: #0891b2;
       transition: transform .2s ease;
     }
-    .geotools-file-card:hover .geotools-file-icon { transform: scale(1.05); }
-    .geotools-file-icon--green { 
-      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); 
-      color: #10b981; 
+    .geotools-dropzone:hover .geotools-dropzone-icon { transform: scale(1.05); }
+    .geotools-dropzone-icon--green {
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+      color: #10b981;
     }
-    .geotools-file-icon--orange { 
-      background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); 
-      color: #f97316; 
+    .geotools-dropzone-icon--orange {
+      background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+      color: #f97316;
     }
-    .geotools-file-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-    .geotools-file-name { font-size: 13px; font-weight: 700; color: #0f172a; line-height: 1.2; }
-    .geotools-file-desc { font-size: 11px; color: #64748b; line-height: 1.3; }
-    .geotools-file-input {
-      width: 100%; height: 42px; padding: 0 14px;
-      border: 1.5px dashed #cbd5e1; border-radius: 10px;
-      background: #f8fafc; font-size: 12px; color: #475569;
-      box-sizing: border-box; cursor: pointer;
-      transition: all .2s ease;
-      display: flex; align-items: center;
-      margin-top: 8px;
+    .geotools-dropzone-text { font-size: 13px; font-weight: 600; color: #334155; }
+    .geotools-dropzone-accept { font-size: 11px; color: #64748b; }
+    .geotools-dropzone-filename {
+      font-size: 11px; color: #94a3b8; margin-top: 10px;
+      padding-top: 10px; border-top: 1px solid #e2e8f0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      max-width: 100%;
     }
-    .geotools-file-input:hover { 
-      border-color: #0891b2; 
-      background: #ecfeff;
-    }
-    .geotools-file-input:focus { 
-      outline: none; 
-      border-color: #0891b2; 
-      border-style: solid; 
-      box-shadow: 0 0 0 3px rgba(8,145,178,.12); 
-      background: #fff; 
-    }
-    .geotools-file-input::file-selector-button {
-      background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
-      border: none; border-radius: 8px;
-      padding: 10px 16px 8px; font-size: 11px; font-weight: 700; color: #fff;
-      cursor: pointer; margin-right: 12px; transition: all .2s ease;
-      box-shadow: 0 2px 6px rgba(8,145,178,.25);
-    }
-    .geotools-file-input::file-selector-button:hover { 
-      background: linear-gradient(135deg, #0e7490 0%, #155e75 100%); 
-      box-shadow: 0 4px 12px rgba(8,145,178,.35); 
-      transform: translateY(-1px); 
-    }
+    .geotools-dropzone-filename.has-file { color: #0891b2; font-weight: 600; }
     .geotools-btn {
       width: 100%; height: 44px; padding: 0 16px; font-size: 13px; font-weight: 700;
       border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;
