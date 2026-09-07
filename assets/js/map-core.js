@@ -126,6 +126,11 @@ L.control.scale({
       maxZoom: 19,
       minZoom: 0,
       attribution: 'NOAA NNVL GOES IR'
+    }),
+    'sentinel2': L.tileLayer('https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg', {
+      maxZoom: 13,
+      minZoom: 0,
+      attribution: 'Sentinel-2 cloudless by EOX'
     })
   };
 
@@ -229,7 +234,7 @@ L.control.scale({
 
   var SATELLITE_TILES = ['bmkg-himawari', 'bmkg-himawari-fd', 'bmkg-himawari-hires', 'bmkg-gk2a', 'bmkg-gk2a-wv',
     'modis-terra', 'modis-aqua', 'viirs-noaa20', 'viirs-noaa21',
-    'noaa-true-color', 'noaa-goes-ir'];
+    'noaa-true-color', 'noaa-goes-ir', 'sentinel2'];
 
   function attachTileError(key) {
     var layer = baseTileLayers[key];
@@ -325,6 +330,9 @@ L.control.scale({
         bmkgXhr.send();
         return;
       } else if (name === 'noaa-true-color' || name === 'noaa-goes-ir') {
+        baseTileLayers[name].addTo(map);
+        attachTileError(name);
+      } else if (name === 'sentinel2') {
         baseTileLayers[name].addTo(map);
         attachTileError(name);
       } else {
@@ -531,7 +539,8 @@ L.control.scale({
     'bmkg-gk2a': 'GK-2A',
     'bmkg-gk2a-wv': 'GK-2A Water Vapor',
     'noaa-true-color': 'NOAA True Color',
-    'noaa-goes-ir': 'NOAA GOES IR'
+    'noaa-goes-ir': 'NOAA GOES IR',
+    'sentinel2': 'Sentinel-2'
   };
 
   /* ── Basemap Modal ── */

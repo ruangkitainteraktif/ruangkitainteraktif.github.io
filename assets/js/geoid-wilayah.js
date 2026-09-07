@@ -269,18 +269,17 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
   try {
     showGeoidBoundaryLoading();
     if (level === 4) {
-      // Desa/Kelurahan: BIG layer 4 tidak menyajikan geometri -> gunakan BNPB Batas_Desa.
-      const kodeNum = Number(kode.replace(/\./g, ''));
-      const bnpbUrl = `https://gis.bnpb.go.id/server/rest/services/Basemap/Batas_Desa/MapServer/0/query?where=KODE_DESA_%3D${kodeNum}&f=json&returnGeometry=true&outSR=4326&outFields=*`;
+      // Desa/Kelurahan: BIG BAPANAS Batas_Administrasi (83.486 polygon desa).
+      const bigUrl = `https://geoservices.big.go.id/gis/rest/services/BAPANAS/Batas_Administrasi/MapServer/2/query?where=KDEPUM%3D%27${encodeURIComponent(kode)}%27&f=json&returnGeometry=true&outSR=4326&outFields=KDEPUM,NAMOBJ,WADMKD,WADMKK,WADMPR,LUASWH&geometryPrecision=5`;
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
-      const response = await fetch(bnpbUrl, { signal: controller.signal });
+      const response = await fetch(bigUrl, { signal: controller.signal });
       clearTimeout(timeout);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const result = await response.json();
       features = result.features || [];
       if (!features.length) {
-        // Fallback: titik BMKG bila batas desa tidak tersedia di BNPB.
+        // Fallback: titik BMKG bila batas desa tidak tersedia di BIG.
         const loc = await geocodeVillageByAdm4(kode);
         if (loc) {
           geoidPointMarker = L.circleMarker([loc.lat, loc.lon], {
@@ -656,7 +655,7 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
 
 // Ambil geometri poligon anak untuk dril-down batas:
 // - level 2 (Kabupaten) -> seluruh Kecamatan (BIG layer 3, kdcpum LIKE 'kode.%')
-// - level 3 (Kecamatan) -> seluruh Desa/Kelurahan (BNPB, rentang KODE_DESA_)
+// - level 3 (Kecamatan) -> seluruh Desa/Kelurahan (BIG BAPANAS, KDEPUM LIKE 'kode.%')
 async function fetchChildBoundaryGeometries(level, kode) {
   const toLL = (geom) => {
     if (!geom) return null;
@@ -669,11 +668,8 @@ async function fetchChildBoundaryGeometries(level, kode) {
       const where = `kdcpum LIKE '${kode}.%'`;
       url = `https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/BATAS_WILAYAH/MapServer/3/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outFields=namobj&geometryPrecision=5`;
     } else if (level === 3) {
-      const digits = kode.replace(/\./g, '');
-      const lo = Number(digits + '0000');
-      const hi = Number((Number(digits) + 1) + '0000');
-      const where = `KODE_DESA_ >= ${lo} AND KODE_DESA_ < ${hi}`;
-      url = `https://gis.bnpb.go.id/server/rest/services/Basemap/Batas_Desa/MapServer/0/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outSR=4326&outFields=NAMA_KEL`;
+      const where = `KDEPUM LIKE '${kode}.%'`;
+      url = `https://geoservices.big.go.id/gis/rest/services/BAPANAS/Batas_Administrasi/MapServer/2/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outSR=4326&outFields=KDEPUM,NAMOBJ,WADMKD&geometryPrecision=5`;
     } else {
       return [];
     }
