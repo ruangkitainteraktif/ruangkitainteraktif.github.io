@@ -6403,6 +6403,7 @@
       font-size: 20px;
     }
     .welcome-feature-icon.icon-geoid { background: #dbeafe; }
+    .welcome-feature-icon.icon-satellite { background: linear-gradient(135deg, #e0f2fe, #bae6fd); }
     .welcome-feature-icon.icon-geotani { background: #dcfce7; }
     .welcome-feature-icon.icon-geoportal { background: #e0e7ff; }
     .welcome-feature-icon.icon-geowatch { background: #fef3c7; }
