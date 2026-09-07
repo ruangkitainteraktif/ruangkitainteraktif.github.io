@@ -152,10 +152,58 @@ function computeAgriculturalCvss(sawahPct, erosiKelas, ndviMean) {
 async function loadGeoidProvinces() {
   try {
     const data = await getGeoidWilayahData();
-    if (!getWilayahChildren(data, '', 1).length) throw new Error('Data provinsi tidak ditemukan');
-    populateGeoidSummaryCards(data);
+    if (getWilayahChildren(data, '', 1).length) {
+      populateGeoidSummaryCards(data);
+    }
   } catch (err) {
     console.warn('kode_wilayah.json tidak dapat dimuat; memakai data cadangan:', err);
+  }
+  fetchAndUpdateGeoidCounts();
+}
+
+const RBI_BASE = 'https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH';
+async function fetchBigRbiCount(servicePath, where) {
+  const url = `${RBI_BASE}/${servicePath}/query?where=${encodeURIComponent(where || '1=1')}&returnCountOnly=true&f=json`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) return 0;
+    const json = await res.json();
+    return json.count || 0;
+  } catch { clearTimeout(timeout); return 0; }
+}
+
+async function fetchBigRbiDistinctCount(servicePath, field) {
+  const url = `${RBI_BASE}/${servicePath}/query?where=1%3D1&returnGeometry=false&outFields=${field}&returnDistinctValues=true&f=json`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) return 0;
+    const json = await res.json();
+    return (json.features || []).length;
+  } catch { clearTimeout(timeout); return 0; }
+}
+
+async function fetchAndUpdateGeoidCounts() {
+  try {
+    const [prov, kab, kec, desa] = await Promise.all([
+      fetchBigRbiDistinctCount('BATAS_KABKOTA_AR/MapServer/0', 'KDPPUM'),
+      fetchBigRbiCount('BATAS_KABKOTA_AR/MapServer/0'),
+      fetchBigRbiCount('BATAS_KECAMATAN_AR/MapServer/0'),
+      fetchBigRbiCount('BATAS_DESAKEL_AR/MapServer/0')
+    ]);
+    const fmt = n => n.toLocaleString('id-ID');
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = fmt(val); };
+    set('geoidCountProv', prov);
+    set('geoidCountKab', kab);
+    set('geoidCountKec', kec);
+    set('geoidCountDesa', desa);
+  } catch (err) {
+    console.warn('Gagal mengambil data jumlah wilayah dari BIG RBI:', err);
   }
 }
 
@@ -269,8 +317,8 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
   try {
     showGeoidBoundaryLoading();
     if (level === 4) {
-      // Desa/Kelurahan: BIG BAPANAS Batas_Administrasi (83.486 polygon desa).
-      const bigUrl = `https://geoservices.big.go.id/gis/rest/services/BAPANAS/Batas_Administrasi/MapServer/2/query?where=KDEPUM%3D%27${encodeURIComponent(kode)}%27&f=json&returnGeometry=true&outSR=4326&outFields=KDEPUM,NAMOBJ,WADMKD,WADMKK,WADMPR,LUASWH&geometryPrecision=5`;
+      // Desa/Kelurahan: BIG RBI BATAS_DESAKEL_AR (84.503 polygon desa, edisi Juni 2026).
+      const bigUrl = `https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH/BATAS_DESAKEL_AR/MapServer/0/query?where=KDEPUM%3D%27${encodeURIComponent(kode)}%27&f=json&returnGeometry=true&outSR=4326&outFields=KDEPUM,NAMOBJ,WADMKD,WADMKK,WADMPR,LUASWH&geometryPrecision=5`;
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
       const response = await fetch(bigUrl, { signal: controller.signal });
@@ -291,15 +339,21 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
         return null;
       }
     } else {
-      // Provinsi / Kabupaten-Kota / Kecamatan: BIG SatuPeta BATAS_WILAYAH (WGS84).
-      let layer, where;
-      if (level === 1) { layer = 2; where = `kdppum = '${kode}'`; }
-      else if (level === 2) { layer = 2; where = `kdpkab = '${kode}'`; }
-      else if (level === 3) { layer = 3; where = `kdcpum = '${kode}'`; }
-      else { return null; }
-
-      const bigBase = 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/BATAS_WILAYAH/MapServer';
-      const url = `${bigBase}/${layer}/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outFields=namobj,kdpkab,kdcpum&geometryPrecision=5`;
+      // Provinsi / Kabupaten-Kota / Kecamatan: BIG RBI (edisi Juni 2026).
+      let url;
+      if (level === 1) {
+        // Provinsi: BATAS_WILAYAH layer 12 (lowercase fields).
+        const where = `kdppum = '${kode}'`;
+        url = `https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH/BATAS_WILAYAH/MapServer/12/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outFields=namobj,kdpkab,kdcpum&geometryPrecision=5`;
+      } else if (level === 2) {
+        // Kabupaten: BATAS_KABKOTA_AR layer 0 (UPPERCASE fields).
+        const where = `KDPKAB = '${kode}'`;
+        url = `https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH/BATAS_KABKOTA_AR/MapServer/0/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outFields=NAMOBJ,KDPKAB&geometryPrecision=5`;
+      } else if (level === 3) {
+        // Kecamatan: BATAS_KECAMATAN_AR layer 0 (UPPERCASE fields).
+        const where = `KDCPUM = '${kode}'`;
+        url = `https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH/BATAS_KECAMATAN_AR/MapServer/0/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outFields=NAMOBJ,KDCPUM,KDPKAB&geometryPrecision=5`;
+      } else { return null; }
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
       const response = await fetch(url, { signal: controller.signal });
@@ -573,7 +627,7 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
           </div>
 
           <div style="padding:8px 14px;background:#f8fafc;display:flex;align-items:center;justify-content:space-between;">
-             <span style="font-size:8px;color:#94a3b8;">Sumber: BMKG · BIG SatuPeta · BNPB · Sentinel-2</span>
+             <span style="font-size:8px;color:#94a3b8;">Sumber: BMKG · BIG RBI · Sentinel-2</span>
             <div style="display:flex;gap:6px;">
               <button class="geotani-btn-print" onclick="printGeotaniPdf()">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -617,6 +671,7 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
                 <span class="boundary-popup-meta-value">${detailCount} wilayah</span>
               </div>` : ''}
              </div>
+             <div style="padding:8px 14px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8;text-align:center;">Sumber: BIG RBI (Rupa Bumi Indonesia) Edisi Juni 2026</div>
              <div style="padding:10px 14px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;gap:8px;justify-content:center;">
                 <button type="button" onclick="showDukcapilDetail('${escapeGeoidHtml(kode)}')" style="border:0;background:#2563eb;color:#fff;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;">Data Penduduk</button>
                 <button type="button" onclick="downloadBoundaryGeoJSON('${escapeGeoidHtml(kode)}')" style="border:0;background:#059669;color:#fff;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;">Download GeoJSON</button>
@@ -655,8 +710,8 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
 }
 
 // Ambil geometri poligon anak untuk dril-down batas:
-// - level 2 (Kabupaten) -> seluruh Kecamatan (BIG layer 3, kdcpum LIKE 'kode.%')
-// - level 3 (Kecamatan) -> seluruh Desa/Kelurahan (BIG BAPANAS, KDEPUM LIKE 'kode.%')
+// - level 2 (Kabupaten) -> seluruh Kecamatan (BIG RBI BATAS_KECAMATAN_AR)
+// - level 3 (Kecamatan) -> seluruh Desa/Kelurahan (BIG RBI BATAS_DESAKEL_AR)
 async function fetchChildBoundaryGeometries(level, kode) {
   const toLL = (geom) => {
     if (!geom) return null;
@@ -666,11 +721,11 @@ async function fetchChildBoundaryGeometries(level, kode) {
   try {
     let url;
     if (level === 2) {
-      const where = `kdcpum LIKE '${kode}.%'`;
-      url = `https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/BATAS_WILAYAH/MapServer/3/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outFields=namobj&geometryPrecision=5`;
+      const where = `KDCPUM LIKE '${kode}.%'`;
+      url = `https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH/BATAS_KECAMATAN_AR/MapServer/0/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outFields=NAMOBJ,KDCPUM&geometryPrecision=5`;
     } else if (level === 3) {
       const where = `KDEPUM LIKE '${kode}.%'`;
-      url = `https://geoservices.big.go.id/gis/rest/services/BAPANAS/Batas_Administrasi/MapServer/2/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outSR=4326&outFields=KDEPUM,NAMOBJ,WADMKD&geometryPrecision=5`;
+      url = `https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH/BATAS_DESAKEL_AR/MapServer/0/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outFields=KDEPUM,NAMOBJ,WADMKD&geometryPrecision=5`;
     } else {
       return [];
     }
@@ -809,15 +864,15 @@ async function downloadBoundaryGeoJSON(kode) {
   const levelNames = { 1: 'Provinsi', 2: 'Kabupaten/Kota', 3: 'Kecamatan', 4: 'Desa/Kelurahan' };
   const label = levelNames[level] || 'Wilayah';
 
-  const bigBase = 'https://geoservices.big.go.id/gis/rest/services/BAPANAS/Batas_Administrasi/MapServer';
+  const rbiBase = 'https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH';
 
   try {
     const allFeatures = [];
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 20000);
 
-    async function queryBig(layer, where, outFields) {
-      const url = `${bigBase}/${layer}/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outSR=4326&outFields=${outFields}&geometryPrecision=5`;
+    async function queryBigRbi(serviceUrl, where, outFields) {
+      const url = `${serviceUrl}/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outSR=4326&outFields=${outFields}&geometryPrecision=5`;
       const response = await fetch(url, { signal: controller.signal });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const result = await response.json();
@@ -831,20 +886,20 @@ async function downloadBoundaryGeoJSON(kode) {
     }
 
     if (level === 1) {
-      const kabFeatures = await queryBig(0, `KDPPUM = '${kode}'`, 'KDPKAB,NAMOBJ,WADMKK,WADMPR,LUASWH');
+      const kabFeatures = await queryBigRbi(`${rbiBase}/BATAS_KABKOTA_AR/MapServer/0`, `KDPPUM = '${kode}'`, 'KDPKAB,NAMOBJ,WADMKK,WADMPR,LUASWH');
       allFeatures.push(...kabFeatures);
-      const kecFeatures = await queryBig(1, `KDPPUM = '${kode}'`, 'KDCPUM,NAMOBJ,WADMKK,WADMPR,LUASWH');
+      const kecFeatures = await queryBigRbi(`${rbiBase}/BATAS_KECAMATAN_AR/MapServer/0`, `KDPPUM = '${kode}'`, 'KDCPUM,NAMOBJ,WADMKK,WADMPR,LUASWH');
       allFeatures.push(...kecFeatures);
     } else if (level === 2) {
-      const kabFeatures = await queryBig(0, `KDPKAB = '${kode}'`, 'KDPKAB,NAMOBJ,WADMKK,WADMPR,LUASWH');
+      const kabFeatures = await queryBigRbi(`${rbiBase}/BATAS_KABKOTA_AR/MapServer/0`, `KDPKAB = '${kode}'`, 'KDPKAB,NAMOBJ,WADMKK,WADMPR,LUASWH');
       allFeatures.push(...kabFeatures);
-      const kecFeatures = await queryBig(1, `KDPKAB = '${kode}'`, 'KDCPUM,NAMOBJ,WADMKK,WADMPR,LUASWH');
+      const kecFeatures = await queryBigRbi(`${rbiBase}/BATAS_KECAMATAN_AR/MapServer/0`, `KDPKAB = '${kode}'`, 'KDCPUM,NAMOBJ,WADMKK,WADMPR,LUASWH');
       allFeatures.push(...kecFeatures);
     } else if (level === 3) {
-      const features = await queryBig(2, `KDEPUM LIKE '${kode}.%'`, 'KDEPUM,NAMOBJ,WADMKD,WADMKK,WADMPR,LUASWH');
+      const features = await queryBigRbi(`${rbiBase}/BATAS_DESAKEL_AR/MapServer/0`, `KDEPUM LIKE '${kode}.%'`, 'KDEPUM,NAMOBJ,WADMKD,WADMKK,WADMPR,LUASWH');
       allFeatures.push(...features);
     } else if (level === 4) {
-      const features = await queryBig(2, `KDEPUM = '${kode}'`, 'KDEPUM,NAMOBJ,WADMKD,WADMKK,WADMPR,LUASWH');
+      const features = await queryBigRbi(`${rbiBase}/BATAS_DESAKEL_AR/MapServer/0`, `KDEPUM = '${kode}'`, 'KDEPUM,NAMOBJ,WADMKD,WADMKK,WADMPR,LUASWH');
       allFeatures.push(...features);
     }
 

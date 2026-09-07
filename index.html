@@ -207,12 +207,20 @@
         <div class="welcome-modal-body">
           <div class="welcome-features-label">Fitur Utama</div>
           <div class="welcome-features-grid">
-            <!-- Citra Satelit - Highlighted -->
+            <!-- Data Statistik Indonesia - Highlighted -->
             <div class="welcome-feature-card highlighted">
+              <div class="welcome-feature-icon icon-geowx">📍</div>
+              <div class="welcome-feature-info">
+                <div class="welcome-feature-name">Data Statistik Indonesia</div>
+                <div class="welcome-feature-desc">84.503 Desa/Kelurahan, 7.432 Kecamatan, 541 Kab/Kota, 38 Provinsi dari BIG RBI edisi Juni 2026. Pencarian batas wilayah + download GeoJSON.</div>
+              </div>
+            </div>
+            <!-- Citra Satelit -->
+            <div class="welcome-feature-card">
               <div class="welcome-feature-icon icon-satellite">🛰️</div>
               <div class="welcome-feature-info">
                 <div class="welcome-feature-name">Citra Satelit</div>
-                <div class="welcome-feature-desc">Export citra satelit BMKG ke PNG dengan legenda A4, watermark koordinat, dan peta area. Support 12 layer satelit real-time: Himawari, GOES, VIIRS, MODIS, dan lainnya.</div>
+                <div class="welcome-feature-desc">Export citra satelit BMKG ke PNG dengan legenda A4, watermark koordinat, dan peta area. Support 12 layer satelit real-time.</div>
               </div>
             </div>
             <!-- Peta Interaktif -->
@@ -245,14 +253,6 @@
               <div class="welcome-feature-info">
                 <div class="welcome-feature-name">GeoTools</div>
                 <div class="welcome-feature-desc">Import SHP, GeoJSON, GPX, Timeline, KMZ via bottom sheet. Animasi GPX dan export video.</div>
-              </div>
-            </div>
-            <!-- GEONUSA -->
-            <div class="welcome-feature-card">
-              <div class="welcome-feature-icon icon-geowx">📍</div>
-              <div class="welcome-feature-info">
-                <div class="welcome-feature-name">Data Statistik Indonesia</div>
-                <div class="welcome-feature-desc">Pencarian batas wilayah administrasi Provinsi, Kabupaten/Kota, Kecamatan, hingga Desa/Kelurahan.</div>
               </div>
             </div>
           </div>
@@ -667,6 +667,7 @@
                 <span class="geoid-summary-label">Desa/Kel</span>
               </div>
             </div>
+            <p style="font-size:10px;color:#94a3b8;text-align:center;margin:8px 0 0;">Sumber: BIG RBI (Rupa Bumi Indonesia) Edisi Juni 2026</p>
             <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
 
             <div id="geoidStatsCard" class="geoid-population-card"></div>
