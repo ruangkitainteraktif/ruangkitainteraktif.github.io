@@ -73,78 +73,6 @@
       ],
       labels: ['Kering', '', 'Lembab', '', 'Sangat Lembab']
     },
-    's5p-cloud-fraction': {
-      title: 'Cloud Fraction',
-      unit: 'Unit: fraction (0\u20131) \u2014 S5P-PAL',
-      gradient: [
-        [0.0, [30, 60, 120]],
-        [0.5, [240, 200, 40]],
-        [1.0, [255, 60, 40]]
-      ],
-      labels: ['0', '0.25', '0.5', '0.75', '1']
-    },
-    's5p-no2-tropo': {
-      title: 'NO\u2082 Tropospheric',
-      unit: 'mol/cm\u00B2 \u2014 S5P-PAL',
-      gradient: [
-        [0.0, [20, 20, 80]],
-        [0.25, [60, 120, 200]],
-        [0.5, [240, 200, 40]],
-        [0.75, [240, 80, 20]],
-        [1.0, [160, 20, 40]]
-      ],
-      labels: ['0', '45', '90', '135', '180']
-    },
-    's5p-ch4': {
-      title: 'CH\u2084 Column',
-      unit: 'ppb \u2014 S5P-PAL',
-      gradient: [
-        [0.0, [20, 100, 60]],
-        [0.5, [200, 200, 40]],
-        [1.0, [200, 60, 20]]
-      ],
-      labels: ['1800', '1850', '1900', '1950', '2000']
-    },
-    's5p-hcho': {
-      title: 'HCHO Column Density',
-      unit: 'mol/cm\u00B2 \u2014 S5P-PAL',
-      gradient: [
-        [0.0, [20, 20, 80]],
-        [0.5, [240, 200, 40]],
-        [1.0, [200, 40, 20]]
-      ],
-      labels: ['0', '0.005', '0.01', '0.015', '0.02']
-    },
-    's5p-co': {
-      title: 'CO Column Density',
-      unit: 'mol/m\u00B2 \u2014 S5P-PAL',
-      gradient: [
-        [0.0, [20, 20, 80]],
-        [0.5, [60, 160, 200]],
-        [1.0, [200, 60, 20]]
-      ],
-      labels: ['0', '0.025', '0.05', '0.075', '0.1']
-    },
-    's5p-so2': {
-      title: 'SO\u2082 Column Density',
-      unit: 'DU \u2014 S5P-PAL',
-      gradient: [
-        [0.0, [20, 20, 80]],
-        [0.5, [240, 200, 40]],
-        [1.0, [200, 40, 20]]
-      ],
-      labels: ['0', '0.25', '0.5', '0.75', '1']
-    },
-    's5p-o3': {
-      title: 'O\u2083 Column Density',
-      unit: 'DU \u2014 S5P-PAL',
-      gradient: [
-        [0.0, [20, 20, 80]],
-        [0.5, [100, 180, 220]],
-        [1.0, [200, 60, 20]]
-      ],
-      labels: ['0', '0.1', '0.2', '0.3', '0.4']
-    },
     'noaa-goes-ir': {
       title: 'GOES IR Enhanced',
       unit: 'Infrared \u2014 NOAA',
@@ -457,7 +385,7 @@
         '.unified-search', '.leaflet-control-scale', '.detail-panel-btn',
         '#detail-panel', '.map-insight-cards', '.quick-layer-bar',
         '.geoid-marker-wrap', '.leaflet-control-mouse-position',
-        '.wind-legend', '.himawari-legend', '.s5p-legend', '.maritime-legend',
+        '.wind-legend', '.himawari-legend', '.maritime-legend',
         '.leaflet-control-legend', '.legend-wrap',
         '.bmkg-time-slider-wrap', '.bmkg-ts-title', '.bmkg-ts-controls',
         '.bmkg-ts-info', '.bmkg-ts-slider-wrap',

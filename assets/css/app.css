@@ -1643,7 +1643,6 @@
     .tab-btn.active {
       color: #0673af;
       background: #ffffff;
-      border-bottom: 3px solid #0b8fb4;
     }
 
     .sidebar-content {
@@ -1703,7 +1702,7 @@
         border-radius: 9px;
         text-align: left;
       }
-      #sidebar-left .tab-btn.active { border-color: #cae9eb; border-bottom: 1px solid #cae9eb; background: linear-gradient(90deg, #e6f8f7, #f7fcfc); box-shadow: inset 3px 0 #0b9ab0; }
+      #sidebar-left .tab-btn.active { border-color: #cae9eb; background: linear-gradient(90deg, #e6f8f7, #f7fcfc); box-shadow: inset 3px 0 #0b9ab0; }
     }
 
     /* Desktop navigation: a compact map-dashboard rail when collapsed. */
@@ -1739,7 +1738,7 @@
         text-align: left;
       }
       #sidebar-left .tab-btn:hover { border-color: #d9e8ef; background: #eef8fa; color: #08729c; }
-      #sidebar-left .tab-btn.active { border-color: #cae9eb; border-bottom: 1px solid #cae9eb; background: linear-gradient(90deg, #e6f8f7, #f7fcfc); color: #05768a; box-shadow: inset 3px 0 #0b9ab0; }
+      #sidebar-left .tab-btn.active { border-color: #cae9eb; background: linear-gradient(90deg, #e6f8f7, #f7fcfc); color: #05768a; box-shadow: inset 3px 0 #0b9ab0; }
       #sidebar-left .tab-btn svg { width: 17px; height: 17px; }
 
       #sidebar-left.collapsed .tab-menu { align-items: center; padding: 10px 11px; }
@@ -4325,13 +4324,6 @@
     .himawari-legend-item { display: flex; align-items: center; gap: 5px; font-size: 9px; color: #cbd5e1; }
     .himawari-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.15); }
     .himawari-legend-unit { font-size: 8px; color: #64748b; margin-top: 6px; font-style: italic; }
-
-    /* S5P Legend */
-    .s5p-legend { background: rgba(15,23,42,.92); border-radius: 8px; padding: 10px 12px; color: #e2e8f0; min-width: 140px; max-width: 200px; backdrop-filter: blur(6px); box-shadow: 0 2px 8px rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.08); }
-    .s5p-legend-title { font-size: 10px; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
-    .s5p-legend-bar { height: 8px; border-radius: 4px; margin-bottom: 4px; border: 1px solid rgba(255,255,255,.1); }
-    .s5p-legend-labels { display: flex; justify-content: space-between; font-size: 7px; color: #94a3b8; margin-bottom: 4px; }
-    .s5p-legend-unit { font-size: 8px; color: #64748b; margin-top: 4px; font-style: italic; }
 
     /* Wind Popup */
     .wind-popup { width: 310px; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1e293b; background: #fff; overflow: hidden; }
@@ -7063,10 +7055,23 @@
     .legend-wrap.legend-collapsed .himawari-legend-labels,
     .legend-wrap.legend-collapsed .himawari-legend-items,
     .legend-wrap.legend-collapsed .himawari-legend-unit,
-    .legend-wrap.legend-collapsed .s5p-legend-bar,
-    .legend-wrap.legend-collapsed .s5p-legend-labels,
-    .legend-wrap.legend-collapsed .s5p-legend-unit,
     .legend-wrap.legend-collapsed .maritime-legend-row,
     .legend-wrap.legend-collapsed .maritime-legend-source { display: none !important; }
     .legend-wrap.legend-collapsed .legend-toggle-icon { transform: rotate(-90deg); }
+
+    /* ── Map Toast Notification ── */
+    .map-toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      z-index: 10002; padding: 10px 20px; border-radius: 10px;
+      background: rgba(239, 68, 68, 0.95); color: #fff;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 13px; font-weight: 600; text-align: center;
+      backdrop-filter: blur(8px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      pointer-events: none; max-width: 90vw;
+      animation: map-toast-in .3s ease-out, map-toast-out .3s ease-in 3.7s forwards;
+    }
+    .map-toast.toast-warn { background: rgba(234, 179, 8, 0.95); color: #1e293b; }
+    .map-toast.toast-info { background: rgba(8, 121, 191, 0.95); }
+    @keyframes map-toast-in { from { opacity: 0; transform: translateX(-50%) translateY(12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+    @keyframes map-toast-out { from { opacity: 1; } to { opacity: 0; } }
 

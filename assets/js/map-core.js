@@ -126,14 +126,7 @@ L.control.scale({
       maxZoom: 19,
       minZoom: 0,
       attribution: 'NOAA NNVL GOES IR'
-    }),
-    's5p-cloud-fraction': L.tileLayer('', { maxZoom: 9, tms: true, maxNativeZoom: 6, attribution: 'S5P-PAL Cloud Fraction' }),
-    's5p-no2-tropo': L.tileLayer('', { maxZoom: 9, tms: true, maxNativeZoom: 6, attribution: 'S5P-PAL NO\u2082' }),
-    's5p-ch4': L.tileLayer('', { maxZoom: 9, tms: true, maxNativeZoom: 6, attribution: 'S5P-PAL CH\u2084' }),
-    's5p-hcho': L.tileLayer('', { maxZoom: 9, tms: true, maxNativeZoom: 6, attribution: 'S5P-PAL HCHO' }),
-    's5p-co': L.tileLayer('', { maxZoom: 9, tms: true, maxNativeZoom: 6, attribution: 'S5P-PAL CO' }),
-    's5p-so2': L.tileLayer('', { maxZoom: 9, tms: true, maxNativeZoom: 6, attribution: 'S5P-PAL SO\u2082' }),
-    's5p-o3': L.tileLayer('', { maxZoom: 9, tms: true, maxNativeZoom: 6, attribution: 'S5P-PAL O\u2083' })
+    })
   };
 
   const airVisualLayers = {
@@ -178,7 +171,6 @@ L.control.scale({
 
   var _noaaBoundaryLayer = null;
   var NOAA_BASEMAPS = ['noaa-true-color', 'noaa-goes-ir'];
-  var S5P_BASEMAPS = ['s5p-cloud-fraction', 's5p-no2-tropo', 's5p-ch4', 's5p-hcho', 's5p-co', 's5p-so2', 's5p-o3'];
 
   function loadNoaaBoundary() {
     if (_noaaBoundaryLayer) { _noaaBoundaryLayer.addTo(map); return; }
@@ -205,11 +197,58 @@ L.control.scale({
     }
   }
 
+  // ── Toast Notification ──
+  var _toastEl = null;
+  var _toastTimer = null;
+  var _tileErrorFired = {};
+
+  function showMapToast(msg, type) {
+    if (_toastEl) { _toastEl.remove(); clearTimeout(_toastTimer); }
+    var el = document.createElement('div');
+    el.className = 'map-toast' + (type === 'warn' ? ' toast-warn' : type === 'info' ? ' toast-info' : '');
+    el.textContent = msg;
+    document.body.appendChild(el);
+    _toastEl = el;
+    _toastTimer = setTimeout(function () { el.remove(); _toastEl = null; }, 4000);
+  }
+  window.showMapToast = showMapToast;
+
+  var SATELLITE_ERROR_MSG = {
+    'bmkg-himawari': 'Citra BMKG Himawari-9 tidak tersedia saat ini.',
+    'bmkg-himawari-fd': 'Citra BMKG Himawari-9 Full Disk tidak tersedia.',
+    'bmkg-himawari-hires': 'Citra BMKG Himawari-9 Hi-Res tidak tersedia.',
+    'bmkg-gk2a': 'Citra BMKG GK-2A tidak tersedia saat ini.',
+    'bmkg-gk2a-wv': 'Citra BMKG GK-2A Water Vapor tidak tersedia.',
+    'modis-terra': 'Citra NASA GIBS MODIS Terra tidak tersedia.',
+    'modis-aqua': 'Citra NASA GIBS MODIS Aqua tidak tersedia.',
+    'viirs-noaa20': 'Citra NASA GIBS VIIRS NOAA-20 tidak tersedia.',
+    'viirs-noaa21': 'Citra NASA GIBS VIIRS NOAA-21 tidak tersedia.',
+    'noaa-true-color': 'Citra NOAA True Color tidak tersedia.',
+    'noaa-goes-ir': 'Citra NOAA GOES IR tidak tersedia.'
+  };
+
+  var SATELLITE_TILES = ['bmkg-himawari', 'bmkg-himawari-fd', 'bmkg-himawari-hires', 'bmkg-gk2a', 'bmkg-gk2a-wv',
+    'modis-terra', 'modis-aqua', 'viirs-noaa20', 'viirs-noaa21',
+    'noaa-true-color', 'noaa-goes-ir'];
+
+  function attachTileError(key) {
+    var layer = baseTileLayers[key];
+    if (!layer || layer._tileErrorAttached) return;
+    layer._tileErrorAttached = true;
+    layer.on('tileerror', function () {
+      if (_tileErrorFired[key]) return;
+      _tileErrorFired[key] = true;
+      var msg = SATELLITE_ERROR_MSG[key] || 'Citra satelit tidak tersedia.';
+      showMapToast(msg, 'error');
+    });
+  }
+
   function setBaseMap(name) {
     var isHillshade = (name === 'hillshade-indonesia');
     var isPth = (name === 'topografi-pth');
     var isBmkg = BMKG_TILETYPE.hasOwnProperty(name);
-    var isS5p = S5P_BASEMAPS.indexOf(name) !== -1;
+
+    _tileErrorFired = {};
 
     Object.entries(baseTileLayers).forEach(function (entry) {
       if (map.hasLayer(entry[1])) map.removeLayer(entry[1]);
@@ -227,18 +266,37 @@ L.control.scale({
       baseBasemapName = name;
       if (name === 'modis-terra') {
         baseTileLayers[name].setUrl(getGibsDateUrl('MODIS_Terra_CorrectedReflectance_TrueColor', 'jpg', getYesterdayDate()));
+        baseTileLayers[name].addTo(map);
+        attachTileError(name);
       } else if (name === 'modis-aqua') {
         baseTileLayers[name].setUrl(getGibsDateUrl('MODIS_Aqua_CorrectedReflectance_TrueColor', 'jpg', getYesterdayDate()));
+        baseTileLayers[name].addTo(map);
+        attachTileError(name);
       } else if (name === 'viirs-noaa20') {
         baseTileLayers[name].setUrl(getGibsDateUrl('VIIRS_NOAA20_CorrectedReflectance_TrueColor', 'jpeg', getYesterdayDate()));
+        baseTileLayers[name].addTo(map);
+        attachTileError(name);
       } else if (name === 'viirs-noaa21') {
         baseTileLayers[name].setUrl(getGibsDateUrl('VIIRS_NOAA21_CorrectedReflectance_TrueColor', 'jpeg', getYesterdayDate()));
+        baseTileLayers[name].addTo(map);
+        attachTileError(name);
       } else if (isBmkg) {
         var bmkgLayer = baseTileLayers[name];
         var bmkgModelName = BMKG_TILETYPE[name];
         var bmkgParam = BMKG_PARAMS[name] || 'EH';
+        attachTileError(name);
         var bmkgXhr = new XMLHttpRequest();
         bmkgXhr.open('GET', 'https://satellite.bmkg.go.id/api22/modelrun', true);
+        bmkgXhr.timeout = 10000;
+        bmkgXhr.onerror = function () {
+          bmkgLayer.addTo(map);
+          if (satelliteBoundary && name !== 'esri-satellite') satelliteBoundary.show(map);
+          currentBasemapName = name; window.currentBasemapName = name;
+          var sel = document.getElementById('basemapSelect'); if (sel) sel.value = name;
+          map.fire('basemapchanged', { basemap: name });
+          showMapToast(SATELLITE_ERROR_MSG[name] || 'Citra BMKG tidak tersedia.', 'error');
+        };
+        bmkgXhr.ontimeout = function () { bmkgXhr.onerror(); };
         bmkgXhr.onreadystatechange = function () {
           if (bmkgXhr.readyState !== 4) return;
           if (bmkgXhr.status >= 200 && bmkgXhr.status < 300) {
@@ -246,27 +304,32 @@ L.control.scale({
               var data = JSON.parse(bmkgXhr.responseText);
               window._bmkgModelrunCache = data;
               var ts = (data[bmkgModelName] || []).slice().reverse()[0];
-              if (ts) bmkgLayer.setUrl('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=' + bmkgModelName + '&param=' + bmkgParam + '&baserun=' + encodeURIComponent(ts));
-            } catch (e) {}
+              if (ts) {
+                bmkgLayer.setUrl('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=' + bmkgModelName + '&param=' + bmkgParam + '&baserun=' + encodeURIComponent(ts));
+              } else {
+                showMapToast(SATELLITE_ERROR_MSG[name] || 'Data BMKG tidak tersedia.', 'warn');
+              }
+            } catch (e) {
+              showMapToast(SATELLITE_ERROR_MSG[name] || 'Gagal memproses data BMKG.', 'error');
+            }
+          } else {
+            bmkgXhr.onerror();
+            return;
           }
           bmkgLayer.addTo(map);
           if (satelliteBoundary && name !== 'esri-satellite') satelliteBoundary.show(map);
-    currentBasemapName = name;
-    window.currentBasemapName = name;
-          window.currentBasemapName = name;
-          var sel = document.getElementById('basemapSelect');
-          if (sel) sel.value = name;
+          currentBasemapName = name; window.currentBasemapName = name;
+          var sel = document.getElementById('basemapSelect'); if (sel) sel.value = name;
           map.fire('basemapchanged', { basemap: name });
         };
         bmkgXhr.send();
         return;
-      } else if (isS5p) {
-        currentBasemapName = name;
-        window.currentBasemapName = name;
-        map.fire('basemapchanged', { basemap: name });
-        return;
+      } else if (name === 'noaa-true-color' || name === 'noaa-goes-ir') {
+        baseTileLayers[name].addTo(map);
+        attachTileError(name);
+      } else {
+        baseTileLayers[name].addTo(map);
       }
-      baseTileLayers[name].addTo(map);
     }
 
     if (satelliteBoundary) {
@@ -418,14 +481,7 @@ L.control.scale({
     'bmkg-gk2a': 'GK-2A',
     'bmkg-gk2a-wv': 'GK-2A Water Vapor',
     'noaa-true-color': 'NOAA True Color',
-    'noaa-goes-ir': 'NOAA GOES IR',
-    's5p-cloud-fraction': 'S5P Cloud Fraction',
-    's5p-no2-tropo': 'S5P NO\u2082 Tropospheric',
-    's5p-ch4': 'S5P CH\u2084',
-    's5p-hcho': 'S5P HCHO',
-    's5p-co': 'S5P CO',
-    's5p-so2': 'S5P SO\u2082',
-    's5p-o3': 'S5P O\u2083'
+    'noaa-goes-ir': 'NOAA GOES IR'
   };
 
   function createBasemapControl(labels, btnClass, btnIcon) {
@@ -908,7 +964,6 @@ L.control.scale({
         if (typeof modisAquaTimeSliderCleanup === 'function') modisAquaTimeSliderCleanup();
         if (typeof viirsTimeSliderCleanup === 'function') viirsTimeSliderCleanup();
         if (typeof cleanupHujanLayer === 'function') cleanupHujanLayer();
-        if (typeof s5pTmsSliderCleanup === 'function') s5pTmsSliderCleanup();
         if (typeof satelliteBoundary !== 'undefined') satelliteBoundary.hide(map);
         if (typeof modisViirsOverlayCleanup === 'function') modisViirsOverlayCleanup();
         if (typeof cuacaMaritimCleanup === 'function') cuacaMaritimCleanup();

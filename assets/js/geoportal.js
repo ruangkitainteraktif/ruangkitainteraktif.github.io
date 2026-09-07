@@ -1201,7 +1201,7 @@
       hiddenEls.push({ restore: () => sidebar.classList.remove('collapsed') });
     }
 
-    const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .geoportal-print-btn, .geoportal-legend, .basemap-btn, .basemap-control-wrap, .leaflet-control-scale, .detail-panel-btn, #detail-panel, .draw-fab-wrap, .modis-time-slider-wrap, .bmkg-time-slider-wrap, .legend-wrap, .zoom-control-wrap, .geoid-marker-wrap, .leaflet-control-mouse-position, .wind-legend, .himawari-legend, .s5p-legend, .maritime-legend, .leaflet-control-legend, .bmkg-ts-title, .bmkg-ts-controls, .bmkg-ts-info, .bmkg-ts-slider-wrap, .quick-layer-bar');
+    const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .geoportal-print-btn, .geoportal-legend, .basemap-btn, .basemap-control-wrap, .leaflet-control-scale, .detail-panel-btn, #detail-panel, .draw-fab-wrap, .modis-time-slider-wrap, .bmkg-time-slider-wrap, .legend-wrap, .zoom-control-wrap, .geoid-marker-wrap, .leaflet-control-mouse-position, .wind-legend, .himawari-legend, .maritime-legend, .leaflet-control-legend, .bmkg-ts-title, .bmkg-ts-controls, .bmkg-ts-info, .bmkg-ts-slider-wrap, .quick-layer-bar, #print-loading-overlay, #print-error-overlay, .print-area-buttons, .print-area-frame, .print-area-vignette, .print-instruction');
     overlays.forEach(el => {
       if (el && getComputedStyle(el).display !== 'none') {
         const prev = el.style.display;
