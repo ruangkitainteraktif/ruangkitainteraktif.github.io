@@ -201,6 +201,15 @@
       if (gempaPanel && gempaPanel.classList.contains('active') && typeof loadEarthquakeData === 'function') loadEarthquakeData();
     }
     if (tabId === 'geotoolsTabGeoPangan' && typeof window.geopanganAutoLoad === 'function') window.geopanganAutoLoad();
+    if (tabId === 'geotoolsTabGeoWatch') {
+      if (typeof window.loadCctvData === 'function') {
+        window.loadCctvData().then(function () {
+          if (typeof window.renderCctvList === 'function') window.renderCctvList();
+        }).catch(function (err) {
+          console.warn('GeoWatch CCTV load failed on tab activation:', err);
+        });
+      }
+    }
     if (typeof map !== 'undefined' && map) setTimeout(function () { map.invalidateSize(); }, 200);
   }
   window.openGeotoolsMainTab = openGeotoolsMainTab;

@@ -143,9 +143,9 @@ L.control.scale({
     'airvisual-co': L.tileLayer('https://osm.airvisual.net/cog/co/tiles/{z}/{x}/{y}.png', { maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual' })
   };
 
-  let currentBasemapName = 'bmkg-gk2a';
+  let currentBasemapName = 'esri-dark-gray';
   window.currentBasemapName = currentBasemapName;
-  let baseBasemapName = 'bmkg-gk2a';
+  let baseBasemapName = 'esri-dark-gray';
   let currentRdtrOpacity = 0.8;
 
   function getYesterdayDate() {
@@ -379,7 +379,29 @@ L.control.scale({
     }
   }
 
-  setBaseMap(currentBasemapName);
+  function applyInitialStartupDefaults() {
+    currentBasemapName = 'esri-dark-gray';
+    baseBasemapName = 'esri-dark-gray';
+    setBaseMap(currentBasemapName);
+
+    var windToggle = document.getElementById('toggleWindAnim');
+    if (windToggle) {
+      windToggle.checked = true;
+      if (typeof window.toggleWindAnimation === 'function') {
+        window.toggleWindAnimation(true);
+      }
+      if (typeof window.dispatchEvent === 'function') {
+        windToggle.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    } else if (typeof window.toggleWindAnimation === 'function') {
+      window.toggleWindAnimation(true);
+    }
+
+    if (typeof window.activateHujanLayer === 'function' && !window.isHujanLayerActive()) {
+      window.activateHujanLayer();
+    }
+  }
+
   setRdtrOpacity(currentRdtrOpacity);
   setMapLocked(false);
 
@@ -635,6 +657,23 @@ L.control.scale({
 
   new VectorBasemapControl().addTo(map);
   buildBasemapModal();
+  setBaseMap(currentBasemapName);
+
+  function scheduleInitialStartupDefaults() {
+    setTimeout(function () {
+      if (typeof window.activateHujanLayer === 'function' || typeof window.toggleWindAnimation === 'function') {
+        applyInitialStartupDefaults();
+      } else {
+        setTimeout(scheduleInitialStartupDefaults, 200);
+      }
+    }, 150);
+  }
+
+  if (document.readyState === 'complete') {
+    scheduleInitialStartupDefaults();
+  } else {
+    window.addEventListener('load', scheduleInitialStartupDefaults, { once: true });
+  }
 
   // Zoom Control
   const ZoomControl = L.Control.extend({
