@@ -384,6 +384,19 @@ L.control.scale({
     baseBasemapName = 'esri-dark-gray';
     setBaseMap(currentBasemapName);
 
+    var airVisualPm25Toggle = document.getElementById('toggleAirVisualPm25');
+    if (airVisualPm25Toggle) {
+      airVisualPm25Toggle.checked = true;
+      if (typeof window.toggleAirVisualLayer === 'function') {
+        window.toggleAirVisualLayer('airvisual-pm25', true);
+      }
+      if (typeof window.dispatchEvent === 'function') {
+        airVisualPm25Toggle.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    } else if (typeof window.toggleAirVisualLayer === 'function') {
+      window.toggleAirVisualLayer('airvisual-pm25', true);
+    }
+
     var windToggle = document.getElementById('toggleWindAnim');
     if (windToggle) {
       windToggle.checked = true;
@@ -441,6 +454,7 @@ L.control.scale({
     if (el.style.display === 'none') item.style.display = 'none';
     item.addEventListener('click', function (e) {
       e.stopPropagation();
+      closeFAB();
       el.click();
     });
   }
@@ -846,33 +860,40 @@ L.control.scale({
     _airvisualLegendControl = null;
   }
 
-  // Province boundary layer for AirVisual
-  var _provinsiAirvisualLayer = null;
+  // Coastline layer for AirVisual
+  var _coastlineAirvisualLayer = null;
 
-  function loadProvinsiAirvisual() {
-    if (_provinsiAirvisualLayer) { _provinsiAirvisualLayer.addTo(map); return; }
+  function loadCoastlineAirvisual() {
+    if (_coastlineAirvisualLayer) { _coastlineAirvisualLayer.addTo(map); return; }
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', 'assets/data/bps/geojson/provinsi.geojson', true);
+    xhr.open('GET', 'assets/data/natural-earth/ne_50m_coastline.geojson', true);
     xhr.onreadystatechange = function () {
       if (xhr.readyState !== 4) return;
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           var geojson = JSON.parse(xhr.responseText);
-          _provinsiAirvisualLayer = L.geoJSON(geojson, {
-            style: { color: '#ffffff', weight: 1.5, opacity: 0.8, fillColor: '#ffffff', fillOpacity: 0 },
+          _coastlineAirvisualLayer = L.geoJSON(geojson, {
+            style: function () {
+              return { color: '#ffffff', weight: 1.2, opacity: 0.85, fillOpacity: 0 };
+            },
+            filter: function (feature) {
+              return feature && feature.geometry && (
+                feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString'
+              );
+            },
             interactive: false
           }).addTo(map);
         } catch (e) {
-          console.error('[AirVisual] Gagal load provinsi GeoJSON:', e);
+          console.error('[AirVisual] Gagal load coastline GeoJSON:', e);
         }
       }
     };
     xhr.send();
   }
 
-  function removeProvinsiAirvisual() {
-    if (_provinsiAirvisualLayer && map.hasLayer(_provinsiAirvisualLayer)) {
-      map.removeLayer(_provinsiAirvisualLayer);
+  function removeCoastlineAirvisual() {
+    if (_coastlineAirvisualLayer && map.hasLayer(_coastlineAirvisualLayer)) {
+      map.removeLayer(_coastlineAirvisualLayer);
     }
   }
 
@@ -883,12 +904,12 @@ L.control.scale({
     if (!activeKeys.length) {
       _activeAirVisualLayerKey = null;
       hideAirVisualLegend();
-      removeProvinsiAirvisual();
+      removeCoastlineAirvisual();
       return;
     }
     if (activeKeys.indexOf(_activeAirVisualLayerKey) === -1) _activeAirVisualLayerKey = activeKeys[0];
     showAirVisualLegend(_activeAirVisualLayerKey);
-    loadProvinsiAirvisual();
+    loadCoastlineAirvisual();
   }
 
   function toggleAirVisualLayer(key, visible) {
@@ -1082,7 +1103,7 @@ L.control.scale({
         if (typeof cuacaMaritimCleanup === 'function') cuacaMaritimCleanup();
         if (typeof pmtilesCleanup === 'function') pmtilesCleanup();
         if (typeof hideAirVisualLegend === 'function') hideAirVisualLegend();
-        if (typeof removeProvinsiAirvisual === 'function') removeProvinsiAirvisual();
+        if (typeof removeCoastlineAirvisual === 'function') removeCoastlineAirvisual();
         Object.keys(airVisualLayers).forEach(function (key) {
           if (map.hasLayer(airVisualLayers[key])) map.removeLayer(airVisualLayers[key]);
         });
@@ -1234,7 +1255,23 @@ L.control.scale({
 
   const weatherMarkersGroup = L.layerGroup().addTo(map);
   const selectedWeatherGroup = L.layerGroup().addTo(map);
-  const cctvMarkersGroup = L.markerClusterGroup({ maxClusterRadius: 45 }).addTo(map);
+  const cctvMarkersGroup = L.markerClusterGroup({
+    maxClusterRadius: 20,
+    disableClusteringAtZoom: 14,
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true,
+    iconCreateFunction: function(cluster) {
+      const count = cluster.getChildCount();
+      const size = count < 10 ? 26 : count < 30 ? 34 : count < 60 ? 42 : 52;
+      return L.divIcon({
+        html: '<div style="display:flex;align-items:center;justify-content:center;width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:rgba(14,165,233,0.9);color:#fff;font-weight:700;font-size:12px;border:2px solid rgba(255,255,255,0.9);box-shadow:0 2px 8px rgba(15,23,42,0.18);">' + count + '</div>',
+        className: 'cctv-cluster-marker',
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2]
+      });
+    }
+  }).addTo(map);
   const earthquakeMarkerGroup = L.layerGroup().addTo(map);
   const geoportalLayers = new Map();
   const GEOPORTAL_WMS_URL = 'https://pisda.sukoharjokab.go.id/geoserver/ows';
@@ -1452,7 +1489,7 @@ L.control.scale({
 
   window.createLegendWithToggle = function (container) {
     var wrap = document.createElement('div');
-    wrap.className = 'legend-wrap';
+    wrap.className = 'legend-wrap legend-collapsed';
     var title = container.querySelector('[class$="-legend-title"]');
     if (title) {
       title.classList.add('legend-toggle');
@@ -1479,7 +1516,7 @@ L.control.scale({
   var UnifiedLegendControl = L.Control.extend({
     options: { position: 'bottomleft' },
     onAdd: function () {
-      _unifiedLegendEl = L.DomUtil.create('div', 'unified-legend-container');
+      _unifiedLegendEl = L.DomUtil.create('div', 'unified-legend-container legend-collapsed');
       var header = L.DomUtil.create('div', 'legend-header', _unifiedLegendEl);
       header.innerHTML = '<span>Legenda</span><span class="legend-toggle-icon">\u25BE</span>';
       header.addEventListener('click', function () {
@@ -1517,6 +1554,7 @@ L.control.scale({
     section.appendChild(domEl);
     _unifiedLegendBody.appendChild(section);
     _unifiedLegendEl.style.display = '';
+    _unifiedLegendEl.classList.add('legend-collapsed');
   };
 
   window.removeUnifiedLegend = function (id) {
