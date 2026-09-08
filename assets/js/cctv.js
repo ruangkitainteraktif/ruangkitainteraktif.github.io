@@ -27,6 +27,24 @@
     return markerItems.length;
   }
 
+  function focusCctvMap(items, options = {}) {
+    if (!Array.isArray(items) || !items.length || typeof map === 'undefined') return false;
+    const maxZoom = options.maxZoom || 16;
+    const duration = options.duration ?? 0.6;
+    const focusItems = items.slice(0, 50);
+    const bounds = L.latLngBounds(focusItems.map(item => [item.lat, item.lon]));
+    if (bounds.isValid()) {
+      map.fitBounds(bounds.pad(0.18), { maxZoom, duration });
+      return true;
+    }
+    const first = focusItems[0];
+    if (first) {
+      map.flyTo([first.lat, first.lon], Math.min(maxZoom, 15), { duration });
+      return true;
+    }
+    return false;
+  }
+
   function renderCctvList() {
     const status = document.getElementById('cctvStatus');
     const results = document.getElementById('cctvResults');
@@ -58,7 +76,13 @@
     for (const item of cctvData) { if (item.searchText.includes(query)) { matches.push(item); if (matches.length === 8) break; } }
     list.replaceChildren(...matches.map(item => {
       const option = document.createElement('button'); option.type = 'button'; option.textContent = `${item.name} — ${item.area}`;
-      option.addEventListener('click', () => { input.value = item.name; document.getElementById('cctvAreaFilter').value = item.area; list.style.display = 'none'; renderCctvList(); map.flyTo([item.lat, item.lon], 16, { duration: 0.5 }); });
+      option.addEventListener('click', () => {
+        input.value = item.name;
+        document.getElementById('cctvAreaFilter').value = item.area;
+        list.style.display = 'none';
+        renderCctvList();
+        focusCctvMap([item], { maxZoom: 16, duration: 0.7 });
+      });
       return option;
     }));
     list.style.display = matches.length ? 'block' : 'none';
@@ -140,11 +164,17 @@
     renderCctvList();
     const items = getCctvFiltered();
     if (items.length > 0) {
-      const bounds = L.latLngBounds(items.map(i => [i.lat, i.lon]));
-      map.fitBounds(bounds.pad(0.15), { maxZoom: 16, duration: 0.5 });
+      focusCctvMap(items, { maxZoom: 16, duration: 0.7 });
     }
   });
-  document.getElementById('cctvSearchInput').addEventListener('input', () => { renderCctvAutocomplete(); renderCctvList(); });
+  document.getElementById('cctvSearchInput').addEventListener('input', () => {
+    renderCctvAutocomplete();
+    renderCctvList();
+    const items = getCctvFiltered();
+    if (items.length > 0 && document.getElementById('cctvSearchInput').value.trim().length >= 2) {
+      focusCctvMap(items, { maxZoom: 16, duration: 0.7 });
+    }
+  });
 
   // Toggle Jalan Tol Layer
   document.getElementById('toggleTollRoad').addEventListener('change', async function() {
