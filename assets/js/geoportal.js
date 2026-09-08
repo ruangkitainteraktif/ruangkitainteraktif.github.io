@@ -659,7 +659,7 @@
         }
       });
     });
-    addUnifiedLegend('geoportal', div);
+    addUnifiedLegend('geoportal', typeof createLegendWithToggle === 'function' ? createLegendWithToggle(div) : div);
   }
 
   let __gpLegendTimer = null;

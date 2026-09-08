@@ -83,7 +83,7 @@
       '<div class="hotspot-legend-items">' + items + '</div>' +
       '<div class="hotspot-legend-source">Sumber: Geoportal ESDM</div>';
 
-    addUnifiedLegend('kawasan-hutan', div);
+    addUnifiedLegend('kawasan-hutan', typeof createLegendWithToggle === 'function' ? createLegendWithToggle(div) : div);
     legendControl = true;
   }
 

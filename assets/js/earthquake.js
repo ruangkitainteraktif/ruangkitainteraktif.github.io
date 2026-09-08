@@ -131,7 +131,7 @@
     return 4;
   }
 
-  function toggleSignificantMarkers(visible) {
+  function applySignificantMarkers(visible) {
     if (visible) {
       placeQuakeListMarkers(earthquakeSignificantData, significantLayerGroup, 'Gempa M 5.0+');
       if (!map.hasLayer(significantLayerGroup)) significantLayerGroup.addTo(map);
@@ -140,7 +140,7 @@
     }
   }
 
-  function toggleFeltMarkers(visible) {
+  function applyFeltMarkers(visible) {
     if (visible) {
       placeQuakeListMarkers(earthquakeFeltData, feltLayerGroup, 'Gempa Dirasakan');
       if (!map.hasLayer(feltLayerGroup)) feltLayerGroup.addTo(map);
@@ -152,7 +152,7 @@
   function renderEarthquakeData(latest, significant, felt) {
     const container = document.getElementById('earthquake-content');
     if (!latest) {
-      container.innerHTML = '<div class="quake-message">Data gempa terbaru belum tersedia.</div>';
+      if (container) container.innerHTML = '<div class="quake-message">Data gempa terbaru belum tersedia.</div>';
       return;
     }
     earthquakeLatestData = latest;
@@ -164,15 +164,12 @@
     if (sigInfo) sigInfo.textContent = significant.length + ' gempa M5+ terkini dari BMKG';
     if (feltInfo) feltInfo.textContent = felt.length + ' gempa dirasakan terkini dari BMKG';
 
-    container.innerHTML = `
-      <article class="quake-latest" onclick="flyToLatestEarthquake()" style="cursor:pointer" title="Klik untuk terbang ke lokasi gempa">
-        <div class="quake-latest-main"><div class="quake-magnitude">M${escapeBMKGHTML(latest.Magnitude || '-')}</div><div><h5 class="quake-latest-title">Gempabumi Terbaru</h5><div class="quake-latest-place">${escapeBMKGHTML(latest.Wilayah || 'Lokasi tidak tersedia')}</div></div></div>
-        <div class="quake-latest-details"><span>Waktu<b>${escapeBMKGHTML(latest.Jam || '-')}</b></span><span>Kedalaman<b>${escapeBMKGHTML(latest.Kedalaman || '-')}</b></span></div>
-        <div class="quake-latest-potensi">Potensi: <b>${escapeBMKGHTML(latest.Potensi || '-')}</b></div>
-      </article>
-      <div class="quake-refresh-wrap"><button class="quake-refresh" type="button" onclick="loadEarthquakeData(true)">Muat ulang</button></div>`;
+    if (container) container.innerHTML = '<div class="quake-message">Data gempa berhasil dimuat.</div>';
 
-    placeLatestEarthquakeMarker(latest);
+    var latestCb = document.getElementById('toggleLatestEarthquake');
+    if (latestCb && latestCb.checked) {
+      placeLatestEarthquakeMarker(latest);
+    }
   }
 
   function placeLatestEarthquakeMarker(gempa) {
@@ -368,11 +365,11 @@
       const feltCb = document.getElementById('toggleFeltMarkers');
       if (sigCb && !sigCb._bound) {
         sigCb._bound = true;
-        sigCb.addEventListener('change', function () { toggleSignificantMarkers(this.checked); });
+        sigCb.addEventListener('change', function () { applySignificantMarkers(this.checked); });
       }
       if (feltCb && !feltCb._bound) {
         feltCb._bound = true;
-        feltCb.addEventListener('change', function () { toggleFeltMarkers(this.checked); });
+        feltCb.addEventListener('change', function () { applyFeltMarkers(this.checked); });
       }
     } catch (error) {
       console.error('Gagal memuat data gempabumi BMKG:', error);
@@ -383,20 +380,33 @@
   window.quakeResetLayers = function () {
     const sigCb = document.getElementById('toggleSignificantMarkers');
     const feltCb = document.getElementById('toggleFeltMarkers');
+    const latestCb = document.getElementById('toggleLatestEarthquake');
     if (sigCb && sigCb.checked) { sigCb.checked = false; sigCb.dispatchEvent(new Event('change')); }
     if (feltCb && feltCb.checked) { feltCb.checked = false; feltCb.dispatchEvent(new Event('change')); }
+    if (latestCb && latestCb.checked) { latestCb.checked = false; if (typeof window.toggleLatestEarthquake === 'function') window.toggleLatestEarthquake(false); }
   };
 
   window.toggleSignificantMarkers = async function(visible) {
     if (visible && !earthquakeLoaded) {
       await loadEarthquakeData();
     }
-    toggleSignificantMarkers(visible);
+    applySignificantMarkers(visible);
   };
 
   window.toggleFeltMarkers = async function(visible) {
     if (visible && !earthquakeLoaded) {
       await loadEarthquakeData();
     }
-    toggleFeltMarkers(visible);
+    applyFeltMarkers(visible);
+  };
+
+  window.toggleLatestEarthquake = async function(visible) {
+    if (visible && !earthquakeLoaded) {
+      await loadEarthquakeData();
+    }
+    if (visible && earthquakeLatestData) {
+      placeLatestEarthquakeMarker(earthquakeLatestData);
+    } else {
+      earthquakeMarkerGroup.clearLayers();
+    }
   };

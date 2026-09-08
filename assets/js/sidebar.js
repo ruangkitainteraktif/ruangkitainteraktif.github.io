@@ -94,17 +94,6 @@
       var sheet = document.getElementById('cctv-search-sheet');
       if (sheet) {
         sheet.classList.remove('sheet-open');
-        if (window.innerWidth <= 768 && sheet.parentElement === document.body) {
-          var tabCctv = document.getElementById('tab-cctv');
-          if (tabCctv) {
-            var refNode = tabCctv.querySelector('.cctv-card');
-            if (refNode && refNode.parentNode === tabCctv) {
-              tabCctv.insertBefore(sheet, refNode);
-            } else {
-              tabCctv.appendChild(sheet);
-            }
-          }
-        }
         applyCctvSearchVisibility();
       }
     }
@@ -113,28 +102,9 @@
 
     if (typeof renderGeoportalLegend === 'function') setTimeout(renderGeoportalLegend, 50);
 
-    if (tabId === 'tab-gempa') {
-      var gempaGempaPanel = document.getElementById('gempa-subtab-gempa');
-      if (gempaGempaPanel && gempaGempaPanel.classList.contains('active')) loadEarthquakeData();
-    }
     if (tabId === 'tab-cctv') {
       loadCctvData();
-      if (window.innerWidth <= 768) {
-        var sidebar = document.getElementById('sidebar-left');
-        var sheet = document.getElementById('cctv-search-sheet');
-        if (sheet && sheet.parentElement !== document.body) {
-          document.body.appendChild(sheet);
-        }
-        applyCctvSearchVisibility();
-        if (sidebar && !sidebar.classList.contains('collapsed')) {
-          sidebar.classList.add('collapsed');
-          setToggleIcon(true);
-          setTimeout(function () { map.invalidateSize(); }, 300);
-        }
-        setTimeout(function () {
-          if (sheet) sheet.classList.add('sheet-open');
-        }, 350);
-      }
+      applyCctvSearchVisibility();
     }
     if (tabId === 'tab-geopangan' && typeof window.geopanganAutoLoad === 'function') window.geopanganAutoLoad();
 
@@ -164,7 +134,7 @@
       panel.classList.toggle('active', isActive);
       panel.hidden = !isActive;
     });
-    document.querySelectorAll('.geotani-analysis-tab').forEach(tab => {
+    document.querySelectorAll('.geotani-analysis-card').forEach(tab => {
       const isActive = tab === targetTab;
       tab.classList.toggle('active', isActive);
       tab.setAttribute('aria-selected', String(isActive));
@@ -216,12 +186,30 @@
   window.openGempaSubtab = openGempaSubtab;
   window.openGeoidSubtab = openGeoidSubtab;
 
+  function openGeotoolsMainTab(btn) {
+    var tabId = btn.getAttribute('data-maintab');
+    if (!tabId) return;
+    var tabs = btn.parentElement.querySelectorAll('.geotools-main-tab-btn');
+    for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+    btn.classList.add('active');
+    var panels = document.querySelectorAll('.geotools-main-tab-panel');
+    for (var j = 0; j < panels.length; j++) panels[j].classList.remove('active');
+    var target = document.getElementById(tabId);
+    if (target) target.classList.add('active');
+    if (tabId === 'geotoolsTabGeoPulse') {
+      var gempaPanel = document.getElementById('gempa-subtab-gempa');
+      if (gempaPanel && gempaPanel.classList.contains('active') && typeof loadEarthquakeData === 'function') loadEarthquakeData();
+    }
+    if (tabId === 'geotoolsTabGeoPangan' && typeof window.geopanganAutoLoad === 'function') window.geopanganAutoLoad();
+    if (typeof map !== 'undefined' && map) setTimeout(function () { map.invalidateSize(); }, 200);
+  }
+  window.openGeotoolsMainTab = openGeotoolsMainTab;
+
   function applyCctvSearchVisibility() {
     var sheet = document.getElementById('cctv-search-sheet');
     if (!sheet) return;
     var cctvSearch = sheet.querySelector('.cctv-autocomplete');
-    if (!cctvSearch) return;
-    cctvSearch.style.display = (window.innerWidth <= 768) ? 'none' : '';
+    if (cctvSearch) cctvSearch.style.display = '';
   }
 
   window.addEventListener('resize', applyCctvSearchVisibility);

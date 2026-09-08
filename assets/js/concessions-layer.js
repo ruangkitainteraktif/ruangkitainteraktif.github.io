@@ -77,7 +77,7 @@
     }
     html += '</div>';
     el.innerHTML = html;
-    addUnifiedLegend('concessions', el);
+    addUnifiedLegend('concessions', typeof createLegendWithToggle === 'function' ? createLegendWithToggle(el) : el);
     legendCtrl = true;
   }
 

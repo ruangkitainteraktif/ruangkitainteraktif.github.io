@@ -1,9 +1,13 @@
   // KLIK MAP -> REVERSE GEOCODE, POPUP & DETAIL PANEL
   function isCuacaTabActive() {
     if (document.getElementById('tab-cuaca')?.classList.contains('active') === true) return true;
-    if (document.getElementById('tab-gempa')?.classList.contains('active') === true) {
-      var infoCuacaPanel = document.getElementById('gempa-subtab-infocuaca');
-      if (infoCuacaPanel && infoCuacaPanel.classList.contains('active')) return true;
+    var geotoolsTab = document.getElementById('tab-geotools');
+    if (geotoolsTab && geotoolsTab.classList.contains('active')) {
+      var geoPulsePanel = document.getElementById('geotoolsTabGeoPulse');
+      if (geoPulsePanel && geoPulsePanel.classList.contains('active')) {
+        var infoCuacaPanel = document.getElementById('gempa-subtab-infocuaca');
+        if (infoCuacaPanel && infoCuacaPanel.classList.contains('active')) return true;
+      }
     }
     return false;
   }
@@ -62,7 +66,7 @@
     }
 
     // Nonaktifkan popup geoid di tab alat, gempa, dan geopangan
-    if (activeTab === 'tab-draw' || activeTab === 'tab-geotools' || activeTab === 'tab-gempa' || activeTab === 'tab-geopangan') return;
+    if (activeTab === 'tab-draw' || activeTab === 'tab-geotools' || activeTab === 'tab-geopangan') return;
 
     // GeoTani tidak memakai reverse geocoding. Saat area kosong dalam cakupan
     // hasil irisan diklik, tampilkan popup batas wilayah analisis aktif.

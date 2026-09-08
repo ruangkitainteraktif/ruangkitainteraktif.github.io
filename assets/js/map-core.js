@@ -798,7 +798,7 @@ L.control.scale({
     L.DomEvent.disableClickPropagation(el);
     L.DomEvent.disableScrollPropagation(el);
     el.innerHTML = buildLegendHtml(key);
-    addUnifiedLegend('airvisual', el);
+    addUnifiedLegend('airvisual', typeof createLegendWithToggle === 'function' ? createLegendWithToggle(el) : el);
     _airvisualLegendControl = true;
   }
 
@@ -1051,7 +1051,7 @@ L.control.scale({
         _activeAirVisualLayerKey = null;
 
         // Bersihkan layer sensor & katalog gempa
-        document.querySelectorAll('#toggleKatalogGempa, #toggleSensorSeismic, #toggleSensorGlobal, #toggleHistoryGempa, #toggleSignificantMarkers, #toggleFeltMarkers').forEach(function (cb) {
+        document.querySelectorAll('#toggleKatalogGempa, #toggleSensorSeismic, #toggleSensorGlobal, #toggleHistoryGempa, #toggleSignificantMarkers, #toggleFeltMarkers, #toggleLatestEarthquake').forEach(function (cb) {
           if (cb) cb.checked = false;
         });
         if (typeof isKatalogGempaActive === 'function' && isKatalogGempaActive()) {
@@ -1273,7 +1273,7 @@ L.control.scale({
         img.style.display = 'none';
       };
     }
-    addUnifiedLegend('ecmwf-fire', div);
+    addUnifiedLegend('ecmwf-fire', typeof createLegendWithToggle === 'function' ? createLegendWithToggle(div) : div);
     ecmwfFireLegendCtrl = true;
   }
 
@@ -1434,12 +1434,19 @@ L.control.scale({
      ═══════════════════════════════════════════════ */
 
   var _unifiedLegendEl = null;
+  var _unifiedLegendBody = null;
   var _unifiedSliderEl = null;
 
   var UnifiedLegendControl = L.Control.extend({
     options: { position: 'bottomleft' },
     onAdd: function () {
       _unifiedLegendEl = L.DomUtil.create('div', 'unified-legend-container');
+      var header = L.DomUtil.create('div', 'legend-header', _unifiedLegendEl);
+      header.innerHTML = '<span>Legenda</span><span class="legend-toggle-icon">\u25BE</span>';
+      header.addEventListener('click', function () {
+        _unifiedLegendEl.classList.toggle('legend-collapsed');
+      });
+      _unifiedLegendBody = L.DomUtil.create('div', 'legend-body', _unifiedLegendEl);
       L.DomEvent.disableClickPropagation(_unifiedLegendEl);
       L.DomEvent.disableScrollPropagation(_unifiedLegendEl);
       return _unifiedLegendEl;
@@ -1462,22 +1469,22 @@ L.control.scale({
   new UnifiedSliderControl().addTo(map);
 
   window.addUnifiedLegend = function (id, domEl) {
-    if (!_unifiedLegendEl) return;
-    var existing = _unifiedLegendEl.querySelector('[data-legend-id="' + id + '"]');
+    if (!_unifiedLegendBody) return;
+    var existing = _unifiedLegendBody.querySelector('[data-legend-id="' + id + '"]');
     if (existing) existing.remove();
     var section = document.createElement('div');
     section.className = 'unified-legend-section';
     section.dataset.legendId = id;
     section.appendChild(domEl);
-    _unifiedLegendEl.appendChild(section);
+    _unifiedLegendBody.appendChild(section);
     _unifiedLegendEl.style.display = '';
   };
 
   window.removeUnifiedLegend = function (id) {
-    if (!_unifiedLegendEl) return;
-    var section = _unifiedLegendEl.querySelector('[data-legend-id="' + id + '"]');
+    if (!_unifiedLegendBody) return;
+    var section = _unifiedLegendBody.querySelector('[data-legend-id="' + id + '"]');
     if (section) section.remove();
-    if (_unifiedLegendEl.children.length === 0) _unifiedLegendEl.style.display = 'none';
+    if (_unifiedLegendBody.children.length === 0) _unifiedLegendEl.style.display = 'none';
   };
 
   window.addUnifiedSlider = function (id, title, domEl) {
@@ -1506,7 +1513,8 @@ L.control.scale({
   };
 
   window.clearUnifiedLegend = function () {
-    if (_unifiedLegendEl) { _unifiedLegendEl.innerHTML = ''; _unifiedLegendEl.style.display = 'none'; }
+    if (_unifiedLegendBody) { _unifiedLegendBody.innerHTML = ''; }
+    if (_unifiedLegendEl) { _unifiedLegendEl.style.display = 'none'; _unifiedLegendEl.classList.remove('legend-collapsed'); }
   };
 
   window.clearUnifiedSlider = function () {
@@ -1588,6 +1596,7 @@ L.control.scale({
     {
       cat: 'Gempa & Bencana',
       layers: [
+        { id: 'toggleLatestEarthquake', label: 'Gempa Terbaru (BMKG)' },
         { id: 'toggleSignificantMarkers', label: '15 Gempa M 5.0+ (BMKG)' },
         { id: 'toggleFeltMarkers', label: '15 Gempa Dirasakan (BMKG)' },
         { id: 'toggleFaultLayer', label: 'Patahan Indonesia (BNPB)' },
@@ -1696,6 +1705,7 @@ L.control.scale({
   ];
 
   var _layerCatalogOpen = false;
+  var _layerCatalogState = {};
 
   function toggleLayerCatalog() {
     var dd = document.getElementById('layerCatalogDropdown');
@@ -1738,7 +1748,11 @@ L.control.scale({
   function syncLayerCatalogState() {
     document.querySelectorAll('.lc-item input[type="checkbox"]').forEach(function(cb) {
       var el = findLayerById(cb.dataset.layerId);
-      cb.checked = el ? el.checked : false;
+      if (el) {
+        cb.checked = el.checked;
+      } else if (_layerCatalogState.hasOwnProperty(cb.dataset.layerId)) {
+        cb.checked = _layerCatalogState[cb.dataset.layerId];
+      }
     });
   }
 
@@ -1747,7 +1761,7 @@ L.control.scale({
     LAYER_CATALOG_DATA.forEach(function(cat, ci) {
       var checked = cat.layers.filter(function(l) {
         var el = findLayerById(l.id);
-        return el && el.checked;
+        return (el && el.checked) || _layerCatalogState[l.id];
       }).length;
       html += '<div class="lc-category open" data-ci="' + ci + '">';
       html += '<button class="lc-cat-header" type="button">';
@@ -1758,7 +1772,7 @@ L.control.scale({
       html += '<div class="lc-items">';
       cat.layers.forEach(function(l) {
         var el = findLayerById(l.id);
-        var isChecked = el ? el.checked : false;
+        var isChecked = el ? el.checked : (_layerCatalogState[l.id] || false);
         html += '<div class="lc-item">';
         html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
         html += '<label for="lc_' + l.id + '">' + l.label + '</label>';
@@ -1780,12 +1794,35 @@ L.control.scale({
         if (el) {
           el.checked = cb.checked;
           el.dispatchEvent(new Event('change'));
+        } else {
+          _layerCatalogState[cb.dataset.layerId] = cb.checked;
         }
         if (cb.dataset.layerId === 'toggleSignificantMarkers' && typeof window.toggleSignificantMarkers === 'function') {
           window.toggleSignificantMarkers(cb.checked);
         }
         if (cb.dataset.layerId === 'toggleFeltMarkers' && typeof window.toggleFeltMarkers === 'function') {
           window.toggleFeltMarkers(cb.checked);
+        }
+        if (cb.dataset.layerId === 'toggleLatestEarthquake' && typeof window.toggleLatestEarthquake === 'function') {
+          window.toggleLatestEarthquake(cb.checked);
+        }
+        if (cb.dataset.layerId === 'toggleSebaranPasar' && typeof window.toggleSebaranPasar === 'function') {
+          window.toggleSebaranPasar(cb.checked);
+        }
+        if (cb.dataset.layerId === 'toggleSppgSebaranLayer' && typeof window.toggleSppgSebaranLayer === 'function') {
+          window.toggleSppgSebaranLayer(cb.checked);
+        }
+        if (cb.dataset.layerId === 'toggleSppgLayer' && typeof window.toggleSppg === 'function') {
+          window.toggleSppg(cb.checked);
+        }
+        if (cb.dataset.layerId === 'toggleTollRoad' && typeof window.toggleTollRoadLayer === 'function') {
+          window.toggleTollRoadLayer(cb.checked);
+        }
+        if (cb.dataset.layerId === 'toggleNationalRoad' && typeof window.toggleNationalRoadLayer === 'function') {
+          window.toggleNationalRoadLayer(cb.checked);
+        }
+        if (cb.dataset.layerId === 'toggleNonTollRoad' && typeof window.toggleNonTollRoadLayer === 'function') {
+          window.toggleNonTollRoadLayer(cb.checked);
         }
         updateCatCount(cb.closest('.lc-category'));
         closeLayerCatalog();

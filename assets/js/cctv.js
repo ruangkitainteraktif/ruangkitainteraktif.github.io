@@ -273,3 +273,74 @@
     var sheet = document.getElementById('cctv-search-sheet');
     if (sheet) sheet.classList.toggle('sheet-open');
   };
+
+  window.toggleTollRoadLayer = async function (visible) {
+    var cb = document.getElementById('toggleTollRoad');
+    if (cb) { cb.checked = visible; cb.dispatchEvent(new Event('change')); return; }
+    if (visible) {
+      if (!tollRoadLoaded) {
+        try {
+          const response = await fetch(TOLL_ROAD_URL);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const geojson = await response.json();
+          tollRoadLayer = L.geoJSON(geojson, {
+            style: { color: '#e67e22', weight: 3, opacity: 0.85, dashArray: '8 4', lineCap: 'round' },
+            onEachFeature: function(feature, layer) {
+              const props = feature.properties || {};
+              const name = props.NAMA || props.NAME || props.nama || 'Jalan Tol';
+              const status = props.STATUS || props.status || '';
+              layer.bindTooltip(status ? `${name} (${status})` : name, { sticky: true, className: 'toll-road-tooltip' });
+            }
+          }).addTo(map);
+          tollRoadLoaded = true;
+        } catch (err) { console.error('Gagal memuat data jalan tol:', err); }
+      } else if (tollRoadLayer) { tollRoadLayer.addTo(map); }
+    } else if (tollRoadLayer) { map.removeLayer(tollRoadLayer); }
+  };
+
+  window.toggleNonTollRoadLayer = async function (visible) {
+    var cb = document.getElementById('toggleNonTollRoad');
+    if (cb) { cb.checked = visible; cb.dispatchEvent(new Event('change')); return; }
+    if (visible) {
+      if (!nonTollLoaded) {
+        try {
+          const query = L.esri.query({ url: NON_TOLL_URL });
+          query.returnGeometry(true); query.outFields = '*'; query.where('1=1');
+          const featureCollection = await new Promise((resolve, reject) => {
+            query.run((error, result) => { if (error) reject(error); else resolve(result); });
+          });
+          if (!featureCollection || !featureCollection.features.length) return;
+          nonTollRoadLayer = L.geoJSON(featureCollection, {
+            style: { color: '#2ecc71', weight: 2, opacity: 0.8 },
+            onEachFeature: function(feature, layer) {
+              const props = feature.properties || {};
+              layer.bindTooltip(String(props.NAMA || props.NAME || props.nama || props.REMARK || 'Jalan'), { sticky: true, className: 'toll-road-tooltip' });
+            }
+          }).addTo(map);
+          nonTollLoaded = true;
+        } catch (err) { console.error('Gagal memuat data jalan non tol:', err); }
+      } else if (nonTollRoadLayer) { nonTollRoadLayer.addTo(map); }
+    } else if (nonTollRoadLayer) { map.removeLayer(nonTollRoadLayer); }
+  };
+
+  window.toggleNationalRoadLayer = async function (visible) {
+    var cb = document.getElementById('toggleNationalRoad');
+    if (cb) { cb.checked = visible; cb.dispatchEvent(new Event('change')); return; }
+    if (visible) {
+      if (!nationalRoadLoaded) {
+        try {
+          const response = await fetch(NATIONAL_ROAD_URL);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const geojson = await response.json();
+          nationalRoadLayer = L.geoJSON(geojson, {
+            style: { color: '#e74c3c', weight: 2.5, opacity: 0.85 },
+            onEachFeature: function(feature, layer) {
+              const props = feature.properties || {};
+              layer.bindTooltip(String(props.NAMA || props.NAME || props.nama || 'Jalan Nasional'), { sticky: true, className: 'toll-road-tooltip' });
+            }
+          }).addTo(map);
+          nationalRoadLoaded = true;
+        } catch (err) { console.error('Gagal memuat data jalan nasional:', err); }
+      } else if (nationalRoadLayer) { nationalRoadLayer.addTo(map); }
+    } else if (nationalRoadLayer) { map.removeLayer(nationalRoadLayer); }
+  };

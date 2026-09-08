@@ -140,6 +140,9 @@
   window.openGeopanganSheet = openGeopanganSheet;
   window.toggleGeopanganSheet = toggleGeopanganSheet;
   window.toggleGeopanganMinimize = toggleGeopanganMinimize;
+  window.toggleSebaranPasar = toggleSebaranPasar;
+  window.toggleSppg = toggleSppg;
+  window.toggleSppgSebaranLayer = toggleSppgSebaran;
 
   function hideSidebarForGeopangan() {
     var sidebar = $('sidebar-left');
@@ -438,7 +441,7 @@
         '</div>' +
         '<div class="gp-legend-unit">Rp/kg</div>' +
       '</div>';
-    addUnifiedLegend('geopangan', div);
+    addUnifiedLegend('geopangan', typeof createLegendWithToggle === 'function' ? createLegendWithToggle(div) : div);
     activeLegend = true;
   }
 
@@ -1076,8 +1079,17 @@
 
   /* ── Main: load and display ── */
   async function loadAndDisplay() {
-    hideSidebarForGeopangan();
-    openGeopanganSheet();
+    if (!loaded) {
+      loaded = true;
+      await Promise.all([loadCommodities(), populateProvinces()]);
+      setDefaultDates();
+    }
+    var sidebar = $('sidebar-left');
+    if (sidebar && !sidebar.classList.contains('collapsed')) {
+      if (typeof window.toggleSidebar === 'function') window.toggleSidebar();
+      else sidebar.classList.add('collapsed');
+      if (typeof map !== 'undefined' && map) setTimeout(function () { map.invalidateSize(); }, 300);
+    }
     var resultEl = $('geopanganResult');
     var loadBtn = $('geopanganLoadBtn');
     if (loadBtn) loadBtn.disabled = true;

@@ -164,7 +164,7 @@
 
     html += `<div class="choropleth-legend-unit">${satuan}</div>`;
     div.innerHTML = html;
-    addUnifiedLegend('choropleth', div);
+    addUnifiedLegend('choropleth', typeof createLegendWithToggle === 'function' ? createLegendWithToggle(div) : div);
     activeChoroplethLegend = true;
   }
 

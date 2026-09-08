@@ -78,7 +78,7 @@
       '</div>' +
       '<div class="hotspot-legend-source">Sumber: SIPONGI KEMENHUT</div>';
 
-    addUnifiedLegend('hotspot', div);
+    addUnifiedLegend('hotspot', typeof createLegendWithToggle === 'function' ? createLegendWithToggle(div) : div);
     hotspotLegendControl = true;
   }
 

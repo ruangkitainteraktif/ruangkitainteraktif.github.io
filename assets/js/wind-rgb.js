@@ -23,7 +23,7 @@
           '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#ff5032;"></span>≥ 15 — Strong</div>' +
         '</div>' +
         '<div class="wind-legend-unit">Sumber: BMKG GFS</div>';
-      return window.createLegendWithToggle(div);
+      return div;
     }
   });
 
@@ -138,7 +138,7 @@
         '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#ff5032;"></span>≥ 15 — Strong</div>' +
       '</div>' +
       '<div class="wind-legend-unit">Sumber: BMKG GFS</div>';
-    addUnifiedLegend('wind-rgb', window.createLegendWithToggle(div));
+    addUnifiedLegend('wind-rgb', div);
     legendControl = true;
   }
 
