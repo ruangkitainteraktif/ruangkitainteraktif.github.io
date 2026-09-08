@@ -98,7 +98,12 @@
   function showSlider() {
     if (!sliderControl) {
       sliderControl = new Sentinel2TimeSliderControl();
-      sliderControl.addTo(map);
+      var el = sliderControl.onAdd(map);
+      if (typeof addUnifiedSlider === 'function') {
+        addUnifiedSlider('sentinel2', 'Sentinel-2', el);
+      } else {
+        sliderControl.addTo(map);
+      }
     }
     _prevMaxZoom = map.getMaxZoom();
     map.setMaxZoom(13);
@@ -107,7 +112,8 @@
 
   function hideSlider() {
     if (sliderControl) {
-      map.removeControl(sliderControl);
+      if (typeof removeUnifiedSlider === 'function') removeUnifiedSlider('sentinel2');
+      else { try { map.removeControl(sliderControl); } catch (e) {} }
       sliderControl = null;
     }
     if (_prevMaxZoom !== null) {

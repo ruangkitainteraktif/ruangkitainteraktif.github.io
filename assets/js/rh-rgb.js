@@ -93,8 +93,26 @@
     }
   }
 
-  function showLegend() { if (!legendControl) { legendControl = new Legend(); legendControl.addTo(map); } }
-  function hideLegend() { if (legendControl) { map.removeControl(legendControl); legendControl = null; } }
+  function showLegend() {
+    if (typeof addUnifiedLegend !== 'function') return;
+    var div = L.DomUtil.create('div', 'wind-legend');
+    L.DomEvent.disableClickPropagation(div);
+    div.innerHTML =
+      '<div class="wind-legend-title">Relative Humidity (%)</div>' +
+      '<div class="wind-legend-bar" style="background:linear-gradient(to right,#f59e0b,#facc15,#86efac,#3b82f6,#7c3aed)"></div>' +
+      '<div class="wind-legend-labels"><span>0</span><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span></div>' +
+      '<div class="wind-legend-items">' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#f59e0b;"></span>< 20 — Sangat Kering</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#facc15;"></span>20 – 40 — Kering</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#86efac;"></span>40 – 60 — Normal</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#3b82f6;"></span>60 – 80 — Lembap</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#7c3aed;"></span>> 80 — Sangat Lembap</div>' +
+      '</div>' +
+      '<div class="wind-legend-unit">Sumber: BMKG GFS</div>';
+    addUnifiedLegend('rh-rgb', window.createLegendWithToggle(div));
+    legendControl = true;
+  }
+  function hideLegend() { if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('rh-rgb'); legendControl = null; }
 
   function addLayer(modelRun, forecast) {
     var mr = GfsBase.buildDateStr(modelRun);

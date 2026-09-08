@@ -96,8 +96,27 @@
     }
   }
 
-  function showLegend() { if (!legendControl) { legendControl = new Legend(); legendControl.addTo(map); } }
-  function hideLegend() { if (legendControl) { map.removeControl(legendControl); legendControl = null; } }
+  function showLegend() {
+    if (typeof addUnifiedLegend !== 'function') return;
+    var div = L.DomUtil.create('div', 'wind-legend');
+    L.DomEvent.disableClickPropagation(div);
+    div.innerHTML =
+      '<div class="wind-legend-title">PM2.5 (µg/m³)</div>' +
+      '<div class="wind-legend-bar" style="background:linear-gradient(to right,#22c55e,#eab308,#f97316,#ef4444,#7c3aed,#7f1d1d)"></div>' +
+      '<div class="wind-legend-labels"><span>0</span><span>15</span><span>55</span><span>150</span><span>250</span><span>500</span></div>' +
+      '<div class="wind-legend-items">' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#22c55e;"></span>< 15 — Baik</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#eab308;"></span>15 – 55 — Sedang</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#f97316;"></span>55 – 150 — Tidak Sehat (Sensitif)</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#ef4444;"></span>150 – 250 — Tidak Sehat</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#7c3aed;"></span>250 – 500 — Sangat Tidak Sehat</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#7f1d1d;"></span>> 500 — Berbahaya</div>' +
+      '</div>' +
+      '<div class="wind-legend-unit">Sumber: BMKG PCM PM2.5</div>';
+    addUnifiedLegend('pm25-rgb', window.createLegendWithToggle(div));
+    legendControl = true;
+  }
+  function hideLegend() { if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('pm25-rgb'); legendControl = null; }
 
   function addLayer(modelRun, forecast) {
     var mr = GfsBase.buildDateStr(modelRun);

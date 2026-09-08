@@ -94,8 +94,26 @@
     }
   }
 
-  function showLegend() { if (!legendControl) { legendControl = new Legend(); legendControl.addTo(map); } }
-  function hideLegend() { if (legendControl) { map.removeControl(legendControl); legendControl = null; } }
+  function showLegend() {
+    if (typeof addUnifiedLegend !== 'function') return;
+    var div = L.DomUtil.create('div', 'wind-legend');
+    L.DomEvent.disableClickPropagation(div);
+    div.innerHTML =
+      '<div class="wind-legend-title">GsMAP Precipitation (mm/jam)</div>' +
+      '<div class="wind-legend-bar" style="background:linear-gradient(to right,#a3e635,#eab308,#f97316,#7c3aed,#1e3a5f)"></div>' +
+      '<div class="wind-legend-labels"><span>0</span><span>5</span><span>10</span><span>20</span><span>50</span></div>' +
+      '<div class="wind-legend-items">' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#a3e635;"></span>< 1 — Hujan Ringan</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#eab308;"></span>1 – 5 — Hujan Sedang</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#f97316;"></span>5 – 10 — Hujan Lebat</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#7c3aed;"></span>10 – 50 — Hujan Sangat Lebat</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#1e3a5f;"></span>> 50 — Hujan Ekstrem</div>' +
+      '</div>' +
+      '<div class="wind-legend-unit">Sumber: BMKG GsMAP</div>';
+    addUnifiedLegend('gsmap-rgb', window.createLegendWithToggle(div));
+    legendControl = true;
+  }
+  function hideLegend() { if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('gsmap-rgb'); legendControl = null; }
 
   function addLayer(modelRun, forecast) {
     var mr = GfsBase.buildDateStr(modelRun);

@@ -59,7 +59,7 @@
   var legendCtrl = null;
 
   function refreshLegend() {
-    if (legendCtrl) { try { map.removeControl(legendCtrl); } catch (e) {} legendCtrl = null; }
+    if (legendCtrl) { if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('concessions'); legendCtrl = null; }
     var entries = [];
     Object.keys(layers).forEach(function (k) {
       if (layers[k].layer && map.hasLayer(layers[k].layer) && LAYERS[k].legendItems) {
@@ -67,23 +67,18 @@
       }
     });
     if (entries.length === 0) return;
-    var LegendControl = L.Control.extend({
-      options: { position: 'bottomleft' },
-      onAdd: function () {
-        var el = L.DomUtil.create('div', 'airvisual-legend leaflet-bar');
-        L.DomEvent.disableClickPropagation(el);
-        L.DomEvent.disableScrollPropagation(el);
-        var html = '<div class="airvisual-legend-title">Legenda</div><div class="airvisual-legend-items">';
-        for (var i = 0; i < entries.length; i++) {
-          html += '<div class="airvisual-legend-item"><span class="airvisual-legend-swatch" style="background:' + entries[i].color + '"></span><span class="airvisual-legend-label">' + esc(entries[i].label) + '</span></div>';
-        }
-        html += '</div>';
-        el.innerHTML = html;
-        return el;
-      }
-    });
-    legendCtrl = new LegendControl();
-    legendCtrl.addTo(map);
+    if (typeof addUnifiedLegend !== 'function') return;
+    var el = L.DomUtil.create('div', 'airvisual-legend leaflet-bar');
+    L.DomEvent.disableClickPropagation(el);
+    L.DomEvent.disableScrollPropagation(el);
+    var html = '<div class="airvisual-legend-title">Legenda</div><div class="airvisual-legend-items">';
+    for (var i = 0; i < entries.length; i++) {
+      html += '<div class="airvisual-legend-item"><span class="airvisual-legend-swatch" style="background:' + entries[i].color + '"></span><span class="airvisual-legend-label">' + esc(entries[i].label) + '</span></div>';
+    }
+    html += '</div>';
+    el.innerHTML = html;
+    addUnifiedLegend('concessions', el);
+    legendCtrl = true;
   }
 
   /* ── Layer definitions ── */

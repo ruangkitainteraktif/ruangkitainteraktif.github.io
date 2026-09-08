@@ -386,3 +386,17 @@
     if (sigCb && sigCb.checked) { sigCb.checked = false; sigCb.dispatchEvent(new Event('change')); }
     if (feltCb && feltCb.checked) { feltCb.checked = false; feltCb.dispatchEvent(new Event('change')); }
   };
+
+  window.toggleSignificantMarkers = async function(visible) {
+    if (visible && !earthquakeLoaded) {
+      await loadEarthquakeData();
+    }
+    toggleSignificantMarkers(visible);
+  };
+
+  window.toggleFeltMarkers = async function(visible) {
+    if (visible && !earthquakeLoaded) {
+      await loadEarthquakeData();
+    }
+    toggleFeltMarkers(visible);
+  };

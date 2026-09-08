@@ -131,7 +131,13 @@
     ensureBottomCenterControlCorner();
     if (!sliderControl) {
       sliderControl = new ViirsTimeSliderControl();
-      sliderControl.addTo(map);
+      var el = sliderControl.onAdd(map);
+      var title = key === 'viirs-noaa21' ? 'VIIRS NOAA-21' : 'VIIRS NOAA-20';
+      if (typeof addUnifiedSlider === 'function') {
+        addUnifiedSlider('viirs', title, el);
+      } else {
+        sliderControl.addTo(map);
+      }
     }
     if (_titleRow) _titleRow.textContent = key === 'viirs-noaa21' ? 'VIIRS NOAA-21' : 'VIIRS NOAA-20';
     _prevMaxZoom = map.getMaxZoom();
@@ -141,7 +147,8 @@
 
   function hideSlider() {
     if (sliderControl) {
-      map.removeControl(sliderControl);
+      if (typeof removeUnifiedSlider === 'function') removeUnifiedSlider('viirs');
+      else { try { map.removeControl(sliderControl); } catch (e) {} }
       sliderControl = null;
     }
     activeKey = null;

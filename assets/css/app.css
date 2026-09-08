@@ -7159,6 +7159,183 @@
     }
     @keyframes map-spin { to { transform: rotate(360deg); } }
 
+    /* ── Unified Legend Container ── */
+    .unified-legend-container {
+      max-height: 40vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0,0,0,0.2) transparent;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      padding: 8px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    .unified-legend-container::-webkit-scrollbar { width: 4px; }
+    .unified-legend-container::-webkit-scrollbar-track { background: transparent; }
+    .unified-legend-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+    .unified-legend-section { flex-shrink: 0; }
+    .unified-legend-section .legend-wrap { position: relative; }
+    .unified-legend-section .wind-legend,
+    .unified-legend-section .himawari-legend,
+    .unified-legend-section .maritime-legend,
+    .unified-legend-section .hotspot-legend,
+    .unified-legend-section .ecmwf-fire-legend,
+    .unified-legend-section .airvisual-legend,
+    .unified-legend-section .gp-legend,
+    .unified-legend-section .choropleth-legend,
+    .unified-legend-section .geoportal-legend {
+      background: rgba(255,255,255,0.08) !important;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.1) !important;
+      border-radius: 10px !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+      color: #e2e8f0;
+    }
+    .unified-legend-section .wind-legend-title,
+    .unified-legend-section .himawari-legend-title,
+    .unified-legend-section .maritime-legend-title,
+    .unified-legend-section .hotspot-legend-title,
+    .unified-legend-section .ecmwf-fire-legend-title,
+    .unified-legend-section .airvisual-legend-title,
+    .unified-legend-section .gp-legend-badge,
+    .unified-legend-section .choropleth-legend-title,
+    .unified-legend-section .geoportal-legend-title {
+      color: #f1f5f9 !important;
+    }
+    .unified-legend-section .wind-legend-item,
+    .unified-legend-section .himawari-legend-item,
+    .unified-legend-section .hotspot-legend-item,
+    .unified-legend-section .airvisual-legend-label,
+    .unified-legend-section .maritime-legend-row,
+    .unified-legend-section .choropleth-legend-label,
+    .unified-legend-section .geoportal-legend-label {
+      color: #cbd5e1 !important;
+    }
+    .unified-legend-section .wind-legend-labels,
+    .unified-legend-section .himawari-legend-labels,
+    .unified-legend-section .wind-legend-unit,
+    .unified-legend-section .himawari-legend-unit,
+    .unified-legend-section .maritime-legend-source,
+    .unified-legend-section .hotspot-legend-source,
+    .unified-legend-section .ecmwf-fire-legend-source,
+    .unified-legend-section .choropleth-legend-unit {
+      color: rgba(255,255,255,0.45) !important;
+    }
+    .unified-legend-section .wind-legend-bar,
+    .unified-legend-section .himawari-legend-bar {
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .unified-legend-section .hotspot-legend-total {
+      color: #94a3b8 !important;
+    }
+    .unified-legend-section .hotspot-legend-dot {
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .unified-legend-section .ecmwf-fire-legend-img {
+      border-radius: 4px;
+      background: rgba(255,255,255,0.05);
+    }
+    .unified-legend-section .airvisual-legend {
+      border-radius: 10px !important;
+    }
+    .unified-legend-section .airvisual-legend-swatch {
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .unified-legend-section .geoportal-legend {
+      border-radius: 10px !important;
+    }
+    .unified-legend-section .geoportal-legend-swatch {
+      border: 1px solid rgba(255,255,255,0.1) !important;
+    }
+
+    /* ── Unified Slider Container ── */
+    .unified-slider-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      max-height: 35vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 6px 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.2) transparent;
+    }
+    .unified-slider-container::-webkit-scrollbar { width: 4px; }
+    .unified-slider-container::-webkit-scrollbar-track { background: transparent; }
+    .unified-slider-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+    .unified-slider-section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .unified-slider-section:last-child { border-bottom: none; }
+    .unified-slider-header {
+      font-size: 10px;
+      font-weight: 700;
+      color: #e2e8f0;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .unified-slider-section .modis-time-slider-wrap,
+    .unified-slider-section .bmkg-time-slider-wrap,
+    .unified-slider-section .sentinel2-time-slider-wrap {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 2px 0;
+      width: 100%;
+    }
+    .unified-slider-section .modis-ts-title,
+    .unified-slider-section .bmkg-ts-title,
+    .unified-slider-section .sentinel2-ts-title {
+      color: #e2e8f0 !important;
+    }
+    .unified-slider-section .modis-ts-date,
+    .unified-slider-section .bmkg-ts-date,
+    .unified-slider-section .sentinel2-ts-date {
+      color: #f1f5f9 !important;
+    }
+    .unified-slider-section .modis-ts-time,
+    .unified-slider-section .bmkg-ts-time,
+    .unified-slider-section .sentinel2-ts-time {
+      color: #94a3b8 !important;
+    }
+    .unified-slider-section .modis-ts-btn,
+    .unified-slider-section .bmkg-ts-btn,
+    .unified-slider-section .sentinel2-ts-btn {
+      background: rgba(255,255,255,0.1) !important;
+      color: #e2e8f0 !important;
+      border: 1px solid rgba(255,255,255,0.1) !important;
+    }
+    .unified-slider-section .modis-ts-btn:hover,
+    .unified-slider-section .bmkg-ts-btn:hover,
+    .unified-slider-section .sentinel2-ts-btn:hover {
+      background: rgba(255,255,255,0.2) !important;
+    }
+    @media (max-width: 768px) {
+      .unified-legend-container { max-height: 30vh; }
+      .unified-slider-container { width: min(280px, calc(100vw - 32px)); padding: 4px 8px; }
+    }
+
     /* Legend collapse toggle */
     .legend-wrap { position: relative; }
 

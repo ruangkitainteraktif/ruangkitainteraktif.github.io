@@ -95,8 +95,26 @@
     }
   }
 
-  function showLegend() { if (!legendControl) { legendControl = new Legend(); legendControl.addTo(map); } }
-  function hideLegend() { if (legendControl) { map.removeControl(legendControl); legendControl = null; } }
+  function showLegend() {
+    if (typeof addUnifiedLegend !== 'function') return;
+    var div = L.DomUtil.create('div', 'wind-legend');
+    L.DomEvent.disableClickPropagation(div);
+    div.innerHTML =
+      '<div class="wind-legend-title">Curah Hujan 24 Jam (mm)</div>' +
+      '<div class="wind-legend-bar" style="background:linear-gradient(to right,#3b82f6,#22c55e,#eab308,#f97316,#ef4444)"></div>' +
+      '<div class="wind-legend-labels"><span>0</span><span>0.5</span><span>5</span><span>20</span><span>50</span><span>100</span></div>' +
+      '<div class="wind-legend-items">' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#3b82f6;"></span>0.5 – 5 — Ringan</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#22c55e;"></span>5 – 20 — Sedang</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#eab308;"></span>20 – 50 — Lebat</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#f97316;"></span>50 – 100 — Sangat Lebat</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#ef4444;"></span>> 100 — Ekstrem</div>' +
+      '</div>' +
+      '<div class="wind-legend-unit">Sumber: BMKG GFS</div>';
+    addUnifiedLegend('tp24-rgb', window.createLegendWithToggle(div));
+    legendControl = true;
+  }
+  function hideLegend() { if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('tp24-rgb'); legendControl = null; }
 
   var H24_MS = 24 * 60 * 60 * 1000;
 

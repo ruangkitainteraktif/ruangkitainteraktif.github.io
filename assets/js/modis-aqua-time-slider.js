@@ -118,7 +118,12 @@
   function showSlider() {
     if (!sliderControl) {
       sliderControl = new ModisAquaTimeSliderControl();
-      sliderControl.addTo(map);
+      var el = sliderControl.onAdd(map);
+      if (typeof addUnifiedSlider === 'function') {
+        addUnifiedSlider('modis-aqua', 'MODIS Aqua', el);
+      } else {
+        sliderControl.addTo(map);
+      }
     }
     _prevMaxZoom = map.getMaxZoom();
     map.setMaxZoom(9);
@@ -127,7 +132,8 @@
 
   function hideSlider() {
     if (sliderControl) {
-      map.removeControl(sliderControl);
+      if (typeof removeUnifiedSlider === 'function') removeUnifiedSlider('modis-aqua');
+      else { try { map.removeControl(sliderControl); } catch (e) {} }
       sliderControl = null;
     }
     if (_prevMaxZoom !== null) {

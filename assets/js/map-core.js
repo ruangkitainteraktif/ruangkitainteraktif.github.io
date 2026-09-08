@@ -793,25 +793,18 @@ L.control.scale({
 
   function showAirVisualLegend(key) {
     hideAirVisualLegend();
-    var LegendControl = L.Control.extend({
-      options: { position: 'bottomleft' },
-      onAdd: function () {
-        var el = L.DomUtil.create('div', 'airvisual-legend leaflet-bar');
-        L.DomEvent.disableClickPropagation(el);
-        L.DomEvent.disableScrollPropagation(el);
-        el.innerHTML = buildLegendHtml(key);
-        return el;
-      }
-    });
-    _airvisualLegendControl = new LegendControl();
-    _airvisualLegendControl.addTo(map);
+    if (typeof addUnifiedLegend !== 'function') return;
+    var el = L.DomUtil.create('div', 'airvisual-legend leaflet-bar');
+    L.DomEvent.disableClickPropagation(el);
+    L.DomEvent.disableScrollPropagation(el);
+    el.innerHTML = buildLegendHtml(key);
+    addUnifiedLegend('airvisual', el);
+    _airvisualLegendControl = true;
   }
 
   function hideAirVisualLegend() {
-    if (_airvisualLegendControl) {
-      map.removeControl(_airvisualLegendControl);
-      _airvisualLegendControl = null;
-    }
+    if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('airvisual');
+    _airvisualLegendControl = null;
   }
 
   // Province boundary layer for AirVisual
@@ -1152,6 +1145,10 @@ L.control.scale({
         // 10b. Bersihkan drawing & measure
         if (typeof clearDrawings === 'function') clearDrawings();
 
+        // 10c. Bersihkan unified legend & slider
+        if (typeof clearUnifiedLegend === 'function') clearUnifiedLegend();
+        if (typeof clearUnifiedSlider === 'function') clearUnifiedSlider();
+
         // 11. Reset detail panel
         const detailPanel = document.getElementById('detail-panel');
         if (detailPanel) detailPanel.classList.add('hidden');
@@ -1169,11 +1166,11 @@ L.control.scale({
 
   /* ── Pindahkan tombol ke dalam FAB ── */
   setTimeout(function () {
+    createGeotoolsFAB();
     moveToFAB('.basemap-btn-vector', 'Basemap');
     moveToFAB('.draw-fab-wrap', 'Gambar & Ukur');
     moveToFAB('.geoportal-print-btn', 'Cetak Peta');
     moveToFAB('.sat-export-btn', 'Export PNG');
-    createGeotoolsFAB();
     moveToFAB('.reset-layers-btn', 'Reset Layer');
     moveToFAB('.leaflet-control-locate', 'Lokasi Saya');
 
@@ -1262,13 +1259,26 @@ L.control.scale({
 
   function showEcmwfFireLegend() {
     if (ecmwfFireLegendCtrl) return;
-    ecmwfFireLegendCtrl = new EcmwfFireLegendControl();
-    ecmwfFireLegendCtrl.addTo(map);
+    if (typeof addUnifiedLegend !== 'function') return;
+    var div = L.DomUtil.create('div', 'ecmwf-fire-legend');
+    L.DomEvent.disableClickPropagation(div);
+    div.innerHTML =
+      '<div class="ecmwf-fire-legend-title">Fire Radiative Power [W m\u207B\u00B2]</div>' +
+      '<img class="ecmwf-fire-legend-img" alt="Legend" ' +
+        'src="https://eccharts.ecmwf.int/wms/?token=public&request=GetLegend&layers=composition_fire&styles=sh_all_fire&width=350&height=50">' +
+      '<div class="ecmwf-fire-legend-source">Sumber: ECMWF CAMS GFAS</div>';
+    var img = div.querySelector('.ecmwf-fire-legend-img');
+    if (img) {
+      img.onerror = function () {
+        img.style.display = 'none';
+      };
+    }
+    addUnifiedLegend('ecmwf-fire', div);
+    ecmwfFireLegendCtrl = true;
   }
 
   function hideEcmwfFireLegend() {
-    if (!ecmwfFireLegendCtrl) return;
-    map.removeControl(ecmwfFireLegendCtrl);
+    if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('ecmwf-fire');
     ecmwfFireLegendCtrl = null;
   }
 
@@ -1419,6 +1429,90 @@ L.control.scale({
     return wrap;
   };
 
+  /* ═══════════════════════════════════════════════
+     UNIFIED LEGEND & SLIDER CONTAINERS
+     ═══════════════════════════════════════════════ */
+
+  var _unifiedLegendEl = null;
+  var _unifiedSliderEl = null;
+
+  var UnifiedLegendControl = L.Control.extend({
+    options: { position: 'bottomleft' },
+    onAdd: function () {
+      _unifiedLegendEl = L.DomUtil.create('div', 'unified-legend-container');
+      L.DomEvent.disableClickPropagation(_unifiedLegendEl);
+      L.DomEvent.disableScrollPropagation(_unifiedLegendEl);
+      return _unifiedLegendEl;
+    }
+  });
+  new UnifiedLegendControl().addTo(map);
+
+  var UnifiedSliderControl = L.Control.extend({
+    options: { position: 'bottomcenter' },
+    onAdd: function () {
+      if (!map._controlCorners.bottomcenter) {
+        map._controlCorners.bottomcenter = L.DomUtil.create('div', 'leaflet-bottom leaflet-center', map._controlContainer);
+      }
+      _unifiedSliderEl = L.DomUtil.create('div', 'unified-slider-container');
+      L.DomEvent.disableClickPropagation(_unifiedSliderEl);
+      L.DomEvent.disableScrollPropagation(_unifiedSliderEl);
+      return _unifiedSliderEl;
+    }
+  });
+  new UnifiedSliderControl().addTo(map);
+
+  window.addUnifiedLegend = function (id, domEl) {
+    if (!_unifiedLegendEl) return;
+    var existing = _unifiedLegendEl.querySelector('[data-legend-id="' + id + '"]');
+    if (existing) existing.remove();
+    var section = document.createElement('div');
+    section.className = 'unified-legend-section';
+    section.dataset.legendId = id;
+    section.appendChild(domEl);
+    _unifiedLegendEl.appendChild(section);
+    _unifiedLegendEl.style.display = '';
+  };
+
+  window.removeUnifiedLegend = function (id) {
+    if (!_unifiedLegendEl) return;
+    var section = _unifiedLegendEl.querySelector('[data-legend-id="' + id + '"]');
+    if (section) section.remove();
+    if (_unifiedLegendEl.children.length === 0) _unifiedLegendEl.style.display = 'none';
+  };
+
+  window.addUnifiedSlider = function (id, title, domEl) {
+    if (!_unifiedSliderEl) return;
+    var existing = _unifiedSliderEl.querySelector('[data-slider-id="' + id + '"]');
+    if (existing) existing.remove();
+    var section = document.createElement('div');
+    section.className = 'unified-slider-section';
+    section.dataset.sliderId = id;
+    if (title) {
+      var header = document.createElement('div');
+      header.className = 'unified-slider-header';
+      header.textContent = title;
+      section.appendChild(header);
+    }
+    section.appendChild(domEl);
+    _unifiedSliderEl.appendChild(section);
+    _unifiedSliderEl.style.display = '';
+  };
+
+  window.removeUnifiedSlider = function (id) {
+    if (!_unifiedSliderEl) return;
+    var section = _unifiedSliderEl.querySelector('[data-slider-id="' + id + '"]');
+    if (section) section.remove();
+    if (_unifiedSliderEl.children.length === 0) _unifiedSliderEl.style.display = 'none';
+  };
+
+  window.clearUnifiedLegend = function () {
+    if (_unifiedLegendEl) { _unifiedLegendEl.innerHTML = ''; _unifiedLegendEl.style.display = 'none'; }
+  };
+
+  window.clearUnifiedSlider = function () {
+    if (_unifiedSliderEl) { _unifiedSliderEl.innerHTML = ''; _unifiedSliderEl.style.display = 'none'; }
+  };
+
   /* ═══════════════════════════════════════
      GeoTools Bottom Sheet (FAB)
      ═══════════════════════════════════════ */
@@ -1496,11 +1590,8 @@ L.control.scale({
       layers: [
         { id: 'toggleSignificantMarkers', label: '15 Gempa M 5.0+ (BMKG)' },
         { id: 'toggleFeltMarkers', label: '15 Gempa Dirasakan (BMKG)' },
-        { id: 'toggleWorldPlatesLayer', label: 'Zona Patahan Dunia (USGS)' },
         { id: 'toggleFaultLayer', label: 'Patahan Indonesia (BNPB)' },
         { id: 'toggleFaultLayerNew', label: 'Patahan Indonesia Baru (PUSGEN 2024)' },
-        { id: 'toggleGempaNTT', label: 'Gempa NTT 2026 (BNPB)' },
-        { id: 'toggleFiniteFaultNTT', label: 'Finite Fault NTT 2026 (BNPB)' },
         { id: 'toggleJalurEvakuasi', label: 'Jalur Evakuasi (BNPB)' },
         { id: 'toggleHistoryGempa', label: 'Riwayat Gempa BMKG' },
         { id: 'toggleKatalogGempa', label: 'Katalog Gempa BMKG' },
@@ -1690,7 +1781,14 @@ L.control.scale({
           el.checked = cb.checked;
           el.dispatchEvent(new Event('change'));
         }
+        if (cb.dataset.layerId === 'toggleSignificantMarkers' && typeof window.toggleSignificantMarkers === 'function') {
+          window.toggleSignificantMarkers(cb.checked);
+        }
+        if (cb.dataset.layerId === 'toggleFeltMarkers' && typeof window.toggleFeltMarkers === 'function') {
+          window.toggleFeltMarkers(cb.checked);
+        }
         updateCatCount(cb.closest('.lc-category'));
+        closeLayerCatalog();
       });
     });
 

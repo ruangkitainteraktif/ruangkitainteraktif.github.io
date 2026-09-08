@@ -214,12 +214,23 @@
 
   function showLegend(config) {
     hideLegend();
-    legendControl = new MaritimeLegend();
-    legendControl.addTo(map);
+    if (typeof addUnifiedLegend !== 'function') return;
+    var cfg = config || activeConfig;
+    if (!cfg) return;
+    var div = L.DomUtil.create('div', 'maritime-legend');
+    var html = '<div class="maritime-legend-title">' + escapeMaritimeHtml(cfg.name) + '</div>';
+    cfg.bands.forEach(function (b) {
+      html += '<div class="maritime-legend-row"><span class="maritime-legend-swatch" style="background:' + b.color + '"></span><span>' + escapeMaritimeHtml(b.label) + '</span></div>';
+    });
+    html += '<div class="maritime-legend-source">Sumber: BMKG</div>';
+    div.innerHTML = html;
+    addUnifiedLegend('maritime', window.createLegendWithToggle(div));
+    legendControl = true;
   }
 
   function hideLegend() {
-    if (legendControl) { map.removeControl(legendControl); legendControl = null; }
+    if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('maritime');
+    legendControl = null;
   }
 
   /* ── Popup ── */

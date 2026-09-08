@@ -411,39 +411,35 @@
 
   /* ── Legend control ── */
   function addLegend(min, max, commodityName, priceTypeName) {
-    if (activeLegend) { map.removeControl(activeLegend); activeLegend = null; }
-    var LegendControl = L.Control.extend({
-      options: { position: 'bottomleft' },
-      onAdd: function () {
-        var div = L.DomUtil.create('div', 'gp-legend');
-        L.DomEvent.disableClickPropagation(div);
-        var stops = getColorStops(min, max, 7);
-        var fmt = function (v) { return v != null ? 'Rp ' + v.toLocaleString('id-ID') : '-'; };
+    if (activeLegend) { if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('geopangan'); activeLegend = null; }
 
-        var svgCommodity = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 6v12"/></svg>';
-        var svgMarket = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18l-2 13H5L3 3z"/><circle cx="9" cy="21" r="1"/><circle cx="17" cy="21" r="1"/></svg>';
+    if (typeof addUnifiedLegend !== 'function') return;
+    var div = L.DomUtil.create('div', 'gp-legend');
+    L.DomEvent.disableClickPropagation(div);
+    var stops = getColorStops(min, max, 7);
+    var fmt = function (v) { return v != null ? 'Rp ' + v.toLocaleString('id-ID') : '-'; };
 
-        div.innerHTML =
-          '<div class="gp-legend-header">' +
-            '<div class="gp-legend-badge">LEGENDA</div>' +
-            '<div class="gp-legend-info-row">' + svgCommodity + '<span>' + commodityName + '</span></div>' +
-            '<div class="gp-legend-info-row">' + svgMarket + '<span>' + priceTypeName + '</span></div>' +
-          '</div>' +
-          '<div class="gp-legend-body">' +
-            '<div class="gp-legend-bar">' +
-              stops.map(function (c) { return '<span style="background:' + c + '"></span>'; }).join('') +
-            '</div>' +
-            '<div class="gp-legend-labels">' +
-              '<span class="gp-legend-label-min">' + fmt(min) + '</span>' +
-              '<span class="gp-legend-label-max">' + fmt(max) + '</span>' +
-            '</div>' +
-            '<div class="gp-legend-unit">Rp/kg</div>' +
-          '</div>';
-        return div;
-      }
-    });
-    activeLegend = new LegendControl();
-    activeLegend.addTo(map);
+    var svgCommodity = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 6v12"/></svg>';
+    var svgMarket = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18l-2 13H5L3 3z"/><circle cx="9" cy="21" r="1"/><circle cx="17" cy="21" r="1"/></svg>';
+
+    div.innerHTML =
+      '<div class="gp-legend-header">' +
+        '<div class="gp-legend-badge">LEGENDA</div>' +
+        '<div class="gp-legend-info-row">' + svgCommodity + '<span>' + commodityName + '</span></div>' +
+        '<div class="gp-legend-info-row">' + svgMarket + '<span>' + priceTypeName + '</span></div>' +
+      '</div>' +
+      '<div class="gp-legend-body">' +
+        '<div class="gp-legend-bar">' +
+          stops.map(function (c) { return '<span style="background:' + c + '"></span>'; }).join('') +
+        '</div>' +
+        '<div class="gp-legend-labels">' +
+          '<span class="gp-legend-label-min">' + fmt(min) + '</span>' +
+          '<span class="gp-legend-label-max">' + fmt(max) + '</span>' +
+        '</div>' +
+        '<div class="gp-legend-unit">Rp/kg</div>' +
+      '</div>';
+    addUnifiedLegend('geopangan', div);
+    activeLegend = true;
   }
 
   /* ── Build price map from API response ── */

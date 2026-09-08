@@ -94,8 +94,26 @@
     }
   }
 
-  function showLegend() { if (!legendControl) { legendControl = new Legend(); legendControl.addTo(map); } }
-  function hideLegend() { if (legendControl) { map.removeControl(legendControl); legendControl = null; } }
+  function showLegend() {
+    if (typeof addUnifiedLegend !== 'function') return;
+    var div = L.DomUtil.create('div', 'wind-legend');
+    L.DomEvent.disableClickPropagation(div);
+    div.innerHTML =
+      '<div class="wind-legend-title">Hari Tanpa Hujan (hari)</div>' +
+      '<div class="wind-legend-bar" style="background:linear-gradient(to right,#3b82f6,#facc15,#f97316,#ef4444,#991b1b)"></div>' +
+      '<div class="wind-legend-labels"><span>0</span><span>5</span><span>10</span><span>20</span><span>30</span></div>' +
+      '<div class="wind-legend-items">' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#3b82f6;"></span>< 5 — Basah</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#facc15;"></span>5 – 10 — Normal</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#f97316;"></span>10 – 20 — Kering</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#ef4444;"></span>20 – 30 — Sangat Kering</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#991b1b;"></span>> 30 — Kekeringan</div>' +
+      '</div>' +
+      '<div class="wind-legend-unit">Sumber: BMKG HTH</div>';
+    addUnifiedLegend('hth-rgb', window.createLegendWithToggle(div));
+    legendControl = true;
+  }
+  function hideLegend() { if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('hth-rgb'); legendControl = null; }
 
   function addLayer(modelRun, forecast) {
     var mr = GfsBase.buildDateStr(modelRun);

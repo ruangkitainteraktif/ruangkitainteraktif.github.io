@@ -103,10 +103,6 @@
       L.DomEvent.disableClickPropagation(wrap);
       L.DomEvent.disableScrollPropagation(wrap);
 
-      var titleRow = L.DomUtil.create('div', 'bmkg-ts-title', wrap);
-      titleRow.textContent = 'Hujan Radar';
-      _titleRow = titleRow;
-
       var controlsRow = L.DomUtil.create('div', 'bmkg-ts-controls', wrap);
 
       var prevBtn = L.DomUtil.create('button', 'bmkg-ts-btn bmkg-ts-prev', controlsRow);
@@ -199,28 +195,45 @@
           '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#b800d6;"></span>&gt; 50 mm/jam — Sangat Ekstrem</div>' +
         '</div>' +
         '<div class="himawari-legend-unit">Sumber: RainViewer</div>';
-      return window.createLegendWithToggle(div);
+      return div;
     }
   });
 
   function showLegend() {
-    if (!legendControl) {
-      legendControl = new RainLegend();
-      legendControl.addTo(map);
-    }
+    if (typeof addUnifiedLegend !== 'function') return;
+    var div = L.DomUtil.create('div', 'himawari-legend');
+    L.DomEvent.disableClickPropagation(div);
+    div.innerHTML =
+      '<div class="himawari-legend-title">Intensitas Hujan (Radar)</div>' +
+      '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,transparent,#01b8ff,#00e500,#ffdc00,#ff7100,#ff0000,#b800d6);"></div>' +
+      '<div class="himawari-legend-labels"><span>-</span><span>Ringan</span><span>Sedang</span><span>Deras</span><span>Sangat Deras</span><span>Ekstrem</span></div>' +
+      '<div class="himawari-legend-items">' +
+        '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#01b8ff;"></span>&lt; 5 mm/jam — Hujan Ringan</div>' +
+        '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#00e500;"></span>5 - 10 mm/jam — Hujan Sedang</div>' +
+        '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#ffdc00;"></span>10 - 20 mm/jam — Hujan Deras</div>' +
+        '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#ff7100;"></span>20 - 30 mm/jam — Hujan Sangat Deras</div>' +
+        '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#ff0000;"></span>30 - 50 mm/jam — Hujan Ekstrem</div>' +
+        '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#b800d6;"></span>&gt; 50 mm/jam — Sangat Ekstrem</div>' +
+      '</div>' +
+      '<div class="himawari-legend-unit">Sumber: RainViewer</div>';
+    addUnifiedLegend('hujan-radar', window.createLegendWithToggle(div));
+    legendControl = true;
   }
 
   function hideLegend() {
-    if (legendControl) {
-      map.removeControl(legendControl);
-      legendControl = null;
-    }
+    if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('hujan-radar');
+    legendControl = null;
   }
 
   function showSlider() {
     if (!sliderControl) {
       sliderControl = new RainTimeSliderControl();
-      sliderControl.addTo(map);
+      var el = sliderControl.onAdd(map);
+      if (typeof addUnifiedSlider === 'function') {
+        addUnifiedSlider('hujan-radar', 'Hujan Radar', el);
+      } else {
+        sliderControl.addTo(map);
+      }
     }
     showLegend();
     _prevMaxZoom = map.getMaxZoom();
@@ -230,7 +243,8 @@
 
   function hideSlider() {
     if (sliderControl) {
-      map.removeControl(sliderControl);
+      if (typeof removeUnifiedSlider === 'function') removeUnifiedSlider('hujan-radar');
+      else { try { map.removeControl(sliderControl); } catch (e) {} }
       sliderControl = null;
     }
     hideLegend();

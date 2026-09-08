@@ -607,10 +607,12 @@
   function renderGeoportalLegend() {
     if (!geoportalLegendCtrl) {
       if (typeof map === 'undefined' || !map) return;
-      try { geoportalLegendCtrl = new GeoportalLegendControl().addTo(map); } catch (e) { return; }
+      if (typeof addUnifiedLegend !== 'function') return;
+      geoportalLegendCtrl = true;
     }
-    const el = geoportalLegendCtrl._container;
-    if (!el) return;
+    if (typeof removeUnifiedLegend !== 'function') return;
+    removeUnifiedLegend('geoportal');
+
     const isGpTab = window.currentActiveTab === 'tab-geoportal';
     const isGeotaniTab = window.currentActiveTab === 'tab-geotani';
     let items = [];
@@ -618,13 +620,18 @@
     else if (isGeotaniTab) items = getGeotaniLegendItems();
     if (!items.length) {
       geoportalLegendSig = '';
-      el.style.display = 'none';
-      el.innerHTML = '';
+      geoportalLegendCtrl = null;
       return;
     }
     const sig = items.map(i => i.kind + ':' + i.label + ':' + (i.wmsUrl || '')).join('|');
-    if (sig === geoportalLegendSig && el.style.display !== 'none') return;
+    if (sig === geoportalLegendSig) return;
     geoportalLegendSig = sig;
+
+    const div = document.createElement('div');
+    div.className = 'geoportal-legend leaflet-bar';
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+
     let html = '<div class="geoportal-legend-title">Legenda</div>';
     items.forEach(it => {
       const safeLbl = (typeof escapeBMKGHTML === 'function') ? escapeBMKGHTML(it.label) : it.label;
@@ -640,8 +647,8 @@
           '<span class="geoportal-legend-label">' + safeLbl + '</span></div>';
       }
     });
-    el.innerHTML = html;
-    el.querySelectorAll('img.geoportal-legend-img').forEach(img => {
+    div.innerHTML = html;
+    div.querySelectorAll('img.geoportal-legend-img').forEach(img => {
       img.addEventListener('error', () => {
         const item = img.closest('.geoportal-legend-item');
         if (item) {
@@ -652,7 +659,7 @@
         }
       });
     });
-    el.style.display = 'block';
+    addUnifiedLegend('geoportal', div);
   }
 
   let __gpLegendTimer = null;

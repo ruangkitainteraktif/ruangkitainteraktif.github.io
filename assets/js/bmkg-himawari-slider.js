@@ -115,10 +115,6 @@
       L.DomEvent.disableClickPropagation(wrap);
       L.DomEvent.disableScrollPropagation(wrap);
 
-      var titleRow = L.DomUtil.create('div', 'bmkg-ts-title', wrap);
-      titleRow.textContent = BMKG_LAYERS[_activeKey] ? BMKG_LAYERS[_activeKey].title : 'BMKG Satellite';
-      _titleRow = titleRow;
-
       var controlsRow = L.DomUtil.create('div', 'bmkg-ts-controls', wrap);
 
       var prevBtn = L.DomUtil.create('button', 'bmkg-ts-btn bmkg-ts-prev', controlsRow);
@@ -227,28 +223,62 @@
           '</div>' +
           '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
       }
-      return window.createLegendWithToggle(div);
+      return div;
     }
   });
 
   function showLegend() {
-    if (!legendControl) {
-      legendControl = new HimawariLegend();
-      legendControl.addTo(map);
+    if (typeof addUnifiedLegend !== 'function') return;
+    var div = L.DomUtil.create('div', 'himawari-legend');
+    L.DomEvent.disableClickPropagation(div);
+    var info = BMKG_LAYERS[_activeKey];
+    var param = info ? info.param : 'EH';
+    if (param === 'VS') {
+      div.innerHTML =
+        '<div class="himawari-legend-title">Visible (0.64&micro;m) — 500m</div>' +
+        '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#000 0%,#fff 100%);"></div>' +
+        '<div class="himawari-legend-labels"><span>Gelap</span><span>Cerah</span></div>' +
+        '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
+    } else if (param === 'WV') {
+      div.innerHTML =
+        '<div class="himawari-legend-title">Uap Air (WV 6.3&micro;m)</div>' +
+        '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#1a1a2e,#16213e,#0f3460,#1a936f,#53a8b6,#b6d7e8,#ffffff);"></div>' +
+        '<div class="himawari-legend-labels"><span>Kering</span><span>Lembab</span><span>Sangat Lembab</span></div>' +
+        '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
+    } else {
+      div.innerHTML =
+        '<div class="himawari-legend-title">Suhu Puncak Awan (IR 10.4&micro;m)</div>' +
+        '<div class="himawari-legend-bar"></div>' +
+        '<div class="himawari-legend-labels"><span>-80&deg;C</span><span>-60&deg;C</span><span>-40&deg;C</span><span>-20&deg;C</span><span>0&deg;C</span><span>20&deg;C</span></div>' +
+        '<div class="himawari-legend-items">' +
+          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#7b0051;"></span>&le; -80&deg;C — Ekstrem</div>' +
+          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#d62828;"></span>-80 s/d -60&deg;C — Sangat Dingin (Cb)</div>' +
+          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#f77f00;"></span>-60 s/d -40&deg;C — Dingin</div>' +
+          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#f6d743;"></span>-40 s/d -20&deg;C — Sedang</div>' +
+          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#1a936f;"></span>-20 s/d 0&deg;C — Hangat</div>' +
+          '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#16213e;"></span>&ge; 0&deg;C — Cerah</div>' +
+        '</div>' +
+        '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
     }
+    addUnifiedLegend('himawari', window.createLegendWithToggle(div));
+    legendControl = true;
   }
 
   function hideLegend() {
-    if (legendControl) {
-      map.removeControl(legendControl);
-      legendControl = null;
-    }
+    if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('himawari');
+    legendControl = null;
   }
 
   function showSlider() {
     if (!sliderControl) {
       sliderControl = new BmkgTimeSliderControl();
-      sliderControl.addTo(map);
+      var el = sliderControl.onAdd(map);
+      var title = BMKG_LAYERS[_activeKey] ? BMKG_LAYERS[_activeKey].title : 'BMKG Satellite';
+      if (typeof addUnifiedSlider === 'function') {
+        addUnifiedSlider('himawari', title, el);
+      } else {
+        sliderControl.addTo(map);
+      }
     }
     showLegend();
     _prevMaxZoom = map.getMaxZoom();
@@ -258,7 +288,8 @@
 
   function hideSlider() {
     if (sliderControl) {
-      map.removeControl(sliderControl);
+      if (typeof removeUnifiedSlider === 'function') removeUnifiedSlider('himawari');
+      else { try { map.removeControl(sliderControl); } catch (e) {} }
       sliderControl = null;
     }
     hideLegend();

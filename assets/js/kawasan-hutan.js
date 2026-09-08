@@ -57,46 +57,39 @@
 
   function createLegend() {
     removeLegend();
-    var LegendControl = L.Control.extend({
-      options: { position: 'bottomleft' },
-      onAdd: function () {
-        var div = L.DomUtil.create('div', 'hotspot-legend');
-        L.DomEvent.disableClickPropagation(div);
+    if (typeof addUnifiedLegend !== 'function') return;
 
-        var items = '';
-        var entries = [
-          ['Kawasan Konservasi', '#c500ff'],
-          ['Hutan Lindung', '#38a800'],
-          ['Hutan Produksi Tetap', '#ffff00'],
-          ['Hutan Produksi Terbatas', '#aaff00'],
-          ['HPT Dapat Dikonversi', '#ff73df'],
-          ['Tubuh Air', '#00c5ff'],
-          ['Areal Penggunaan Lain', '#e0e0e0']
-        ];
-        for (var i = 0; i < entries.length; i++) {
-          items += '<div class="hotspot-legend-item">' +
-            '<span class="hotspot-legend-dot" style="background:' + entries[i][1] + ';"></span>' +
-            '<span>' + entries[i][0] + '</span>' +
-          '</div>';
-        }
+    var items = '';
+    var entries = [
+      ['Kawasan Konservasi', '#c500ff'],
+      ['Hutan Lindung', '#38a800'],
+      ['Hutan Produksi Tetap', '#ffff00'],
+      ['Hutan Produksi Terbatas', '#aaff00'],
+      ['HPT Dapat Dikonversi', '#ff73df'],
+      ['Tubuh Air', '#00c5ff'],
+      ['Areal Penggunaan Lain', '#e0e0e0']
+    ];
+    for (var i = 0; i < entries.length; i++) {
+      items += '<div class="hotspot-legend-item">' +
+        '<span class="hotspot-legend-dot" style="background:' + entries[i][1] + ';"></span>' +
+        '<span>' + entries[i][0] + '</span>' +
+      '</div>';
+    }
 
-        div.innerHTML =
-          '<div class="hotspot-legend-title">Kawasan Hutan</div>' +
-          '<div class="hotspot-legend-items">' + items + '</div>' +
-          '<div class="hotspot-legend-source">Sumber: Geoportal ESDM</div>';
+    var div = L.DomUtil.create('div', 'hotspot-legend');
+    L.DomEvent.disableClickPropagation(div);
+    div.innerHTML =
+      '<div class="hotspot-legend-title">Kawasan Hutan</div>' +
+      '<div class="hotspot-legend-items">' + items + '</div>' +
+      '<div class="hotspot-legend-source">Sumber: Geoportal ESDM</div>';
 
-        return div;
-      }
-    });
-    legendControl = new LegendControl();
-    legendControl.addTo(map);
+    addUnifiedLegend('kawasan-hutan', div);
+    legendControl = true;
   }
 
   function removeLegend() {
-    if (legendControl) {
-      map.removeControl(legendControl);
-      legendControl = null;
-    }
+    if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('kawasan-hutan');
+    legendControl = null;
   }
 
   function showLayer() {

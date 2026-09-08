@@ -124,11 +124,27 @@
   }
 
   function showLegend() {
-    if (!legendControl) { legendControl = new WindLegend(); legendControl.addTo(map); }
+    if (typeof addUnifiedLegend !== 'function') return;
+    var div = L.DomUtil.create('div', 'wind-legend');
+    L.DomEvent.disableClickPropagation(div);
+    div.innerHTML =
+      '<div class="wind-legend-title">Wind Speed (m/s)</div>' +
+      '<div class="wind-legend-bar" style="background:linear-gradient(to right,#64b4ff,#32dc78,#ffdc32,#ff5032)"></div>' +
+      '<div class="wind-legend-labels"><span>0</span><span>3</span><span>8</span><span>15</span><span>25</span></div>' +
+      '<div class="wind-legend-items">' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#64b4ff;"></span>< 3 — Calm</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#32dc78;"></span>3 – 8 — Light</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#ffdc32;"></span>8 – 15 — Moderate</div>' +
+        '<div class="wind-legend-item"><span class="wind-legend-dot" style="background:#ff5032;"></span>≥ 15 — Strong</div>' +
+      '</div>' +
+      '<div class="wind-legend-unit">Sumber: BMKG GFS</div>';
+    addUnifiedLegend('wind-rgb', window.createLegendWithToggle(div));
+    legendControl = true;
   }
 
   function hideLegend() {
-    if (legendControl) { map.removeControl(legendControl); legendControl = null; }
+    if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('wind-rgb');
+    legendControl = null;
   }
 
   function addLayer(modelRun, forecast) {

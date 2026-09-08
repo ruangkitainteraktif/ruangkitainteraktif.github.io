@@ -123,7 +123,7 @@
 
   function createLegend(lvlConfig, kelas) {
     if (activeChoroplethLegend) {
-      map.removeControl(activeChoroplethLegend);
+      if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('choropleth');
       activeChoroplethLegend = null;
     }
 
@@ -135,42 +135,37 @@
     const title = lvlConfig.pivot_judul || '';
     const tipeSkala = lvlConfig.pivot_tipe_skala || 'sequential';
 
-    const LegendControl = L.Control.extend({
-      options: { position: 'bottomleft' },
-      onAdd: function () {
-        const div = L.DomUtil.create('div', 'choropleth-legend');
-        L.DomEvent.disableClickPropagation(div);
+    if (typeof addUnifiedLegend !== 'function') return;
 
-        let html = `<div class="choropleth-legend-title">${title}</div>`;
+    const div = L.DomUtil.create('div', 'choropleth-legend');
+    L.DomEvent.disableClickPropagation(div);
 
-        const n = kelas.length;
-        for (let i = 0; i < n; i++) {
-          let color;
-          if (tipeSkala === 'diverging' && midColor) {
-            const half = Math.floor(n / 2);
-            if (i < half) {
-              color = interpolateColor(minColor, midColor, half > 0 ? i / half : 0);
-            } else {
-              color = interpolateColor(midColor, maxColor, (n - half) > 1 ? (i - half) / (n - half - 1) : 0);
-            }
-          } else {
-            color = interpolateColor(minColor, maxColor, n > 1 ? i / (n - 1) : 0);
-          }
-          const label = legendaLabels[i] || (kelas[i].min.toFixed(1) + ' – ' + kelas[i].max.toFixed(1));
-          html += `<div class="choropleth-legend-item">
-            <span class="choropleth-legend-color" style="background:${color};"></span>
-            <span class="choropleth-legend-label">${label}</span>
-          </div>`;
+    let html = `<div class="choropleth-legend-title">${title}</div>`;
+
+    const n = kelas.length;
+    for (let i = 0; i < n; i++) {
+      let color;
+      if (tipeSkala === 'diverging' && midColor) {
+        const half = Math.floor(n / 2);
+        if (i < half) {
+          color = interpolateColor(minColor, midColor, half > 0 ? i / half : 0);
+        } else {
+          color = interpolateColor(midColor, maxColor, (n - half) > 1 ? (i - half) / (n - half - 1) : 0);
         }
-
-        html += `<div class="choropleth-legend-unit">${satuan}</div>`;
-        div.innerHTML = html;
-        return div;
+      } else {
+        color = interpolateColor(minColor, maxColor, n > 1 ? i / (n - 1) : 0);
       }
-    });
+      const label = legendaLabels[i] || (kelas[i].min.toFixed(1) + ' – ' + kelas[i].max.toFixed(1));
+      html += `<div class="choropleth-legend-item">
+        <span class="choropleth-legend-color" style="background:${color};"></span>
+        <span class="choropleth-legend-label">${label}</span>
+      </div>`;
+    }
 
-    activeChoroplethLegend = new LegendControl();
-    activeChoroplethLegend.addTo(map);
+    html += `<div class="choropleth-legend-unit">${satuan}</div>`;
+    div.innerHTML = html;
+    addUnifiedLegend('choropleth', div);
+    activeChoroplethLegend = true;
   }
 
   function removeChoropleth() {
@@ -179,7 +174,7 @@
       activeChoroplethLayer = null;
     }
     if (activeChoroplethLegend) {
-      map.removeControl(activeChoroplethLegend);
+      if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('choropleth');
       activeChoroplethLegend = null;
     }
     activeIndicatorMeta = null;

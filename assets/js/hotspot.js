@@ -46,55 +46,45 @@
   }
 
   function createHotspotLegend(totalCount, high, medium, low) {
-    if (hotspotLegendControl) {
-      map.removeControl(hotspotLegendControl);
-      hotspotLegendControl = null;
-    }
+    if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('hotspot');
+    hotspotLegendControl = null;
 
-    var LegendControl = L.Control.extend({
-      options: { position: 'bottomleft' },
-      onAdd: function () {
-        var div = L.DomUtil.create('div', 'hotspot-legend hotspot-legend-karhutla');
-        L.DomEvent.disableClickPropagation(div);
+    if (typeof addUnifiedLegend !== 'function') return;
+    var div = L.DomUtil.create('div', 'hotspot-legend hotspot-legend-karhutla');
+    L.DomEvent.disableClickPropagation(div);
 
-        div.innerHTML =
-          '<div class="hotspot-legend-title">Hotspot Karhutla (24 Jam)</div>' +
-          '<div class="hotspot-legend-total">' + totalCount.toLocaleString('id-ID') + ' titik aktif</div>' +
-          '<div class="hotspot-legend-gradient">' +
-            '<div class="hotspot-legend-bar"></div>' +
-            '<div class="hotspot-legend-labels">' +
-              '<span>Low</span><span>Medium</span><span>High</span>' +
-            '</div>' +
-          '</div>' +
-          '<div class="hotspot-legend-items">' +
-            '<div class="hotspot-legend-item">' +
-              '<span class="hotspot-legend-dot" style="background:#dc2626;"></span>' +
-              '<span>High (' + high + ')</span>' +
-            '</div>' +
-            '<div class="hotspot-legend-item">' +
-              '<span class="hotspot-legend-dot" style="background:#f59e0b;"></span>' +
-              '<span>Medium (' + medium + ')</span>' +
-            '</div>' +
-            '<div class="hotspot-legend-item">' +
-              '<span class="hotspot-legend-dot" style="background:#22c55e;"></span>' +
-              '<span>Low (' + low + ')</span>' +
-            '</div>' +
-          '</div>' +
-          '<div class="hotspot-legend-source">Sumber: SIPONGI KEMENHUT</div>';
+    div.innerHTML =
+      '<div class="hotspot-legend-title">Hotspot Karhutla (24 Jam)</div>' +
+      '<div class="hotspot-legend-total">' + totalCount.toLocaleString('id-ID') + ' titik aktif</div>' +
+      '<div class="hotspot-legend-gradient">' +
+        '<div class="hotspot-legend-bar"></div>' +
+        '<div class="hotspot-legend-labels">' +
+          '<span>Low</span><span>Medium</span><span>High</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="hotspot-legend-items">' +
+        '<div class="hotspot-legend-item">' +
+          '<span class="hotspot-legend-dot" style="background:#dc2626;"></span>' +
+          '<span>High (' + high + ')</span>' +
+        '</div>' +
+        '<div class="hotspot-legend-item">' +
+          '<span class="hotspot-legend-dot" style="background:#f59e0b;"></span>' +
+          '<span>Medium (' + medium + ')</span>' +
+        '</div>' +
+        '<div class="hotspot-legend-item">' +
+          '<span class="hotspot-legend-dot" style="background:#22c55e;"></span>' +
+          '<span>Low (' + low + ')</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="hotspot-legend-source">Sumber: SIPONGI KEMENHUT</div>';
 
-        return div;
-      }
-    });
-
-    hotspotLegendControl = new LegendControl();
-    hotspotLegendControl.addTo(map);
+    addUnifiedLegend('hotspot', div);
+    hotspotLegendControl = true;
   }
 
   function removeHotspotLegend() {
-    if (hotspotLegendControl) {
-      map.removeControl(hotspotLegendControl);
-      hotspotLegendControl = null;
-    }
+    if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('hotspot');
+    hotspotLegendControl = null;
   }
 
   function showHotspotLayer() {
