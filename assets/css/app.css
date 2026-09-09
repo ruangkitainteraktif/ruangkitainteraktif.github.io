@@ -5465,10 +5465,6 @@
         box-shadow: 0 -4px 20px rgba(0,0,0,.15);
       }
       #hotspot-sheet.sheet-open { transform: translateY(0); }
-      body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .leaflet-bottom.leaflet-right {
-        right: 0;
-        bottom: calc(35dvh + 12px);
-      }
       #hotspot-sheet .hs-sheet-handle { display: flex; }
       #hotspot-sheet .hs-sheet-head { padding: 0 16px 10px; }
       #hotspot-sheet.sheet-minimized {
@@ -5681,6 +5677,42 @@
         box-sizing: border-box;
         padding: 10px 16px;
         border-bottom: 0;
+      }
+
+      /* ── Push FAB, Legend & Slider Up When Bottom Sheet Open (Mobile) ── */
+      body.geotools-sheet-open:not(.geotools-sheet-minimized) .leaflet-bottom.leaflet-right,
+      body.geopangan-sheet-open:not(.geopangan-sheet-minimized) .leaflet-bottom.leaflet-right,
+      body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .leaflet-bottom.leaflet-right,
+      body.geotools-sheet-open:not(.geotools-sheet-minimized) .leaflet-bottom.leaflet-left,
+      body.geopangan-sheet-open:not(.geopangan-sheet-minimized) .leaflet-bottom.leaflet-left,
+      body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .leaflet-bottom.leaflet-left,
+      body.geotools-sheet-open:not(.geotools-sheet-minimized) .leaflet-bottom.leaflet-center,
+      body.geopangan-sheet-open:not(.geopangan-sheet-minimized) .leaflet-bottom.leaflet-center,
+      body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .leaflet-bottom.leaflet-center {
+        margin-bottom: calc(50vh + 12px);
+      }
+      body.geopangan-sheet-open:not(.geopangan-sheet-minimized) .leaflet-bottom.leaflet-right,
+      body.geopangan-sheet-open:not(.geopangan-sheet-minimized) .leaflet-bottom.leaflet-left,
+      body.geopangan-sheet-open:not(.geopangan-sheet-minimized) .leaflet-bottom.leaflet-center {
+        margin-bottom: calc(55vh + 12px);
+      }
+      body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .leaflet-bottom.leaflet-right,
+      body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .leaflet-bottom.leaflet-left,
+      body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .leaflet-bottom.leaflet-center {
+        margin-bottom: calc(35vh + 12px);
+      }
+
+      /* ── Push FAB, Legend & Slider When Sheet Minimized (Mobile) ── */
+      body.geotools-sheet-minimized .leaflet-bottom.leaflet-right,
+      body.geotools-sheet-minimized .leaflet-bottom.leaflet-left,
+      body.geotools-sheet-minimized .leaflet-bottom.leaflet-center,
+      body.geopangan-sheet-minimized .leaflet-bottom.leaflet-right,
+      body.geopangan-sheet-minimized .leaflet-bottom.leaflet-left,
+      body.geopangan-sheet-minimized .leaflet-bottom.leaflet-center,
+      body.hotspot-sheet-minimized .leaflet-bottom.leaflet-right,
+      body.hotspot-sheet-minimized .leaflet-bottom.leaflet-left,
+      body.hotspot-sheet-minimized .leaflet-bottom.leaflet-center {
+        margin-bottom: 64px;
       }
 
       /* ── Sembunyikan Zoom Control di Mobile ── */

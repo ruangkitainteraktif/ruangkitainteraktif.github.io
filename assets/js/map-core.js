@@ -433,6 +433,15 @@ L.control.scale({
         wrap.classList.toggle('map-fab-open');
         var ctrlContainer = wrap.closest('.leaflet-bottom.leaflet-right');
         if (ctrlContainer) ctrlContainer.classList.toggle('map-fab-active');
+        if (document.body.classList.contains('geotools-sheet-open') && !document.getElementById('geotools-sheet').classList.contains('gs-sheet-minimized')) {
+          minimizeGeotoolsSheet();
+        }
+        if (document.body.classList.contains('geopangan-sheet-open') && !document.body.classList.contains('geopangan-sheet-minimized')) {
+          toggleGeopanganMinimize();
+        }
+        if (document.body.classList.contains('hotspot-sheet-open') && !document.body.classList.contains('hotspot-sheet-minimized')) {
+          toggleHotspotMinimize();
+        }
       });
       wrap.appendChild(items);
       wrap.appendChild(btn);
@@ -1669,6 +1678,7 @@ L.control.scale({
       sheet.dataset.moved = '1';
     }
     sheet.classList.add('gs-sheet-open');
+    document.body.classList.add('geotools-sheet-open');
     _geotoolsSheetOpen = true;
   }
 
@@ -1678,6 +1688,7 @@ L.control.scale({
     var tabContent = document.getElementById('tab-geotools');
     if (!sheet || !body || !tabContent) return;
     sheet.classList.remove('gs-sheet-open', 'gs-sheet-minimized');
+    document.body.classList.remove('geotools-sheet-open');
     _geotoolsSheetOpen = false;
     if (sheet.dataset.moved) {
       while (body.firstChild) tabContent.appendChild(body.firstChild);
@@ -1694,6 +1705,7 @@ L.control.scale({
     _geotoolsMinimized = !_geotoolsMinimized;
     sheet.classList.toggle('gs-sheet-minimized', _geotoolsMinimized);
     sheet.classList.toggle('gs-sheet-open', !_geotoolsMinimized);
+    document.body.classList.toggle('geotools-sheet-minimized', _geotoolsMinimized);
   }
   window.minimizeGeotoolsSheet = minimizeGeotoolsSheet;
 
@@ -1703,6 +1715,8 @@ L.control.scale({
     _geotoolsMinimized = false;
     sheet.classList.remove('gs-sheet-minimized');
     sheet.classList.add('gs-sheet-open');
+    document.body.classList.add('geotools-sheet-open');
+    document.body.classList.remove('geotools-sheet-minimized');
   }
   window.restoreGeotoolsSheet = restoreGeotoolsSheet;
 
