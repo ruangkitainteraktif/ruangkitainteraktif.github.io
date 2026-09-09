@@ -202,7 +202,7 @@
       border: 1px solid rgba(255,255,255,.5);
       border-radius: 16px;
       box-shadow: 0 4px 16px rgba(0,0,0,.08), 0 12px 40px rgba(0,0,0,.06);
-      padding: 8px 0;
+      padding: 0 0 8px;
       scrollbar-width: thin; scrollbar-color: #c1c1c1 transparent;
     }
     .layer-catalog-dropdown::-webkit-scrollbar { width: 5px; }
@@ -2280,10 +2280,13 @@
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      margin: 0 8px 6px;
+      margin: 0 0 6px;
       padding: 8px 10px;
-      border-radius: 10px;
+      border-radius: 16px 16px 0 0;
       background: linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #14b8a6 100%);
+      position: sticky;
+      top: 0;
+      z-index: 1;
     }
     .lc-donation-text {
       font-size: 11px;
@@ -2324,8 +2327,8 @@
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      margin: 8px 10px 6px;
-      padding: 8px 10px;
+      margin: 8px 0 6px;
+      padding: 10px 12px;
       border-radius: 10px;
       background: linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #14b8a6 100%);
     }
@@ -3170,7 +3173,7 @@
     .geotools-main-tab-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
     .geotools-main-tab-btn.active { background: var(--accent); color: var(--text-inverse); box-shadow: 0 2px 6px rgba(8,145,178,.3); }
     .geotools-main-tab-btn:last-child { grid-column: 1 / -1; }
-    .geotools-main-tab-panel { display: none; }
+    .geotools-main-tab-panel { display: none; overflow-x: hidden; }
     .geotools-main-tab-panel.active { display: block; }
 
     .info-card {

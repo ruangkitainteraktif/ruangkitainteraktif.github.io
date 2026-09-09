@@ -542,11 +542,11 @@ L.control.scale({
     var btCb = document.getElementById('toggleBatnas');
     if (hsCb) hsCb.addEventListener('change', function () {
       if (typeof bnpbHillshade === 'undefined') return;
-      if (this.checked) bnpbHillshade.show(); else bnpbHillshade.hide();
+      if (this.checked) bnpbHillshade.showPth(); else bnpbHillshade.hidePth();
     });
     if (btCb) btCb.addEventListener('change', function () {
       if (typeof bnpbHillshade === 'undefined') return;
-      if (this.checked) bnpbHillshade.showPth(); else bnpbHillshade.hidePth();
+      if (this.checked) bnpbHillshade.show(); else bnpbHillshade.hide();
     });
   });
 
@@ -897,6 +897,36 @@ L.control.scale({
     }
   }
 
+  /* ── Coastline layer toggle (for layer catalog) ── */
+  var _coastlineLayerCatalog = null;
+
+  function toggleCoastlineLayer(show) {
+    if (show) {
+      if (_coastlineLayerCatalog && map.hasLayer(_coastlineLayerCatalog)) return;
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', 'assets/data/natural-earth/ne_50m_coastline.geojson', true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            var geojson = JSON.parse(xhr.responseText);
+            _coastlineLayerCatalog = L.geoJSON(geojson, {
+              style: { color: '#ffffff', weight: 1.2, opacity: 0.85, fillOpacity: 0 },
+              filter: function (f) {
+                return f && f.geometry && (f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString');
+              },
+              interactive: false
+            }).addTo(map);
+          } catch (e) {}
+        }
+      };
+      xhr.send();
+    } else {
+      if (_coastlineLayerCatalog && map.hasLayer(_coastlineLayerCatalog)) map.removeLayer(_coastlineLayerCatalog);
+      _coastlineLayerCatalog = null;
+    }
+  }
+
   var _activeAirVisualLayerKey = null;
 
   function refreshAirVisualPresentation() {
@@ -975,7 +1005,8 @@ L.control.scale({
           'toggleSawitNasionalLayer', 'toggleSawitPerkebunanLayer', 'toggleRehabDasLayer', 'togglePerkebunanPl24Layer',
           'toggleRktnSumateraLayer', 'toggleRktnSulawesiLayer', 'toggleRktnPapuaLayer', 'toggleRktnMalukuLayer', 'toggleRktnKalimantanLayer', 'toggleRktnJawaLayer', 'toggleRktnBaliNtLayer',
           'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer', 'toggleSppgSebaranLayer',
-          'toggleConcessionsLayer', 'toggleProtectedLayer', 'toggleMangroveLayer', 'togglePeatlandLayer'
+          'toggleConcessionsLayer', 'toggleProtectedLayer', 'toggleMangroveLayer', 'togglePeatlandLayer',
+          'toggleBumiPersilLayer', 'toggleCoastlineLayer'
         ];
         toggles.forEach(id => {
           const el = document.getElementById(id);
@@ -1195,6 +1226,10 @@ L.control.scale({
         var btCb = document.getElementById('toggleBatnas');
         if (hsCb) hsCb.checked = false;
         if (btCb) btCb.checked = false;
+
+        // 10b-1. Reset Bumi Persil layer
+        if (typeof toggleBumiPersilLayer === 'function') toggleBumiPersilLayer(false);
+
         setBaseMap('google-maps');
         currentBasemapName = 'google-maps';
         window.currentBasemapName = 'google-maps';
@@ -1281,10 +1316,27 @@ L.control.scale({
   const PEMPROV_WMS_URL = 'https://geoserver.jatimprov.go.id/geoserver/wms';
   const MAGELANG_WMS_URL = 'https://geoportal.magelangkota.go.id/geoserver/ows';
   const IGTPR_WMS_URL = 'https://igtpr.atrbpn.go.id/geoserver/ows';
-  const BHUMI_WMS_URL = 'https://atlas.atrbpn.go.id/geoserver/ows';
   const BPS_WMS_URL = 'https://geoserver.bps.go.id/ows';
   const KLATEN_WMS_URL = 'https://geoportal.klaten.go.id/geoserver/wms';
   const CIREBON_WMS_URL = 'https://geoserver.cirebonkota.go.id/geoserver/wms';
+
+  /* ── BPN Bhumi Persil (WMTS) ── */
+  var bumiPersilLayer = null;
+
+  function toggleBumiPersilLayer(show) {
+    if (show) {
+      if (bumiPersilLayer && map.hasLayer(bumiPersilLayer)) return;
+      bumiPersilLayer = L.tileLayer('https://bhumi.atrbpn.go.id/mapproxy/wmts/bhumi_persil/localgrid_high/{z}/{x}/{y}.png', {
+        tileSize: 256,
+        attribution: 'ATRBPN - Bhumi Persil'
+      });
+      bumiPersilLayer.addTo(map);
+      map.setView([-6.1944, 106.8231], 18);
+    } else {
+      if (bumiPersilLayer && map.hasLayer(bumiPersilLayer)) map.removeLayer(bumiPersilLayer);
+      bumiPersilLayer = null;
+    }
+  }
 
   /* ── VIIRS NOAA-20 Thermal Anomalies (NASA GIBS WMS) ── */
   var viirsNoaa20Layer = null;
@@ -1664,6 +1716,7 @@ L.control.scale({
     __fabItems.appendChild(item);
     item.addEventListener('click', function (e) {
       e.stopPropagation();
+      closeFAB();
       openGeotoolsSheet();
     });
   }
@@ -1673,6 +1726,12 @@ L.control.scale({
      ═══════════════════════════════════════ */
 
   var LAYER_CATALOG_DATA = [
+    {
+      cat: 'Bumi Persil',
+      layers: [
+        { id: 'toggleBumiPersilLayer', label: 'Persil Tanah (ATRBPN)' }
+      ]
+    },
     {
       cat: 'Gempa & Bencana',
       layers: [
@@ -1779,7 +1838,8 @@ L.control.scale({
     {
       cat: 'Terrain & Lainnya',
       layers: [
-        { id: 'toggleDemnasOverlay', label: 'Terrain Overlay (SRTM)' }
+        { id: 'toggleDemnasOverlay', label: 'Terrain Overlay (SRTM)' },
+        { id: 'toggleCoastlineLayer', label: 'Garis Pantai (Natural Earth)' }
       ]
     }
   ];
@@ -1910,6 +1970,9 @@ L.control.scale({
         }
         if (cb.dataset.layerId === 'toggleNonTollRoad' && typeof window.toggleNonTollRoadLayer === 'function') {
           window.toggleNonTollRoadLayer(cb.checked);
+        }
+        if (cb.dataset.layerId === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') {
+          window.toggleBumiPersilLayer(cb.checked);
         }
         updateCatCount(cb.closest('.lc-category'));
         closeLayerCatalog();
