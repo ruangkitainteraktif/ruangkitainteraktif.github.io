@@ -974,7 +974,7 @@ L.control.scale({
           'toggleCuacaPelabuhanLayer', 'toggleCuacaPerairanLayer',
           'toggleSawitNasionalLayer', 'toggleSawitPerkebunanLayer', 'toggleRehabDasLayer', 'togglePerkebunanPl24Layer',
           'toggleRktnSumateraLayer', 'toggleRktnSulawesiLayer', 'toggleRktnPapuaLayer', 'toggleRktnMalukuLayer', 'toggleRktnKalimantanLayer', 'toggleRktnJawaLayer', 'toggleRktnBaliNtLayer',
-          'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer',
+          'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer', 'toggleSppgSebaranLayer',
           'toggleConcessionsLayer', 'toggleProtectedLayer', 'toggleMangroveLayer', 'togglePeatlandLayer'
         ];
         toggles.forEach(id => {
@@ -1208,6 +1208,9 @@ L.control.scale({
         // 10c. Bersihkan unified legend & slider
         if (typeof clearUnifiedLegend === 'function') clearUnifiedLegend();
         if (typeof clearUnifiedSlider === 'function') clearUnifiedSlider();
+
+        // 10d. Sync layer catalog checkboxes
+        if (typeof syncLayerCatalogState === 'function') syncLayerCatalogState();
 
         // 11. Reset detail panel
         const detailPanel = document.getElementById('detail-panel');
@@ -1834,7 +1837,14 @@ L.control.scale({
   }
 
   function buildLayerCatalog(container) {
-    var html = '<input type="text" class="lc-search" placeholder="Cari layer..." />';
+    var html = '<div class="lc-donation-banner">' +
+      '<div class="lc-donation-text">Dukung RuangKita</div>' +
+      '<div class="lc-donation-btns">' +
+        '<a href="https://saweria.co/maspannn" target="_blank" rel="noopener" class="lc-donation-btn lc-donation-saweria">Saweria</a>' +
+        '<a href="https://www.paypal.com/paypalme/panjidanutirto" target="_blank" rel="noopener" class="lc-donation-btn lc-donation-paypal">PayPal</a>' +
+      '</div>' +
+    '</div>' +
+    '<input type="text" class="lc-search" placeholder="Cari layer..." />';
     LAYER_CATALOG_DATA.forEach(function(cat, ci) {
       var checked = cat.layers.filter(function(l) {
         var el = findLayerById(l.id);

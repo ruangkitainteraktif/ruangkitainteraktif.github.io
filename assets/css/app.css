@@ -2274,6 +2274,94 @@
     }
     .app-banner-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.2); background: #f0fdfa; }
 
+    /* Layer Catalog donation banner */
+    .lc-donation-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 0 8px 6px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #14b8a6 100%);
+    }
+    .lc-donation-text {
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+    }
+    .lc-donation-btns {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .lc-donation-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .lc-donation-saweria {
+      background: #fff;
+      color: #0d9488;
+    }
+    .lc-donation-saweria:hover { background: #f0fdfa; transform: translateY(-1px); }
+    .lc-donation-paypal {
+      background: #003087;
+      color: #fff;
+    }
+    .lc-donation-paypal:hover { background: #001c64; transform: translateY(-1px); }
+
+    /* Geotools sidebar donation banner */
+    .gt-donation-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 8px 10px 6px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #14b8a6 100%);
+    }
+    .gt-donation-text {
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+    }
+    .gt-donation-btns {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .gt-donation-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .gt-donation-saweria {
+      background: #fff;
+      color: #0d9488;
+    }
+    .gt-donation-saweria:hover { background: #f0fdfa; transform: translateY(-1px); }
+    .gt-donation-paypal {
+      background: #003087;
+      color: #fff;
+    }
+    .gt-donation-paypal:hover { background: #001c64; transform: translateY(-1px); }
+
     .tab-content { display: none; }
     .tab-content h4 {
       font-size: 15px;

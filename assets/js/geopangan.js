@@ -1124,7 +1124,7 @@
       var priceTypeName = priceTypeEl && priceTypeEl.selectedOptions[0] ? priceTypeEl.selectedOptions[0].textContent : '';
 
       if (activeLayer) { map.removeLayer(activeLayer); activeLayer = null; }
-      if (activeLegend) { map.removeControl(activeLegend); activeLegend = null; }
+    if (activeLegend) { if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('geopangan'); activeLegend = null; }
 
       activeLayer = L.geoJSON(geojson, {
         style: function (feature) {
@@ -1367,7 +1367,7 @@
   /* ── Public cleanup (called by reset layers) ── */
   window.clearGeopanganLayers = function () {
     if (activeLayer && map.hasLayer(activeLayer)) { map.removeLayer(activeLayer); activeLayer = null; }
-    if (activeLegend) { map.removeControl(activeLegend); activeLegend = null; }
+    if (activeLegend) { if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('geopangan'); activeLegend = null; }
     if (sebaranPasarLayer && map.hasLayer(sebaranPasarLayer)) { map.removeLayer(sebaranPasarLayer); sebaranPasarLayer = null; }
     if (sppgLayer && map.hasLayer(sppgLayer)) { map.removeLayer(sppgLayer); sppgLayer = null; }
     if (sppgSebaranLayer && map.hasLayer(sppgSebaranLayer)) { map.removeLayer(sppgSebaranLayer); sppgSebaranLayer = null; }
