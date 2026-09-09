@@ -350,6 +350,7 @@ L.control.scale({
     }
 
     currentBasemapName = name;
+    if (name === 'google-maps') hideCoastline();
     var select = document.getElementById('basemapSelect');
     if (select) select.value = name;
     map.fire('basemapchanged', { basemap: name });
@@ -869,11 +870,12 @@ L.control.scale({
     _airvisualLegendControl = null;
   }
 
-  // Coastline layer for AirVisual
-  var _coastlineAirvisualLayer = null;
+  // Shared coastline layer
+  var _coastlineLayer = null;
 
-  function loadCoastlineAirvisual() {
-    if (_coastlineAirvisualLayer) { _coastlineAirvisualLayer.addTo(map); return; }
+  function showCoastline() {
+    if (_coastlineLayer && map.hasLayer(_coastlineLayer)) return;
+    if (currentBasemapName === 'google-maps') return;
     var xhr = new XMLHttpRequest();
     xhr.open('GET', 'assets/data/natural-earth/ne_50m_coastline.geojson', true);
     xhr.onreadystatechange = function () {
@@ -881,59 +883,26 @@ L.control.scale({
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           var geojson = JSON.parse(xhr.responseText);
-          _coastlineAirvisualLayer = L.geoJSON(geojson, {
-            style: function () {
-              return { color: '#ffffff', weight: 1.2, opacity: 0.85, fillOpacity: 0 };
-            },
-            filter: function (feature) {
-              return feature && feature.geometry && (
-                feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString'
-              );
+          _coastlineLayer = L.geoJSON(geojson, {
+            style: { color: '#ffffff', weight: 1.2, opacity: 0.85, fillOpacity: 0 },
+            filter: function (f) {
+              return f && f.geometry && (f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString');
             },
             interactive: false
           }).addTo(map);
-        } catch (e) {
-          console.error('[AirVisual] Gagal load coastline GeoJSON:', e);
-        }
+        } catch (e) {}
       }
     };
     xhr.send();
   }
 
-  function removeCoastlineAirvisual() {
-    if (_coastlineAirvisualLayer && map.hasLayer(_coastlineAirvisualLayer)) {
-      map.removeLayer(_coastlineAirvisualLayer);
-    }
+  function hideCoastline() {
+    if (_coastlineLayer && map.hasLayer(_coastlineLayer)) map.removeLayer(_coastlineLayer);
+    _coastlineLayer = null;
   }
 
-  /* ── Coastline layer toggle (for layer catalog) ── */
-  var _coastlineLayerCatalog = null;
-
   function toggleCoastlineLayer(show) {
-    if (show) {
-      if (_coastlineLayerCatalog && map.hasLayer(_coastlineLayerCatalog)) return;
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', 'assets/data/natural-earth/ne_50m_coastline.geojson', true);
-      xhr.onreadystatechange = function () {
-        if (xhr.readyState !== 4) return;
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            var geojson = JSON.parse(xhr.responseText);
-            _coastlineLayerCatalog = L.geoJSON(geojson, {
-              style: { color: '#ffffff', weight: 1.2, opacity: 0.85, fillOpacity: 0 },
-              filter: function (f) {
-                return f && f.geometry && (f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString');
-              },
-              interactive: false
-            }).addTo(map);
-          } catch (e) {}
-        }
-      };
-      xhr.send();
-    } else {
-      if (_coastlineLayerCatalog && map.hasLayer(_coastlineLayerCatalog)) map.removeLayer(_coastlineLayerCatalog);
-      _coastlineLayerCatalog = null;
-    }
+    if (show) showCoastline(); else hideCoastline();
   }
 
   var _activeAirVisualLayerKey = null;
@@ -943,12 +912,12 @@ L.control.scale({
     if (!activeKeys.length) {
       _activeAirVisualLayerKey = null;
       hideAirVisualLegend();
-      removeCoastlineAirvisual();
+      hideCoastline();
       return;
     }
     if (activeKeys.indexOf(_activeAirVisualLayerKey) === -1) _activeAirVisualLayerKey = activeKeys[0];
     showAirVisualLegend(_activeAirVisualLayerKey);
-    loadCoastlineAirvisual();
+        showCoastline();
   }
 
   function toggleAirVisualLayer(key, visible) {
@@ -1026,6 +995,10 @@ L.control.scale({
         });
 
         toggleCoastlineLayer(false);
+
+        if (typeof toggleTollRoadLayer === 'function') toggleTollRoadLayer(false);
+        if (typeof toggleNonTollRoadLayer === 'function') toggleNonTollRoadLayer(false);
+        if (typeof toggleNationalRoadLayer === 'function') toggleNationalRoadLayer(false);
 
         // 2. Matikan semua geoportal WMS/WFS layers
         geoportalLayers.forEach((layer) => {
@@ -1145,7 +1118,7 @@ L.control.scale({
         if (typeof cuacaMaritimCleanup === 'function') cuacaMaritimCleanup();
         if (typeof pmtilesCleanup === 'function') pmtilesCleanup();
         if (typeof hideAirVisualLegend === 'function') hideAirVisualLegend();
-        if (typeof removeCoastlineAirvisual === 'function') removeCoastlineAirvisual();
+        hideCoastline();
         Object.keys(airVisualLayers).forEach(function (key) {
           if (map.hasLayer(airVisualLayers[key])) map.removeLayer(airVisualLayers[key]);
         });

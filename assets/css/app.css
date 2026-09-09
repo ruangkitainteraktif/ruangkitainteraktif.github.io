@@ -5679,41 +5679,6 @@
         border-bottom: 0;
       }
 
-      /* ── Push FAB, Legend & Slider Up When Bottom Sheet Open (Mobile) ── */
-      body.geotools-sheet-open:not(.geotools-sheet-minimized) .leaflet-bottom.leaflet-right,
-      body.geopangan-sheet-open:not(.geopangan-sheet-minimized) .leaflet-bottom.leaflet-right,
-      body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .leaflet-bottom.leaflet-right,
-      body.geotools-sheet-open:not(.geotools-sheet-minimized) .leaflet-bottom.leaflet-left,
-      body.geopangan-sheet-open:not(.geopangan-sheet-minimized) .leaflet-bottom.leaflet-left,
-      body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .leaflet-bottom.leaflet-left,
-      body.geotools-sheet-open:not(.geotools-sheet-minimized) .leaflet-bottom.leaflet-center,
-      body.geopangan-sheet-open:not(.geopangan-sheet-minimized) .leaflet-bottom.leaflet-center,
-      body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .leaflet-bottom.leaflet-center {
-        margin-bottom: calc(50vh + 12px);
-      }
-      body.geopangan-sheet-open:not(.geopangan-sheet-minimized) .leaflet-bottom.leaflet-right,
-      body.geopangan-sheet-open:not(.geopangan-sheet-minimized) .leaflet-bottom.leaflet-left,
-      body.geopangan-sheet-open:not(.geopangan-sheet-minimized) .leaflet-bottom.leaflet-center {
-        margin-bottom: calc(55vh + 12px);
-      }
-      body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .leaflet-bottom.leaflet-right,
-      body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .leaflet-bottom.leaflet-left,
-      body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .leaflet-bottom.leaflet-center {
-        margin-bottom: calc(35vh + 12px);
-      }
-
-      /* ── Push FAB, Legend & Slider When Sheet Minimized (Mobile) ── */
-      body.geotools-sheet-minimized .leaflet-bottom.leaflet-right,
-      body.geotools-sheet-minimized .leaflet-bottom.leaflet-left,
-      body.geotools-sheet-minimized .leaflet-bottom.leaflet-center,
-      body.geopangan-sheet-minimized .leaflet-bottom.leaflet-right,
-      body.geopangan-sheet-minimized .leaflet-bottom.leaflet-left,
-      body.geopangan-sheet-minimized .leaflet-bottom.leaflet-center,
-      body.hotspot-sheet-minimized .leaflet-bottom.leaflet-right,
-      body.hotspot-sheet-minimized .leaflet-bottom.leaflet-left,
-      body.hotspot-sheet-minimized .leaflet-bottom.leaflet-center {
-        margin-bottom: 56px;
-      }
 
       /* ── Sembunyikan Zoom Control di Mobile ── */
       .zoom-control-wrap { display: none !important; }
