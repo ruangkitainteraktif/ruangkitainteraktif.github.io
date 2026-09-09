@@ -5712,7 +5712,7 @@
       body.hotspot-sheet-minimized .leaflet-bottom.leaflet-right,
       body.hotspot-sheet-minimized .leaflet-bottom.leaflet-left,
       body.hotspot-sheet-minimized .leaflet-bottom.leaflet-center {
-        margin-bottom: 64px;
+        margin-bottom: 56px;
       }
 
       /* ── Sembunyikan Zoom Control di Mobile ── */

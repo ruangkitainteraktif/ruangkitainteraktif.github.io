@@ -8,7 +8,7 @@
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
   const initialCenter = isMobile ? [-1.5, 116.0] : [-2.5, 118.0];
   const initialZoom = isMobile ? 5 : 5;
-  const map = L.map('map', { zoomControl: false, preferCanvas: true, maxZoom: 19, minZoom: 4 }).setView(initialCenter, initialZoom);
+  const map = L.map('map', { zoomControl: false, preferCanvas: true, maxZoom: 18, minZoom: 4 }).setView(initialCenter, initialZoom);
 
 L.control.scale({
   position: 'bottomleft',
@@ -16,6 +16,15 @@ L.control.scale({
   metric: true,
   imperial: false
 }).addTo(map);
+
+  map.on('zoomend', function () {
+    if (map.getZoom() >= 18) {
+      showMapToast('Zoom maksimal. Layer direset.', 'warn');
+      var resetBtn = document.querySelector('.reset-layers-btn');
+      if (resetBtn) resetBtn.click();
+      setBaseMap('google-maps');
+    }
+  });
 
   const baseTileLayers = {
     'osm': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1025,6 +1034,8 @@ L.control.scale({
           }
         });
 
+        toggleCoastlineLayer(false);
+
         // 2. Matikan semua geoportal WMS/WFS layers
         geoportalLayers.forEach((layer) => {
           if (map.hasLayer(layer)) map.removeLayer(layer);
@@ -1987,6 +1998,9 @@ L.control.scale({
         }
         if (cb.dataset.layerId === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') {
           window.toggleBumiPersilLayer(cb.checked);
+        }
+        if (cb.dataset.layerId === 'toggleCoastlineLayer') {
+          toggleCoastlineLayer(cb.checked);
         }
         updateCatCount(cb.closest('.lc-category'));
         closeLayerCatalog();
