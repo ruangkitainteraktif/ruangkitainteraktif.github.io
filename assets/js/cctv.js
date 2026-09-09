@@ -177,7 +177,8 @@
   });
 
   // Toggle Jalan Tol Layer
-  document.getElementById('toggleTollRoad').addEventListener('change', async function() {
+  var _toggleTollRoadEl = document.getElementById('toggleTollRoad');
+  if (_toggleTollRoadEl) _toggleTollRoadEl.addEventListener('change', async function() {
     if (this.checked) {
       if (!tollRoadLoaded) {
         try {
@@ -218,7 +219,8 @@
   let nonTollRoadLayer = null;
   let nonTollLoaded = false;
 
-  document.getElementById('toggleNonTollRoad').addEventListener('change', async function() {
+  var _toggleNonTollRoadEl = document.getElementById('toggleNonTollRoad');
+  if (_toggleNonTollRoadEl) _toggleNonTollRoadEl.addEventListener('change', async function() {
     if (this.checked) {
       if (!nonTollLoaded) {
         try {
@@ -266,7 +268,8 @@
   let nationalRoadLayer = null;
   let nationalRoadLoaded = false;
 
-  document.getElementById('toggleNationalRoad').addEventListener('change', async function() {
+  var _toggleNationalRoadEl = document.getElementById('toggleNationalRoad');
+  if (_toggleNationalRoadEl) _toggleNationalRoadEl.addEventListener('change', async function() {
     if (this.checked) {
       if (!nationalRoadLoaded) {
         try {
