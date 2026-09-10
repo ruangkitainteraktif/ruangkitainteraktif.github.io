@@ -1729,6 +1729,9 @@ L.control.scale({
         { id: 'toggleFeltMarkers', label: '15 Gempa Dirasakan (BMKG)' },
         { id: 'toggleFaultLayer', label: 'Patahan Indonesia (BNPB)' },
         { id: 'toggleFaultLayerNew', label: 'Patahan Indonesia Baru (PUSGEN 2024)' },
+        { id: 'toggleWorldPlatesLayer', label: 'Zona Patahan Dunia (USGS)' },
+        { id: 'toggleGempaNTT', label: 'Gempa NTT' },
+        { id: 'toggleFiniteFaultNTT', label: 'Finite Fault NTT' },
         { id: 'toggleJalurEvakuasi', label: 'Jalur Evakuasi (BNPB)' },
         { id: 'toggleHistoryGempa', label: 'Riwayat Gempa BMKG' },
         { id: 'toggleKatalogGempa', label: 'Katalog Gempa BMKG' },
@@ -1774,6 +1777,7 @@ L.control.scale({
     {
       cat: 'Prediksi Cuaca',
       layers: [
+        { id: 'toggleHujanLayer', label: 'Hujan Realtime (BMKG)' },
         { id: 'toggleWindRgb', label: 'Wind Speed and Direction (GFS)' },
         { id: 'toggleRhRgb', label: 'Relative Humidity (GFS)' },
         { id: 'toggleTp24Rgb', label: 'Total Precipitation 24 Jam (GFS)' },
@@ -1879,6 +1883,8 @@ L.control.scale({
       var el = findLayerById(cb.dataset.layerId);
       if (el) {
         cb.checked = el.checked;
+      } else if (cb.dataset.layerId === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') {
+        cb.checked = isHujanLayerActive();
       } else if (_layerCatalogState.hasOwnProperty(cb.dataset.layerId)) {
         cb.checked = _layerCatalogState[cb.dataset.layerId];
       }
@@ -1892,12 +1898,49 @@ L.control.scale({
         '<a href="https://saweria.co/maspannn" target="_blank" rel="noopener" class="lc-donation-btn lc-donation-saweria">Saweria</a>' +
         '<a href="https://www.paypal.com/paypalme/panjidanutirto" target="_blank" rel="noopener" class="lc-donation-btn lc-donation-paypal">PayPal</a>' +
       '</div>' +
-    '</div>' +
-    '<input type="text" class="lc-search" placeholder="Cari layer..." />';
+    '</div>';
+
+      var activeLayers = [];
+      LAYER_CATALOG_DATA.forEach(function(cat) {
+        cat.layers.forEach(function(l) {
+          var el = findLayerById(l.id);
+          var isChecked = el ? el.checked : (_layerCatalogState[l.id] || false);
+          if (l.id === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') {
+            isChecked = isHujanLayerActive();
+          }
+          if (isChecked) activeLayers.push(l);
+        });
+      });
+
+    if (activeLayers.length > 0) {
+      html += '<div class="lc-category lc-active-group open">';
+      html += '<div class="lc-active-header">';
+      html += '<button class="lc-cat-header lc-active-header-btn" type="button">';
+      html += '<svg class="lc-cat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
+      html += '<span class="lc-cat-title lc-active-title">Layer Aktif</span>';
+      html += '<span class="lc-cat-count">' + activeLayers.length + '</span>';
+      html += '</button>';
+      html += '<button class="lc-clear-all" type="button" id="lcClearAll">Matikan Semua</button>';
+      html += '</div>';
+      html += '<div class="lc-items">';
+      activeLayers.forEach(function(l) {
+        html += '<div class="lc-item lc-active-item">';
+        html += '<input type="checkbox" id="lc_active_' + l.id + '" data-layer-id="' + l.id + '" checked />';
+        html += '<label for="lc_active_' + l.id + '">' + l.label + '</label>';
+        html += '</div>';
+      });
+      html += '</div></div>';
+    }
+
+    html += '<input type="text" class="lc-search" placeholder="Cari layer..." />';
     LAYER_CATALOG_DATA.forEach(function(cat, ci) {
       var checked = cat.layers.filter(function(l) {
         var el = findLayerById(l.id);
-        return (el && el.checked) || _layerCatalogState[l.id];
+        var isOn = (el && el.checked) || _layerCatalogState[l.id];
+        if (l.id === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') {
+          isOn = isHujanLayerActive();
+        }
+        return isOn;
       }).length;
       html += '<div class="lc-category open" data-ci="' + ci + '">';
       html += '<button class="lc-cat-header" type="button">';
@@ -1909,6 +1952,9 @@ L.control.scale({
       cat.layers.forEach(function(l) {
         var el = findLayerById(l.id);
         var isChecked = el ? el.checked : (_layerCatalogState[l.id] || false);
+        if (l.id === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') {
+          isChecked = isHujanLayerActive();
+        }
         html += '<div class="lc-item">';
         html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
         html += '<label for="lc_' + l.id + '">' + l.label + '</label>';
@@ -1918,6 +1964,20 @@ L.control.scale({
     });
     container.innerHTML = html;
 
+    var clearAllBtn = document.getElementById('lcClearAll');
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        container.querySelectorAll('.lc-active-item input[type="checkbox"]').forEach(function(cb) {
+          if (cb.checked) {
+            cb.checked = false;
+            cb.dispatchEvent(new Event('change'));
+          }
+        });
+        buildLayerCatalog(container);
+      });
+    }
+
     container.querySelectorAll('.lc-cat-header').forEach(function(btn) {
       btn.addEventListener('click', function() {
         btn.closest('.lc-category').classList.toggle('open');
@@ -1926,47 +1986,71 @@ L.control.scale({
 
     container.querySelectorAll('.lc-item input[type="checkbox"]').forEach(function(cb) {
       cb.addEventListener('change', function() {
-        var el = findLayerById(cb.dataset.layerId);
-        if (el) {
-          el.checked = cb.checked;
-          el.dispatchEvent(new Event('change'));
+        var id = cb.dataset.layerId;
+        var hasWindowToggle =
+          (id === 'toggleSignificantMarkers' && typeof window.toggleSignificantMarkers === 'function') ||
+          (id === 'toggleFeltMarkers' && typeof window.toggleFeltMarkers === 'function') ||
+          (id === 'toggleLatestEarthquake' && typeof window.toggleLatestEarthquake === 'function') ||
+          (id === 'toggleSebaranPasar' && typeof window.toggleSebaranPasar === 'function') ||
+          (id === 'toggleSppgSebaranLayer' && typeof window.toggleSppgSebaranLayer === 'function') ||
+          (id === 'toggleSppgLayer' && typeof window.toggleSppg === 'function') ||
+          (id === 'toggleTollRoad' && typeof window.toggleTollRoadLayer === 'function') ||
+          (id === 'toggleNationalRoad' && typeof window.toggleNationalRoadLayer === 'function') ||
+          (id === 'toggleNonTollRoad' && typeof window.toggleNonTollRoadLayer === 'function') ||
+          (id === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') ||
+          (id === 'toggleHujanLayer') ||
+          (id === 'toggleCoastlineLayer');
+        if (!hasWindowToggle) {
+          var el = findLayerById(id);
+          if (el) {
+            el.checked = cb.checked;
+            el.dispatchEvent(new Event('change'));
+          } else {
+            _layerCatalogState[id] = cb.checked;
+          }
         } else {
-          _layerCatalogState[cb.dataset.layerId] = cb.checked;
+          _layerCatalogState[id] = cb.checked;
+          var el = findLayerById(id);
+          if (el) el.checked = cb.checked;
         }
-        if (cb.dataset.layerId === 'toggleSignificantMarkers' && typeof window.toggleSignificantMarkers === 'function') {
+        if (id === 'toggleSignificantMarkers' && typeof window.toggleSignificantMarkers === 'function') {
           window.toggleSignificantMarkers(cb.checked);
         }
-        if (cb.dataset.layerId === 'toggleFeltMarkers' && typeof window.toggleFeltMarkers === 'function') {
+        if (id === 'toggleFeltMarkers' && typeof window.toggleFeltMarkers === 'function') {
           window.toggleFeltMarkers(cb.checked);
         }
-        if (cb.dataset.layerId === 'toggleLatestEarthquake' && typeof window.toggleLatestEarthquake === 'function') {
+        if (id === 'toggleLatestEarthquake' && typeof window.toggleLatestEarthquake === 'function') {
           window.toggleLatestEarthquake(cb.checked);
         }
-        if (cb.dataset.layerId === 'toggleSebaranPasar' && typeof window.toggleSebaranPasar === 'function') {
+        if (id === 'toggleSebaranPasar' && typeof window.toggleSebaranPasar === 'function') {
           window.toggleSebaranPasar(cb.checked);
         }
-        if (cb.dataset.layerId === 'toggleSppgSebaranLayer' && typeof window.toggleSppgSebaranLayer === 'function') {
+        if (id === 'toggleSppgSebaranLayer' && typeof window.toggleSppgSebaranLayer === 'function') {
           window.toggleSppgSebaranLayer(cb.checked);
         }
-        if (cb.dataset.layerId === 'toggleSppgLayer' && typeof window.toggleSppg === 'function') {
+        if (id === 'toggleSppgLayer' && typeof window.toggleSppg === 'function') {
           window.toggleSppg(cb.checked);
         }
-        if (cb.dataset.layerId === 'toggleTollRoad' && typeof window.toggleTollRoadLayer === 'function') {
+        if (id === 'toggleTollRoad' && typeof window.toggleTollRoadLayer === 'function') {
           window.toggleTollRoadLayer(cb.checked);
         }
-        if (cb.dataset.layerId === 'toggleNationalRoad' && typeof window.toggleNationalRoadLayer === 'function') {
+        if (id === 'toggleNationalRoad' && typeof window.toggleNationalRoadLayer === 'function') {
           window.toggleNationalRoadLayer(cb.checked);
         }
-        if (cb.dataset.layerId === 'toggleNonTollRoad' && typeof window.toggleNonTollRoadLayer === 'function') {
+        if (id === 'toggleNonTollRoad' && typeof window.toggleNonTollRoadLayer === 'function') {
           window.toggleNonTollRoadLayer(cb.checked);
         }
-        if (cb.dataset.layerId === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') {
+        if (id === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') {
           window.toggleBumiPersilLayer(cb.checked);
         }
-        if (cb.dataset.layerId === 'toggleCoastlineLayer') {
+        if (id === 'toggleCoastlineLayer') {
           toggleCoastlineLayer(cb.checked);
         }
+        if (id === 'toggleHujanLayer') {
+          toggleHujanLayer(cb.checked);
+        }
         updateCatCount(cb.closest('.lc-category'));
+        delete container.dataset.built;
         closeLayerCatalog();
       });
     });
