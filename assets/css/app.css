@@ -185,6 +185,13 @@
     }
     .unified-search-clear:hover { background: rgba(0,0,0,.12); }
     /* ── Layer Catalog Button ── */
+    .reset-layers-search-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border: 0; border-radius: 50%; flex-shrink: 0;
+      background: rgba(239,68,68,.1); color: #ef4444; cursor: pointer;
+      transition: background .15s, transform .15s;
+    }
+    .reset-layers-search-btn:hover { background: rgba(239,68,68,.2); transform: scale(1.08); }
     .layer-catalog-btn {
       display: flex; align-items: center; justify-content: center;
       width: 28px; height: 28px; border: 0; border-radius: 50%; flex-shrink: 0;
@@ -394,7 +401,6 @@
       box-shadow: 0 2px 8px rgba(0,0,0,.15);
     }
     .map-fab-item:hover[title]::after { opacity: 1; }
-    .map-fab-item .reset-layers-btn,
     .map-fab-item .geoportal-print-btn,
     .map-fab-item .sat-export-btn,
     .map-fab-item .draw-fab-btn,
@@ -425,33 +431,6 @@
     .leaflet-control-locate.active a::after, .leaflet-control-locate.following a::after { display: none !important; }
     @keyframes locate-spin { to { transform: rotate(360deg); } }
 
-    .reset-layers-btn {
-      display: grid;
-      place-items: center;
-      width: 38px !important;
-      height: 38px !important;
-      margin: 8px !important;
-      margin-bottom: 0 !important;
-      border: 1px solid var(--border-color) !important;
-      border-radius: 50% !important;
-      background: var(--bg-card) !important;
-      color: var(--accent) !important;
-      font-size: 18px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 6px 18px rgba(8,63,102,.2) !important;
-      transition: transform .2s, box-shadow .2s, background .2s;
-    }
-    .reset-layers-btn:hover {
-      background: var(--bg-card-hover) !important;
-      box-shadow: inset 0 0 0 1px var(--accent);
-      transform: translateY(-2px);
-    }
-    .reset-layers-btn.reset-flash {
-      background: var(--accent) !important;
-      color: var(--text-inverse) !important;
-      transform: scale(0.92);
-    }
     .geoportal-print-btn {
       display: grid;
       place-items: center;

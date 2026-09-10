@@ -554,7 +554,7 @@
   }
 
   if (typeof map !== 'undefined') {
-    new SatExportControl().addTo(map);
+    /* Export PNG button removed */
   }
 
   window.SatelliteExport = { exportImage: exportImage };

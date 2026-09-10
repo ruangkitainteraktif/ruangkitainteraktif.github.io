@@ -960,16 +960,7 @@ L.control.scale({
     }
   });
 
-  const ResetLayersControl = L.Control.extend({
-    options: { position: 'bottomright' },
-    onAdd() {
-      const btn = L.DomUtil.create('button', 'reset-layers-btn');
-      btn.innerHTML = '↺';
-      btn.title = 'Reset semua layer';
-      btn.setAttribute('aria-label', 'Reset semua layer aktif');
-      L.DomEvent.disableClickPropagation(btn);
-      L.DomEvent.disableScrollPropagation(btn);
-      btn.addEventListener('click', () => {
+  function resetAllLayers() {
         // 1. Matikan layer jalan & angin (checkbox-driven)
         const toggles = [
           'toggleTollRoad', 'toggleNonTollRoad', 'toggleNationalRoad',
@@ -1236,15 +1227,10 @@ L.control.scale({
         if (detailPanel) detailPanel.classList.add('hidden');
         const detailBtn = window._detailPanelBtn;
         if (detailBtn) detailBtn.classList.remove('active');
-
-        btn.classList.add('reset-flash');
-        setTimeout(() => btn.classList.remove('reset-flash'), 400);
-      });
-      return btn;
-    }
-  });
+  }
   window.__geoportalPrintCtrl = new PrintMapControl().addTo(map);
-  new ResetLayersControl().addTo(map);
+
+  document.getElementById('resetLayersBtn').addEventListener('click', resetAllLayers);
 
   /* ── Pindahkan tombol ke dalam FAB ── */
   setTimeout(function () {
@@ -1252,8 +1238,6 @@ L.control.scale({
     moveToFAB('.basemap-btn-vector', 'Basemap');
     moveToFAB('.draw-fab-wrap', 'Gambar & Ukur');
     moveToFAB('.geoportal-print-btn', 'Cetak Peta');
-    moveToFAB('.sat-export-btn', 'Export PNG');
-    moveToFAB('.reset-layers-btn', 'Reset Layer');
     moveToFAB('.leaflet-control-locate', 'Lokasi Saya');
 
     /* ── Zoom Control di bawah tengah ── */
@@ -1328,7 +1312,6 @@ L.control.scale({
   function toggleViirsNoaa20Layer(show) {
     if (show) {
       if (viirsNoaa20Layer && map.hasLayer(viirsNoaa20Layer)) return;
-      if (typeof LayerLoading !== 'undefined') LayerLoading.show();
       var today = new Date().toISOString().slice(0, 10);
       viirsNoaa20Layer = L.tileLayer.wms(
         'https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi',
@@ -1400,7 +1383,6 @@ L.control.scale({
   function toggleEcmwfFireLayer(show) {
     if (show) {
       if (ecmwfFireLayer && map.hasLayer(ecmwfFireLayer)) return;
-      if (typeof LayerLoading !== 'undefined') LayerLoading.show();
       ecmwfFireLayer = L.tileLayer.wms(
         'https://eccharts.ecmwf.int/wms/?token=public',
         {
@@ -1411,12 +1393,8 @@ L.control.scale({
           attribution: 'ECMWF'
         }
       );
-      ecmwfFireLayer.on('load', function () {
-        if (typeof LayerLoading !== 'undefined') LayerLoading.hide();
-      });
-      ecmwfFireLayer.on('error', function () {
-        if (typeof LayerLoading !== 'undefined') LayerLoading.hide();
-      });
+      ecmwfFireLayer.on('load', function () {});
+      ecmwfFireLayer.on('error', function () {});
       ecmwfFireLayer.addTo(map);
       showEcmwfFireLegend();
     } else {

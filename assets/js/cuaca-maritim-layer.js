@@ -260,11 +260,9 @@
       pelLoading = false;
       window._cuacaPelabuhanData = ports;
       setInfo('Cuaca pelabuhan: ' + ports.length + ' stasiun — BMKG Maritim');
-      if (typeof LayerLoading !== 'undefined') LayerLoading.hide();
     }).catch(function (e) {
       pelLoading = false;
       setInfo('Gagal memuat data cuaca pelabuhan.');
-      if (typeof LayerLoading !== 'undefined') LayerLoading.hide();
       console.error('[Cuaca Maritim] pelabuhan gagal:', e);
     });
   }
@@ -290,11 +288,9 @@
       perLoading = false;
       window._cuacaPerairanData = { geojson: geojson, weather: weatherByCode };
       setInfo('Cuaca perairan: ' + Object.keys(weatherByCode).length + ' wilayah — BMKG Maritim');
-      if (typeof LayerLoading !== 'undefined') LayerLoading.hide();
     }).catch(function (e) {
       perLoading = false;
       setInfo('Gagal memuat data cuaca perairan.');
-      if (typeof LayerLoading !== 'undefined') LayerLoading.hide();
       console.error('[Cuaca Maritim] perairan gagal:', e);
     });
   }

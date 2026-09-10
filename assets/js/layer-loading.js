@@ -73,23 +73,12 @@
 
   var overlay = document.createElement('div');
   overlay.className = 'map-loading-overlay';
-  overlay.innerHTML = '<div class="map-loading-spinner" role="status" aria-label="Memuat layer..."></div>';
-
-  var mapEl = document.getElementById('map');
-  if (mapEl) mapEl.appendChild(overlay);
 
   var pending = 0;
   var _cbState = {};
 
-  function show() {
-    if (pending === 0 && overlay) overlay.classList.add('active');
-    pending++;
-  }
-
-  function hideOne() {
-    pending = Math.max(0, pending - 1);
-    if (pending === 0 && overlay) overlay.classList.remove('active');
-  }
+  function show() {}
+  function hideOne() {}
 
   function getLayerName(cb) {
     var id = cb.id || '';
@@ -112,6 +101,7 @@
   document.addEventListener('change', function (e) {
     var cb = e.target;
     if (!cb || cb.type !== 'checkbox' || !cb.checked) return;
+    if (cb.closest && cb.closest('.lc-item')) return;
     var isLayer = /^(toggle|geoidToggle)/.test(cb.id) ||
       (cb.closest && (cb.closest('.cctv-layer-toggle') || cb.closest('.geoid-check')));
     if (isLayer) {
@@ -126,6 +116,7 @@
           showToast(getLayerName(cb));
         }
         delete _cbState[cbId];
+        hideOne();
       }, SAFETY_TIMEOUT);
     }
   }, true);
