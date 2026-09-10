@@ -5632,7 +5632,7 @@
     }
     #attr-table-sheet .at-sheet-minimize:hover, #attr-table-sheet .at-sheet-close:hover { background: var(--border-color); }
     #attr-table-sheet .at-sheet-body {
-      flex: 1 1 auto; min-height: 0; overflow-y: auto;
+      flex: 1 1 auto; min-height: 0; overflow: auto;
       padding: 12px 16px 16px; -webkit-overflow-scrolling: touch;
       scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent;
     }
