@@ -350,7 +350,6 @@ L.control.scale({
     }
 
     currentBasemapName = name;
-    if (name === 'google-maps') hideCoastline();
     var select = document.getElementById('basemapSelect');
     if (select) select.value = name;
     map.fire('basemapchanged', { basemap: name });
@@ -872,17 +871,23 @@ L.control.scale({
 
   // Shared coastline layer
   var _coastlineLayer = null;
+  var _coastlineGeneration = 0;
+  var _coastlineXhr = null;
 
   function showCoastline() {
     if (_coastlineLayer && map.hasLayer(_coastlineLayer)) return;
-    if (currentBasemapName === 'google-maps') return;
+    if (_coastlineXhr) { _coastlineXhr.abort(); _coastlineXhr = null; }
+    var gen = ++_coastlineGeneration;
     var xhr = new XMLHttpRequest();
+    _coastlineXhr = xhr;
     xhr.open('GET', 'assets/data/natural-earth/ne_50m_coastline.geojson', true);
     xhr.onreadystatechange = function () {
       if (xhr.readyState !== 4) return;
+      _coastlineXhr = null;
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           var geojson = JSON.parse(xhr.responseText);
+          if (gen !== _coastlineGeneration) return;
           _coastlineLayer = L.geoJSON(geojson, {
             style: { color: '#ffffff', weight: 1.2, opacity: 0.85, fillOpacity: 0 },
             filter: function (f) {
@@ -897,6 +902,8 @@ L.control.scale({
   }
 
   function hideCoastline() {
+    _coastlineGeneration++;
+    if (_coastlineXhr) { _coastlineXhr.abort(); _coastlineXhr = null; }
     if (_coastlineLayer && map.hasLayer(_coastlineLayer)) map.removeLayer(_coastlineLayer);
     _coastlineLayer = null;
   }
@@ -961,6 +968,7 @@ L.control.scale({
   });
 
   function resetAllLayers() {
+        _layerCatalogState = {};
         // 1. Matikan layer jalan & angin (checkbox-driven)
         const toggles = [
           'toggleTollRoad', 'toggleNonTollRoad', 'toggleNationalRoad',
@@ -975,7 +983,7 @@ L.control.scale({
           'toggleRktnSumateraLayer', 'toggleRktnSulawesiLayer', 'toggleRktnPapuaLayer', 'toggleRktnMalukuLayer', 'toggleRktnKalimantanLayer', 'toggleRktnJawaLayer', 'toggleRktnBaliNtLayer',
           'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer', 'toggleSppgSebaranLayer',
           'toggleConcessionsLayer', 'toggleProtectedLayer', 'toggleMangroveLayer', 'togglePeatlandLayer',
-          'toggleBumiPersilLayer', 'toggleCoastlineLayer'
+          'toggleBumiPersilLayer'
         ];
         toggles.forEach(id => {
           const el = document.getElementById(id);
