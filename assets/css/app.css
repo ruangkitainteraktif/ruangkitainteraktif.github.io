@@ -5596,6 +5596,105 @@
     #geotools-sheet .gs-sheet-body::-webkit-scrollbar-track { background: transparent; }
     #geotools-sheet .gs-sheet-body::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
 
+    /* ── Attribute Table Sheet (Desktop: kanan) ── */
+    #attr-table-sheet {
+      display: flex; position: fixed; top: 120px; right: 12px; bottom: 12px; left: auto;
+      width: min(420px, calc(100vw - 106px)); height: auto;
+      border-radius: 16px; z-index: 1100;
+      transform: translateX(calc(100% + 24px)); transition: transform 0.3s ease-in-out;
+      flex-direction: column; overflow: hidden;
+      background: var(--bg-primary); box-shadow: var(--shadow-sheet); visibility: hidden;
+      color: var(--text-primary);
+    }
+    #attr-table-sheet.attr-table-sheet-open { transform: translateX(0); visibility: visible; }
+    body.attr-table-sheet-open:not(.attr-table-sheet-minimized) .leaflet-bottom.leaflet-right { right: calc(min(420px, calc(100vw - 106px)) + 28px); }
+    #attr-table-sheet .at-sheet-handle { display: none; }
+    #attr-table-sheet .at-sheet-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px 10px; border-bottom: 1px solid var(--border-color); flex-shrink: 0;
+    }
+    #attr-table-sheet .at-sheet-title {
+      display: flex; align-items: center; gap: 6px;
+      color: var(--text-primary); font-size: 13px; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    #attr-table-sheet .at-sheet-actions { display: flex; align-items: center; gap: 6px; }
+    #attr-table-sheet .at-sheet-minimize, #attr-table-sheet .at-sheet-close {
+      display: grid; width: 28px; height: 28px; place-items: center;
+      border: 0; border-radius: 50%; background: var(--bg-tertiary); color: var(--text-tertiary);
+      cursor: pointer; font-size: 16px; transition: background .15s;
+    }
+    #attr-table-sheet .at-sheet-minimize:hover, #attr-table-sheet .at-sheet-close:hover { background: var(--border-color); }
+    #attr-table-sheet .at-sheet-body {
+      flex: 1 1 auto; min-height: 0; overflow-y: auto;
+      padding: 12px 16px 16px; -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent;
+    }
+    #attr-table-sheet .at-sheet-body::-webkit-scrollbar { width: 5px; }
+    #attr-table-sheet .at-sheet-body::-webkit-scrollbar-track { background: transparent; }
+    #attr-table-sheet .at-sheet-body::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+    #attr-table-sheet.attr-table-sheet-minimized {
+      top: auto; right: auto; bottom: 12px; left: 50%;
+      width: min(330px, calc(100vw - 24px)); height: 52px;
+      border-radius: 26px; transform: translateX(-50%); visibility: visible;
+    }
+    #attr-table-sheet.attr-table-sheet-minimized .at-sheet-handle,
+    #attr-table-sheet.attr-table-sheet-minimized .at-sheet-body { display: none; }
+    #attr-table-sheet.attr-table-sheet-minimized .at-sheet-head {
+      min-height: 52px; box-sizing: border-box; padding: 10px 16px; border-bottom: 0;
+    }
+
+    /* ── Attr Table Inner Styles ── */
+    .at-controls { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+    .at-search {
+      width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 8px;
+      font-size: 12px; background: var(--bg-secondary); color: var(--text-primary);
+      box-sizing: border-box; outline: none; transition: border-color .15s;
+    }
+    .at-search:focus { border-color: #2563eb; }
+    .at-info { font-size: 11px; color: var(--text-tertiary); }
+    .at-table-wrap { overflow-x: auto; margin: 0 -4px; }
+    .at-table {
+      width: 100%; border-collapse: collapse; font-size: 11px; white-space: nowrap;
+    }
+    .at-table th {
+      position: sticky; top: 0; background: var(--bg-secondary);
+      padding: 7px 8px; text-align: left; font-weight: 600; font-size: 10px;
+      color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .3px;
+      border-bottom: 2px solid var(--border-color); z-index: 1;
+    }
+    .at-table td {
+      padding: 6px 8px; border-bottom: 1px solid var(--border-color);
+      max-width: 180px; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary);
+    }
+    .at-table .at-th-no, .at-table .at-td-no { width: 36px; text-align: center; }
+    .at-row { cursor: pointer; transition: background .12s; }
+    .at-row:hover { background: rgba(37, 99, 235, .06); }
+    .at-row-active { background: rgba(37, 99, 235, .12) !important; }
+    .at-empty, .at-loading, .at-wms-hint {
+      text-align: center; padding: 24px 16px; color: var(--text-tertiary); font-size: 12px;
+    }
+    .at-wms-hint { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .at-wms-hint svg { color: #2563eb; }
+    .at-pagination {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      padding: 10px 0 4px; border-top: 1px solid var(--border-color); margin-top: 8px;
+    }
+    .at-page-btn {
+      padding: 4px 12px; border: 1px solid var(--border-color); border-radius: 6px;
+      background: var(--bg-secondary); color: var(--text-primary); font-size: 11px;
+      cursor: pointer; transition: background .12s;
+    }
+    .at-page-btn:hover:not(:disabled) { background: rgba(37, 99, 235, .08); }
+    .at-page-btn:disabled { opacity: .4; cursor: default; }
+    .at-page-info { font-size: 11px; color: var(--text-tertiary); }
+
+    @keyframes at-pulse {
+      0% { opacity: 1; }
+      50% { opacity: .3; }
+      100% { opacity: 1; }
+    }
+    .at-highlight-pulse { animation: at-pulse 1s ease-in-out 3; }
+
     @media (max-width: 768px) {
       #geopangan-sheet {
         top: auto;
@@ -5714,6 +5813,38 @@
         width: 100%; height: 52px;
         border-radius: 18px 18px 0 0;
         transform: translateY(0);
+      }
+
+      /* ── Attribute Table Sheet (Mobile: bottom 50vh) ── */
+      #attr-table-sheet {
+        top: auto; right: 0; bottom: 0; left: 0;
+        width: 100%; height: 50vh; height: 50dvh;
+        border-radius: 16px 16px 0 0;
+        transform: translateY(100%);
+      }
+      #attr-table-sheet.attr-table-sheet-open { transform: translateY(0); }
+      #attr-table-sheet .at-sheet-handle {
+        display: flex; width: 36px; height: 4px;
+        margin: 8px auto 6px; flex-shrink: 0;
+        border-radius: 999px; background: #d1d5db; cursor: pointer;
+      }
+      #attr-table-sheet .at-sheet-head { padding: 4px 16px 10px; }
+      #attr-table-sheet .at-sheet-body { padding: 8px 12px 20px; }
+      #attr-table-sheet.attr-table-sheet-minimized {
+        top: auto; right: 0; bottom: 0; left: 0;
+        width: 100%; height: 52px;
+        border-radius: 16px 16px 0 0;
+        transform: translateY(0);
+        border: 1px solid rgba(255, 255, 255, .72);
+        background: rgba(255, 255, 255, .92);
+        box-shadow: 0 -2px 12px rgba(0,0,0,.1);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+      #attr-table-sheet.attr-table-sheet-minimized .at-sheet-handle,
+      #attr-table-sheet.attr-table-sheet-minimized .at-sheet-body { display: none; }
+      #attr-table-sheet.attr-table-sheet-minimized .at-sheet-head {
+        min-height: 52px; box-sizing: border-box; padding: 10px 16px; border-bottom: 0;
       }
     }
 

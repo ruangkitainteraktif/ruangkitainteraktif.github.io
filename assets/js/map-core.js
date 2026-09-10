@@ -2050,6 +2050,15 @@ L.control.scale({
           toggleHujanLayer(cb.checked);
         }
         updateCatCount(cb.closest('.lc-category'));
+        if (cb.checked && typeof hasAttrSupport === 'function' && hasAttrSupport(id)) {
+          if (typeof isWmsAttrLayer === 'function' && isWmsAttrLayer(id)) {
+            openWmsAttrTable(id);
+          } else {
+            setTimeout(function () { openAttrTable(id); }, 300);
+          }
+        } else if (!cb.checked && typeof closeAttrTableSheet === 'function') {
+          closeAttrTableSheet();
+        }
         delete container.dataset.built;
         closeLayerCatalog();
       });
