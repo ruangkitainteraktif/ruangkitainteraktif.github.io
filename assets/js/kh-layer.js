@@ -120,4 +120,5 @@
   });
 
   window.khLayerCleanup = cleanup;
+  Object.defineProperty(window, 'khLayerObj', { get: function () { return layer; } });
 })();

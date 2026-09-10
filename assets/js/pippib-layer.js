@@ -101,4 +101,5 @@
   });
 
   window.pippibLayerCleanup = cleanup;
+  Object.defineProperty(window, 'pippibLayerObj', { get: function () { return layer; } });
 })();

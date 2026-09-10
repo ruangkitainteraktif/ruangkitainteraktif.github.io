@@ -114,4 +114,5 @@
   });
 
   window.isKrbTitikActive = function () { return krbTitikVisible; };
+  Object.defineProperty(window, 'krbTitikLayerObj', { get: function () { return krbTitikLayer; } });
 })();

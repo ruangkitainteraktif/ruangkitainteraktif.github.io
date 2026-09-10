@@ -178,4 +178,5 @@
     const cb = document.getElementById('toggleJalurEvakuasi');
     if (cb) cb.checked = false;
   };
+  Object.defineProperty(window, 'jalurEvakuasiLayerObj', { get: function () { return jalurLayer; } });
 })();

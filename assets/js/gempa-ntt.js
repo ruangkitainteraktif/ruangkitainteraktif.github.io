@@ -84,4 +84,5 @@
   });
 
   window.isGempaNTTActive = function () { return visible; };
+  Object.defineProperty(window, 'gempaNTTLayerObj', { get: function () { return layer; } });
 })();

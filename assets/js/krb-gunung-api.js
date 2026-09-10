@@ -118,4 +118,5 @@
   });
 
   window.isKrbGunungApiActive = function () { return krbVisible; };
+  Object.defineProperty(window, 'krbGunungApiLayerObj', { get: function () { return krbLayer; } });
 })();

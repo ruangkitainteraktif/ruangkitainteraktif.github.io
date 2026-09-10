@@ -70,4 +70,5 @@
     cb.addEventListener('change', function () { toggleLayer(this.checked); });
   });
   window.isPetaGeologiActive = function () { return visible; };
+  Object.defineProperty(window, 'petaGeologiLayerObj', { get: function () { return layer; } });
 })();

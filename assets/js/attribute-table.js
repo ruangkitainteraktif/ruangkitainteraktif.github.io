@@ -181,21 +181,252 @@
         var ll = m.getLatLng();
         return [ll.lat, ll.lng];
       }
+    },
+    toggleCuacaPelabuhanLayer: {
+      name: 'Cuaca Pelabuhan (BMKG)',
+      type: 'vector',
+      getFeatures: function () { return window._cuacaPelabuhanData || []; },
+      props: ['name', 'code', 'weather', 'wave_cat', 'wind_speed_min', 'wind_speed_max'],
+      getLatLng: function (item) {
+        if (item.lat && item.lon) return [parseFloat(item.lat), parseFloat(item.lon)];
+        if (item.lat && item.lng) return [parseFloat(item.lat), parseFloat(item.lng)];
+        return null;
+      }
+    },
+    toggleCuacaPerairanLayer: {
+      name: 'Cuaca Perairan (BMKG)',
+      type: 'geojson',
+      getLayer: function () { return typeof perGroup !== 'undefined' ? perGroup : null; },
+      props: ['ID_MAR', 'WP_IMM', 'WilPel'],
+      getLatLng: function (f) {
+        if (f.geometry && f.geometry.coordinates) {
+          var c = f.geometry.coordinates;
+          if (f.geometry.type === 'Polygon' && c.length && c[0].length) return [c[0][0][1], c[0][0][0]];
+          if (f.geometry.type === 'MultiPolygon' && c.length && c[0].length && c[0][0].length) return [c[0][0][0][1], c[0][0][0][0]];
+        }
+        return null;
+      }
+    },
+    togglePetaGeologi: {
+      name: 'Peta Geologi (BIG)',
+      type: 'featureLayer',
+      getLayer: function () { return window.petaGeologiLayerObj || null; },
+      props: ['namobj', 'umurobj', 'remark'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng ? m.getLatLng() : null;
+        return ll ? [ll.lat, ll.lng] : null;
+      }
+    },
+    toggleGeostruktur: {
+      name: 'Geologi Geostruktur (BIG)',
+      type: 'featureLayer',
+      getLayer: function () { return window.geostrukturLayerObj || null; },
+      props: ['namaobj', 'klsstr', 'remark'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng ? m.getLatLng() : null;
+        return ll ? [ll.lat, ll.lng] : null;
+      }
+    },
+    toggleKrbGunungApi: {
+      name: 'KRB Gunung Api (BIG)',
+      type: 'featureLayer',
+      getLayer: function () { return window.krbGunungApiLayerObj || null; },
+      props: ['namobj', 'clapi', 'eru', 'indga', 'lav', 'matga', 'vei', 'remark'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng ? m.getLatLng() : null;
+        return ll ? [ll.lat, ll.lng] : null;
+      }
+    },
+    toggleKrbTitik: {
+      name: 'Gas Vulkanik Gunung Api (BIG)',
+      type: 'featureLayer',
+      getLayer: function () { return window.krbTitikLayerObj || null; },
+      props: ['namobj', 'indga', 'gasvul', 'eru', 'lav', 'matga', 'remark'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng ? m.getLatLng() : null;
+        return ll ? [ll.lat, ll.lng] : null;
+      }
+    },
+    toggleKarst: {
+      name: 'Kawasan Bentang Alam Karst (BIG)',
+      type: 'featureLayer',
+      getLayer: function () { return window.karstLayerObj || null; },
+      props: ['namobj', 'skkbak', 'datstr', 'klskbak', 'remark'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng ? m.getLatLng() : null;
+        return ll ? [ll.lat, ll.lng] : null;
+      }
+    },
+    toggleLikuifaksi: {
+      name: 'Kerentanan Likuifaksi (BIG)',
+      type: 'featureLayer',
+      getLayer: function () { return window.likuifaksiLayerObj || null; },
+      props: ['namobj', 'kerentanan', 'keterangan'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng ? m.getLatLng() : null;
+        return ll ? [ll.lat, ll.lng] : null;
+      }
+    },
+    togglePatahanAktif: {
+      name: 'Patahan Aktif 1:50K (BIG)',
+      type: 'featureLayer',
+      getLayer: function () { return window.patahanAktifLayerObj || null; },
+      props: ['namobj', 'jenispthn', 'pjgpthn', 'lokasi', 'geologi', 'sjrhgempa', 'remark'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng ? m.getLatLng() : null;
+        return ll ? [ll.lat, ll.lng] : null;
+      }
+    },
+    toggleGambutLayer: {
+      name: 'Lahan Gambut (SIMONTANA)',
+      type: 'featureLayer',
+      getLayer: function () { return window.gambutLayerObj || null; },
+      props: ['lg_50', 'l', 'lpdc', 'lcyll'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng ? m.getLatLng() : null;
+        return ll ? [ll.lat, ll.lng] : null;
+      }
+    },
+    toggleKhLayer: {
+      name: 'Kawasan Hutan (Kemenhut)',
+      type: 'featureLayer',
+      getLayer: function () { return window.khLayerObj || null; },
+      props: ['namobj', 'wadmkk', 'wadmpr', 'fungsikws', 'noskpnjk', 'lskpnjk', 'keterangan'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng ? m.getLatLng() : null;
+        return ll ? [ll.lat, ll.lng] : null;
+      }
+    },
+    togglePippibLayer: {
+      name: 'PIPPIB 2023 Periode I',
+      type: 'featureLayer',
+      getLayer: function () { return window.pippibLayerObj || null; },
+      props: ['namaobj', 'remark', 'pippib23_1'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng ? m.getLatLng() : null;
+        return ll ? [ll.lat, ll.lng] : null;
+      }
+    },
+    toggleKawasanHutanLayer: {
+      name: 'Kawasan Hutan (ESDM)',
+      type: 'featureLayer',
+      getLayer: function () { return window.kawasanHutanLayerObj || null; },
+      props: ['namobj', 'deskripsi', 'noskkws', 'lskkws'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng ? m.getLatLng() : null;
+        return ll ? [ll.lat, ll.lng] : null;
+      }
+    },
+    toggleGempaNTT: {
+      name: 'Gempa NTT',
+      type: 'featureLayer',
+      getLayer: function () { return window.gempaNTTLayerObj || null; },
+      props: ['provinsi', 'kabupaten', 'jenis_bencana', 'tanggal_update', 'meninggal', 'luka_sakit_', 'mengungsi_', 'rumah_rusak'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng ? m.getLatLng() : null;
+        return ll ? [ll.lat, ll.lng] : null;
+      }
+    },
+    toggleSawahDilindungi: {
+      name: 'Sawah Dilindungi (BIG)',
+      type: 'featureLayer',
+      getLayer: function () { return window.sawahDilindungiLayerObj || null; },
+      props: ['lsd', 'wadmpr', 'wadmkk', 'luasha', 'remark'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng ? m.getLatLng() : null;
+        return ll ? [ll.lat, ll.lng] : null;
+      }
+    },
+    toggleSawahNasional50k: {
+      name: 'Sawah Nasional 50K (BIG)',
+      type: 'featureLayer',
+      getLayer: function () { return window.sawahNasionalLayerObj || null; },
+      props: ['q_name19', 'wadmpr', 'wadmkk', 'luas_polyg'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng ? m.getLatLng() : null;
+        return ll ? [ll.lat, ll.lng] : null;
+      }
+    },
+    toggleSawitNasionalLayer: {
+      name: 'Sawit Nasional',
+      type: 'dss',
+      toggleId: 'toggleSawitNasionalLayer',
+      props: ['namaobj', 'remark', 'pippib23_1']
+    },
+    toggleSawitPerkebunanLayer: {
+      name: 'Sawit dan Perkebunan',
+      type: 'dss',
+      toggleId: 'toggleSawitPerkebunanLayer',
+      props: ['namaobj', 'remark']
+    },
+    toggleRehabDasLayer: {
+      name: 'Rehab DAS',
+      type: 'dss',
+      toggleId: 'toggleRehabDasLayer',
+      props: ['namaobj', 'remark']
+    },
+    togglePerkebunanPl24Layer: {
+      name: 'Perkebunan PL24',
+      type: 'dss',
+      toggleId: 'togglePerkebunanPl24Layer',
+      props: ['namaobj', 'remark']
+    },
+    toggleRktnSumateraLayer: {
+      name: 'RKTN Sumatera',
+      type: 'dss',
+      toggleId: 'toggleRktnSumateraLayer',
+      props: ['namaobj', 'remark']
+    },
+    toggleRktnSulawesiLayer: {
+      name: 'RKTN Sulawesi',
+      type: 'dss',
+      toggleId: 'toggleRktnSulawesiLayer',
+      props: ['namaobj', 'remark']
+    },
+    toggleRktnPapuaLayer: {
+      name: 'RKTN Papua',
+      type: 'dss',
+      toggleId: 'toggleRktnPapuaLayer',
+      props: ['namaobj', 'remark']
+    },
+    toggleRktnMalukuLayer: {
+      name: 'RKTN Maluku',
+      type: 'dss',
+      toggleId: 'toggleRktnMalukuLayer',
+      props: ['namaobj', 'remark']
+    },
+    toggleRktnKalimantanLayer: {
+      name: 'RKTN Kalimantan',
+      type: 'dss',
+      toggleId: 'toggleRktnKalimantanLayer',
+      props: ['namaobj', 'remark']
+    },
+    toggleRktnJawaLayer: {
+      name: 'RKTN Jawa',
+      type: 'dss',
+      toggleId: 'toggleRktnJawaLayer',
+      props: ['namaobj', 'remark']
+    },
+    toggleRktnBaliNtLayer: {
+      name: 'RKTN Bali & NT',
+      type: 'dss',
+      toggleId: 'toggleRktnBaliNtLayer',
+      props: ['namaobj', 'remark']
+    },
+    toggleHillshade: {
+      name: 'Hillshade',
+      type: 'raster'
+    },
+    toggleBatnas: {
+      name: 'Batnas (Batimetri)',
+      type: 'raster'
     }
   };
 
   /* ── WMS GetFeatureInfo Layers ── */
   var WMS_ATTR_REGISTRY = {
     toggleFaultLayer: { name: 'Patahan Indonesia (BNPB)' },
-    toggleFaultLayerNew: { name: 'Patahan Indonesia Baru (PUSGEN 2024)' },
-    toggleWorldPlatesLayer: { name: 'Zona Patahan Dunia (USGS)' },
-    toggleKrbGunungApi: { name: 'KRB Gunung Api (BIG)' },
-    toggleKrbTitik: { name: 'Gas Vulkanik Gunung Api (BIG)' },
-    togglePetaGeologi: { name: 'Peta Geologi (BIG)' },
-    toggleGeostruktur: { name: 'Geologi Geostruktur (BIG)' },
-    togglePatahanAktif: { name: 'Patahan Aktif 1:50K (BIG)' },
-    toggleLikuifaksi: { name: 'Kerentanan Likuifaksi (BIG)' },
-    toggleKarst: { name: 'Kawasan Bentang Alam Karst (BIG)' }
+    toggleWorldPlatesLayer: { name: 'Zona Patahan Dunia (USGS)' }
   };
 
   /* ── Escape HTML ── */
@@ -320,7 +551,12 @@
     var config = _currentLayer.config;
     var features = [];
 
-    if (config.type === 'vector') {
+    if (config.type === 'raster') {
+      _currentFeatures = [];
+      _currentPage = 1;
+      renderAttrContent();
+      return;
+    } else if (config.type === 'vector') {
       var raw = config.getFeatures();
       features = raw.map(function (item) {
         var f = {};
@@ -335,6 +571,21 @@
       features = extractGeoJsonFeatures(config.getLayer());
     } else if (config.type === 'cluster') {
       features = extractClusterFeatures(config.getLayer());
+    } else if (config.type === 'featureLayer') {
+      var fl = config.getLayer();
+      if (fl && fl.eachLayer) {
+        features = extractClusterFeatures(fl);
+      }
+    } else if (config.type === 'dss') {
+      var dssLayers = window.dssLayersById;
+      if (dssLayers && dssLayers[config.toggleId]) {
+        var layerArr = dssLayers[config.toggleId];
+        for (var i = 0; i < layerArr.length; i++) {
+          if (layerArr[i] && layerArr[i].eachLayer) {
+            features = features.concat(extractClusterFeatures(layerArr[i]));
+          }
+        }
+      }
     }
 
     _currentFeatures = features;
@@ -356,7 +607,15 @@
     var props = _currentLayer.config.props || [];
 
     if (_currentFeatures.length === 0) {
-      content.innerHTML = '<div class="at-empty">Tidak ada fitur untuk layer ini.</div>';
+      if (_currentLayer.config.type === 'raster') {
+        content.innerHTML =
+          '<div class="at-empty">' +
+            '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px;opacity:0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' +
+            '<div>Layer raster tidak memiliki tabel atribut.</div>' +
+          '</div>';
+      } else {
+        content.innerHTML = '<div class="at-empty">Tidak ada fitur untuk layer ini.</div>';
+      }
       return;
     }
 

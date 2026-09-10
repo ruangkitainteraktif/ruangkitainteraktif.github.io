@@ -214,4 +214,5 @@
     const cb = document.getElementById('toggleFaultLayerNew');
     if (cb) cb.checked = false;
   };
+  Object.defineProperty(window, 'faultNewLayerObj', { get: function () { return faultNewLayer; } });
 })();

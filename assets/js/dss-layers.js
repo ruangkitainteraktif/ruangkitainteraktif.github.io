@@ -98,6 +98,7 @@
     });
   });
 
+  window.dssLayersById = layersById;
   window.dssLayersCleanup = function (id) {
     if (id) {
       var def = DEFS.filter(function (d) { return d.id === id; })[0];

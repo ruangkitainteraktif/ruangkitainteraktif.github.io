@@ -53,4 +53,5 @@
     cb.addEventListener('change', function () { toggleLayer(this.checked); });
   });
   window.isPatahanAktifActive = function () { return visible; };
+  Object.defineProperty(window, 'patahanAktifLayerObj', { get: function () { return layer; } });
 })();

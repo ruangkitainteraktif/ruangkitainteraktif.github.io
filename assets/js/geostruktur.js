@@ -62,4 +62,5 @@
     cb.addEventListener('change', function () { toggleLayer(this.checked); });
   });
   window.isGeostrukturActive = function () { return visible; };
+  Object.defineProperty(window, 'geostrukturLayerObj', { get: function () { return layer; } });
 })();

@@ -1958,6 +1958,9 @@ L.control.scale({
         html += '<div class="lc-item">';
         html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
         html += '<label for="lc_' + l.id + '">' + l.label + '</label>';
+        html += '<button type="button" class="lc-attr-btn' + (isChecked ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
+        html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
+        html += '</button>';
         html += '</div>';
       });
       html += '</div></div>';
@@ -2050,6 +2053,14 @@ L.control.scale({
           toggleHujanLayer(cb.checked);
         }
         updateCatCount(cb.closest('.lc-category'));
+        var attrBtn = cb.closest('.lc-item').querySelector('.lc-attr-btn');
+        if (attrBtn) {
+          if (cb.checked && typeof hasAttrSupport === 'function' && hasAttrSupport(id)) {
+            attrBtn.classList.add('lc-attr-btn-show');
+          } else {
+            attrBtn.classList.remove('lc-attr-btn-show');
+          }
+        }
         if (cb.checked && typeof hasAttrSupport === 'function' && hasAttrSupport(id)) {
           if (typeof isWmsAttrLayer === 'function' && isWmsAttrLayer(id)) {
             openWmsAttrTable(id);
@@ -2061,6 +2072,20 @@ L.control.scale({
         }
         delete container.dataset.built;
         closeLayerCatalog();
+      });
+    });
+
+    container.querySelectorAll('.lc-attr-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var id = btn.dataset.layerId;
+        if (typeof hasAttrSupport === 'function' && hasAttrSupport(id)) {
+          if (typeof isWmsAttrLayer === 'function' && isWmsAttrLayer(id)) {
+            openWmsAttrTable(id);
+          } else {
+            openAttrTable(id);
+          }
+        }
       });
     });
 

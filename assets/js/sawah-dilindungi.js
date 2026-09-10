@@ -153,3 +153,7 @@
       });
     }
   });
+
+  Object.defineProperty(window, 'sawahDilindungiLayerObj', { get: function () { return sawahDilindungiLayer; } });
+  Object.defineProperty(window, 'sawahNasionalLayerObj', { get: function () { return sawahNasionalLayer; } });
+})();

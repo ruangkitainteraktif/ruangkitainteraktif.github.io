@@ -58,4 +58,5 @@
     cb.addEventListener('change', function () { toggleLayer(this.checked); });
   });
   window.isLikuifaksiActive = function () { return visible; };
+  Object.defineProperty(window, 'likuifaksiLayerObj', { get: function () { return layer; } });
 })();

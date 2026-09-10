@@ -150,4 +150,5 @@
 
   window.isKawasanHutanActive = function () { return visible; };
   window.kawasanHutanCleanup = cleanup;
+  Object.defineProperty(window, 'kawasanHutanLayerObj', { get: function () { return layer; } });
 })();

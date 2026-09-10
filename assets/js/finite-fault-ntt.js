@@ -243,4 +243,5 @@
 
   window.isFiniteFaultNTTActive = function () { return ffLayer && map.hasLayer(ffLayer); };
   window.showFiniteFaultPopup = function (lat, lng) { showPopupAt(lat, lng); };
+  Object.defineProperty(window, 'finiteFaultNTTLayerObj', { get: function () { return ffLayer; } });
 })();

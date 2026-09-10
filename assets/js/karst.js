@@ -58,4 +58,5 @@
     cb.addEventListener('change', function () { toggleLayer(this.checked); });
   });
   window.isKarstActive = function () { return visible; };
+  Object.defineProperty(window, 'karstLayerObj', { get: function () { return layer; } });
 })();

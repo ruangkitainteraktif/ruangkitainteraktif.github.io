@@ -91,4 +91,5 @@
   });
 
   window.gambutLayerCleanup = cleanup;
+  Object.defineProperty(window, 'gambutLayerObj', { get: function () { return layer; } });
 })();
