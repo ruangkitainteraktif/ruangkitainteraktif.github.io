@@ -588,98 +588,6 @@ L.control.scale({
     'sentinel2': 'Sentinel-2'
   };
 
-  /* ── Basemap Modal ── */
-  function openBasemapModal(focusType) {
-    var modal = document.getElementById('basemapModal');
-    if (!modal) return;
-    modal.querySelectorAll('.basemap-modal-option').forEach(function(opt) {
-      opt.classList.toggle('active', opt.dataset.value === currentBasemapName);
-    });
-    if (focusType) {
-      var section = modal.querySelector('[data-section="' + focusType + '"]');
-      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-    modal.classList.add('open');
-  }
-  window.openBasemapModal = openBasemapModal;
-
-  function closeBasemapModal() {
-    var modal = document.getElementById('basemapModal');
-    if (modal) modal.classList.remove('open');
-  }
-  window.closeBasemapModal = closeBasemapModal;
-
-  function buildBasemapModal() {
-    var body = document.querySelector('.basemap-modal-body');
-    if (!body) return;
-    var sections = [
-      { type: 'vector', title: 'Basemap Vektor', labels: vectorBasemapLabels, icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>' },
-      { type: 'satellite', title: 'Basemap Satelit', labels: satelliteBasemapLabels, icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>' }
-    ];
-    sections.forEach(function(sec) {
-      var title = document.createElement('div');
-      title.className = 'basemap-modal-section-title';
-      title.textContent = sec.title;
-      title.dataset.section = sec.type;
-      body.appendChild(title);
-      var grid = document.createElement('div');
-      grid.className = 'basemap-modal-grid';
-      Object.entries(sec.labels).forEach(function(entry) {
-        var key = entry[0], label = entry[1];
-        var opt = document.createElement('div');
-        opt.className = 'basemap-modal-option';
-        opt.dataset.value = key;
-        if (key === currentBasemapName) opt.classList.add('active');
-        var icon = document.createElement('div');
-        icon.className = 'basemap-modal-option-icon';
-        icon.innerHTML = sec.icon;
-        var lbl = document.createElement('span');
-        lbl.className = 'basemap-modal-option-label';
-        lbl.textContent = label;
-        opt.appendChild(icon);
-        opt.appendChild(lbl);
-        opt.addEventListener('click', function() {
-          setBaseMap(key);
-          document.querySelectorAll('.basemap-modal-option').forEach(function(o) {
-            o.classList.toggle('active', o.dataset.value === key);
-          });
-          closeBasemapModal();
-        });
-        grid.appendChild(opt);
-      });
-      body.appendChild(grid);
-    });
-  }
-
-  function createBasemapControl(labels, btnClass, btnIcon, modalType) {
-    return L.Control.extend({
-      options: { position: 'bottomright' },
-      onAdd() {
-        const wrap = L.DomUtil.create('div', 'basemap-control-wrap');
-        L.DomEvent.disableClickPropagation(wrap);
-        L.DomEvent.disableScrollPropagation(wrap);
-        const btn = L.DomUtil.create('button', 'basemap-btn ' + btnClass, wrap);
-        btn.innerHTML = btnIcon;
-        btn.title = 'Pilih Basemap';
-        btn.setAttribute('aria-label', 'Ganti basemap');
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          openBasemapModal(modalType);
-        });
-        return wrap;
-      }
-    });
-  }
-
-  const VectorBasemapControl = createBasemapControl(
-    vectorBasemapLabels,
-    'basemap-btn-vector',
-    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>',
-    'vector'
-  );
-
-  new VectorBasemapControl().addTo(map);
-  buildBasemapModal();
   setBaseMap(currentBasemapName);
 
   function scheduleInitialStartupDefaults() {
@@ -1216,9 +1124,6 @@ L.control.scale({
         setBaseMap('google-maps');
         currentBasemapName = 'google-maps';
         window.currentBasemapName = 'google-maps';
-        document.querySelectorAll('.basemap-modal-option').forEach(function(o) {
-          o.classList.toggle('active', o.dataset.value === 'google-maps');
-        });
 
         // 10b. Bersihkan drawing & measure
         if (typeof clearDrawings === 'function') clearDrawings();
@@ -1243,7 +1148,6 @@ L.control.scale({
   /* ── Pindahkan tombol ke dalam FAB ── */
   setTimeout(function () {
     createGeotoolsFAB();
-    moveToFAB('.basemap-btn-vector', 'Basemap');
     moveToFAB('.draw-fab-wrap', 'Gambar & Ukur');
     moveToFAB('.geoportal-print-btn', 'Cetak Peta');
     moveToFAB('.leaflet-control-locate', 'Lokasi Saya');
@@ -1906,6 +1810,45 @@ L.control.scale({
 
   var LAYER_CATALOG_DATA = [
     {
+      cat: 'Basemap',
+      type: 'basemap',
+      groups: [
+        {
+          group: 'Vektor',
+          layers: [
+            { id: 'osm', label: 'Open Street Map' },
+            { id: 'rupabumi', label: 'Rupabumi Indonesia' },
+            { id: 'esri-dark-gray', label: 'Esri Dark Gray' },
+            { id: 'esri-topo', label: 'Esri Topographic' },
+            { id: 'esri-terrain', label: 'Esri Terrain' },
+            { id: 'esri-street', label: 'Esri Street' },
+            { id: 'esri-shaded-relief', label: 'Esri Shaded Relief' },
+            { id: 'esri-physical', label: 'Esri Physical' },
+            { id: 'esri-natgeo', label: 'Esri National Geographic' },
+            { id: 'google-maps', label: 'Google Maps' }
+          ]
+        },
+        {
+          group: 'Satelit',
+          layers: [
+            { id: 'esri-satellite', label: 'Esri Satellite' },
+            { id: 'modis-terra', label: 'MODIS Terra' },
+            { id: 'modis-aqua', label: 'MODIS Aqua' },
+            { id: 'viirs-noaa20', label: 'VIIRS NOAA-20' },
+            { id: 'viirs-noaa21', label: 'VIIRS NOAA-21' },
+            { id: 'bmkg-himawari', label: 'Himawari-9 IR' },
+            { id: 'bmkg-himawari-fd', label: 'Himawari-9 Full Disk' },
+            { id: 'bmkg-himawari-hires', label: 'Himawari-9 Hi-Res' },
+            { id: 'bmkg-gk2a', label: 'GK-2A' },
+            { id: 'bmkg-gk2a-wv', label: 'GK-2A Water Vapor' },
+            { id: 'noaa-true-color', label: 'NOAA True Color' },
+            { id: 'noaa-goes-ir', label: 'NOAA GOES IR' },
+            { id: 'sentinel2', label: 'Sentinel-2' }
+          ]
+        }
+      ]
+    },
+    {
       cat: 'Bumi Persil',
       layers: [
         { id: 'toggleBumiPersilLayer', label: 'Persil Tanah (ATRBPN)' }
@@ -2064,6 +2007,7 @@ L.control.scale({
     var el = document.getElementById(id);
     if (el) return el;
     for (var i = 0; i < LAYER_CATALOG_DATA.length; i++) {
+      if (!LAYER_CATALOG_DATA[i].layers) continue;
       for (var j = 0; j < LAYER_CATALOG_DATA[i].layers.length; j++) {
         var l = LAYER_CATALOG_DATA[i].layers[j];
         if (l.id === id && l.dataAttr) {
@@ -2098,6 +2042,7 @@ L.control.scale({
 
       var activeLayers = [];
       LAYER_CATALOG_DATA.forEach(function(cat) {
+        if (!cat.layers) return;
         cat.layers.forEach(function(l) {
           var el = findLayerById(l.id);
           var isChecked = el ? el.checked : (_layerCatalogState[l.id] || false);
@@ -2130,7 +2075,7 @@ L.control.scale({
 
     html += '<input type="text" class="lc-search" placeholder="Cari layer..." />';
     LAYER_CATALOG_DATA.forEach(function(cat, ci) {
-      var checked = cat.layers.filter(function(l) {
+      var checked = (cat.layers || []).filter(function(l) {
         var el = findLayerById(l.id);
         var isOn = (el && el.checked) || _layerCatalogState[l.id];
         if (l.id === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') {
@@ -2142,23 +2087,41 @@ L.control.scale({
       html += '<button class="lc-cat-header" type="button">';
       html += '<svg class="lc-cat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
       html += '<span class="lc-cat-title">' + cat.cat + '</span>';
-      html += '<span class="lc-cat-count">' + checked + ' / ' + cat.layers.length + '</span>';
+      if (cat.type === 'basemap') {
+        html += '<span class="lc-cat-count">' + currentBasemapName + '</span>';
+      } else {
+        html += '<span class="lc-cat-count">' + checked + ' / ' + cat.layers.length + '</span>';
+      }
       html += '</button>';
       html += '<div class="lc-items">';
-      cat.layers.forEach(function(l) {
-        var el = findLayerById(l.id);
-        var isChecked = el ? el.checked : (_layerCatalogState[l.id] || false);
-        if (l.id === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') {
-          isChecked = isHujanLayerActive();
-        }
-        html += '<div class="lc-item">';
-        html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
-        html += '<label for="lc_' + l.id + '">' + l.label + '</label>';
-        html += '<button type="button" class="lc-attr-btn' + (isChecked ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
-        html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
-        html += '</button>';
-        html += '</div>';
-      });
+      if (cat.type === 'basemap' && cat.groups) {
+        cat.groups.forEach(function(grp) {
+          html += '<div class="lc-basemap-group">' + grp.group + '</div>';
+          grp.layers.forEach(function(l) {
+            var isActive = (l.id === currentBasemapName);
+            html += '<div class="lc-item lc-basemap-item' + (isActive ? ' lc-basemap-active' : '') + '" data-basemap-id="' + l.id + '">';
+            html += '<input type="radio" name="lc-basemap" id="lc_bm_' + l.id + '" data-basemap-id="' + l.id + '"' + (isActive ? ' checked' : '') + ' />';
+            html += '<label for="lc_bm_' + l.id + '">' + l.label + '</label>';
+            if (isActive) html += '<span class="lc-basemap-badge">Aktif</span>';
+            html += '</div>';
+          });
+        });
+      } else {
+        cat.layers.forEach(function(l) {
+          var el = findLayerById(l.id);
+          var isChecked = el ? el.checked : (_layerCatalogState[l.id] || false);
+          if (l.id === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') {
+            isChecked = isHujanLayerActive();
+          }
+          html += '<div class="lc-item">';
+          html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
+          html += '<label for="lc_' + l.id + '">' + l.label + '</label>';
+          html += '<button type="button" class="lc-attr-btn' + (isChecked ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
+          html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
+          html += '</button>';
+          html += '</div>';
+        });
+      }
       html += '</div></div>';
     });
     container.innerHTML = html;
@@ -2180,6 +2143,22 @@ L.control.scale({
     container.querySelectorAll('.lc-cat-header').forEach(function(btn) {
       btn.addEventListener('click', function() {
         btn.closest('.lc-category').classList.toggle('open');
+      });
+    });
+
+    container.querySelectorAll('.lc-basemap-item').forEach(function(item) {
+      item.addEventListener('click', function(e) {
+        if (e.target.tagName === 'INPUT') return;
+        var radio = item.querySelector('input[type="radio"]');
+        if (radio && !radio.checked) radio.click();
+      });
+    });
+
+    container.querySelectorAll('input[name="lc-basemap"]').forEach(function(radio) {
+      radio.addEventListener('change', function() {
+        var bmId = radio.dataset.basemapId;
+        setBaseMap(bmId);
+        buildLayerCatalog(container);
       });
     });
 
