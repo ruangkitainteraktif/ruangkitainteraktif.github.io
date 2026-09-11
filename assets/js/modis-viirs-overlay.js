@@ -24,7 +24,13 @@
 
   function fetchLatestDate() {
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', MODIS_URL + '/query?where=1%3D1&outFields=AcquisitionDate&orderByFields=AcquisitionDate%20DESC&resultRecordCount=1&f=json', true);
+    var queryUrl = MODIS_URL + '/query';
+    var body = 'where=' + encodeURIComponent('1=1') +
+      '&outFields=' + encodeURIComponent('AcquisitionDate') +
+      '&orderByFields=' + encodeURIComponent('AcquisitionDate DESC') +
+      '&resultRecordCount=1&f=json';
+    xhr.open('POST', queryUrl, true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
     xhr.onreadystatechange = function () {
       if (xhr.readyState !== 4) return;
       if (xhr.status >= 200 && xhr.status < 300) {
@@ -39,7 +45,7 @@
         } catch (e) { /* ignore */ }
       }
     };
-    xhr.send();
+    xhr.send(body);
   }
 
   function toggleModis(on) {

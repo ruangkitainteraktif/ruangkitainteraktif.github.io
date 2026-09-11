@@ -1439,6 +1439,172 @@ L.control.scale({
     }
   }
 
+  /* ── Food Security & Vulnerability Analysis (Badan Pangan) ── */
+  var fsvaLayer = null;
+  var fsvaLegendCtrl = null;
+  var fsvaWmsUrl = 'https://geoportal.badanpangan.go.id/geoserver/palapa/wms';
+
+  var FsvaLegendControl = L.Control.extend({
+    options: { position: 'bottomleft' },
+    onAdd: function () {
+      var div = L.DomUtil.create('div', 'fsva-legend');
+      L.DomEvent.disableClickPropagation(div);
+      div.innerHTML =
+        '<div class="fsva-legend-title">FSVA 2025 - Indeks Kerentanan Pangan</div>' +
+        '<img class="fsva-legend-img" alt="Legend" ' +
+          'src="' + fsvaWmsUrl + '?request=GetLegendGraphic&layer=palapa:FSVA_2025&format=image/png&width=20&height=20">' +
+        '<div class="fsva-legend-source">Sumber: Badan Pangan Nasional</div>';
+      var img = div.querySelector('.fsva-legend-img');
+      if (img) {
+        img.onerror = function () { img.style.display = 'none'; };
+      }
+      return div;
+    }
+  });
+
+  function showFsvaLegend() {
+    if (fsvaLegendCtrl) return;
+    if (typeof addUnifiedLegend !== 'function') return;
+    var div = L.DomUtil.create('div', 'fsva-legend');
+    L.DomEvent.disableClickPropagation(div);
+    div.innerHTML =
+      '<div class="fsva-legend-title">FSVA 2025 - Indeks Kerentanan Pangan</div>' +
+      '<img class="fsva-legend-img" alt="Legend" ' +
+        'src="' + fsvaWmsUrl + '?request=GetLegendGraphic&layer=palapa:FSVA_2025&format=image/png&width=20&height=20">' +
+      '<div class="fsva-legend-source">Sumber: Badan Pangan Nasional</div>';
+    var img = div.querySelector('.fsva-legend-img');
+    if (img) {
+      img.onerror = function () { img.style.display = 'none'; };
+    }
+    addUnifiedLegend('fsva', typeof createLegendWithToggle === 'function' ? createLegendWithToggle(div) : div);
+    fsvaLegendCtrl = true;
+  }
+
+  function hideFsvaLegend() {
+    if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('fsva');
+    fsvaLegendCtrl = null;
+  }
+
+  function buildFsvaPopup(props) {
+    if (!props) return null;
+    var esc = function(s) { return String(s || '-').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+    var rankColor = function(r) {
+      if (r <= 2) return '#dc2626';
+      if (r <= 4) return '#ea580c';
+      return '#16a34a';
+    };
+    var rankLabel = function(r) {
+      if (r <= 2) return 'Sangat Rentan';
+      if (r <= 4) return 'Rentan';
+      return 'Aman';
+    };
+    var fields = [
+      ['Provinsi', props.WADMPR],
+      ['Kab/Kota', props.WADMKK],
+      ['Kode', props.KDPKAB]
+    ];
+    var indicators = [
+      ['Jumlah Penduduk Miskin', props.NCPR, props.P_NCPR, '%'],
+      ['Ketersediaan Energi', props.ENERGI, props.P_ENERG, '%'],
+      ['Protein Hewani', props.PROHE, props.P_PROHE, '%'],
+      ['Konsumsi Beras', props.CBPD, props.P_CBPD, '%'],
+      ['Kemiskinan', props.MISKIN, props.P_MISKIN, '%'],
+      ['Harga & Ketersediaan Pangan', props.CVHARGA, props.P_CVHARGA, ''],
+      ['Pelayanan Air Minum', props.POU, props.P_POU, '%'],
+      ['Rasio Lahan Sawah', props.RLSP, props.P_RLSP, '%'],
+      ['Tanaman Pangan', props.TNPAIR, props.P_TNPAIR, '%'],
+      ['Indeks Ketahanan Pangan', props.AMANPANGN, props.P_AMANPANG, '%'],
+      ['Pencemaran Habitat', props.PPH, props.P_PPH, '%'],
+      ['Prevalensi Stunting', props.STUNTING, props.P_STUNTING, '%']
+    ];
+    var html = '<div class="fsva-popup" style="min-width:280px">';
+    html += '<div class="fsva-popup-header">';
+    html += '<div class="fsva-popup-badge"><span class="fsva-popup-badge-dot"></span>FSVA 2025</div>';
+    html += '<div class="fsva-popup-title">' + esc(props.WADMKK) + '</div>';
+    html += '<div class="fsva-popup-subtitle">' + esc(props.WADMPR) + '</div>';
+    html += '</div>';
+    html += '<div class="fsva-popup-body">';
+    if (props.RANK) {
+      html += '<div class="fsva-popup-rank">';
+      html += '<div class="fsva-popup-rank-label">Peringkat Nasional</div>';
+      html += '<div class="fsva-popup-rank-value">#' + esc(props.RANK) + ' dari 514</div>';
+      html += '</div>';
+    }
+    html += '<div class="fsva-popup-section-title">Indikator Kerentanan</div>';
+    html += '<div class="fsva-popup-fields">';
+    indicators.forEach(function(ind) {
+      var label = ind[0], val = ind[1], rank = ind[2], unit = ind[3];
+      if (val == null) return;
+      var color = rankColor(rank);
+      var rlabel = rankLabel(rank);
+      html += '<div class="fsva-popup-field">';
+      html += '<div class="fsva-popup-field-header">';
+      html += '<span class="fsva-popup-field-label">' + esc(label) + '</span>';
+      html += '<span class="fsva-popup-field-rank" style="background:' + color + ';">' + rlabel + '</span>';
+      html += '</div>';
+      html += '<div class="fsva-popup-field-value">' + esc(parseFloat(val).toFixed(1)) + unit + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    html += '</div>';
+    html += '<div class="fsva-popup-footer"><span>Sumber: Badan Pangan Nasional - PETAKE TAHANAN DAN KERENTANAN PANGAN 2025</span></div>';
+    html += '</div>';
+    return html;
+  }
+
+  function toggleFsvaLayer(show) {
+    if (show) {
+      if (fsvaLayer && map.hasLayer(fsvaLayer)) return;
+      fsvaLayer = L.tileLayer.wms(fsvaWmsUrl, {
+        layers: 'palapa:FSVA_2025',
+        format: 'image/png',
+        transparent: true,
+        version: '1.1.1',
+        crs: L.CRS.EPSG4326,
+        attribution: 'Badan Pangan Nasional - FSVA 2025'
+      });
+      fsvaLayer.addTo(map);
+      fsvaLayer.on('click', function (e) {
+        var url = fsvaWmsUrl + '?' + L.Util.getParamString({
+          service: 'WMS',
+          version: '1.1.1',
+          request: 'GetFeatureInfo',
+          layers: 'palapa:FSVA_2025',
+          query_layers: 'palapa:FSVA_2025',
+          info_format: 'application/json',
+          x: Math.floor(e.containerPoint.x),
+          y: Math.floor(e.containerPoint.y),
+          width: map.getSize().x,
+          height: map.getSize().y,
+          srs: 'EPSG:4326',
+          bbox: map.getBounds().toBBoxString()
+        });
+        fetch(url)
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data.features && data.features.length > 0) {
+              var props = data.features[0].properties;
+              var html = buildFsvaPopup(props);
+              if (html) {
+                L.popup({ maxWidth: 320, className: 'fsva-leaflet-popup' })
+                  .setLatLng(e.latlng)
+                  .setContent(html)
+                  .openOn(map);
+              }
+            }
+          })
+          .catch(function() {});
+      });
+      showFsvaLegend();
+    } else {
+      if (fsvaLayer && map.hasLayer(fsvaLayer)) map.removeLayer(fsvaLayer);
+      fsvaLayer = null;
+      hideFsvaLegend();
+      map.closePopup();
+    }
+  }
+  window.toggleFsvaLayer = toggleFsvaLayer;
+
   /* ═══════════════════════════════════════════════════════
      QUICK LAYER TOOLBAR
      ═══════════════════════════════════════════════════════ */
@@ -1815,6 +1981,12 @@ L.control.scale({
       ]
     },
     {
+      cat: 'Ketahanan Pangan',
+      layers: [
+        { id: 'toggleFsvaLayer', label: 'FSVA 2025 (Badan Pangan)' }
+      ]
+    },
+    {
       cat: 'Terrain & Lainnya',
       layers: [
         { id: 'toggleDemnasOverlay', label: 'Terrain Overlay (SRTM)' },
@@ -1988,7 +2160,8 @@ L.control.scale({
           (id === 'toggleNonTollRoad' && typeof window.toggleNonTollRoadLayer === 'function') ||
           (id === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') ||
           (id === 'toggleHujanLayer') ||
-          (id === 'toggleCoastlineLayer');
+          (id === 'toggleCoastlineLayer') ||
+          (id === 'toggleFsvaLayer' && typeof window.toggleFsvaLayer === 'function');
         if (!hasWindowToggle) {
           var el = findLayerById(id);
           if (el) {
@@ -2037,6 +2210,9 @@ L.control.scale({
         }
         if (id === 'toggleHujanLayer') {
           toggleHujanLayer(cb.checked);
+        }
+        if (id === 'toggleFsvaLayer' && typeof window.toggleFsvaLayer === 'function') {
+          window.toggleFsvaLayer(cb.checked);
         }
         updateCatCount(cb.closest('.lc-category'));
         var attrBtn = cb.closest('.lc-item').querySelector('.lc-attr-btn');

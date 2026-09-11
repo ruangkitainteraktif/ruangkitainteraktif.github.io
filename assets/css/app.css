@@ -7136,6 +7136,170 @@
       font-style: italic;
     }
 
+    /* ── FSVA 2025 Legend ── */
+    .fsva-legend {
+      background: rgba(255,255,255,.95);
+      border-radius: 8px;
+      padding: 10px 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      border: 1px solid #e5e7eb;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-width: 160px;
+      max-width: 240px;
+    }
+    .fsva-legend-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 6px;
+    }
+    .fsva-legend-img {
+      display: block;
+      max-width: 100%;
+      max-height: 120px;
+      margin-bottom: 4px;
+    }
+    .fsva-legend-source {
+      font-size: 8px;
+      color: #94a3b8;
+      font-style: italic;
+    }
+    .unified-legend-section .fsva-legend {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      padding: 4px 0;
+      min-width: auto;
+      max-width: none;
+    }
+    .unified-legend-section .fsva-legend-title {
+      font-size: 11px;
+      color: #e2e8f0;
+    }
+    .unified-legend-section .fsva-legend-source {
+      font-size: 9px;
+      color: #64748b;
+    }
+    .unified-legend-section .fsva-legend-img {
+      max-height: 200px;
+    }
+
+    /* ── FSVA 2025 Popup ── */
+    .fsva-leaflet-popup .leaflet-popup-content-wrapper {
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      padding: 0;
+    }
+    .fsva-leaflet-popup .leaflet-popup-content {
+      margin: 0;
+      min-width: 280px;
+    }
+    .fsva-popup {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .fsva-popup-header {
+      background: linear-gradient(135deg, #059669, #10b981);
+      padding: 12px 14px;
+      color: white;
+    }
+    .fsva-popup-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .fsva-popup-badge-dot {
+      width: 6px;
+      height: 6px;
+      background: #fbbf24;
+      border-radius: 50%;
+    }
+    .fsva-popup-title {
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .fsva-popup-subtitle {
+      font-size: 11px;
+      opacity: 0.85;
+    }
+    .fsva-popup-body {
+      padding: 10px 14px;
+    }
+    .fsva-popup-rank {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .fsva-popup-rank-label {
+      font-size: 10px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .fsva-popup-rank-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #059669;
+    }
+    .fsva-popup-section-title {
+      font-size: 10px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .fsva-popup-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .fsva-popup-field {
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 6px;
+    }
+    .fsva-popup-field:last-child {
+      border-bottom: none;
+    }
+    .fsva-popup-field-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+    .fsva-popup-field-label {
+      font-size: 10px;
+      color: #64748b;
+    }
+    .fsva-popup-field-rank {
+      font-size: 8px;
+      color: white;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+    .fsva-popup-field-value {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .fsva-popup-footer {
+      background: #f8fafc;
+      padding: 8px 14px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 8px;
+      color: #94a3b8;
+      font-style: italic;
+    }
+
     /* ── DEM Topography Analysis ── */
     .topo-report-card {
       background: #fff;
@@ -8274,6 +8438,42 @@
     }
     [data-theme="dark"] .ecmwf-fire-legend {
       background: var(--bg-glass);
+      border-color: var(--border-color);
+    }
+    [data-theme="dark"] .fsva-legend {
+      background: var(--bg-glass);
+      border-color: var(--border-color);
+    }
+    [data-theme="dark"] .fsva-popup-header {
+      background: linear-gradient(135deg, #047857, #059669);
+    }
+    [data-theme="dark"] .fsva-popup-body {
+      background: var(--bg-primary);
+    }
+    [data-theme="dark"] .fsva-popup-title {
+      color: var(--text-primary);
+    }
+    [data-theme="dark"] .fsva-popup-subtitle {
+      color: var(--text-secondary);
+    }
+    [data-theme="dark"] .fsva-popup-rank {
+      background: rgba(16,185,129,0.1);
+      border-color: rgba(16,185,129,0.3);
+    }
+    [data-theme="dark"] .fsva-popup-rank-value {
+      color: #34d399;
+    }
+    [data-theme="dark"] .fsva-popup-field {
+      border-color: var(--border-color);
+    }
+    [data-theme="dark"] .fsva-popup-field-label {
+      color: var(--text-secondary);
+    }
+    [data-theme="dark"] .fsva-popup-field-value {
+      color: var(--text-primary);
+    }
+    [data-theme="dark"] .fsva-popup-footer {
+      background: var(--bg-secondary);
       border-color: var(--border-color);
     }
     [data-theme="dark"] .gp-popup {

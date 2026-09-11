@@ -163,11 +163,16 @@ async function loadGeoidProvinces() {
 
 const RBI_BASE = 'https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH';
 async function fetchBigRbiCount(servicePath, where) {
-  const url = `${RBI_BASE}/${servicePath}/query?where=${encodeURIComponent(where || '1=1')}&returnCountOnly=true&f=json`;
+  const url = `${RBI_BASE}/${servicePath}/query`;
+  const params = new URLSearchParams({
+    where: where || '1=1',
+    returnCountOnly: 'true',
+    f: 'json'
+  }).toString();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
-    const res = await fetch(url, { signal: controller.signal });
+    const res = await fetch(url, { method: 'POST', body: params, headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, signal: controller.signal });
     clearTimeout(timeout);
     if (!res.ok) return 0;
     const json = await res.json();
@@ -176,11 +181,18 @@ async function fetchBigRbiCount(servicePath, where) {
 }
 
 async function fetchBigRbiDistinctCount(servicePath, field) {
-  const url = `${RBI_BASE}/${servicePath}/query?where=1%3D1&returnGeometry=false&outFields=${field}&returnDistinctValues=true&f=json`;
+  const url = `${RBI_BASE}/${servicePath}/query`;
+  const params = new URLSearchParams({
+    where: '1=1',
+    returnGeometry: 'false',
+    outFields: field,
+    returnDistinctValues: 'true',
+    f: 'json'
+  }).toString();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
-    const res = await fetch(url, { signal: controller.signal });
+    const res = await fetch(url, { method: 'POST', body: params, headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, signal: controller.signal });
     clearTimeout(timeout);
     if (!res.ok) return 0;
     const json = await res.json();
@@ -1019,7 +1031,15 @@ function geoidDistanceKm(lat1, lon1, lat2, lon2) {
 async function fetchBigHazardZone(lat, lng) {
   const baseUrl = 'https://geoservices.big.go.id/gis/rest/services/PTRA/Atlas_Kebencanaan/MapServer';
   const geometry = JSON.stringify({ x: lng, y: lat });
-  const commonParams = `f=json&returnGeometry=false&where=1=1&geometry=${geometry}&geometryType=esriGeometryPoint&spatialRel=esriSpatialRelIntersects&outFields=*`;
+  const commonParams = new URLSearchParams({
+    f: 'json',
+    returnGeometry: 'false',
+    where: '1=1',
+    geometry: geometry,
+    geometryType: 'esriGeometryPoint',
+    spatialRel: 'esriSpatialRelIntersects',
+    outFields: '*'
+  }).toString();
 
   const withTimeout = (promise, ms) => {
     const timeout = new Promise(resolve => setTimeout(() => resolve(null), ms));
@@ -1027,7 +1047,7 @@ async function fetchBigHazardZone(lat, lng) {
   };
 
   const fetchLayer = (layerId) => withTimeout(
-    fetch(`${baseUrl}/${layerId}/query?${commonParams}`)
+    fetch(`${baseUrl}/${layerId}/query`, { method: 'POST', body: commonParams, headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' } })
       .then(r => r.ok ? r.json() : null)
       .catch(() => null),
     10000

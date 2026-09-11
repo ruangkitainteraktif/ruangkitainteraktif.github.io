@@ -1418,9 +1418,13 @@
       showCoverageOnHover: false,
       zoomToBoundsOnClick: true
     });
-    var queryUrl = SEBARAN_PASAR_URL + '/query?where=1%3D1&outFields=*&f=json&returnGeometry=true&resultRecordCount=5000';
+    var queryUrl = SEBARAN_PASAR_URL + '/query';
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', queryUrl, true);
+    var body = 'where=' + encodeURIComponent('1=1') +
+      '&outFields=' + encodeURIComponent('*') +
+      '&f=json&returnGeometry=true&resultRecordCount=5000';
+    xhr.open('POST', queryUrl, true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
     xhr.onreadystatechange = function () {
       if (xhr.readyState !== 4) return;
       if (xhr.status >= 200 && xhr.status < 300) {
@@ -1462,7 +1466,7 @@
         }
       }
     };
-    xhr.send();
+    xhr.send(body);
   }
 
   /* ── SPPG Layer (Sismonbgn / Kementerian PUPR) ── */
