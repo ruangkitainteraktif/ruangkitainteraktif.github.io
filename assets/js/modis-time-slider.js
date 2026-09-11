@@ -54,8 +54,10 @@
       L.DomEvent.disableClickPropagation(wrap);
       L.DomEvent.disableScrollPropagation(wrap);
 
-      var titleRow = L.DomUtil.create('div', 'modis-ts-title', wrap);
-      titleRow.textContent = 'MODIS Terra';
+      if (typeof addUnifiedSlider !== 'function') {
+        var titleRow = L.DomUtil.create('div', 'modis-ts-title', wrap);
+        titleRow.textContent = 'MODIS Terra';
+      }
 
       var controlsRow = L.DomUtil.create('div', 'modis-ts-controls', wrap);
 

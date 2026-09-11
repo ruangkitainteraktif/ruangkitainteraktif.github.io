@@ -317,16 +317,7 @@
         return ll ? [ll.lat, ll.lng] : null;
       }
     },
-    toggleGempaNTT: {
-      name: 'Gempa NTT',
-      type: 'featureLayer',
-      getLayer: function () { return window.gempaNTTLayerObj || null; },
-      props: ['provinsi', 'kabupaten', 'jenis_bencana', 'tanggal_update', 'meninggal', 'luka_sakit_', 'mengungsi_', 'rumah_rusak'],
-      getLatLng: function (m) {
-        var ll = m.getLatLng ? m.getLatLng() : null;
-        return ll ? [ll.lat, ll.lng] : null;
-      }
-    },
+    /* Gempa NTT attribute table entry removed */
     toggleSawahDilindungi: {
       name: 'Sawah Dilindungi (BIG)',
       type: 'featureLayer',
@@ -494,8 +485,30 @@
   function openAttrTable(toggleId) {
     var sheet = document.getElementById('attr-table-sheet');
     if (!sheet) return;
-
     var config = ATTR_LAYER_REGISTRY[toggleId];
+    // Support dynamic SIH3 toggles without enumerating every id in the registry
+    if (!config) {
+      var m;
+      if ((m = toggleId.match(/^toggleSih3Dpu_(.+)$/))) {
+        var sid = m[1];
+        var labelEl = document.querySelector('[data-layer-id="' + toggleId + '"] label');
+        var name = labelEl && labelEl.textContent ? labelEl.textContent.trim() : ('SIH3 DPU ' + sid);
+        config = {
+          name: name,
+          type: 'cluster',
+          getLayer: function () { return window._sih3DpuCache && window._sih3DpuCache[sid] ? window._sih3DpuCache[sid] : null; }
+        };
+      } else if ((m = toggleId.match(/^toggleSih3Cit_(.+)$/))) {
+        var cid = m[1];
+        var labelEl2 = document.querySelector('[data-layer-id="' + toggleId + '"] label');
+        var name2 = labelEl2 && labelEl2.textContent ? labelEl2.textContent.trim() : ('SIH3 Citarum ' + cid);
+        config = {
+          name: name2,
+          type: 'cluster',
+          getLayer: function () { return window._sih3CitCache && window._sih3CitCache[cid] ? window._sih3CitCache[cid] : null; }
+        };
+      }
+    }
     if (!config) return;
 
     _currentLayer = { id: toggleId, config: config };
@@ -605,6 +618,11 @@
     var start = (_currentPage - 1) * PAGE_SIZE;
     var page = all.slice(start, start + PAGE_SIZE);
     var props = _currentLayer.config.props || [];
+    // If no explicit props defined, infer from first feature's keys (exclude internal keys)
+    if ((!props || props.length === 0) && _currentFeatures && _currentFeatures.length > 0) {
+      var sample = _currentFeatures[0] || {};
+      props = Object.keys(sample).filter(function (k) { return k && k.indexOf('_') !== 0; });
+    }
 
     if (_currentFeatures.length === 0) {
       if (_currentLayer.config.type === 'raster') {
@@ -877,6 +895,8 @@
 
   /* ── Check if layer has attr support ── */
   function hasAttrSupport(toggleId) {
+    // Also support SIH3 dynamic toggles by pattern so buttons show without manual registry entries
+    if (/^toggleSih3Dpu_/.test(toggleId) || /^toggleSih3Cit_/.test(toggleId)) return true;
     return !!(ATTR_LAYER_REGISTRY[toggleId] || WMS_ATTR_REGISTRY[toggleId]);
   }
   window.hasAttrSupport = hasAttrSupport;

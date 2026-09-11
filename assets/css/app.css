@@ -272,16 +272,36 @@
       font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase;
       letter-spacing: .05em; padding: 8px 8px 2px 28px;
     }
+    .sih3-leaflet-popup { max-width: 320px !important; }
     .sih3-leaflet-popup .leaflet-popup-content-wrapper {
-      border-radius: 10px; padding: 0; overflow: hidden;
+      border-radius: 14px; padding: 0; overflow: hidden; box-shadow: 0 6px 24px rgba(59,130,246,0.12); border: none;
     }
+    .sih3-leaflet-popup .leaflet-popup-content { width: auto !important; margin: 0; }
+    .sih3-leaflet-popup .leaflet-popup-tip { box-shadow: 3px 3px 8px rgba(59,130,246,0.12); }
     .sih3-popup {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       min-width: 220px;
+      color: #0f172a;
+      background: #fff;
+      overflow: hidden;
     }
     .sih3-popup-header {
-      padding: 12px 14px; color: white;
+      position: relative;
+      padding: 12px 14px 10px;
+      color: #fff;
+      background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+      overflow: hidden;
     }
+    .sih3-popup-header::before {
+      content: '';
+      position: absolute;
+      top: -20px; right: -20px;
+      width: 70px; height: 70px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .sih3-popup-header > * { position: relative; z-index: 1; }
     .sih3-popup-badge {
       display: inline-flex; align-items: center; gap: 5px;
       background: rgba(255,255,255,0.2); border-radius: 4px;
@@ -295,18 +315,18 @@
     }
     .sih3-popup-body {
       padding: 10px 14px;
+      max-height: 35vh;
+      overflow-y: auto;
     }
     .sih3-popup-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 4px 0; border-bottom: 1px solid #f1f5f9;
+      display: block; padding: 6px 0; border-bottom: 1px solid #f1f5f9;
     }
     .sih3-popup-row:last-child { border-bottom: none; }
     .sih3-popup-label {
-      font-size: 10px; color: #64748b;
+      display: block; font-size: 10px; color: #64748b; margin-bottom: 4px;
     }
     .sih3-popup-value {
-      font-size: 11px; font-weight: 600; color: #1e293b; text-align: right;
-      max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      display: block; font-size: 11px; font-weight: 600; color: #1e293b; text-align: left; white-space: normal; overflow: visible; max-width: none;
     }
     .sih3-popup-highlight {
       color: #2563eb;
@@ -314,6 +334,7 @@
     .sih3-popup-footer {
       background: #f8fafc; padding: 8px 14px; border-top: 1px solid #e5e7eb;
       font-size: 8px; color: #94a3b8; font-style: italic;
+      text-align: center;
     }
     .sih3-dpu-marker {
       background: transparent; border: none;
@@ -874,7 +895,7 @@
     .modis-ts-title {
       font-size: 10px;
       font-weight: 700;
-      color: #475569;
+      color: var(--text-secondary);
       text-align: center;
       letter-spacing: 0.02em;
     }
@@ -886,7 +907,7 @@
       border: none;
       border-radius: 50%;
       background: transparent;
-      color: #475569;
+      color: #334155;
       cursor: pointer;
       transition: background 0.15s, color 0.15s;
       flex-shrink: 0;
@@ -5313,11 +5334,7 @@
       color: #aaa;
       font-weight: 500;
     }
-    /* severity colors for gempa NTT */
-    .agol-severity-berat { background: linear-gradient(135deg, #b91c1c, #dc2626); }
-    .agol-severity-sedang { background: linear-gradient(135deg, #b45309, #f59e0b); }
-    .agol-severity-ringan { background: linear-gradient(135deg, #1d4ed8, #3b82f6); }
-    .agol-severity-data   { background: linear-gradient(135deg, #4b5563, #6b7280); }
+    /* Gempa NTT styles removed */
     /* geologi colors */
     .agol-geo-patahan  { background: linear-gradient(135deg, #7f1d1d, #991b1b); }
     .agol-geo-geostruktur { background: linear-gradient(135deg, #1e3a5f, #2563eb); }
@@ -7371,8 +7388,9 @@
       margin-bottom: 4px;
     }
     .fsva-legend-source {
-      font-size: 8px;
-      color: #94a3b8;
+      font-size: 10px;
+      color: #64748b;
+      text-align: center;
       font-style: italic;
     }
     .unified-legend-section .fsva-legend {
@@ -7397,17 +7415,20 @@
 
     /* ── FSVA 2025 Popup ── */
     .fsva-leaflet-popup .leaflet-popup-content-wrapper {
-      border-radius: 10px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      border-radius: 12px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.12);
       padding: 0;
-      max-height: 35vh;
+      max-height: 60vh;
       overflow: hidden;
+      border: none;
     }
     .fsva-leaflet-popup .leaflet-popup-content {
       margin: 0;
-      min-width: 280px;
-      max-height: 35vh;
+      min-width: 300px;
+      max-width: 360px;
+      max-height: 60vh;
       overflow-y: auto;
+      width: auto !important;
     }
     .fsva-popup {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -7510,9 +7531,10 @@
       background: #f8fafc;
       padding: 8px 14px;
       border-top: 1px solid #e5e7eb;
-      font-size: 8px;
-      color: #94a3b8;
+      font-size: 10px;
+      color: #64748b;
       font-style: italic;
+      text-align: center;
     }
 
     /* ── DEM Topography Analysis ── */

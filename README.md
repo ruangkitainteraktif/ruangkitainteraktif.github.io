@@ -102,10 +102,9 @@
 - Insight cuaca (ikon, suhu, kelembapan, angin, tutupan awan)
 
 **Sub-tab: Gempa**
-- Gempa terkini dari BMKG, gempa signifikan (M5.0+), gempa dirasakan
-- Marker animasi dengan popup detail
-- Zona risiko gempa dan longsor dari **BIG**
-- Gempa NTT 2026 (BNPB), jalur evakuasi, sensor seismik, riwayat & katalog gempa
+-- Gempa terkini dari BMKG, gempa signifikan (M5.0+), gempa dirasakan
+-- Marker animasi dengan popup detail
+-- Zona risiko gempa dan longsor dari **BIG**
 
 **Sub-tab: Kehutanan**
 - Hotspot karhutla dari NASA FIRMS via SIPONGI

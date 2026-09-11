@@ -35,8 +35,10 @@
       L.DomEvent.disableClickPropagation(wrap);
       L.DomEvent.disableScrollPropagation(wrap);
 
-      var titleRow = L.DomUtil.create('div', 'sentinel2-ts-title', wrap);
-      titleRow.textContent = 'Sentinel-2';
+      if (typeof addUnifiedSlider !== 'function') {
+        var titleRow = L.DomUtil.create('div', 'sentinel2-ts-title', wrap);
+        titleRow.textContent = 'Sentinel-2';
+      }
 
       var controlsRow = L.DomUtil.create('div', 'sentinel2-ts-controls', wrap);
 

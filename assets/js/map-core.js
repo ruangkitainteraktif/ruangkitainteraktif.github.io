@@ -1128,13 +1128,7 @@ L.control.scale({
           document.getElementById('toggleKrbTitik')?.dispatchEvent(new Event('change'));
         }
 
-        // Bersihkan layer gempa NTT
-        if (document.getElementById('toggleGempaNTT')) {
-          document.getElementById('toggleGempaNTT').checked = false;
-        }
-        if (typeof isGempaNTTActive === 'function' && isGempaNTTActive()) {
-          document.getElementById('toggleGempaNTT')?.dispatchEvent(new Event('change'));
-        }
+        // Gempa NTT layers removed
 
         // Bersihkan layer geologi BIG
         var bigGeoToggles = ['togglePetaGeologi', 'toggleGeostruktur', 'togglePatahanAktif', 'toggleLikuifaksi', 'toggleKarst'];
@@ -1427,9 +1421,9 @@ L.control.scale({
       L.DomEvent.disableClickPropagation(div);
       div.innerHTML =
         '<div class="fsva-legend-title">FSVA 2025 - Indeks Kerentanan Pangan</div>' +
-        '<img class="fsva-legend-img" alt="Legend" ' +
-          'src="' + fsvaWmsUrl + '?request=GetLegendGraphic&layer=palapa:FSVA_2025&format=image/png&width=20&height=20">' +
-        '<div class="fsva-legend-source">Sumber: Badan Pangan Nasional</div>';
+          '<img class="fsva-legend-img" alt="Legend" ' +
+            'src="' + fsvaWmsUrl + '?request=GetLegendGraphic&layer=palapa:FSVA_2025&format=image/png&width=20&height=20">' +
+          '<div class="fsva-legend-source">Sumber: Peta Ketahanan dan Kerentanan Pangan 2025 — Badan Pangan Nasional</div>';
       var img = div.querySelector('.fsva-legend-img');
       if (img) {
         img.onerror = function () { img.style.display = 'none'; };
@@ -1447,7 +1441,7 @@ L.control.scale({
       '<div class="fsva-legend-title">FSVA 2025 - Indeks Kerentanan Pangan</div>' +
       '<img class="fsva-legend-img" alt="Legend" ' +
         'src="' + fsvaWmsUrl + '?request=GetLegendGraphic&layer=palapa:FSVA_2025&format=image/png&width=20&height=20">' +
-      '<div class="fsva-legend-source">Sumber: Badan Pangan Nasional</div>';
+      '<div class="fsva-legend-source">Sumber: Peta Ketahanan dan Kerentanan Pangan 2025 — Badan Pangan Nasional</div>';
     var img = div.querySelector('.fsva-legend-img');
     if (img) {
       img.onerror = function () { img.style.display = 'none'; };
@@ -1523,7 +1517,7 @@ L.control.scale({
     });
     html += '</div>';
     html += '</div>';
-    html += '<div class="fsva-popup-footer"><span>Sumber: Badan Pangan Nasional - PETAKE TAHANAN DAN KERENTANAN PANGAN 2025</span></div>';
+    html += '<div class="fsva-popup-footer"><span>Sumber: Peta Ketahanan dan Kerentanan Pangan 2025 — Badan Pangan Nasional</span></div>';
     html += '</div>';
     return html;
   }
@@ -1623,17 +1617,23 @@ L.control.scale({
   function _buildSih3DpuPopup(props) {
     var jenis = props.jenis_pos || '-';
     var cfg = SIH3_DPU_ICONS[jenis] || { color: '#6b7280', icon: '📍' };
+    // If jenis is very long or indicates 'Pos Tinggi', don't show badge — use title only
+    var showBadge = true;
+    try { if (/Pos\s*Tinggi/i.test(jenis) || (jenis && jenis.length > 28)) showBadge = false; } catch (e) {}
+    var badgeHtml = showBadge ? ('<div class="sih3-popup-badge"><span>' + cfg.icon + '</span> ' + jenis + '</div>') : '';
     return '<div class="sih3-popup sih3-dpu-popup">' +
       '<div class="sih3-popup-header" style="background:linear-gradient(135deg,' + cfg.color + ',' + cfg.color + 'cc)">' +
-        '<div class="sih3-popup-badge"><span>' + cfg.icon + '</span> ' + jenis + '</div>' +
-        '<div class="sih3-popup-title">' + (props.judul || '-') + '</div>' +
-        '<div class="sih3-popup-subtitle">' + (props.name || '-') + '</div>' +
+        badgeHtml +
+        '<div class="sih3-popup-title">' + (props.name || '-') + '</div>' +
+        // Remove subtitle 'Kewenangan' from header — use title only
+        '' +
       '</div>' +
       '<div class="sih3-popup-body">' +
-        '<div class="sih3-popup-row"><span class="sih3-popup-label">Kewenangan</span><span class="sih3-popup-value">' + (props.name || '-') + '</span></div>' +
-        '<div class="sih3-popup-row"><span class="sih3-popup-label">Jenis Input</span><span class="sih3-popup-value">' + (props.tipe_input || '-') + '</span></div>' +
-        '<div class="sih3-popup-row"><span class="sih3-popup-label">Nilai</span><span class="sih3-popup-value sih3-popup-highlight">' + (props.nilai || '-') + '</span></div>' +
-        '<div class="sih3-popup-row"><span class="sih3-popup-label">Tanggal</span><span class="sih3-popup-value">' + (props.tanggal || '-') + ' ' + (props.jam ? props.jam + ':00' : '') + '</span></div>' +
+        // Kewenangan moved to title/subtitle — remove duplicate row
+        '' +
+        '<div class="sih3-popup-row"><div class="sih3-popup-label">Jenis Input</div><div class="sih3-popup-value">' + (props.tipe_input || '-') + '</div></div>' +
+        '<div class="sih3-popup-row"><div class="sih3-popup-label">Nilai</div><div class="sih3-popup-value sih3-popup-highlight">' + (props.nilai || '-') + '</div></div>' +
+        '<div class="sih3-popup-row"><div class="sih3-popup-label">Tanggal</div><div class="sih3-popup-value">' + (props.tanggal || '-') + ' ' + (props.jam ? props.jam + ':00' : '') + '</div></div>' +
       '</div>' +
       '<div class="sih3-popup-footer">SIH3 Dinas PU SDA Jatim</div>' +
     '</div>';
@@ -1650,24 +1650,20 @@ L.control.scale({
       var url = SIH3_DPU_API.replace('{id}', viewId);
       fsvaFetchJson(url).then(function(data) {
         if (!Array.isArray(data) || data.length === 0) return;
-        var markers = L.geoJSON(null, {
-          pointToLayer: function(feature, latlng) {
-            return L.marker(latlng, { icon: _buildSih3DpuIcon(feature.properties.jenis_pos) });
-          },
-          onEachFeature: function(feature, layer) {
-            layer.bindPopup(_buildSih3DpuPopup(feature.properties), { maxWidth: 280, className: 'sih3-leaflet-popup' });
-          }
-        });
+        // Use MarkerClusterGroup for point data to improve performance and UX
+        var cluster = L.markerClusterGroup({ maxClusterRadius: 45 });
         data.forEach(function(item) {
           var lat = parseFloat(item.lat);
           var lng = parseFloat(item.long);
           if (isNaN(lat) || isNaN(lng)) return;
-          markers.addLayer(L.marker([lat, lng], { icon: _buildSih3DpuIcon(item.jenis_pos) })
-            .bindPopup(_buildSih3DpuPopup(item), { maxWidth: 280, className: 'sih3-leaflet-popup' }));
+          var m = L.marker([lat, lng], { icon: _buildSih3DpuIcon(item.jenis_pos) })
+            .bindPopup(_buildSih3DpuPopup(item), { maxWidth: 280, className: 'sih3-leaflet-popup' });
+          m.on('click', function () { flyToMarker(this); });
+          cluster.addLayer(m);
         });
-        _sih3DpuCache[viewId] = markers;
-        _sih3DpuLayers[viewId] = markers;
-        markers.addTo(map);
+        _sih3DpuCache[viewId] = cluster;
+        _sih3DpuLayers[viewId] = cluster;
+        cluster.addTo(map);
       }).catch(function(err) {
         console.warn('[SIH3 DPU] Gagal load view ' + viewId + ':', err.message);
       });
@@ -1742,7 +1738,7 @@ L.control.scale({
     return '<div class="sih3-popup sih3-cit-popup">' +
       '<div class="sih3-popup-header" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)">' +
         '<div class="sih3-popup-badge"><span>💧</span> BBWS Citarum</div>' +
-        '<div class="sih3-popup-title">' + (props.Nama || props.nama || props.KABUPATEN || 'Data') + '</div>' +
+        '<div class="sih3-popup-title">' + (props.name || 'Data') + '</div>' +
       '</div>' +
       '<div class="sih3-popup-body">' + rows + '</div>' +
       '<div class="sih3-popup-footer">SIH3 WS Citarum</div>' +
@@ -1771,19 +1767,45 @@ L.control.scale({
       var url = SIH3_CIT_BASE + fileName;
       fsvaFetchJson(url).then(function(geojson) {
         var style = _buildSih3CitStyle(fileId);
-        var layer = L.geoJSON(geojson, {
-          style: function() { return style; },
-          pointToLayer: function(feature, latlng) {
-            var color = SIH3_CIT_COLORS[fileId] || '#3b82f6';
-            return L.circleMarker(latlng, { radius: 5, weight: 1, color: color, fillColor: color, fillOpacity: 0.85 });
-          },
-          onEachFeature: function(feature, layer) {
-            layer.bindPopup(_buildSih3CitPopup(feature.properties, fileId), { maxWidth: 300, className: 'sih3-leaflet-popup' });
+          // If the GeoJSON contains point features, render them as clustered markers
+          var hasPoint = Array.isArray(geojson.features) && geojson.features.some(function(f){ return f.geometry && f.geometry.type === 'Point'; });
+          if (hasPoint) {
+            var cluster = L.markerClusterGroup({ maxClusterRadius: 45 });
+            geojson.features.forEach(function(f) {
+              if (!f.geometry || f.geometry.type !== 'Point') return;
+              var coords = f.geometry.coordinates;
+              var lat = coords[1], lng = coords[0];
+              var color = SIH3_CIT_COLORS[fileId] || '#3b82f6';
+              var icon = L.divIcon({
+                className: 'sih3-cit-marker',
+                html: '<div style="background:' + color + ';width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.2);"></div>',
+                iconSize: [16,16], iconAnchor: [8,8]
+              });
+              var m = L.marker([lat, lng], { icon: icon })
+                .bindPopup(_buildSih3CitPopup(f.properties, fileId), { maxWidth: 300, className: 'sih3-leaflet-popup' });
+              m.on('click', function () { flyToMarker(this); });
+              cluster.addLayer(m);
+            });
+            _sih3CitCache[fileId] = cluster;
+            _sih3CitLayers[fileId] = cluster;
+            cluster.addTo(map);
+          } else {
+            var layer = L.geoJSON(geojson, {
+              style: function() { return style; },
+              pointToLayer: function(feature, latlng) {
+                var color = SIH3_CIT_COLORS[fileId] || '#3b82f6';
+                return L.circleMarker(latlng, { radius: 5, weight: 1, color: color, fillColor: color, fillOpacity: 0.85 });
+              },
+              onEachFeature: function(feature, layer) {
+                layer.bindPopup(_buildSih3CitPopup(feature.properties, fileId), { maxWidth: 300, className: 'sih3-leaflet-popup' });
+                // fly-to when polygon/line/circleMarker clicked
+                layer.on('click', function () { flyToPolygon(this); });
+              }
+            });
+            _sih3CitCache[fileId] = layer;
+            _sih3CitLayers[fileId] = layer;
+            layer.addTo(map);
           }
-        });
-        _sih3CitCache[fileId] = layer;
-        _sih3CitLayers[fileId] = layer;
-        layer.addTo(map);
       }).catch(function(err) {
         console.warn('[SIH3 Citarum] Gagal load file ' + fileId + ':', err.message);
       });
@@ -1893,6 +1915,28 @@ L.control.scale({
     wrap.appendChild(container);
     return wrap;
   };
+
+  /* Helper: fly-to effect for markers and polygons */
+  function flyToMarker(marker) {
+    try {
+      var latlng = marker.getLatLng();
+      if (!latlng) return;
+      var targetZoom = Math.max(map.getZoom(), 12);
+      map.flyTo(latlng, targetZoom, { duration: 0.8 });
+      if (marker.openPopup) setTimeout(function () { marker.openPopup(); }, 400);
+    } catch (e) {}
+  }
+
+  function flyToPolygon(layer) {
+    try {
+      var bounds = null;
+      if (typeof layer.getBounds === 'function') bounds = layer.getBounds();
+      else if (layer.getLatLngs) bounds = L.latLngBounds(layer.getLatLngs());
+      if (!bounds || !bounds.isValid()) return;
+      map.flyToBounds(bounds.pad(0.12), { duration: 0.9 });
+      if (layer.openPopup) setTimeout(function () { layer.openPopup(); }, 600);
+    } catch (e) {}
+  }
 
   /* ═══════════════════════════════════════════════
      UNIFIED LEGEND & SLIDER CONTAINERS
@@ -2125,8 +2169,7 @@ L.control.scale({
         { id: 'toggleFaultLayer', label: 'Patahan Indonesia (BNPB)' },
         { id: 'toggleFaultLayerNew', label: 'Patahan Indonesia Baru (PUSGEN 2024)' },
         { id: 'toggleWorldPlatesLayer', label: 'Zona Patahan Dunia (USGS)' },
-        { id: 'toggleGempaNTT', label: 'Gempa NTT' },
-        { id: 'toggleFiniteFaultNTT', label: 'Finite Fault NTT' },
+        /* Gempa NTT and Finite Fault NTT removed */
         { id: 'toggleJalurEvakuasi', label: 'Jalur Evakuasi (BNPB)' },
         { id: 'toggleHistoryGempa', label: 'Riwayat Gempa BMKG' },
         { id: 'toggleKatalogGempa', label: 'Katalog Gempa BMKG' },

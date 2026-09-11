@@ -64,9 +64,11 @@
       L.DomEvent.disableClickPropagation(wrap);
       L.DomEvent.disableScrollPropagation(wrap);
 
-      var titleRow = L.DomUtil.create('div', 'modis-ts-title', wrap);
-      titleRow.textContent = activeKey === 'viirs-noaa21' ? 'VIIRS NOAA-21' : 'VIIRS NOAA-20';
-      _titleRow = titleRow;
+      if (typeof addUnifiedSlider !== 'function') {
+        var titleRow = L.DomUtil.create('div', 'modis-ts-title', wrap);
+        titleRow.textContent = activeKey === 'viirs-noaa21' ? 'VIIRS NOAA-21' : 'VIIRS NOAA-20';
+        _titleRow = titleRow;
+      }
 
       var controlsRow = L.DomUtil.create('div', 'modis-ts-controls', wrap);
 
