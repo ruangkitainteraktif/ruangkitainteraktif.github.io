@@ -1443,6 +1443,28 @@ L.control.scale({
   var fsvaLayer = null;
   var fsvaLegendCtrl = null;
   var fsvaWmsUrl = 'https://geoportal.badanpangan.go.id/geoserver/palapa/wms';
+  var fsvaProxies = [
+    function (url) { return 'https://api.cors.syrins.tech/?url=' + encodeURIComponent(url); },
+    function (url) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url); }
+  ];
+
+  function fsvaFetchJson(url) {
+    return fetch(url).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).catch(function () {
+      var chain = Promise.reject();
+      fsvaProxies.forEach(function (mk) {
+        chain = chain.catch(function () {
+          return fetch(mk(url), { cache: 'no-store' }).then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          });
+        });
+      });
+      return chain;
+    });
+  }
 
   var FsvaLegendControl = L.Control.extend({
     options: { position: 'bottomleft' },
@@ -1564,8 +1586,9 @@ L.control.scale({
         attribution: 'Badan Pangan Nasional - FSVA 2025'
       });
       fsvaLayer.addTo(map);
-      fsvaLayer.on('click', function (e) {
-        var url = fsvaWmsUrl + '?' + L.Util.getParamString({
+      fsvaLayer._fsvaClickHandler = function (e) {
+        if (!fsvaLayer || !map.hasLayer(fsvaLayer)) return;
+        var infoUrl = fsvaWmsUrl + '?' + L.Util.getParamString({
           service: 'WMS',
           version: '1.1.1',
           request: 'GetFeatureInfo',
@@ -1579,8 +1602,7 @@ L.control.scale({
           srs: 'EPSG:4326',
           bbox: map.getBounds().toBBoxString()
         });
-        fetch(url)
-          .then(function(r) { return r.json(); })
+        fsvaFetchJson(infoUrl)
           .then(function(data) {
             if (data.features && data.features.length > 0) {
               var props = data.features[0].properties;
@@ -1593,11 +1615,27 @@ L.control.scale({
               }
             }
           })
-          .catch(function() {});
-      });
+          .catch(function(err) {
+            console.warn('[FSVA] GetFeatureInfo gagal:', err.message);
+          });
+      };
+      fsvaLayer._fsvaContainerClickHandler = function (event) {
+        if (!fsvaLayer || !map.hasLayer(fsvaLayer)) return;
+        if (event.target.closest('.leaflet-control')) return;
+        try {
+          fsvaLayer._fsvaClickHandler({
+            latlng: map.mouseEventToLatLng(event),
+            containerPoint: map.mouseEventToContainerPoint(event)
+          });
+        } catch (err) {}
+      };
+      map.getContainer().addEventListener('click', fsvaLayer._fsvaContainerClickHandler, true);
       showFsvaLegend();
     } else {
       if (fsvaLayer && map.hasLayer(fsvaLayer)) map.removeLayer(fsvaLayer);
+      if (fsvaLayer && fsvaLayer._fsvaContainerClickHandler) {
+        map.getContainer().removeEventListener('click', fsvaLayer._fsvaContainerClickHandler, true);
+      }
       fsvaLayer = null;
       hideFsvaLegend();
       map.closePopup();
@@ -1874,6 +1912,12 @@ L.control.scale({
       ]
     },
     {
+      cat: 'Ketahanan Pangan',
+      layers: [
+        { id: 'toggleFsvaLayer', label: 'FSVA 2025 (Badan Pangan)' }
+      ]
+    },
+    {
       cat: 'Gempa & Bencana',
       layers: [
         { id: 'toggleLatestEarthquake', label: 'Gempa Terbaru (BMKG)' },
@@ -1978,12 +2022,6 @@ L.control.scale({
         { id: 'toggleSebaranPasar', label: 'Sebaran Pasar Indonesia' },
         { id: 'toggleSppgSebaranLayer', label: 'Sebaran SPPG Indonesia' },
         { id: 'toggleSppgLayer', label: 'SPPG Indonesia' }
-      ]
-    },
-    {
-      cat: 'Ketahanan Pangan',
-      layers: [
-        { id: 'toggleFsvaLayer', label: 'FSVA 2025 (Badan Pangan)' }
       ]
     },
     {

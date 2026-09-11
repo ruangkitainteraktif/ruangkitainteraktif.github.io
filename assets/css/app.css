@@ -7189,10 +7189,14 @@
       border-radius: 10px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.15);
       padding: 0;
+      max-height: 35vh;
+      overflow: hidden;
     }
     .fsva-leaflet-popup .leaflet-popup-content {
       margin: 0;
       min-width: 280px;
+      max-height: 35vh;
+      overflow-y: auto;
     }
     .fsva-popup {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
