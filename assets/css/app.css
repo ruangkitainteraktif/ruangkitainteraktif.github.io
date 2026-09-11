@@ -268,6 +268,56 @@
       margin-left: auto; font-size: 9px; font-weight: 700; color: #fff;
       background: #2563eb; border-radius: 8px; padding: 1px 6px; flex-shrink: 0;
     }
+    .lc-subcat-header {
+      font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase;
+      letter-spacing: .05em; padding: 8px 8px 2px 28px;
+    }
+    .sih3-leaflet-popup .leaflet-popup-content-wrapper {
+      border-radius: 10px; padding: 0; overflow: hidden;
+    }
+    .sih3-popup {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-width: 220px;
+    }
+    .sih3-popup-header {
+      padding: 12px 14px; color: white;
+    }
+    .sih3-popup-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,0.2); border-radius: 4px;
+      padding: 2px 8px; font-size: 10px; font-weight: 600; margin-bottom: 6px;
+    }
+    .sih3-popup-title {
+      font-size: 14px; font-weight: 700;
+    }
+    .sih3-popup-subtitle {
+      font-size: 11px; opacity: 0.85;
+    }
+    .sih3-popup-body {
+      padding: 10px 14px;
+    }
+    .sih3-popup-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 4px 0; border-bottom: 1px solid #f1f5f9;
+    }
+    .sih3-popup-row:last-child { border-bottom: none; }
+    .sih3-popup-label {
+      font-size: 10px; color: #64748b;
+    }
+    .sih3-popup-value {
+      font-size: 11px; font-weight: 600; color: #1e293b; text-align: right;
+      max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .sih3-popup-highlight {
+      color: #2563eb;
+    }
+    .sih3-popup-footer {
+      background: #f8fafc; padding: 8px 14px; border-top: 1px solid #e5e7eb;
+      font-size: 8px; color: #94a3b8; font-style: italic;
+    }
+    .sih3-dpu-marker {
+      background: transparent; border: none;
+    }
     .lc-attr-btn {
       display: none; margin-left: auto; padding: 2px 4px; border: none; border-radius: 4px;
       background: transparent; color: #94a3b8; cursor: pointer; transition: color .15s, background .15s;
@@ -8333,8 +8383,16 @@
       color: var(--text-primary);
     }
     [data-theme="dark"] .lc-basemap-group { color: #64748b; }
+    [data-theme="dark"] .lc-subcat-header { color: #64748b; }
     [data-theme="dark"] .lc-item.lc-basemap-active { background: rgba(37,99,235,.15); border-left-color: #3b82f6; }
     [data-theme="dark"] .lc-basemap-badge { background: #3b82f6; }
+    [data-theme="dark"] .sih3-popup-body { background: var(--bg-primary); }
+    [data-theme="dark"] .sih3-popup-title { color: var(--text-primary); }
+    [data-theme="dark"] .sih3-popup-subtitle { color: var(--text-secondary); }
+    [data-theme="dark"] .sih3-popup-row { border-color: var(--border-color); }
+    [data-theme="dark"] .sih3-popup-label { color: var(--text-secondary); }
+    [data-theme="dark"] .sih3-popup-value { color: var(--text-primary); }
+    [data-theme="dark"] .sih3-popup-footer { background: var(--bg-secondary); border-color: var(--border-color); }
     [data-theme="dark"] .dm-sidebar { background: var(--bg-primary); color: var(--text-primary); }
     [data-theme="dark"] .dm-sidebar-option { background: var(--bg-secondary); border-color: var(--border-color); }
     [data-theme="dark"] .dm-sidebar-option:hover { background: var(--bg-card-hover); }
