@@ -640,18 +640,43 @@ L.control.scale({
   });
   new ZoomControl().addTo(map);
 
-  // Draw FAB Control — round button below basemap, expands to show draw/measure tools
-  function openDrawModal() {
-    var modal = document.getElementById('drawModal');
-    if (modal) modal.classList.add('open');
-  }
-  window.openDrawModal = openDrawModal;
+  // Draw & Measure Sidebar
+  var _drawSidebarMinimized = false;
 
-  function closeDrawModal() {
-    var modal = document.getElementById('drawModal');
-    if (modal) modal.classList.remove('open');
+  function openDrawSidebar() {
+    var sb = document.getElementById('drawSidebar');
+    if (!sb) return;
+    _drawSidebarMinimized = false;
+    sb.classList.remove('dm-sidebar-minimized');
+    sb.classList.add('dm-sidebar-open');
   }
-  window.closeDrawModal = closeDrawModal;
+  window.openDrawSidebar = openDrawSidebar;
+
+  function closeDrawSidebar() {
+    var sb = document.getElementById('drawSidebar');
+    if (!sb) return;
+    sb.classList.remove('dm-sidebar-open', 'dm-sidebar-minimized');
+    _drawSidebarMinimized = false;
+  }
+  window.closeDrawSidebar = closeDrawSidebar;
+
+  function minimizeDrawSidebar() {
+    var sb = document.getElementById('drawSidebar');
+    if (!sb) return;
+    _drawSidebarMinimized = !_drawSidebarMinimized;
+    sb.classList.toggle('dm-sidebar-minimized', _drawSidebarMinimized);
+    if (!_drawSidebarMinimized) sb.classList.add('dm-sidebar-open');
+  }
+  window.minimizeDrawSidebar = minimizeDrawSidebar;
+
+  function restoreDrawSidebar() {
+    var sb = document.getElementById('drawSidebar');
+    if (!sb) return;
+    _drawSidebarMinimized = false;
+    sb.classList.remove('dm-sidebar-minimized');
+    sb.classList.add('dm-sidebar-open');
+  }
+  window.restoreDrawSidebar = restoreDrawSidebar;
 
   const DrawFABControl = L.Control.extend({
     options: { position: 'bottomright' },
@@ -663,7 +688,7 @@ L.control.scale({
       btn.setAttribute('aria-label', 'Draw & Measure');
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
-        openDrawModal();
+        openDrawSidebar();
       });
       L.DomEvent.disableClickPropagation(wrap);
       L.DomEvent.disableScrollPropagation(wrap);
@@ -672,6 +697,17 @@ L.control.scale({
     }
   });
   new DrawFABControl().addTo(map);
+
+  (function() {
+    var sb = document.getElementById('drawSidebar');
+    if (!sb) return;
+    var title = sb.querySelector('.dm-sidebar-title');
+    if (title) {
+      title.addEventListener('click', function() {
+        if (sb.classList.contains('dm-sidebar-minimized')) restoreDrawSidebar();
+      });
+    }
+  })();
 
   // AirVisual Legend Control
   const AIRVISUAL_LEGEND_DATA = {
