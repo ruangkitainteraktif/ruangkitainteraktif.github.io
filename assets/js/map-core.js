@@ -649,6 +649,7 @@ L.control.scale({
     _drawSidebarMinimized = false;
     sb.classList.remove('dm-sidebar-minimized');
     sb.classList.add('dm-sidebar-open');
+    document.body.classList.add('dm-sidebar-open');
   }
   window.openDrawSidebar = openDrawSidebar;
 
@@ -657,6 +658,7 @@ L.control.scale({
     if (!sb) return;
     sb.classList.remove('dm-sidebar-open', 'dm-sidebar-minimized');
     _drawSidebarMinimized = false;
+    document.body.classList.remove('dm-sidebar-open', 'dm-sidebar-minimized');
   }
   window.closeDrawSidebar = closeDrawSidebar;
 
@@ -665,7 +667,13 @@ L.control.scale({
     if (!sb) return;
     _drawSidebarMinimized = !_drawSidebarMinimized;
     sb.classList.toggle('dm-sidebar-minimized', _drawSidebarMinimized);
-    if (!_drawSidebarMinimized) sb.classList.add('dm-sidebar-open');
+    document.body.classList.toggle('dm-sidebar-minimized', _drawSidebarMinimized);
+    if (!_drawSidebarMinimized) {
+      sb.classList.add('dm-sidebar-open');
+      document.body.classList.add('dm-sidebar-open');
+    } else {
+      document.body.classList.remove('dm-sidebar-open');
+    }
   }
   window.minimizeDrawSidebar = minimizeDrawSidebar;
 
@@ -675,6 +683,8 @@ L.control.scale({
     _drawSidebarMinimized = false;
     sb.classList.remove('dm-sidebar-minimized');
     sb.classList.add('dm-sidebar-open');
+    document.body.classList.remove('dm-sidebar-minimized');
+    document.body.classList.add('dm-sidebar-open');
   }
   window.restoreDrawSidebar = restoreDrawSidebar;
 
