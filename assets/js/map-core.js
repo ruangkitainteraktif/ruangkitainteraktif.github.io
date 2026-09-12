@@ -938,7 +938,9 @@ L.control.scale({
           'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer', 'toggleSppgSebaranLayer',
           'toggleConcessionsLayer', 'toggleProtectedLayer', 'toggleMangroveLayer', 'togglePeatlandLayer',
           'toggleBumiPersilLayer',
-          'toggleLsdTmsLayer', 'toggleBpsTutupanLahan',
+          'toggleLsdTmsLayer', 'toggleLbsTmsLayer', 'toggleKp2bTmsLayer',
+          'toggleDiTmsLayer', 'toggleSaluranIrTmsLayer', 'toggleRtrwTmsLayer',
+          'toggleBpsTutupanLahan',
           'st2023:batas_desa', 'st2023:batas_kecamatan', 'st2023:batas_kabupaten', 'st2023:batas_provinsi',
           'st2023:dasymetric_utp', 'st2023:dasymetric_utp_tp', 'st2023:dasymetric_utp_horti', 'st2023:dasymetric_utp_holti',
           'st2023:dasymetric_utp_hutan', 'st2023:dasymetric_utp_ikan', 'st2023:dasymetric_utp_kebun',
@@ -2161,7 +2163,12 @@ L.control.scale({
       cat: 'ATRBPN',
       layers: [
         { id: 'toggleBumiPersilLayer', label: 'Persil Tanah (ATRBPN)' },
-        { id: 'toggleLsdTmsLayer', label: 'Lahan Sawah Dilindungi (LSD)' }
+        { id: 'toggleRtrwTmsLayer', label: 'RTRW Kabupaten/Kota' },
+        { id: 'toggleLsdTmsLayer', label: 'Lahan Sawah Dilindungi (LSD)' },
+        { id: 'toggleLbsTmsLayer', label: 'Lahan Baku Sawah' },
+        { id: 'toggleKp2bTmsLayer', label: 'KP2B' },
+        { id: 'toggleDiTmsLayer', label: 'Daerah Irigasi' },
+        { id: 'toggleSaluranIrTmsLayer', label: 'Saluran Irigasi' }
       ]
     },
     {
@@ -2682,7 +2689,12 @@ L.control.scale({
           id === 'toggleSawahNasional50k' ||
           id === 'toggleErosiLayer' ||
           id === 'toggleBpsTutupanLahan' ||
-          id === 'toggleLsdTmsLayer';
+          id === 'toggleLsdTmsLayer' ||
+          id === 'toggleLbsTmsLayer' ||
+          id === 'toggleKp2bTmsLayer' ||
+          id === 'toggleDiTmsLayer' ||
+          id === 'toggleSaluranIrTmsLayer' ||
+          id === 'toggleRtrwTmsLayer';
         if (!hasWindowToggle) {
           var el = findLayerById(id);
           if (el) {
@@ -2762,8 +2774,8 @@ L.control.scale({
         if (id === 'toggleBpsTutupanLahan' && typeof window.toggleBpsTutupanLahan === 'function') {
           window.toggleBpsTutupanLahan(cb.checked);
         }
-        if (id === 'toggleLsdTmsLayer' && typeof window.toggleLsdTmsLayer === 'function') {
-          window.toggleLsdTmsLayer(cb.checked);
+        if (id.indexOf('TmsLayer') !== -1 && typeof window.toggleAtrbpnTmsLayer === 'function') {
+          window.toggleAtrbpnTmsLayer(id, cb.checked);
         }
         updateCatCount(cb.closest('.lc-category'));
         var attrBtn = cb.closest('.lc-item').querySelector('.lc-attr-btn');
