@@ -7418,7 +7418,7 @@
       border-radius: 12px;
       box-shadow: 0 6px 24px rgba(0,0,0,0.12);
       padding: 0;
-      max-height: 60vh;
+      max-height: 37vh;
       overflow: hidden;
       border: none;
     }
@@ -7426,7 +7426,7 @@
       margin: 0;
       min-width: 300px;
       max-width: 360px;
-      max-height: 60vh;
+      max-height: 37vh;
       overflow-y: auto;
       width: auto !important;
     }
@@ -7972,7 +7972,8 @@
     .unified-legend-section .airvisual-legend,
     .unified-legend-section .gp-legend,
     .unified-legend-section .choropleth-legend,
-    .unified-legend-section .geoportal-legend {
+    .unified-legend-section .geoportal-legend,
+    .unified-legend-section .atrbpn-legend {
       background: rgba(255,255,255,0.96) !important;
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
@@ -7989,7 +7990,8 @@
     .unified-legend-section .airvisual-legend-title,
     .unified-legend-section .gp-legend-badge,
     .unified-legend-section .choropleth-legend-title,
-    .unified-legend-section .geoportal-legend-title {
+    .unified-legend-section .geoportal-legend-title,
+    .unified-legend-section .atrbpn-legend-title {
       color: #0f172a !important;
     }
     .unified-legend-section .wind-legend-item,
@@ -7998,7 +8000,8 @@
     .unified-legend-section .airvisual-legend-label,
     .unified-legend-section .maritime-legend-row,
     .unified-legend-section .choropleth-legend-label,
-    .unified-legend-section .geoportal-legend-label {
+    .unified-legend-section .geoportal-legend-label,
+    .unified-legend-section .atrbpn-legend-item {
       color: #334155 !important;
     }
     .unified-legend-section .wind-legend-labels,
@@ -8008,7 +8011,8 @@
     .unified-legend-section .maritime-legend-source,
     .unified-legend-section .hotspot-legend-source,
     .unified-legend-section .ecmwf-fire-legend-source,
-    .unified-legend-section .choropleth-legend-unit {
+    .unified-legend-section .choropleth-legend-unit,
+    .unified-legend-section .atrbpn-legend-source {
       color: #64748b !important;
     }
     .unified-legend-section .wind-legend-bar,
@@ -8036,6 +8040,51 @@
     }
     .unified-legend-section .geoportal-legend-swatch {
       border: 1px solid rgba(255,255,255,0.1) !important;
+    }
+
+    /* ── ATRBPN Legend ── */
+    .unified-legend-section .atrbpn-legend {
+      background: rgba(255,255,255,0.96) !important;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(148,163,184,0.22) !important;
+      border-radius: 10px !important;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+      color: #0f172a;
+      padding: 10px 12px;
+      min-width: 180px;
+    }
+    .unified-legend-section .atrbpn-legend-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #0f172a !important;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+    .unified-legend-section .atrbpn-legend-items {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .unified-legend-section .atrbpn-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: #334155 !important;
+    }
+    .unified-legend-section .atrbpn-legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .unified-legend-section .atrbpn-legend-source {
+      font-size: 9px;
+      color: #64748b !important;
+      margin-top: 6px;
+      line-height: 1.3;
     }
 
     /* ── Unified Slider Container ── */

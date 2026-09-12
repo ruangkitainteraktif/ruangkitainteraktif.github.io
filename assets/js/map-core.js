@@ -938,6 +938,7 @@ L.control.scale({
           'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer', 'toggleSppgSebaranLayer',
           'toggleConcessionsLayer', 'toggleProtectedLayer', 'toggleMangroveLayer', 'togglePeatlandLayer',
           'toggleBumiPersilLayer',
+          'toggleFsvaLayer',
           'toggleLsdTmsLayer', 'toggleLbsTmsLayer', 'toggleKp2bTmsLayer',
           'toggleDiTmsLayer', 'toggleSaluranIrTmsLayer', 'toggleRtrwTmsLayer',
           'toggleBpsTutupanLahan',
@@ -1257,6 +1258,33 @@ L.control.scale({
 
   /* ── BPN Bhumi Persil (WMTS) ── */
   var bumiPersilLayer = null;
+  var bumiPersilLegendActive = false;
+
+  function showBumiPersilLegend() {
+    if (bumiPersilLegendActive) return;
+    if (typeof addUnifiedLegend !== 'function') return;
+
+    var div = L.DomUtil.create('div', 'atrbpn-legend');
+    L.DomEvent.disableClickPropagation(div);
+
+    div.innerHTML =
+      '<div class="atrbpn-legend-title">Persil Tanah (Bhumi Persil)</div>' +
+      '<div class="atrbpn-legend-items">' +
+        '<div class="atrbpn-legend-item">' +
+          '<span class="atrbpn-legend-dot" style="background:#8B4513;"></span>' +
+          '<span>Batas Persil Tanah</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="atrbpn-legend-source">Sumber: ATRBPN - Bhumi (bhumi.atrbpn.go.id)</div>';
+
+    addUnifiedLegend('atrbpn-bumipersil', typeof createLegendWithToggle === 'function' ? createLegendWithToggle(div) : div);
+    bumiPersilLegendActive = true;
+  }
+
+  function hideBumiPersilLegend() {
+    if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('atrbpn-bumipersil');
+    bumiPersilLegendActive = false;
+  }
 
   function toggleBumiPersilLayer(show) {
     if (show) {
@@ -1267,9 +1295,11 @@ L.control.scale({
       });
       bumiPersilLayer.addTo(map);
       map.setView([-6.1944, 106.8231], 18);
+      showBumiPersilLegend();
     } else {
       if (bumiPersilLayer && map.hasLayer(bumiPersilLayer)) map.removeLayer(bumiPersilLayer);
       bumiPersilLayer = null;
+      hideBumiPersilLegend();
     }
   }
 
@@ -2173,8 +2203,29 @@ L.control.scale({
     },
     {
       cat: 'Ketahanan Pangan',
-      layers: [
-        { id: 'toggleFsvaLayer', label: 'FSVA 2025 (Badan Pangan)' }
+      subcats: [
+        { subcat: 'Badan Pangan', layers: [
+          { id: 'toggleFsvaLayer', label: 'FSVA 2025 (Badan Pangan)' }
+        ]},
+        { subcat: 'KSA BPS', layers: [
+          { id: 'bps-lbs-2024', label: 'LBS Nasional 2024' }
+        ]},
+        { subcat: 'KSP BIG', layers: [
+          { id: 'toggleSawahDilindungi', label: 'LSD 50K' },
+          { id: 'toggleSawahNasional50k', label: 'LBS 50K' }
+        ]},
+        { subcat: 'KEMENTAN', layers: [
+          { id: 'arcgis-sawah-2023', label: 'LBS 2023' },
+          { id: 'arcgis-sawah-2019', label: 'LBS 2019' },
+          { id: 'arcgis-kawasan-padi', label: 'Kawasan Padi (KEMENTAN)' },
+          { id: 'arcgis-kawasan-jagung', label: 'Kawasan Jagung (KEMENTAN)' },
+          { id: 'arcgis-kawasan-kedelai', label: 'Kawasan Kedelai (KEMENTAN)' }
+        ]},
+        { subcat: 'Market & SPPG', layers: [
+          { id: 'toggleSebaranPasar', label: 'Sebaran Pasar Indonesia' },
+          { id: 'toggleSppgSebaranLayer', label: 'Sebaran SPPG Indonesia' },
+          { id: 'toggleSppgLayer', label: 'SPPG Indonesia' }
+        ]}
       ]
     },
     {
@@ -2233,37 +2284,6 @@ L.control.scale({
       ]
     },
     {
-      cat: 'Lahan Baku Sawah',
-      subcats: [
-        { subcat: 'KSA BPS', layers: [
-          { id: 'bps-lbs-2024', label: 'LBS Nasional 2024' }
-        ]},
-        { subcat: 'KSP BIG', layers: [
-          { id: 'toggleSawahDilindungi', label: 'LSD 50K' },
-          { id: 'toggleSawahNasional50k', label: 'LBS 50K' }
-        ]},
-        { subcat: 'KEMENTAN', layers: [
-          { id: 'arcgis-sawah-2023', label: 'LBS 2023' },
-          { id: 'arcgis-sawah-2019', label: 'LBS 2019' }
-        ]}
-      ]
-    },
-    {
-      cat: 'Tutupan Lahan & Erosi',
-      layers: [
-        { id: 'toggleBpsTutupanLahan', label: 'Peta Tutupan Lahan 100m (KSA BPS)' },
-        { id: 'toggleErosiLayer', label: 'Peta Rawan Erosi (BIG)' }
-      ]
-    },
-    {
-      cat: 'Kawasan Pertanian',
-      layers: [
-        { id: 'arcgis-kawasan-padi', label: 'Kawasan Padi (KEMENTAN)' },
-        { id: 'arcgis-kawasan-jagung', label: 'Kawasan Jagung (KEMENTAN)' },
-        { id: 'arcgis-kawasan-kedelai', label: 'Kawasan Kedelai (KEMENTAN)' }
-      ]
-    },
-    {
       cat: 'Gempa & Bencana',
       layers: [
         { id: 'toggleLatestEarthquake', label: 'Gempa Terbaru (BMKG)' },
@@ -2278,6 +2298,34 @@ L.control.scale({
         { id: 'toggleKatalogGempa', label: 'Katalog Gempa BMKG' },
         { id: 'toggleSensorSeismic', label: 'Sensor Seismic BMKG' },
         { id: 'toggleSensorGlobal', label: 'Sensor Global (GEOFON)' }
+      ]
+    },
+    {
+      cat: 'Meteorologi',
+      subcats: [
+        { subcat: 'Prediksi Cuaca', layers: [
+          { id: 'toggleHujanLayer', label: 'Hujan Realtime (BMKG)' },
+          { id: 'toggleWindRgb', label: 'Wind Speed and Direction (GFS)' },
+          { id: 'toggleRhRgb', label: 'Relative Humidity (GFS)' },
+          { id: 'toggleTp24Rgb', label: 'Total Precipitation 24 Jam (GFS)' },
+          { id: 'togglePm25Rgb', label: 'PM2.5 Air Quality (BMKG PCM)' },
+          { id: 'toggleHthRgb', label: 'Hari Tanpa Hujan (BMKG HTH)' },
+          { id: 'toggleWindAnim', label: 'Animasi Angin (Wind Particle)' },
+          { id: 'toggleCuacaPerairanLayer', label: 'Cuaca Perairan (BMKG)' },
+          { id: 'toggleCuacaPelabuhanLayer', label: 'Cuaca Pelabuhan (BMKG)' },
+          { id: 'toggleMaritimeAngin', label: 'Angin Laut (Wind Speed)' },
+          { id: 'toggleMaritimeGelombang', label: 'Tinggi Gelombang' },
+          { id: 'toggleMaritimeSwell', label: 'Swell (Primary Swell)' },
+          { id: 'toggleMaritimeWindSea', label: 'Gelombang Angin (Wind Sea)' }
+        ]},
+        { subcat: 'Kualitas Udara', layers: [
+          { id: 'toggleAirVisualPm25', label: 'PM2.5 (AirVisual)' },
+          { id: 'toggleAirVisualPm10', label: 'PM10 (AirVisual)', dataAttr: 'airvisual-pm10' },
+          { id: 'toggleAirVisualO3', label: 'O3 - Ozon (AirVisual)', dataAttr: 'airvisual-o3' },
+          { id: 'toggleAirVisualNo2', label: 'NO2 - Nitrogen Dioksida (AirVisual)', dataAttr: 'airvisual-no2' },
+          { id: 'toggleAirVisualSo2', label: 'SO2 - Sulfur Dioksida (AirVisual)', dataAttr: 'airvisual-so2' },
+          { id: 'toggleAirVisualCo', label: 'CO - Karbon Monoksida (AirVisual)', dataAttr: 'airvisual-co' }
+        ]}
       ]
     },
     {
@@ -2305,40 +2353,6 @@ L.control.scale({
       ]
     },
     {
-      cat: 'Cuaca & Maritim',
-      layers: [
-        { id: 'toggleCuacaPerairanLayer', label: 'Cuaca Perairan (BMKG)' },
-        { id: 'toggleCuacaPelabuhanLayer', label: 'Cuaca Pelabuhan (BMKG)' },
-        { id: 'toggleMaritimeAngin', label: 'Angin Laut (Wind Speed)' },
-        { id: 'toggleMaritimeGelombang', label: 'Tinggi Gelombang' },
-        { id: 'toggleMaritimeSwell', label: 'Swell (Primary Swell)' },
-        { id: 'toggleMaritimeWindSea', label: 'Gelombang Angin (Wind Sea)' }
-      ]
-    },
-    {
-      cat: 'Prediksi Cuaca',
-      layers: [
-        { id: 'toggleHujanLayer', label: 'Hujan Realtime (BMKG)' },
-        { id: 'toggleWindRgb', label: 'Wind Speed and Direction (GFS)' },
-        { id: 'toggleRhRgb', label: 'Relative Humidity (GFS)' },
-        { id: 'toggleTp24Rgb', label: 'Total Precipitation 24 Jam (GFS)' },
-        { id: 'togglePm25Rgb', label: 'PM2.5 Air Quality (BMKG PCM)' },
-        { id: 'toggleHthRgb', label: 'Hari Tanpa Hujan (BMKG HTH)' },
-        { id: 'toggleWindAnim', label: 'Animasi Angin (Wind Particle)' }
-      ]
-    },
-    {
-      cat: 'Kualitas Udara',
-      layers: [
-        { id: 'toggleAirVisualPm25', label: 'PM2.5 (AirVisual)' },
-        { id: 'toggleAirVisualPm10', label: 'PM10 (AirVisual)', dataAttr: 'airvisual-pm10' },
-        { id: 'toggleAirVisualO3', label: 'O3 - Ozon (AirVisual)', dataAttr: 'airvisual-o3' },
-        { id: 'toggleAirVisualNo2', label: 'NO2 - Nitrogen Dioksida (AirVisual)', dataAttr: 'airvisual-no2' },
-        { id: 'toggleAirVisualSo2', label: 'SO2 - Sulfur Dioksida (AirVisual)', dataAttr: 'airvisual-so2' },
-        { id: 'toggleAirVisualCo', label: 'CO - Karbon Monoksida (AirVisual)', dataAttr: 'airvisual-co' }
-      ]
-    },
-    {
       cat: 'Geologi',
       layers: [
         { id: 'toggleVolcanoLayer', label: 'Gunung Api Indonesia (PVMBG)' },
@@ -2354,32 +2368,9 @@ L.control.scale({
       ]
     },
     {
-      cat: 'Jalan',
-      layers: [
-        { id: 'toggleTollRoad', label: 'Jalan Tol Pulau Jawa' },
-        { id: 'toggleNationalRoad', label: 'Jalan Nasional' },
-        { id: 'toggleNonTollRoad', label: 'Jalan Non Tol (BIG)' }
-      ]
-    },
-    {
-      cat: 'Market & SPPG',
-      layers: [
-        { id: 'toggleSebaranPasar', label: 'Sebaran Pasar Indonesia' },
-        { id: 'toggleSppgSebaranLayer', label: 'Sebaran SPPG Indonesia' },
-        { id: 'toggleSppgLayer', label: 'SPPG Indonesia' }
-      ]
-    },
-    {
-      cat: 'Terrain & Lainnya',
-      layers: [
-        { id: 'toggleDemnasOverlay', label: 'Terrain Overlay (SRTM)' },
-        { id: 'toggleCoastlineLayer', label: 'Garis Pantai (Natural Earth)' }
-      ]
-    },
-    {
-      cat: 'Dinas PU SDA Jatim (SIH3)',
+      cat: 'Hidrologi',
       subcats: [
-        { subcat: 'Hidrologi', layers: [
+        { subcat: 'Dinas PU SDA Jatim - Hidrologi', layers: [
           { id: 'toggleSih3Dpu_78', label: 'Titik Sampling Kualitas Air' },
           { id: 'toggleSih3Dpu_73', label: 'Sensor Banjir BPBD Jatim' },
           { id: 'toggleSih3Dpu_70', label: 'Pos Tinggi Muka Air Dam Provinsi' },
@@ -2411,33 +2402,28 @@ L.control.scale({
           { id: 'toggleSih3Dpu_89', label: 'Data Debit Sungai PU SDA' },
           { id: 'toggleSih3Dpu_80', label: 'AWLR Bidang Sungai Waduk Pantai' }
         ]},
-        { subcat: 'Hidrogeologi', layers: [
+        { subcat: 'Dinas PU SDA Jatim - Hidrogeologi', layers: [
           { id: 'toggleSih3Dpu_83', label: 'Telemetri TMA Tanah ESDM' },
           { id: 'toggleSih3Dpu_43', label: 'Sumur Pantau ESDM' },
           { id: 'toggleSih3Dpu_54', label: 'Sumur Pantau Badan Usaha' }
         ]},
-        { subcat: 'Hidrometeorologi', layers: [
+        { subcat: 'Dinas PU SDA Jatim - Hidrometeorologi', layers: [
           { id: 'toggleSih3Dpu_32', label: 'Pos Hujan Utama BMKG' },
           { id: 'toggleSih3Dpu_36', label: 'Pos Hujan Otomatis BMKG' },
           { id: 'toggleSih3Dpu_29', label: 'Peta Peringatan Dini Kekeringan' }
-        ]}
-      ]
-    },
-    {
-      cat: 'BBWS Citarum (SIH3)',
-      subcats: [
-        { subcat: 'Batas Wilayah', layers: [
+        ]},
+        { subcat: 'BBWS Citarum - Batas Wilayah', layers: [
           { id: 'toggleSih3Cit_16', label: 'Batas DAS WS Citarum' },
           { id: 'toggleSih3Cit_17', label: 'Batas WS Citarum' },
           { id: 'toggleSih3Cit_18', label: 'Kab/Kota WS Citarum' }
         ]},
-        { subcat: 'Hidrologi', layers: [
+        { subcat: 'BBWS Citarum - Hidrologi', layers: [
           { id: 'toggleSih3Cit_19', label: 'Pos Duga Air (PDA)' },
           { id: 'toggleSih3Cit_20', label: 'Status Kualitas Air BBWS' },
           { id: 'toggleSih3Cit_21', label: 'Status Kualitas Air DLH' },
           { id: 'toggleSih3Cit_22', label: 'Titik Pos Pantau Kualitas Air' }
         ]},
-        { subcat: 'Hidrometeorologi', layers: [
+        { subcat: 'BBWS Citarum - Hidrometeorologi', layers: [
           { id: 'toggleSih3Cit_23', label: 'Pos Curah Hujan (PCH)' },
           { id: 'toggleSih3Cit_24', label: 'Analisis CH Juni 2026' },
           { id: 'toggleSih3Cit_25', label: 'Prakiraan CH Agustus 2026' },
@@ -2445,11 +2431,23 @@ L.control.scale({
           { id: 'toggleSih3Cit_27', label: 'Hari Tanpa Hujan Klimatologi' },
           { id: 'toggleSih3Cit_31', label: 'Prakiraan CH Oktober 2026' }
         ]},
-        { subcat: 'Hidrogeologi', layers: [
+        { subcat: 'BBWS Citarum - Hidrogeologi', layers: [
           { id: 'toggleSih3Cit_28', label: '⚠️ Ketersediaan Air Tanah (20.5 MB)' },
           { id: 'toggleSih3Cit_29', label: '⚠️ Hidrogeologi (71.9 MB)' },
           { id: 'toggleSih3Cit_30', label: 'Cekungan Air Tanah' }
         ]}
+      ]
+    },
+    {
+      cat: 'Terrain & Lainnya',
+      layers: [
+        { id: 'toggleDemnasOverlay', label: 'Terrain Overlay (SRTM)' },
+        { id: 'toggleCoastlineLayer', label: 'Garis Pantai (Natural Earth)' },
+        { id: 'toggleBpsTutupanLahan', label: 'Peta Tutupan Lahan 100m (KSA BPS)' },
+        { id: 'toggleErosiLayer', label: 'Peta Rawan Erosi (BIG)' },
+        { id: 'toggleTollRoad', label: 'Jalan Tol Pulau Jawa' },
+        { id: 'toggleNationalRoad', label: 'Jalan Nasional' },
+        { id: 'toggleNonTollRoad', label: 'Jalan Non Tol (BIG)' }
       ]
     }
   ];
