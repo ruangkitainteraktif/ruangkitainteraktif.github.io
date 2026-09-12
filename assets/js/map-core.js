@@ -255,6 +255,10 @@ L.control.scale({
 
     _tileErrorFired = {};
 
+    if (typeof window.cleanupSentinel1Rtc === 'function') {
+      window.cleanupSentinel1Rtc();
+    }
+
     Object.entries(baseTileLayers).forEach(function (entry) {
       if (map.hasLayer(entry[1])) map.removeLayer(entry[1]);
     });
@@ -335,6 +339,16 @@ L.control.scale({
       } else if (name === 'sentinel2') {
         baseTileLayers[name].addTo(map);
         attachTileError(name);
+      } else if (name === 'sentinel1-rtc') {
+        if (typeof window.activateSentinel1Rtc === 'function') {
+          window.activateSentinel1Rtc();
+        }
+        currentBasemapName = name;
+        window.currentBasemapName = name;
+        var sel = document.getElementById('basemapSelect');
+        if (sel) sel.value = name;
+        map.fire('basemapchanged', { basemap: name });
+        return;
       } else {
         baseTileLayers[name].addTo(map);
       }
@@ -1188,7 +1202,19 @@ L.control.scale({
         if (typeof cleanupSih3DpuLayers === 'function') cleanupSih3DpuLayers();
         if (typeof cleanupSih3CitarumLayers === 'function') cleanupSih3CitarumLayers();
 
-        // 10e. Sync layer catalog checkboxes
+        // 10e. Uncheck ALL layer catalog checkboxes (lc_ prefixed) and trigger their handlers
+        var lcDd = document.getElementById('layerCatalogDropdown');
+        if (lcDd) {
+          lcDd.querySelectorAll('.lc-item input[type="checkbox"]').forEach(function(cb) {
+            if (cb.checked) {
+              cb.checked = false;
+              cb.dispatchEvent(new Event('change'));
+            }
+          });
+          delete lcDd.dataset.built;
+        }
+
+        // 10f. Sync layer catalog checkboxes
         if (typeof syncLayerCatalogState === 'function') syncLayerCatalogState();
 
         // 11. Reset detail panel
@@ -2184,7 +2210,8 @@ L.control.scale({
             { id: 'bmkg-gk2a-wv', label: 'GK-2A Water Vapor' },
             { id: 'noaa-true-color', label: 'NOAA True Color' },
             { id: 'noaa-goes-ir', label: 'NOAA GOES IR' },
-            { id: 'sentinel2', label: 'Sentinel-2' }
+            { id: 'sentinel2', label: 'Sentinel-2' },
+            { id: 'sentinel1-rtc', label: 'Sentinel-1 RTC (SAR)' }
           ]
         }
       ]

@@ -389,6 +389,8 @@
         '.leaflet-control-legend', '.legend-wrap',
         '.bmkg-time-slider-wrap', '.bmkg-ts-title', '.bmkg-ts-controls',
         '.bmkg-ts-info', '.bmkg-ts-slider-wrap',
+        '.s1rtc-time-slider-wrap', '.s1rtc-ts-title', '.s1rtc-ts-controls',
+        '.s1rtc-ts-info', '.s1rtc-ts-slider-wrap',
         '.draw-fab-wrap',
         '.map-fab-item', '.map-fab-menu', '.map-fab-overlay', '.map-fab-btn',
         '.layer-catalog-dropdown', '.layer-catalog-btn',
