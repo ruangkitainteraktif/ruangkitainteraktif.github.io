@@ -66,6 +66,18 @@
     drawControl = new L.Control.Draw(options);
     map.addControl(drawControl);
 
+    // Force draw control to sit at bottom:125px (keep top unset)
+    setTimeout(() => {
+      const el = document.querySelector('.leaflet-draw-section') || document.querySelector('.leaflet-draw-toolbar');
+      if (el) {
+        const ctrl = el.closest('.leaflet-control');
+        if (ctrl) {
+          ctrl.style.bottom = '30px';
+          ctrl.style.top = 'auto';
+        }
+      }
+    }, 50);
+
     // Aktifkan mode gambar yang dipilih.
     const handlerMap = {
       marker: 'marker',

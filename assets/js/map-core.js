@@ -340,9 +340,6 @@ L.control.scale({
         baseTileLayers[name].addTo(map);
         attachTileError(name);
       } else if (name === 'sentinel1-rtc') {
-        if (typeof window.activateSentinel1Rtc === 'function') {
-          window.activateSentinel1Rtc();
-        }
         currentBasemapName = name;
         window.currentBasemapName = name;
         var sel = document.getElementById('basemapSelect');

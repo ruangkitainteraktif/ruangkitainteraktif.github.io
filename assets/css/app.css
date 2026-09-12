@@ -5825,7 +5825,7 @@
       min-height: 20px;
     }
     .dm-sidebar.dm-sidebar-minimized {
-      top: auto; right: auto; bottom: 12px; left: 50%;
+      top: auto; right: auto; bottom: 50px; left: 50%;
       width: min(330px, calc(100vw - 24px));
       height: 52px;
       border-radius: 26px;
