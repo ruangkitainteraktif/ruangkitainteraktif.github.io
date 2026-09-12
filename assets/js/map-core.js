@@ -937,7 +937,22 @@ L.control.scale({
           'toggleRktnSumateraLayer', 'toggleRktnSulawesiLayer', 'toggleRktnPapuaLayer', 'toggleRktnMalukuLayer', 'toggleRktnKalimantanLayer', 'toggleRktnJawaLayer', 'toggleRktnBaliNtLayer',
           'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer', 'toggleSppgSebaranLayer',
           'toggleConcessionsLayer', 'toggleProtectedLayer', 'toggleMangroveLayer', 'togglePeatlandLayer',
-          'toggleBumiPersilLayer'
+          'toggleBumiPersilLayer',
+          'toggleLsdTmsLayer', 'toggleBpsTutupanLahan',
+          'st2023:batas_desa', 'st2023:batas_kecamatan', 'st2023:batas_kabupaten', 'st2023:batas_provinsi',
+          'st2023:dasymetric_utp', 'st2023:dasymetric_utp_tp', 'st2023:dasymetric_utp_horti', 'st2023:dasymetric_utp_holti',
+          'st2023:dasymetric_utp_hutan', 'st2023:dasymetric_utp_ikan', 'st2023:dasymetric_utp_kebun',
+          'st2023:dasymetric_utp_milenial', 'st2023:dasymetric_utp_ternak', 'st2023:dasymetric_utp_urban',
+          'st2023:geotagging', 'st2023:geotagging_tanaman_pangan', 'st2023:geotagging_hortikultura',
+          'st2023:geotagging_kebun', 'st2023:geotagging_hutan', 'st2023:geotagging_ikan', 'st2023:geotagging_ternak',
+          'st2023:infrastruktur_pertanian', 'st2023:gurem_lahan_vw',
+          'st2023:utp_ihk_01', 'st2023:utp_ihk_02', 'st2023:utp_ihk_03', 'st2023:utp_ihk_04',
+          'st2023:utp_ihk_05', 'st2023:utp_ihk_06', 'st2023:utp_ihk_07', 'st2023:utp_ihk_08',
+          'st2023:utp_ihk_09', 'st2023:utp_ihk_10', 'st2023:utp_ihk_11', 'st2023:utp_ihk_12',
+          'st2023:utp_ihk_13', 'st2023:utp_ihk_14', 'st2023:utp_ihk_15', 'st2023:utp_ihk_16', 'st2023:utp_ihk_17',
+          'bps-lbs-2024',
+          'arcgis-sawah-2023', 'arcgis-sawah-2019',
+          'arcgis-kawasan-padi', 'arcgis-kawasan-jagung', 'arcgis-kawasan-kedelai'
         ];
         toggles.forEach(id => {
           const el = document.getElementById(id);
@@ -965,12 +980,6 @@ L.control.scale({
               map.removeLayer(arcgisSawahLayers[key]);
             }
           });
-        }
-
-        // 3b. Uncheck geotani jsTree nodes
-        var geotaniTree = $('#geotaniLayerTree').jstree(true);
-        if (geotaniTree) {
-          geotaniTree.uncheck_all();
         }
 
         // 3b-1. Matikan semua BPS/KSA WMS layers dari Geotani
@@ -2161,6 +2170,105 @@ L.control.scale({
       ]
     },
     {
+      cat: 'Sensus Pertanian 2023',
+      subcats: [
+        { subcat: 'Batas Administrasi', layers: [
+          { id: 'st2023:batas_desa', label: 'Batas Desa' },
+          { id: 'st2023:batas_kecamatan', label: 'Batas Kecamatan' },
+          { id: 'st2023:batas_kabupaten', label: 'Batas Kabupaten' },
+          { id: 'st2023:batas_provinsi', label: 'Batas Provinsi' }
+        ]},
+        { subcat: 'Dasymetric UTP', layers: [
+          { id: 'st2023:dasymetric_utp', label: 'Dasymetric UTP (Dasar)' },
+          { id: 'st2023:dasymetric_utp_tp', label: 'Dasymetric UTP Tanaman Pangan' },
+          { id: 'st2023:dasymetric_utp_horti', label: 'Dasymetric UTP Hortikultura' },
+          { id: 'st2023:dasymetric_utp_holti', label: 'Dasymetric UTP Holtikultura' },
+          { id: 'st2023:dasymetric_utp_hutan', label: 'Dasymetric UTP Hutan' },
+          { id: 'st2023:dasymetric_utp_ikan', label: 'Dasymetric UTP Perikanan' },
+          { id: 'st2023:dasymetric_utp_kebun', label: 'Dasymetric UTP Perkebunan' },
+          { id: 'st2023:dasymetric_utp_milenial', label: 'Dasymetric UTP Petani Milenial' },
+          { id: 'st2023:dasymetric_utp_ternak', label: 'Dasymetric UTP Peternakan' },
+          { id: 'st2023:dasymetric_utp_urban', label: 'Dasymetric UTP Urban' }
+        ]},
+        { subcat: 'Geotagging', layers: [
+          { id: 'st2023:geotagging', label: 'Geotagging (Semua)' },
+          { id: 'st2023:geotagging_tanaman_pangan', label: 'Geotagging Tanaman Pangan' },
+          { id: 'st2023:geotagging_hortikultura', label: 'Geotagging Hortikultura' },
+          { id: 'st2023:geotagging_kebun', label: 'Geotagging Perkebunan' },
+          { id: 'st2023:geotagging_hutan', label: 'Geotagging Hutan' },
+          { id: 'st2023:geotagging_ikan', label: 'Geotagging Perikanan' },
+          { id: 'st2023:geotagging_ternak', label: 'Geotagging Peternakan' }
+        ]},
+        { subcat: 'Infrastruktur & Lainnya', layers: [
+          { id: 'st2023:infrastruktur_pertanian', label: 'Infrastruktur Pertanian' },
+          { id: 'st2023:gurem_lahan_vw', label: 'Gurem Lahan' }
+        ]},
+        { subcat: 'UTP IHK 01-17', layers: [
+          { id: 'st2023:utp_ihk_01', label: 'UTP IHK 01' },
+          { id: 'st2023:utp_ihk_02', label: 'UTP IHK 02' },
+          { id: 'st2023:utp_ihk_03', label: 'UTP IHK 03' },
+          { id: 'st2023:utp_ihk_04', label: 'UTP IHK 04' },
+          { id: 'st2023:utp_ihk_05', label: 'UTP IHK 05' },
+          { id: 'st2023:utp_ihk_06', label: 'UTP IHK 06' },
+          { id: 'st2023:utp_ihk_07', label: 'UTP IHK 07' },
+          { id: 'st2023:utp_ihk_08', label: 'UTP IHK 08' },
+          { id: 'st2023:utp_ihk_09', label: 'UTP IHK 09' },
+          { id: 'st2023:utp_ihk_10', label: 'UTP IHK 10' },
+          { id: 'st2023:utp_ihk_11', label: 'UTP IHK 11' },
+          { id: 'st2023:utp_ihk_12', label: 'UTP IHK 12' },
+          { id: 'st2023:utp_ihk_13', label: 'UTP IHK 13' },
+          { id: 'st2023:utp_ihk_14', label: 'UTP IHK 14' },
+          { id: 'st2023:utp_ihk_15', label: 'UTP IHK 15' },
+          { id: 'st2023:utp_ihk_16', label: 'UTP IHK 16' },
+          { id: 'st2023:utp_ihk_17', label: 'UTP IHK 17' }
+        ]}
+      ]
+    },
+    {
+      cat: 'Lahan Baku Sawah',
+      subcats: [
+        { subcat: 'KSA BPS', layers: [
+          { id: 'bps-lbs-2024', label: 'LBS Nasional 2024' }
+        ]},
+        { subcat: 'KSP BIG', layers: [
+          { id: 'toggleSawahDilindungi', label: 'LSD 50K' },
+          { id: 'toggleSawahNasional50k', label: 'LBS 50K' }
+        ]},
+        { subcat: 'KEMENTAN', layers: [
+          { id: 'arcgis-sawah-2023', label: 'LBS 2023' },
+          { id: 'arcgis-sawah-2019', label: 'LBS 2019' }
+        ]}
+      ]
+    },
+    {
+      cat: 'Tutupan Lahan & Erosi',
+      layers: [
+        { id: 'toggleBpsTutupanLahan', label: 'Peta Tutupan Lahan 100m (KSA BPS)' },
+        { id: 'toggleErosiLayer', label: 'Peta Rawan Erosi (BIG)' }
+      ]
+    },
+    {
+      cat: 'Kawasan Pertanian',
+      layers: [
+        { id: 'arcgis-kawasan-padi', label: 'Kawasan Padi (KEMENTAN)' },
+        { id: 'arcgis-kawasan-jagung', label: 'Kawasan Jagung (KEMENTAN)' },
+        { id: 'arcgis-kawasan-kedelai', label: 'Kawasan Kedelai (KEMENTAN)' }
+      ]
+    },
+    {
+      cat: 'Lahan Pertanian',
+      layers: [
+        { id: 'toggleLsdTmsLayer', label: 'Lahan Sawah Dilindungi (LSD)' }
+      ]
+    },
+    {
+      cat: 'Instansi & Sarana',
+      layers: [
+        { id: 'toggleBppLayer', label: 'BPP - Balai Penyuluhan Pertanian' },
+        { id: 'toggleSawitLayer', label: 'IGT Sawit 2023' }
+      ]
+    },
+    {
       cat: 'Gempa & Bencana',
       layers: [
         { id: 'toggleLatestEarthquake', label: 'Gempa Terbaru (BMKG)' },
@@ -2578,7 +2686,15 @@ L.control.scale({
           (id === 'toggleCoastlineLayer') ||
           (id === 'toggleFsvaLayer' && typeof window.toggleFsvaLayer === 'function') ||
           (id.indexOf('toggleSih3Dpu_') === 0 && typeof window.toggleSih3DpuLayer === 'function') ||
-          (id.indexOf('toggleSih3Cit_') === 0 && typeof window.toggleSih3CitarumLayer === 'function');
+          (id.indexOf('toggleSih3Cit_') === 0 && typeof window.toggleSih3CitarumLayer === 'function') ||
+          id.indexOf('st2023:') === 0 ||
+          id === 'bps-lbs-2024' ||
+          id.indexOf('arcgis-') === 0 ||
+          id === 'toggleSawahDilindungi' ||
+          id === 'toggleSawahNasional50k' ||
+          id === 'toggleErosiLayer' ||
+          id === 'toggleBpsTutupanLahan' ||
+          id === 'toggleLsdTmsLayer';
         if (!hasWindowToggle) {
           var el = findLayerById(id);
           if (el) {
@@ -2636,6 +2752,30 @@ L.control.scale({
         }
         if (id.indexOf('toggleSih3Cit_') === 0 && typeof window.toggleSih3CitarumLayer === 'function') {
           window.toggleSih3CitarumLayer(id.replace('toggleSih3Cit_', ''), cb.checked);
+        }
+        if (id.indexOf('st2023:') === 0 && typeof window.toggleBpsSt2023Layer === 'function') {
+          window.toggleBpsSt2023Layer(id, cb.checked);
+        }
+        if (id === 'bps-lbs-2024' && typeof window.toggleBpsWmts === 'function') {
+          window.toggleBpsWmts(id, cb.checked);
+        }
+        if (id.indexOf('arcgis-') === 0 && typeof window.toggleArcgisSawah === 'function') {
+          window.toggleArcgisSawah(id, cb.checked);
+        }
+        if (id === 'toggleSawahDilindungi' && typeof window.toggleSawahDilindungi === 'function') {
+          window.toggleSawahDilindungi(cb.checked);
+        }
+        if (id === 'toggleSawahNasional50k' && typeof window.toggleSawahNasional50k === 'function') {
+          window.toggleSawahNasional50k(cb.checked);
+        }
+        if (id === 'toggleErosiLayer' && typeof window.toggleErosiLayer === 'function') {
+          window.toggleErosiLayer(cb.checked);
+        }
+        if (id === 'toggleBpsTutupanLahan' && typeof window.toggleBpsTutupanLahan === 'function') {
+          window.toggleBpsTutupanLahan(cb.checked);
+        }
+        if (id === 'toggleLsdTmsLayer' && typeof window.toggleLsdTmsLayer === 'function') {
+          window.toggleLsdTmsLayer(cb.checked);
         }
         updateCatCount(cb.closest('.lc-category'));
         var attrBtn = cb.closest('.lc-item').querySelector('.lc-attr-btn');
