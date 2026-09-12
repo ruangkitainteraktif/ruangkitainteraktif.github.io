@@ -583,6 +583,13 @@
 
   function getGeotaniLegendItems() {
     const items = getSt2023LegendItems();
+    const ARCGIS_LABELS = {
+      'arcgis-sawah-2023': 'LBS 2023 (KEMENTAN)',
+      'arcgis-sawah-2019': 'LBS 2019 (KEMENTAN)',
+      'arcgis-kawasan-padi': 'Kawasan Padi (KEMENTAN)',
+      'arcgis-kawasan-jagung': 'Kawasan Jagung (KEMENTAN)',
+      'arcgis-kawasan-kedelai': 'Kawasan Kedelai (KEMENTAN)'
+    };
     try {
       if (isMapLayerActive(bpsTutupanLahanState.layer)) {
         items.push({ kind: 'wms', label: 'Tutupan Lahan 100 m', wmsUrl: 'https://geoserver.bps.go.id/tutupan_lahan/wms', layerName: 'tutupan_lahan:tutupan_lahan_100m' });
@@ -600,6 +607,13 @@
       if (isMapLayerActive(erosiLayer)) {
         items.push({ kind: 'swatch', color: '#94a3b8', label: 'Peta Rawan Erosi (BIG)' });
       }
+      if (typeof arcgisSawahLayers !== 'undefined') {
+        Object.keys(arcgisSawahLayers).forEach(function (key) {
+          if (arcgisSawahLayers[key] && isMapLayerActive(arcgisSawahLayers[key])) {
+            items.push({ kind: 'swatch', color: '#4caf50', label: ARCGIS_LABELS[key] || key });
+          }
+        });
+      }
     } catch (e) { /* layer modul lain belum siap */ }
     return items;
   }
@@ -614,10 +628,9 @@
     removeUnifiedLegend('geoportal');
 
     const isGpTab = window.currentActiveTab === 'tab-geoportal';
-    const isGeotaniTab = window.currentActiveTab === 'tab-geotani';
     let items = [];
     if (isGpTab) items = getGeoportalLegendItems();
-    else if (isGeotaniTab) items = getGeotaniLegendItems();
+    else items = getGeotaniLegendItems();
     if (!items.length) {
       geoportalLegendSig = '';
       geoportalLegendCtrl = null;

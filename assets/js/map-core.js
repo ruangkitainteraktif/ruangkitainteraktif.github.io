@@ -2158,9 +2158,10 @@ L.control.scale({
       ]
     },
     {
-      cat: 'Bumi Persil',
+      cat: 'ATRBPN',
       layers: [
-        { id: 'toggleBumiPersilLayer', label: 'Persil Tanah (ATRBPN)' }
+        { id: 'toggleBumiPersilLayer', label: 'Persil Tanah (ATRBPN)' },
+        { id: 'toggleLsdTmsLayer', label: 'Lahan Sawah Dilindungi (LSD)' }
       ]
     },
     {
@@ -2253,19 +2254,6 @@ L.control.scale({
         { id: 'arcgis-kawasan-padi', label: 'Kawasan Padi (KEMENTAN)' },
         { id: 'arcgis-kawasan-jagung', label: 'Kawasan Jagung (KEMENTAN)' },
         { id: 'arcgis-kawasan-kedelai', label: 'Kawasan Kedelai (KEMENTAN)' }
-      ]
-    },
-    {
-      cat: 'Lahan Pertanian',
-      layers: [
-        { id: 'toggleLsdTmsLayer', label: 'Lahan Sawah Dilindungi (LSD)' }
-      ]
-    },
-    {
-      cat: 'Instansi & Sarana',
-      layers: [
-        { id: 'toggleBppLayer', label: 'BPP - Balai Penyuluhan Pertanian' },
-        { id: 'toggleSawitLayer', label: 'IGT Sawit 2023' }
       ]
     },
     {
@@ -2574,7 +2562,7 @@ L.control.scale({
         }
         return isOn;
       }).length;
-      html += '<div class="lc-category open" data-ci="' + ci + '">';
+      html += '<div class="lc-category" data-ci="' + ci + '">';
       html += '<button class="lc-cat-header" type="button">';
       html += '<svg class="lc-cat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
       html += '<span class="lc-cat-title">' + cat.cat + '</span>';

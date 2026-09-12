@@ -12,10 +12,9 @@
       opacity: 0.7,
       maxZoom: 18,
       minZoom: 0,
-      tms: true,
       attribution: 'LSD Lahan Sawah Dilindungi'
     }).addTo(map);
-    map.flyTo([-2.5, 112.0], 10, { duration: 1.5 });
+    map.flyTo([-7.68, 110.84], 12, { duration: 1.5 });
   }
 
   function hideLayer() {
