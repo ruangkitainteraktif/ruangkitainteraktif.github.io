@@ -69,7 +69,6 @@
     'toggleSensorGlobal': 'Data Sensor Global tidak tersedia.',
     'toggleLsdTmsLayer': 'Data Lahan Sawah Dilindungi tidak tersedia.',
     'toggleLbsTmsLayer': 'Data Lahan Baku Sawah tidak tersedia.',
-    'toggleKp2bTmsLayer': 'Data KP2B tidak tersedia.',
     'toggleDiTmsLayer': 'Data Daerah Irigasi tidak tersedia.',
     'toggleSaluranIrTmsLayer': 'Data Saluran Irigasi tidak tersedia.',
     'toggleRtrwTmsLayer': 'Data RTRW tidak tersedia.',

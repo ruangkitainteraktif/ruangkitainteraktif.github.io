@@ -155,16 +155,20 @@ L.control.scale({
     'airvisual-co': L.tileLayer('https://osm.airvisual.net/cog/co/tiles/{z}/{x}/{y}.png', { maxZoom: 12, minZoom: 0, opacity: 0.7, attribution: 'AirVisual' })
   };
 
-  var omiYesterday = (function () { var d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })();
+  function _omiDate(offset) {
+    var d = new Date();
+    d.setDate(d.getDate() + (offset || -1));
+    return d.toISOString().slice(0, 10);
+  }
   var omiLayers = {
-    'omi-aerosol-index': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/OMI_Aerosol_Index/default/' + omiYesterday + '/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
+    'omi-aerosol-index': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/OMI_Aerosol_Index/default/' + _omiDate(-1) + '/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
       maxZoom: 6, minZoom: 0, opacity: 0.75, attribution: 'NASA GIBS OMI'
     }),
-    'omi-so2': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/OMI_SO2_Lower_Troposphere/default/' + omiYesterday + '/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
-      maxZoom: 6, minZoom: 0, opacity: 0.75, attribution: 'NASA GIBS OMI'
+    'omi-so2': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/OMI_SO2_Lower_Troposphere/default/' + _omiDate(-2) + '/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
+      maxZoom: 5, minZoom: 0, opacity: 0.75, attribution: 'NASA GIBS OMI'
     }),
-    'omi-no2': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/OMI_Nitrogen_Dioxide_Tropo_Column/default/' + omiYesterday + '/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
-      maxZoom: 6, minZoom: 0, opacity: 0.75, attribution: 'NASA GIBS OMI'
+    'omi-no2': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/OMI_Nitrogen_Dioxide_Tropo_Column/default/' + _omiDate(-8) + '/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
+      maxZoom: 5, minZoom: 0, opacity: 0.75, attribution: 'NASA GIBS OMI'
     })
   };
   window.omiLayers = omiLayers;
@@ -245,8 +249,9 @@ L.control.scale({
     return d.toISOString().slice(0, 10);
   }
 
-  function getGibsDateUrl(layerId, ext, dateStr) {
-    return 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/' + layerId + '/default/' + dateStr + '/GoogleMapsCompatible_Level9/{z}/{y}/{x}.' + ext;
+  function getGibsDateUrl(layerId, ext, dateStr, level) {
+    var lvl = level || 9;
+    return 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/' + layerId + '/default/' + dateStr + '/GoogleMapsCompatible_Level' + lvl + '/{z}/{y}/{x}.' + ext;
   }
 
   var BMKG_TILETYPE = {
@@ -387,7 +392,7 @@ L.control.scale({
         baseTileLayers[name].addTo(map);
         attachTileError(name);
       } else if (name === 'oci-pace') {
-        baseTileLayers[name].setUrl(getGibsDateUrl('OCI_PACE_True_Color', 'jpeg', getYesterdayDate()));
+        baseTileLayers[name].setUrl(getGibsDateUrl('OCI_PACE_True_Color', 'jpeg', getYesterdayDate(), 7));
         baseTileLayers[name].addTo(map);
         attachTileError(name);
       } else if (isBmkg) {
@@ -1053,7 +1058,7 @@ L.control.scale({
           'toggleConcessionsLayer', 'toggleProtectedLayer', 'toggleMangroveLayer', 'togglePeatlandLayer',
           'toggleBumiPersilLayer',
           'toggleFsvaLayer',
-          'toggleLsdTmsLayer', 'toggleLbsTmsLayer', 'toggleKp2bTmsLayer',
+          'toggleLsdTmsLayer', 'toggleLbsTmsLayer',
           'toggleDiTmsLayer', 'toggleSaluranIrTmsLayer', 'toggleRtrwTmsLayer',
           'toggleBpsTutupanLahan',
           'st2023:batas_desa', 'st2023:batas_kecamatan', 'st2023:batas_kabupaten', 'st2023:batas_provinsi',
@@ -2304,21 +2309,21 @@ L.control.scale({
           group: 'Satelit',
           layers: [
             { id: 'esri-satellite', label: 'Esri Satellite' },
-            { id: 'modis-terra', label: 'MODIS Terra' },
-            { id: 'modis-aqua', label: 'MODIS Aqua' },
-            { id: 'oci-pace', label: 'OCI PACE True Color' },
-            { id: 'viirs-snpp', label: 'VIIRS SNPP' },
-            { id: 'viirs-noaa20', label: 'VIIRS NOAA-20' },
-            { id: 'viirs-noaa21', label: 'VIIRS NOAA-21' },
-            { id: 'bmkg-himawari', label: 'Himawari-9 IR' },
-            { id: 'bmkg-himawari-fd', label: 'Himawari-9 Full Disk' },
-            { id: 'bmkg-himawari-hires', label: 'Himawari-9 Hi-Res' },
-            { id: 'bmkg-gk2a', label: 'GK-2A' },
-            { id: 'bmkg-gk2a-wv', label: 'GK-2A Water Vapor' },
+            { id: 'modis-terra', label: 'MODIS Terra (NASA)' },
+            { id: 'modis-aqua', label: 'MODIS Aqua (NASA)' },
+            { id: 'viirs-noaa20', label: 'VIIRS NOAA-20 (NASA)' },
+            { id: 'viirs-noaa21', label: 'VIIRS NOAA-21 (NASA)' },
+            { id: 'viirs-snpp', label: 'VIIRS SNPP (NASA)' },
+            { id: 'oci-pace', label: 'OCI PACE (NASA)' },
+            { id: 'bmkg-himawari', label: 'Himawari-9 IR (BMKG)' },
+            { id: 'bmkg-himawari-fd', label: 'Himawari-9 Full Disk (BMKG)' },
+            { id: 'bmkg-himawari-hires', label: 'Himawari-9 Hi-Res (BMKG)' },
+            { id: 'bmkg-gk2a', label: 'GK-2A (BMKG)' },
+            { id: 'bmkg-gk2a-wv', label: 'GK-2A Water Vapor (BMKG)' },
             { id: 'noaa-true-color', label: 'NOAA True Color' },
             { id: 'noaa-goes-ir', label: 'NOAA GOES IR' },
-            { id: 'sentinel1-rtc', label: 'Sentinel-1 RTC (SAR)' },
-            { id: 'sentinel2', label: 'Sentinel-2' }
+            { id: 'sentinel1-rtc', label: 'Sentinel-1 RTC (ESA)' },
+            { id: 'sentinel2', label: 'Sentinel-2 (ESA)' }
           ]
         }
       ]
@@ -2330,7 +2335,6 @@ L.control.scale({
         { id: 'toggleRtrwTmsLayer', label: 'RTRW Kabupaten/Kota' },
         { id: 'toggleLsdTmsLayer', label: 'Lahan Sawah Dilindungi (LSD)' },
         { id: 'toggleLbsTmsLayer', label: 'Lahan Baku Sawah' },
-        { id: 'toggleKp2bTmsLayer', label: 'KP2B' },
         { id: 'toggleDiTmsLayer', label: 'Daerah Irigasi' },
         { id: 'toggleSaluranIrTmsLayer', label: 'Saluran Irigasi' }
       ]
@@ -2826,7 +2830,6 @@ L.control.scale({
           id === 'toggleBpsTutupanLahan' ||
           id === 'toggleLsdTmsLayer' ||
           id === 'toggleLbsTmsLayer' ||
-          id === 'toggleKp2bTmsLayer' ||
           id === 'toggleDiTmsLayer' ||
           id === 'toggleSaluranIrTmsLayer' ||
           id === 'toggleRtrwTmsLayer' ||

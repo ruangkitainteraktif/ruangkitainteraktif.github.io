@@ -18,6 +18,8 @@
   var _mosaicVariant = null; // '2x' or '1x' or null (undetected)
   var _triedFallback = false;
   var _prevMaxZoom = null;
+  var _fallbackLayer = null;
+  var _zoomHandler = null;
 
   function getLayer() {
     if (!_layer) {
@@ -30,7 +32,7 @@
         }
         _layer = L.tileLayer(base + params, {
           maxZoom: 18,
-          minZoom: 0,
+          minZoom: 8,
           opacity: 0.85,
           attribution: 'Sentinel-1 RTC &copy; ESA / Microsoft Planetary Computer',
           tileSize: 256,
@@ -141,6 +143,22 @@
       map.setMaxZoom(13);
     }
 
+    // Add Esri satellite as fallback below zoom 8 (S1 RTC minZoom)
+    if (typeof baseTileLayers !== 'undefined' && baseTileLayers['esri-satellite']) {
+      _fallbackLayer = baseTileLayers['esri-satellite'];
+      if (map.getZoom() < 8 && !map.hasLayer(_fallbackLayer)) {
+        _fallbackLayer.addTo(map);
+      }
+      _zoomHandler = function (e) {
+        if (e.target.getZoom() < 8 && !map.hasLayer(_fallbackLayer)) {
+          _fallbackLayer.addTo(map);
+        } else if (e.target.getZoom() >= 8 && map.hasLayer(_fallbackLayer)) {
+          map.removeLayer(_fallbackLayer);
+        }
+      };
+      map.on('zoomend', _zoomHandler);
+    }
+
     // Ensure we detect which tile variant to use and add the appropriate layer
     ensureLayerVariantAndAdd();
     showLegend();
@@ -156,6 +174,14 @@
     hideLegend();
     var layer = getLayer();
     if (layer && map.hasLayer(layer)) map.removeLayer(layer);
+    if (_fallbackLayer && map.hasLayer(_fallbackLayer)) {
+      map.removeLayer(_fallbackLayer);
+      _fallbackLayer = null;
+    }
+    if (_zoomHandler) {
+      map.off('zoomend', _zoomHandler);
+      _zoomHandler = null;
+    }
     if (typeof toggleCoastlineLayer === 'function') {
       toggleCoastlineLayer(false);
       var cb = document.getElementById('toggleCoastlineLayer');

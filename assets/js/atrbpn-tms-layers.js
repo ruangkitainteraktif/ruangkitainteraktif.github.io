@@ -1,4 +1,4 @@
-/* ── ATRBPN TMS Layers (LSD, LBS, KP2B, DI, Saluran, RTRW) ── */
+/* ── ATRBPN TMS Layers (LSD, LBS, DI, Saluran, RTRW) ── */
 (function () {
   'use strict';
 
@@ -21,17 +21,6 @@
         title: 'Lahan Baku Sawah',
         items: [
           { color: '#32CD32', label: 'Lahan Baku Sawah' }
-        ],
-        source: 'Sumber: ATRBPN / Kementerian ATR/BPN'
-      }
-    },
-    'toggleKp2bTmsLayer': {
-      url: 'https://pptr.dasmap.com/layers/tms/public/270_kp2b/{z}/{x}/{y}/?tileSize=1024',
-      center: [-7.68, 110.84], zoom: 12, label: 'KP2B',
-      legend: {
-        title: 'KP2B (Kawasan Perencanaan Pertanahan untuk Kebutuhan Publik)',
-        items: [
-          { color: '#FF6347', label: 'Kawasan Perencanaan Pertanahan' }
         ],
         source: 'Sumber: ATRBPN / Kementerian ATR/BPN'
       }
