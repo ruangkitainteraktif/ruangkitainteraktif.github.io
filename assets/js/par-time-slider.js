@@ -1,9 +1,9 @@
-/* ── Chlorophyll-a (OCI PACE) Time Slider — NASA GIBS WMTS ── */
+/* ── PAR (Photosynthetically Available Radiation) Time Slider — NASA GIBS WMTS ── */
 (function () {
   'use strict';
 
-  var LAYER_KEY = 'chlorophyll-a';
-  var GIBS_LAYER_ID = 'OCI_PACE_Chlorophyll_a';
+  var LAYER_KEY = 'par';
+  var GIBS_LAYER_ID = 'OCI_PACE_Photosynthetically_Available_Radiation';
   var GIBS_EXT = 'png';
   var DAY_COUNT = 30;
   var sliderControl = null;
@@ -42,29 +42,6 @@
     layer.setUrl(newUrl);
   }
 
-  function showLegend() {
-    if (typeof addUnifiedLegend !== 'function') return;
-    var div = L.DomUtil.create('div', 'himawari-legend');
-    L.DomEvent.disableClickPropagation(div);
-    div.innerHTML =
-      '<div class="himawari-legend-title">Chlorophyll-a Concentration</div>' +
-      '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#08306b,#2171b5,#6baed6,#c6dbef,#ffffcc,#d9f0a3,#78c679,#238443,#00441b);"></div>' +
-      '<div class="himawari-legend-labels"><span>0.01 mg/m\u00B3</span><span>0.1</span><span>1.0</span><span>10+ mg/m\u00B3</span></div>' +
-      '<div class="himawari-legend-items">' +
-        '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#08306b;"></span>Biru Tua — Rendah (&lt;0.1 mg/m\u00B3)</div>' +
-        '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#78c679;"></span>Hijau — Sedang (0.1\u20131.0 mg/m\u00B3)</div>' +
-        '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#ffffcc;"></span>Kuning — Tinggi (1\u201310 mg/m\u00B3)</div>' +
-        '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#00441b;"></span>Hijau Tua — Sangat Tinggi (&gt;10 mg/m\u00B3)</div>' +
-      '</div>' +
-      '<div class="himawari-legend-unit">Satuan: mg/m\u00B3 (klorofil-a) | Resolusi: 1 km</div>' +
-      '<div class="himawari-legend-unit">Sumber: NASA GIBS / OCI PACE</div>';
-    addUnifiedLegend('chlorophyll-a', window.createLegendWithToggle(div));
-  }
-
-  function hideLegend() {
-    if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('chlorophyll-a');
-  }
-
   var SliderControl = L.Control.extend({
     options: { position: 'bottomcenter' },
     onAdd: function () {
@@ -74,7 +51,7 @@
 
       if (typeof addUnifiedSlider !== 'function') {
         var titleRow = L.DomUtil.create('div', 'modis-ts-title', wrap);
-        titleRow.textContent = 'Chlorophyll-a Laut';
+        titleRow.textContent = 'PAR - Radiasi Fotosintesis';
       }
 
       var controlsRow = L.DomUtil.create('div', 'modis-ts-controls', wrap);
@@ -135,12 +112,35 @@
 
   var _prevMaxZoom = null;
 
+  function showLegend() {
+    if (typeof addUnifiedLegend !== 'function') return;
+    var div = L.DomUtil.create('div', 'himawari-legend');
+    L.DomEvent.disableClickPropagation(div);
+    div.innerHTML =
+      '<div class="himawari-legend-title">Photosynthetically Available Radiation (PAR)</div>' +
+      '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#1a0533,#3b0764,#7c3aed,#a855f7,#facc15,#fb923c,#ef4444);"></div>' +
+      '<div class="himawari-legend-labels"><span>0 mol/m\u00B2/d</span><span>15</span><span>30</span><span>60+ mol/m\u00B2/d</span></div>' +
+      '<div class="himawari-legend-items">' +
+        '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#3b0764;"></span>Ungu — Rendah (&lt;5 mol/m\u00B2/d)</div>' +
+        '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#a855f7;"></span>Ungu Muda — Sedang (5\u201315 mol/m\u00B2/d)</div>' +
+        '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#facc15;"></span>Kuning — Tinggi (15\u201340 mol/m\u00B2/d)</div>' +
+        '<div class="himawari-legend-item"><span class="himawari-legend-dot" style="background:#ef4444;"></span>Merah — Sangat Tinggi (&gt;40 mol/m\u00B2/d)</div>' +
+      '</div>' +
+      '<div class="himawari-legend-unit">Satuan: mol/m\u00B2/d (PAR) | Resolusi: 1 km</div>' +
+      '<div class="himawari-legend-unit">Sumber: NASA GIBS / OCI PACE</div>';
+    addUnifiedLegend('par', window.createLegendWithToggle(div));
+  }
+
+  function hideLegend() {
+    if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('par');
+  }
+
   function showSlider() {
     if (!sliderControl) {
       sliderControl = new SliderControl();
       var el = sliderControl.onAdd(map);
       if (typeof addUnifiedSlider === 'function') {
-        addUnifiedSlider('chlorophyll-a', 'Chlorophyll-a Laut', el);
+        addUnifiedSlider('par', 'PAR - Radiasi Fotosintesis', el);
       } else {
         sliderControl.addTo(map);
       }
@@ -153,7 +153,7 @@
 
   function hideSlider() {
     if (sliderControl) {
-      if (typeof removeUnifiedSlider === 'function') removeUnifiedSlider('chlorophyll-a');
+      if (typeof removeUnifiedSlider === 'function') removeUnifiedSlider('par');
       else { try { map.removeControl(sliderControl); } catch (e) {} }
       sliderControl = null;
     }
@@ -177,8 +177,6 @@
     map.on('basemapchanged', function (e) {
       if (e.basemap === LAYER_KEY) {
         showSlider();
-        var clCb = document.getElementById('toggleCoastlineLayer');
-        if (clCb && clCb.checked) { clCb.checked = false; toggleCoastlineLayer(false); }
       } else {
         hideSlider();
       }
@@ -189,5 +187,5 @@
     }
   });
 
-  window.chlorophyllTimeSliderCleanup = cleanup;
+  window.parTimeSliderCleanup = cleanup;
 })();

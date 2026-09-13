@@ -139,9 +139,6 @@
     if (_prevMaxZoom === null) {
       _prevMaxZoom = map.getMaxZoom();
     }
-    if (_prevMaxZoom !== null && _prevMaxZoom > 13) {
-      map.setMaxZoom(13);
-    }
 
     // Add Esri satellite as fallback below zoom 8 (S1 RTC minZoom)
     if (typeof baseTileLayers !== 'undefined' && baseTileLayers['esri-satellite']) {

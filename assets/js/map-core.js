@@ -104,6 +104,12 @@ L.control.scale({
       opacity: 0.6,
       attribution: 'NASA GIBS OCI PACE'
     }),
+    'par': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/OCI_PACE_Photosynthetically_Available_Radiation/default/{Time}/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png', {
+      maxZoom: 7,
+      minZoom: 0,
+      opacity: 0.75,
+      attribution: 'NASA GIBS OCI PACE'
+    }),
     'bmkg-himawari': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=EH&baserun=', {
       maxZoom: 10,
       minZoom: 3,
@@ -255,6 +261,12 @@ L.control.scale({
     return d.toISOString().slice(0, 10);
   }
 
+  function getTwoDaysAgoDate() {
+    var d = new Date();
+    d.setDate(d.getDate() - 2);
+    return d.toISOString().slice(0, 10);
+  }
+
   function getGibsDateUrl(layerId, ext, dateStr, level) {
     var lvl = level || 9;
     return 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/' + layerId + '/default/' + dateStr + '/GoogleMapsCompatible_Level' + lvl + '/{z}/{y}/{x}.' + ext;
@@ -333,12 +345,13 @@ L.control.scale({
     'viirs-snpp': 'Citra NASA GIBS VIIRS SNPP tidak tersedia.',
     'oci-pace': 'Citra NASA GIBS OCI PACE tidak tersedia.',
     'chlorophyll-a': 'Citra NASA GIBS Chlorophyll-a tidak tersedia.',
+    'par': 'Citra NASA GIBS PAR tidak tersedia.',
     'noaa-true-color': 'Citra NOAA True Color tidak tersedia.',
     'noaa-goes-ir': 'Citra NOAA GOES IR tidak tersedia.'
   };
 
   var SATELLITE_TILES = ['bmkg-himawari', 'bmkg-himawari-fd', 'bmkg-himawari-hires', 'bmkg-gk2a', 'bmkg-gk2a-wv',
-    'modis-terra', 'modis-aqua', 'viirs-noaa20', 'viirs-noaa21', 'viirs-snpp', 'oci-pace', 'chlorophyll-a',
+    'modis-terra', 'modis-aqua', 'viirs-noaa20', 'viirs-noaa21',     'viirs-snpp', 'oci-pace', 'chlorophyll-a', 'par',
     'noaa-true-color', 'noaa-goes-ir', 'sentinel2'];
 
   function attachTileError(key) {
@@ -403,12 +416,13 @@ L.control.scale({
         baseTileLayers[name].addTo(map);
         attachTileError(name);
       } else if (name === 'chlorophyll-a') {
-        baseTileLayers['esri-satellite'].addTo(map);
-        baseTileLayers[name].setUrl(getGibsDateUrl('OCI_PACE_Chlorophyll_a', 'png', getYesterdayDate(), 7));
+        baseTileLayers[name].setUrl(getGibsDateUrl('OCI_PACE_Chlorophyll_a', 'png', getTwoDaysAgoDate(), 7));
         baseTileLayers[name].addTo(map);
         attachTileError(name);
-        var clCb = document.getElementById('toggleCoastlineLayer');
-        if (clCb && clCb.checked) { clCb.checked = false; toggleCoastlineLayer(false); }
+      } else if (name === 'par') {
+        baseTileLayers[name].setUrl(getGibsDateUrl('OCI_PACE_Photosynthetically_Available_Radiation', 'png', getTwoDaysAgoDate(), 7));
+        baseTileLayers[name].addTo(map);
+        attachTileError(name);
       } else if (isBmkg) {
         var bmkgLayer = baseTileLayers[name];
         var bmkgModelName = BMKG_TILETYPE[name];
@@ -484,6 +498,16 @@ L.control.scale({
     var select = document.getElementById('basemapSelect');
     if (select) select.value = name;
     map.fire('basemapchanged', { basemap: name });
+
+    var isSatellite = satelliteBasemapLabels.hasOwnProperty(name);
+    if (isSatellite) {
+      hideCoastline();
+      hideSatelliteBoundary();
+      var clCb = document.getElementById('toggleCoastlineLayer');
+      if (clCb && clCb.checked) clCb.checked = false;
+    } else {
+      hideSatelliteBoundary();
+    }
   }
 
   function setRdtrOpacity(value) {
@@ -514,6 +538,7 @@ L.control.scale({
     currentBasemapName = 'esri-dark-gray';
     baseBasemapName = 'esri-dark-gray';
     setBaseMap(currentBasemapName);
+    showCoastline();
 
     var airVisualPm25Toggle = document.getElementById('toggleAirVisualPm25');
     if (airVisualPm25Toggle) {
@@ -719,7 +744,8 @@ L.control.scale({
     'noaa-true-color': 'NOAA True Color',
     'noaa-goes-ir': 'NOAA GOES IR',
     'sentinel2': 'Sentinel-2',
-    'chlorophyll-a': 'Chlorophyll-a Laut'
+    'chlorophyll-a': 'Chlorophyll-a Laut',
+    'par': 'PAR (Radiasi Fotosintesis)'
   };
 
   setBaseMap(currentBasemapName);
@@ -1000,6 +1026,36 @@ L.control.scale({
     if (show) showCoastline(); else hideCoastline();
   }
 
+  var _satBoundaryLayer = null;
+  var _satBoundaryGeneration = 0;
+
+  function showSatelliteBoundary() {
+    if (_satBoundaryLayer && map.hasLayer(_satBoundaryLayer)) return;
+    var gen = ++_satBoundaryGeneration;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'assets/data/bps/geojson/provinsi.geojson', true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          var geojson = JSON.parse(xhr.responseText);
+          if (gen !== _satBoundaryGeneration) return;
+          _satBoundaryLayer = L.geoJSON(geojson, {
+            style: { color: '#ffffff', weight: 1.2, opacity: 0.7, fillColor: '#ffffff', fillOpacity: 0 },
+            interactive: false
+          }).addTo(map);
+        } catch (e) {}
+      }
+    };
+    xhr.send();
+  }
+
+  function hideSatelliteBoundary() {
+    _satBoundaryGeneration++;
+    if (_satBoundaryLayer && map.hasLayer(_satBoundaryLayer)) map.removeLayer(_satBoundaryLayer);
+    _satBoundaryLayer = null;
+  }
+
   var _activeAirVisualLayerKey = null;
 
   function refreshAirVisualPresentation() {
@@ -1213,6 +1269,7 @@ L.control.scale({
         if (typeof viirsSnppTimeSliderCleanup === 'function') viirsSnppTimeSliderCleanup();
         if (typeof ociPaceTimeSliderCleanup === 'function') ociPaceTimeSliderCleanup();
         if (typeof chlorophyllTimeSliderCleanup === 'function') chlorophyllTimeSliderCleanup();
+        if (typeof parTimeSliderCleanup === 'function') parTimeSliderCleanup();
         if (typeof sentinel2TimeSliderCleanup === 'function') sentinel2TimeSliderCleanup();
         if (typeof bmkgHimawariSliderCleanup === 'function') bmkgHimawariSliderCleanup();
         if (typeof cleanupHujanLayer === 'function') cleanupHujanLayer();
@@ -1222,6 +1279,7 @@ L.control.scale({
         if (typeof pmtilesCleanup === 'function') pmtilesCleanup();
         if (typeof hideAirVisualLegend === 'function') hideAirVisualLegend();
         hideCoastline();
+        hideSatelliteBoundary();
         Object.keys(airVisualLayers).forEach(function (key) {
           if (map.hasLayer(airVisualLayers[key])) map.removeLayer(airVisualLayers[key]);
         });
@@ -2343,7 +2401,8 @@ L.control.scale({
             { id: 'noaa-goes-ir', label: 'NOAA GOES IR' },
             { id: 'sentinel1-rtc', label: 'Sentinel-1 RTC (ESA)' },
             { id: 'sentinel2', label: 'Sentinel-2 (ESA)' },
-            { id: 'chlorophyll-a', label: 'Chlorophyll-a Laut (NASA)' }
+            { id: 'chlorophyll-a', label: 'Chlorophyll-a Laut (NASA)' },
+            { id: 'par', label: 'PAR - Radiasi Fotosintesis (NASA)' }
           ]
         }
       ]
