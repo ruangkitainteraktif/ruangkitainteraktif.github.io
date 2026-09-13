@@ -384,12 +384,15 @@ L.control.scale({
     if (isHillshade) {
       baseTileLayers[baseBasemapName].addTo(map);
       if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.show();
+      if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.hideBatnas();
     } else if (isPth) {
       baseTileLayers[baseBasemapName].addTo(map);
       if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.showPth();
+      if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.hideBatnas();
     } else {
       if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.hide();
       if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.hidePth();
+      if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.hideBatnas();
       baseBasemapName = name;
       if (name === 'modis-terra') {
         baseTileLayers[name].setUrl(getGibsDateUrl('MODIS_Terra_CorrectedReflectance_TrueColor', 'jpg', getYesterdayDate()));
@@ -416,10 +419,12 @@ L.control.scale({
         baseTileLayers[name].addTo(map);
         attachTileError(name);
       } else if (name === 'chlorophyll-a') {
+        if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.showBatnas();
         baseTileLayers[name].setUrl(getGibsDateUrl('OCI_PACE_Chlorophyll_a', 'png', getTwoDaysAgoDate(), 7));
         baseTileLayers[name].addTo(map);
         attachTileError(name);
       } else if (name === 'par') {
+        if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.showBatnas();
         baseTileLayers[name].setUrl(getGibsDateUrl('OCI_PACE_Photosynthetically_Available_Radiation', 'png', getTwoDaysAgoDate(), 7));
         baseTileLayers[name].addTo(map);
         attachTileError(name);
@@ -433,7 +438,7 @@ L.control.scale({
         bmkgXhr.timeout = 10000;
         bmkgXhr.onerror = function () {
           bmkgLayer.addTo(map);
-          if (satelliteBoundary && name !== 'esri-satellite') satelliteBoundary.show(map);
+          if (typeof window.toggleProvinceBoundary === 'function' && name !== 'esri-satellite') { var pbCb = document.getElementById('toggleProvinceBoundary'); if (pbCb && !pbCb.checked) { pbCb.checked = true; window.toggleProvinceBoundary(true); } }
           currentBasemapName = name; window.currentBasemapName = name;
           var sel = document.getElementById('basemapSelect'); if (sel) sel.value = name;
           map.fire('basemapchanged', { basemap: name });
@@ -460,7 +465,7 @@ L.control.scale({
             return;
           }
           bmkgLayer.addTo(map);
-          if (satelliteBoundary && name !== 'esri-satellite') satelliteBoundary.show(map);
+          if (typeof window.toggleProvinceBoundary === 'function' && name !== 'esri-satellite') { var pbCb = document.getElementById('toggleProvinceBoundary'); if (pbCb && !pbCb.checked) { pbCb.checked = true; window.toggleProvinceBoundary(true); } }
           currentBasemapName = name; window.currentBasemapName = name;
           var sel = document.getElementById('basemapSelect'); if (sel) sel.value = name;
           map.fire('basemapchanged', { basemap: name });
@@ -485,15 +490,6 @@ L.control.scale({
       }
     }
 
-    if (satelliteBoundary) {
-      var isSatellite = satelliteBasemapLabels.hasOwnProperty(name);
-      if (isSatellite && name !== 'esri-satellite') {
-        satelliteBoundary.show(map);
-      } else {
-        satelliteBoundary.hide(map);
-      }
-    }
-
     currentBasemapName = name;
     var select = document.getElementById('basemapSelect');
     if (select) select.value = name;
@@ -501,12 +497,15 @@ L.control.scale({
 
     var isSatellite = satelliteBasemapLabels.hasOwnProperty(name);
     if (isSatellite) {
-      hideCoastline();
-      hideSatelliteBoundary();
-      var clCb = document.getElementById('toggleCoastlineLayer');
-      if (clCb && clCb.checked) clCb.checked = false;
+      if (typeof window.toggleProvinceBoundary === 'function') {
+        var pbCb = document.getElementById('toggleProvinceBoundary');
+        if (pbCb && !pbCb.checked) { pbCb.checked = true; window.toggleProvinceBoundary(true); }
+      }
     } else {
-      hideSatelliteBoundary();
+      if (typeof window.toggleProvinceBoundary === 'function') {
+        var pbCb = document.getElementById('toggleProvinceBoundary');
+        if (pbCb && pbCb.checked) { pbCb.checked = false; window.toggleProvinceBoundary(false); }
+      }
     }
   }
 
@@ -538,7 +537,13 @@ L.control.scale({
     currentBasemapName = 'esri-dark-gray';
     baseBasemapName = 'esri-dark-gray';
     setBaseMap(currentBasemapName);
-    showCoastline();
+    if (typeof window.toggleProvinceBoundary === 'function') {
+      window.toggleProvinceBoundary(true);
+      var pbCb = document.getElementById('toggleProvinceBoundary');
+      if (pbCb) pbCb.checked = true;
+    } else {
+      showCoastline();
+    }
 
     var airVisualPm25Toggle = document.getElementById('toggleAirVisualPm25');
     if (airVisualPm25Toggle) {
@@ -1273,7 +1278,6 @@ L.control.scale({
         if (typeof sentinel2TimeSliderCleanup === 'function') sentinel2TimeSliderCleanup();
         if (typeof bmkgHimawariSliderCleanup === 'function') bmkgHimawariSliderCleanup();
         if (typeof cleanupHujanLayer === 'function') cleanupHujanLayer();
-        if (typeof satelliteBoundary !== 'undefined') satelliteBoundary.hide(map);
         if (typeof modisViirsOverlayCleanup === 'function') modisViirsOverlayCleanup();
         if (typeof cuacaMaritimCleanup === 'function') cuacaMaritimCleanup();
         if (typeof pmtilesCleanup === 'function') pmtilesCleanup();
@@ -1342,6 +1346,14 @@ L.control.scale({
         }
 
         // Gempa NTT layers removed
+
+        // Bersihkan layer geologi BNPB
+        var gnCb = document.getElementById('toggleGeologiBNPB');
+        if (gnCb && gnCb.checked) { gnCb.checked = false; gnCb.dispatchEvent(new Event('change')); }
+
+        // Bersihkan province boundary
+        var pbCb = document.getElementById('toggleProvinceBoundary');
+        if (pbCb && pbCb.checked) { pbCb.checked = false; pbCb.dispatchEvent(new Event('change')); }
 
         // Bersihkan layer geologi BIG
         var bigGeoToggles = ['togglePetaGeologi', 'toggleGeostruktur', 'togglePatahanAktif', 'toggleLikuifaksi', 'toggleKarst'];
@@ -2400,9 +2412,7 @@ L.control.scale({
             { id: 'noaa-true-color', label: 'NOAA True Color' },
             { id: 'noaa-goes-ir', label: 'NOAA GOES IR' },
             { id: 'sentinel1-rtc', label: 'Sentinel-1 RTC (ESA)' },
-            { id: 'sentinel2', label: 'Sentinel-2 (ESA)' },
-            { id: 'chlorophyll-a', label: 'Chlorophyll-a Laut (NASA)' },
-            { id: 'par', label: 'PAR - Radiasi Fotosintesis (NASA)' }
+            { id: 'sentinel2', label: 'Sentinel-2 (ESA)' }
           ]
         }
       ]
@@ -2518,6 +2528,13 @@ L.control.scale({
       ]
     },
     {
+      cat: 'Lingkungan',
+      layers: [
+        { id: 'chlorophyll-a', label: 'Chlorophyll-a Laut (NASA)' },
+        { id: 'par', label: 'PAR - Radiasi Fotosintesis (NASA)' }
+      ]
+    },
+    {
       cat: 'Meteorologi',
       subcats: [
         { subcat: 'Prediksi Cuaca', layers: [
@@ -2575,6 +2592,7 @@ L.control.scale({
     {
       cat: 'Geologi',
       layers: [
+        { id: 'toggleGeologiBNPB', label: 'Peta Geologi (BNPB)' },
         { id: 'toggleVolcanoLayer', label: 'Gunung Api Indonesia (PVMBG)' },
         { id: 'toggleKrbGunungApi', label: 'Kawasan Rawan Bencana Gunung Api (BIG)' },
         { id: 'toggleKrbTitik', label: 'Gas Vulkanik Gunung Api (BIG)' },
@@ -2582,9 +2600,7 @@ L.control.scale({
         { id: 'toggleGeostruktur', label: 'Geologi Geostruktur (BIG)' },
         { id: 'togglePatahanAktif', label: 'Patahan Aktif 1:50K (BIG)' },
         { id: 'toggleLikuifaksi', label: 'Kerentanan Likuifaksi (BIG)' },
-        { id: 'toggleKarst', label: 'Kawasan Bentang Alam Karst (BIG)' },
-        { id: 'toggleHillshade', label: 'Hillshade' },
-        { id: 'toggleBatnas', label: 'Batnas (Batimetri)' }
+        { id: 'toggleKarst', label: 'Kawasan Bentang Alam Karst (BIG)' }
       ]
     },
     {
@@ -2662,6 +2678,9 @@ L.control.scale({
       cat: 'Terrain & Lainnya',
       layers: [
         { id: 'toggleDemnasOverlay', label: 'Terrain Overlay (SRTM)' },
+        { id: 'toggleHillshade', label: 'Hillshade' },
+        { id: 'toggleBatnas', label: 'Batnas (Batimetri)' },
+        { id: 'toggleProvinceBoundary', label: 'Batas Provinsi (PBF)' },
         { id: 'toggleCoastlineLayer', label: 'Garis Pantai (Natural Earth)' },
         { id: 'toggleBpsTutupanLahan', label: 'Peta Tutupan Lahan 100m (KSA BPS)' },
         { id: 'toggleErosiLayer', label: 'Peta Rawan Erosi (BIG)' },
@@ -2955,6 +2974,12 @@ L.control.scale({
         }
         if (id === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') {
           window.toggleBumiPersilLayer(cb.checked);
+        }
+        if (id === 'toggleGeologiBNPB' && typeof window.toggleGeologiBNPB === 'function') {
+          window.toggleGeologiBNPB(cb.checked);
+        }
+        if (id === 'toggleProvinceBoundary' && typeof window.toggleProvinceBoundary === 'function') {
+          window.toggleProvinceBoundary(cb.checked);
         }
         if (id === 'toggleCoastlineLayer') {
           toggleCoastlineLayer(cb.checked);

@@ -177,8 +177,8 @@
     map.on('basemapchanged', function (e) {
       if (e.basemap === LAYER_KEY) {
         showSlider();
-        var clCb = document.getElementById('toggleCoastlineLayer');
-        if (clCb && clCb.checked) { clCb.checked = false; toggleCoastlineLayer(false); }
+        var pbCb = document.getElementById('toggleProvinceBoundary');
+        if (pbCb && pbCb.checked) { pbCb.checked = false; window.toggleProvinceBoundary(false); }
       } else {
         hideSlider();
       }

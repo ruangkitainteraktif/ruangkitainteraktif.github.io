@@ -10,6 +10,7 @@
   var hillshadeProvLayer = null;
   var pthLayer = null;
   var pthProvLayer = null;
+  var batnasLayer = null;
   var cachedGeojson = null;
 
   function fetchGeojson(cb) {
@@ -93,11 +94,45 @@
   function cleanupAll() {
     cleanupHillshade();
     cleanupPth();
+    cleanupBatnas();
+  }
+
+  /* ── Batnas standalone (for chlorophyll/par background) ── */
+  function showBatnas() {
+    if (!batnasLayer) {
+      if (!map.getPane('batnasPane')) map.createPane('batnasPane');
+      map.getPane('batnasPane').style.zIndex = '100';
+      batnasLayer = L.esri.dynamicMapLayer({
+        url: TOPOGRAFI_URL,
+        layers: [0],
+        opacity: 1,
+        pane: 'batnasPane'
+      });
+    }
+    if (!map.hasLayer(batnasLayer)) {
+      batnasLayer.addTo(map);
+      batnasLayer.bringToBack();
+    }
+  }
+
+  function hideBatnas() {
+    if (batnasLayer && map.hasLayer(batnasLayer)) map.removeLayer(batnasLayer);
+  }
+
+  function cleanupBatnas() {
+    hideBatnas();
+    batnasLayer = null;
+  }
+
+  function batnasToBack() {
+    if (batnasLayer && map.hasLayer(batnasLayer)) batnasLayer.bringToBack();
   }
 
   window.bnpbHillshade = {
     show: showHillshade, hide: hideHillshade, cleanup: cleanupHillshade,
     showPth: showPth, hidePth: hidePth, cleanupPth: cleanupPth,
+    showBatnas: showBatnas, hideBatnas: hideBatnas, cleanupBatnas: cleanupBatnas,
+    batnasToBack: batnasToBack,
     cleanupAll: cleanupAll
   };
 })();
