@@ -5465,6 +5465,7 @@
     .agol-geo-volcano  { background: linear-gradient(135deg, #9a3412, #dc2626); }
     .agol-geo-krb      { background: linear-gradient(135deg, #831843, #be185d); }
     .agol-geo-kawasan  { background: linear-gradient(135deg, #14532d, #16a34a); }
+    .agol-geo-kttht    { background: linear-gradient(135deg, #1e3a5f, #0369a1); }
     .agol-geo-kawasan .agol-popup-badge { font-size: 10px; padding: 3px 10px; border-radius: 5px; letter-spacing: .02em; }
     .agol-geo-kawasan .agol-popup-title { font-size: 15px; }
 
@@ -7113,6 +7114,33 @@
       word-break: break-word;
     }
 
+    /* ── OMI Legend ── */
+    .omi-legend.leaflet-bar {
+      background: rgba(255,255,255,.96);
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(15,23,42,.16);
+      padding: 8px 10px;
+      max-width: 300px;
+      font-family: inherit;
+    }
+    .omi-legend-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 5px;
+      margin-bottom: 6px;
+    }
+    .omi-legend-img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+
     /* ==================== WELCOME FEATURE MODAL ==================== */
     .welcome-modal {
       position: fixed; inset: 0; z-index: 4000;
@@ -8089,6 +8117,7 @@
     .unified-legend-section .hotspot-legend,
     .unified-legend-section .ecmwf-fire-legend,
     .unified-legend-section .airvisual-legend,
+    .unified-legend-section .omi-legend,
     .unified-legend-section .gp-legend,
     .unified-legend-section .choropleth-legend,
     .unified-legend-section .geoportal-legend,
@@ -8107,6 +8136,7 @@
     .unified-legend-section .hotspot-legend-title,
     .unified-legend-section .ecmwf-fire-legend-title,
     .unified-legend-section .airvisual-legend-title,
+    .unified-legend-section .omi-legend-title,
     .unified-legend-section .gp-legend-badge,
     .unified-legend-section .choropleth-legend-title,
     .unified-legend-section .geoportal-legend-title,
@@ -8859,6 +8889,10 @@
       border-color: var(--border-color);
     }
     [data-theme="dark"] .airvisual-legend {
+      background: var(--bg-glass);
+      border-color: var(--border-color);
+    }
+    [data-theme="dark"] .omi-legend {
       background: var(--bg-glass);
       border-color: var(--border-color);
     }
