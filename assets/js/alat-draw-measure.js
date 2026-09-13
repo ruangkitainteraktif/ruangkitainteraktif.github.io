@@ -72,7 +72,7 @@
       if (el) {
         const ctrl = el.closest('.leaflet-control');
         if (ctrl) {
-          ctrl.style.bottom = '50px';
+          ctrl.style.bottom = '70px';
           ctrl.style.top = 'auto';
         }
       }

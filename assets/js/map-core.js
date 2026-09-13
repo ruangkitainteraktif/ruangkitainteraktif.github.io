@@ -98,18 +98,6 @@ L.control.scale({
       Time: (function () { var d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })(),
       attribution: 'NASA GIBS'
     }),
-    'chlorophyll-a': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/OCI_PACE_Chlorophyll_a/default/{Time}/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png', {
-      maxZoom: 7,
-      minZoom: 0,
-      opacity: 0.6,
-      attribution: 'NASA GIBS OCI PACE'
-    }),
-    'par': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/OCI_PACE_Photosynthetically_Available_Radiation/default/{Time}/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png', {
-      maxZoom: 7,
-      minZoom: 0,
-      opacity: 0.75,
-      attribution: 'NASA GIBS OCI PACE'
-    }),
     'bmkg-himawari': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=EH&baserun=', {
       maxZoom: 10,
       minZoom: 3,
@@ -351,7 +339,7 @@ L.control.scale({
   };
 
   var SATELLITE_TILES = ['bmkg-himawari', 'bmkg-himawari-fd', 'bmkg-himawari-hires', 'bmkg-gk2a', 'bmkg-gk2a-wv',
-    'modis-terra', 'modis-aqua', 'viirs-noaa20', 'viirs-noaa21',     'viirs-snpp', 'oci-pace', 'chlorophyll-a', 'par',
+    'modis-terra', 'modis-aqua', 'viirs-noaa20', 'viirs-noaa21',     'viirs-snpp', 'oci-pace',
     'noaa-true-color', 'noaa-goes-ir', 'sentinel2'];
 
   function attachTileError(key) {
@@ -416,16 +404,6 @@ L.control.scale({
         attachTileError(name);
       } else if (name === 'oci-pace') {
         baseTileLayers[name].setUrl(getGibsDateUrl('OCI_PACE_True_Color', 'jpeg', getYesterdayDate(), 7));
-        baseTileLayers[name].addTo(map);
-        attachTileError(name);
-      } else if (name === 'chlorophyll-a') {
-        if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.showBatnas();
-        baseTileLayers[name].setUrl(getGibsDateUrl('OCI_PACE_Chlorophyll_a', 'png', getTwoDaysAgoDate(), 7));
-        baseTileLayers[name].addTo(map);
-        attachTileError(name);
-      } else if (name === 'par') {
-        if (typeof bnpbHillshade !== 'undefined') bnpbHillshade.showBatnas();
-        baseTileLayers[name].setUrl(getGibsDateUrl('OCI_PACE_Photosynthetically_Available_Radiation', 'png', getTwoDaysAgoDate(), 7));
         baseTileLayers[name].addTo(map);
         attachTileError(name);
       } else if (isBmkg) {
@@ -748,9 +726,7 @@ L.control.scale({
     'bmkg-gk2a-wv': 'GK-2A Water Vapor',
     'noaa-true-color': 'NOAA True Color',
     'noaa-goes-ir': 'NOAA GOES IR',
-    'sentinel2': 'Sentinel-2',
-    'chlorophyll-a': 'Chlorophyll-a Laut',
-    'par': 'PAR (Radiasi Fotosintesis)'
+    'sentinel2': 'Sentinel-2'
   };
 
   setBaseMap(currentBasemapName);
@@ -1275,6 +1251,8 @@ L.control.scale({
         if (typeof ociPaceTimeSliderCleanup === 'function') ociPaceTimeSliderCleanup();
         if (typeof chlorophyllTimeSliderCleanup === 'function') chlorophyllTimeSliderCleanup();
         if (typeof parTimeSliderCleanup === 'function') parTimeSliderCleanup();
+        if (typeof chlorophyllOverlayCleanup === 'function') chlorophyllOverlayCleanup();
+        if (typeof parOverlayCleanup === 'function') parOverlayCleanup();
         if (typeof sentinel2TimeSliderCleanup === 'function') sentinel2TimeSliderCleanup();
         if (typeof bmkgHimawariSliderCleanup === 'function') bmkgHimawariSliderCleanup();
         if (typeof cleanupHujanLayer === 'function') cleanupHujanLayer();
@@ -2530,8 +2508,8 @@ L.control.scale({
     {
       cat: 'Lingkungan',
       layers: [
-        { id: 'chlorophyll-a', label: 'Chlorophyll-a Laut (NASA)' },
-        { id: 'par', label: 'PAR - Radiasi Fotosintesis (NASA)' }
+        { id: 'toggleChlorophyllOverlay', label: 'Chlorophyll-a Laut (NASA)' },
+        { id: 'toggleParOverlay', label: 'PAR - Radiasi Fotosintesis (NASA)' }
       ]
     },
     {
@@ -2922,6 +2900,8 @@ L.control.scale({
           id.indexOf('st2023:') === 0 ||
           id === 'bps-lbs-2024' ||
           id.indexOf('arcgis-') === 0 ||
+          id === 'toggleChlorophyllOverlay' ||
+          id === 'toggleParOverlay' ||
           id === 'toggleSawahDilindungi' ||
           id === 'toggleSawahNasional50k' ||
           id === 'toggleErosiLayer' ||
@@ -2980,6 +2960,12 @@ L.control.scale({
         }
         if (id === 'toggleProvinceBoundary' && typeof window.toggleProvinceBoundary === 'function') {
           window.toggleProvinceBoundary(cb.checked);
+        }
+        if (id === 'toggleChlorophyllOverlay' && typeof window.toggleChlorophyllOverlay === 'function') {
+          window.toggleChlorophyllOverlay(cb.checked);
+        }
+        if (id === 'toggleParOverlay' && typeof window.toggleParOverlay === 'function') {
+          window.toggleParOverlay(cb.checked);
         }
         if (id === 'toggleCoastlineLayer') {
           toggleCoastlineLayer(cb.checked);

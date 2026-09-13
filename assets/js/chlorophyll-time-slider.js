@@ -36,10 +36,9 @@
   }
 
   function updateUrl(dateStr) {
-    var layer = baseTileLayers[LAYER_KEY];
-    if (!layer) return;
-    var newUrl = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/' + GIBS_LAYER_ID + '/default/' + dateStr + '/GoogleMapsCompatible_Level7/{z}/{y}/{x}.' + GIBS_EXT;
-    layer.setUrl(newUrl);
+    if (typeof window.updateChlorophyllDate === 'function') {
+      window.updateChlorophyllDate(dateStr);
+    }
   }
 
   function showLegend() {
@@ -166,27 +165,12 @@
 
   function cleanup() {
     hideSlider();
-    if (typeof baseTileLayers !== 'undefined' && baseTileLayers[LAYER_KEY]) {
-      var yesterday = formatISO(getDateByOffset(-2));
-      updateUrl(yesterday);
-    }
     currentDayOffset = -2;
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    map.on('basemapchanged', function (e) {
-      if (e.basemap === LAYER_KEY) {
-        showSlider();
-        var pbCb = document.getElementById('toggleProvinceBoundary');
-        if (pbCb && pbCb.checked) { pbCb.checked = false; window.toggleProvinceBoundary(false); }
-      } else {
-        hideSlider();
-      }
-    });
-
-    if (typeof currentBasemapName !== 'undefined' && currentBasemapName === LAYER_KEY) {
-      showSlider();
-    }
+    window.chlorophyllShowSlider = showSlider;
+    window.chlorophyllHideSlider = hideSlider;
   });
 
   window.chlorophyllTimeSliderCleanup = cleanup;
