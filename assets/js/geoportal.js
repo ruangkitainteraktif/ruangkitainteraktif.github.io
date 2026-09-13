@@ -1221,12 +1221,25 @@
       hiddenEls.push({ restore: () => sidebar.classList.remove('collapsed') });
     }
 
-    const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .geoportal-print-btn, .geoportal-legend, .basemap-btn, .basemap-control-wrap, .leaflet-control-scale, .detail-panel-btn, #detail-panel, .draw-fab-wrap, .modis-time-slider-wrap, .bmkg-time-slider-wrap, .s1rtc-time-slider-wrap, .legend-wrap, .zoom-control-wrap, .geoid-marker-wrap, .leaflet-control-mouse-position, .wind-legend, .himawari-legend, .maritime-legend, .leaflet-control-legend, .bmkg-ts-title, .bmkg-ts-controls, .bmkg-ts-info, .bmkg-ts-slider-wrap, .quick-layer-bar, #print-loading-overlay, #print-error-overlay, .print-area-buttons, .print-area-frame, .print-area-vignette, .print-instruction, .map-fab-item, .map-fab-menu, .map-fab-overlay, .map-fab-btn, .layer-catalog-dropdown, .layer-catalog-btn, #geotools-sheet');
+    const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .geoportal-print-btn, .geoportal-legend, .basemap-btn, .basemap-control-wrap, .leaflet-control-scale, .detail-panel-btn, #detail-panel, .draw-fab-wrap, .legend-wrap, .zoom-control-wrap, .geoid-marker-wrap, .leaflet-control-mouse-position, .wind-legend, .himawari-legend, .maritime-legend, .leaflet-control-legend, .quick-layer-bar, #print-error-overlay, .print-area-buttons, .print-area-frame, .print-area-vignette, .print-instruction, .map-fab-item, .map-fab-menu, .map-fab-overlay, .map-fab-btn, .layer-catalog-dropdown, .layer-catalog-btn, #geotools-sheet, .unified-slider-container, .unified-legend-container');
     overlays.forEach(el => {
       if (el && getComputedStyle(el).display !== 'none') {
         const prev = el.style.display;
         el.style.setProperty('display', 'none', 'important');
         hiddenEls.push({ restore: () => { el.style.display = prev; } });
+      }
+    });
+    var _essentialControls = new Set(['leaflet-control-zoom', 'leaflet-control-locate', 'leaflet-control-scale']);
+    document.querySelectorAll('.leaflet-control').forEach(function (el) {
+      var cls = el.className || '';
+      var dominated = false;
+      _essentialControls.forEach(function (k) { if (cls.indexOf(k) !== -1) dominated = true; });
+      if (dominated) return;
+      if (el.querySelector('.geoportal-print-btn')) return;
+      if (getComputedStyle(el).display !== 'none') {
+        var prev = el.style.display;
+        el.style.setProperty('display', 'none', 'important');
+        hiddenEls.push({ restore: function () { el.style.display = prev; } });
       }
     });
 
@@ -1251,8 +1264,8 @@
       const leafletContainer = document.querySelector('.leaflet-container');
       if (leafletContainer) {
         map.invalidateSize();
-        await new Promise(r => setTimeout(r, 200));
-        const mapCanvas = await html2canvas(leafletContainer, { useCORS: true, allowTaint: false, scale: 2, logging: false, backgroundColor: '#e8e8e8' });
+        await new Promise(r => setTimeout(r, 1500));
+        const mapCanvas = await html2canvas(leafletContainer, { useCORS: true, allowTaint: false, scale: 2, logging: false, backgroundColor: '#e8e8e8', ignoreElements: function(el) { return el.id === 'print-loading-overlay' || el.id === 'print-error-overlay'; } });
         const canvasAspect = mapCanvas.width / mapCanvas.height;
         const frameAspect = mapFrameW / mapFrameH;
         let cropX, cropY, cropW, cropH;
@@ -1437,10 +1450,10 @@
     ctx.strokeStyle = '#c8c8c8'; ctx.lineWidth = 0.2 * s;
     ctx.beginPath(); ctx.moveTo(panelX * s, mapFrameY * s); ctx.lineTo(panelX * s, (mapFrameY + panelH) * s); ctx.stroke();
 
-    const headTitle = activeNames.length ? activeNames.join(' / ') : 'LAYER AKTIF';
     let py = mapFrameY + 4;
     ctx.fillStyle = '#1e293b'; ctx.font = 'bold 9px "Segoe UI", system-ui, sans-serif';
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    const headTitle = data.titleText || 'LAYER AKTIF';
     ctx.fillText(headTitle, (panelX + 4) * s, py * s);
     py += 6;
     ctx.strokeStyle = '#c8c8c8'; ctx.lineWidth = 0.2 * s;
@@ -1662,7 +1675,7 @@
 
       pdf.setDrawColor(200, 200, 200); pdf.setLineWidth(0.2);
       pdf.line(panelX, mapFrameY, panelX, mapFrameY + panelH);
-      const headTitle = data.activeNames.length ? data.activeNames.join(' / ') : 'LAYER AKTIF';
+      const headTitle = data.titleText || 'LAYER AKTIF';
       let py = mapFrameY + 4;
       pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9); pdf.setTextColor(30, 41, 59);
       pdf.text(headTitle, panelX + 4, py, { maxWidth: panelW - 8 });
@@ -1784,9 +1797,9 @@
       console.error('[PrintGeoportal] Gagal membuat PDF:', err);
       showPrintError(err && err.message ? err.message : String(err));
     } finally {
+      data.hiddenEls.forEach(h => { if (h.restore) try { h.restore(); } catch (e) {} });
       hidePrintLoading();
       if (btn) { btn.disabled = false; btn.innerHTML = window.GEOPORTAL_PRINT_ICON || '\uD83D\uDCBB'; }
-      data.hiddenEls.forEach(h => { if (h.restore) try { h.restore(); } catch (e) {} });
       try { map.invalidateSize(); } catch (e) {}
     }
   }
