@@ -104,6 +104,48 @@ L.control.scale({
       tms: true,
       attribution: 'BMKG Himawari-9'
     }),
+    'bmkg-himawari-nc': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=NC&baserun=', {
+      maxZoom: 10,
+      minZoom: 3,
+      tms: true,
+      attribution: 'BMKG Himawari-9 Natural Color'
+    }),
+    'bmkg-himawari-wv': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=WV&baserun=', {
+      maxZoom: 10,
+      minZoom: 3,
+      tms: true,
+      attribution: 'BMKG Himawari-9 Water Vapor'
+    }),
+    'bmkg-himawari-rp': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=RP&baserun=', {
+      maxZoom: 10,
+      minZoom: 3,
+      tms: true,
+      attribution: 'BMKG Himawari-9 Rainfall'
+    }),
+    'bmkg-himawari-sw': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=SW&baserun=', {
+      maxZoom: 10,
+      minZoom: 3,
+      tms: true,
+      attribution: 'BMKG Himawari-9 Shortwave IR'
+    }),
+    'bmkg-himawari-sm': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=SM&baserun=', {
+      maxZoom: 10,
+      minZoom: 3,
+      tms: true,
+      attribution: 'BMKG Himawari-9 SST'
+    }),
+    'bmkg-himawari-va': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=VA&baserun=', {
+      maxZoom: 10,
+      minZoom: 3,
+      tms: true,
+      attribution: 'BMKG Himawari-9 Volcanic Ash'
+    }),
+    'bmkg-himawari-vs': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=VS&baserun=', {
+      maxZoom: 10,
+      minZoom: 3,
+      tms: true,
+      attribution: 'BMKG Himawari-9 Visible'
+    }),
     'bmkg-himawari-fd': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9fd&param=EH&baserun=', {
       maxZoom: 10,
       minZoom: 3,
@@ -120,14 +162,19 @@ L.control.scale({
       maxZoom: 10,
       minZoom: 3,
       tms: true,
-      attribution: 'BMKG GK-2A'
+      attribution: 'BMKG GK-2A IR'
     }),
     'bmkg-gk2a-wv': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=gk2a&param=WV&baserun=', {
       maxZoom: 10,
       minZoom: 3,
-      maxNativeZoom: 3,
       tms: true,
       attribution: 'BMKG GK-2A Water Vapor'
+    }),
+    'bmkg-gk2a-rp': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=gk2a&param=RP&baserun=', {
+      maxZoom: 10,
+      minZoom: 3,
+      tms: true,
+      attribution: 'BMKG GK-2A Rainfall'
     }),
     'noaa-true-color': L.tileLayer('https://gis.nnvl.noaa.gov/arcgis/rest/services/TRUE/TRUE_current/ImageServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
@@ -169,6 +216,21 @@ L.control.scale({
     }),
     'omi-no2': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/OMI_Nitrogen_Dioxide_Tropo_Column/default/' + _omiDate(-8) + '/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
       maxZoom: 5, minZoom: 0, opacity: 0.75, attribution: 'NASA GIBS OMI'
+    }),
+    'omi-aod-abs': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/OMI_Absorbing_Aerosol_Optical_Depth/default/' + _omiDate(-1) + '/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
+      maxZoom: 6, minZoom: 0, opacity: 0.75, attribution: 'NASA GIBS OMI'
+    }),
+    'omi-modis-terra-aod': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Aerosol/default/' + _omiDate(-1) + '/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
+      maxZoom: 6, minZoom: 0, opacity: 0.75, attribution: 'NASA GIBS MODIS Terra'
+    }),
+    'omi-modis-aqua-aod': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Aqua_Aerosol/default/' + _omiDate(-1) + '/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
+      maxZoom: 6, minZoom: 0, opacity: 0.75, attribution: 'NASA GIBS MODIS Aqua'
+    }),
+    'omi-so2-pbl': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/OMI_SO2_Planetary_Boundary_Layer/default/' + _omiDate(-2) + '/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
+      maxZoom: 6, minZoom: 0, opacity: 0.75, attribution: 'NASA GIBS OMI'
+    }),
+    'omps-noaa20-so2-lt': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/OMPS_NOAA20_SO2_Lower_Troposphere/default/' + _omiDate(-2) + '/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', {
+      maxZoom: 6, minZoom: 0, opacity: 0.75, attribution: 'NASA GIBS OMPS NOAA-20'
     })
   };
   window.omiLayers = omiLayers;
@@ -188,6 +250,35 @@ L.control.scale({
     'omi-no2': {
       imgUrl: 'https://gibs.earthdata.nasa.gov/legends/OMI_Nitrogen_Dioxide_Tropo_Column_H.svg',
       title: 'NO\u2082 Tropospheric Column (OMI)'
+    },
+    'omi-aod-abs': {
+      imgUrl: 'https://gibs.earthdata.nasa.gov/legends/OMI_Absorbing_Aerosol_Optical_Depth_H.svg',
+      title: 'Absorbing AOD Near-UV (OMI)'
+    },
+    'omi-modis-terra-aod': {
+      custom: true,
+      title: 'Aerosol Optical Depth (MODIS Terra)',
+      gradient: 'linear-gradient(90deg,#ffffcc,#c7e9b4,#7fcdbb,#41b6c4,#1d91c0,#225ea8,#0c2c84)',
+      labels: ['0.0', '0.1', '0.2', '0.3', '0.5', '1.0', '2.0+'],
+      unit: 'AOD 550nm | Resolusi: 10km | Sumber: NASA GIBS / MODIS Terra'
+    },
+    'omi-modis-aqua-aod': {
+      custom: true,
+      title: 'Aerosol Optical Depth (MODIS Aqua)',
+      gradient: 'linear-gradient(90deg,#ffffcc,#c7e9b4,#7fcdbb,#41b6c4,#1d91c0,#225ea8,#0c2c84)',
+      labels: ['0.0', '0.1', '0.2', '0.3', '0.5', '1.0', '2.0+'],
+      unit: 'AOD 550nm | Resolusi: 10km | Sumber: NASA GIBS / MODIS Aqua'
+    },
+    'omi-so2-pbl': {
+      imgUrl: 'https://gibs.earthdata.nasa.gov/legends/OMI_SO2_Planetary_Boundary_Layer_H.svg',
+      title: 'SO\u2082 Planetary Boundary Layer (OMI)'
+    },
+    'omps-noaa20-so2-lt': {
+      custom: true,
+      title: 'SO\u2082 Lower Troposphere (OMPS NOAA-20)',
+      gradient: 'linear-gradient(90deg,#f7fbff,#deebf7,#c6dbef,#9ecae1,#6baed6,#4292c6,#2171b5,#08519c,#08306b)',
+      labels: ['-0.5', '0.0', '0.5', '1.0', '2.0', '3.0', '5.0+'],
+      unit: 'SO\u2082 DU | Resolusi: 13.5x24km | Sumber: NASA GIBS / OMPS NOAA-20'
     }
   };
 
@@ -201,10 +292,30 @@ L.control.scale({
     L.DomEvent.disableScrollPropagation(el);
     var titleEl = L.DomUtil.create('div', 'omi-legend-title', el);
     titleEl.textContent = d.title;
-    var imgEl = L.DomUtil.create('img', 'omi-legend-img', el);
-    imgEl.src = d.imgUrl;
-    imgEl.alt = d.title;
-    imgEl.style.width = '280px';
+    if (d.custom) {
+      var bar = L.DomUtil.create('div', 'himawari-legend-bar', el);
+      bar.style.background = d.gradient;
+      bar.style.height = '14px';
+      bar.style.borderRadius = '3px';
+      var labelsRow = L.DomUtil.create('div', 'himawari-legend-labels', el);
+      labelsRow.style.display = 'flex';
+      labelsRow.style.justifyContent = 'space-between';
+      labelsRow.style.fontSize = '10px';
+      (d.labels || []).forEach(function (lbl) {
+        var span = document.createElement('span');
+        span.textContent = lbl;
+        labelsRow.appendChild(span);
+      });
+      if (d.unit) {
+        var unitEl = L.DomUtil.create('div', 'himawari-legend-unit', el);
+        unitEl.textContent = d.unit;
+      }
+    } else {
+      var imgEl = L.DomUtil.create('img', 'omi-legend-img', el);
+      imgEl.src = d.imgUrl;
+      imgEl.alt = d.title;
+      imgEl.style.width = '280px';
+    }
     addUnifiedLegend('omi', typeof createLegendWithToggle === 'function' ? createLegendWithToggle(el) : el);
     _omiLegendControl = true;
   }
@@ -262,17 +373,33 @@ L.control.scale({
 
   var BMKG_TILETYPE = {
     'bmkg-himawari': 'himawari9',
+    'bmkg-himawari-nc': 'himawari9',
+    'bmkg-himawari-wv': 'himawari9',
+    'bmkg-himawari-rp': 'himawari9',
+    'bmkg-himawari-sw': 'himawari9',
+    'bmkg-himawari-sm': 'himawari9',
+    'bmkg-himawari-va': 'himawari9',
+    'bmkg-himawari-vs': 'himawari9',
     'bmkg-himawari-fd': 'himawari9fd',
     'bmkg-himawari-hires': 'himawari9hires',
     'bmkg-gk2a': 'gk2a',
-    'bmkg-gk2a-wv': 'gk2a'
+    'bmkg-gk2a-wv': 'gk2a',
+    'bmkg-gk2a-rp': 'gk2a'
   };
   var BMKG_PARAMS = {
     'bmkg-himawari': 'EH',
+    'bmkg-himawari-nc': 'NC',
+    'bmkg-himawari-wv': 'WV',
+    'bmkg-himawari-rp': 'RP',
+    'bmkg-himawari-sw': 'SW',
+    'bmkg-himawari-sm': 'SM',
+    'bmkg-himawari-va': 'VA',
+    'bmkg-himawari-vs': 'VS',
     'bmkg-himawari-fd': 'EH',
     'bmkg-himawari-hires': 'VS',
     'bmkg-gk2a': 'EH',
-    'bmkg-gk2a-wv': 'WV'
+    'bmkg-gk2a-wv': 'WV',
+    'bmkg-gk2a-rp': 'RP'
   };
   window._bmkgModelrunCache = null;
 
@@ -322,10 +449,18 @@ L.control.scale({
 
   var SATELLITE_ERROR_MSG = {
     'bmkg-himawari': 'Citra BMKG Himawari-9 tidak tersedia saat ini.',
+    'bmkg-himawari-nc': 'Citra BMKG Himawari-9 Natural Color tidak tersedia.',
+    'bmkg-himawari-wv': 'Citra BMKG Himawari-9 Water Vapor tidak tersedia.',
+    'bmkg-himawari-rp': 'Citra BMKG Himawari-9 Rainfall tidak tersedia.',
+    'bmkg-himawari-sw': 'Citra BMKG Himawari-9 Shortwave IR tidak tersedia.',
+    'bmkg-himawari-sm': 'Citra BMKG Himawari-9 SST tidak tersedia.',
+    'bmkg-himawari-va': 'Citra BMKG Himawari-9 Volcanic Ash tidak tersedia.',
+    'bmkg-himawari-vs': 'Citra BMKG Himawari-9 Visible tidak tersedia.',
     'bmkg-himawari-fd': 'Citra BMKG Himawari-9 Full Disk tidak tersedia.',
     'bmkg-himawari-hires': 'Citra BMKG Himawari-9 Hi-Res tidak tersedia.',
     'bmkg-gk2a': 'Citra BMKG GK-2A tidak tersedia saat ini.',
     'bmkg-gk2a-wv': 'Citra BMKG GK-2A Water Vapor tidak tersedia.',
+    'bmkg-gk2a-rp': 'Citra BMKG GK-2A Rainfall tidak tersedia.',
     'modis-terra': 'Citra NASA GIBS MODIS Terra tidak tersedia.',
     'modis-aqua': 'Citra NASA GIBS MODIS Aqua tidak tersedia.',
     'viirs-noaa20': 'Citra NASA GIBS VIIRS NOAA-20 tidak tersedia.',
@@ -338,7 +473,7 @@ L.control.scale({
     'noaa-goes-ir': 'Citra NOAA GOES IR tidak tersedia.'
   };
 
-  var SATELLITE_TILES = ['bmkg-himawari', 'bmkg-himawari-fd', 'bmkg-himawari-hires', 'bmkg-gk2a', 'bmkg-gk2a-wv',
+  var SATELLITE_TILES = ['bmkg-himawari', 'bmkg-himawari-nc', 'bmkg-himawari-wv', 'bmkg-himawari-rp', 'bmkg-himawari-sw', 'bmkg-himawari-sm', 'bmkg-himawari-va', 'bmkg-himawari-vs', 'bmkg-himawari-fd', 'bmkg-himawari-hires',     'bmkg-gk2a', 'bmkg-gk2a-wv', 'bmkg-gk2a-rp',
     'modis-terra', 'modis-aqua', 'viirs-noaa20', 'viirs-noaa21',     'viirs-snpp', 'oci-pace',
     'noaa-true-color', 'noaa-goes-ir', 'sentinel2'];
 
@@ -479,11 +614,13 @@ L.control.scale({
         var pbCb = document.getElementById('toggleProvinceBoundary');
         if (pbCb && !pbCb.checked) { pbCb.checked = true; window.toggleProvinceBoundary(true); }
       }
+      showLabels();
     } else {
       if (typeof window.toggleProvinceBoundary === 'function') {
         var pbCb = document.getElementById('toggleProvinceBoundary');
         if (pbCb && pbCb.checked) { pbCb.checked = false; window.toggleProvinceBoundary(false); }
       }
+      hideLabels();
     }
   }
 
@@ -720,10 +857,18 @@ L.control.scale({
     'viirs-snpp': 'VIIRS SNPP',
     'oci-pace': 'OCI PACE True Color',
     'bmkg-himawari': 'Himawari-9 IR',
+    'bmkg-himawari-nc': 'Himawari-9 Natural Color',
+    'bmkg-himawari-wv': 'Himawari-9 Water Vapor',
+    'bmkg-himawari-rp': 'Himawari-9 Rainfall',
+    'bmkg-himawari-sw': 'Himawari-9 Shortwave IR',
+    'bmkg-himawari-sm': 'Himawari-9 SST',
+    'bmkg-himawari-va': 'Himawari-9 Volcanic Ash',
+    'bmkg-himawari-vs': 'Himawari-9 Visible',
     'bmkg-himawari-fd': 'Himawari-9 Full Disk',
     'bmkg-himawari-hires': 'Himawari-9 Hi-Res',
-    'bmkg-gk2a': 'GK-2A',
+    'bmkg-gk2a': 'GK-2A IR',
     'bmkg-gk2a-wv': 'GK-2A Water Vapor',
+    'bmkg-gk2a-rp': 'GK-2A Rainfall',
     'noaa-true-color': 'NOAA True Color',
     'noaa-goes-ir': 'NOAA GOES IR',
     'sentinel2': 'Sentinel-2'
@@ -1007,6 +1152,22 @@ L.control.scale({
     if (show) showCoastline(); else hideCoastline();
   }
 
+  var _labelsLayer = null;
+
+  function showLabels() {
+    if (_labelsLayer && map.hasLayer(_labelsLayer)) return;
+    _labelsLayer = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 23, attribution: 'Esri, HERE, Garmin, © OpenStreetMap contributors', interactive: false }
+    );
+    _labelsLayer.addTo(map);
+  }
+
+  function hideLabels() {
+    if (_labelsLayer && map.hasLayer(_labelsLayer)) map.removeLayer(_labelsLayer);
+    _labelsLayer = null;
+  }
+
   var _satBoundaryLayer = null;
   var _satBoundaryGeneration = 0;
 
@@ -1251,6 +1412,7 @@ L.control.scale({
         if (typeof ociPaceTimeSliderCleanup === 'function') ociPaceTimeSliderCleanup();
         if (typeof chlorophyllTimeSliderCleanup === 'function') chlorophyllTimeSliderCleanup();
         if (typeof parTimeSliderCleanup === 'function') parTimeSliderCleanup();
+        if (typeof aerosolSo2SliderCleanup === 'function') aerosolSo2SliderCleanup();
         if (typeof chlorophyllOverlayCleanup === 'function') chlorophyllOverlayCleanup();
         if (typeof parOverlayCleanup === 'function') parOverlayCleanup();
         if (typeof sentinel2TimeSliderCleanup === 'function') sentinel2TimeSliderCleanup();
@@ -2383,10 +2545,18 @@ L.control.scale({
             { id: 'viirs-snpp', label: 'VIIRS SNPP (NASA)' },
             { id: 'oci-pace', label: 'OCI PACE (NASA)' },
             { id: 'bmkg-himawari', label: 'Himawari-9 IR (BMKG)' },
+            { id: 'bmkg-himawari-nc', label: 'Himawari-9 Natural Color (BMKG)' },
+            { id: 'bmkg-himawari-wv', label: 'Himawari-9 Water Vapor (BMKG)' },
+            { id: 'bmkg-himawari-rp', label: 'Himawari-9 Rainfall (BMKG)' },
+            { id: 'bmkg-himawari-sw', label: 'Himawari-9 Shortwave IR (BMKG)' },
+            { id: 'bmkg-himawari-sm', label: 'Himawari-9 SST (BMKG)' },
+            { id: 'bmkg-himawari-va', label: 'Himawari-9 Volcanic Ash (BMKG)' },
+            { id: 'bmkg-himawari-vs', label: 'Himawari-9 Visible (BMKG)' },
             { id: 'bmkg-himawari-fd', label: 'Himawari-9 Full Disk (BMKG)' },
             { id: 'bmkg-himawari-hires', label: 'Himawari-9 Hi-Res (BMKG)' },
-            { id: 'bmkg-gk2a', label: 'GK-2A (BMKG)' },
+            { id: 'bmkg-gk2a', label: 'GK-2A IR (BMKG)' },
             { id: 'bmkg-gk2a-wv', label: 'GK-2A Water Vapor (BMKG)' },
+            { id: 'bmkg-gk2a-rp', label: 'GK-2A Rainfall (BMKG)' },
             { id: 'noaa-true-color', label: 'NOAA True Color' },
             { id: 'noaa-goes-ir', label: 'NOAA GOES IR' },
             { id: 'sentinel1-rtc', label: 'Sentinel-1 RTC (ESA)' },
@@ -2507,9 +2677,25 @@ L.control.scale({
     },
     {
       cat: 'Lingkungan',
-      layers: [
-        { id: 'toggleChlorophyllOverlay', label: 'Chlorophyll-a Laut (NASA)' },
-        { id: 'toggleParOverlay', label: 'PAR - Radiasi Fotosintesis (NASA)' }
+      subcats: [
+        { subcat: 'Laut', layers: [
+          { id: 'toggleChlorophyllOverlay', label: 'Chlorophyll-a Laut (NASA)' },
+          { id: 'toggleParOverlay', label: 'PAR - Radiasi Fotosintesis (NASA)' }
+        ]},
+        { subcat: 'Aerosol', layers: [
+          { id: 'omi-aerosol-index', label: 'UV Aerosol Index (OMI/Aura)' },
+          { id: 'omi-aod-abs', label: 'Absorbing AOD Near-UV (OMI/Aura)' },
+          { id: 'omi-modis-terra-aod', label: 'Aerosol Optical Depth (MODIS Terra)' },
+          { id: 'omi-modis-aqua-aod', label: 'Aerosol Optical Depth (MODIS Aqua)' }
+        ]},
+        { subcat: 'SO\u2082', layers: [
+          { id: 'omi-so2', label: 'SO\u2082 Lower Troposphere (OMI/Aura)' },
+          { id: 'omi-so2-pbl', label: 'SO\u2082 Planetary Boundary Layer (OMI/Aura)' },
+          { id: 'omps-noaa20-so2-lt', label: 'SO\u2082 Lower Troposphere (OMPS NOAA-20)' }
+        ]},
+        { subcat: 'NO\u2082', layers: [
+          { id: 'omi-no2', label: 'NO\u2082 Tropospheric Column (OMI/Aura)' }
+        ]}
       ]
     },
     {
@@ -2536,10 +2722,7 @@ L.control.scale({
           { id: 'toggleAirVisualO3', label: 'O3 - Ozon (AirVisual)', dataAttr: 'airvisual-o3' },
           { id: 'toggleAirVisualNo2', label: 'NO2 - Nitrogen Dioksida (AirVisual)', dataAttr: 'airvisual-no2' },
           { id: 'toggleAirVisualSo2', label: 'SO2 - Sulfur Dioksida (AirVisual)', dataAttr: 'airvisual-so2' },
-          { id: 'toggleAirVisualCo', label: 'CO - Karbon Monoksida (AirVisual)', dataAttr: 'airvisual-co' },
-          { id: 'omi-aerosol-index', label: 'Aerosol Index (OMI/Aura)' },
-          { id: 'omi-so2', label: 'SO\u2082 Troposphere Bawah (OMI/Aura)' },
-          { id: 'omi-no2', label: 'NO\u2082 Tropospheric Column (OMI/Aura)' }
+          { id: 'toggleAirVisualCo', label: 'CO - Karbon Monoksida (AirVisual)', dataAttr: 'airvisual-co' }
         ]}
       ]
     },

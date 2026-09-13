@@ -48,6 +48,85 @@
       ],
       labels: ['Gelap', 'Cerah']
     },
+    'bmkg-himawari-nc': {
+      title: 'Natural Color (RGB)',
+      unit: 'Vis+NIR \u2014 BMKG',
+      gradient: [
+        [0.0, [0, 80, 0]],
+        [0.33, [0, 160, 0]],
+        [0.66, [100, 180, 255]],
+        [1.0, [255, 255, 255]]
+      ],
+      labels: ['Laut', 'Vegetasi', 'Awan Tipis', 'Awan Tebal']
+    },
+    'bmkg-himawari-wv': {
+      title: 'Uap Air (Water Vapor)',
+      unit: 'WV 6.3\u00B5m \u2014 BMKG',
+      gradient: [
+        [0.0, [26, 26, 46]],
+        [0.25, [22, 33, 62]],
+        [0.5, [15, 52, 96]],
+        [0.75, [83, 168, 182]],
+        [1.0, [255, 255, 255]]
+      ],
+      labels: ['Kering', 'Lembab', 'Sangat Lembab']
+    },
+    'bmkg-himawari-rp': {
+      title: 'Rainfall Rate (Curah Hujan)',
+      unit: 'Derived \u2014 BMKG',
+      gradient: [
+        [0.0, [0, 0, 128]],
+        [0.25, [0, 0, 255]],
+        [0.5, [0, 200, 0]],
+        [0.75, [255, 255, 0]],
+        [1.0, [255, 0, 0]]
+      ],
+      labels: ['Ringan', 'Sedang', 'Lebat', 'Sangat Lebat']
+    },
+    'bmkg-himawari-sw': {
+      title: 'Shortwave IR (3.9\u00B5m)',
+      unit: 'SW IR \u2014 BMKG',
+      gradient: [
+        [0.0, [0, 0, 80]],
+        [0.25, [80, 0, 120]],
+        [0.5, [200, 100, 0]],
+        [0.75, [255, 200, 0]],
+        [1.0, [255, 255, 255]]
+      ],
+      labels: ['Dingin', 'Hangat', 'Panas']
+    },
+    'bmkg-himawari-sm': {
+      title: 'Sea Surface Temperature (SST)',
+      unit: 'IR Window \u2014 BMKG',
+      gradient: [
+        [0.0, [0, 0, 128]],
+        [0.25, [0, 100, 200]],
+        [0.5, [0, 180, 0]],
+        [0.75, [255, 200, 0]],
+        [1.0, [200, 0, 0]]
+      ],
+      labels: ['20\u00B0C', '24\u00B0C', '28\u00B0C', '32\u00B0C']
+    },
+    'bmkg-himawari-va': {
+      title: 'Volcanic Ash (Abu Vulkanik)',
+      unit: 'Multi-band \u2014 BMKG',
+      gradient: [
+        [0.0, [0, 0, 80]],
+        [0.33, [200, 0, 0]],
+        [0.66, [255, 200, 0]],
+        [1.0, [255, 255, 255]]
+      ],
+      labels: ['Tipis', 'Sedang', 'Tebal']
+    },
+    'bmkg-himawari-vs': {
+      title: 'Visible (0.64\u00B5m)',
+      unit: '500m \u2014 BMKG',
+      gradient: [
+        [0.0, [0, 0, 0]],
+        [1.0, [255, 255, 255]]
+      ],
+      labels: ['Gelap', 'Cerah']
+    },
     'bmkg-gk2a': {
       title: 'Suhu Puncak Awan',
       unit: 'IR 10.4\u00B5m \u2014 BMKG GK-2A',
@@ -72,6 +151,18 @@
         [1.0, [255, 255, 255]]
       ],
       labels: ['Kering', '', 'Lembab', '', 'Sangat Lembab']
+    },
+    'bmkg-gk2a-rp': {
+      title: 'Rainfall Rate (Curah Hujan)',
+      unit: 'Derived \u2014 BMKG GK-2A',
+      gradient: [
+        [0.0, [0, 0, 128]],
+        [0.25, [0, 0, 255]],
+        [0.5, [0, 200, 0]],
+        [0.75, [255, 255, 0]],
+        [1.0, [255, 0, 0]]
+      ],
+      labels: ['Ringan', 'Sedang', 'Lebat', 'Sangat Lebat']
     },
     'noaa-goes-ir': {
       title: 'GOES IR Enhanced',

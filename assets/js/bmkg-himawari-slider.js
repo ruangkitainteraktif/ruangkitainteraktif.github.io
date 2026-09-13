@@ -4,10 +4,18 @@
 
   var BMKG_LAYERS = {
     'bmkg-himawari':      { tiletype: 'himawari9', modelname: 'himawari9',    param: 'EH', title: 'Himawari-9 IR Enhanced' },
+    'bmkg-himawari-nc':   { tiletype: 'himawari9', modelname: 'himawari9',    param: 'NC', title: 'Himawari-9 Natural Color' },
+    'bmkg-himawari-wv':   { tiletype: 'himawari9', modelname: 'himawari9',    param: 'WV', title: 'Himawari-9 Water Vapor' },
+    'bmkg-himawari-rp':   { tiletype: 'himawari9', modelname: 'himawari9',    param: 'RP', title: 'Himawari-9 Rainfall' },
+    'bmkg-himawari-sw':   { tiletype: 'himawari9', modelname: 'himawari9',    param: 'SW', title: 'Himawari-9 Shortwave IR' },
+    'bmkg-himawari-sm':   { tiletype: 'himawari9', modelname: 'himawari9',    param: 'SM', title: 'Himawari-9 SST' },
+    'bmkg-himawari-va':   { tiletype: 'himawari9', modelname: 'himawari9',    param: 'VA', title: 'Himawari-9 Volcanic Ash' },
+    'bmkg-himawari-vs':   { tiletype: 'himawari9', modelname: 'himawari9',    param: 'VS', title: 'Himawari-9 Visible' },
     'bmkg-himawari-fd':   { tiletype: 'himawari9', modelname: 'himawari9fd',  param: 'EH', title: 'Himawari-9 Full Disk' },
     'bmkg-himawari-hires':{ tiletype: 'himawari9', modelname: 'himawari9hires', param: 'VS', title: 'Himawari-9 Hi-Res (Visible)' },
-    'bmkg-gk2a':          { tiletype: 'himawari9', modelname: 'gk2a',         param: 'EH', title: 'GK-2A' },
-    'bmkg-gk2a-wv':       { tiletype: 'himawari9', modelname: 'gk2a',         param: 'WV', title: 'GK-2A Water Vapor' }
+    'bmkg-gk2a':          { tiletype: 'himawari9', modelname: 'gk2a',         param: 'EH', title: 'GK-2A IR Enhanced' },
+    'bmkg-gk2a-wv':       { tiletype: 'himawari9', modelname: 'gk2a',         param: 'WV', title: 'GK-2A Water Vapor' },
+    'bmkg-gk2a-rp':       { tiletype: 'himawari9', modelname: 'gk2a',         param: 'RP', title: 'GK-2A Rainfall' }
   };
 
   var MODELRUN_URL = 'https://satellite.bmkg.go.id/api22/modelrun';
@@ -208,6 +216,36 @@
           '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#1a1a2e,#16213e,#0f3460,#1a936f,#53a8b6,#b6d7e8,#ffffff);"></div>' +
           '<div class="himawari-legend-labels"><span>Kering</span><span>Lembab</span><span>Sangat Lembab</span></div>' +
           '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
+      } else if (param === 'NC') {
+        div.innerHTML =
+          '<div class="himawari-legend-title">Natural Color (RGB)</div>' +
+          '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#005000,#00a000,#64b4ff,#ffffff);"></div>' +
+          '<div class="himawari-legend-labels"><span>Laut</span><span>Vegetasi</span><span>Awan Tipis</span><span>Awan Tebal</span></div>' +
+          '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
+      } else if (param === 'RP') {
+        div.innerHTML =
+          '<div class="himawari-legend-title">Rainfall Rate (Curah Hujan)</div>' +
+          '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#000080,#0000ff,#00c800,#ffff00,#ff0000);"></div>' +
+          '<div class="himawari-legend-labels"><span>Ringan</span><span>Sedang</span><span>Lebat</span><span>Sangat Lebat</span></div>' +
+          '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
+      } else if (param === 'SW') {
+        div.innerHTML =
+          '<div class="himawari-legend-title">Shortwave IR (3.9&micro;m)</div>' +
+          '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#000050,#500078,#c86400,#ffc800,#ffffff);"></div>' +
+          '<div class="himawari-legend-labels"><span>Dingin</span><span>Hangat</span><span>Panas</span></div>' +
+          '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
+      } else if (param === 'SM') {
+        div.innerHTML =
+          '<div class="himawari-legend-title">Sea Surface Temperature (SST)</div>' +
+          '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#000080,#0064c8,#00b400,#ffc800,#c80000);"></div>' +
+          '<div class="himawari-legend-labels"><span>20&deg;C</span><span>24&deg;C</span><span>28&deg;C</span><span>32&deg;C</span></div>' +
+          '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
+      } else if (param === 'VA') {
+        div.innerHTML =
+          '<div class="himawari-legend-title">Volcanic Ash (Abu Vulkanik)</div>' +
+          '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#000050,#c80000,#ffc800,#ffffff);"></div>' +
+          '<div class="himawari-legend-labels"><span>Tipis</span><span>Sedang</span><span>Tebal</span></div>' +
+          '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
       } else {
         div.innerHTML =
           '<div class="himawari-legend-title">Suhu Puncak Awan (IR 10.4&micro;m)</div>' +
@@ -244,6 +282,36 @@
         '<div class="himawari-legend-title">Uap Air (WV 6.3&micro;m)</div>' +
         '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#1a1a2e,#16213e,#0f3460,#1a936f,#53a8b6,#b6d7e8,#ffffff);"></div>' +
         '<div class="himawari-legend-labels"><span>Kering</span><span>Lembab</span><span>Sangat Lembab</span></div>' +
+        '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
+    } else if (param === 'NC') {
+      div.innerHTML =
+        '<div class="himawari-legend-title">Natural Color (RGB)</div>' +
+        '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#005000,#00a000,#64b4ff,#ffffff);"></div>' +
+        '<div class="himawari-legend-labels"><span>Laut</span><span>Vegetasi</span><span>Awan Tipis</span><span>Awan Tebal</span></div>' +
+        '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
+    } else if (param === 'RP') {
+      div.innerHTML =
+        '<div class="himawari-legend-title">Rainfall Rate (Curah Hujan)</div>' +
+        '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#000080,#0000ff,#00c800,#ffff00,#ff0000);"></div>' +
+        '<div class="himawari-legend-labels"><span>Ringan</span><span>Sedang</span><span>Lebat</span><span>Sangat Lebat</span></div>' +
+        '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
+    } else if (param === 'SW') {
+      div.innerHTML =
+        '<div class="himawari-legend-title">Shortwave IR (3.9&micro;m)</div>' +
+        '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#000050,#500078,#c86400,#ffc800,#ffffff);"></div>' +
+        '<div class="himawari-legend-labels"><span>Dingin</span><span>Hangat</span><span>Panas</span></div>' +
+        '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
+    } else if (param === 'SM') {
+      div.innerHTML =
+        '<div class="himawari-legend-title">Sea Surface Temperature (SST)</div>' +
+        '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#000080,#0064c8,#00b400,#ffc800,#c80000);"></div>' +
+        '<div class="himawari-legend-labels"><span>20&deg;C</span><span>24&deg;C</span><span>28&deg;C</span><span>32&deg;C</span></div>' +
+        '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
+    } else if (param === 'VA') {
+      div.innerHTML =
+        '<div class="himawari-legend-title">Volcanic Ash (Abu Vulkanik)</div>' +
+        '<div class="himawari-legend-bar" style="background:linear-gradient(90deg,#000050,#c80000,#ffc800,#ffffff);"></div>' +
+        '<div class="himawari-legend-labels"><span>Tipis</span><span>Sedang</span><span>Tebal</span></div>' +
         '<div class="himawari-legend-unit">Sumber: BMKG Satellite</div>';
     } else {
       div.innerHTML =
