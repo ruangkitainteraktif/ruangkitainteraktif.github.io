@@ -98,6 +98,12 @@ L.control.scale({
       Time: (function () { var d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })(),
       attribution: 'NASA GIBS'
     }),
+    'chlorophyll-a': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/OCI_PACE_Chlorophyll_a/default/{Time}/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png', {
+      maxZoom: 7,
+      minZoom: 0,
+      opacity: 0.6,
+      attribution: 'NASA GIBS OCI PACE'
+    }),
     'bmkg-himawari': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=EH&baserun=', {
       maxZoom: 10,
       minZoom: 3,
@@ -326,12 +332,13 @@ L.control.scale({
     'viirs-noaa21': 'Citra NASA GIBS VIIRS NOAA-21 tidak tersedia.',
     'viirs-snpp': 'Citra NASA GIBS VIIRS SNPP tidak tersedia.',
     'oci-pace': 'Citra NASA GIBS OCI PACE tidak tersedia.',
+    'chlorophyll-a': 'Citra NASA GIBS Chlorophyll-a tidak tersedia.',
     'noaa-true-color': 'Citra NOAA True Color tidak tersedia.',
     'noaa-goes-ir': 'Citra NOAA GOES IR tidak tersedia.'
   };
 
   var SATELLITE_TILES = ['bmkg-himawari', 'bmkg-himawari-fd', 'bmkg-himawari-hires', 'bmkg-gk2a', 'bmkg-gk2a-wv',
-    'modis-terra', 'modis-aqua', 'viirs-noaa20', 'viirs-noaa21', 'viirs-snpp', 'oci-pace',
+    'modis-terra', 'modis-aqua', 'viirs-noaa20', 'viirs-noaa21', 'viirs-snpp', 'oci-pace', 'chlorophyll-a',
     'noaa-true-color', 'noaa-goes-ir', 'sentinel2'];
 
   function attachTileError(key) {
@@ -395,6 +402,13 @@ L.control.scale({
         baseTileLayers[name].setUrl(getGibsDateUrl('OCI_PACE_True_Color', 'jpeg', getYesterdayDate(), 7));
         baseTileLayers[name].addTo(map);
         attachTileError(name);
+      } else if (name === 'chlorophyll-a') {
+        baseTileLayers['esri-satellite'].addTo(map);
+        baseTileLayers[name].setUrl(getGibsDateUrl('OCI_PACE_Chlorophyll_a', 'png', getYesterdayDate(), 7));
+        baseTileLayers[name].addTo(map);
+        attachTileError(name);
+        var clCb = document.getElementById('toggleCoastlineLayer');
+        if (clCb && clCb.checked) { clCb.checked = false; toggleCoastlineLayer(false); }
       } else if (isBmkg) {
         var bmkgLayer = baseTileLayers[name];
         var bmkgModelName = BMKG_TILETYPE[name];
@@ -704,7 +718,8 @@ L.control.scale({
     'bmkg-gk2a-wv': 'GK-2A Water Vapor',
     'noaa-true-color': 'NOAA True Color',
     'noaa-goes-ir': 'NOAA GOES IR',
-    'sentinel2': 'Sentinel-2'
+    'sentinel2': 'Sentinel-2',
+    'chlorophyll-a': 'Chlorophyll-a Laut'
   };
 
   setBaseMap(currentBasemapName);
@@ -997,7 +1012,6 @@ L.control.scale({
     }
     if (activeKeys.indexOf(_activeAirVisualLayerKey) === -1) _activeAirVisualLayerKey = activeKeys[0];
     showAirVisualLegend(_activeAirVisualLayerKey);
-        showCoastline();
   }
 
   function toggleAirVisualLayer(key, visible) {
@@ -1196,6 +1210,11 @@ L.control.scale({
         if (typeof modisTimeSliderCleanup === 'function') modisTimeSliderCleanup();
         if (typeof modisAquaTimeSliderCleanup === 'function') modisAquaTimeSliderCleanup();
         if (typeof viirsTimeSliderCleanup === 'function') viirsTimeSliderCleanup();
+        if (typeof viirsSnppTimeSliderCleanup === 'function') viirsSnppTimeSliderCleanup();
+        if (typeof ociPaceTimeSliderCleanup === 'function') ociPaceTimeSliderCleanup();
+        if (typeof chlorophyllTimeSliderCleanup === 'function') chlorophyllTimeSliderCleanup();
+        if (typeof sentinel2TimeSliderCleanup === 'function') sentinel2TimeSliderCleanup();
+        if (typeof bmkgHimawariSliderCleanup === 'function') bmkgHimawariSliderCleanup();
         if (typeof cleanupHujanLayer === 'function') cleanupHujanLayer();
         if (typeof satelliteBoundary !== 'undefined') satelliteBoundary.hide(map);
         if (typeof modisViirsOverlayCleanup === 'function') modisViirsOverlayCleanup();
@@ -2323,7 +2342,8 @@ L.control.scale({
             { id: 'noaa-true-color', label: 'NOAA True Color' },
             { id: 'noaa-goes-ir', label: 'NOAA GOES IR' },
             { id: 'sentinel1-rtc', label: 'Sentinel-1 RTC (ESA)' },
-            { id: 'sentinel2', label: 'Sentinel-2 (ESA)' }
+            { id: 'sentinel2', label: 'Sentinel-2 (ESA)' },
+            { id: 'chlorophyll-a', label: 'Chlorophyll-a Laut (NASA)' }
           ]
         }
       ]
