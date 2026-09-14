@@ -4,11 +4,20 @@
   }
 
   // 1. Inisialisasi Peta
-  // Pusat awal: Tengah Indonesia (desktop) atau Kalimantan (mobile)
+  // Pusat awal: Tengah Indonesia (antara Sulawesi & Kalimantan)
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
-  const initialCenter = isMobile ? [-1.5, 116.0] : [-2.5, 118.0];
+  const initialCenter = [-1.0, 119.2];
   const initialZoom = isMobile ? 5 : 5;
   const map = L.map('map', { zoomControl: false, preferCanvas: true, maxZoom: 19, minZoom: 4 }).setView(initialCenter, initialZoom);
+
+  // Close all other popups when a new popup opens (prevent popup stacking)
+  map.on('popupopen', function(e) {
+    map.eachLayer(function(layer) {
+      if (layer !== e.popup._source && layer._popup && layer._popup !== e.popup) {
+        layer.closePopup();
+      }
+    });
+  });
 
 L.control.scale({
   position: 'bottomleft',

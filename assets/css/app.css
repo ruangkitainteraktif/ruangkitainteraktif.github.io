@@ -4127,7 +4127,7 @@
     .geotani-leaflet-popup .leaflet-popup-content { width: auto !important; margin: 0; }
     .geotani-leaflet-popup .leaflet-popup-tip { box-shadow: 4px 4px 12px rgba(22, 163, 74, .15); }
 
-    .geotani-popup { width: 320px; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--text-primary); background: var(--bg-primary); overflow: hidden; }
+    .geotani-popup { width: 320px; max-height: min(35vh, 300px); overflow-y: auto; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--text-primary); background: var(--bg-primary); overflow-x: hidden; }
 
     .geotani-popup-head {
       position: relative;
@@ -6991,7 +6991,7 @@
     .sawah-popup-row span { color: #4a6580; }
     .sawah-popup-row b { font-weight: 600; color: #1e293b; text-align: right; max-width: 60%; }
     .sawah-leaflet-popup .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,.15); }
-    .sawah-leaflet-popup .leaflet-popup-content { margin: 0; width: 300px; }
+    .sawah-leaflet-popup .leaflet-popup-content { margin: 0; width: 320px; }
     .geoportal-loading { grid-column: 1 / -1; display: grid; justify-items: center; gap: 12px; padding: 40px 14px; color: #668198; text-align: center; }
     .geoportal-loading p { font-size: 12px; font-weight: 600; color: #234b6d; }
     .geoportal-spinner { width: 34px; height: 34px; border: 3px solid #d7e6f2; border-top-color: #0879bf; border-radius: 50%; animation: geoportal-spin .8s linear infinite; }

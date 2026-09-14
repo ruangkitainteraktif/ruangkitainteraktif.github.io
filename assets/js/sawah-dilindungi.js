@@ -84,7 +84,7 @@
         onEachFeature: function(feature, layer) {
           if (feature.properties) {
             layer.bindPopup(createSawahPopup(feature.properties), {
-              maxWidth: 280,
+              maxWidth: 320,
               className: 'sawah-leaflet-popup'
             });
           }
@@ -120,7 +120,7 @@
         onEachFeature: function(feature, layer) {
           if (feature.properties) {
             layer.bindPopup(createSawahNasionalPopup(feature.properties), {
-              maxWidth: 280,
+              maxWidth: 320,
               className: 'sawah-leaflet-popup'
             });
           }
