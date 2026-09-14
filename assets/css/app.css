@@ -830,7 +830,8 @@
     }
     .leaflet-bottom.leaflet-center {
       left: 50%;
-      bottom: 12px;
+      top: 112px;
+      bottom: auto;
       display: flex;
       width: auto;
       transform: translateX(-50%);
@@ -981,10 +982,6 @@
       letter-spacing: -0.01em;
     }
     @media (max-width: 768px) {
-      .leaflet-bottom.leaflet-center {
-        top: 112px;
-        bottom: auto;
-      }
       .modis-time-slider-wrap {
         width: min(280px, calc(100vw - 32px));
         padding: 4px 8px;
