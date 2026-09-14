@@ -190,6 +190,13 @@ L.control.scale({
       maxZoom: 13,
       minZoom: 0,
       attribution: 'Sentinel-2 cloudless by EOX'
+    }),
+    'zoom-earth': L.tileLayer('https://tiles.zoom.earth/geocolor/himawari/2026-09-13/1250/{z}/{x}/{y}.jpg', {
+      maxZoom: 18,
+      minZoom: 0,
+      opacity: 0.8,
+      crossOrigin: 'anonymous',
+      attribution: 'Zoom Earth Himawari'
     })
   };
 
@@ -461,6 +468,7 @@ L.control.scale({
     'bmkg-gk2a': 'Citra BMKG GK-2A tidak tersedia saat ini.',
     'bmkg-gk2a-wv': 'Citra BMKG GK-2A Water Vapor tidak tersedia.',
     'bmkg-gk2a-rp': 'Citra BMKG GK-2A Rainfall tidak tersedia.',
+    'zoom-earth': 'Citra Zoom Earth tidak tersedia saat ini.',
     'modis-terra': 'Citra NASA GIBS MODIS Terra tidak tersedia.',
     'modis-aqua': 'Citra NASA GIBS MODIS Aqua tidak tersedia.',
     'viirs-noaa20': 'Citra NASA GIBS VIIRS NOAA-20 tidak tersedia.',
@@ -475,7 +483,7 @@ L.control.scale({
 
   var SATELLITE_TILES = ['bmkg-himawari', 'bmkg-himawari-nc', 'bmkg-himawari-wv', 'bmkg-himawari-rp', 'bmkg-himawari-sw', 'bmkg-himawari-sm', 'bmkg-himawari-va', 'bmkg-himawari-vs', 'bmkg-himawari-fd', 'bmkg-himawari-hires',     'bmkg-gk2a', 'bmkg-gk2a-wv', 'bmkg-gk2a-rp',
     'modis-terra', 'modis-aqua', 'viirs-noaa20', 'viirs-noaa21',     'viirs-snpp', 'oci-pace',
-    'noaa-true-color', 'noaa-goes-ir', 'sentinel2'];
+    'noaa-true-color', 'noaa-goes-ir', 'sentinel2', 'zoom-earth'];
 
   function attachTileError(key) {
     var layer = baseTileLayers[key];
@@ -840,6 +848,7 @@ L.control.scale({
     'osm': 'Open Street Map',
     'rupabumi': 'Rupabumi Indonesia',
     'esri-dark-gray': 'Esri Dark Gray',
+    'zoom-earth': 'Zoom Earth',
     'esri-topo': 'Esri Topographic',
     'esri-terrain': 'Esri Terrain',
     'esri-street': 'Esri Street',
@@ -1001,6 +1010,84 @@ L.control.scale({
     if (title) {
       title.addEventListener('click', function() {
         if (sb.classList.contains('dm-sidebar-minimized')) restoreDrawSidebar();
+      });
+    }
+  })();
+
+  // Legend Sidebar
+  var _legendSidebarMinimized = false;
+
+  function openLegendSidebar() {
+    var sb = document.getElementById('legendSidebar');
+    var body = document.getElementById('legendSidebarBody');
+    if (!sb || !body) return;
+    _legendSidebarMinimized = false;
+    sb.classList.remove('lg-sidebar-minimized');
+    sb.classList.add('lg-sidebar-open');
+    document.body.classList.add('lg-sidebar-open');
+    // Move legend content from unified legend to sidebar
+    var legendBody = document.querySelector('.legend-body');
+    if (legendBody && legendBody.children.length > 0) {
+      while (legendBody.firstChild) {
+        body.appendChild(legendBody.firstChild);
+      }
+    }
+  }
+  window.openLegendSidebar = openLegendSidebar;
+
+  function closeLegendSidebar() {
+    var sb = document.getElementById('legendSidebar');
+    var body = document.getElementById('legendSidebarBody');
+    if (!sb) return;
+    sb.classList.remove('lg-sidebar-open', 'lg-sidebar-minimized');
+    _legendSidebarMinimized = false;
+    document.body.classList.remove('lg-sidebar-open', 'lg-sidebar-minimized');
+    // Move legend content back to unified legend
+    if (body) {
+      var legendBody = document.querySelector('.legend-body');
+      if (legendBody) {
+        while (body.firstChild) {
+          legendBody.appendChild(body.firstChild);
+        }
+      }
+    }
+  }
+  window.closeLegendSidebar = closeLegendSidebar;
+
+  function minimizeLegendSidebar() {
+    var sb = document.getElementById('legendSidebar');
+    if (!sb) return;
+    _legendSidebarMinimized = !_legendSidebarMinimized;
+    sb.classList.toggle('lg-sidebar-minimized', _legendSidebarMinimized);
+    document.body.classList.toggle('lg-sidebar-minimized', _legendSidebarMinimized);
+    if (!_legendSidebarMinimized) {
+      sb.classList.add('lg-sidebar-open');
+      document.body.classList.add('lg-sidebar-open');
+    } else {
+      document.body.classList.remove('lg-sidebar-open');
+    }
+  }
+  window.minimizeLegendSidebar = minimizeLegendSidebar;
+
+  function restoreLegendSidebar() {
+    var sb = document.getElementById('legendSidebar');
+    if (!sb) return;
+    _legendSidebarMinimized = false;
+    sb.classList.remove('lg-sidebar-minimized');
+    sb.classList.add('lg-sidebar-open');
+    document.body.classList.remove('lg-sidebar-minimized');
+    document.body.classList.add('lg-sidebar-open');
+  }
+  window.restoreLegendSidebar = restoreLegendSidebar;
+
+  // Legend sidebar title click to restore when minimized
+  (function() {
+    var sb = document.getElementById('legendSidebar');
+    if (!sb) return;
+    var title = sb.querySelector('.lg-sidebar-title');
+    if (title) {
+      title.addEventListener('click', function() {
+        if (sb.classList.contains('lg-sidebar-minimized')) restoreLegendSidebar();
       });
     }
   })();
@@ -1273,6 +1360,7 @@ L.control.scale({
           'toggleLsdTmsLayer', 'toggleLbsTmsLayer',
           'toggleDiTmsLayer', 'toggleSaluranIrTmsLayer', 'toggleRtrwTmsLayer',
           'toggleBpsTutupanLahan',
+          'toggleSekolahLayer',
           'st2023:batas_desa', 'st2023:batas_kecamatan', 'st2023:batas_kabupaten', 'st2023:batas_provinsi',
           'st2023:dasymetric_utp', 'st2023:dasymetric_utp_tp', 'st2023:dasymetric_utp_horti', 'st2023:dasymetric_utp_holti',
           'st2023:dasymetric_utp_hutan', 'st2023:dasymetric_utp_ikan', 'st2023:dasymetric_utp_kebun',
@@ -1417,6 +1505,7 @@ L.control.scale({
         if (typeof parOverlayCleanup === 'function') parOverlayCleanup();
         if (typeof sentinel2TimeSliderCleanup === 'function') sentinel2TimeSliderCleanup();
         if (typeof bmkgHimawariSliderCleanup === 'function') bmkgHimawariSliderCleanup();
+        if (typeof zoomEarthSliderCleanup === 'function') zoomEarthSliderCleanup();
         if (typeof cleanupHujanLayer === 'function') cleanupHujanLayer();
         if (typeof modisViirsOverlayCleanup === 'function') modisViirsOverlayCleanup();
         if (typeof cuacaMaritimCleanup === 'function') cuacaMaritimCleanup();
@@ -1569,6 +1658,7 @@ L.control.scale({
   /* ── Pindahkan tombol ke dalam FAB ── */
   setTimeout(function () {
     createGeotoolsFAB();
+    createLegendFAB();
     moveToFAB('.draw-fab-wrap', 'Gambar & Ukur');
     moveToFAB('.geoportal-print-btn', 'Cetak Peta');
     moveToFAB('.leaflet-control-locate', 'Lokasi Saya');
@@ -2510,6 +2600,21 @@ L.control.scale({
     });
   }
 
+  /* ── Legend FAB Button ── */
+  function createLegendFAB() {
+    if (!__fabItems) __fabItems = document.querySelector('.map-fab-items');
+    if (!__fabItems) return;
+    var item = L.DomUtil.create('button', 'map-fab-item legend-sidebar-btn');
+    item.title = 'Legenda';
+    item.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>';
+    __fabItems.appendChild(item);
+    item.addEventListener('click', function (e) {
+      e.stopPropagation();
+      closeFAB();
+      openLegendSidebar();
+    });
+  }
+
   /* ═══════════════════════════════════════
      Layer Catalog Dropdown
      ═══════════════════════════════════════ */
@@ -2560,7 +2665,8 @@ L.control.scale({
             { id: 'noaa-true-color', label: 'NOAA True Color' },
             { id: 'noaa-goes-ir', label: 'NOAA GOES IR' },
             { id: 'sentinel1-rtc', label: 'Sentinel-1 RTC (ESA)' },
-            { id: 'sentinel2', label: 'Sentinel-2 (ESA)' }
+            { id: 'sentinel2', label: 'Sentinel-2 (ESA)' },
+            { id: 'zoom-earth', label: 'Zoom Earth (Himawari)' }
           ]
         }
       ]
@@ -2571,7 +2677,7 @@ L.control.scale({
         { id: 'toggleBumiPersilLayer', label: 'Persil Tanah (ATRBPN)' },
         { id: 'toggleRtrwTmsLayer', label: 'RTRW Kabupaten/Kota' },
         { id: 'toggleLsdTmsLayer', label: 'Lahan Sawah Dilindungi (LSD)' },
-        { id: 'toggleLbsTmsLayer', label: 'Lahan Baku Sawah' },
+        { id: 'toggleLbsTmsLayer', label: 'Lahan Baku Sawah (LBS)' },
         { id: 'toggleDiTmsLayer', label: 'Daerah Irigasi' },
         { id: 'toggleSaluranIrTmsLayer', label: 'Saluran Irigasi' }
       ]
@@ -2702,13 +2808,11 @@ L.control.scale({
       cat: 'Meteorologi',
       subcats: [
         { subcat: 'Prediksi Cuaca', layers: [
-          { id: 'toggleHujanLayer', label: 'Hujan Realtime (BMKG)' },
           { id: 'toggleWindRgb', label: 'Wind Speed and Direction (GFS)' },
           { id: 'toggleRhRgb', label: 'Relative Humidity (GFS)' },
           { id: 'toggleTp24Rgb', label: 'Total Precipitation 24 Jam (GFS)' },
           { id: 'togglePm25Rgb', label: 'PM2.5 Air Quality (BMKG PCM)' },
           { id: 'toggleHthRgb', label: 'Hari Tanpa Hujan (BMKG HTH)' },
-          { id: 'toggleWindAnim', label: 'Animasi Angin (Wind Particle)' },
           { id: 'toggleCuacaPerairanLayer', label: 'Cuaca Perairan (BMKG)' },
           { id: 'toggleCuacaPelabuhanLayer', label: 'Cuaca Pelabuhan (BMKG)' },
           { id: 'toggleMaritimeAngin', label: 'Angin Laut (Wind Speed)' },
@@ -2836,6 +2940,12 @@ L.control.scale({
       ]
     },
     {
+      cat: 'Fasilitas Umum',
+      layers: [
+        { id: 'toggleSekolahLayer', label: 'Sekolah Indonesia (BNPB)' }
+      ]
+    },
+    {
       cat: 'Terrain & Lainnya',
       layers: [
         { id: 'toggleDemnasOverlay', label: 'Terrain Overlay (SRTM)' },
@@ -2844,10 +2954,8 @@ L.control.scale({
         { id: 'toggleProvinceBoundary', label: 'Batas Provinsi (PBF)' },
         { id: 'toggleCoastlineLayer', label: 'Garis Pantai (Natural Earth)' },
         { id: 'toggleBpsTutupanLahan', label: 'Peta Tutupan Lahan 100m (KSA BPS)' },
-        { id: 'toggleErosiLayer', label: 'Peta Rawan Erosi (BIG)' },
         { id: 'toggleTollRoad', label: 'Jalan Tol Pulau Jawa' },
-        { id: 'toggleNationalRoad', label: 'Jalan Nasional' },
-        { id: 'toggleNonTollRoad', label: 'Jalan Non Tol (BIG)' }
+        { id: 'toggleNationalRoad', label: 'Jalan Nasional' }
       ]
     }
   ];
@@ -3094,6 +3202,7 @@ L.control.scale({
           id === 'toggleDiTmsLayer' ||
           id === 'toggleSaluranIrTmsLayer' ||
           id === 'toggleRtrwTmsLayer' ||
+          id === 'toggleSekolahLayer' ||
           id.indexOf('omi-') === 0;
         if (!hasWindowToggle) {
           var el = findLayerById(id);
@@ -3185,6 +3294,9 @@ L.control.scale({
         }
         if (id === 'toggleBpsTutupanLahan' && typeof window.toggleBpsTutupanLahan === 'function') {
           window.toggleBpsTutupanLahan(cb.checked);
+        }
+        if (id === 'toggleSekolahLayer' && typeof window.toggleSekolahLayer === 'function') {
+          window.toggleSekolahLayer(cb.checked);
         }
         if (id.indexOf('TmsLayer') !== -1 && typeof window.toggleAtrbpnTmsLayer === 'function') {
           window.toggleAtrbpnTmsLayer(id, cb.checked);

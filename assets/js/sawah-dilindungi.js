@@ -137,22 +137,8 @@
     }
   }
 
-  // Event listener
-  document.addEventListener('DOMContentLoaded', () => {
-    const checkbox = document.getElementById('toggleSawahDilindungi');
-    if (checkbox) {
-      checkbox.addEventListener('change', () => {
-        toggleSawahDilindungi(checkbox.checked);
-      });
-    }
-
-    const checkboxNasional = document.getElementById('toggleSawahNasional50k');
-    if (checkboxNasional) {
-      checkboxNasional.addEventListener('change', () => {
-        toggleSawahNasional50k(checkboxNasional.checked);
-      });
-    }
-  });
+  window.toggleSawahDilindungi = toggleSawahDilindungi;
+  window.toggleSawahNasional50k = toggleSawahNasional50k;
 
   Object.defineProperty(window, 'sawahDilindungiLayerObj', { get: function () { return sawahDilindungiLayer; } });
   Object.defineProperty(window, 'sawahNasionalLayerObj', { get: function () { return sawahNasionalLayer; } });
