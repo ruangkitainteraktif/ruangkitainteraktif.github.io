@@ -688,19 +688,6 @@ L.control.scale({
       if (pbCb) pbCb.checked = true;
     }
 
-    var airVisualPm25Toggle = document.getElementById('toggleAirVisualPm25');
-    if (airVisualPm25Toggle) {
-      airVisualPm25Toggle.checked = true;
-      if (typeof window.toggleAirVisualLayer === 'function') {
-        window.toggleAirVisualLayer('airvisual-pm25', true);
-      }
-      if (typeof window.dispatchEvent === 'function') {
-        airVisualPm25Toggle.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-    } else if (typeof window.toggleAirVisualLayer === 'function') {
-      window.toggleAirVisualLayer('airvisual-pm25', true);
-    }
-
     var windToggle = document.getElementById('toggleWindAnim');
     if (windToggle) {
       windToggle.checked = true;
@@ -714,8 +701,10 @@ L.control.scale({
       window.toggleWindAnimation(true);
     }
 
-    if (typeof window.activateHujanLayer === 'function' && !window.isHujanLayerActive()) {
-      window.activateHujanLayer();
+    if (typeof window.toggleBmkgRadar === 'function' && !window.isBmkgRadarActive()) {
+      window.toggleBmkgRadar(true);
+      var radarBtn = document.getElementById('qlRadar');
+      if (radarBtn) radarBtn.classList.add('active');
     }
   }
 
@@ -2279,6 +2268,7 @@ L.control.scale({
       qlPm25:      { target: 'toggleAirVisualPm25',         type: 'checkbox' },
       qlWind:      { target: 'toggleWindAnim',              type: 'checkbox' },
       qlHujan:     { type: 'toggle-fn',                    fn: toggleHujanLayer },
+      qlRadar:     { type: 'toggle-fn',                    fn: function(v) { if (typeof window.toggleBmkgRadar === 'function') window.toggleBmkgRadar(v); } },
       qlProvinsi:  { type: 'toggle-fn',                    fn: function(v) { if (typeof window.toggleProvinceBoundary === 'function') window.toggleProvinceBoundary(v); } },
       qlEcmwfFire: { type: 'toggle-fn',                    fn: toggleEcmwfFireLayer },
       qlViirsNoaa20:{ type: 'toggle-fn',                    fn: toggleViirsNoaa20Layer },
@@ -2306,6 +2296,7 @@ L.control.scale({
           if (c.fn === toggleViirsNoaa20Layer) isOn = !!(viirsNoaa20Layer && map.hasLayer(viirsNoaa20Layer));
           else if (c.fn === toggleEcmwfFireLayer) isOn = !!(ecmwfFireLayer && map.hasLayer(ecmwfFireLayer));
           else if (c.fn === toggleHujanLayer) isOn = typeof isHujanLayerActive === 'function' && isHujanLayerActive();
+          else if (btnId === 'qlRadar') isOn = typeof window.isBmkgRadarActive === 'function' && window.isBmkgRadarActive();
           else if (btnId === 'qlProvinsi') isOn = typeof isProvinceBoundaryActive === 'function' && isProvinceBoundaryActive();
           btn.classList.toggle('active', isOn);
         } else {
@@ -2330,6 +2321,7 @@ L.control.scale({
             if (c.fn === toggleViirsNoaa20Layer) isOn = !!(viirsNoaa20Layer && map.hasLayer(viirsNoaa20Layer));
             else if (c.fn === toggleEcmwfFireLayer) isOn = !!(ecmwfFireLayer && map.hasLayer(ecmwfFireLayer));
             else if (c.fn === toggleHujanLayer) isOn = typeof isHujanLayerActive === 'function' && isHujanLayerActive();
+            else if (btnId === 'qlRadar') isOn = typeof window.isBmkgRadarActive === 'function' && window.isBmkgRadarActive();
             else if (btnId === 'qlProvinsi') isOn = typeof isProvinceBoundaryActive === 'function' && isProvinceBoundaryActive();
             if (c.fn) c.fn(!isOn);
           } else {
