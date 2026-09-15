@@ -2410,6 +2410,7 @@ L.control.scale({
         map._controlCorners.bottomcenter = L.DomUtil.create('div', 'leaflet-bottom leaflet-center', map._controlContainer);
       }
       _unifiedSliderEl = L.DomUtil.create('div', 'unified-slider-container');
+      _unifiedSliderEl.style.display = 'none';
       L.DomEvent.disableClickPropagation(_unifiedSliderEl);
       L.DomEvent.disableScrollPropagation(_unifiedSliderEl);
       return _unifiedSliderEl;
