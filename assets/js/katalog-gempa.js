@@ -112,7 +112,8 @@
         weight: 1,
         opacity: 0.9,
         fillColor: getMarkerColor(mag),
-        fillOpacity: 0.7
+        fillOpacity: 0.7,
+        properties: data
       });
 
       var data = {
@@ -169,4 +170,5 @@
   });
 
   window.isKatalogGempaActive = function () { return katalogVisible; };
+  window.katalogGempaLayer = katalogLayerGroup;
 })();

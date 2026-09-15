@@ -184,13 +184,14 @@
           this.layer = protomapsL.leafletLayer({ url: cfg.url, paintRules: cfg.paintFn(), labelRules: [] });
           this.layer.addTo(map);
           refreshLegend();
+          window[key === 'concessions' ? 'concessionsPmtilesLayer' : key + 'PmtilesLayer'] = this.layer;
         } catch (err) { console.error('[PMTiles] Gagal:', key, err); }
       },
       hide: function () {
         if (this.layer && map.hasLayer(this.layer)) map.removeLayer(this.layer);
         refreshLegend();
       },
-      cleanup: function () { this.hide(); this.layer = null; }
+      cleanup: function () { this.hide(); this.layer = null; window[key === 'concessions' ? 'concessionsPmtilesLayer' : key + 'PmtilesLayer'] = null; }
     };
   });
 

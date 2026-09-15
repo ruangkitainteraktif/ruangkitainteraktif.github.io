@@ -107,7 +107,17 @@
       var color = STATUS_COLOR[status] || STATUS_COLOR[1];
 
       var marker = L.marker([lat, lon], {
-        icon: createVolcanoIcon(color)
+        icon: createVolcanoIcon(color),
+        properties: {
+          ga_nama_gapi: v.ga_nama_gapi,
+          ga_status: v.ga_status,
+          ga_kab_gapi: v.ga_kab_gapi,
+          ga_prov_gapi: v.ga_prov_gapi,
+          ga_elev_gapi: v.ga_elev_gapi,
+          ga_koter_gapi: v.ga_koter_gapi,
+          ga_lat_gapi: v.ga_lat_gapi,
+          ga_lon_gapi: v.ga_lon_gapi
+        }
       });
 
       marker.bindPopup(buildVolcanoPopup(v), { maxWidth: 360, className: 'agol-leaflet-popup' });
@@ -156,4 +166,5 @@
   });
 
   window.isVolcanoLayerActive = function () { return volcanoVisible; };
+  window.volcanoClusterGroup = volcanoClusterGroup;
 })();

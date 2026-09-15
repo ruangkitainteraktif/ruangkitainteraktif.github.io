@@ -50,7 +50,8 @@
         weight: 1,
         opacity: 0.9,
         fillColor: '#22c55e',
-        fillOpacity: 0.7
+        fillOpacity: 0.7,
+        properties: data
       });
 
       var data = {
@@ -105,4 +106,5 @@
   });
 
   window.isSensorSeismicActive = function () { return seismicVisible; };
+  window.sensorSeismicLayer = seismicLayerGroup;
 })();

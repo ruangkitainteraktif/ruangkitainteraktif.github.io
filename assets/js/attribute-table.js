@@ -92,7 +92,7 @@
       name: 'Gunung Api Indonesia (PVMBG)',
       type: 'cluster',
       getLayer: function () { return typeof volcanoClusterGroup !== 'undefined' ? volcanoClusterGroup : null; },
-      props: ['NAMA', 'ga_status', 'EA', 'N', 'ELEV', 'KOTA'],
+      props: ['ga_nama_gapi', 'ga_status', 'ga_kab_gapi', 'ga_prov_gapi', 'ga_elev_gapi', 'ga_koter_gapi'],
       getLatLng: function (m) {
         var ll = m.getLatLng();
         return [ll.lat, ll.lng];
@@ -112,7 +112,7 @@
       name: 'Sebaran SPPG Indonesia',
       type: 'cluster',
       getLayer: function () { return typeof sppgSebaranLayer !== 'undefined' ? sppgSebaranLayer : null; },
-      props: ['NAMA', 'ALAMAT', 'KOTA', 'PROVINSI'],
+      props: ['Nama SPPG', 'Kode SPPG', 'Provinsi', 'Kab/Kota', 'Alamat'],
       getLatLng: function (m) {
         var ll = m.getLatLng();
         return [ll.lat, ll.lng];
@@ -122,7 +122,7 @@
       name: 'SPPG Indonesia',
       type: 'cluster',
       getLayer: function () { return typeof sppgLayer !== 'undefined' ? sppgLayer : null; },
-      props: ['NAMA', 'ALAMAT', 'KOTA', 'PROVINSI'],
+      props: ['name', 'category', 'desc'],
       getLatLng: function (m) {
         var ll = m.getLatLng();
         return [ll.lat, ll.lng];
@@ -146,7 +146,7 @@
       name: 'Katalog Gempa BMKG',
       type: 'cluster',
       getLayer: function () { return typeof katalogGempaLayer !== 'undefined' ? katalogGempaLayer : null; },
-      props: ['Tanggal', 'Magnitudo', 'Kedalaman', 'Wilayah'],
+      props: ['date', 'mag', 'depth', 'lokasi', 'pusat', 'tsunami', 'dirasakan'],
       getLatLng: function (m) {
         var ll = m.getLatLng();
         return [ll.lat, ll.lng];
@@ -156,7 +156,7 @@
       name: 'Riwayat Gempa BMKG',
       type: 'cluster',
       getLayer: function () { return typeof historyGempaLayer !== 'undefined' ? historyGempaLayer : null; },
-      props: ['Tanggal', 'Magnitudo', 'Kedalaman', 'Wilayah'],
+      props: ['time', 'mag', 'depth', 'place', 'id', 'status'],
       getLatLng: function (m) {
         var ll = m.getLatLng();
         return [ll.lat, ll.lng];
@@ -166,7 +166,7 @@
       name: 'Sensor Seismic BMKG',
       type: 'cluster',
       getLayer: function () { return typeof sensorSeismicLayer !== 'undefined' ? sensorSeismicLayer : null; },
-      props: ['Nama', 'Tipe', 'Status', 'Lokasi'],
+      props: ['id', 'stakeholder', 'uptbmkg'],
       getLatLng: function (m) {
         var ll = m.getLatLng();
         return [ll.lat, ll.lng];
@@ -176,7 +176,7 @@
       name: 'Sensor Global (GEOFON)',
       type: 'cluster',
       getLayer: function () { return typeof sensorGlobalLayer !== 'undefined' ? sensorGlobalLayer : null; },
-      props: ['Nama', 'Tipe', 'Status', 'Network'],
+      props: ['id', 'description', 'net', 'sta'],
       getLatLng: function (m) {
         var ll = m.getLatLng();
         return [ll.lat, ll.lng];
@@ -197,7 +197,7 @@
     toggleCuacaPerairanLayer: {
       name: 'Cuaca Perairan (BMKG)',
       type: 'geojson',
-      getLayer: function () { return typeof perGroup !== 'undefined' ? perGroup : null; },
+      getLayer: function () { return window._cuacaPerairanGroup || null; },
       props: ['name', 'ID_MAR', 'WP_IMM', 'WilPel', 'weather', 'weather_desc', 'wave_cat', 'wave_desc', 'wind_from', 'wind_to', 'wind_speed_min', 'wind_speed_max', 'warning_desc', 'valid_from', 'valid_to'],
       getLatLng: function (f) {
         if (f.geometry && f.geometry.coordinates) {
@@ -206,6 +206,16 @@
           if (f.geometry.type === 'MultiPolygon' && c.length && c[0].length && c[0][0].length) return [c[0][0][0][1], c[0][0][0][0]];
         }
         return null;
+      }
+    },
+    toggleSekolahLayer: {
+      name: 'Sekolah Indonesia (BNPB)',
+      type: 'featureLayer',
+      getLayer: function () { return window.sekolahLayerObj || null; },
+      props: ['nama', 'infrastruk', 'kabkot', 'provinsi', 'kecamatan', 'desa'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng ? m.getLatLng() : null;
+        return ll ? [ll.lat, ll.lng] : null;
       }
     },
     togglePetaGeologi: {
@@ -405,6 +415,156 @@
       toggleId: 'toggleRktnBaliNtLayer',
       props: ['namaobj', 'remark']
     },
+    toggleJalurEvakuasi: {
+      name: 'Jalur Evakuasi (BNPB)',
+      type: 'arcgis',
+      url: 'https://gis.bnpb.go.id/server/rest/services/inarisk/Jalur_evakuasi/MapServer/0/query',
+      outFields: ['NAMA', 'JNS_JLN', 'KLNJTN', 'LEBAR', 'KET'],
+      props: ['NAMA', 'JNS_JLN', 'KLNJTN', 'LEBAR', 'KET']
+    },
+    toggleFaultLayerNew: {
+      name: 'Patahan Indonesia Baru (PUSGEN 2024)',
+      type: 'arcgis',
+      url: 'https://gis.bnpb.go.id/server/rest/services/inarisk/Faults_new/MapServer/1/query',
+      outFields: ['Name', 'Segment', 'Type', 'Mmax', 'Sliprate_m', 'Length_km', 'Region', 'LCLASSSTR'],
+      props: ['Name', 'Segment', 'Type', 'Mmax', 'Sliprate_m', 'Length_km', 'Region', 'LCLASSSTR']
+    },
+    toggleGeologiBNPB: {
+      name: 'Peta Geologi (BNPB)',
+      type: 'arcgis',
+      url: 'https://gis.bnpb.go.id/server/rest/services/thematic/PETA_GEOLOGI/MapServer/1/query',
+      outFields: ['*'],
+      props: ['UMUROBJ']
+    },
+    'arcgis-sawah-2023': {
+      name: 'LBS 2023 (Kementan)',
+      type: 'arcgis',
+      url: 'https://sig02.pertanian.go.id/server/rest/services/Sawah/Sawah2023/MapServer/0/query',
+      outFields: ['*'],
+      props: []
+    },
+    'arcgis-sawah-2019': {
+      name: 'LBS 2019 (Kementan)',
+      type: 'arcgis',
+      url: 'https://sig02.pertanian.go.id/server/rest/services/Sawah/LBS2019/MapServer/23/query',
+      outFields: ['*'],
+      props: []
+    },
+    'arcgis-kawasan-padi': {
+      name: 'Kawasan Padi (Kementan)',
+      type: 'arcgis',
+      url: 'https://sig02.pertanian.go.id/server/rest/services/Kawasan/Peta_Kawasan_Padi/MapServer/0/query',
+      outFields: ['*'],
+      props: []
+    },
+    'arcgis-kawasan-jagung': {
+      name: 'Kawasan Jagung (Kementan)',
+      type: 'arcgis',
+      url: 'https://sig02.pertanian.go.id/server/rest/services/Kawasan/Peta_Kawasan_Jagung/MapServer/0/query',
+      outFields: ['*'],
+      props: []
+    },
+    'arcgis-kawasan-kedelai': {
+      name: 'Kawasan Kedelai (Kementan)',
+      type: 'arcgis',
+      url: 'https://sig02.pertanian.go.id/server/rest/services/Kawasan/Peta_Kawasan_Kedelai/MapServer/0/query',
+      outFields: ['*'],
+      props: []
+    },
+    toggleProtectedLayer: {
+      name: 'Kawasan Konservasi (WDPA)',
+      type: 'pmtiles',
+      getLayer: function () { return window.protectedPmtilesLayer || null; },
+      props: ['name', 'type', 'status', 'provinsi', 'kabupaten', 'area_ha']
+    },
+    toggleMangroveLayer: {
+      name: 'Mangrove (GMW v3)',
+      type: 'pmtiles',
+      getLayer: function () { return window.mangrovePmtilesLayer || null; },
+      props: ['name', 'type', 'status', 'provinsi', 'kabupaten', 'area_ha']
+    },
+    togglePeatlandLayer: {
+      name: 'Lahan Gambut (GFW)',
+      type: 'pmtiles',
+      getLayer: function () { return window.peatlandPmtilesLayer || null; },
+      props: ['name', 'type', 'status', 'provinsi', 'kabupaten', 'area_ha']
+    },
+    toggleBumiPersilLayer: { name: 'Persil Tanah (ATRBPN)', type: 'raster' },
+    toggleRtrwTmsLayer: { name: 'RTRW Kabupaten/Kota', type: 'raster' },
+    toggleLsdTmsLayer: { name: 'Lahan Sawah Dilindungi (LSD)', type: 'raster' },
+    toggleLbsTmsLayer: { name: 'Lahan Baku Sawah (LBS)', type: 'raster' },
+    toggleDiTmsLayer: { name: 'Daerah Irigasi', type: 'raster' },
+    toggleSaluranIrTmsLayer: { name: 'Saluran Irigasi', type: 'raster' },
+    'bps-lbs-2024': { name: 'LBS Nasional 2024', type: 'raster' },
+    toggleDemnasOverlay: { name: 'Terrain Overlay (SRTM)', type: 'raster' },
+    toggleProvinceBoundary: { name: 'Batas Provinsi (PBF)', type: 'raster' },
+    toggleCoastlineLayer: { name: 'Garis Pantai (Natural Earth)', type: 'raster' },
+    toggleBpsTutupanLahan: { name: 'Peta Tutupan Lahan 100m (BPS)', type: 'raster' },
+    toggleWindRgb: { name: 'Wind Speed and Direction (GFS)', type: 'raster' },
+    toggleRhRgb: { name: 'Relative Humidity (GFS)', type: 'raster' },
+    toggleTp24Rgb: { name: 'Total Precipitation 24 Jam (GFS)', type: 'raster' },
+    togglePm25Rgb: { name: 'PM2.5 Air Quality (BMKG PCM)', type: 'raster' },
+    toggleHthRgb: { name: 'Hari Tanpa Hujan (BMKG HTH)', type: 'raster' },
+    toggleMaritimeAngin: { name: 'Angin Laut (Wind Speed)', type: 'raster' },
+    toggleMaritimeGelombang: { name: 'Tinggi Gelombang', type: 'raster' },
+    toggleMaritimeSwell: { name: 'Swell (Primary Swell)', type: 'raster' },
+    toggleMaritimeWindSea: { name: 'Gelombang Angin (Wind Sea)', type: 'raster' },
+    toggleChlorophyllOverlay: { name: 'Chlorophyll-a Laut (NASA)', type: 'raster' },
+    toggleParOverlay: { name: 'PAR - Radiasi Fotosintesis (NASA)', type: 'raster' },
+    'omi-aerosol-index': { name: 'UV Aerosol Index (OMI/Aura)', type: 'raster' },
+    'omi-aod-abs': { name: 'Absorbing AOD Near-UV (OMI/Aura)', type: 'raster' },
+    'omi-modis-terra-aod': { name: 'Aerosol Optical Depth (MODIS Terra)', type: 'raster' },
+    'omi-modis-aqua-aod': { name: 'Aerosol Optical Depth (MODIS Aqua)', type: 'raster' },
+    'omi-so2': { name: 'SO2 Lower Troposphere (OMI/Aura)', type: 'raster' },
+    'omi-so2-pbl': { name: 'SO2 Planetary Boundary Layer (OMI/Aura)', type: 'raster' },
+    'omps-noaa20-so2-lt': { name: 'SO2 Lower Troposphere (OMPS NOAA-20)', type: 'raster' },
+    'omi-no2': { name: 'NO2 Tropospheric Column (OMI/Aura)', type: 'raster' },
+    toggleAirVisualPm25: { name: 'PM2.5 (AirVisual)', type: 'raster' },
+    toggleAirVisualPm10: { name: 'PM10 (AirVisual)', type: 'raster' },
+    toggleAirVisualO3: { name: 'O3 - Ozon (AirVisual)', type: 'raster' },
+    toggleAirVisualNo2: { name: 'NO2 - Nitrogen Dioksida (AirVisual)', type: 'raster' },
+    toggleAirVisualSo2: { name: 'SO2 - Sulfur Dioksida (AirVisual)', type: 'raster' },
+    toggleAirVisualCo: { name: 'CO - Karbon Monoksida (AirVisual)', type: 'raster' },
+    'st2023:batas_desa': { name: 'Batas Desa (SP2023)', type: 'raster' },
+    'st2023:batas_kecamatan': { name: 'Batas Kecamatan (SP2023)', type: 'raster' },
+    'st2023:batas_kabupaten': { name: 'Batas Kabupaten (SP2023)', type: 'raster' },
+    'st2023:batas_provinsi': { name: 'Batas Provinsi (SP2023)', type: 'raster' },
+    'st2023:dasymetric_utp': { name: 'Dasymetric UTP (SP2023)', type: 'raster' },
+    'st2023:dasymetric_utp_tp': { name: 'Dasymetric UTP Tanaman Pangan (SP2023)', type: 'raster' },
+    'st2023:dasymetric_utp_horti': { name: 'Dasymetric UTP Hortikultura (SP2023)', type: 'raster' },
+    'st2023:dasymetric_utp_holti': { name: 'Dasymetric UTP Holtikultura (SP2023)', type: 'raster' },
+    'st2023:dasymetric_utp_hutan': { name: 'Dasymetric UTP Hutan (SP2023)', type: 'raster' },
+    'st2023:dasymetric_utp_ikan': { name: 'Dasymetric UTP Perikanan (SP2023)', type: 'raster' },
+    'st2023:dasymetric_utp_kebun': { name: 'Dasymetric UTP Perkebunan (SP2023)', type: 'raster' },
+    'st2023:dasymetric_utp_milenial': { name: 'Dasymetric UTP Petani Milenial (SP2023)', type: 'raster' },
+    'st2023:dasymetric_utp_ternak': { name: 'Dasymetric UTP Peternakan (SP2023)', type: 'raster' },
+    'st2023:dasymetric_utp_urban': { name: 'Dasymetric UTP Urban (SP2023)', type: 'raster' },
+    'st2023:geotagging': { name: 'Geotagging Semua (SP2023)', type: 'raster' },
+    'st2023:geotagging_tanaman_pangan': { name: 'Geotagging Tanaman Pangan (SP2023)', type: 'raster' },
+    'st2023:geotagging_hortikultura': { name: 'Geotagging Hortikultura (SP2023)', type: 'raster' },
+    'st2023:geotagging_kebun': { name: 'Geotagging Perkebunan (SP2023)', type: 'raster' },
+    'st2023:geotagging_hutan': { name: 'Geotagging Hutan (SP2023)', type: 'raster' },
+    'st2023:geotagging_ikan': { name: 'Geotagging Perikanan (SP2023)', type: 'raster' },
+    'st2023:geotagging_ternak': { name: 'Geotagging Peternakan (SP2023)', type: 'raster' },
+    'st2023:infrastruktur_pertanian': { name: 'Infrastruktur Pertanian (SP2023)', type: 'raster' },
+    'st2023:gurem_lahan_vw': { name: 'Gurem Lahan (SP2023)', type: 'raster' },
+    'st2023:utp_ihk_01': { name: 'UTP IHK 01 (SP2023)', type: 'raster' },
+    'st2023:utp_ihk_02': { name: 'UTP IHK 02 (SP2023)', type: 'raster' },
+    'st2023:utp_ihk_03': { name: 'UTP IHK 03 (SP2023)', type: 'raster' },
+    'st2023:utp_ihk_04': { name: 'UTP IHK 04 (SP2023)', type: 'raster' },
+    'st2023:utp_ihk_05': { name: 'UTP IHK 05 (SP2023)', type: 'raster' },
+    'st2023:utp_ihk_06': { name: 'UTP IHK 06 (SP2023)', type: 'raster' },
+    'st2023:utp_ihk_07': { name: 'UTP IHK 07 (SP2023)', type: 'raster' },
+    'st2023:utp_ihk_08': { name: 'UTP IHK 08 (SP2023)', type: 'raster' },
+    'st2023:utp_ihk_09': { name: 'UTP IHK 09 (SP2023)', type: 'raster' },
+    'st2023:utp_ihk_10': { name: 'UTP IHK 10 (SP2023)', type: 'raster' },
+    'st2023:utp_ihk_11': { name: 'UTP IHK 11 (SP2023)', type: 'raster' },
+    'st2023:utp_ihk_12': { name: 'UTP IHK 12 (SP2023)', type: 'raster' },
+    'st2023:utp_ihk_13': { name: 'UTP IHK 13 (SP2023)', type: 'raster' },
+    'st2023:utp_ihk_14': { name: 'UTP IHK 14 (SP2023)', type: 'raster' },
+    'st2023:utp_ihk_15': { name: 'UTP IHK 15 (SP2023)', type: 'raster' },
+    'st2023:utp_ihk_16': { name: 'UTP IHK 16 (SP2023)', type: 'raster' },
+    'st2023:utp_ihk_17': { name: 'UTP IHK 17 (SP2023)', type: 'raster' },
     toggleHillshade: {
       name: 'Hillshade',
       type: 'raster'
@@ -418,7 +578,8 @@
   /* ── WMS GetFeatureInfo Layers ── */
   var WMS_ATTR_REGISTRY = {
     toggleFaultLayer: { name: 'Patahan Indonesia (BNPB)' },
-    toggleWorldPlatesLayer: { name: 'Zona Patahan Dunia (USGS)' }
+    toggleWorldPlatesLayer: { name: 'Zona Patahan Dunia (USGS)' },
+    toggleFsvaLayer: { name: 'FSVA 2025 (Badan Pangan)' }
   };
 
   /* ── Escape HTML ── */
@@ -463,21 +624,35 @@
   function extractClusterFeatures(layer) {
     var features = [];
     if (!layer) return features;
-    layer.eachLayer(function (m) {
-      if (m.getLatLng) {
-        var props = {};
-        if (m.feature && m.feature.properties) {
-          props = m.feature.properties;
-        } else if (m.options && m.options.properties) {
-          props = m.options.properties;
-        }
-        var f = {};
-        for (var k in props) f[k] = props[k];
-        var ll = m.getLatLng();
-        f._latlng = ll;
-        f._marker = m;
-        features.push(f);
+    var iterator = layer.eachLayer || layer.eachFeature;
+    if (!iterator) return features;
+    iterator.call(layer, function (m) {
+      var props = {};
+      if (m.feature && m.feature.properties) {
+        props = m.feature.properties;
+      } else if (m.options && m.options.properties) {
+        props = m.options.properties;
       }
+      var f = {};
+      for (var k in props) f[k] = props[k];
+      var ll = null;
+      if (m.getLatLng) {
+        ll = m.getLatLng();
+      } else if (m.feature && m.feature.geometry && m.feature.geometry.coordinates) {
+        var c = m.feature.geometry.coordinates;
+        var t = m.feature.geometry.type;
+        if (t === 'Point') { ll = [c[1], c[0]]; }
+        else if (t === 'Polygon' && c[0] && c[0].length) { ll = [c[0][0][1], c[0][0][0]]; }
+        else if (t === 'MultiPolygon' && c[0] && c[0][0] && c[0][0].length) { ll = [c[0][0][0][1], c[0][0][0][0]]; }
+        else if (t === 'LineString' && c.length) { ll = [c[0][1], c[0][0]]; }
+        else if (t === 'MultiLineString' && c[0] && c[0].length) { ll = [c[0][0][1], c[0][0][0]]; }
+      } else if (m.getBounds) {
+        var b = m.getBounds();
+        ll = [(b.getNorth() + b.getSouth()) / 2, (b.getEast() + b.getWest()) / 2];
+      }
+      if (ll) f._latlng = ll;
+      f._marker = m;
+      features.push(f);
     });
     return features;
   }
@@ -587,8 +762,107 @@
       features = extractClusterFeatures(config.getLayer());
     } else if (config.type === 'featureLayer') {
       var fl = config.getLayer();
-      if (fl && fl.eachLayer) {
+      var currentId = _currentLayer.id;
+      var retryCount = _currentLayer._flRetryCount || 0;
+      if (fl) {
         features = extractClusterFeatures(fl);
+      }
+      if (features.length === 0 && fl) {
+        if (retryCount >= 4) {
+          features = extractClusterFeatures(fl);
+          if (features.length === 0) {
+            var emptyMsg = document.getElementById('at-sheet-content');
+            if (emptyMsg) emptyMsg.innerHTML = '<div class="at-empty">Tidak ada data atribut untuk layer ini.</div>';
+            return;
+          }
+        } else {
+          var content = document.getElementById('at-sheet-content');
+          if (content) content.innerHTML = '<div class="at-loading">Memuat data layer…</div>';
+          _currentLayer._flRetryCount = retryCount + 1;
+          var onFeature = function () {
+            fl.off('createfeature', onFeature);
+            fl.off('addfeature', onFeature);
+            clearTimeout(retryTimer);
+            if (_currentLayer && _currentLayer.config && _currentLayer.id === currentId) {
+              loadFeatures();
+            }
+          };
+          var retryTimer = setTimeout(function () {
+            fl.off('createfeature', onFeature);
+            fl.off('addfeature', onFeature);
+            if (_currentLayer && _currentLayer.config && _currentLayer.id === currentId) {
+              loadFeatures();
+            }
+          }, 5000);
+          fl.on('createfeature', onFeature);
+          fl.on('addfeature', onFeature);
+          if (typeof fl.isLoading === 'function' && !fl.isLoading()) {
+            setTimeout(function () { onFeature(); }, 0);
+          }
+          return;
+        }
+      } else {
+        _currentLayer._flRetryCount = 0;
+      }
+    } else if (config.type === 'arcgis') {
+      var arcId = _currentLayer.id;
+      var arcContent = document.getElementById('at-sheet-content');
+      if (arcContent) arcContent.innerHTML = '<div class="at-loading">Memuat data dari server…</div>';
+      var qUrl = config.url + (config.url.indexOf('?') === -1 ? '?' : '&') +
+        'where=1%3D1&outFields=' + encodeURIComponent((config.outFields || ['*']).join(',')) +
+        '&returnGeometry=true&outSR=4326&f=json&resultRecordCount=2000';
+      fetch(qUrl).then(function (r) { return r.json(); }).then(function (data) {
+        if (!_currentLayer || _currentLayer.id !== arcId) return;
+        var feats = (data && data.features) || [];
+        _currentFeatures = feats.map(function (feat) {
+          var a = feat.attributes || {};
+          var f = {};
+          for (var k in a) { if (a[k] !== null && a[k] !== undefined) f[k] = a[k]; }
+          if (feat.geometry) {
+            var ll = null;
+            if (feat.geometry.x != null && feat.geometry.y != null) ll = [feat.geometry.y, feat.geometry.x];
+            else if (feat.geometry.paths && feat.geometry.paths[0] && feat.geometry.paths[0][0]) { var p = feat.geometry.paths[0][0]; ll = [p[1], p[0]]; }
+            else if (feat.geometry.rings && feat.geometry.rings[0] && feat.geometry.rings[0][0]) { var p2 = feat.geometry.rings[0][0]; ll = [p2[1], p2[0]]; }
+            if (ll) f._latlng = ll;
+          }
+          return f;
+        });
+        _currentPage = 1;
+        renderAttrContent();
+      }).catch(function () {
+        if (_currentLayer && _currentLayer.id === arcId && arcContent)
+          arcContent.innerHTML = '<div class="at-empty">Gagal memuat data atribut.</div>';
+      });
+      return;
+    } else if (config.type === 'pmtiles') {
+      var pmtId = _currentLayer.id;
+      var pmtContent = document.getElementById('at-sheet-content');
+      var pLayer = config.getLayer();
+      if (pLayer && typeof pLayer.queryTileFeaturesDebug === 'function') {
+        if (pmtContent) pmtContent.innerHTML = '<div class="at-loading">Memuat data PMTiles…</div>';
+        var center = map.getCenter();
+        pLayer.queryTileFeaturesDebug(center.lng, center.lat).then(function (results) {
+          if (!_currentLayer || _currentLayer.id !== pmtId) return;
+          var feats = [];
+          if (results && results.data) feats = results.data;
+          else if (Array.isArray(results)) feats = results;
+          _currentFeatures = feats.map(function (item) {
+            var f = {};
+            var props = item.properties || item;
+            for (var k in props) { if (k !== 'geometry' && props[k] !== null) f[k] = props[k]; }
+            if (item.geometry && item.geometry.coordinates) {
+              var c = item.geometry.coordinates;
+              if (item.geometry.type === 'Point') f._latlng = [c[1], c[0]];
+            }
+            return f;
+          });
+          _currentPage = 1;
+          renderAttrContent();
+        }).catch(function () {
+          if (_currentLayer && _currentLayer.id === pmtId && pmtContent)
+            pmtContent.innerHTML = '<div class="at-empty">Tidak ada data atribut di viewport ini.</div>';
+        });
+        return;
       }
     } else if (config.type === 'dss') {
       var dssLayers = window.dssLayersById;
@@ -736,7 +1010,8 @@
       if (_highlightMarker) { map.removeLayer(_highlightMarker); _highlightMarker = null; }
     }, 3000);
 
-    content.querySelectorAll('.at-row').forEach(function (r) { r.classList.remove('at-row-active'); });
+    var content = document.getElementById('at-sheet-content');
+    if (content) content.querySelectorAll('.at-row').forEach(function (r) { r.classList.remove('at-row-active'); });
     if (rowEl) rowEl.classList.add('at-row-active');
   }
 
@@ -788,7 +1063,8 @@
       togglePatahanAktif: { url: 'https://tanahair.indonesia.go.id/demnas/rest/services/Demnas_Geologi/MapServer', layers: '2' },
       toggleLikuifaksi: { url: 'https://tanahair.indonesia.go.id/demnas/rest/services/Demnas_Geologi/MapServer', layers: '3' },
       toggleKarst: { url: 'https://tanahair.indonesia.go.id/demnas/rest/services/Demnas_Geologi/MapServer', layers: '4' },
-      toggleWorldPlatesLayer: { url: 'https://earthquake.usgs.gov/arcgis/services/eqcenter/MapServer/WMSServer', layers: '0' }
+      toggleWorldPlatesLayer: { url: 'https://earthquake.usgs.gov/arcgis/services/eqcenter/MapServer/WMSServer', layers: '0' },
+      toggleFsvaLayer: { url: 'https://geoportal.badanpangan.go.id/geoserver/palapa/wms', layers: 'palapa:FSVA_2025' }
     };
 
     var cfg = layerMap[toggleId];
@@ -799,7 +1075,7 @@
       'LAYERS=' + cfg.layers, 'QUERY_LAYERS=' + cfg.layers,
       'INFO_FORMAT=application/json', 'FEATURE_COUNT=10',
       'SRS=EPSG:4326',
-      'BBOX=' + (lng - 0.5) + ',' + (lat - 0.5) + ',' + (lng + 0.5) + ',' + (lat + 0.5),
+      'BBOX=' + (latlng.lng - 0.5) + ',' + (latlng.lat - 0.5) + ',' + (latlng.lng + 0.5) + ',' + (latlng.lat + 0.5),
       'WIDTH=' + size.x, 'HEIGHT=' + size.y,
       'X=' + Math.round(point.x), 'Y=' + Math.round(point.y)
     ];

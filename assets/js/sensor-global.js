@@ -51,7 +51,8 @@
         weight: 1,
         opacity: 0.9,
         fillColor: '#60a5fa',
-        fillOpacity: 0.7
+        fillOpacity: 0.7,
+        properties: data
       });
 
       var data = {
@@ -107,4 +108,5 @@
   });
 
   window.isSensorGlobalActive = function () { return globalVisible; };
+  window.sensorGlobalLayer = globalLayerGroup;
 })();

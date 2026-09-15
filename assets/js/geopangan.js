@@ -1444,7 +1444,8 @@
                 iconSize: [14, 14],
                 iconAnchor: [7, 7],
                 popupAnchor: [0, -8]
-              })
+              }),
+              properties: { NAMA_PASAR: name, JENIS_PASAR: jenis, NAMA_KOTA: kabkota, NAMA_PROP: provinsi }
             });
             var name = p.NAMA_PASAR || p.nama_pasar || '-';
             var jenis = p.JENIS_PASAR || p.jenis_pasar || '-';
@@ -1461,6 +1462,7 @@
             sebaranPasarLayer.addLayer(marker);
           }
           map.addLayer(sebaranPasarLayer);
+          window.sebaranPasarLayer = sebaranPasarLayer;
         } catch (e) {
           console.error('[Geopangan] Gagal load Sebaran Pasar:', e);
         }
@@ -1509,7 +1511,8 @@
                 iconSize: [14, 14],
                 iconAnchor: [7, 7],
                 popupAnchor: [0, -8]
-              })
+              }),
+              properties: { name: p.name, category: p.category, desc: p.desc }
             });
             marker.bindPopup(
               '<div style="font-size:12px;line-height:1.6">' +
@@ -1521,6 +1524,7 @@
             sppgLayer.addLayer(marker);
           }
           map.addLayer(sppgLayer);
+          window.sppgLayer = sppgLayer;
         } catch (e) {
           console.error('[Geopangan] Gagal load SPPG GeoJSON:', e);
         }
@@ -1580,7 +1584,8 @@
                 iconSize: [16, 16],
                 iconAnchor: [8, 8],
                 popupAnchor: [0, -10]
-              })
+              }),
+              properties: { 'Nama SPPG': p['Nama SPPG'], 'Kode SPPG': p['Kode SPPG'], 'Provinsi': p.Provinsi, 'Kab/Kota': p['Kab/Kota'], 'Alamat': p.Alamat }
             });
             marker.bindPopup(
               '<div style="font-size:12px;line-height:1.6">' +
@@ -1594,6 +1599,7 @@
             sppgSebaranLayer.addLayer(marker);
           }
           map.addLayer(sppgSebaranLayer);
+          window.sppgSebaranLayer = sppgSebaranLayer;
           console.log('[SPPG Sebaran] Layer added to map');
           renderSppgSebaranTable(features);
         } catch (e) {

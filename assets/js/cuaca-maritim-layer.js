@@ -334,6 +334,7 @@
       perGroup.addTo(map);
       perLoaded = true;
       perLoading = false;
+      window._cuacaPerairanGroup = perGroup;
       window._cuacaPerairanData = { geojson: geojson, weather: weatherByCode };
       setInfo('Cuaca perairan: ' + Object.keys(weatherByCode).length + ' wilayah — BMKG Maritim');
     }).catch(function (e) {
@@ -346,6 +347,7 @@
   function disablePerairan() {
     if (perGroup && map.hasLayer(perGroup)) map.removeLayer(perGroup);
     perLoading = false;
+    window._cuacaPerairanGroup = null;
   }
 
   /* ── Event binding ── */
@@ -371,6 +373,7 @@
     disablePerairan();
     pelGroup = null; pelLoaded = false;
     perGroup = null; perLoaded = false;
+    window._cuacaPerairanGroup = null;
     var cb1 = document.getElementById('toggleCuacaPerairanLayer');
     var cb2 = document.getElementById('toggleCuacaPelabuhanLayer');
     if (cb1) cb1.checked = false;

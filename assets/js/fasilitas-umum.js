@@ -31,6 +31,7 @@
     if (!visible) {
       if (_layer && map.hasLayer(_layer)) map.removeLayer(_layer);
       _layer = null;
+      window.sekolahLayerObj = null;
       return;
     }
 
@@ -62,6 +63,7 @@
         }
       }
     }).addTo(map);
+    window.sekolahLayerObj = _layer;
   };
 
 })();
