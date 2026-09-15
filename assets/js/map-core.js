@@ -3322,6 +3322,9 @@ L.control.scale({
             attrBtn.classList.remove('lc-attr-btn-show');
           }
         }
+        if (!cb.checked && typeof removeUnifiedLegend === 'function') {
+          removeUnifiedLegend(id);
+        }
         delete container.dataset.built;
         closeLayerCatalog();
       });

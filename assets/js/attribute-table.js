@@ -186,8 +186,9 @@
       name: 'Cuaca Pelabuhan (BMKG)',
       type: 'vector',
       getFeatures: function () { return window._cuacaPelabuhanData || []; },
-      props: ['name', 'code', 'weather', 'wave_cat', 'wind_speed_min', 'wind_speed_max'],
+      props: ['name', 'code', 'weather', 'weather_desc', 'wave_cat', 'wave_desc', 'wind_from', 'wind_to', 'wind_speed_min', 'wind_speed_max', 'current_from', 'current_to', 'current_speed_min', 'current_speed_max', 'visibility', 'temp_min', 'temp_max', 'rh_min', 'rh_max', 'warning_desc', 'valid_from', 'valid_to'],
       getLatLng: function (item) {
+        if (item.latitude && item.longitude) return [parseFloat(item.latitude), parseFloat(item.longitude)];
         if (item.lat && item.lon) return [parseFloat(item.lat), parseFloat(item.lon)];
         if (item.lat && item.lng) return [parseFloat(item.lat), parseFloat(item.lng)];
         return null;
@@ -197,7 +198,7 @@
       name: 'Cuaca Perairan (BMKG)',
       type: 'geojson',
       getLayer: function () { return typeof perGroup !== 'undefined' ? perGroup : null; },
-      props: ['ID_MAR', 'WP_IMM', 'WilPel'],
+      props: ['name', 'ID_MAR', 'WP_IMM', 'WilPel', 'weather', 'weather_desc', 'wave_cat', 'wave_desc', 'wind_from', 'wind_to', 'wind_speed_min', 'wind_speed_max', 'warning_desc', 'valid_from', 'valid_to'],
       getLatLng: function (f) {
         if (f.geometry && f.geometry.coordinates) {
           var c = f.geometry.coordinates;

@@ -147,6 +147,38 @@
     return g;
   }
 
+  function flattenPelabuhanData(ports) {
+    return ports.map(function (p) {
+      var d = (p.data && p.data[0]) || {};
+      return {
+        code: p.code || '',
+        name: p.name || '',
+        latitude: p.latitude,
+        longitude: p.longitude,
+        weather: d.weather || '',
+        weather_desc: d.weather_desc || '',
+        wave_cat: d.wave_cat || '',
+        wave_desc: d.wave_desc || '',
+        wind_from: d.wind_from || '',
+        wind_to: d.wind_to || '',
+        wind_speed_min: d.wind_speed_min || '',
+        wind_speed_max: d.wind_speed_max || '',
+        current_from: d.current_from || '',
+        current_to: d.current_to || '',
+        current_speed_min: d.current_speed_min || '',
+        current_speed_max: d.current_speed_max || '',
+        visibility: d.visibility || '',
+        temp_min: d.temp_min || '',
+        temp_max: d.temp_max || '',
+        rh_min: d.rh_min || '',
+        rh_max: d.rh_max || '',
+        warning_desc: d.warning_desc || '',
+        valid_from: d.valid_from || '',
+        valid_to: d.valid_to || ''
+      };
+    });
+  }
+
   function pelabuhanPopup(p) {
     var d = (p.data && p.data.length) ? p.data[0] : {};
     var color = WAVE_COLOR[d.wave_cat] || DEFAULT_COLOR;
@@ -206,6 +238,22 @@
         return { color: '#1f78ff', weight: 1, opacity: 0.85, fillColor: color, fillOpacity: 0.35 };
       },
       onEachFeature: function (feature, layer) {
+        var code = feature.properties.ID_MAR;
+        var w = weatherByCode && weatherByCode[code];
+        if (w) {
+          feature.properties.weather = w.weather || '';
+          feature.properties.weather_desc = w.weather_desc || '';
+          feature.properties.wave_cat = w.wave_cat || '';
+          feature.properties.wave_desc = w.wave_desc || '';
+          feature.properties.wind_from = w.wind_from || '';
+          feature.properties.wind_to = w.wind_to || '';
+          feature.properties.wind_speed_min = w.wind_speed_min || '';
+          feature.properties.wind_speed_max = w.wind_speed_max || '';
+          feature.properties.warning_desc = w.warning_desc || '';
+          feature.properties.valid_from = w.valid_from || '';
+          feature.properties.valid_to = w.valid_to || '';
+          feature.properties.name = w.name || feature.properties.WP_IMM || '';
+        }
         layer.bindPopup(maritimPopupHtml(feature), { maxWidth: 360, className: 'agol-leaflet-popup' });
       }
     });
@@ -258,7 +306,7 @@
       pelGroup.addTo(map);
       pelLoaded = true;
       pelLoading = false;
-      window._cuacaPelabuhanData = ports;
+      window._cuacaPelabuhanData = flattenPelabuhanData(ports);
       setInfo('Cuaca pelabuhan: ' + ports.length + ' stasiun — BMKG Maritim');
     }).catch(function (e) {
       pelLoading = false;

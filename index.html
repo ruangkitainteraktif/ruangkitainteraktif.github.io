@@ -326,14 +326,6 @@
         <span>PM2.5</span>
         <span class="ql-badge">NEW</span>
       </button>
-      <button type="button" class="ql-btn" id="qlViirsNoaa20" title="VIIRS NOAA-20 Thermal Anomalies">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
-        </svg>
-        <span>VIIRS</span>
-        <span class="ql-badge">NEW</span>
-      </button>
       <button type="button" class="ql-btn" id="qlWind" title="Animasi angin Open-Meteo">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M3 8h11a3 3 0 1 0-3-3"/>
@@ -349,6 +341,13 @@
           <path d="M4 20c.6.5 1.2 1 2.5 1C7 21 7 19 9.5 19c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>
         </svg>
         <span>Hujan</span>
+      </button>
+      <button type="button" class="ql-btn" id="qlViirsNoaa20" title="VIIRS NOAA-20 Thermal Anomalies">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+        </svg>
+        <span>VIIRS</span>
       </button>
       <button type="button" class="ql-btn" id="qlEcmwfFire" title="ECMWF Fire Composition">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -732,13 +731,13 @@
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
               <span>GPX</span>
             </button>
-            <button class="geoid-subtab-btn" data-subtab="alat-tab-timeline" onclick="openGeoidSubtab(this)">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
-              <span>Timeline</span>
-            </button>
             <button class="geoid-subtab-btn" data-subtab="alat-tab-kmz" onclick="openGeoidSubtab(this)">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               <span>KMZ</span>
+            </button>
+            <button class="geoid-subtab-btn" data-subtab="alat-tab-timeline" onclick="openGeoidSubtab(this)">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+              <span>Timeline</span>
             </button>
           </div>
 
@@ -1855,21 +1854,21 @@
 
         </div>
   </div>
-  <!-- Tambahkan proj4 jika SHP menggunakan proyeksi selain WGS84 -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
-  <script src="https://unpkg.com/@turf/turf@7.1.0/turf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/jstree.min.js"></script>
+    <!-- Tambahkan proj4 jika SHP menggunakan proyeksi selain WGS84 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+    <script src="https://unpkg.com/@turf/turf@7.1.0/turf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/jstree.min.js"></script>
     <script src="assets/js/satellite-boundary.js"></script>
-  <script src="assets/js/map-core.js"></script>
-  <script src="assets/js/layer-loading.js"></script>
-<script src="assets/js/bnpb-hillshade.js"></script>
-<script src="assets/js/geologi-bnpb.js"></script>
-<script src="assets/js/province-boundary-vector.js"></script>
-<script src="assets/js/chlorophyll-par-overlay.js"></script>
+    <script src="assets/js/map-core.js"></script>
+    <script src="assets/js/layer-loading.js"></script>
+    <script src="assets/js/bnpb-hillshade.js"></script>
+    <script src="assets/js/geologi-bnpb.js"></script>
+    <script src="assets/js/province-boundary-vector.js"></script>
+    <script src="assets/js/chlorophyll-par-overlay.js"></script>
     <script src="assets/js/modis-time-slider.js"></script>
     <script src="assets/js/modis-aqua-time-slider.js"></script>
     <script src="assets/js/viirs-time-slider.js"></script>
