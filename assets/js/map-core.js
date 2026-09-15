@@ -204,6 +204,16 @@ L.control.scale({
       maxZoom: 14,
       minZoom: 0,
       attribution: 'EOX - Sentinel-2 cloudless 2024'
+    }),
+    'eox-blackmarble': L.tileLayer('https://tiles.maps.eox.at/wmts/1.0.0/blackmarble_3857/default/g/{z}/{y}/{x}.jpg', {
+      maxZoom: 12,
+      minZoom: 0,
+      attribution: 'NASA Black Marble - EOX'
+    }),
+    'eox-terrain-light': L.tileLayer('https://tiles.maps.eox.at/wmts/1.0.0/terrain-light_3857/default/g/{z}/{y}/{x}.jpg', {
+      maxZoom: 12,
+      minZoom: 0,
+      attribution: 'EOX Terrain Light'
     })
   };
 
@@ -890,7 +900,9 @@ L.control.scale({
     'noaa-true-color': 'NOAA True Color',
     'noaa-goes-ir': 'NOAA GOES IR',
     'sentinel2': 'Sentinel-2',
-    'eox-s2cloudless-2024': 'Sentinel-2 Cloudless 2024'
+    'eox-s2cloudless-2024': 'Sentinel-2 Cloudless 2024',
+    'eox-blackmarble': 'NASA Black Marble',
+    'eox-terrain-light': 'Terrain Light (EOX)'
   };
 
   setBaseMap(currentBasemapName);
@@ -2606,7 +2618,9 @@ L.control.scale({
             { id: 'noaa-goes-ir', label: 'NOAA GOES IR' },
             { id: 'sentinel1-rtc', label: 'Sentinel-1 RTC (ESA)' },
             { id: 'sentinel2', label: 'Sentinel-2 (ESA)' },
-            { id: 'eox-s2cloudless-2024', label: 'Sentinel-2 Cloudless 2024 (EOX)' }
+            { id: 'eox-s2cloudless-2024', label: 'Sentinel-2 Cloudless 2024 (EOX)' },
+            { id: 'eox-blackmarble', label: 'NASA Black Marble (EOX)' },
+            { id: 'eox-terrain-light', label: 'Terrain Light (EOX)' }
           ]
         }
       ]
@@ -2894,7 +2908,8 @@ L.control.scale({
         { id: 'toggleProvinceBoundary', label: 'Batas Provinsi (PBF)' },
         { id: 'toggleBpsTutupanLahan', label: 'Peta Tutupan Lahan 100m (KSA BPS)' },
         { id: 'toggleTollRoad', label: 'Jalan Tol Pulau Jawa' },
-        { id: 'toggleNationalRoad', label: 'Jalan Nasional' }
+        { id: 'toggleNationalRoad', label: 'Jalan Nasional' },
+        { id: 'toggleEoxOverlay', label: 'Labels Overlay (EOX)' }
       ]
     }
   ];
@@ -3144,7 +3159,8 @@ L.control.scale({
           id === 'toggleSaluranIrTmsLayer' ||
           id === 'toggleRtrwTmsLayer' ||
           id === 'toggleSekolahLayer' ||
-          id.indexOf('omi-') === 0;
+          id.indexOf('omi-') === 0 ||
+          id === 'toggleEoxOverlay';
         if (!hasWindowToggle) {
           var el = findLayerById(id);
           if (el) {
@@ -3241,6 +3257,9 @@ L.control.scale({
         }
         if (id.indexOf('omi-') === 0 && typeof window.toggleOmiLayer === 'function') {
           window.toggleOmiLayer(id, cb.checked);
+        }
+        if (id === 'toggleEoxOverlay' && typeof window.toggleEoxOverlay === 'function') {
+          window.toggleEoxOverlay(cb.checked);
         }
         updateCatCount(cb.closest('.lc-category'));
         var attrBtn = cb.closest('.lc-item').querySelector('.lc-attr-btn');
