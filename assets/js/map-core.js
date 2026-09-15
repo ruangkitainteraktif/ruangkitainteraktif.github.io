@@ -199,6 +199,11 @@ L.control.scale({
       maxZoom: 13,
       minZoom: 0,
       attribution: 'Sentinel-2 cloudless by EOX'
+    }),
+    'eox-s2cloudless-2024': L.tileLayer('https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpeg', {
+      maxZoom: 14,
+      minZoom: 0,
+      attribution: 'EOX - Sentinel-2 cloudless 2024'
     })
   };
 
@@ -884,7 +889,8 @@ L.control.scale({
     'bmkg-gk2a-rp': 'GK-2A Rainfall',
     'noaa-true-color': 'NOAA True Color',
     'noaa-goes-ir': 'NOAA GOES IR',
-    'sentinel2': 'Sentinel-2'
+    'sentinel2': 'Sentinel-2',
+    'eox-s2cloudless-2024': 'Sentinel-2 Cloudless 2024'
   };
 
   setBaseMap(currentBasemapName);
@@ -2599,7 +2605,8 @@ L.control.scale({
             { id: 'noaa-true-color', label: 'NOAA True Color' },
             { id: 'noaa-goes-ir', label: 'NOAA GOES IR' },
             { id: 'sentinel1-rtc', label: 'Sentinel-1 RTC (ESA)' },
-            { id: 'sentinel2', label: 'Sentinel-2 (ESA)' }
+            { id: 'sentinel2', label: 'Sentinel-2 (ESA)' },
+            { id: 'eox-s2cloudless-2024', label: 'Sentinel-2 Cloudless 2024 (EOX)' }
           ]
         }
       ]
