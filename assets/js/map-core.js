@@ -199,13 +199,6 @@ L.control.scale({
       maxZoom: 13,
       minZoom: 0,
       attribution: 'Sentinel-2 cloudless by EOX'
-    }),
-    'zoom-earth': L.tileLayer('https://tiles.zoom.earth/geocolor/himawari/2026-09-13/1250/{z}/{x}/{y}.jpg', {
-      maxZoom: 18,
-      minZoom: 0,
-      opacity: 0.8,
-      crossOrigin: 'anonymous',
-      attribution: 'Zoom Earth Himawari'
     })
   };
 
@@ -477,7 +470,6 @@ L.control.scale({
     'bmkg-gk2a': 'Citra BMKG GK-2A tidak tersedia saat ini.',
     'bmkg-gk2a-wv': 'Citra BMKG GK-2A Water Vapor tidak tersedia.',
     'bmkg-gk2a-rp': 'Citra BMKG GK-2A Rainfall tidak tersedia.',
-    'zoom-earth': 'Citra Zoom Earth tidak tersedia saat ini.',
     'modis-terra': 'Citra NASA GIBS MODIS Terra tidak tersedia.',
     'modis-aqua': 'Citra NASA GIBS MODIS Aqua tidak tersedia.',
     'viirs-noaa20': 'Citra NASA GIBS VIIRS NOAA-20 tidak tersedia.',
@@ -492,7 +484,7 @@ L.control.scale({
 
   var SATELLITE_TILES = ['bmkg-himawari', 'bmkg-himawari-nc', 'bmkg-himawari-wv', 'bmkg-himawari-rp', 'bmkg-himawari-sw', 'bmkg-himawari-sm', 'bmkg-himawari-va', 'bmkg-himawari-vs', 'bmkg-himawari-fd', 'bmkg-himawari-hires',     'bmkg-gk2a', 'bmkg-gk2a-wv', 'bmkg-gk2a-rp',
     'modis-terra', 'modis-aqua', 'viirs-noaa20', 'viirs-noaa21',     'viirs-snpp', 'oci-pace',
-    'noaa-true-color', 'noaa-goes-ir', 'sentinel2', 'zoom-earth'];
+    'noaa-true-color', 'noaa-goes-ir', 'sentinel2'];
 
   function attachTileError(key) {
     var layer = baseTileLayers[key];
@@ -857,7 +849,6 @@ L.control.scale({
     'osm': 'Open Street Map',
     'rupabumi': 'Rupabumi Indonesia',
     'esri-dark-gray': 'Esri Dark Gray',
-    'zoom-earth': 'Zoom Earth',
     'esri-topo': 'Esri Topographic',
     'esri-terrain': 'Esri Terrain',
     'esri-street': 'Esri Street',
@@ -1519,7 +1510,6 @@ L.control.scale({
         if (typeof parOverlayCleanup === 'function') parOverlayCleanup();
         if (typeof sentinel2TimeSliderCleanup === 'function') sentinel2TimeSliderCleanup();
         if (typeof bmkgHimawariSliderCleanup === 'function') bmkgHimawariSliderCleanup();
-        if (typeof zoomEarthSliderCleanup === 'function') zoomEarthSliderCleanup();
         if (typeof cleanupHujanLayer === 'function') cleanupHujanLayer();
         if (typeof modisViirsOverlayCleanup === 'function') modisViirsOverlayCleanup();
         if (typeof cuacaMaritimCleanup === 'function') cuacaMaritimCleanup();
@@ -2680,8 +2670,7 @@ L.control.scale({
             { id: 'noaa-true-color', label: 'NOAA True Color' },
             { id: 'noaa-goes-ir', label: 'NOAA GOES IR' },
             { id: 'sentinel1-rtc', label: 'Sentinel-1 RTC (ESA)' },
-            { id: 'sentinel2', label: 'Sentinel-2 (ESA)' },
-            { id: 'zoom-earth', label: 'Zoom Earth (Himawari)' }
+            { id: 'sentinel2', label: 'Sentinel-2 (ESA)' }
           ]
         }
       ]
@@ -3090,7 +3079,7 @@ L.control.scale({
         }
         return isOn;
       }).length;
-      html += '<div class="lc-category" data-ci="' + ci + '">';
+      html += '<div class="lc-category' + (cat.type === 'basemap' ? ' open' : '') + '" data-ci="' + ci + '">';
       html += '<button class="lc-cat-header" type="button">';
       html += '<svg class="lc-cat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
       html += '<span class="lc-cat-title">' + cat.cat + '</span>';

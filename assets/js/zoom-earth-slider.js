@@ -20,10 +20,8 @@
   var allTimestamps = [];
   var filteredTimestamps = [];
   var _active = false;
-  var _playInterval = null;
   var _prevMaxZoom = null;
   var _selectedRange = 0;
-  var PLAY_INTERVAL_MS = 400;
   var CROSSFADE_MS = 300;
   var _crossfadeLayer = null;
   var _crossfading = false;
@@ -198,11 +196,6 @@
 
       var controlsRow = L.DomUtil.create('div', 'ze-ts-controls', wrap);
 
-      var playBtn = L.DomUtil.create('button', 'ze-ts-btn ze-ts-play', controlsRow);
-      playBtn.innerHTML = '<svg class="ze-icon-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>' +
-                          '<svg class="ze-icon-pause" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="5" y="3" width="4" height="18"/><rect x="15" y="3" width="4" height="18"/></svg>';
-      playBtn.title = 'Putar / Jeda';
-
       var prevBtn = L.DomUtil.create('button', 'ze-ts-btn ze-ts-prev', controlsRow);
       prevBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
       prevBtn.title = 'Sebelumnya';
@@ -225,10 +218,6 @@
       var timeDisplay = L.DomUtil.create('span', 'ze-ts-time', infoRow);
       timeDisplay.textContent = '';
 
-      var iconPlay = playBtn.querySelector('.ze-icon-play');
-      var iconPause = playBtn.querySelector('.ze-icon-pause');
-      var playing = false;
-
       function applyTimestamp() {
         if (filteredTimestamps.length === 0) return;
         var ts = filteredTimestamps[currentIndex];
@@ -237,40 +226,11 @@
       }
 
       function updateSliderFromFilter() {
-        stopPlay();
         slider.max = String(Math.max(0, filteredTimestamps.length - 1));
         currentIndex = filteredTimestamps.length - 1;
         slider.value = String(currentIndex);
         applyTimestamp();
       }
-
-      function startPlay() {
-        if (filteredTimestamps.length === 0) return;
-        playing = true;
-        iconPlay.style.display = 'none';
-        iconPause.style.display = 'block';
-        _playInterval = setInterval(function () {
-          if (_crossfading) return;
-          if (currentIndex < filteredTimestamps.length - 1) currentIndex++;
-          else currentIndex = 0;
-          slider.value = String(currentIndex);
-          var ts = filteredTimestamps[currentIndex];
-          dateDisplay.textContent = formatDateTime(ts);
-          crossfadeTo(ts);
-        }, PLAY_INTERVAL_MS);
-      }
-
-      function stopPlay() {
-        playing = false;
-        iconPlay.style.display = 'block';
-        iconPause.style.display = 'none';
-        if (_playInterval) { clearInterval(_playInterval); _playInterval = null; }
-      }
-
-      playBtn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        if (playing) stopPlay(); else startPlay();
-      });
 
       slider.addEventListener('input', function () {
         currentIndex = parseInt(this.value, 10);
@@ -302,7 +262,6 @@
 
       wrap._slider = slider;
       wrap._dateDisplay = dateDisplay;
-      wrap._stopPlay = stopPlay;
       return wrap;
     }
   });
@@ -322,12 +281,10 @@
 
   function hideSlider() {
     if (sliderControl) {
-      if (sliderControl._stopPlay) sliderControl._stopPlay();
       if (typeof removeUnifiedSlider === 'function') removeUnifiedSlider('zoom-earth');
       else { try { map.removeControl(sliderControl); } catch (e) {} }
       sliderControl = null;
     }
-    if (_playInterval) { clearInterval(_playInterval); _playInterval = null; }
     if (_crossfadeLayer) {
       try { map.removeLayer(_crossfadeLayer); } catch (e) {}
       _crossfadeLayer = null;

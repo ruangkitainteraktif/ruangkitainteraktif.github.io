@@ -39,10 +39,8 @@
   var _activeKey = null;
   var _refreshInterval = null;
   var _titleRow = null;
-  var _playInterval = null;
   var _selectedRange = 0;
   var REFRESH_MS = 10 * 60 * 1000;
-  var PLAY_MS = 400;
   var CROSSFADE_MS = 300;
   var _crossfadeLayer = null;
   var _crossfading = false;
@@ -257,11 +255,6 @@
 
       var controlsRow = L.DomUtil.create('div', 'bmkg-ts-controls', wrap);
 
-      var playBtn = L.DomUtil.create('button', 'bmkg-ts-btn bmkg-ts-play', controlsRow);
-      playBtn.innerHTML = '<svg class="bmkg-icon-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>' +
-                          '<svg class="bmkg-icon-pause" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="5" y="3" width="4" height="18"/><rect x="15" y="3" width="4" height="18"/></svg>';
-      playBtn.title = 'Putar / Jeda';
-
       var prevBtn = L.DomUtil.create('button', 'bmkg-ts-btn bmkg-ts-prev', controlsRow);
       prevBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
       prevBtn.title = 'Sebelumnya';
@@ -293,7 +286,6 @@
       }
 
       function updateSliderFromFilter() {
-        stopPlay();
         slider.max = String(Math.max(0, filteredTimestamps.length - 1));
         currentIndex = filteredTimestamps.length - 1;
         slider.value = String(currentIndex);
@@ -322,40 +314,6 @@
           slider.dispatchEvent(new Event('input'));
         }
       });
-
-      var iconPlay = playBtn.querySelector('.bmkg-icon-play');
-      var iconPause = playBtn.querySelector('.bmkg-icon-pause');
-      var playing = false;
-
-      function startPlay() {
-        if (filteredTimestamps.length === 0) return;
-        playing = true;
-        iconPlay.style.display = 'none';
-        iconPause.style.display = 'block';
-        _playInterval = setInterval(function () {
-          if (_crossfading) return;
-          if (currentIndex < filteredTimestamps.length - 1) currentIndex++;
-          else currentIndex = 0;
-          slider.value = String(currentIndex);
-          var ts = filteredTimestamps[currentIndex];
-          dateDisplay.textContent = formatDateTime(ts);
-          crossfadeTo(ts);
-        }, PLAY_MS);
-      }
-
-      function stopPlay() {
-        playing = false;
-        iconPlay.style.display = 'block';
-        iconPause.style.display = 'none';
-        if (_playInterval) { clearInterval(_playInterval); _playInterval = null; }
-      }
-
-      playBtn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        if (playing) stopPlay(); else startPlay();
-      });
-
-      wrap._stopPlay = stopPlay;
 
       fetchTimestamps(function () {
         if (filteredTimestamps.length === 0) {
@@ -467,12 +425,10 @@
 
   function hideSlider() {
     if (sliderControl) {
-      if (sliderControl._stopPlay) sliderControl._stopPlay();
       if (typeof removeUnifiedSlider === 'function') removeUnifiedSlider('himawari');
       else { try { map.removeControl(sliderControl); } catch (e) {} }
       sliderControl = null;
     }
-    if (_playInterval) { clearInterval(_playInterval); _playInterval = null; }
     if (_crossfadeLayer) {
       try { map.removeLayer(_crossfadeLayer); } catch (e) {}
       _crossfadeLayer = null;
