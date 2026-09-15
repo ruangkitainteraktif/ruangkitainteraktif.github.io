@@ -1220,37 +1220,6 @@
       text-align: center;
       letter-spacing: -0.01em;
     }
-    .bmkg-ts-range {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-      width: 100%;
-      justify-content: center;
-    }
-    .bmkg-ts-range-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      height: 20px;
-      padding: 0 6px;
-      border: 1px solid #fecaca;
-      border-radius: 10px;
-      background: transparent;
-      color: #dc2626;
-      font-size: 9px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s, color 0.15s, border-color 0.15s;
-      line-height: 1;
-    }
-    .bmkg-ts-range-btn:hover {
-      background: #fee2e2;
-    }
-    .bmkg-ts-range-active {
-      background: #dc2626 !important;
-      color: #fff !important;
-      border-color: #dc2626 !important;
-    }
     @media (max-width: 768px) {
       .bmkg-time-slider-wrap {
         width: min(280px, calc(100vw - 32px));
@@ -1259,7 +1228,6 @@
       .bmkg-ts-btn { width: 24px; height: 24px; }
       .bmkg-ts-date { font-size: 10px; }
       .bmkg-ts-time { font-size: 9px; }
-      .bmkg-ts-range-btn { height: 18px; padding: 0 4px; font-size: 8px; }
     }
 
     /* ── Sentinel-1 RTC Time Slider ── */
@@ -2096,6 +2064,7 @@
     #qlPm25.active      { background: #7c3aed; }
     #qlWind.active      { background: #0ea5e9; }
     #qlHujan.active     { background: #06b6d4; }
+    #qlProvinsi.active  { background: #0d9488; }
     #qlEcmwfFire.active { background: #f97316; }
     #qlViirsNoaa20.active { background: #dc2626; }
     #qlKonsesi.active   { background: #ea580c; }
@@ -8563,19 +8532,6 @@
     .unified-slider-section .sentinel2-ts-btn:hover,
     .unified-slider-section .s1rtc-ts-btn:hover {
       background: rgba(148,163,184,0.2) !important;
-    }
-    .unified-slider-section .bmkg-ts-range-btn {
-      background: rgba(148,163,184,0.08) !important;
-      color: #475569 !important;
-      border-color: rgba(148,163,184,0.25) !important;
-    }
-    .unified-slider-section .bmkg-ts-range-btn:hover {
-      background: rgba(148,163,184,0.15) !important;
-    }
-    .unified-slider-section .bmkg-ts-range-active {
-      background: #475569 !important;
-      color: #fff !important;
-      border-color: #475569 !important;
     }
     @media (max-width: 768px) {
       .unified-legend-container {

@@ -560,7 +560,7 @@ L.control.scale({
         bmkgXhr.timeout = 10000;
         bmkgXhr.onerror = function () {
           bmkgLayer.addTo(map);
-          if (typeof window.toggleProvinceBoundary === 'function' && name !== 'esri-satellite') { var pbCb = document.getElementById('toggleProvinceBoundary'); if (pbCb && !pbCb.checked) { pbCb.checked = true; window.toggleProvinceBoundary(true); } }
+          if (typeof window.toggleProvinceBoundary === 'function' && name !== 'esri-satellite') { window.toggleProvinceBoundary(true); var pbCb = document.getElementById('toggleProvinceBoundary'); if (pbCb) pbCb.checked = true; }
           currentBasemapName = name; window.currentBasemapName = name;
           var sel = document.getElementById('basemapSelect'); if (sel) sel.value = name;
           map.fire('basemapchanged', { basemap: name });
@@ -587,7 +587,7 @@ L.control.scale({
             return;
           }
           bmkgLayer.addTo(map);
-          if (typeof window.toggleProvinceBoundary === 'function' && name !== 'esri-satellite') { var pbCb = document.getElementById('toggleProvinceBoundary'); if (pbCb && !pbCb.checked) { pbCb.checked = true; window.toggleProvinceBoundary(true); } }
+          if (typeof window.toggleProvinceBoundary === 'function' && name !== 'esri-satellite') { window.toggleProvinceBoundary(true); var pbCb = document.getElementById('toggleProvinceBoundary'); if (pbCb) pbCb.checked = true; }
           currentBasemapName = name; window.currentBasemapName = name;
           var sel = document.getElementById('basemapSelect'); if (sel) sel.value = name;
           map.fire('basemapchanged', { basemap: name });
@@ -619,15 +619,21 @@ L.control.scale({
 
     var isSatellite = satelliteBasemapLabels.hasOwnProperty(name);
     if (isSatellite) {
-      if (typeof window.toggleProvinceBoundary === 'function') {
+      if (name !== 'esri-satellite' && typeof window.toggleProvinceBoundary === 'function') {
+        window.toggleProvinceBoundary(true);
         var pbCb = document.getElementById('toggleProvinceBoundary');
-        if (pbCb && !pbCb.checked) { pbCb.checked = true; window.toggleProvinceBoundary(true); }
+        if (pbCb) pbCb.checked = true;
+      } else if (name === 'esri-satellite' && typeof window.toggleProvinceBoundary === 'function') {
+        window.toggleProvinceBoundary(false);
+        var pbCb = document.getElementById('toggleProvinceBoundary');
+        if (pbCb) pbCb.checked = false;
       }
       showLabels();
     } else {
       if (typeof window.toggleProvinceBoundary === 'function') {
+        window.toggleProvinceBoundary(false);
         var pbCb = document.getElementById('toggleProvinceBoundary');
-        if (pbCb && pbCb.checked) { pbCb.checked = false; window.toggleProvinceBoundary(false); }
+        if (pbCb) pbCb.checked = false;
       }
       hideLabels();
     }
@@ -665,8 +671,6 @@ L.control.scale({
       window.toggleProvinceBoundary(true);
       var pbCb = document.getElementById('toggleProvinceBoundary');
       if (pbCb) pbCb.checked = true;
-    } else {
-      showCoastline();
     }
 
     var airVisualPm25Toggle = document.getElementById('toggleAirVisualPm25');
@@ -1196,49 +1200,6 @@ L.control.scale({
     _airvisualLegendControl = null;
   }
 
-  // Shared coastline layer
-  var _coastlineLayer = null;
-  var _coastlineGeneration = 0;
-  var _coastlineXhr = null;
-
-  function showCoastline() {
-    if (_coastlineLayer && map.hasLayer(_coastlineLayer)) return;
-    if (_coastlineXhr) { _coastlineXhr.abort(); _coastlineXhr = null; }
-    var gen = ++_coastlineGeneration;
-    var xhr = new XMLHttpRequest();
-    _coastlineXhr = xhr;
-    xhr.open('GET', 'assets/data/natural-earth/ne_50m_coastline.geojson', true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-      _coastlineXhr = null;
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          var geojson = JSON.parse(xhr.responseText);
-          if (gen !== _coastlineGeneration) return;
-          _coastlineLayer = L.geoJSON(geojson, {
-            style: { color: '#ffffff', weight: 1.2, opacity: 0.85, fillOpacity: 0 },
-            filter: function (f) {
-              return f && f.geometry && (f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString');
-            },
-            interactive: false
-          }).addTo(map);
-        } catch (e) {}
-      }
-    };
-    xhr.send();
-  }
-
-  function hideCoastline() {
-    _coastlineGeneration++;
-    if (_coastlineXhr) { _coastlineXhr.abort(); _coastlineXhr = null; }
-    if (_coastlineLayer && map.hasLayer(_coastlineLayer)) map.removeLayer(_coastlineLayer);
-    _coastlineLayer = null;
-  }
-
-  function toggleCoastlineLayer(show) {
-    if (show) showCoastline(); else hideCoastline();
-  }
-
   var _labelsLayer = null;
   var _labelsPaneName = 'labelsPane';
 
@@ -1260,36 +1221,6 @@ L.control.scale({
     _labelsLayer = null;
   }
 
-  var _satBoundaryLayer = null;
-  var _satBoundaryGeneration = 0;
-
-  function showSatelliteBoundary() {
-    if (_satBoundaryLayer && map.hasLayer(_satBoundaryLayer)) return;
-    var gen = ++_satBoundaryGeneration;
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', 'assets/data/bps/geojson/provinsi.geojson', true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          var geojson = JSON.parse(xhr.responseText);
-          if (gen !== _satBoundaryGeneration) return;
-          _satBoundaryLayer = L.geoJSON(geojson, {
-            style: { color: '#ffffff', weight: 1.2, opacity: 0.7, fillColor: '#ffffff', fillOpacity: 0 },
-            interactive: false
-          }).addTo(map);
-        } catch (e) {}
-      }
-    };
-    xhr.send();
-  }
-
-  function hideSatelliteBoundary() {
-    _satBoundaryGeneration++;
-    if (_satBoundaryLayer && map.hasLayer(_satBoundaryLayer)) map.removeLayer(_satBoundaryLayer);
-    _satBoundaryLayer = null;
-  }
-
   var _activeAirVisualLayerKey = null;
 
   function refreshAirVisualPresentation() {
@@ -1297,7 +1228,6 @@ L.control.scale({
     if (!activeKeys.length) {
       _activeAirVisualLayerKey = null;
       hideAirVisualLegend();
-      hideCoastline();
       return;
     }
     if (activeKeys.indexOf(_activeAirVisualLayerKey) === -1) _activeAirVisualLayerKey = activeKeys[0];
@@ -1388,8 +1318,6 @@ L.control.scale({
             el.dispatchEvent(new Event('change'));
           }
         });
-
-        toggleCoastlineLayer(false);
 
         if (typeof toggleTollRoadLayer === 'function') toggleTollRoadLayer(false);
         if (typeof toggleNonTollRoadLayer === 'function') toggleNonTollRoadLayer(false);
@@ -1515,8 +1443,6 @@ L.control.scale({
         if (typeof cuacaMaritimCleanup === 'function') cuacaMaritimCleanup();
         if (typeof pmtilesCleanup === 'function') pmtilesCleanup();
         if (typeof hideAirVisualLegend === 'function') hideAirVisualLegend();
-        hideCoastline();
-        hideSatelliteBoundary();
         Object.keys(airVisualLayers).forEach(function (key) {
           if (map.hasLayer(airVisualLayers[key])) map.removeLayer(airVisualLayers[key]);
         });
@@ -2335,6 +2261,7 @@ L.control.scale({
       qlPm25:      { target: 'toggleAirVisualPm25',         type: 'checkbox' },
       qlWind:      { target: 'toggleWindAnim',              type: 'checkbox' },
       qlHujan:     { type: 'toggle-fn',                    fn: toggleHujanLayer },
+      qlProvinsi:  { type: 'toggle-fn',                    fn: function(v) { if (typeof window.toggleProvinceBoundary === 'function') window.toggleProvinceBoundary(v); } },
       qlEcmwfFire: { type: 'toggle-fn',                    fn: toggleEcmwfFireLayer },
       qlViirsNoaa20:{ type: 'toggle-fn',                    fn: toggleViirsNoaa20Layer },
       qlKonsesi:   { target: 'toggleConcessionsLayer',      type: 'checkbox' },
@@ -2361,6 +2288,7 @@ L.control.scale({
           if (c.fn === toggleViirsNoaa20Layer) isOn = !!(viirsNoaa20Layer && map.hasLayer(viirsNoaa20Layer));
           else if (c.fn === toggleEcmwfFireLayer) isOn = !!(ecmwfFireLayer && map.hasLayer(ecmwfFireLayer));
           else if (c.fn === toggleHujanLayer) isOn = typeof isHujanLayerActive === 'function' && isHujanLayerActive();
+          else if (btnId === 'qlProvinsi') isOn = typeof isProvinceBoundaryActive === 'function' && isProvinceBoundaryActive();
           btn.classList.toggle('active', isOn);
         } else {
           btn.classList.toggle('active', currentBasemapName === c.target);
@@ -2384,6 +2312,7 @@ L.control.scale({
             if (c.fn === toggleViirsNoaa20Layer) isOn = !!(viirsNoaa20Layer && map.hasLayer(viirsNoaa20Layer));
             else if (c.fn === toggleEcmwfFireLayer) isOn = !!(ecmwfFireLayer && map.hasLayer(ecmwfFireLayer));
             else if (c.fn === toggleHujanLayer) isOn = typeof isHujanLayerActive === 'function' && isHujanLayerActive();
+            else if (btnId === 'qlProvinsi') isOn = typeof isProvinceBoundaryActive === 'function' && isProvinceBoundaryActive();
             if (c.fn) c.fn(!isOn);
           } else {
             if (currentBasemapName === c.target) setBaseMap('google-maps');
@@ -2648,12 +2577,6 @@ L.control.scale({
           group: 'Satelit',
           layers: [
             { id: 'esri-satellite', label: 'Esri Satellite' },
-            { id: 'modis-terra', label: 'MODIS Terra (NASA)' },
-            { id: 'modis-aqua', label: 'MODIS Aqua (NASA)' },
-            { id: 'viirs-noaa20', label: 'VIIRS NOAA-20 (NASA)' },
-            { id: 'viirs-noaa21', label: 'VIIRS NOAA-21 (NASA)' },
-            { id: 'viirs-snpp', label: 'VIIRS SNPP (NASA)' },
-            { id: 'oci-pace', label: 'OCI PACE (NASA)' },
             { id: 'bmkg-himawari', label: 'Himawari-9 IR (BMKG)' },
             { id: 'bmkg-himawari-nc', label: 'Himawari-9 Natural Color (BMKG)' },
             { id: 'bmkg-himawari-wv', label: 'Himawari-9 Water Vapor (BMKG)' },
@@ -2667,6 +2590,12 @@ L.control.scale({
             { id: 'bmkg-gk2a', label: 'GK-2A IR (BMKG)' },
             { id: 'bmkg-gk2a-wv', label: 'GK-2A Water Vapor (BMKG)' },
             { id: 'bmkg-gk2a-rp', label: 'GK-2A Rainfall (BMKG)' },
+            { id: 'modis-terra', label: 'MODIS Terra (NASA)' },
+            { id: 'modis-aqua', label: 'MODIS Aqua (NASA)' },
+            { id: 'viirs-noaa20', label: 'VIIRS NOAA-20 (NASA)' },
+            { id: 'viirs-noaa21', label: 'VIIRS NOAA-21 (NASA)' },
+            { id: 'viirs-snpp', label: 'VIIRS SNPP (NASA)' },
+            { id: 'oci-pace', label: 'OCI PACE (NASA)' },
             { id: 'noaa-true-color', label: 'NOAA True Color' },
             { id: 'noaa-goes-ir', label: 'NOAA GOES IR' },
             { id: 'sentinel1-rtc', label: 'Sentinel-1 RTC (ESA)' },
@@ -2956,7 +2885,6 @@ L.control.scale({
         { id: 'toggleHillshade', label: 'Hillshade' },
         { id: 'toggleBatnas', label: 'Batnas (Batimetri)' },
         { id: 'toggleProvinceBoundary', label: 'Batas Provinsi (PBF)' },
-        { id: 'toggleCoastlineLayer', label: 'Garis Pantai (Natural Earth)' },
         { id: 'toggleBpsTutupanLahan', label: 'Peta Tutupan Lahan 100m (KSA BPS)' },
         { id: 'toggleTollRoad', label: 'Jalan Tol Pulau Jawa' },
         { id: 'toggleNationalRoad', label: 'Jalan Nasional' }
@@ -3191,7 +3119,6 @@ L.control.scale({
           (id === 'toggleNonTollRoad' && typeof window.toggleNonTollRoadLayer === 'function') ||
           (id === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') ||
           (id === 'toggleHujanLayer') ||
-          (id === 'toggleCoastlineLayer') ||
           (id === 'toggleFsvaLayer' && typeof window.toggleFsvaLayer === 'function') ||
           (id.indexOf('toggleSih3Dpu_') === 0 && typeof window.toggleSih3DpuLayer === 'function') ||
           (id.indexOf('toggleSih3Cit_') === 0 && typeof window.toggleSih3CitarumLayer === 'function') ||
@@ -3265,9 +3192,6 @@ L.control.scale({
         }
         if (id === 'toggleParOverlay' && typeof window.toggleParOverlay === 'function') {
           window.toggleParOverlay(cb.checked);
-        }
-        if (id === 'toggleCoastlineLayer') {
-          toggleCoastlineLayer(cb.checked);
         }
         if (id === 'toggleHujanLayer') {
           toggleHujanLayer(cb.checked);

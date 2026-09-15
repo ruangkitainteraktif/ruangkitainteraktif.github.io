@@ -1,4 +1,4 @@
-/* ── Province Boundary (PBF Vector Tiles) — replaces coastline on satellite basemaps ── */
+/* ── Province Boundary (PBF Vector Tiles) ── */
 (function () {
   'use strict';
 
@@ -27,17 +27,11 @@
     }
     if (!map.hasLayer(_provinceLayer)) _provinceLayer.addTo(map);
     _active = true;
-    hideCoastline();
-    var cb = document.getElementById('toggleCoastlineLayer');
-    if (cb) cb.checked = false;
   }
 
   function hide() {
     if (_provinceLayer && map.hasLayer(_provinceLayer)) map.removeLayer(_provinceLayer);
     _active = false;
-    showCoastline();
-    var cb = document.getElementById('toggleCoastlineLayer');
-    if (cb) cb.checked = true;
   }
 
   function isActive() {

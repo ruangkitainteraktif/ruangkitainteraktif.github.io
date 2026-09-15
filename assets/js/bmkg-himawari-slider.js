@@ -21,15 +21,6 @@
   var MODELRUN_URL = 'https://satellite.bmkg.go.id/api22/modelrun';
   var TILE_URL_TEMPLATE = 'https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype={tiletype}&modelname={modelname}&param={param}&baserun=';
 
-  var TIME_RANGES = [
-    { label: '3J', hours: 3 },
-    { label: '6J', hours: 6 },
-    { label: '12J', hours: 12 },
-    { label: '24J', hours: 24 },
-    { label: '3H', hours: 72 },
-    { label: 'Semua', hours: 0 }
-  ];
-
   var sliderControl = null;
   var legendControl = null;
   var currentIndex = 0;
@@ -39,7 +30,6 @@
   var _activeKey = null;
   var _refreshInterval = null;
   var _titleRow = null;
-  var _selectedRange = 0;
   var REFRESH_MS = 10 * 60 * 1000;
   var CROSSFADE_MS = 300;
   var _crossfadeLayer = null;
@@ -168,16 +158,7 @@
   }
 
   function filterTimestamps() {
-    if (_selectedRange === 0) {
-      filteredTimestamps = allTimestamps.slice();
-      return;
-    }
-    var hours = TIME_RANGES[_selectedRange].hours;
-    var cutoff = new Date(Date.now() - hours * 3600 * 1000).toISOString();
-    filteredTimestamps = allTimestamps.filter(function (ts) { return ts >= cutoff; });
-    if (filteredTimestamps.length === 0 && allTimestamps.length > 0) {
-      filteredTimestamps = [allTimestamps[allTimestamps.length - 1]];
-    }
+    filteredTimestamps = allTimestamps.slice();
   }
 
   function fetchTimestamps(callback) {
@@ -234,24 +215,6 @@
       var wrap = L.DomUtil.create('div', 'bmkg-time-slider-wrap');
       L.DomEvent.disableClickPropagation(wrap);
       L.DomEvent.disableScrollPropagation(wrap);
-
-      var rangeRow = L.DomUtil.create('div', 'bmkg-ts-range', wrap);
-      var rangeBtns = [];
-      TIME_RANGES.forEach(function (r, i) {
-        var btn = L.DomUtil.create('button', 'bmkg-ts-range-btn' + (i === _selectedRange ? ' bmkg-ts-range-active' : ''), rangeRow);
-        btn.textContent = r.label;
-        btn.title = r.hours === 0 ? 'Semua waktu' : r.hours + ' jam terakhir';
-        btn.addEventListener('click', function (e) {
-          e.stopPropagation();
-          _selectedRange = i;
-          filterTimestamps();
-          rangeBtns.forEach(function (b, j) {
-            b.classList.toggle('bmkg-ts-range-active', j === i);
-          });
-          updateSliderFromFilter();
-        });
-        rangeBtns.push(btn);
-      });
 
       var controlsRow = L.DomUtil.create('div', 'bmkg-ts-controls', wrap);
 
@@ -447,7 +410,6 @@
     allTimestamps = [];
     filteredTimestamps = [];
     currentIndex = 0;
-    _selectedRange = 0;
     hideSlider();
     fetchTimestamps(function () {
       currentIndex = 0;

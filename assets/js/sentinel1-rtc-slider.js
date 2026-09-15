@@ -14,7 +14,6 @@
   var GIBS_WMTS_TEMPLATE = null;
 
   var _layer = null;
-  var _coastlineWasActive = false;
   var _mosaicVariant = null; // '2x' or '1x' or null (undetected)
   var _triedFallback = false;
   var _prevMaxZoom = null;
@@ -159,12 +158,6 @@
     // Ensure we detect which tile variant to use and add the appropriate layer
     ensureLayerVariantAndAdd();
     showLegend();
-    if (typeof toggleCoastlineLayer === 'function') {
-      var cb = document.getElementById('toggleCoastlineLayer');
-      _coastlineWasActive = cb ? cb.checked : false;
-      toggleCoastlineLayer(false);
-      if (cb) cb.checked = false;
-    }
   }
 
   function cleanupSentinel1Rtc() {
@@ -178,12 +171,6 @@
     if (_zoomHandler) {
       map.off('zoomend', _zoomHandler);
       _zoomHandler = null;
-    }
-    if (typeof toggleCoastlineLayer === 'function') {
-      toggleCoastlineLayer(false);
-      var cb = document.getElementById('toggleCoastlineLayer');
-      if (cb) cb.checked = false;
-      _coastlineWasActive = false;
     }
     if (_prevMaxZoom !== null) {
       map.setMaxZoom(_prevMaxZoom);
