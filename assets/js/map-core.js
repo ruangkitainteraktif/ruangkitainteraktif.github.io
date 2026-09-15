@@ -6,7 +6,7 @@
   // 1. Inisialisasi Peta
   // Pusat awal: Tengah Indonesia (antara Sulawesi & Kalimantan)
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
-  const initialCenter = [-1.0, 119.2];
+  const initialCenter = [-1.0, 121.0];
   const initialZoom = isMobile ? 5 : 5;
   const map = L.map('map', { zoomControl: false, preferCanvas: true, maxZoom: 19, minZoom: 4 }).setView(initialCenter, initialZoom);
 
@@ -1249,12 +1249,17 @@ L.control.scale({
   }
 
   var _labelsLayer = null;
+  var _labelsPaneName = 'labelsPane';
 
   function showLabels() {
     if (_labelsLayer && map.hasLayer(_labelsLayer)) return;
+    if (!map.getPane(_labelsPaneName)) {
+        map.createPane(_labelsPaneName);
+        map.getPane(_labelsPaneName).style.zIndex = '2000';
+    }
     _labelsLayer = L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-      { maxZoom: 23, attribution: 'Esri, HERE, Garmin, © OpenStreetMap contributors', interactive: false }
+      { maxZoom: 23, attribution: 'Esri, HERE, Garmin, © OpenStreetMap contributors', interactive: false, pane: _labelsPaneName }
     );
     _labelsLayer.addTo(map);
   }
