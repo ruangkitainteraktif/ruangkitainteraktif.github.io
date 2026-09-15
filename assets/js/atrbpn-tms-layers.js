@@ -27,7 +27,7 @@
     },
     'toggleDiTmsLayer': {
       url: 'https://pptr.dasmap.com/layers/tms/public/224_drhirgs/{z}/{x}/{y}/?tileSize=1024',
-      center: [-2.0, 117.0], zoom: 5, label: 'Daerah Irigasi',
+      center: [-7.68, 110.84], zoom: 12, label: 'Daerah Irigasi',
       legend: {
         title: 'Daerah Irigasi',
         items: [
@@ -38,7 +38,7 @@
     },
     'toggleSaluranIrTmsLayer': {
       url: 'https://pptr.dasmap.com/layers/tms/public/223_slrnirgs/{z}/{x}/{y}/?tileSize=1024',
-      center: [-2.0, 117.0], zoom: 5, label: 'Saluran Irigasi',
+      center: [-7.68, 110.84], zoom: 12, label: 'Saluran Irigasi',
       legend: {
         title: 'Saluran Irigasi',
         items: [
