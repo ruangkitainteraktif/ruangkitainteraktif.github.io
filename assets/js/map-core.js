@@ -2759,6 +2759,7 @@ L.control.scale({
           { id: 'toggleTp24Rgb', label: 'Total Precipitation 24 Jam (GFS)' },
           { id: 'togglePm25Rgb', label: 'PM2.5 Air Quality (BMKG PCM)' },
           { id: 'toggleHthRgb', label: 'Hari Tanpa Hujan (BMKG HTH)' },
+          { id: 'toggleBmkgPrecip10days', label: 'Prakiraan Hujan 10 Hari (BMKG)' },
           { id: 'toggleCuacaPerairanLayer', label: 'Cuaca Perairan (BMKG)' },
           { id: 'toggleCuacaPelabuhanLayer', label: 'Cuaca Pelabuhan (BMKG)' },
           { id: 'toggleMaritimeAngin', label: 'Angin Laut (Wind Speed)' },
@@ -2898,6 +2899,7 @@ L.control.scale({
         { id: 'toggleHillshade', label: 'Hillshade' },
         { id: 'toggleBatnas', label: 'Batnas (Batimetri)' },
         { id: 'toggleProvinceBoundary', label: 'Batas Provinsi (PBF)' },
+        { id: 'toggleBmkgTimezone', label: 'Batas Wilayah Waktu (BMKG)' },
         { id: 'toggleBpsTutupanLahan', label: 'Peta Tutupan Lahan 100m (KSA BPS)' },
         { id: 'toggleTollRoad', label: 'Jalan Tol Pulau Jawa' },
         { id: 'toggleNationalRoad', label: 'Jalan Nasional' },
@@ -3252,6 +3254,12 @@ L.control.scale({
         }
         if (id === 'toggleEoxOverlay' && typeof window.toggleEoxOverlay === 'function') {
           window.toggleEoxOverlay(cb.checked);
+        }
+        if (id === 'toggleBmkgTimezone' && typeof window.toggleBmkgTimezone === 'function') {
+          window.toggleBmkgTimezone(cb.checked);
+        }
+        if (id === 'toggleBmkgPrecip10days' && typeof window.toggleBmkgPrecip10days === 'function') {
+          window.toggleBmkgPrecip10days(cb.checked);
         }
         updateCatCount(cb.closest('.lc-category'));
         var attrBtn = cb.closest('.lc-item').querySelector('.lc-attr-btn');
