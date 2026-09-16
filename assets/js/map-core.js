@@ -706,6 +706,12 @@ L.control.scale({
       var radarBtn = document.getElementById('qlRadar');
       if (radarBtn) radarBtn.classList.add('active');
     }
+
+    var pm25Toggle = document.getElementById('toggleAirVisualPm25');
+    if (pm25Toggle) {
+      pm25Toggle.checked = true;
+      pm25Toggle.dispatchEvent(new Event('change', { bubbles: true }));
+    }
   }
 
   setRdtrOpacity(currentRdtrOpacity);
@@ -2322,7 +2328,7 @@ L.control.scale({
             else if (c.fn === toggleEcmwfFireLayer) isOn = !!(ecmwfFireLayer && map.hasLayer(ecmwfFireLayer));
             else if (c.fn === toggleHujanLayer) isOn = typeof isHujanLayerActive === 'function' && isHujanLayerActive();
             else if (btnId === 'qlRadar') isOn = typeof window.isBmkgRadarActive === 'function' && window.isBmkgRadarActive();
-            else if (btnId === 'qlProvinsi') isOn = typeof isProvinceBoundaryActive === 'function' && isProvinceBoundaryActive();
+          else if (btnId === 'qlProvinsi') isOn = typeof isProvinceBoundaryActive === 'function' && isProvinceBoundaryActive();
             if (c.fn) c.fn(!isOn);
           } else {
             if (currentBasemapName === c.target) setBaseMap('google-maps');
