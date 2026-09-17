@@ -41,6 +41,7 @@
     'toggleSebaranPasar': 'Data Sebaran Pasar tidak tersedia.',
     'toggleSppgSebaranLayer': 'Data Sebaran SPPG tidak tersedia.',
     'toggleSppgLayer': 'Data SPPG tidak tersedia.',
+    'toggleSppgDistrictLayer': 'Data SPPG per Kabupaten/Kota tidak tersedia.',
     'toggleDemnasOverlay': 'Data Terrain SRTM tidak tersedia.',
     'toggleBppLayer': 'Data BPP tidak tersedia.',
     'toggleSawitLayer': 'Data Sawit tidak tersedia.',

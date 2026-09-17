@@ -128,6 +128,18 @@
         return [ll.lat, ll.lng];
       }
     },
+    toggleSppgDistrictLayer: {
+      name: 'SPPG per Kabupaten/Kota',
+      type: 'vector',
+      getFeatures: function () { return typeof window.getSppgDistrictData === 'function' ? window.getSppgDistrictData() : []; },
+      props: ['id', 'name', 'province', 'district', 'subDistrict', 'village'],
+      getLatLng: function (item) {
+        var lat = parseFloat(item.latitude);
+        var lng = parseFloat(item.longitude);
+        if (isFinite(lat) && isFinite(lng)) return [lat, lng];
+        return null;
+      }
+    },
     toggleConcessionsLayer: {
       name: 'Konsesi (GFW)',
       type: 'geojson',

@@ -701,17 +701,13 @@ L.control.scale({
       window.toggleWindAnimation(true);
     }
 
-    if (typeof window.toggleBmkgRadar === 'function' && !window.isBmkgRadarActive()) {
-      window.toggleBmkgRadar(true);
-      var radarBtn = document.getElementById('qlRadar');
-      if (radarBtn) radarBtn.classList.add('active');
-    }
-
     var pm25Toggle = document.getElementById('toggleAirVisualPm25');
     if (pm25Toggle) {
       pm25Toggle.checked = true;
       pm25Toggle.dispatchEvent(new Event('change', { bubbles: true }));
     }
+
+    if (typeof toggleHujanLayer === 'function') toggleHujanLayer(true);
   }
 
   setRdtrOpacity(currentRdtrOpacity);
@@ -2658,6 +2654,7 @@ L.control.scale({
         { subcat: 'Market & SPPG', layers: [
           { id: 'toggleSebaranPasar', label: 'Sebaran Pasar Indonesia' },
           { id: 'toggleSppgSebaranLayer', label: 'Sebaran SPPG Indonesia' },
+          { id: 'toggleSppgDistrictLayer', label: 'SPPG per Kabupaten/Kota' },
           { id: 'toggleSppgLayer', label: 'SPPG Indonesia' }
         ]}
       ]
@@ -3137,6 +3134,7 @@ L.control.scale({
           (id === 'toggleSebaranPasar' && typeof window.toggleSebaranPasar === 'function') ||
           (id === 'toggleSppgSebaranLayer' && typeof window.toggleSppgSebaranLayer === 'function') ||
           (id === 'toggleSppgLayer' && typeof window.toggleSppg === 'function') ||
+          (id === 'toggleSppgDistrictLayer' && typeof window.toggleSppgDistrictLayer === 'function') ||
           (id === 'toggleTollRoad' && typeof window.toggleTollRoadLayer === 'function') ||
           (id === 'toggleNationalRoad' && typeof window.toggleNationalRoadLayer === 'function') ||
           (id === 'toggleNonTollRoad' && typeof window.toggleNonTollRoadLayer === 'function') ||
@@ -3192,6 +3190,9 @@ L.control.scale({
         }
         if (id === 'toggleSppgLayer' && typeof window.toggleSppg === 'function') {
           window.toggleSppg(cb.checked);
+        }
+        if (id === 'toggleSppgDistrictLayer' && typeof window.toggleSppgDistrictLayer === 'function') {
+          window.toggleSppgDistrictLayer(cb.checked);
         }
         if (id === 'toggleTollRoad' && typeof window.toggleTollRoadLayer === 'function') {
           window.toggleTollRoadLayer(cb.checked);
@@ -3271,7 +3272,7 @@ L.control.scale({
         updateCatCount(cb.closest('.lc-category'));
         var attrBtn = cb.closest('.lc-item').querySelector('.lc-attr-btn');
         if (attrBtn) {
-          if (cb.checked && typeof hasAttrSupport === 'function' && hasAttrSupport(id)) {
+          if (cb.checked) {
             attrBtn.classList.add('lc-attr-btn-show');
           } else {
             attrBtn.classList.remove('lc-attr-btn-show');

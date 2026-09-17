@@ -1779,6 +1779,62 @@
     .sppg-td-tgl { color: #059669; font-size: 10px; white-space: nowrap; }
     .sppg-td-empty { text-align: center; color: #94a3b8; padding: 20px 8px; }
 
+    /* ===== SPPG District Choropleth ===== */
+    .sppgd-tooltip { background: #1e293b; color: #fff; border: none; border-radius: 8px; padding: 6px 10px; font-size: 12px; box-shadow: 0 4px 12px rgba(0,0,0,.25); }
+    .sppgd-tooltip::before { border-top-color: #1e293b; }
+
+    .sppgd-leaflet-popup { max-width: 340px !important; }
+    .sppgd-leaflet-popup .leaflet-popup-content-wrapper { border-radius: 14px; padding: 0; overflow: hidden; box-shadow: 0 8px 32px rgba(139,92,246,.2); border: none; max-height: 55vh; overflow-x: hidden; }
+    .sppgd-leaflet-popup .leaflet-popup-content { width: auto !important; margin: 0; }
+
+    .sppgd-popup { width: 320px; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1e293b; background: #fff; display: flex; flex-direction: column; }
+    .sppgd-popup-header { padding: 16px; background: linear-gradient(135deg, #7c3aed, #a855f7); color: #fff; }
+    .sppgd-popup-badge { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 700; margin-bottom: 6px; }
+    .sppgd-popup-title { font-size: 15px; font-weight: 700; line-height: 1.3; }
+    .sppgd-popup-subtitle { font-size: 11px; opacity: .85; margin-top: 2px; }
+    .sppgd-popup-body { padding: 0; max-height: 200px; overflow-y: auto; }
+    .sppgd-popup-list { padding: 8px 16px; }
+    .sppgd-popup-item { padding: 6px 0; border-bottom: 1px solid #f1f5f9; }
+    .sppgd-popup-item:last-child { border-bottom: none; }
+    .sppgd-popup-item-name { display: block; font-size: 12px; font-weight: 600; color: #1e3a5f; }
+    .sppgd-popup-item-sub { display: block; font-size: 10px; color: #64748b; margin-top: 1px; }
+    .sppgd-popup-more { text-align: center; font-size: 11px; color: #8b5cf6; padding: 8px; font-weight: 600; }
+    .sppgd-popup-empty { text-align: center; color: #94a3b8; padding: 20px; font-size: 12px; }
+    .sppgd-popup-footer { padding: 10px 16px 14px; border-top: 1px solid #f1f5f9; }
+    .sppgd-popup-btn { width: 100%; padding: 7px; background: linear-gradient(135deg, #7c3aed, #a855f7); color: #fff; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+    .sppgd-popup-btn:hover { opacity: .9; }
+    .sppgd-popup-source { font-size: 9px; color: #94a3b8; text-align: center; margin-top: 6px; }
+
+    .sppgd-table-panel { position: absolute; bottom: 60px; left: 10px; right: 10px; z-index: 1000; max-height: 45vh; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,.15); overflow: hidden; }
+    .sppgd-table-wrap { display: flex; flex-direction: column; max-height: 45vh; }
+    .sppgd-table-title { display: flex; align-items: center; gap: 8px; padding: 10px 14px; font-size: 13px; font-weight: 700; color: #1e3a5f; border-bottom: 1px solid #eef2f7; }
+    .sppgd-table-title span { color: #8b5cf6; font-weight: 600; }
+    .sppgd-badge { display: inline-flex; align-items: center; background: #8b5cf6; color: #fff; font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: .4px; }
+    .sppgd-table-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; border-bottom: 1px solid #eef2f7; flex-wrap: wrap; }
+    .sppgd-table-actions { display: flex; align-items: center; gap: 6px; }
+    .sppgd-table-search { width: 180px; padding: 5px 10px; border: 1px solid #d7e2eb; border-radius: 8px; font-size: 11px; outline: none; transition: border-color .15s; }
+    .sppgd-table-search:focus { border-color: #8b5cf6; box-shadow: 0 0 0 2px rgba(139,92,246,.15); }
+    .sppgd-btn-csv { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; background: #10b981; color: #fff; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; }
+    .sppgd-btn-csv:hover { background: #059669; }
+    .sppgd-btn-close { padding: 4px 8px; background: #ef4444; color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 700; cursor: pointer; line-height: 1; }
+    .sppgd-btn-close:hover { background: #dc2626; }
+    .sppgd-table-scroll { overflow-x: auto; flex: 1; }
+    .sppgd-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .sppgd-table thead th { position: sticky; top: 0; background: #8b5cf6; color: #fff; padding: 8px 7px; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: .3px; white-space: nowrap; cursor: pointer; user-select: none; }
+    .sppgd-th-no { width: 30px; text-align: center; cursor: default !important; }
+    .sppgd-table tbody tr { transition: background .15s; cursor: pointer; }
+    .sppgd-table tbody tr:nth-child(even) { background: #faf8ff; }
+    .sppgd-table tbody tr:hover { background: #f3efff; }
+    .sppgd-table td { padding: 7px 8px; border-bottom: 1px solid #eef2f7; }
+    .sppgd-td-empty { text-align: center; color: #94a3b8; padding: 20px 8px; }
+    .sppgd-pagination { display: flex; align-items: center; gap: 4px; padding: 8px 14px; border-top: 1px solid #eef2f7; flex-wrap: wrap; }
+    .sppgd-pag-btn { padding: 4px 10px; background: #f1f5f9; border: 1px solid #d7e2eb; border-radius: 6px; font-size: 11px; cursor: pointer; transition: all .15s; }
+    .sppgd-pag-btn:hover { background: #e2e8f0; }
+    .sppgd-pag-btn:disabled { opacity: .4; cursor: default; }
+    .sppgd-pag-active { background: #8b5cf6 !important; color: #fff !important; border-color: #8b5cf6 !important; }
+    .sppgd-pag-info { font-size: 10px; color: #64748b; margin-left: auto; }
+    .sppgd-marker-popup { font-size: 12px; }
+
     /* ===== GeoPangan Popup ===== */
     .gp-leaflet-popup { max-width: 320px !important; }
     .gp-leaflet-popup .leaflet-popup-content-wrapper {
@@ -9449,4 +9505,20 @@
       background: #475569 !important; color: #fff !important;
       border-color: #475569 !important;
     }
+
+    /* SPPG District Dark Mode */
+    [data-theme="dark"] .sppgd-table-panel { background: var(--bg-card); border-color: var(--border-color); }
+    [data-theme="dark"] .sppgd-table-title { color: var(--text-primary); border-color: var(--border-color); }
+    [data-theme="dark"] .sppgd-table-header { border-color: var(--border-color); }
+    [data-theme="dark"] .sppgd-table-search { background: var(--bg-input); border-color: var(--border-color); color: var(--text-primary); }
+    [data-theme="dark"] .sppgd-table tbody tr:nth-child(even) { background: var(--bg-secondary); }
+    [data-theme="dark"] .sppgd-table tbody tr:hover { background: var(--bg-tertiary); }
+    [data-theme="dark"] .sppgd-table td { border-color: var(--border-color); color: var(--text-primary); }
+    [data-theme="dark"] .sppgd-pagination { border-color: var(--border-color); }
+    [data-theme="dark"] .sppgd-pag-btn { background: var(--bg-secondary); border-color: var(--border-color); color: var(--text-primary); }
+    [data-theme="dark"] .sppgd-popup { background: var(--bg-card); color: var(--text-primary); }
+    [data-theme="dark"] .sppgd-popup-body { background: var(--bg-card); }
+    [data-theme="dark"] .sppgd-popup-item { border-color: var(--border-color); }
+    [data-theme="dark"] .sppgd-popup-item-name { color: var(--text-primary); }
+    [data-theme="dark"] .sppgd-tooltip { background: var(--bg-card); color: var(--text-primary); }
 
