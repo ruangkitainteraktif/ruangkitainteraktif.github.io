@@ -1297,7 +1297,7 @@ L.control.scale({
           'toggleCuacaPelabuhanLayer', 'toggleCuacaPerairanLayer',
           'toggleSawitNasionalLayer', 'toggleSawitPerkebunanLayer', 'toggleRehabDasLayer', 'togglePerkebunanPl24Layer',
           'toggleRktnSumateraLayer', 'toggleRktnSulawesiLayer', 'toggleRktnPapuaLayer', 'toggleRktnMalukuLayer', 'toggleRktnKalimantanLayer', 'toggleRktnJawaLayer', 'toggleRktnBaliNtLayer',
-          'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer', 'toggleSppgSebaranLayer',
+          'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer', 'toggleSppgSebaranLayer', 'toggleSppgDistrictLayer',
           'toggleConcessionsLayer', 'toggleProtectedLayer', 'toggleMangroveLayer', 'togglePeatlandLayer',
           'toggleBumiPersilLayer',
           'toggleFsvaLayer',
@@ -2891,12 +2891,6 @@ L.control.scale({
       ]
     },
     {
-      cat: 'Fasilitas Umum',
-      layers: [
-        { id: 'toggleSekolahLayer', label: 'Sekolah Indonesia (BNPB)' }
-      ]
-    },
-    {
       cat: 'Terrain & Lainnya',
       layers: [
         { id: 'toggleDemnasOverlay', label: 'Terrain Overlay (SRTM)' },
@@ -3010,14 +3004,16 @@ L.control.scale({
       var pinnedItems = [];
       if (_pinnedLayers.length > 0) {
         LAYER_CATALOG_DATA.forEach(function(cat) {
-          if (cat.type === 'basemap') return;
           var allLayers = cat.layers || [];
           if (cat.subcats) {
             cat.subcats.forEach(function(sc) { allLayers = allLayers.concat(sc.layers || []); });
           }
+          if (cat.type === 'basemap' && cat.groups) {
+            cat.groups.forEach(function(grp) { allLayers = allLayers.concat(grp.layers || []); });
+          }
           allLayers.forEach(function(l) {
             var pi = _pinnedLayers.indexOf(l.id);
-            if (pi >= 0) pinnedItems.push({ layer: l, order: pi });
+            if (pi >= 0) pinnedItems.push({ layer: l, order: pi, isBasemap: cat.type === 'basemap' });
           });
         });
         pinnedItems.sort(function (a, b) { return a.order - b.order; });
@@ -3036,17 +3032,29 @@ L.control.scale({
         html += '<div class="lc-items">';
         pinnedItems.forEach(function(pi) {
           var l = pi.layer;
-          var el = findLayerById(l.id);
-          var isChecked = el ? el.checked : (_layerCatalogState[l.id] || false);
-          if (l.id === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') isChecked = isHujanLayerActive();
-          html += '<div class="lc-item lc-item-pinned">';
-          html += '<input type="checkbox" id="lc_pin_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
-          html += '<label for="lc_pin_' + l.id + '">' + l.label + '</label>';
-          html += '<button type="button" class="lc-attr-btn' + (isChecked ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
-          html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
-          html += '</button>';
-          html += '<button type="button" class="lc-pin-btn lc-pin-btn-active" data-layer-id="' + l.id + '" title="Hapus Pin">' + pinIconFilled + '</button>';
-          html += '</div>';
+          if (pi.isBasemap) {
+            var isActive = (l.id === currentBasemapName);
+            html += '<div class="lc-item lc-item-pinned' + (isActive ? ' lc-basemap-active' : '') + '">';
+            html += '<input type="radio" name="lc-basemap-pin" id="lc_bm_pin_' + l.id + '" data-basemap-id="' + l.id + '"' + (isActive ? ' checked' : '') + ' />';
+            html += '<label for="lc_bm_pin_' + l.id + '">' + l.label + '</label>';
+            html += '<div class="lc-item-actions">';
+            if (isActive) html += '<span class="lc-basemap-badge">Aktif</span>';
+            html += '<button type="button" class="lc-pin-btn lc-pin-btn-active" data-layer-id="' + l.id + '" title="Hapus Pin">' + pinIconFilled + '</button>';
+            html += '</div></div>';
+          } else {
+            var el = findLayerById(l.id);
+            var isChecked = el ? el.checked : (_layerCatalogState[l.id] || false);
+            if (l.id === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') isChecked = isHujanLayerActive();
+            html += '<div class="lc-item lc-item-pinned">';
+            html += '<input type="checkbox" id="lc_pin_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
+            html += '<label for="lc_pin_' + l.id + '">' + l.label + '</label>';
+            html += '<div class="lc-item-actions">';
+            html += '<button type="button" class="lc-attr-btn' + (isChecked ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
+            html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
+            html += '</button>';
+            html += '<button type="button" class="lc-pin-btn lc-pin-btn-active" data-layer-id="' + l.id + '" title="Hapus Pin">' + pinIconFilled + '</button>';
+            html += '</div></div>';
+          }
         });
         html += '</div></div>';
       }
@@ -3118,11 +3126,14 @@ L.control.scale({
           html += '<div class="lc-basemap-group">' + grp.group + '</div>';
           grp.layers.forEach(function(l) {
             var isActive = (l.id === currentBasemapName);
+            var bmPinned = isPinnedLayer(l.id);
             html += '<div class="lc-item lc-basemap-item' + (isActive ? ' lc-basemap-active' : '') + '" data-basemap-id="' + l.id + '">';
             html += '<input type="radio" name="lc-basemap" id="lc_bm_' + l.id + '" data-basemap-id="' + l.id + '"' + (isActive ? ' checked' : '') + ' />';
             html += '<label for="lc_bm_' + l.id + '">' + l.label + '</label>';
+            html += '<div class="lc-item-actions">';
             if (isActive) html += '<span class="lc-basemap-badge">Aktif</span>';
-            html += '</div>';
+            html += '<button type="button" class="lc-pin-btn' + (bmPinned ? ' lc-pin-btn-active' : '') + '" data-layer-id="' + l.id + '" title="' + (bmPinned ? 'Hapus Pin' : 'Pin Layer') + '">' + (bmPinned ? pinIconFilled : pinIconOutline) + '</button>';
+            html += '</div></div>';
           });
         });
       } else if (cat.subcats) {
@@ -3137,12 +3148,13 @@ L.control.scale({
             html += '<div class="lc-item">';
             html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
             html += '<label for="lc_' + l.id + '">' + l.label + '</label>';
+            html += '<div class="lc-item-actions">';
             html += '<button type="button" class="lc-attr-btn' + (isChecked ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
             html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
             html += '</button>';
             var pinned = isPinnedLayer(l.id);
             html += '<button type="button" class="lc-pin-btn' + (pinned ? ' lc-pin-btn-active' : '') + '" data-layer-id="' + l.id + '" title="' + (pinned ? 'Hapus Pin' : 'Pin Layer') + '">' + (pinned ? pinIconFilled : pinIconOutline) + '</button>';
-            html += '</div>';
+            html += '</div></div>';
           });
         });
       } else {
@@ -3155,12 +3167,13 @@ L.control.scale({
           html += '<div class="lc-item">';
           html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
           html += '<label for="lc_' + l.id + '">' + l.label + '</label>';
+          html += '<div class="lc-item-actions">';
           html += '<button type="button" class="lc-attr-btn' + (isChecked ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
           html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
           html += '</button>';
           var pinned2 = isPinnedLayer(l.id);
           html += '<button type="button" class="lc-pin-btn' + (pinned2 ? ' lc-pin-btn-active' : '') + '" data-layer-id="' + l.id + '" title="' + (pinned2 ? 'Hapus Pin' : 'Pin Layer') + '">' + (pinned2 ? pinIconFilled : pinIconOutline) + '</button>';
-          html += '</div>';
+          html += '</div></div>';
         });
       }
       html += '</div></div>';
@@ -3206,7 +3219,7 @@ L.control.scale({
       });
     });
 
-    container.querySelectorAll('.lc-basemap-item').forEach(function(item) {
+    container.querySelectorAll('.lc-item[data-basemap-id]').forEach(function(item) {
       item.addEventListener('click', function(e) {
         if (e.target.tagName === 'INPUT') return;
         var radio = item.querySelector('input[type="radio"]');
@@ -3215,6 +3228,14 @@ L.control.scale({
     });
 
     container.querySelectorAll('input[name="lc-basemap"]').forEach(function(radio) {
+      radio.addEventListener('change', function() {
+        var bmId = radio.dataset.basemapId;
+        setBaseMap(bmId);
+        buildLayerCatalog(container);
+      });
+    });
+
+    container.querySelectorAll('input[name="lc-basemap-pin"]').forEach(function(radio) {
       radio.addEventListener('change', function() {
         var bmId = radio.dataset.basemapId;
         setBaseMap(bmId);

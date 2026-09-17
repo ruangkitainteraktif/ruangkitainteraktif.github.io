@@ -4,6 +4,11 @@
 
   var API_URL = 'https://mbgwatch.org/api/backend/v2/sppgs';
   var GEOJSON_URL = 'assets/data/bps/geojson/kabupaten.geojson';
+  var PROXY_LIST = [
+    function (url) { return 'https://api.cors.syrins.tech/?url=' + encodeURIComponent(url); },
+    function (url) { return 'https://corsproxy.io/?url=' + encodeURIComponent(url); },
+    function (url) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url); }
+  ];
 
   var layer = null;
   var legendCtrl = null;
@@ -47,19 +52,45 @@
     return '> 500';
   }
 
-  /* ── Fetch API ── */
+  /* ── Fetch API (with CORS proxy fallback) ── */
+  function fetchWithTimeout(url, timeout) {
+    return new Promise(function (resolve, reject) {
+      var controller = new AbortController();
+      var timer = setTimeout(function () { controller.abort(); }, timeout || 10000);
+      fetch(url, { signal: controller.signal })
+        .then(function (r) { clearTimeout(timer); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(resolve)
+        .catch(reject);
+    });
+  }
+
   function fetchApiData(callback) {
     if (apiCache) { callback(apiCache); return; }
-    fetch(API_URL)
-      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    fetchWithTimeout(API_URL, 10000)
       .then(function (data) {
         apiCache = data;
         aggregateByDistrict(data);
         callback(apiCache);
       })
-      .catch(function (e) {
-        console.warn('[SPPG District] API fetch gagal:', e.message);
-        callback(null);
+      .catch(function () {
+        var tries = PROXY_LIST.map(function (fn) { return fn(API_URL); });
+        var i = 0;
+        function tryNext() {
+          if (i >= tries.length) {
+            console.warn('[SPPG District] Semua proxy gagal untuk:', API_URL);
+            if (typeof showMapToast === 'function') showMapToast('Gagal memuat data SPPG. Coba lagi nanti.', 'error');
+            callback(null);
+            return;
+          }
+          fetchWithTimeout(tries[i], 10000)
+            .then(function (data) {
+              apiCache = data;
+              aggregateByDistrict(data);
+              callback(apiCache);
+            })
+            .catch(function () { i++; tryNext(); });
+        }
+        tryNext();
       });
   }
 
