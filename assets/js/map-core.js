@@ -2914,6 +2914,34 @@ L.control.scale({
 
   var _layerCatalogOpen = false;
   var _layerCatalogState = {};
+  var _pinnedLayers = [];
+  var PINNED_MAX = 5;
+  var _pinStorageKey = 'ruangkita-pinned-layers';
+
+  function loadPinnedLayers() {
+    try {
+      var raw = localStorage.getItem(_pinStorageKey);
+      if (raw) {
+        var arr = JSON.parse(raw);
+        if (Array.isArray(arr)) _pinnedLayers = arr.slice(0, PINNED_MAX);
+      }
+    } catch (e) { _pinnedLayers = []; }
+  }
+  function savePinnedLayers() {
+    try { localStorage.setItem(_pinStorageKey, JSON.stringify(_pinnedLayers)); } catch (e) {}
+  }
+  function isPinnedLayer(id) { return _pinnedLayers.indexOf(id) >= 0; }
+  function togglePinLayer(id) {
+    var idx = _pinnedLayers.indexOf(id);
+    if (idx >= 0) {
+      _pinnedLayers.splice(idx, 1);
+    } else {
+      if (_pinnedLayers.length >= PINNED_MAX) _pinnedLayers.pop();
+      _pinnedLayers.unshift(id);
+    }
+    savePinnedLayers();
+  }
+  loadPinnedLayers();
 
   function toggleLayerCatalog() {
     var dd = document.getElementById('layerCatalogDropdown');
@@ -2975,6 +3003,53 @@ L.control.scale({
         '<a href="https://www.paypal.com/paypalme/panjidanutirto" target="_blank" rel="noopener" class="lc-donation-btn lc-donation-paypal">PayPal</a>' +
       '</div>' +
     '</div>';
+
+      var pinIconOutline = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2z"/></svg>';
+      var pinIconFilled = '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2z"/></svg>';
+
+      var pinnedItems = [];
+      if (_pinnedLayers.length > 0) {
+        LAYER_CATALOG_DATA.forEach(function(cat) {
+          if (cat.type === 'basemap') return;
+          var allLayers = cat.layers || [];
+          if (cat.subcats) {
+            cat.subcats.forEach(function(sc) { allLayers = allLayers.concat(sc.layers || []); });
+          }
+          allLayers.forEach(function(l) {
+            var pi = _pinnedLayers.indexOf(l.id);
+            if (pi >= 0) pinnedItems.push({ layer: l, order: pi });
+          });
+        });
+        pinnedItems.sort(function (a, b) { return a.order - b.order; });
+      }
+
+      if (pinnedItems.length > 0) {
+        html += '<div class="lc-category lc-pinned-group open">';
+        html += '<div class="lc-pinned-header">';
+        html += '<button class="lc-cat-header lc-pinned-header-btn" type="button">';
+        html += '<svg class="lc-cat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
+        html += '<span class="lc-cat-title lc-pinned-title">Layer Dipin</span>';
+        html += '<span class="lc-cat-count">' + pinnedItems.length + ' / ' + PINNED_MAX + '</span>';
+        html += '</button>';
+        html += '<button class="lc-unpin-all" type="button" id="lcUnpinAll">Hapus Semua Pin</button>';
+        html += '</div>';
+        html += '<div class="lc-items">';
+        pinnedItems.forEach(function(pi) {
+          var l = pi.layer;
+          var el = findLayerById(l.id);
+          var isChecked = el ? el.checked : (_layerCatalogState[l.id] || false);
+          if (l.id === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') isChecked = isHujanLayerActive();
+          html += '<div class="lc-item lc-item-pinned">';
+          html += '<input type="checkbox" id="lc_pin_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
+          html += '<label for="lc_pin_' + l.id + '">' + l.label + '</label>';
+          html += '<button type="button" class="lc-attr-btn' + (isChecked ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
+          html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
+          html += '</button>';
+          html += '<button type="button" class="lc-pin-btn lc-pin-btn-active" data-layer-id="' + l.id + '" title="Hapus Pin">' + pinIconFilled + '</button>';
+          html += '</div>';
+        });
+        html += '</div></div>';
+      }
 
       var activeLayers = [];
       LAYER_CATALOG_DATA.forEach(function(cat) {
@@ -3065,6 +3140,8 @@ L.control.scale({
             html += '<button type="button" class="lc-attr-btn' + (isChecked ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
             html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
             html += '</button>';
+            var pinned = isPinnedLayer(l.id);
+            html += '<button type="button" class="lc-pin-btn' + (pinned ? ' lc-pin-btn-active' : '') + '" data-layer-id="' + l.id + '" title="' + (pinned ? 'Hapus Pin' : 'Pin Layer') + '">' + (pinned ? pinIconFilled : pinIconOutline) + '</button>';
             html += '</div>';
           });
         });
@@ -3081,6 +3158,8 @@ L.control.scale({
           html += '<button type="button" class="lc-attr-btn' + (isChecked ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
           html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
           html += '</button>';
+          var pinned2 = isPinnedLayer(l.id);
+          html += '<button type="button" class="lc-pin-btn' + (pinned2 ? ' lc-pin-btn-active' : '') + '" data-layer-id="' + l.id + '" title="' + (pinned2 ? 'Hapus Pin' : 'Pin Layer') + '">' + (pinned2 ? pinIconFilled : pinIconOutline) + '</button>';
           html += '</div>';
         });
       }
@@ -3101,6 +3180,25 @@ L.control.scale({
         buildLayerCatalog(container);
       });
     }
+
+    var unpinAllBtn = document.getElementById('lcUnpinAll');
+    if (unpinAllBtn) {
+      unpinAllBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        _pinnedLayers = [];
+        savePinnedLayers();
+        buildLayerCatalog(container);
+      });
+    }
+
+    container.querySelectorAll('.lc-pin-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var id = btn.dataset.layerId;
+        togglePinLayer(id);
+        buildLayerCatalog(container);
+      });
+    });
 
     container.querySelectorAll('.lc-cat-header').forEach(function(btn) {
       btn.addEventListener('click', function() {
