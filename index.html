@@ -301,6 +301,9 @@
         <button type="button" id="resetLayersBtn" class="reset-layers-search-btn" title="Reset semua layer" style="display:none">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
         </button>
+        <button type="button" id="aiAnalysisBtn" class="ai-trigger-btn" title="AI Geospatial Analysis (Beta)">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/><polyline points="2 15.5 12 8.5 22 15.5"/><line x1="12" y1="2" x2="12" y2="8.5"/></svg>
+        </button>
         <button type="button" id="layerCatalogBtn" class="layer-catalog-btn" title="Tambah Layer">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
@@ -502,6 +505,44 @@
         </div>
       </div>
       <div class="at-sheet-body" id="at-sheet-content"></div>
+    </div>
+
+    <!-- AI GEOSPATIAL ANALYSIS SHEET -->
+    <div id="ai-sheet">
+      <div class="ais-sheet-handle"></div>
+      <div class="ais-sheet-head">
+        <span class="ais-sheet-title">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/><polyline points="2 15.5 12 8.5 22 15.5"/><line x1="12" y1="2" x2="12" y2="8.5"/></svg>
+          <span>AI Analisis <small class="ais-beta-badge">Beta</small></span>
+        </span>
+        <div class="ais-sheet-actions">
+          <button class="ais-sheet-minimize" type="button" aria-label="Minimalkan" onclick="minimizeAiSheet()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <button class="ais-sheet-close" type="button" aria-label="Tutup" onclick="closeAiSheet()">×</button>
+        </div>
+      </div>
+      <div class="ais-sheet-body">
+        <div id="ais-model-selector" class="ais-model-selector"></div>
+        <div id="ais-status" class="hidden"></div>
+        <div id="ais-chat-messages" class="ais-chat-messages"></div>
+        <div class="ais-quick-actions">
+          <button class="ais-quick-btn">📊 SPPG</button>
+          <button class="ais-quick-btn">🔥 Hotspot</button>
+          <button class="ais-quick-btn">🗺️ Layer</button>
+          <button class="ais-quick-btn">📍 Rekomendasi</button>
+          <button class="ais-quick-btn">📋 Ringkasan</button>
+        </div>
+        <div class="ais-chat-input-area">
+          <input type="text" id="ais-chat-input" class="ais-chat-input" placeholder="Tanya tentang data peta..." autocomplete="off" onkeydown="window._aiHandleKeydown(event)" />
+          <button class="ais-chat-send" onclick="window._aiSendMessage()">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+        <div class="ais-chat-footer">
+          <button class="ais-clear-chat" onclick="window._aiClearChat()">Hapus Chat</button>
+        </div>
+      </div>
     </div>
 
     <!-- BACKDROP OVERLAY (MOBILE ONLY) -->
@@ -1946,6 +1987,7 @@
   <script src="assets/js/bmkg-timezone.js"></script>
   <script src="assets/js/bmkg-precip-10days.js"></script>
   <script src="assets/js/bmkg-radar-overlay.js"></script>
+  <script src="assets/js/bmkg-stamet-overlay.js"></script>
   <script src="assets/js/map-insight-cards.js"></script>
   <script src="assets/js/geotani-search.js"></script>
   <script src="assets/js/sawah-dilindungi.js"></script>
@@ -1977,6 +2019,7 @@
   <script src="assets/js/concessions-layer.js"></script>
   <script src="assets/js/geopangan.js"></script>
   <script src="assets/js/sppg-district.js"></script>
+  <script src="assets/js/ai-analysis.js"></script>
 
 
   <script src="assets/js/population-chart.js"></script>

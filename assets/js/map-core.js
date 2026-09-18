@@ -569,6 +569,8 @@ L.control.scale({
         var bmkgLayer = baseTileLayers[name];
         var bmkgModelName = BMKG_TILETYPE[name];
         var bmkgParam = BMKG_PARAMS[name] || 'EH';
+        currentBasemapName = name; window.currentBasemapName = name;
+        var sel = document.getElementById('basemapSelect'); if (sel) sel.value = name;
         attachTileError(name);
         var bmkgXhr = new XMLHttpRequest();
         bmkgXhr.open('GET', 'https://satellite.bmkg.go.id/api22/modelrun', true);
@@ -576,8 +578,6 @@ L.control.scale({
         bmkgXhr.onerror = function () {
           bmkgLayer.addTo(map);
           if (typeof window.toggleProvinceBoundary === 'function' && name !== 'esri-satellite') { window.toggleProvinceBoundary(true); var pbCb = document.getElementById('toggleProvinceBoundary'); if (pbCb) pbCb.checked = true; }
-          currentBasemapName = name; window.currentBasemapName = name;
-          var sel = document.getElementById('basemapSelect'); if (sel) sel.value = name;
           map.fire('basemapchanged', { basemap: name });
           showMapToast(SATELLITE_ERROR_MSG[name] || 'Citra BMKG tidak tersedia.', 'error');
         };
@@ -603,8 +603,6 @@ L.control.scale({
           }
           bmkgLayer.addTo(map);
           if (typeof window.toggleProvinceBoundary === 'function' && name !== 'esri-satellite') { window.toggleProvinceBoundary(true); var pbCb = document.getElementById('toggleProvinceBoundary'); if (pbCb) pbCb.checked = true; }
-          currentBasemapName = name; window.currentBasemapName = name;
-          var sel = document.getElementById('basemapSelect'); if (sel) sel.value = name;
           map.fire('basemapchanged', { basemap: name });
         };
         bmkgXhr.send();
@@ -1299,7 +1297,7 @@ L.control.scale({
           'toggleRktnSumateraLayer', 'toggleRktnSulawesiLayer', 'toggleRktnPapuaLayer', 'toggleRktnMalukuLayer', 'toggleRktnKalimantanLayer', 'toggleRktnJawaLayer', 'toggleRktnBaliNtLayer',
           'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer', 'toggleSppgSebaranLayer', 'toggleSppgDistrictLayer',
           'toggleConcessionsLayer', 'toggleProtectedLayer', 'toggleMangroveLayer', 'togglePeatlandLayer',
-          'toggleBumiPersilLayer',
+          'toggleBumiPersilLayer', 'toggleBmkgStametRadar',
           'toggleFsvaLayer',
           'toggleLsdTmsLayer', 'toggleLbsTmsLayer',
           'toggleDiTmsLayer', 'toggleSaluranIrTmsLayer', 'toggleRtrwTmsLayer',
@@ -2621,6 +2619,12 @@ L.control.scale({
       ]
     },
     {
+      cat: 'BMKG',
+      layers: [
+        { id: 'toggleBmkgStametRadar', label: 'Radar Soekarno-Hatta (BMKG)' }
+      ]
+    },
+    {
       cat: 'ATRBPN',
       layers: [
         { id: 'toggleBumiPersilLayer', label: 'Persil Tanah (ATRBPN)' },
@@ -3384,6 +3388,9 @@ L.control.scale({
         }
         if (id === 'toggleBmkgTimezone' && typeof window.toggleBmkgTimezone === 'function') {
           window.toggleBmkgTimezone(cb.checked);
+        }
+        if (id === 'toggleBmkgStametRadar' && typeof window.toggleBmkgStametRadar === 'function') {
+          window.toggleBmkgStametRadar(cb.checked);
         }
         if (id === 'toggleBmkgPrecip10days' && typeof window.toggleBmkgPrecip10days === 'function') {
           window.toggleBmkgPrecip10days(cb.checked);

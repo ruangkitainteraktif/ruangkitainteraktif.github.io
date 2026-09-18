@@ -4,6 +4,8 @@
 
   var API_URL = 'https://mbgwatch.org/api/backend/v2/sppgs';
   var GEOJSON_URL = 'assets/data/bps/geojson/kabupaten.geojson';
+  var LOCAL_DATA_URL = 'assets/data/sppg-district-data.json';
+  var LOCAL_CACHE_KEY = 'sppg-district-cache';
   var PROXY_LIST = [
     function (url) { return 'https://api.cors.syrins.tech/?url=' + encodeURIComponent(url); },
     function (url) { return 'https://corsproxy.io/?url=' + encodeURIComponent(url); },
@@ -70,27 +72,57 @@
       .then(function (data) {
         apiCache = data;
         aggregateByDistrict(data);
+        try { localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(data)); } catch (e) {}
         callback(apiCache);
       })
       .catch(function () {
         var tries = PROXY_LIST.map(function (fn) { return fn(API_URL); });
         var i = 0;
-        function tryNext() {
+        function tryNextProxy() {
           if (i >= tries.length) {
-            console.warn('[SPPG District] Semua proxy gagal untuk:', API_URL);
-            if (typeof showMapToast === 'function') showMapToast('Gagal memuat data SPPG. Coba lagi nanti.', 'error');
-            callback(null);
+            loadFromCacheOrLocal(callback);
             return;
           }
           fetchWithTimeout(tries[i], 10000)
             .then(function (data) {
               apiCache = data;
               aggregateByDistrict(data);
+              try { localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(data)); } catch (e) {}
               callback(apiCache);
             })
-            .catch(function () { i++; tryNext(); });
+            .catch(function () { i++; tryNextProxy(); });
         }
-        tryNext();
+        tryNextProxy();
+      });
+  }
+
+  function loadFromCacheOrLocal(callback) {
+    try {
+      var cached = localStorage.getItem(LOCAL_CACHE_KEY);
+      if (cached) {
+        var data = JSON.parse(cached);
+        if (Array.isArray(data) && data.length > 0) {
+          apiCache = data;
+          aggregateByDistrict(data);
+          callback(apiCache);
+          return;
+        }
+      }
+    } catch (e) {}
+    fetchLocalData(callback);
+  }
+
+  function fetchLocalData(callback) {
+    fetchWithTimeout(LOCAL_DATA_URL, 15000)
+      .then(function (data) {
+        apiCache = data;
+        aggregateByDistrict(data);
+        callback(apiCache);
+      })
+      .catch(function (e) {
+        console.warn('[SPPG District] Gagal memuat data lokal:', e.message);
+        if (typeof showMapToast === 'function') showMapToast('Gagal memuat data SPPG. Coba lagi nanti.', 'error');
+        callback(null);
       });
   }
 
@@ -162,7 +194,6 @@
         '<div class="sppgd-popup-list">' + (listHtml || '<div class="sppgd-popup-empty">Tidak ada data SPPG</div>') + '</div>' +
       '</div>' +
       '<div class="sppgd-popup-footer">' +
-        '<button class="sppgd-popup-btn" data-district="' + esc(name) + '" data-province="' + esc(prov) + '">Lihat Semua di Tabel &raquo;</button>' +
         '<div class="sppgd-popup-source">Sumber: MBG Watch API</div>' +
       '</div>' +
     '</div>';
@@ -465,15 +496,6 @@
                   .setLatLng(l.getCenter())
                   .setContent(html)
                   .openOn(map);
-
-                setTimeout(function () {
-                  var btn = document.querySelector('.sppgd-popup-btn');
-                  if (btn) {
-                    btn.addEventListener('click', function () {
-                      showTablePanel(feature.properties.nmkab);
-                    });
-                  }
-                }, 100);
               });
             }
           }).addTo(map);
