@@ -1297,7 +1297,10 @@ L.control.scale({
           'toggleRktnSumateraLayer', 'toggleRktnSulawesiLayer', 'toggleRktnPapuaLayer', 'toggleRktnMalukuLayer', 'toggleRktnKalimantanLayer', 'toggleRktnJawaLayer', 'toggleRktnBaliNtLayer',
           'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer', 'toggleSppgSebaranLayer', 'toggleSppgDistrictLayer',
           'toggleConcessionsLayer', 'toggleProtectedLayer', 'toggleMangroveLayer', 'togglePeatlandLayer',
-          'toggleBumiPersilLayer', 'toggleBmkgStametRadar',
+          'toggleBumiPersilLayer',
+          'toggleBmkgProd_nowcasting', 'toggleBmkgProd_prakiraan', 'toggleBmkgProd_geohotspot',
+          'toggleBmkgProd_rdca', 'toggleBmkgProd_rdcaGeohotspot', 'toggleBmkgProd_spartanBasin',
+          'toggleBmkgProd_signatureForecast',
           'toggleFsvaLayer',
           'toggleLsdTmsLayer', 'toggleLbsTmsLayer',
           'toggleDiTmsLayer', 'toggleSaluranIrTmsLayer', 'toggleRtrwTmsLayer',
@@ -2621,7 +2624,13 @@ L.control.scale({
     {
       cat: 'BMKG',
       layers: [
-        { id: 'toggleBmkgStametRadar', label: 'Radar Soekarno-Hatta (BMKG)' }
+        { id: 'toggleBmkgProd_nowcasting', label: 'Nowcasting Aktif (BMKG)' },
+        { id: 'toggleBmkgProd_prakiraan', label: 'Prakiraan Cuaca (BMKG)' },
+        { id: 'toggleBmkgProd_geohotspot', label: 'Hotspot (BMKG)' },
+        { id: 'toggleBmkgProd_rdca', label: 'RDCA Radar (BMKG)' },
+        { id: 'toggleBmkgProd_rdcaGeohotspot', label: 'RDCA + Hotspot (BMKG)' },
+        { id: 'toggleBmkgProd_spartanBasin', label: 'Spartan BASIN (BMKG)' },
+        { id: 'toggleBmkgProd_signatureForecast', label: 'Signature Forecast (BMKG)' }
       ]
     },
     {
@@ -3389,8 +3398,9 @@ L.control.scale({
         if (id === 'toggleBmkgTimezone' && typeof window.toggleBmkgTimezone === 'function') {
           window.toggleBmkgTimezone(cb.checked);
         }
-        if (id === 'toggleBmkgStametRadar' && typeof window.toggleBmkgStametRadar === 'function') {
-          window.toggleBmkgStametRadar(cb.checked);
+        if (id.indexOf('toggleBmkgProd_') === 0) {
+          var fn = window['toggleBmkgProd_' + id.replace('toggleBmkgProd_', '')];
+          if (typeof fn === 'function') fn(cb.checked);
         }
         if (id === 'toggleBmkgPrecip10days' && typeof window.toggleBmkgPrecip10days === 'function') {
           window.toggleBmkgPrecip10days(cb.checked);

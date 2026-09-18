@@ -14,6 +14,8 @@
   var _attrTableOpen = false;
   var _attrTableMinimized = false;
 
+  var BASE_BMKG_PROD = 'https://datacuaca.bmkg.go.id/arcgis/rest/services/production/';
+
   /* ── Layer Registry ── */
   var ATTR_LAYER_REGISTRY = {
     toggleSignificantMarkers: {
@@ -483,6 +485,55 @@
       outFields: ['*'],
       props: []
     },
+    toggleBmkgProd_nowcasting: {
+      name: 'Nowcasting Aktif (BMKG)',
+      type: 'arcgis',
+      url: BASE_BMKG_PROD + 'nowcasting_public/MapServer/2/query',
+      outFields: ['namakecamatan','namakotakab','namaprovinsi','tipearea','kategoridampak','waktuberlaku'],
+      props: ['namakecamatan','namakotakab','namaprovinsi','tipearea','kategoridampak','waktuberlaku']
+    },
+    toggleBmkgProd_prakiraan: {
+      name: 'Prakiraan Cuaca (BMKG)',
+      type: 'arcgis',
+      url: BASE_BMKG_PROD + 'prakiraan_cuaca/MapServer/0/query',
+      outFields: ['kecamatan','kabupaten','propinsi'],
+      props: ['kecamatan','kabupaten','propinsi']
+    },
+    toggleBmkgProd_geohotspot: {
+      name: 'Hotspot (BMKG)',
+      type: 'arcgis',
+      url: BASE_BMKG_PROD + 'geohotspot/MapServer/0/query',
+      outFields: ['provinsi','kabupaten','kecamatan','date','time','region'],
+      props: ['provinsi','kabupaten','kecamatan','date','time','region']
+    },
+    toggleBmkgProd_rdca: {
+      name: 'RDCA Radar (BMKG)',
+      type: 'arcgis',
+      url: BASE_BMKG_PROD + 'rdca/MapServer/1/query',
+      outFields: ['latitude','longitude','system_date'],
+      props: ['latitude','longitude','system_date']
+    },
+    toggleBmkgProd_rdcaGeohotspot: {
+      name: 'RDCA + Hotspot (BMKG)',
+      type: 'arcgis',
+      url: BASE_BMKG_PROD + 'rdca_geohotspot/MapServer/0/query',
+      outFields: ['provinsi','kabupaten','kecamatan','date','time'],
+      props: ['provinsi','kabupaten','kecamatan','date','time']
+    },
+    toggleBmkgProd_spartanBasin: {
+      name: 'Spartan BASIN (BMKG)',
+      type: 'arcgis',
+      url: BASE_BMKG_PROD + 'saoffg/MapServer/0/query',
+      outFields: ['cat','label','ffr12','ffr24','status'],
+      props: ['cat','label','ffr12','ffr24','status']
+    },
+    toggleBmkgProd_signatureForecast: {
+      name: 'Signature Forecast (BMKG)',
+      type: 'arcgis',
+      url: BASE_BMKG_PROD + 'signature_bmkg_forecast/MapServer/0/query',
+      outFields: ['published','id','type','category','impacted'],
+      props: ['published','id','type','category','impacted']
+    },
     toggleProtectedLayer: {
       name: 'Kawasan Konservasi (WDPA)',
       type: 'pmtiles',
@@ -819,13 +870,14 @@
       var arcId = _currentLayer.id;
       var arcContent = document.getElementById('at-sheet-content');
       if (arcContent) arcContent.innerHTML = '<div class="at-loading">Memuat data dari server…</div>';
-      var qUrl = config.url + (config.url.indexOf('?') === -1 ? '?' : '&') +
+      var baseQ = config.url + (config.url.indexOf('?') === -1 ? '?' : '&') +
         'where=1%3D1&outFields=' + encodeURIComponent((config.outFields || ['*']).join(',')) +
-        '&returnGeometry=true&outSR=4326&f=json&resultRecordCount=2000';
-      fetch(qUrl).then(function (r) { return r.json(); }).then(function (data) {
-        if (!_currentLayer || _currentLayer.id !== arcId) return;
+        '&returnGeometry=true&outSR=4326&f=json';
+      var PAGE = 2000;
+      var MAX_RECORDS = 50000;
+      function parseArcFeatures(data) {
         var feats = (data && data.features) || [];
-        _currentFeatures = feats.map(function (feat) {
+        return feats.map(function (feat) {
           var a = feat.attributes || {};
           var f = {};
           for (var k in a) { if (a[k] !== null && a[k] !== undefined) f[k] = a[k]; }
@@ -838,12 +890,43 @@
           }
           return f;
         });
-        _currentPage = 1;
-        renderAttrContent();
-      }).catch(function () {
-        if (_currentLayer && _currentLayer.id === arcId && arcContent)
-          arcContent.innerHTML = '<div class="at-empty">Gagal memuat data atribut.</div>';
-      });
+      }
+      function fetchSequential(offset, collected) {
+        if (!_currentLayer || _currentLayer.id !== arcId) return Promise.resolve(collected);
+        if (collected.length >= MAX_RECORDS) return Promise.resolve(collected);
+        return fetch(baseQ + '&resultOffset=' + offset + '&resultRecordCount=' + PAGE)
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!_currentLayer || _currentLayer.id !== arcId) return collected;
+            var page = parseArcFeatures(data);
+            var merged = collected.concat(page);
+            if (page.length < PAGE || merged.length >= MAX_RECORDS) return merged;
+            return fetchSequential(offset + PAGE, merged);
+          });
+      }
+      fetch(baseQ + '&returnCountOnly=true')
+        .then(function (r) { return r.json(); })
+        .then(function (cntData) {
+          if (!_currentLayer || _currentLayer.id !== arcId) return;
+          var total = (cntData && cntData.count != null) ? cntData.count : 0;
+          if (total === 0) { _currentFeatures = []; _currentPage = 1; renderAttrContent(); return; }
+          var capped = total > MAX_RECORDS;
+          return fetchSequential(0, []).then(function (allFeats) {
+            if (!_currentLayer || _currentLayer.id !== arcId) return;
+            _currentFeatures = allFeats;
+            _currentPage = 1;
+            renderAttrContent();
+            if (capped && arcContent) {
+              var info = document.createElement('div');
+              info.className = 'at-info-bar';
+              info.textContent = 'Menampilkan ' + allFeats.length.toLocaleString('id-ID') + ' dari ' + total.toLocaleString('id-ID') + ' data (maks. ' + MAX_RECORDS.toLocaleString('id-ID') + ')';
+              arcContent.insertBefore(info, arcContent.firstChild);
+            }
+          });
+        }).catch(function () {
+          if (_currentLayer && _currentLayer.id === arcId && arcContent)
+            arcContent.innerHTML = '<div class="at-empty">Gagal memuat data atribut.</div>';
+        });
       return;
     } else if (config.type === 'pmtiles') {
       var pmtId = _currentLayer.id;

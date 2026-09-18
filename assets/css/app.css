@@ -1817,14 +1817,6 @@
     .sppgd-popup-footer { padding: 10px 16px 14px; border-top: 1px solid #f1f5f9; }
     .sppgd-popup-source { font-size: 9px; color: #94a3b8; text-align: center; }
 
-    /* BMKG Stamet Radar Legend */
-    .stamet-radar-legend { padding: 8px 12px; }
-    .stamet-radar-legend-title { font-size: 11px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
-    .stamet-radar-legend-items { display: flex; flex-direction: column; gap: 3px; }
-    .stamet-radar-legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-secondary); }
-    .stamet-radar-swatch { display: inline-block; width: 12px; height: 10px; border-radius: 2px; border: 1px solid var(--border-color); flex-shrink: 0; }
-    .stamet-radar-legend-meta { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border-color); font-size: 9px; color: var(--text-muted); line-height: 1.4; }
-    #stamet-radar-timestamp { font-weight: 600; color: var(--text-secondary); }
 
     .sppgd-table-panel { position: absolute; bottom: 60px; left: 10px; right: 10px; z-index: 1000; max-height: 45vh; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,.15); overflow: hidden; }
     .sppgd-table-wrap { display: flex; flex-direction: column; max-height: 45vh; }
@@ -6367,6 +6359,11 @@
     .at-empty, .at-loading, .at-wms-hint {
       text-align: center; padding: 24px 16px; color: var(--text-tertiary); font-size: 12px;
     }
+    .at-info-bar {
+      padding: 6px 12px; margin: 0 0 6px; font-size: 11px; color: #92400e;
+      background: #fef3c7; border: 1px solid #fcd34d; border-radius: 6px;
+      text-align: center;
+    }
     .at-wms-hint { display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .at-wms-hint svg { color: #2563eb; }
     .at-pagination {
@@ -8839,6 +8836,84 @@
       color: #64748b !important;
       margin-top: 6px;
       line-height: 1.3;
+    }
+
+    /* ── BMKG Production Legend ── */
+    .unified-legend-section .bmkg-prod-legend {
+      background: rgba(255,255,255,0.96) !important;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(148,163,184,0.22) !important;
+      border-radius: 10px !important;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+      color: #0f172a;
+      padding: 10px 12px;
+      min-width: 180px;
+    }
+    .unified-legend-section .bmkg-prod-legend-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #0f172a !important;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+    .unified-legend-section .bmkg-prod-legend-items {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .unified-legend-section .bmkg-prod-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: #334155 !important;
+    }
+    .unified-legend-section .bmkg-prod-swatch {
+      width: 14px;
+      height: 12px;
+      border-radius: 2px;
+      flex-shrink: 0;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+    .unified-legend-section .bmkg-prod-legend-source {
+      font-size: 9px;
+      color: #64748b !important;
+      margin-top: 6px;
+      line-height: 1.3;
+    }
+
+    /* ── BMKG Production Popup ── */
+    .bmkg-prod-popup .leaflet-popup-content-wrapper {
+      border-radius: 10px !important;
+      box-shadow: 0 4px 16px rgba(15,23,42,0.12) !important;
+    }
+    .bmkg-prod-popup-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .bmkg-prod-popup-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .bmkg-prod-popup-table td {
+      font-size: 11px;
+      padding: 2px 0;
+      vertical-align: top;
+    }
+    .bmkg-prod-popup-k {
+      font-weight: 600;
+      color: #475569;
+      white-space: nowrap;
+      padding-right: 10px;
+    }
+    .bmkg-prod-popup-v {
+      color: #0f172a;
+      word-break: break-word;
     }
 
     /* ── Unified Slider Container ── */
