@@ -14,8 +14,6 @@
   var _attrTableOpen = false;
   var _attrTableMinimized = false;
 
-  var BASE_BMKG_PROD = 'https://datacuaca.bmkg.go.id/arcgis/rest/services/production/';
-
   /* ── Layer Registry ── */
   var ATTR_LAYER_REGISTRY = {
     toggleSignificantMarkers: {
@@ -484,55 +482,6 @@
       url: 'https://sig02.pertanian.go.id/server/rest/services/Kawasan/Peta_Kawasan_Kedelai/MapServer/0/query',
       outFields: ['*'],
       props: []
-    },
-    toggleBmkgProd_nowcasting: {
-      name: 'Nowcasting Aktif (BMKG)',
-      type: 'arcgis',
-      url: BASE_BMKG_PROD + 'nowcasting_public/MapServer/2/query',
-      outFields: ['namakecamatan','namakotakab','namaprovinsi','tipearea','kategoridampak','waktuberlaku'],
-      props: ['namakecamatan','namakotakab','namaprovinsi','tipearea','kategoridampak','waktuberlaku']
-    },
-    toggleBmkgProd_prakiraan: {
-      name: 'Prakiraan Cuaca (BMKG)',
-      type: 'arcgis',
-      url: BASE_BMKG_PROD + 'prakiraan_cuaca/MapServer/0/query',
-      outFields: ['kecamatan','kabupaten','propinsi'],
-      props: ['kecamatan','kabupaten','propinsi']
-    },
-    toggleBmkgProd_geohotspot: {
-      name: 'Hotspot (BMKG)',
-      type: 'arcgis',
-      url: BASE_BMKG_PROD + 'geohotspot/MapServer/0/query',
-      outFields: ['provinsi','kabupaten','kecamatan','date','time','region'],
-      props: ['provinsi','kabupaten','kecamatan','date','time','region']
-    },
-    toggleBmkgProd_rdca: {
-      name: 'RDCA Radar (BMKG)',
-      type: 'arcgis',
-      url: BASE_BMKG_PROD + 'rdca/MapServer/1/query',
-      outFields: ['latitude','longitude','system_date'],
-      props: ['latitude','longitude','system_date']
-    },
-    toggleBmkgProd_rdcaGeohotspot: {
-      name: 'RDCA + Hotspot (BMKG)',
-      type: 'arcgis',
-      url: BASE_BMKG_PROD + 'rdca_geohotspot/MapServer/0/query',
-      outFields: ['provinsi','kabupaten','kecamatan','date','time'],
-      props: ['provinsi','kabupaten','kecamatan','date','time']
-    },
-    toggleBmkgProd_spartanBasin: {
-      name: 'Spartan BASIN (BMKG)',
-      type: 'arcgis',
-      url: BASE_BMKG_PROD + 'saoffg/MapServer/0/query',
-      outFields: ['cat','label','ffr12','ffr24','status'],
-      props: ['cat','label','ffr12','ffr24','status']
-    },
-    toggleBmkgProd_signatureForecast: {
-      name: 'Signature Forecast (BMKG)',
-      type: 'arcgis',
-      url: BASE_BMKG_PROD + 'signature_bmkg_forecast/MapServer/0/query',
-      outFields: ['published','id','type','category','impacted'],
-      props: ['published','id','type','category','impacted']
     },
     toggleProtectedLayer: {
       name: 'Kawasan Konservasi (WDPA)',
