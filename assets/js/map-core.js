@@ -1592,6 +1592,7 @@ L.control.scale({
   window.__geoportalPrintCtrl = new PrintMapControl().addTo(map);
 
   document.getElementById('resetLayersBtn').addEventListener('click', resetAllLayers);
+  window.resetAllLayers = resetAllLayers;
 
   /* ── Pindahkan tombol ke dalam FAB ── */
   setTimeout(function () {

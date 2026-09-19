@@ -793,6 +793,42 @@
     return s;
   }
 
+  async function fetchLahanSawahData(kode, bbox) {
+    var result = { lbs: null, lsd: null };
+    try {
+      var sawah = await fetchLuasSawah(kode);
+      if (sawah && sawah.sawahHa > 0) {
+        result.lbs = { ha: sawah.sawahHa, count: sawah.count };
+      }
+    } catch (e) {}
+    if (bbox) {
+      try {
+        var envelope = bbox.west + ',' + bbox.south + ',' + bbox.east + ',' + bbox.north;
+        var params = new URLSearchParams({
+          f: 'json', returnGeometry: 'false', where: '1=1',
+          geometry: envelope, geometryType: 'esriGeometryEnvelope',
+          inSR: '4326', spatialRel: 'esriSpatialRelIntersects',
+          outFields: 'wadmpr,wadmkk,luasha'
+        });
+        var ctrl = new AbortController();
+        var t = setTimeout(function () { ctrl.abort(); }, 12000);
+        var res = await fetch('https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/59/query?' + params.toString(), { signal: ctrl.signal });
+        clearTimeout(t);
+        if (res.ok) {
+          var data = await res.json();
+          var feats = data.features || [];
+          var totalHa = 0;
+          feats.forEach(function (f) {
+            var a = f.attributes || {};
+            if (a.luasha && !isNaN(parseFloat(a.luasha))) totalHa += parseFloat(a.luasha);
+          });
+          if (totalHa > 0) result.lsd = { ha: Math.round(totalHa * 100) / 100, count: feats.length };
+        }
+      } catch (e) {}
+    }
+    return result;
+  }
+
   async function formatRegionAnswer(text) {
     var regionQuery = parseRegionFromText(text);
     if (!regionQuery || /^(region|wilayah|area|daerah|pulau|provinsi|kabupaten|kota|kecamatan|desa|kelurahan)$/.test(regionQuery)) {
@@ -807,6 +843,13 @@
     }
     var match = searchRegionByName(regionQuery);
     if (!match) return 'Wilayah **"' + regionQuery + '"** tidak ditemukan. Coba nama provinsi, kabupaten, atau kota yang lebih lengkap.\n\n_Contoh: "Jawa Timur", "Kota Bandung", "Kabupaten Sleman"_.';
+
+    if (typeof resetAllLayers === 'function') {
+      try { resetAllLayers(); } catch (e) {}
+    }
+    if (typeof showGeoidBoundary === 'function') {
+      try { await showGeoidBoundary(match.kode); } catch (e) {}
+    }
 
     var levelLabel = { provinsi: 'Provinsi', kabkot: 'Kabupaten/Kota', kecamatan: 'Kecamatan', desa: 'Desa/Kelurahan' };
     var s = '**Profil Wilayah: ' + match.name + '**\n';
@@ -823,19 +866,42 @@
     }
 
     var centerLat = null, centerLng = null;
+    var bbox = null;
     if (boundary && boundary.center) {
       centerLat = boundary.center[0];
       centerLng = boundary.center[1];
+      bbox = boundary.bbox;
     } else {
       var center = await getRegionCenter(match.kode);
       if (center && center.lat && center.lng) {
         centerLat = center.lat;
         centerLng = center.lng;
+        bbox = computeBboxFromCenter(centerLat, centerLng, 0.5);
       }
     }
 
+    var lahanData = null;
+    try { lahanData = await fetchLahanSawahData(match.kode, bbox); } catch (e) {}
+    if (lahanData && (lahanData.lbs || lahanData.lsd)) {
+      s += '**Lahan Sawah:**\n';
+      if (lahanData.lbs && lahanData.lbs.ha > 0) {
+        var lbsPct = (boundary && boundary.luasHa > 0) ? ((lahanData.lbs.ha / boundary.luasHa) * 100).toFixed(1) : null;
+        s += '- LBS 2023: **' + fmt(lahanData.lbs.ha) + ' ha**';
+        if (lbsPct) s += ' (' + lbsPct + '% dari luas wilayah)';
+        s += '\n';
+      }
+      if (lahanData.lsd && lahanData.lsd.ha > 0) {
+        var lsdPct = (boundary && boundary.luasHa > 0) ? ((lahanData.lsd.ha / boundary.luasHa) * 100).toFixed(1) : null;
+        s += '- LSD 50K: **' + fmt(lahanData.lsd.ha) + ' ha**';
+        if (lsdPct) s += ' (' + lsdPct + '% dari luas wilayah)';
+        s += '\n';
+      }
+      s += '\n';
+    }
+
     if (centerLat != null && centerLng != null) {
-      var bbox = boundary ? boundary.bbox : computeBboxFromCenter(centerLat, centerLng, 0.5);
+      if (!bbox) bbox = computeBboxFromCenter(centerLat, centerLng, 0.5);
+
       var hs = countHotspotsInBbox(bbox);
       if (hs) {
         s += '**Hotspot Karhutla (24 Jam):**\n';
@@ -869,9 +935,10 @@
       }
     }
 
-    if (s === '**Profil Wilayah: ' + match.name + '**\n' + (levelLabel[match.type] || match.type) + ' | Kode: ' + match.kode + '\n\n') {
-      s += '_Data terbatas untuk wilayah ini. Coba aktifkan layer data untuk analisis lebih lanjut._';
-    }
+    var recIds = ['toggleHotspotLayer', 'toggleLatestEarthquake', 'toggleVolcanoLayer', 'arcgis-sawah-2023', 'toggleSawahDilindungi', 'toggleAirVisualPm25'];
+    var recLabels = { toggleHotspotLayer: '🔥 Hotspot', toggleLatestEarthquake: '🌍 Gempa', toggleVolcanoLayer: '🌋 Gunung Api', 'arcgis-sawah-2023': '🌾 LBS 2023', toggleSawahDilindungi: '🌾 LSD 50K', toggleAirVisualPm25: '💨 PM2.5' };
+    s += '**Rekomendasi Layer:**\n';
+    s += recGrid(recIds, recLabels);
 
     return s;
   }
