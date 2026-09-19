@@ -11,16 +11,7 @@
   var CHAT_HISTORY_KEY = 'ruangkita-ai-chat';
   var MAX_CHAT = 50;
 
-  var QUICK_ACTIONS = [
-    { label: 'Wilayah', intent: 'region' },
-    { label: 'Hotspot', intent: 'hotspot' },
-    { label: 'Gempa', intent: 'gempa' },
-    { label: 'Gunung', intent: 'gunung' },
-    { label: 'Cuaca', intent: 'cuaca' },
-    { label: 'Layer', intent: 'layers' },
-    { label: 'Lokasi', intent: 'viewport' },
-    { label: 'Ringkasan', intent: 'summary' }
-  ];
+  var QUICK_ACTIONS = [];
 
   function $(id) { return document.getElementById(id); }
   function fmt(n) { return n == null ? '-' : Number(n).toLocaleString('id-ID'); }
@@ -259,9 +250,14 @@
   var _regionBoundaryCache = {};
 
   function normalizeRegionQuery(text) {
-    return text.toLowerCase()
-      .replace(/^(profil|info|data|detail|informasi|tentang|untuk|di|pulau|provinsi|kabupaten|kota|kecamatan|desa|kelurahan)\s*/g, '')
+    var q = text.toLowerCase()
+      .replace(/^(profil|info|data|detail|informasi|tentang|untuk|di|pulau|penduduk|jumlah|populasi|demografi|hotspot|gempa|gunung|cuaca|udara|lahan|iklim|curah|hujan|angin|suhu|banjir|longsor|kebakaran|erupsi|magma|sawah|pertanian)\s*/g, '')
       .trim();
+    return q;
+  }
+
+  function stripAdminPrefix(q) {
+    return q.replace(/^(provinsi|kabupaten|kota|kecamatan|desa|kelurahan)\s*/g, '').trim();
   }
 
   function searchRegionByName(text) {
@@ -301,9 +297,13 @@
     if (typeof window.weatherSearchLocations !== 'undefined' && window.weatherSearchLocations.length) {
       for (var i = 0; i < Math.min(window.weatherSearchLocations.length, 50000); i++) {
         var loc = window.weatherSearchLocations[i];
-        if (loc.searchText && (norm(loc.searchText).indexOf(qn) !== -1 || loc.searchText.replace(/\s+/g, '').indexOf(qnCompact) !== -1)) {
+        var locDesa = norm(loc.desa || '');
+        if (locDesa && (locDesa === qn || locDesa.indexOf(qn) !== -1 || qn.indexOf(locDesa) !== -1)) {
+          scoreMatch(loc.desa, { name: loc.desa || loc.kecamatan, kode: loc.kode, provinsi: loc.provinsi, kabkot: loc.kabkota }, 'desa');
+          if (bestScore >= 80) break;
+        } else if (loc.searchText && (norm(loc.searchText).indexOf(qn) !== -1 || loc.searchText.replace(/\s+/g, '').indexOf(qnCompact) !== -1)) {
           scoreMatch(loc.searchText, { name: loc.desa || loc.kecamatan, kode: loc.kode, provinsi: loc.provinsi, kabkot: loc.kabkota }, 'desa');
-          break;
+          if (bestScore >= 80) break;
         }
       }
     }
@@ -384,12 +384,57 @@
     return total > 0 ? { total: total, high: high, medium: medium, low: low } : null;
   }
 
-  function findNearestQuakes(centerLat, centerLng, limit) {
+  function findNearestHotspots(centerLat, centerLng, limit) {
+    var features = (typeof window.getHotspotFeatures === 'function') ? window.getHotspotFeatures() : [];
+    if (!features.length) return [];
+    var result = [];
+    features.forEach(function (f) {
+      var p = f.properties;
+      if (p.lat == null || p.long == null) return;
+      var dist = geoidDistanceKm(centerLat, centerLng, p.lat, p.long);
+      result.push({
+        lat: p.lat, long: p.long,
+        confidence: p.confidence_level || '-',
+        provinsi: p.nama_provinsi || '-',
+        kabkota: p.kabkota || '-',
+        sumber: p.sumber || '-',
+        date: p.date_hotspot || '-',
+        dist: dist
+      });
+    });
+    result.sort(function (a, b) { return a.dist - b.dist; });
+    return result.slice(0, limit || 5);
+  }
+
+  async function findNearestQuakes(centerLat, centerLng, limit) {
     var quakes = [];
     var src = [];
-    if (typeof earthquakeSignificantData !== 'undefined') src = src.concat(earthquakeSignificantData);
-    if (typeof earthquakeFeltData !== 'undefined') src = src.concat(earthquakeFeltData);
+    if (typeof earthquakeSignificantData !== 'undefined' && earthquakeSignificantData.length) src = src.concat(earthquakeSignificantData);
+    if (typeof earthquakeFeltData !== 'undefined' && earthquakeFeltData.length) src = src.concat(earthquakeFeltData);
     if (typeof earthquakeLatestData !== 'undefined' && earthquakeLatestData) src.push(earthquakeLatestData);
+
+    if (!src.length) {
+      if (!window._quakeFetchPromise) {
+        window._quakeFetchPromise = (async function () {
+          var urls = [
+            'https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json',
+            'https://data.bmkg.go.id/DataMKG/TEWS/gempaterkini.json',
+            'https://data.bmkg.go.id/DataMKG/TEWS/gempadirasakan.json'
+          ];
+          try {
+            var results = await Promise.all(urls.map(function (u) { return fetch(u).then(function (r) { return r.json(); }); }));
+            var getGempa = function (p) { var g = p && p.Infogempa && p.Infogempa.gempa; return Array.isArray(g) ? g : (g ? [g] : []); };
+            earthquakeLatestData = getGempa(results[0])[0] || null;
+            earthquakeSignificantData = getGempa(results[1]);
+            earthquakeFeltData = getGempa(results[2]);
+          } catch (e) {}
+        })();
+      }
+      await window._quakeFetchPromise;
+      if (typeof earthquakeSignificantData !== 'undefined' && earthquakeSignificantData.length) src = src.concat(earthquakeSignificantData);
+      if (typeof earthquakeFeltData !== 'undefined' && earthquakeFeltData.length) src = src.concat(earthquakeFeltData);
+      if (typeof earthquakeLatestData !== 'undefined' && earthquakeLatestData) src.push(earthquakeLatestData);
+    }
 
     src.forEach(function (item) {
       var coords = (item.Coordinates || '').split(',');
@@ -499,7 +544,7 @@
   }
 
   /* === Answer Formatters === */
-  function formatHotspotAnswer() {
+  async function formatHotspotAnswer(text, regionMatch) {
     var d = extractHotspotData();
     if (!d) return 'Tidak ada data hotspot yang tersedia. Aktifkan layer Hotspot terlebih dahulu.';
     var s = '**Data Hotspot Karhutla (24 Jam)**\n\n';
@@ -511,10 +556,31 @@
       s += '\n**Top 10 Kabupaten/Kota:**\n';
       d.kabkotaTop10.forEach(function (p, i) { s += (i + 1) + '. ' + p.name + ' - **' + fmt(p.count) + '** titik\n'; });
     }
+    if (regionMatch) {
+      var boundary = await fetchRegionBoundaryData(regionMatch.kode);
+      if (boundary) {
+        var regionHotspots = countHotspotsInBbox(boundary.bbox);
+        s += '\n---\n**Hotspot di ' + regionMatch.name + ':**\n';
+        if (regionHotspots) {
+          s += 'Total dalam bbox: **' + fmt(regionHotspots.total) + '** titik\n';
+          s += 'High: **' + fmt(regionHotspots.high) + '** | Medium: **' + fmt(regionHotspots.medium) + '** | Low: **' + fmt(regionHotspots.low) + '**\n';
+          var nearest = findNearestHotspots(boundary.center[0], boundary.center[1], 3);
+          if (nearest.length) {
+            s += 'Terdekat dari pusat wilayah: **' + fmt(Math.round(nearest[0].dist)) + ' km** (' + nearest[0].confidence + ', ' + nearest[0].kabkota + ')\n';
+            s += '\n**3 Hotspot Terdekat:**\n';
+            nearest.forEach(function (h, i) {
+              s += (i + 1) + '. ' + h.lat.toFixed(1) + ', ' + h.long.toFixed(1) + ' — ' + h.confidence + ' — **' + fmt(Math.round(h.dist)) + ' km** — ' + h.kabkota + '\n';
+            });
+          }
+        } else {
+          s += 'Tidak ada hotspot dalam bbox wilayah ini.\n';
+        }
+      }
+    }
     return s;
   }
 
-  function formatGempaAnswer() {
+  async function formatGempaAnswer(text, regionMatch) {
     var d = extractGempaData();
     if (!d) return 'Tidak ada data gempa yang tersedia.';
     var s = '**Data Gempa BMKG**\n\n';
@@ -534,6 +600,20 @@
         s += (i + 1) + '. M' + (e.mag || '-') + ' - ' + (e.place || '-') + ' (Kedalaman: ' + (e.depth || '-') + ' km)\n';
       });
     }
+    if (regionMatch) {
+      var boundary = await fetchRegionBoundaryData(regionMatch.kode);
+      if (boundary) {
+        var nearest = await findNearestQuakes(boundary.center[0], boundary.center[1], 5);
+        if (nearest.length) {
+          s += '\n---\n**Gempa Terdekat dari ' + regionMatch.name + ':**\n';
+          nearest.forEach(function (q, i) {
+            s += (i + 1) + '. M' + q.mag + ' — **' + fmt(Math.round(q.dist)) + ' km** — ' + q.wilayah + ' (Kedalaman: ' + q.kedalaman + ' km)\n';
+          });
+        } else {
+          s += '\n---\nTidak ada data gempa di sekitar ' + regionMatch.name + '.\n';
+        }
+      }
+    }
     return s;
   }
 
@@ -549,7 +629,7 @@
     return s;
   }
 
-  function formatCuacaAnswer() {
+  async function formatCuacaAnswer(text, regionMatch) {
     var active = [];
     var weatherIds = ['toggleWindRgb','toggleRhRgb','toggleTp24Rgb','togglePm25Rgb','toggleHthRgb','toggleBmkgPrecip10days','toggleCuacaPerairanLayer','toggleCuacaPelabuhanLayer'];
     var labels = { toggleWindRgb: 'Wind Speed (GFS)', toggleRhRgb: 'Relative Humidity', toggleTp24Rgb: 'Precipitation 24 Jam', togglePm25Rgb: 'PM2.5 (BMKG PCM)', toggleHthRgb: 'Hari Tanpa Hujan', toggleBmkgPrecip10days: 'Prakiraan Hujan 10 Hari', toggleCuacaPerairanLayer: 'Cuaca Perairan', toggleCuacaPelabuhanLayer: 'Cuaca Pelabuhan' };
@@ -565,6 +645,11 @@
     }
     s += 'Layer aktif: **' + active.length + '**\n\n';
     active.forEach(function (l, i) { s += (i + 1) + '. ' + l + '\n'; });
+    if (regionMatch) {
+      s += '\n---\n**Cuaca untuk ' + regionMatch.name + ':**\n';
+      s += 'Untuk data cuaca detail, gunakan pencarian lokasi di panel cuaca dengan nama desa/kelurahan.\n';
+      s += 'Kode wilayah: **' + regionMatch.kode + '**\n';
+    }
     return s;
   }
 
@@ -584,10 +669,15 @@
     }
     s += 'Layer aktif: **' + active.length + '**\n\n';
     active.forEach(function (l, i) { s += (i + 1) + '. ' + l + '\n'; });
+    if (regionMatch) {
+      s += '\n---\n**Kualitas Udara di ' + regionMatch.name + ':**\n';
+      s += 'Data PM2.5 ditampilkan melalui layer AirVisual di peta.\n';
+      s += 'Kode wilayah: **' + regionMatch.kode + '**\n';
+    }
     return s;
   }
 
-  function formatGunungAnswer() {
+  async function formatGunungAnswer(text, regionMatch) {
     var ids = ['toggleVolcanoLayer','toggleKrbGunungApi','toggleKrbTitik','toggleGeologiBNPB'];
     var labels = { toggleVolcanoLayer: 'Gunung Api (PVMBG)', toggleKrbGunungApi: 'KRB Gunung Api (BIG)', toggleKrbTitik: 'Gas Vulkanik (BIG)', toggleGeologiBNPB: 'Peta Geologi (BNPB)' };
     var count = countActiveInCategory(ids);
@@ -601,6 +691,19 @@
     ids.forEach(function (id) {
       if (isLayerActiveById(id)) s += '- ' + labels[id] + '\n';
     });
+    if (regionMatch) {
+      var boundary = await fetchRegionBoundaryData(regionMatch.kode);
+      if (boundary) {
+        var nearest = await findNearestVolcanoes(boundary.center[0], boundary.center[1], regionMatch.name);
+        if (nearest.length) {
+          var STATUS_ICON = { Normal: '\uD83D\uDFE2', Waspada: '\uD83D\uDFE1', Siaga: '\uD83D\uDD34', Awas: '\uD83D\uDD34' };
+          s += '\n---\n**Gunung Terdekat dari ' + regionMatch.name + ':**\n';
+          nearest.slice(0, 5).forEach(function (v, i) {
+            s += (i + 1) + '. **' + v.name + '** — ' + fmt(Math.round(v.dist)) + ' km — ' + (STATUS_ICON[v.status] || '') + ' ' + v.status + ' | ' + fmt(v.elevation) + ' mdpl\n';
+          });
+        }
+      }
+    }
     return s;
   }
 
@@ -655,7 +758,7 @@
     return s;
   }
 
-  function formatLahanAnswer() {
+  async function formatLahanAnswer(text, regionMatch) {
     var ids = LAYER_CATEGORIES['ATRBPN'].ids;
     var count = countActiveInCategory(ids);
     var s = '**Data Lahan & Pertanahan**\n\n';
@@ -667,6 +770,22 @@
       return s;
     }
     s += 'Layer ATRBPN aktif: **' + count + '**\n';
+    if (regionMatch) {
+      var boundary = await fetchRegionBoundaryData(regionMatch.kode);
+      if (boundary) {
+        var lahans = await fetchLahanSawahData(regionMatch.kode, boundary.bbox);
+        s += '\n---\n**Lahan di ' + regionMatch.name + ':**\n';
+        if (lahans.lbs) {
+          s += 'LBS 2023 (Lahan Baku Sawah): **' + fmt(Math.round(lahans.lbs.ha)) + '** ha (' + lahans.lbs.count + ' blok)\n';
+        }
+        if (lahans.lsd) {
+          s += 'LSD 50K (Lahan Sawah Dilindungi): **' + fmt(Math.round(lahans.lsd.ha)) + '** ha (' + lahans.lsd.count + ' poligon)\n';
+        }
+        if (!lahans.lbs && !lahans.lsd) {
+          s += 'Tidak ada data lahan sawah untuk wilayah ini.\n';
+        }
+      }
+    }
     return s;
   }
 
@@ -727,24 +846,104 @@
     return s;
   }
 
-  function formatPendudukAnswer() {
-    var s = '**Data Penduduk & Demografi**\n\n';
-    var stored = null;
-    try { stored = localStorage.getItem('bpsIndicators'); } catch (e) {}
-    if (stored) {
-      try {
-        var indicators = JSON.parse(stored);
-        s += 'Data BPS tersedia: **' + (Array.isArray(indicators) ? indicators.length + ' indikator' : 'aktif') + '**\n';
-      } catch (e) {
-        s += 'Data BPS tersedia di localStorage\n';
-      }
-    } else {
-      s += 'Data BPS belum dimuat.\n\n';
-      s += '**Sumber data tersedia:**\n';
-      s += '- BPS Indikator (18 indikator demografi)\n';
-      s += '- Dukcapil (34 provinsi)\n';
-      s += '- BPS Demografi (rank, gender, usia)\n';
+  async function formatPendudukAnswer(text, regionMatch) {
+    if (!regionMatch) {
+      return '**Data Penduduk & Demografi**\n\n' +
+        'Ketik nama wilayah untuk melihat data penduduk detail dari Dukcapil.\n\n' +
+        '**Contoh:**\n' +
+        '- "penduduk Jawa Timur"\n' +
+        '- "jumlah penduduk Kota Bandung"\n' +
+        '- "populasi DKI Jakarta"\n' +
+        '- "demografi Bali"\n\n' +
+        '_Sumber: DKB Tahun 2024 Semester 1 (39 provinsi, level desa/kelurahan)._';
     }
+    if (typeof window.getDukcapilPopulation !== 'function') {
+      return 'Data Dukcapil belum dimuat. Silakan coba lagi nanti.';
+    }
+    var data = await window.getDukcapilPopulation(regionMatch.kode);
+    if (!data) {
+      return 'Data penduduk untuk **' + regionMatch.name + '** tidak ditemukan.';
+    }
+    var malePct = data.pp ? Math.round((data.pd / data.pp) * 100) : 0;
+    var femalePct = 100 - malePct;
+    var areaKm2 = Number(data.lw) || 0;
+    var density = areaKm2 > 0 ? Math.round(data.pp / areaKm2) : 0;
+    var avgKK = data.kk ? (data.pp / data.kk).toLocaleString('id-ID', { maximumFractionDigits: 1 }) : '-';
+
+    var s = '**Data Penduduk: ' + regionMatch.name + '**\n';
+    s += '_Sumber: ' + data.source + '_\n\n';
+    s += 'Total Populasi: **' + fmt(data.pp) + '** jiwa\n';
+    s += 'Laki-laki: **' + fmt(data.pd) + '** (' + malePct + '%) | Perempuan: **' + fmt(data.wn) + '** (' + femalePct + '%)\n';
+    s += 'Kepala Keluarga: **' + fmt(data.kk) + '**\n';
+    s += 'Luas Wilayah: **' + (areaKm2 ? areaKm2.toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' km²' : '-') + '**\n';
+    s += 'Kepadatan: **' + (density ? fmt(density) + '/km²' : '-') + '**\n';
+    s += 'Rata-rata/KK: **' + avgKK + ' jiwa**\n';
+
+    var ageGroups = [['0–4', 'u0'], ['5–9', 'u5'], ['10–14', 'u10'], ['15–19', 'u15'], ['20–24', 'u20'], ['25–34', 'u25'], ['35–44', 'u35'], ['45–54', 'u45'], ['55–64', 'u55'], ['65–69', 'u65'], ['70–74', 'u70'], ['75+', 'u75']];
+    var ageSorted = ageGroups.map(function (a) { return { label: a[0], val: Number(data[a[1]]) || 0 }; }).sort(function (a, b) { return b.val - a.val; });
+    s += '\n**Distribusi Usia (Top 5):**\n';
+    ageSorted.slice(0, 5).forEach(function (a, i) {
+      s += (i + 1) + '. ' + a.label + ' tahun: **' + fmt(a.val) + '**\n';
+    });
+
+    var totalReligion = (data.is || 0) + (data.kr || 0) + (data.ka || 0) + (data.hi || 0) + (data.bu || 0) + (data.ko || 0);
+    if (totalReligion > 0) {
+      var relItems = [
+        { name: 'Islam', val: data.is },
+        { name: 'Kristen', val: data.kr },
+        { name: 'Katolik', val: data.ka },
+        { name: 'Hindu', val: data.hi },
+        { name: 'Buddha', val: data.bu },
+        { name: 'Konghucu', val: data.ko }
+      ].filter(function (r) { return r.val > 0; }).sort(function (a, b) { return b.val - a.val; });
+      s += '\n**Agama:** ';
+      s += relItems.map(function (r) { return r.name + ' ' + Math.round((r.val / totalReligion) * 100) + '%'; }).join(' | ') + '\n';
+    }
+
+    var totalEdu = (data.tb || 0) + (data.bt || 0) + (data.ts || 0) + (data.sl || 0) + (data.sa || 0) + (data.d1 || 0) + (data.d3 || 0) + (data.s1 || 0) + (data.s2 || 0) + (data.s3 || 0);
+    if (totalEdu > 0) {
+      var eduItems = [
+        { name: 'Belum sekolah', val: data.tb },
+        { name: 'Belum tamat SD', val: data.bt },
+        { name: 'Tamat SD', val: data.ts },
+        { name: 'SLTP', val: data.sl },
+        { name: 'SLTA', val: data.sa },
+        { name: 'Diploma', val: (data.d1 || 0) + (data.d3 || 0) },
+        { name: 'S1', val: data.s1 },
+        { name: 'S2+', val: (data.s2 || 0) + (data.s3 || 0) }
+      ].filter(function (e) { return e.val > 0; }).sort(function (a, b) { return b.val - a.val; });
+      s += '**Pendidikan:** ';
+      s += eduItems.slice(0, 5).map(function (e) { return e.name + ' ' + Math.round((e.val / totalEdu) * 100) + '%'; }).join(' | ') + '\n';
+    }
+
+    var totalJob = (data.pk || 0) + (data.ps || 0) + (data.mr || 0) + (data.pw || 0) + (data.nl || 0) + (data.pm || 0) + (data.gp || 0) + (data.ws || 0);
+    if (totalJob > 0) {
+      var jobItems = [
+        { name: 'Petani', val: data.pk },
+        { name: 'PNS', val: data.ps },
+        { name: 'Mengurus rumah', val: data.mr },
+        { name: 'Pelajar/mahasiswa', val: data.pw },
+        { name: 'Nelayan', val: data.nl },
+        { name: 'Pensiunan', val: data.pm },
+        { name: 'Guru', val: data.gp },
+        { name: 'Wiraswasta', val: data.ws }
+      ].filter(function (j) { return j.val > 0; }).sort(function (a, b) { return b.val - a.val; });
+      s += '**Pekerjaan:** ';
+      s += jobItems.slice(0, 5).map(function (j) { return j.name + ' ' + Math.round((j.val / totalJob) * 100) + '%'; }).join(' | ') + '\n';
+    }
+
+    var totalBlood = (data.og || 0) + (data.ag || 0) + (data.bg || 0) + (data.abg || 0);
+    if (totalBlood > 0) {
+      s += '**Golongan Darah:** ';
+      s += [
+        { name: 'O', val: data.og },
+        { name: 'A', val: data.ag },
+        { name: 'B', val: data.bg },
+        { name: 'AB', val: data.abg }
+      ].filter(function (b) { return b.val > 0; }).sort(function (a, b) { return b.val - a.val; }).map(function (b) { return b.name + ' ' + Math.round((b.val / totalBlood) * 100) + '%'; }).join(' | ') + '\n';
+    }
+
+    s += '\nTotal desa/kelurahan: **' + fmt(data.records) + '**';
     return s;
   }
 
@@ -860,6 +1059,190 @@
     return result;
   }
 
+  var LULC_CLASSES = [
+    { id: 1, band: 1, name: 'Air', color: '#419bdf' },
+    { id: 2, band: 2, name: 'Hutan/Pohon', color: '#397d49' },
+    { id: 3, band: 4, name: 'Vegetasi Banjir', color: '#7a87c6' },
+    { id: 4, band: 5, name: 'Tanaman Pangan', color: '#e49635' },
+    { id: 5, band: 7, name: 'Kawasan Terbangun', color: '#c4281b' },
+    { id: 6, band: 8, name: 'Tanah Gundul', color: '#a59b8f' },
+    { id: 7, band: 9, name: 'Salju/Es', color: '#a8ebff' },
+    { id: 8, band: 10, name: 'Awan', color: '#616161' },
+    { id: 9, band: 11, name: 'Padang Rumput', color: '#e3e2c3' }
+  ];
+  var LULC_BAND_MAP = {};
+  LULC_CLASSES.forEach(function (c) { LULC_BAND_MAP[c.band] = c; });
+
+  function lulcToMercator(lon, lat) {
+    return [lon * 20037508.34 / 180, Math.log(Math.tan((90 + lat) * Math.PI / 360)) / (Math.PI / 180) * 20037508.34 / 180];
+  }
+
+  async function fetchLulcData(boundary) {
+    if (!boundary || !boundary.path || !boundary.path.length) return null;
+    var rings = boundary.path.map(function (ring) { return ring.map(function (p) { return lulcToMercator(p[1], p[0]); }); });
+    var geometry = { rings: rings, spatialReference: { wkid: 102100 } };
+    var params = new URLSearchParams({
+      f: 'json',
+      geometryType: 'esriGeometryPolygon',
+      geometry: JSON.stringify(geometry),
+      pixelSize: '10'
+    });
+    var controller = new AbortController();
+    var timeout = setTimeout(function () { controller.abort(); }, 30000);
+    try {
+      var res = await fetch('https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/computeStatisticsHistograms?' + params, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!res.ok) return null;
+      var payload = await res.json();
+      var histograms = payload.histograms && payload.histograms[0];
+      if (!histograms || !histograms.counts) return null;
+      var counts = histograms.counts || [];
+      var mins = histograms.minValues || [];
+      var totalPixels = counts.reduce(function (a, b) { return a + b; }, 0);
+      if (totalPixels === 0) return null;
+      var dist = {};
+      for (var i = 0; i < counts.length; i++) {
+        var bandVal = Math.round(mins[i] ?? i);
+        var cls = LULC_BAND_MAP[bandVal];
+        if (!cls) continue;
+        if (!dist[cls.id]) dist[cls.id] = { name: cls.name, color: cls.color, count: 0, pct: 0 };
+        dist[cls.id].count += counts[i];
+        dist[cls.id].pct += (counts[i] / totalPixels) * 100;
+      }
+      var classes = Object.values(dist).sort(function (a, b) { return b.pct - a.pct; });
+      var vegPct = classes.filter(function (c) { return [2, 3, 4].indexOf(c.id) !== -1; }).reduce(function (s, c) { return s + c.pct; }, 0);
+      var builtPct = (dist[5] || {}).pct || 0;
+      return { classes: classes, totalPixels: totalPixels, vegPct: vegPct, builtPct: builtPct };
+    } catch (e) {
+      clearTimeout(timeout);
+      return null;
+    }
+  }
+
+  var GEOPANGAN_KEY_COMMODITIES = [
+    { id: 'com_1', name: 'Beras', satuan: 'kg' },
+    { id: 'com_10', name: 'Telur Ayam', satuan: 'kg' },
+    { id: 'com_14', name: 'Cabai Merah', satuan: 'kg' },
+    { id: 'com_16', name: 'Cabai Rawit', satuan: 'kg' },
+    { id: 'com_20', name: 'Minyak Goreng', satuan: 'kg' },
+    { id: 'com_22', name: 'Gula Pasir', satuan: 'kg' },
+    { id: 'com_7', name: 'Daging Ayam', satuan: 'kg' },
+    { id: 'com_8', name: 'Daging Sapi', satuan: 'kg' }
+  ];
+  var GEOPANGAN_PROXY = [
+    function (u) { return 'https://api.cors.syrins.tech/?url=' + encodeURIComponent(u); },
+    function (u) { return 'https://corsproxy.io/?url=' + encodeURIComponent(u); },
+    function (u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); }
+  ];
+  var GEOPANGAN_PROV_MAP = {
+    '11': 1, '12': 2, '13': 3, '14': 4, '15': 6, '16': 8, '17': 7, '18': 10,
+    '19': 9, '21': 5, '31': 13, '32': 12, '33': 14, '34': 15, '35': 16, '36': 11,
+    '51': 17, '52': 18, '53': 19, '61': 20, '62': 22, '63': 21, '64': 23, '65': 24,
+    '71': 25, '72': 26, '73': 27, '74': 29, '75': 28, '76': 30, '81': 31, '82': 32,
+    '91': 33, '92': 37, '93': 38, '94': 35, '95': 39, '96': 36, '97': 40, '99': 34
+  };
+
+  async function fetchGeopanganData(kode) {
+    if (!kode) return null;
+    var provCode = kode.split('.')[0];
+    var provId = GEOPANGAN_PROV_MAP[provCode];
+    if (!provId) return null;
+
+    var now = new Date();
+    var end = now.toISOString().slice(0, 10);
+    var start = new Date(now.getTime() - 14 * 86400000).toISOString().slice(0, 10);
+
+    async function fetchWithFallback(url) {
+      try {
+        var c = new AbortController();
+        var t = setTimeout(function () { c.abort(); }, 8000);
+        var r = await fetch(url, { signal: c.signal });
+        clearTimeout(t);
+        if (r.ok) return await r.json();
+      } catch (e) {}
+      for (var i = 0; i < GEOPANGAN_PROXY.length; i++) {
+        try {
+          var c2 = new AbortController();
+          var t2 = setTimeout(function () { c2.abort(); }, 8000);
+          var r2 = await fetch(GEOPANGAN_PROXY[i](url), { cache: 'no-store', signal: c2.signal });
+          clearTimeout(t2);
+          if (r2.ok) return await r2.json();
+        } catch (e) {}
+      }
+      return null;
+    }
+
+    var results = [];
+    for (var ci = 0; ci < GEOPANGAN_KEY_COMMODITIES.length; ci++) {
+      var com = GEOPANGAN_KEY_COMMODITIES[ci];
+      var params = new URLSearchParams({
+        price_type_id: '1', comcat_id: com.id, province_id: String(provId),
+        regency_id: '', showKota: 'false', showPasar: 'false', tipe_laporan: '1',
+        start_date: start, end_date: end
+      });
+      try {
+        var json = await fetchWithFallback('https://www.bi.go.id/hargapangan/WebSite/TabelHarga/GetGridDataKomoditas?' + params);
+        if (json && json.data && json.data.length) {
+          var rows = json.data.filter(function (r) { return r.level === 1; });
+          if (rows.length) {
+            var latestVal = null;
+            var firstDate = null;
+            var prevVal = null;
+            var dateCols = Object.keys(rows[0]).filter(function (k) { return /\d{2}\/\d{2}\/\d{4}/.test(k); }).sort(function (a, b) {
+              var pa = a.split('/'), pb = b.split('/');
+              return new Date(pa[2], pa[1] - 1, pa[0]) - new Date(pb[2], pb[1] - 1, pb[0]);
+            });
+            for (var di = 0; di < rows.length; di++) {
+              var r = rows[di];
+              for (var dj = dateCols.length - 1; dj >= 0; dj--) {
+                var v = parseFloat(String(r[dateCols[dj]] || '').replace(/[^0-9.,-]/g, '').replace(',', '.'));
+                if (!isNaN(v) && v > 0) { latestVal = v; firstDate = dateCols[dj]; break; }
+              }
+              if (dj > 0) {
+                var pv = parseFloat(String(r[dateCols[dj - 1]] || '').replace(/[^0-9.,-]/g, '').replace(',', '.'));
+                if (!isNaN(pv) && pv > 0) prevVal = pv;
+              }
+              break;
+            }
+            if (latestVal !== null) {
+              var trend = '';
+              if (prevVal !== null && prevVal > 0) {
+                var chg = ((latestVal - prevVal) / prevVal * 100).toFixed(1);
+                trend = parseFloat(chg) > 0 ? ' +_chg_' + chg + '%' : parseFloat(chg) < 0 ? ' _chg_' + chg + '%' : '';
+              }
+              results.push({ name: com.name, price: latestVal, satuan: com.satuan, trend: trend, date: firstDate });
+            }
+          }
+        }
+      } catch (e) {}
+    }
+    return results.length ? results : null;
+  }
+
+  var _cctvCache = null;
+  async function findNearestCctv(centerLat, centerLng, limit) {
+    if (!_cctvCache) {
+      try {
+        var c = new AbortController();
+        var t = setTimeout(function () { c.abort(); }, 10000);
+        var res = await fetch('assets/data/cctv_updated.geojson', { signal: c.signal });
+        clearTimeout(t);
+        if (!res.ok) return [];
+        var gj = await res.json();
+        _cctvCache = (gj.features || []).map(function (f) {
+          var p = f.properties || {};
+          var g = f.geometry || {};
+          return { id: String(p.id || ''), name: p.name || 'CCTV', area: p.area || '-', lon: Number(g.coordinates && g.coordinates[0]), lat: Number(g.coordinates && g.coordinates[1]) };
+        }).filter(function (i) { return isFinite(i.lat) && isFinite(i.lon); });
+      } catch (e) { return []; }
+    }
+    var items = _cctvCache.map(function (i) {
+      return { id: i.id, name: i.name, area: i.area, dist: geoidDistanceKm(centerLat, centerLng, i.lat, i.lon) };
+    });
+    items.sort(function (a, b) { return a.dist - b.dist; });
+    return items.slice(0, limit || 5);
+  }
+
   async function formatRegionAnswer(text) {
     var regionQuery = parseRegionFromText(text);
     if (!regionQuery || /^(region|wilayah|area|daerah|pulau|provinsi|kabupaten|kota|kecamatan|desa|kelurahan)$/.test(regionQuery)) {
@@ -870,16 +1253,16 @@
         '- "Kabupaten Sleman"\n' +
         '- "DKI Jakarta"\n' +
         '- "Bali"\n\n' +
-        '_Data yang ditampilkan: luas wilayah, hotspot, gempa terdekat, dan gunung api terdekat._';
+        '_Data yang ditampilkan: luas wilayah, penduduk, lahan sawah, topografi, hotspot, gempa, dan gunung api terdekat._';
     }
     var match = searchRegionByName(regionQuery);
     if (!match) return 'Wilayah **"' + regionQuery + '"** tidak ditemukan. Coba nama provinsi, kabupaten, atau kota yang lebih lengkap.\n\n_Contoh: "Jawa Timur", "Kota Bandung", "Kabupaten Sleman"_.';
 
     if (typeof resetAllLayers === 'function') {
-      try { resetAllLayers(); } catch (e) {}
+      try { resetAllLayers(); } catch (e) { console.warn('[AI] resetAllLayers error:', e); }
     }
     if (typeof showGeoidBoundary === 'function') {
-      try { await showGeoidBoundary(match.kode); } catch (e) {}
+      try { await showGeoidBoundary(match.kode); } catch (e) { console.warn('[AI] showGeoidBoundary error:', e); }
     }
 
     var levelLabel = { provinsi: 'Provinsi', kabkot: 'Kabupaten/Kota', kecamatan: 'Kecamatan', desa: 'Desa/Kelurahan' };
@@ -894,6 +1277,18 @@
     if (boundary && boundary.luasHa > 0) {
       var luasKm2 = (boundary.luasHa / 100).toFixed(1);
       s += '**Luas Wilayah:** ' + fmt(Math.round(boundary.luasHa)) + ' ha (' + luasKm2 + ' km²)\n\n';
+    }
+
+    var popData = null;
+    try { if (typeof window.getDukcapilPopulation === 'function') popData = await window.getDukcapilPopulation(match.kode); } catch (e) {}
+    if (popData && popData.pp > 0) {
+      var malePct = Math.round((popData.pd / popData.pp) * 100);
+      var density = popData.lw > 0 ? Math.round(popData.pp / popData.lw) : 0;
+      s += '**Data Penduduk (DKB 2024):**\n';
+      s += '- Total: **' + fmt(popData.pp) + '** jiwa\n';
+      s += '- Laki-laki: **' + fmt(popData.pd) + '** (' + malePct + '%) | Perempuan: **' + fmt(popData.wn) + '** (' + (100 - malePct) + '%)\n';
+      s += '- KK: **' + fmt(popData.kk) + '** | Kepadatan: **' + (density ? fmt(density) + '/km²' : '-') + '**\n';
+      s += '- Desa/Kelurahan: **' + fmt(popData.records) + '**\n\n';
     }
 
     var centerLat = null, centerLng = null;
@@ -943,7 +1338,7 @@
         s += '\n';
       }
 
-      var quakes = findNearestQuakes(centerLat, centerLng, 3);
+      var quakes = await findNearestQuakes(centerLat, centerLng, 3);
       if (quakes.length) {
         s += '**Gempa Terdekat:**\n';
         quakes.forEach(function (q, i) {
@@ -966,50 +1361,172 @@
       }
     }
 
-    var recIds = ['toggleHotspotLayer', 'toggleLatestEarthquake', 'toggleVolcanoLayer', 'arcgis-sawah-2023', 'toggleSawahDilindungi', 'toggleAirVisualPm25'];
-    var recLabels = { toggleHotspotLayer: '🔥 Hotspot', toggleLatestEarthquake: '🌍 Gempa', toggleVolcanoLayer: '🌋 Gunung Api', 'arcgis-sawah-2023': '🌾 LBS 2023', toggleSawahDilindungi: '🌾 LSD 50K', toggleAirVisualPm25: '💨 PM2.5' };
-    s += '**Rekomendasi Layer:**\n';
-    s += recGrid(recIds, recLabels, match.name);
+    var topoLevel = match.type === 'provinsi' ? 'provinsi' : 'kabupaten';
+    var topoResult = null;
+    try { if (typeof window.runDemAnalysis === 'function') topoResult = await window.runDemAnalysis(match.kode, topoLevel); } catch (e) {}
+    if (topoResult && topoResult.elevMin !== undefined) {
+      var floodKm2 = topoResult.floodAreaHa > 0 ? (topoResult.floodAreaHa / 100).toFixed(1) : null;
+      var erosionKm2 = topoResult.erosionAreaHa > 0 ? (topoResult.erosionAreaHa / 100).toFixed(1) : null;
+      s += '**Topografi (DEM):**\n';
+      s += '- Elevasi: **' + Math.round(topoResult.elevMin) + '–' + Math.round(topoResult.elevMax) + ' m** (rerata ' + Math.round(topoResult.elevAvg) + ' m)\n';
+      s += '- Kemiringan: rerata **' + topoResult.slopeAvg.toFixed(1) + '°** | maks **' + topoResult.slopeMax.toFixed(1) + '°**\n';
+      s += '- Terrain: datar **' + topoResult.flatPct.toFixed(1) + '%** | curam **' + topoResult.steepPct.toFixed(1) + '%** | aspek dominan **' + topoResult.dominantAspect + '**\n';
+      if (floodKm2 && parseFloat(floodKm2) > 0) s += '- Potensi banjir: **' + floodKm2 + ' km²**\n';
+      if (erosionKm2 && parseFloat(erosionKm2) > 0) s += '- Potensi erosi: **' + erosionKm2 + ' km²**\n';
+      s += '\n';
+    }
+
+    if (boundary && boundary.path) {
+      var lulc = null;
+      try { lulc = await fetchLulcData(boundary); } catch (e) {}
+      if (lulc && lulc.classes.length) {
+        s += '**Land Cover (Sentinel-2 10m):**\n';
+        lulc.classes.slice(0, 6).forEach(function (c) {
+          s += '- ' + c.name + ': **' + c.pct.toFixed(1) + '%**\n';
+        });
+        s += '- Vegetasi total: **' + lulc.vegPct.toFixed(1) + '%** | Terbangun: **' + lulc.builtPct.toFixed(1) + '%**\n\n';
+      }
+    }
+
+    if (match.type === 'provinsi') {
+      var gpData = null;
+      try { gpData = await fetchGeopanganData(match.kode); } catch (e) {}
+      if (gpData) {
+        s += '**Harga Pangan (PIHPS BI):**\n';
+        gpData.forEach(function (item) {
+          var priceStr = 'Rp ' + Math.round(item.price).toLocaleString('id-ID') + '/' + item.satuan;
+          s += '- ' + item.name + ': **' + priceStr + '**';
+          if (item.trend) {
+            var trendStr = item.trend.replace('_chg_', '').replace('+', ' ↗ ').replace('-', ' ↘ ');
+            s += trendStr;
+          }
+          s += '\n';
+        });
+        s += '\n';
+      }
+    }
+
+    if (centerLat != null && centerLng != null) {
+      var cctvs = await findNearestCctv(centerLat, centerLng, 5);
+      if (cctvs.length) {
+        s += '**CCTV Terdekat:**\n';
+        cctvs.forEach(function (cam, i) {
+          s += (i + 1) + '. ' + cam.name + ' (' + cam.area + ') — **' + fmt(Math.round(cam.dist)) + ' km**\n';
+        });
+        s += '\n';
+      }
+    }
+
+    var WEATHER_DESC = {
+      0: 'Cerah', 1: 'Sebagian Besar Cerah', 2: 'Berawan Sebagian', 3: 'Berawan',
+      45: 'Kabut', 48: 'Kabut Beku',
+      51: 'Gerimis Ringan', 53: 'Gerimis', 55: 'Gerimis Lebat',
+      56: 'Gerimis Beku Ringan', 57: 'Gerimis Beku Lebat',
+      61: 'Hujan Ringan', 63: 'Hujan', 65: 'Hujan Lebat',
+      66: 'Hujan Beku Ringan', 67: 'Hujan Beku Lebat',
+      71: 'Salju Ringan', 73: 'Salju', 75: 'Salju Lebat',
+      77: 'Butiran Salju',
+      80: 'Hujan Petir Ringan', 81: 'Hujan Petir', 82: 'Hujan Petir Lebat',
+      85: 'Hujan Salju Ringan', 86: 'Hujan Salju Lebat',
+      95: 'Badai Petir', 96: 'Badai Petir + Hujan Es Ringan', 99: 'Badai Petir + Hujan Es Lebat'
+    };
+    var WMO_TO_UV = function (cloud) { return cloud < 20 ? 8 : cloud < 50 ? 6 : cloud < 70 ? 4 : 2; };
+
+    if (centerLat != null && centerLng != null) {
+      var weatherData = null;
+      try {
+        var wUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + centerLat + '&longitude=' + centerLng +
+          '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,precipitation' +
+          '&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code,uv_index_max&timezone=Asia%2FBangkok&forecast_days=3';
+        var wRes = await fetch(wUrl);
+        if (wRes.ok) weatherData = await wRes.json();
+      } catch (e) {}
+      if (weatherData && weatherData.current) {
+        var c = weatherData.current;
+        var desc = WEATHER_DESC[c.weather_code] || 'Tidak diketahui';
+        s += '**Cuaca Hari Ini:**\n';
+        s += '- Kondisi: **' + desc + '**\n';
+        s += '- Suhu: **' + c.temperature_2m + '°C** (Terasa: ' + c.apparent_temperature + '°C)\n';
+        s += '- Kelembapan: **' + c.relative_humidity_2m + '%** | Angin: **' + c.wind_speed_10m + ' km/j**\n';
+        s += '- Curah hujan: **' + (c.precipitation || 0) + ' mm**\n';
+        if (weatherData.daily) {
+          var d = weatherData.daily;
+          s += '- Prediksi 3 hari: ';
+          for (var di = 0; di < Math.min(3, (d.time || []).length); di++) {
+            var dayDesc = WEATHER_DESC[d.weather_code[di]] || '-';
+            var dayLabel = di === 0 ? 'Hari ini' : di === 1 ? 'Besok' : d.time[di].slice(5);
+            s += dayLabel + ' **' + Math.round(d.temperature_2m_min[di]) + '–' + Math.round(d.temperature_2m_max[di]) + '°C** ' + dayDesc;
+            if (d.precipitation_sum[di] > 0) s += ' (' + d.precipitation_sum[di] + ' mm)';
+            s += di < 2 ? ', ' : '';
+          }
+          s += '\n';
+        }
+        s += '\n';
+      }
+    }
+
+    var POPULAR_REGIONS = {
+      provinsi: [
+        { name: 'DKI Jakarta', q: 'Jakarta' }, { name: 'Jawa Barat', q: 'Jawa Barat' },
+        { name: 'Jawa Timur', q: 'Jawa Timur' }, { name: 'Jawa Tengah', q: 'Jawa Tengah' },
+        { name: 'Sumatera Utara', q: 'Sumatera Utara' }, { name: 'Bali', q: 'Bali' },
+        { name: 'Kalimantan Timur', q: 'Kalimantan Timur' }, { name: 'Sulawesi Selatan', q: 'Sulawesi Selatan' }
+      ],
+      kabkot: [
+        { name: 'Kota Bandung', q: 'Kota Bandung' }, { name: 'Kota Surabaya', q: 'Kota Surabaya' },
+        { name: 'Kota Semarang', q: 'Kota Semarang' }, { name: 'Kota Yogyakarta', q: 'Kota Yogyakarta' },
+        { name: 'Kota Medan', q: 'Kota Medan' }, { name: 'Kota Makassar', q: 'Kota Makassar' },
+        { name: 'Kota Denpasar', q: 'Kota Denpasar' }, { name: 'Kota Bogor', q: 'Kota Bogor' }
+      ],
+      kecamatan: [
+        { name: 'Kec. Denpasar Selatan', q: 'Denpasar Selatan' }, { name: 'Kec. Sukamakmur', q: 'Sukamakmur' },
+        { name: 'Kec. Cimanggis', q: 'Cimanggis' }, { name: 'Kec. Tegallalang', q: 'Tegallalang' },
+        { name: 'Kec. Ubud', q: 'Ubud' }, { name: 'Kec. Cibiru', q: 'Cibiru' }
+      ],
+      desa: [
+        { name: 'Desa Sukamaju', q: 'Sukamaju' }, { name: 'Desa Pemecutan', q: 'Pemecutan' },
+        { name: 'Desa Adat Kuta', q: 'Desa Adat Kuta' }, { name: 'Desa Cilangkap', q: 'Cilangkap' },
+        { name: 'Desa Kedungjati', q: 'Kedungjati' }, { name: 'Desa Wisata Candirejo', q: 'Candirejo' }
+      ]
+    };
+    var popRegions = POPULAR_REGIONS[match.type] || POPULAR_REGIONS.provinsi;
+    var regionChipsHtml = '<div class="ais-welcome-btns">';
+    popRegions.forEach(function (r) {
+      var safeQ = r.q.replace(/'/g, "\\'");
+      regionChipsHtml += '<button class="ais-welcome-btn" onclick="window._aiSendQuick(-1,\'' + safeQ + '\')">' + r.name + '</button>';
+    });
+    regionChipsHtml += '</div><div class="ais-hint-modern">Klik nama wilayah di atas atau ketik langsung di kolom chat</div>';
+    s += '\x00RAW' + regionChipsHtml + 'RAW\x00';
 
     return s;
   }
 
   function formatHelpAnswer() {
-    return '**AI Analisis Geospasial**\n\n' +
-      'Tanyakan sesuatu tentang data peta, atau gunakan tombol quick action.\n\n' +
-      '**Contoh pertanyaan:**\n' +
-      '- "Hotspot terbanyak di mana?"\n' +
-      '- "Gempa terbaru apa?"\n' +
-      '- "Basemap apa yang aktif?"\n' +
-      '- "Layer cuaca apa saja yang aktif?"\n' +
-      '- "Kualitas udara bagaimana?"\n' +
-      '- "Data gunung api"\n' +
-      '- "Status kehutanan"\n' +
-      '- "Data hidrologi aktif"\n' +
-      '- "Layer bencana apa saja?"\n' +
-      '- "Sensor seismic aktif?"\n' +
-      '- "Data maritim"\n' +
-      '- "Ringkasan data peta"\n' +
+    return '**Cari Wilayah**\n\n' +
+      'Ketik nama wilayah untuk melihat profil lengkapnya: luas, penduduk, topografi, hotspot, gempa, gunung api.\n\n' +
+      '**Contoh:**\n' +
       '- "Jawa Timur"\n' +
       '- "Kota Bandung"\n' +
-      '- "Kabupaten Sleman"\n';
+      '- "Kabupaten Sleman"\n' +
+      '- "Desa Sukamaju"\n\n' +
+      'Atau pilih quick action di bawah untuk analisis cepat.';
   }
 
-  async function getAnswer(intent, text) {
+  async function getAnswer(intent, text, regionMatch) {
     switch (intent) {
       case 'region': return await formatRegionAnswer(text);
-      case 'hotspot': return formatHotspotAnswer();
-      case 'gempa': return formatGempaAnswer();
+      case 'hotspot': return await formatHotspotAnswer(text, regionMatch);
+      case 'gempa': return await formatGempaAnswer(text, regionMatch);
       case 'basemap': return formatBasemapAnswer();
-      case 'cuaca': return formatCuacaAnswer();
-      case 'udara': return formatUdaraAnswer();
-      case 'gunung': return formatGunungAnswer();
+      case 'cuaca': return await formatCuacaAnswer(text, regionMatch);
+      case 'udara': return await formatUdaraAnswer(text, regionMatch);
+      case 'gunung': return await formatGunungAnswer(text, regionMatch);
       case 'hutan': return formatHutanAnswer();
       case 'geologi': return formatGeologiAnswer();
       case 'hidrologi': return formatHidrologiAnswer();
       case 'penduduk': return formatPendudukAnswer();
       case 'pangan': return formatPanganAnswer();
-      case 'lahan': return formatLahanAnswer();
+      case 'lahan': return await formatLahanAnswer(text, regionMatch);
       case 'maritim': return formatMaritimAnswer();
       case 'bencana': return formatBencanaAnswer();
       case 'sensorgempa': return formatSensorGempaAnswer();
@@ -1073,12 +1590,32 @@
   function saveChatHistory() { try { localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(chatHistory)); } catch (e) {} }
   function loadChatHistory() { try { chatHistory = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY) || '[]'); } catch (e) { chatHistory = []; } }
 
+  function showWelcomeMessage() {
+    addChatMessage('ai', 'Selamat datang! Ketik nama wilayah untuk melihat profil lengkap: data penduduk, topografi, land cover, cuaca, harga pangan, dan CCTV.');
+    var allSuggestions = [
+      { emoji: '🏙️', name: 'Jakarta', q: 'Jakarta' }, { emoji: '🏙️', name: 'Surabaya', q: 'Surabaya' },
+      { emoji: '🏙️', name: 'Bandung', q: 'Bandung' }, { emoji: '🏙️', name: 'Semarang', q: 'Semarang' },
+      { emoji: '🏙️', name: 'Yogyakarta', q: 'Yogyakarta' }, { emoji: '🏙️', name: 'Medan', q: 'Medan' },
+      { emoji: '🏙️', name: 'Makassar', q: 'Makassar' }, { emoji: '🏙️', name: 'Denpasar', q: 'Denpasar' },
+      { emoji: '🏘️', name: 'Desa Sukamaju', q: 'Desa Sukamaju' }, { emoji: '🏘️', name: 'Desa Cilangkap', q: 'Desa Cilangkap' },
+      { emoji: '🏘️', name: 'Desa Adat Kuta', q: 'Desa Adat Kuta' }, { emoji: '🏘️', name: 'Desa Pemecutan', q: 'Desa Pemecutan' }
+    ];
+    for (var i = allSuggestions.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var tmp = allSuggestions[i]; allSuggestions[i] = allSuggestions[j]; allSuggestions[j] = tmp; }
+    var picks = allSuggestions.slice(0, 5);
+    var chipsHtml = '<div class="ais-welcome-btns">';
+    picks.forEach(function (p) { chipsHtml += '<button class="ais-welcome-btn" onclick="window._aiSendQuick(-1,\'' + p.q.replace(/'/g, "\\'") + '\')">' + p.emoji + ' ' + p.name + '</button>'; });
+    chipsHtml += '</div>';
+    addChatMessage('ai', '\x00RAW' + chipsHtml + 'RAW\x00');
+  }
+
   window._aiClearChat = function () {
     if (_typingTimer) { clearInterval(_typingTimer); _typingTimer = null; }
     chatHistory = []; localStorage.removeItem(CHAT_HISTORY_KEY); renderChat();
+    showWelcomeMessage();
   };
 
-  window._aiSendQuick = function (idx) {
+  window._aiSendQuick = function (idx, directText) {
+    if (directText) { sendMessage(directText); return; }
     var action = QUICK_ACTIONS[idx];
     if (action) sendMessage(action.intent);
   };
@@ -1192,14 +1729,18 @@
       var regionMatch = searchRegionByName(text);
       if (regionMatch) intent = 'region';
     }
-    var isRegion = intent === 'region';
-    if (isRegion) showAiLoading('Mencari data wilayah');
+    var regionMatch = null;
+    if (intent !== 'region' && intent !== 'help' && intent !== 'basemap' && intent !== 'layers' && intent !== 'viewport' && intent !== 'summary') {
+      regionMatch = searchRegionByName(text);
+    }
+    var needsLoading = intent === 'region' || regionMatch;
+    if (needsLoading) showAiLoading(regionMatch ? 'Mencari data ' + regionMatch.name : 'Mencari data wilayah');
     try {
-      var answer = await getAnswer(intent, text);
-      if (isRegion) removeAiLoading();
+      var answer = await getAnswer(intent, text, regionMatch);
+      if (needsLoading) removeAiLoading();
       typeWriteMessage(answer);
     } catch (e) {
-      if (isRegion) removeAiLoading();
+      if (needsLoading) removeAiLoading();
       typeWriteMessage('Terjadi kesalahan saat memproses pertanyaan. Silakan coba lagi.');
     }
   }
@@ -1215,8 +1756,10 @@
     sheetOpen = true;
     sheetMinimized = false;
     if (!chatHistory.length) {
-      addChatMessage('ai', 'Halo! Saya adalah AI asisten geospasial. Tanyakan apa saja tentang data peta, atau pilih quick action di bawah.');
+      showWelcomeMessage();
     }
+    var input = $('ais-chat-input');
+    if (input) { setTimeout(function () { input.focus(); }, 300); }
   }
 
   function closeAiSheet() {
@@ -1249,9 +1792,6 @@
     if (triggerBtn) triggerBtn.addEventListener('click', toggleAiSheet);
     loadChatHistory();
     renderChat();
-    document.querySelectorAll('.ais-quick-btn').forEach(function (btn, idx) {
-      btn.addEventListener('click', function () { window._aiSendQuick(idx); });
-    });
   }
 
   if (document.readyState === 'loading') {

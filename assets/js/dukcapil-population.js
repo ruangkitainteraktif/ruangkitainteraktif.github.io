@@ -122,4 +122,6 @@
     if (typeof toggleDetailPanel === 'function') toggleDetailPanel(true);
     document.getElementById('dukcapilPopulationDetail')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  window.getDukcapilPopulation = getDukcapilPopulation;
 })();
