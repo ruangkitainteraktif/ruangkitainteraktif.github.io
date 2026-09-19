@@ -135,6 +135,7 @@
       var json = await res.json();
       placeVolcanoMarkers(json);
       volcanoLoaded = true;
+      window._volcanoDataCache = json;
       if (info) info.textContent = json.length + ' gunung api aktif di Indonesia';
     } catch (e) {
       console.error('[Volcano] Gagal memuat gunung.json:', e);

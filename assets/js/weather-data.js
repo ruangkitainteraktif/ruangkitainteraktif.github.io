@@ -116,6 +116,10 @@
       }
       provinsiSearchIndex = [...provSeen.values()];
 
+      window.provinsiSearchIndex = provinsiSearchIndex;
+      window.kabkotaSearchIndex = kabkotaSearchIndex;
+      window.kecamatanSearchIndex = kecamatanSearchIndex;
+      window.weatherSearchLocations = weatherSearchLocations;
 
       generate38RandomWeatherMarkers();
     } catch (err) {

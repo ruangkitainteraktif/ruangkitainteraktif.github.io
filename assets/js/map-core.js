@@ -2959,6 +2959,15 @@ L.control.scale({
   }
   window.closeLayerCatalog = closeLayerCatalog;
 
+  function buildLayerCatalogIfNeeded() {
+    var dd = document.getElementById('layerCatalogDropdown');
+    if (dd && !dd.dataset.built && typeof buildLayerCatalog === 'function') {
+      buildLayerCatalog(dd);
+      dd.dataset.built = '1';
+    }
+  }
+  window.buildLayerCatalogIfNeeded = buildLayerCatalogIfNeeded;
+
   function findLayerById(id) {
     var el = document.getElementById(id);
     if (el) return el;
