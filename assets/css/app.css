@@ -2339,6 +2339,16 @@
       0%, 80%, 100% { transform: translateY(0); opacity: .4; }
       40% { transform: translateY(-6px); opacity: 1; }
     }
+    .ais-msg-typing-indicator {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 14px;
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: 14px; border-top-left-radius: 4px;
+      font-size: 12px; color: var(--text-secondary);
+    }
+    .ais-msg-typing-indicator .ais-typing-dots {
+      padding: 0; background: none; border: none; border-radius: 0;
+    }
 
     .ais-msg-typing .ais-msg-content { overflow: hidden; }
     .ais-msg-typing .ais-msg-cursor {

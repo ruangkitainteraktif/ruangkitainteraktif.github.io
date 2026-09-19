@@ -207,20 +207,51 @@
   }
   window.toggleLayerFromAI = toggleLayerFromAI;
 
+  window._aiRegionAnalyze = function (intent, regionName) {
+    var queryMap = {
+      hotspot: 'Hotspot di ',
+      gempa: 'Gempa di ',
+      gunung: 'Gunung api di ',
+      lahan: 'Lahan sawah di ',
+      udara: 'Kualitas udara di '
+    };
+    var query = (queryMap[intent] || '') + regionName;
+    addChatMessage('user', query);
+    getAnswer(intent, query).then(function (answer) {
+      typeWriteMessage(answer);
+    }).catch(function () {
+      typeWriteMessage('Gagal memuat analisis. Silakan coba lagi.');
+    });
+  };
+
   function isLayerActiveById(layerId) {
     var el = document.getElementById(layerId);
     if (el && el.checked) return true;
     return !!(window._layerCatalogState && window._layerCatalogState[layerId]);
   }
 
-  function recChip(id, label, isActive) {
-    return '<button type="button" class="ais-layer-rec' + (isActive ? ' ais-layer-rec-active' : '') + '" data-layer-id="' + id + '" onclick="toggleLayerFromAI(\'' + id + '\')">' + label + '</button>';
+  var REGION_CHIP_INTENTS = {
+    toggleHotspotLayer: 'hotspot',
+    toggleLatestEarthquake: 'gempa',
+    toggleVolcanoLayer: 'gunung',
+    'arcgis-sawah-2023': 'lahan',
+    toggleSawahDilindungi: 'lahan',
+    toggleAirVisualPm25: 'udara'
+  };
+
+  function recChip(id, label, isActive, regionName) {
+    var onclick = "toggleLayerFromAI('" + id + "')";
+    if (regionName && REGION_CHIP_INTENTS[id]) {
+      var safeName = regionName.replace(/'/g, "\\'");
+      onclick += ";window._aiRegionAnalyze('" + REGION_CHIP_INTENTS[id] + "','" + safeName + "')";
+    }
+    return '<button type="button" class="ais-layer-rec' + (isActive ? ' ais-layer-rec-active' : '') + '" data-layer-id="' + id + '" onclick="' + onclick + '">' + label + '</button>';
   }
 
-  function recGrid(ids, labels) {
+  function recGrid(ids, labels, regionName) {
     var s = '<div class="ais-rec-grid">';
-    ids.forEach(function (id) { s += recChip(id, labels[id], isLayerActiveById(id)); });
-    s += '</div><div class="ais-empty-hint">Klik untuk aktifkan/dinonaktifkan</div>';
+    ids.forEach(function (id) { s += recChip(id, labels[id], isLayerActiveById(id), regionName); });
+    s += '</div><div class="ais-empty-hint">' + (regionName ? 'Klik untuk analisis detail' : 'Klik untuk aktifkan/dinonaktifkan') + '</div>';
     return '\x00RAW' + s + 'RAW\x00';
   }
 
@@ -938,7 +969,7 @@
     var recIds = ['toggleHotspotLayer', 'toggleLatestEarthquake', 'toggleVolcanoLayer', 'arcgis-sawah-2023', 'toggleSawahDilindungi', 'toggleAirVisualPm25'];
     var recLabels = { toggleHotspotLayer: '🔥 Hotspot', toggleLatestEarthquake: '🌍 Gempa', toggleVolcanoLayer: '🌋 Gunung Api', 'arcgis-sawah-2023': '🌾 LBS 2023', toggleSawahDilindungi: '🌾 LSD 50K', toggleAirVisualPm25: '💨 PM2.5' };
     s += '**Rekomendasi Layer:**\n';
-    s += recGrid(recIds, recLabels);
+    s += recGrid(recIds, recLabels, match.name);
 
     return s;
   }
@@ -1135,6 +1166,22 @@
     }
   }
 
+  function showAiLoading(text) {
+    var c = $('ais-chat-messages');
+    if (!c) return;
+    var div = document.createElement('div');
+    div.className = 'ais-msg ais-msg-ai';
+    div.id = 'ais-loading-msg';
+    div.innerHTML = '<div class="ais-msg-avatar">' + AI_AVATAR_SVG + '</div><div class="ais-msg-content"><span class="ais-msg-typing-indicator">' + (text || 'Memproses') + '<span class="ais-typing-dots"><span></span><span></span><span></span></span></span></div>';
+    c.appendChild(div);
+    c.scrollTop = c.scrollHeight;
+  }
+
+  function removeAiLoading() {
+    var el = document.getElementById('ais-loading-msg');
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+  }
+
   async function sendMessage(text) {
     if (!text || !text.trim()) return;
     var input = $('ais-chat-input');
@@ -1145,10 +1192,14 @@
       var regionMatch = searchRegionByName(text);
       if (regionMatch) intent = 'region';
     }
+    var isRegion = intent === 'region';
+    if (isRegion) showAiLoading('Mencari data wilayah');
     try {
       var answer = await getAnswer(intent, text);
+      if (isRegion) removeAiLoading();
       typeWriteMessage(answer);
     } catch (e) {
+      if (isRegion) removeAiLoading();
       typeWriteMessage('Terjadi kesalahan saat memproses pertanyaan. Silakan coba lagi.');
     }
   }
