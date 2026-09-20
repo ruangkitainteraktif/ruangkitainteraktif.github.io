@@ -1828,7 +1828,8 @@ L.control.scale({
   var fsvaLegendCtrl = null;
   var fsvaWmsUrl = 'https://geoportal.badanpangan.go.id/geoserver/palapa/wms';
   var fsvaProxies = [
-    function (url) { return 'https://api.cors.syrins.tech/?url=' + encodeURIComponent(url); },
+    function (url) { return 'https://api.cors.lol/?url=' + encodeURIComponent(url); },
+    function (url) { return 'https://proxy.killcors.com/?url=' + encodeURIComponent(url); },
     function (url) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url); }
   ];
 

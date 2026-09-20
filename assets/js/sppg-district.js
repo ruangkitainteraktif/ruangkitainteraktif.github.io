@@ -7,8 +7,8 @@
   var LOCAL_DATA_URL = 'assets/data/sppg-district-data.json';
   var LOCAL_CACHE_KEY = 'sppg-district-cache';
   var PROXY_LIST = [
-    function (url) { return 'https://api.cors.syrins.tech/?url=' + encodeURIComponent(url); },
-    function (url) { return 'https://corsproxy.io/?url=' + encodeURIComponent(url); },
+    function (url) { return 'https://api.cors.lol/?url=' + encodeURIComponent(url); },
+    function (url) { return 'https://proxy.killcors.com/?url=' + encodeURIComponent(url); },
     function (url) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url); }
   ];
 

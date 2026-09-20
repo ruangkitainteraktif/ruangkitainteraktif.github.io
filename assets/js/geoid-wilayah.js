@@ -2,8 +2,8 @@ const WILAYAH_API_BASE = 'https://wilayah.web.id/api';
 const WILAYAH_LOCAL_DATA_URL = 'assets/data/kode_wilayah.json';
 
 const GEOID_PROXY_LIST = [
-  function (url) { return 'https://api.cors.syrins.tech/?url=' + encodeURIComponent(url); },
-  function (url) { return 'https://corsproxy.io/?url=' + encodeURIComponent(url); },
+  function (url) { return 'https://api.cors.lol/?url=' + encodeURIComponent(url); },
+  function (url) { return 'https://proxy.killcors.com/?url=' + encodeURIComponent(url); },
   function (url) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url); }
 ];
 
@@ -1683,8 +1683,8 @@ async function fetchNearbyPOI(lat, lng, radiusMeter = 1000) {
 
 async function fetchPropertiHarga(lat, lng, radiusMeter = 2000) {
   const PROXY_LIST = [
-    function (u) { return 'https://api.cors.syrins.tech/?url=' + encodeURIComponent(u); },
-    function (u) { return 'https://corsproxy.io/?url=' + encodeURIComponent(u); },
+    function (u) { return 'https://api.cors.lol/?url=' + encodeURIComponent(u); },
+    function (u) { return 'https://proxy.killcors.com/?url=' + encodeURIComponent(u); },
     function (u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); }
   ];
   async function fetchWithFallback(url) {

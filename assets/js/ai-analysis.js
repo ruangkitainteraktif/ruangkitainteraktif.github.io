@@ -1206,8 +1206,8 @@
     { id: 'com_8', name: 'Daging Sapi', satuan: 'kg' }
   ];
   var GEOPANGAN_PROXY = [
-    function (u) { return 'https://api.cors.syrins.tech/?url=' + encodeURIComponent(u); },
-    function (u) { return 'https://corsproxy.io/?url=' + encodeURIComponent(u); },
+    function (u) { return 'https://api.cors.lol/?url=' + encodeURIComponent(u); },
+    function (u) { return 'https://proxy.killcors.com/?url=' + encodeURIComponent(u); },
     function (u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); }
   ];
   var GEOPANGAN_PROV_MAP = {

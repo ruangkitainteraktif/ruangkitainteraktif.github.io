@@ -141,7 +141,7 @@
       if (window.Hls?.isSupported()) {
         cctvHls = new Hls({
           xhrSetup: function (xhr, url) {
-            xhr.open('GET', 'https://corsproxy.io/?' + encodeURIComponent(url), true);
+            xhr.open('GET', 'https://api.cors.lol/?url=' + encodeURIComponent(url), true);
           }
         });
         cctvHls.on(Hls.Events.ERROR, function (event, data) {
