@@ -1682,14 +1682,35 @@ async function fetchNearbyPOI(lat, lng, radiusMeter = 1000) {
 }
 
 async function fetchPropertiHarga(lat, lng, radiusMeter = 2000) {
+  const PROXY_LIST = [
+    function (u) { return 'https://api.cors.syrins.tech/?url=' + encodeURIComponent(u); },
+    function (u) { return 'https://corsproxy.io/?url=' + encodeURIComponent(u); },
+    function (u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); }
+  ];
+  async function fetchWithFallback(url) {
+    try {
+      const c = new AbortController();
+      const t = setTimeout(() => c.abort(), 8000);
+      const r = await fetch(url, { signal: c.signal });
+      clearTimeout(t);
+      if (r.ok) return await r.json();
+    } catch (_) {}
+    for (const px of PROXY_LIST) {
+      try {
+        const c = new AbortController();
+        const t = setTimeout(() => c.abort(), 8000);
+        const r = await fetch(px(url), { cache: 'no-store', signal: c.signal });
+        clearTimeout(t);
+        if (r.ok) return await r.json();
+      } catch (_) {}
+    }
+    return null;
+  }
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
     const [rumahRes, rukoRes] = await Promise.all([
-      fetch(`https://rupabumi.com/maps/api/properti.php?latitude=${lat}&longitude=${lng}`, { signal: controller.signal }).then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(`https://rupabumi.com/maps/api/ruko.php?latitude=${lat}&longitude=${lng}`, { signal: controller.signal }).then(r => r.ok ? r.json() : null).catch(() => null)
+      fetchWithFallback(`https://rupabumi.com/maps/api/properti.php?latitude=${lat}&longitude=${lng}`),
+      fetchWithFallback(`https://rupabumi.com/maps/api/ruko.php?latitude=${lat}&longitude=${lng}`)
     ]);
-    clearTimeout(timeout);
 
     const calcAvg = (items, key = 'price') => {
       if (!items || !items.length) return { avg: 0, count: 0 };

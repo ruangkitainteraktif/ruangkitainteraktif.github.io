@@ -1408,6 +1408,52 @@
     if (centerLat != null && centerLng != null) {
       if (!bbox) bbox = computeBboxFromCenter(centerLat, centerLng, 0.5);
 
+      if (typeof fetchPropertiHarga === 'function') {
+        var properti = null;
+        try {
+          var propertiPromise = fetchPropertiHarga(centerLat, centerLng);
+          var propertiTimeout = new Promise(function (resolve) { setTimeout(function () { resolve(null); }, 10000); });
+          properti = await Promise.race([propertiPromise, propertiTimeout]);
+        } catch (e) {}
+        if (properti && (properti.rumah.count > 0 || properti.ruko.count > 0)) {
+          var formatRp = function (val) {
+            if (!val || val <= 0) return '-';
+            if (val >= 1000000000) return 'Rp ' + (val / 1000000000).toFixed(1) + ' M';
+            if (val >= 1000000) return 'Rp ' + (val / 1000000).toFixed(1) + ' jt';
+            return 'Rp ' + fmt(val);
+          };
+          s += '**Harga Properti (Rupabumi):**\n';
+          if (properti.rumah.count > 0) s += '- Rumah: **' + formatRp(properti.rumah.avg) + '** (rerata dari ' + properti.rumah.count + ' listing)\n';
+          if (properti.ruko.count > 0) s += '- Ruko: **' + formatRp(properti.ruko.avg) + '** (rerata dari ' + properti.ruko.count + ' listing)\n';
+          s += '\n';
+        }
+      }
+
+      var now = new Date();
+      var dd = String(now.getDate()).padStart(2, '0');
+      var mm = String(now.getMonth() + 1).padStart(2, '0');
+      var yyyy = now.getFullYear();
+      var sholatUrl = 'https://api.aladhan.com/v1/timings/' + dd + '-' + mm + '-' + yyyy + '?latitude=' + centerLat + '&longitude=' + centerLng + '&method=20';
+      var sholatData = null;
+      try {
+        var sholatPromise = fetch(sholatUrl).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+        var sholatTimeout = new Promise(function (resolve) { setTimeout(function () { resolve(null); }, 8000); });
+        sholatData = await Promise.race([sholatPromise, sholatTimeout]);
+      } catch (e) {}
+      if (sholatData && sholatData.data && sholatData.data.timings) {
+        var t = sholatData.data.timings;
+        var tgl = sholatData.data.date && sholatData.data.date.readable ? sholatData.data.date.readable : dd + '/' + mm + '/' + yyyy;
+        s += '**Waktu Sholat (' + tgl + '):**\n';
+        s += '- Imsak: **' + (t.Imsak || '-') + '**\n';
+        s += '- Subuh: **' + (t.Fajr || '-') + '**\n';
+        s += '- Terbit: **' + (t.Sunrise || '-') + '**\n';
+        s += '- Dhuha: **' + (t.Dhuha || '-') + '**\n';
+        s += '- Dzuhur: **' + (t.Dhuhr || '-') + '**\n';
+        s += '- Ashar: **' + (t.Asr || '-') + '**\n';
+        s += '- Maghrib: **' + (t.Maghrib || '-') + '**\n';
+        s += '- Isya: **' + (t.Isha || '-') + '**\n\n';
+      }
+
       var hs = countHotspotsInBbox(bbox);
       if (hs) {
         s += '**Hotspot Karhutla (24 Jam):**\n';
