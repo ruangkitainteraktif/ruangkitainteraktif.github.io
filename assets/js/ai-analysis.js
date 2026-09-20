@@ -1466,6 +1466,27 @@
         });
         s += '- Vegetasi total: **' + lulc.vegPct.toFixed(1) + '%** | Terbangun: **' + lulc.builtPct.toFixed(1) + '%**\n\n';
       }
+
+      if (typeof window.fetchNdviStatistics === 'function') {
+        var ndviRings = boundary.path.map(function (ring) {
+          var coords = ring[0] || ring;
+          return coords.map(function (p) { return [p[1], p[0]]; });
+        });
+        var ndviStats = null;
+        try { ndviStats = await window.fetchNdviStatistics(ndviRings); } catch (e) { console.warn('[AI] NDVI error:', e); }
+        if (ndviStats && Number.isFinite(ndviStats.mean)) {
+          var ndviMean = ndviStats.mean;
+          var ndviLabel, ndviColor;
+          if (ndviMean >= 0.6) { ndviLabel = 'Sangat Tinggi'; ndviColor = '#176b34'; }
+          else if (ndviMean >= 0.4) { ndviLabel = 'Tinggi'; ndviColor = '#3f9c49'; }
+          else if (ndviMean >= 0.2) { ndviLabel = 'Sedang'; ndviColor = '#a8b93b'; }
+          else { ndviLabel = 'Sangat Rendah'; ndviColor = '#c62828'; }
+          s += '**NDVI (Sentinel-2):**\n';
+          s += '- Rata-rata: **' + ndviMean.toFixed(3) + '** — ' + ndviLabel + '\n';
+          s += '- Min: **' + Number(ndviStats.min).toFixed(2) + '** | Maks: **' + Number(ndviStats.max).toFixed(2) + '**\n';
+          s += '- Sampel: **' + fmt(Number(ndviStats.count || 0)) + '** piksel valid\n\n';
+        }
+      }
     }
 
     if (match.type === 'provinsi') {
@@ -1570,8 +1591,10 @@
       ]
     };
     var popRegions = POPULAR_REGIONS[match.type] || POPULAR_REGIONS.provinsi;
+    var shuffled = popRegions.slice();
+    for (var si = shuffled.length - 1; si > 0; si--) { var sj = Math.floor(Math.random() * (si + 1)); var st = shuffled[si]; shuffled[si] = shuffled[sj]; shuffled[sj] = st; }
     var regionChipsHtml = '<div class="ais-welcome-btns">';
-    popRegions.forEach(function (r) {
+    shuffled.slice(0, 3).forEach(function (r) {
       var safeQ = r.q.replace(/'/g, "\\'");
       regionChipsHtml += '<button class="ais-welcome-btn" onclick="window._aiSendQuick(-1,\'' + safeQ + '\')">' + r.name + '</button>';
     });
@@ -1686,7 +1709,7 @@
       { emoji: '🏘️', name: 'Desa Adat Kuta', q: 'Desa Adat Kuta' }, { emoji: '🏘️', name: 'Desa Pemecutan', q: 'Desa Pemecutan' }
     ];
     for (var i = allSuggestions.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var tmp = allSuggestions[i]; allSuggestions[i] = allSuggestions[j]; allSuggestions[j] = tmp; }
-    var picks = allSuggestions.slice(0, 5);
+    var picks = allSuggestions.slice(0, 3);
     var chipsHtml = '<div class="ais-welcome-btns">';
     picks.forEach(function (p) { chipsHtml += '<button class="ais-welcome-btn" onclick="window._aiSendQuick(-1,\'' + p.q.replace(/'/g, "\\'") + '\')">' + p.emoji + ' ' + p.name + '</button>'; });
     chipsHtml += '</div>';
