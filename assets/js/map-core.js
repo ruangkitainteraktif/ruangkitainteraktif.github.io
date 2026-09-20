@@ -2502,6 +2502,9 @@ L.control.scale({
     sheet.classList.remove('gs-sheet-open', 'gs-sheet-minimized');
     document.body.classList.remove('geotools-sheet-open');
     _geotoolsSheetOpen = false;
+    if (typeof window.clearGeopanganLayers === 'function') {
+      try { window.clearGeopanganLayers(); } catch (e) {}
+    }
     if (sheet.dataset.moved) {
       while (body.firstChild) tabContent.appendChild(body.firstChild);
       delete sheet.dataset.moved;
