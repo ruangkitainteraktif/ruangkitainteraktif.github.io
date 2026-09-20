@@ -9,6 +9,7 @@
   const initialCenter = [-1.0, 121.0];
   const initialZoom = isMobile ? 5 : 5;
   const map = L.map('map', { zoomControl: false, preferCanvas: true, maxZoom: 19, minZoom: 4 }).setView(initialCenter, initialZoom);
+  window.map = map;
 
   // Close all other popups when a new popup opens (prevent popup stacking)
   map.on('popupopen', function(e) {

@@ -82,6 +82,8 @@
 
   function $(id) { return document.getElementById(id); }
 
+  function getMap() { return window.map || (typeof map !== 'undefined' ? map : null); }
+
   /* ── Mobile table sheet ──
      The existing result/table nodes are moved (not recreated), preserving all
      table event listeners for search, sorting, pagination, and CSV export. */
@@ -153,7 +155,7 @@
       sidebar.classList.add('sidebar-force-hidden');
     } else {
       sidebar.classList.add('collapsed', 'sidebar-force-hidden');
-      if (typeof map !== 'undefined') setTimeout(function () { map.invalidateSize(); }, 300);
+      if (typeof map !== 'undefined') setTimeout(function () { var _m = getMap(); if (_m) _m.invalidateSize(); }, 300);
     }
   }
 
@@ -372,7 +374,10 @@
 
     var query = params.toString();
     var json = await fetchWithProxy(BI_API_RAW + '/GetGridDataKomoditas?' + query);
-    return json.data || [];
+    if (!json) { console.warn('[Geopangan] API returned null'); return []; }
+    if (!json.data) { console.warn('[Geopangan] API response missing .data:', Object.keys(json)); return []; }
+    if (!Array.isArray(json.data)) { console.warn('[Geopangan] API .data is not array:', typeof json.data); return []; }
+    return json.data;
   }
 
   /* ── Load GeoJSON ── */
@@ -447,13 +452,17 @@
 
   /* ── Build price map from API response ── */
   function buildPriceMap(data) {
-    if (!data.length) return { priceMap: {}, dailyMap: {}, dateLabels: [], latestDate: null, min: 0, max: 0 };
+    if (!Array.isArray(data) || !data.length) return { priceMap: {}, dailyMap: {}, dateLabels: [], latestDate: null, min: 0, max: 0 };
     var first = data[0];
     var dateCols = Object.keys(first).filter(function (k) { return /\d{2}\/\d{2}\/\d{4}/.test(k); });
     dateCols.sort(function (a, b) {
       var pa = a.split('/'), pb = b.split('/');
       return new Date(pa[2], pa[1] - 1, pa[0]) - new Date(pb[2], pb[1] - 1, pb[0]);
     });
+    if (!dateCols.length) {
+      console.warn('[Geopangan] No date columns found in API response. Available keys:', Object.keys(first).slice(0, 10));
+      return { priceMap: {}, dailyMap: {}, dateLabels: [], latestDate: null, min: 0, max: 0 };
+    }
     var latestDate = dateCols[dateCols.length - 1];
     var dateLabels = dateCols.map(function (d) {
       var p = d.split('/');
@@ -1079,16 +1088,20 @@
 
   /* ── Main: load and display ── */
   async function loadAndDisplay() {
-    if (!loaded) {
-      loaded = true;
-      await Promise.all([loadCommodities(), populateProvinces()]);
-      setDefaultDates();
+    try {
+      if (!loaded) {
+        loaded = true;
+        await Promise.all([loadCommodities(), populateProvinces()]);
+        setDefaultDates();
+      }
+    } catch (e) {
+      console.error('[Geopangan] Gagal inisialisasi:', e);
     }
     var sidebar = $('sidebar-left');
     if (sidebar && !sidebar.classList.contains('collapsed')) {
       if (typeof window.toggleSidebar === 'function') window.toggleSidebar();
       else sidebar.classList.add('collapsed');
-      if (typeof map !== 'undefined' && map) setTimeout(function () { map.invalidateSize(); }, 300);
+      if (typeof map !== 'undefined' && map) setTimeout(function () { var _m = getMap(); if (_m) _m.invalidateSize(); }, 300);
     }
     var resultEl = $('geopanganResult');
     var loadBtn = $('geopanganLoadBtn');
@@ -1123,7 +1136,8 @@
       var commodityName = commodityEl && commodityEl.selectedOptions[0] ? commodityEl.selectedOptions[0].textContent : '';
       var priceTypeName = priceTypeEl && priceTypeEl.selectedOptions[0] ? priceTypeEl.selectedOptions[0].textContent : '';
 
-      if (activeLayer) { map.removeLayer(activeLayer); activeLayer = null; }
+      var _m = getMap();
+      if (_m && activeLayer) { _m.removeLayer(activeLayer); activeLayer = null; }
     if (activeLegend) { if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('geopangan'); activeLegend = null; }
 
       activeLayer = L.geoJSON(geojson, {
@@ -1221,6 +1235,7 @@
           layer.bindPopup(popupHtml, { maxWidth: 320, className: 'gp-leaflet-popup' });
 
           layer.on('popupopen', function () {
+            if (typeof Chart === 'undefined') return;
             var canvas = document.getElementById('gp-chart-' + provCode);
             if (canvas && daily.length) {
               var ctx = canvas.getContext('2d');
@@ -1318,20 +1333,21 @@
           layer.on('mouseover', function () { layer.setStyle({ weight: 2.5, fillOpacity: 0.9 }); });
           layer.on('mouseout', function () { if (activeLayer) activeLayer.resetStyle(layer); });
         }
-      }).addTo(map);
+      }).addTo(getMap());
 
       addLegend(min, max, commodityName, priceTypeName);
 
+      var _mapRef = getMap();
       var selectedProvince = $('geopanganProvince') ? $('geopanganProvince').value : '';
-      if (selectedProvince && PROVINCE_MAP[selectedProvince]) {
+      if (_mapRef && selectedProvince && PROVINCE_MAP[selectedProvince]) {
         var targetNmprov = PROVINCE_MAP[selectedProvince].nmprov;
         activeLayer.eachLayer(function (layer) {
           if (normalize(layer.feature.properties.nmprov) === normalize(targetNmprov)) {
-            map.fitBounds(layer.getBounds().pad(0.3), { maxZoom: 8 });
+            _mapRef.fitBounds(layer.getBounds().pad(0.3), { maxZoom: 8 });
           }
         });
-      } else {
-        map.fitBounds(activeLayer.getBounds().pad(0.1));
+      } else if (_mapRef) {
+        _mapRef.fitBounds(activeLayer.getBounds().pad(0.1));
       }
 
       if (resultEl) {
@@ -1366,11 +1382,12 @@
 
   /* ── Public cleanup (called by reset layers) ── */
   window.clearGeopanganLayers = function () {
-    if (activeLayer && map.hasLayer(activeLayer)) { map.removeLayer(activeLayer); activeLayer = null; }
+    var _m = getMap();
+    if (_m && activeLayer && _m.hasLayer(activeLayer)) { _m.removeLayer(activeLayer); activeLayer = null; }
     if (activeLegend) { if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('geopangan'); activeLegend = null; }
-    if (sebaranPasarLayer && map.hasLayer(sebaranPasarLayer)) { map.removeLayer(sebaranPasarLayer); sebaranPasarLayer = null; }
-    if (sppgLayer && map.hasLayer(sppgLayer)) { map.removeLayer(sppgLayer); sppgLayer = null; }
-    if (sppgSebaranLayer && map.hasLayer(sppgSebaranLayer)) { map.removeLayer(sppgSebaranLayer); sppgSebaranLayer = null; }
+    if (_m && sebaranPasarLayer && _m.hasLayer(sebaranPasarLayer)) { _m.removeLayer(sebaranPasarLayer); sebaranPasarLayer = null; }
+    if (_m && sppgLayer && _m.hasLayer(sppgLayer)) { _m.removeLayer(sppgLayer); sppgLayer = null; }
+    if (_m && sppgSebaranLayer && _m.hasLayer(sppgSebaranLayer)) { _m.removeLayer(sppgSebaranLayer); sppgSebaranLayer = null; }
     var chk = $('toggleSebaranPasar');
     if (chk) chk.checked = false;
     var chkSppg = $('toggleSppgLayer');
@@ -1393,9 +1410,10 @@
   }
 
   function resetGeopanganSheetTitle() {
-    var anyActive = (sebaranPasarLayer && map.hasLayer(sebaranPasarLayer)) ||
-                    (sppgLayer && map.hasLayer(sppgLayer)) ||
-                    (sppgSebaranLayer && map.hasLayer(sppgSebaranLayer));
+    var _m = getMap();
+    var anyActive = (_m && sebaranPasarLayer && _m.hasLayer(sebaranPasarLayer)) ||
+                    (_m && sppgLayer && _m.hasLayer(sppgLayer)) ||
+                    (_m && sppgSebaranLayer && _m.hasLayer(sppgSebaranLayer));
     if (!anyActive) setGeopanganSheetTitle('Harga Pangan');
   }
 
@@ -1403,15 +1421,16 @@
   var SEBARAN_PASAR_URL = 'https://geospasial.bappenas.go.id/server/rest/services/TRPPB_Sebaran_Pasar_kemendag/MapServer/0';
 
   function toggleSebaranPasar(visible) {
+    var _m = getMap();
     if (!visible) {
-      if (sebaranPasarLayer && map.hasLayer(sebaranPasarLayer)) {
-        map.removeLayer(sebaranPasarLayer);
+      if (_m && sebaranPasarLayer && _m.hasLayer(sebaranPasarLayer)) {
+        _m.removeLayer(sebaranPasarLayer);
       }
       resetGeopanganSheetTitle();
       return;
     }
     setGeopanganSheetTitle('Sebaran Pasar Indonesia');
-    if (sebaranPasarLayer) { sebaranPasarLayer.addTo(map); return; }
+    if (sebaranPasarLayer) { sebaranPasarLayer.addTo(_m); return; }
     sebaranPasarLayer = L.markerClusterGroup({
       maxClusterRadius: 45,
       spiderfyOnMaxZoom: true,
@@ -1461,7 +1480,7 @@
             );
             sebaranPasarLayer.addLayer(marker);
           }
-          map.addLayer(sebaranPasarLayer);
+          getMap().addLayer(sebaranPasarLayer);
           window.sebaranPasarLayer = sebaranPasarLayer;
         } catch (e) {
           console.error('[Geopangan] Gagal load Sebaran Pasar:', e);
@@ -1475,15 +1494,16 @@
   var SPPG_URL = 'assets/data/SPPG.geojson';
 
   function toggleSppg(visible) {
+    var _m = getMap();
     if (!visible) {
-      if (sppgLayer && map.hasLayer(sppgLayer)) {
-        map.removeLayer(sppgLayer);
+      if (_m && sppgLayer && _m.hasLayer(sppgLayer)) {
+        _m.removeLayer(sppgLayer);
       }
       resetGeopanganSheetTitle();
       return;
     }
     setGeopanganSheetTitle('SPPG Indonesia');
-    if (sppgLayer) { sppgLayer.addTo(map); return; }
+    if (sppgLayer) { sppgLayer.addTo(_m); return; }
     var xhr = new XMLHttpRequest();
     xhr.open('GET', SPPG_URL, true);
     xhr.onreadystatechange = function () {
@@ -1523,7 +1543,7 @@
             );
             sppgLayer.addLayer(marker);
           }
-          map.addLayer(sppgLayer);
+          getMap().addLayer(sppgLayer);
           window.sppgLayer = sppgLayer;
         } catch (e) {
           console.error('[Geopangan] Gagal load SPPG GeoJSON:', e);
@@ -1538,9 +1558,10 @@
 
   function toggleSppgSebaran(visible) {
     console.log('[SPPG Sebaran] toggleSppgSebaran called, visible:', visible);
+    var _m = getMap();
     if (!visible) {
-      if (sppgSebaranLayer && map.hasLayer(sppgSebaranLayer)) {
-        map.removeLayer(sppgSebaranLayer);
+      if (_m && sppgSebaranLayer && _m.hasLayer(sppgSebaranLayer)) {
+        _m.removeLayer(sppgSebaranLayer);
       }
       var sppgTbl = $('sppgSebaranTable');
       if (sppgTbl) sppgTbl.innerHTML = '';
@@ -1551,7 +1572,7 @@
     openGeopanganSheet();
     setGeopanganSheetTitle('Sebaran SPPG Indonesia');
     if (sppgSebaranLayer) {
-      sppgSebaranLayer.addTo(map);
+      sppgSebaranLayer.addTo(_m);
       if (sppgFeaturesCache) renderSppgSebaranTable(sppgFeaturesCache);
       return;
     }
@@ -1598,7 +1619,7 @@
             );
             sppgSebaranLayer.addLayer(marker);
           }
-          map.addLayer(sppgSebaranLayer);
+          getMap().addLayer(sppgSebaranLayer);
           window.sppgSebaranLayer = sppgSebaranLayer;
           console.log('[SPPG Sebaran] Layer added to map');
           renderSppgSebaranTable(features);

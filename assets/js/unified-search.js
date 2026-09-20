@@ -160,15 +160,20 @@
     clearBtn.style.display = 'none';
 
     if (item.type === 'cctv') {
-      map.flyTo([item.lat, item.lon], 16, { duration: 0.5 });
+      const _m = window.map;
+      if (_m) _m.flyTo([item.lat, item.lon], 16, { duration: 0.5 });
       openCctvModal(item.id);
       return;
     }
 
     const wilayahTypes = ['provinsi', 'kabkot', 'kecamatan', 'desa'];
     if (wilayahTypes.includes(item.type)) {
-      if (typeof resetAllLayers === 'function') { try { resetAllLayers(); } catch (e) {} }
-      showGeoidBoundary(item.kode);
+      if (typeof window.resetAllLayers === 'function') { try { window.resetAllLayers(); } catch (e) {} }
+      try {
+        await showGeoidBoundary(item.kode);
+      } catch (e) {
+        console.warn('[UnifiedSearch] showGeoidBoundary failed:', e);
+      }
       if (typeof setAdmText === 'function') {
         setAdmText('adm-provinsi', item.provinsi);
         setAdmText('adm-kabkota', item.type === 'kabkot' ? item.name : item.kabkot);

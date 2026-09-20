@@ -237,7 +237,7 @@
   }
 
   /* ── Main analysis ── */
-  async function runDemAnalysis(kode, level, progressCb) {
+  async function runDemAnalysis(kode, level, progressCb, options) {
     if (progressCb) progressCb(5, 'Memuat batas wilayah...');
 
     var boundary = await fetchBoundary(kode);
@@ -369,7 +369,9 @@
     };
 
     if (progressCb) progressCb(90, 'Membuat overlay peta...');
-    createElevationOverlay(elevData, results);
+    if (options.skipOverlay !== true) {
+      createElevationOverlay(elevData, results);
+    }
 
     if (progressCb) progressCb(100, 'Selesai');
     return results;

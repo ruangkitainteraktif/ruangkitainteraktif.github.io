@@ -1,6 +1,33 @@
 const WILAYAH_API_BASE = 'https://wilayah.web.id/api';
 const WILAYAH_LOCAL_DATA_URL = 'assets/data/kode_wilayah.json';
 
+const GEOID_PROXY_LIST = [
+  function (url) { return 'https://api.cors.syrins.tech/?url=' + encodeURIComponent(url); },
+  function (url) { return 'https://corsproxy.io/?url=' + encodeURIComponent(url); },
+  function (url) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url); }
+];
+
+async function geoidFetchWithProxy(url, timeoutMs) {
+  var ms = timeoutMs || 15000;
+  try {
+    var c = new AbortController();
+    var t = setTimeout(function () { c.abort(); }, ms);
+    var res = await fetch(url, { signal: c.signal });
+    clearTimeout(t);
+    if (res.ok) return res;
+  } catch (e) { /* CORS blocked, try proxies */ }
+  for (var i = 0; i < GEOID_PROXY_LIST.length; i++) {
+    try {
+      var c2 = new AbortController();
+      var t2 = setTimeout(function () { c2.abort(); }, ms);
+      var res2 = await fetch(GEOID_PROXY_LIST[i](url), { cache: 'no-store', signal: c2.signal });
+      clearTimeout(t2);
+      if (res2.ok) return res2;
+    } catch (e) { /* try next */ }
+  }
+  throw new Error('Semua proxy gagal untuk: ' + url);
+}
+
 const GEOID_PROVINCE_FALLBACK = [
   ['11', 'Aceh'], ['12', 'Sumatera Utara'], ['13', 'Sumatera Barat'], ['14', 'Riau'], ['15', 'Jambi'], ['16', 'Sumatera Selatan'], ['17', 'Bengkulu'], ['18', 'Lampung'], ['19', 'Kepulauan Bangka Belitung'], ['21', 'Kepulauan Riau'],
   ['31', 'DKI Jakarta'], ['32', 'Jawa Barat'], ['33', 'Jawa Tengah'], ['34', 'DI Yogyakarta'], ['35', 'Jawa Timur'], ['36', 'Banten'],
@@ -304,11 +331,12 @@ function hideGeoidBoundaryLoading() {
 }
 
 async function showGeoidBoundary(kode, zoom, options = {}) {
-  if (typeof map === 'undefined' || !map) return;
+  const _m = window.map;
+  if (!_m) return;
 
   const requestId = ++geoidBoundaryRequestId;
   if (geoidBoundaryLayer) {
-    map.removeLayer(geoidBoundaryLayer);
+    _m.removeLayer(geoidBoundaryLayer);
     geoidBoundaryLayer = null;
   }
 
@@ -319,7 +347,7 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
   const levelNames = { 1: 'Provinsi', 2: 'Kabupaten/Kota', 3: 'Kecamatan', 4: 'Desa/Kelurahan' };
   const label = levelNames[level] || 'Wilayah';
   const isGeotaniMode = window.currentActiveTab === 'tab-geotani';
-  if (geoidPointMarker) { map.removeLayer(geoidPointMarker); geoidPointMarker = null; }
+  if (geoidPointMarker) { _m.removeLayer(geoidPointMarker); geoidPointMarker = null; }
 
   if (typeof clearGeoidChildBoundaries === 'function') clearGeoidChildBoundaries();
 
@@ -331,10 +359,7 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
     if (level === 4) {
       // Desa/Kelurahan: BIG RBI BATAS_DESAKEL_AR (84.503 polygon desa, edisi Juni 2026).
       const bigUrl = `https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH/BATAS_DESAKEL_AR/MapServer/0/query?where=KDEPUM%3D%27${encodeURIComponent(kode)}%27&f=json&returnGeometry=true&outSR=4326&outFields=KDEPUM,NAMOBJ,WADMKD,WADMKK,WADMPR,LUASWH&geometryPrecision=5`;
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
-      const response = await fetch(bigUrl, { signal: controller.signal });
-      clearTimeout(timeout);
+      const response = await geoidFetchWithProxy(bigUrl, 15000);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const result = await response.json();
       features = result.features || [];
@@ -344,8 +369,8 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
         if (loc) {
           geoidPointMarker = L.circleMarker([loc.lat, loc.lon], {
             radius: 7, color: '#2563eb', weight: 3, opacity: 0.95, fillColor: '#60a5fa', fillOpacity: 0.4
-          }).addTo(map);
-          map.flyTo([loc.lat, loc.lon], 15, { duration: 1 });
+          }).addTo(_m);
+          _m.flyTo([loc.lat, loc.lon], 15, { duration: 1 });
           return geoidPointMarker;
         }
         return null;
@@ -366,12 +391,9 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
         const where = `KDCPUM = '${kode}'`;
         url = `https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH/BATAS_KECAMATAN_AR/MapServer/0/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outFields=NAMOBJ,KDCPUM,KDPKAB&geometryPrecision=5`;
       } else { return null; }
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
-      const response = await fetch(url, { signal: controller.signal });
-      clearTimeout(timeout);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const result = await response.json();
+      const response2 = await geoidFetchWithProxy(url, 15000);
+      if (!response2.ok) throw new Error(`HTTP ${response2.status}`);
+      const result = await response2.json();
       features = result.features || [];
     }
 
@@ -412,9 +434,9 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
       // bukan dari fitur batas provinsi yang geometri/luasnya degeneratif.
       const includeArea = !(level === 1 && kdp === '');
       if (geomType === 'polyline') {
-        layers.push(L.polyline(g, { color: isGeotaniMode ? '#16a34a' : '#2563eb', weight: 3, opacity: 0.95, dashArray: '7 5' }).addTo(map));
+        layers.push(L.polyline(g, { color: isGeotaniMode ? '#16a34a' : '#2563eb', weight: 3, opacity: 0.95, dashArray: '7 5' }).addTo(_m));
       } else {
-        layers.push(L.polygon(g, { color: isGeotaniMode ? '#16a34a' : '#2563eb', weight: 3, opacity: 0.95, fillColor: isGeotaniMode ? '#4ade80' : '#60a5fa', fillOpacity: fFill, dashArray: '7 5' }).addTo(map));
+        layers.push(L.polygon(g, { color: isGeotaniMode ? '#16a34a' : '#2563eb', weight: 3, opacity: 0.95, fillColor: isGeotaniMode ? '#4ade80' : '#60a5fa', fillOpacity: fFill, dashArray: '7 5' }).addTo(_m));
         if (includeArea) {
           const lw = (a.luaswh != null && !isNaN(parseFloat(a.luaswh))) ? parseFloat(a.luaswh) * 100 : computePolygonAreaHa(g);
           luasHa += lw;
@@ -449,7 +471,7 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
             weight: 1.5, opacity: 0.7,
             fillColor: isGeotaniMode ? '#4ade80' : '#60a5fa',
             fillOpacity: 0.15, dashArray: '7 5'
-          }).addTo(map));
+          }).addTo(_m));
         }
       } catch (e) { console.warn('Gagal memuat batas anak:', e); }
     }
@@ -457,7 +479,7 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
     const detailLabel = level === 1 ? 'Jumlah Kabupaten/Kota' : level === 2 ? 'Jumlah Kecamatan' : level === 3 ? 'Jumlah Desa/Kelurahan' : '';
     const detailCount = level === 1 ? batasCount : childCount;
 
-    geoidBoundaryLayer = L.featureGroup(layers).addTo(map);
+    geoidBoundaryLayer = L.featureGroup(layers).addTo(_m);
     geoidBoundaryRawData = { path: firstGeom, nama, kode };
     const data = { nama };
     const rings = firstGeom;
@@ -705,7 +727,7 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
 
     const bounds = geoidBoundaryLayer.getBounds();
     if (bounds.isValid() && options.flyTo !== false) {
-      map.flyToBounds(bounds.pad(0.08), { maxZoom: zoom || (level === 1 ? 8 : level === 2 ? 10 : level === 3 ? 12 : 15), duration: 1 });
+      _m.flyToBounds(bounds.pad(0.08), { maxZoom: zoom || (level === 1 ? 8 : level === 2 ? 10 : level === 3 ? 12 : 15), duration: 1 });
     }
     return geoidBoundaryLayer;
   } catch (err) {
@@ -715,6 +737,28 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
       } else {
         console.warn('Boundary wilayah tidak tersedia:', err);
       }
+      // Fallback: geocode pusat wilayah lalu flyTo
+      try {
+        const wd = await getGeoidWilayahData();
+        if (Array.isArray(wd)) {
+          const parts = kode.split('.');
+          const provNode = wd.find(d => d.kode === parts[0]);
+          const kabNode = parts.length >= 2 ? wd.find(d => d.kode === parts.slice(0, 2).join('.')) : null;
+          const kecNode = parts.length >= 3 ? wd.find(d => d.kode === parts.slice(0, 3).join('.')) : null;
+          const desaNode = parts.length >= 4 ? wd.find(d => d.kode === kode) : null;
+          const selection = {
+            desa: desaNode ? desaNode.nama : null,
+            kecamatan: kecNode ? kecNode.nama : null,
+            kabkot: kabNode ? kabNode.nama : null,
+            provinsi: provNode ? provNode.nama : null
+          };
+          const loc = await geocodeAdministrativeArea(selection);
+          if (loc) {
+            const z = level === 1 ? 7 : level === 2 ? 10 : level === 3 ? 12 : 15;
+            _m.flyTo([loc.lat, loc.lon], z, { duration: 1 });
+          }
+        }
+      } catch (fe) { console.warn('[GeoID] Fallback geocode gagal:', fe); }
     }
   } finally {
     hideGeoidBoundaryLoading();
@@ -741,10 +785,7 @@ async function fetchChildBoundaryGeometries(level, kode) {
     } else {
       return [];
     }
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeout);
+    const res = await geoidFetchWithProxy(url, 15000);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const j = await res.json();
     return (j.features || []).map(f => toLL(f.geometry)).filter(Boolean);
@@ -758,8 +799,8 @@ function clearGeoidChildBoundaries() {
   geoidChildBoundaryRequestId++;
   geoidChildBoundaryLoading = false;
   geoidChildBoundaryParentCode = null;
-  if (geoidChildBoundaryLayer && map?.hasLayer(geoidChildBoundaryLayer)) {
-    map.removeLayer(geoidChildBoundaryLayer);
+  if (geoidChildBoundaryLayer && window.map?.hasLayer(geoidChildBoundaryLayer)) {
+    window.map.removeLayer(geoidChildBoundaryLayer);
   }
   geoidChildBoundaryLayer = null;
 }
@@ -880,12 +921,10 @@ async function downloadBoundaryGeoJSON(kode) {
 
   try {
     const allFeatures = [];
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20000);
 
     async function queryBigRbi(serviceUrl, where, outFields) {
       const url = `${serviceUrl}/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outSR=4326&outFields=${outFields}&geometryPrecision=5`;
-      const response = await fetch(url, { signal: controller.signal });
+      const response = await geoidFetchWithProxy(url, 20000);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const result = await response.json();
       return (result.features || []).map(f => ({
@@ -969,7 +1008,7 @@ function showGeoidFlyup(lat, lon, info, zoom = 15) {
 
   const selectedGroup = typeof selectedWeatherGroup !== 'undefined'
     ? selectedWeatherGroup
-    : L.layerGroup().addTo(map);
+    : L.layerGroup().addTo(window.map);
 
   selectedGroup.clearLayers();
 
@@ -1018,7 +1057,7 @@ function showGeoidFlyup(lat, lon, info, zoom = 15) {
   marker.bindPopup(popupContent, { maxWidth: 360, className: isGeotaniMode ? 'geotani-leaflet-popup' : 'geoid-leaflet-popup' });
   marker.openPopup();
 
-  map.flyTo([lat, lon], zoom, { duration: 1 });
+  window.map.flyTo([lat, lon], zoom, { duration: 1 });
   return marker;
 }
 
@@ -1118,9 +1157,9 @@ function showGempaPopup(lat, lon, mag, wilayah, potensi, tanggal, jam, kedalaman
     <div class="quake-popup-footer"><span class="quake-popup-footer-text">Sumber: BMKG</span></div>
   </div>`;
 
-  map.flyTo([lat, lon], 8, { duration: 1 });
+  window.map.flyTo([lat, lon], 8, { duration: 1 });
   setTimeout(() => {
-    if (_gempaRadiusCircle) { map.removeLayer(_gempaRadiusCircle); _gempaRadiusCircle = null; }
+    if (_gempaRadiusCircle) { window.map.removeLayer(_gempaRadiusCircle); _gempaRadiusCircle = null; }
     _gempaRadiusCircle = L.circle([lat, lon], {
       radius: radius,
       color: color,
@@ -1128,8 +1167,8 @@ function showGempaPopup(lat, lon, mag, wilayah, potensi, tanggal, jam, kedalaman
       opacity: 0.7,
       fillColor: color,
       fillOpacity: 0.12
-    }).addTo(map);
-    if (!_popupMarkerGroup) _popupMarkerGroup = L.layerGroup().addTo(map);
+    }).addTo(window.map);
+    if (!_popupMarkerGroup) _popupMarkerGroup = L.layerGroup().addTo(window.map);
     L.marker([lat, lon]).bindPopup(popupHtml, { maxWidth: 340, className: 'quake-leaflet-popup' }).openPopup().addTo(_popupMarkerGroup);
   }, 1100);
 }
@@ -1151,9 +1190,9 @@ function showHotspotPopup(lat, lon, desa, kecamatan, kabkota, provinsi, sumber, 
     ${routeCreate ? `<div style="margin-top:6px;padding-top:6px;border-top:1px solid #e5e7eb;"><a href="${escapeGeoidHtml(routeCreate)}" target="_blank" style="font-size:10px;color:#0891b2;text-decoration:none;font-weight:600;">Laporkan Ground Check</a></div>` : ''}
   </div>`;
 
-  map.flyTo([lat, lon], 10, { duration: 1 });
+  window.map.flyTo([lat, lon], 10, { duration: 1 });
   setTimeout(() => {
-    if (!_popupMarkerGroup) _popupMarkerGroup = L.layerGroup().addTo(map);
+    if (!_popupMarkerGroup) _popupMarkerGroup = L.layerGroup().addTo(window.map);
     L.marker([lat, lon]).bindPopup(popupHtml, { maxWidth: 280, className: 'hotspot-popup' }).openPopup().addTo(_popupMarkerGroup);
   }, 1100);
 }
@@ -2167,7 +2206,7 @@ window.printGeotaniPdf = async function() {
   const hiddenEls = [];
   const hiddenLayers = [];
   try {
-    map.closePopup();
+    window.map.closePopup();
     const sidebar = document.getElementById('sidebar-left');
     if (sidebar && !sidebar.classList.contains('collapsed')) {
       sidebar.classList.add('collapsed');
@@ -2180,15 +2219,15 @@ window.printGeotaniPdf = async function() {
         hiddenEls.push({ el, prop: 'display' });
       }
     });
-    if (typeof selectedWeatherGroup !== 'undefined' && selectedWeatherGroup && map.hasLayer(selectedWeatherGroup)) {
-      map.removeLayer(selectedWeatherGroup);
+    if (typeof selectedWeatherGroup !== 'undefined' && selectedWeatherGroup && window.map.hasLayer(selectedWeatherGroup)) {
+      window.map.removeLayer(selectedWeatherGroup);
       hiddenLayers.push(selectedWeatherGroup);
     }
-    map.invalidateSize();
+    window.map.invalidateSize();
     await new Promise(r => setTimeout(r, 300));
 
     const frameAspect = mapFrameW / mapFrameH;
-    const mapSize = map.getSize();
+    const mapSize = window.map.getSize();
     const containerAspect = mapSize.x / mapSize.y;
 
     if (geoidBoundaryLayer) {
@@ -2205,7 +2244,7 @@ window.printGeotaniPdf = async function() {
           const span = e - w;
           bounds = L.latLngBounds([bounds.getSouth(), w - span * f], [bounds.getNorth(), e + span * f]);
         }
-        map.fitBounds(bounds, { maxZoom: 16, duration: 0 });
+        window.map.fitBounds(bounds, { maxZoom: 16, duration: 0 });
       }
     }
     await new Promise(r => setTimeout(r, 2000));
@@ -2272,7 +2311,7 @@ window.printGeotaniPdf = async function() {
     pdf.setLineWidth(0.3);
     pdf.rect(mapFrameX, mapFrameY, mapFrameW, mapFrameH);
 
-      const mapBounds = map.getBounds();
+      const mapBounds = window.map.getBounds();
       const latMin = mapBounds.getSouth();
       const latMax = mapBounds.getNorth();
       const lonMin = mapBounds.getWest();
@@ -2285,8 +2324,8 @@ window.printGeotaniPdf = async function() {
       let effLatMin, effLatMax, effLonMin, effLonMax;
       const leafletContainer = document.querySelector('.leaflet-container');
       if (leafletContainer) {
-        map.getRenderer(map).options.padding = 0;
-        map.invalidateSize();
+        window.map.getRenderer(window.map).options.padding = 0;
+        window.map.invalidateSize();
         await new Promise(r => setTimeout(r, 200));
         const mapCanvas = await html2canvas(leafletContainer, { useCORS: true, allowTaint: true, scale: 2, logging: false, backgroundColor: '#e8e8e8' });
         const mapImg = mapCanvas.toDataURL('image/jpeg', 0.92);
@@ -2586,13 +2625,13 @@ window.printGeotaniPdf = async function() {
     alert('Gagal membuat PDF: ' + (error.message || 'Terjadi kesalahan'));
   } finally {
     for (const layer of hiddenLayers) {
-      if (layer && !map.hasLayer(layer)) layer.addTo(map);
+      if (layer && !window.map.hasLayer(layer)) layer.addTo(window.map);
     }
     for (const item of hiddenEls) {
       if (item.prop) item.el.style[item.prop] = '';
       else if (item.remove === false) item.el.classList.remove(item.cls);
     }
-    map.invalidateSize();
+    window.map.invalidateSize();
     if (btn) { btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Cetak PDF'; }
   }
 };
@@ -2641,10 +2680,7 @@ window.loadCuacaPopup = async function (marker, kode, lat, lon) {
     } else {
       return;
     }
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeout);
+    const res = await geoidFetchWithProxy(url, 15000);
     if (!res.ok) return;
     const wd = await res.json();
     const forecastDays = wd.data?.[0]?.cuaca || [];

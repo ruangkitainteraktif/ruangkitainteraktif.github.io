@@ -272,10 +272,24 @@
     var kabkotaIdx = (typeof window.kabkotaSearchIndex !== 'undefined') ? window.kabkotaSearchIndex : [];
     var kecIdx = (typeof window.kecamatanSearchIndex !== 'undefined') ? window.kecamatanSearchIndex : [];
 
-    var bestMatch = null;
-    var bestScore = 0;
+    // Detect level prefix: "kabupaten Bandung" -> filter to kabkot only
+    var levelPrefixRe = /^(provinsi|kabupaten|kota|kecamatan|desa|kelurahan)\s+/;
+    var levelFilter = null;
+    var prefixMatch = q.match(levelPrefixRe);
+    if (prefixMatch) {
+      var p = prefixMatch[1].toLowerCase();
+      if (p === 'provinsi') levelFilter = 'provinsi';
+      else if (p === 'kabupaten' || p === 'kota') levelFilter = 'kabkot';
+      else if (p === 'kecamatan') levelFilter = 'kecamatan';
+      else if (p === 'desa' || p === 'kelurahan') levelFilter = 'desa';
+      q = q.replace(levelPrefixRe, '').trim();
+      qn = norm(q);
+      qnCompact = qn.replace(/\s+/g, '');
+    }
 
-    function scoreMatch(searchText, item, type) {
+    var results = [];
+
+    function addResult(searchText, item, type, contextBonus) {
       var sn = norm(searchText);
       var snCompact = sn.replace(/\s+/g, '');
       var score = 0;
@@ -284,31 +298,93 @@
       else if (qn.indexOf(sn) !== -1 && sn.length > 3) score = 60;
       else if (sn.indexOf(qn) !== -1 || snCompact.indexOf(qnCompact) !== -1) score = 40;
       else if (qnCompact.indexOf(snCompact) !== -1 && snCompact.length > 3) score = 30;
-      if (score > bestScore) {
-        bestScore = score;
-        bestMatch = { type: type, name: item.name, kode: item.kode, provinsi: item.provinsi || item.name, kabkot: item.kabkot || '' };
+      if (score > 0) score += (contextBonus || 0);
+      if (score > 0) {
+        results.push({ score: score, type: type, name: item.name, kode: item.kode, provinsi: item.provinsi || item.name, kabkot: item.kabkot || '' });
       }
     }
 
-    provinsiIdx.forEach(function (item) { scoreMatch(item.searchText, item, 'provinsi'); });
-    kabkotaIdx.forEach(function (item) { scoreMatch(item.searchText, item, 'kabkot'); });
-    kecIdx.forEach(function (item) { scoreMatch(item.searchText, item, 'kecamatan'); });
+    function hasContext(word) {
+      if (!word) return false;
+      var wn = norm(word);
+      return qn.indexOf(wn) !== -1 || qnCompact.indexOf(wn.replace(/\s+/g, '')) !== -1;
+    }
+
+    provinsiIdx.forEach(function (item) { addResult(item.searchText, item, 'provinsi', 0); });
+
+    kabkotaIdx.forEach(function (item) {
+      var bonus = hasContext(item.provinsi) ? 15 : 0;
+      addResult(item.searchText, item, 'kabkot', bonus);
+    });
+
+    kecIdx.forEach(function (item) {
+      var bonus = 0;
+      if (hasContext(item.kabkot)) bonus += 15;
+      if (hasContext(item.provinsi)) bonus += 10;
+      addResult(item.searchText, item, 'kecamatan', bonus);
+    });
 
     if (typeof window.weatherSearchLocations !== 'undefined' && window.weatherSearchLocations.length) {
       for (var i = 0; i < Math.min(window.weatherSearchLocations.length, 50000); i++) {
         var loc = window.weatherSearchLocations[i];
         var locDesa = norm(loc.desa || '');
         if (locDesa && (locDesa === qn || locDesa.indexOf(qn) !== -1 || qn.indexOf(locDesa) !== -1)) {
-          scoreMatch(loc.desa, { name: loc.desa || loc.kecamatan, kode: loc.kode, provinsi: loc.provinsi, kabkot: loc.kabkota }, 'desa');
-          if (bestScore >= 80) break;
+          var bonus = 0;
+          if (hasContext(loc.kecamatan)) bonus += 20;
+          if (hasContext(loc.kabkota)) bonus += 15;
+          if (hasContext(loc.provinsi)) bonus += 10;
+          addResult(loc.desa, { name: loc.desa || loc.kecamatan, kode: loc.kode, provinsi: loc.provinsi, kabkot: loc.kabkota }, 'desa', bonus);
         } else if (loc.searchText && (norm(loc.searchText).indexOf(qn) !== -1 || loc.searchText.replace(/\s+/g, '').indexOf(qnCompact) !== -1)) {
-          scoreMatch(loc.searchText, { name: loc.desa || loc.kecamatan, kode: loc.kode, provinsi: loc.provinsi, kabkot: loc.kabkota }, 'desa');
-          if (bestScore >= 80) break;
+          var bonus2 = 0;
+          if (hasContext(loc.kecamatan)) bonus2 += 20;
+          if (hasContext(loc.kabkota)) bonus2 += 15;
+          if (hasContext(loc.provinsi)) bonus2 += 10;
+          addResult(loc.searchText, { name: loc.desa || loc.kecamatan, kode: loc.kode, provinsi: loc.provinsi, kabkot: loc.kabkota }, 'desa', bonus2);
         }
       }
     }
 
-    return bestScore >= 30 ? bestMatch : null;
+    if (!results.length) return null;
+
+    // Filter by explicit level prefix
+    if (levelFilter) {
+      results = results.filter(function (r) { return r.type === levelFilter; });
+      if (!results.length) return null;
+    }
+
+    // Parent hierarchy validation penalty (skip if user typed a level prefix):
+    // desa       -> butuh kecamatan context  -> -20 jika tidak ada
+    // kecamatan   -> butuh kabkot context    -> -20 jika tidak ada
+    // kabkot      -> butuh provinsi context  -> -20 jika tidak ada
+    if (!levelFilter) {
+      results.forEach(function (r) {
+        if (r.type === 'desa' && !hasContext(r.kabkot)) r.score -= 20;
+        else if (r.type === 'kecamatan' && !hasContext(r.kabkot)) r.score -= 20;
+        else if (r.type === 'kabkot' && !hasContext(r.provinsi)) r.score -= 20;
+      });
+    }
+    results.sort(function (a, b) { return b.score - a.score; });
+
+    var best = results[0];
+    if (best.score < 30) return null;
+
+    // Disambiguation: if multiple results share the same name but different types
+    // with a tight score gap, return the disambiguation object.
+    var sameName = results.filter(function (r) { return norm(r.name) === norm(best.name); });
+    if (sameName.length >= 2 && !levelFilter) {
+      var scoreGap = sameName[0].score - sameName[sameName.length - 1].score;
+      var hasDiffTypes = sameName.some(function (r) { return r.type !== best.type; });
+      if (hasDiffTypes && scoreGap <= 15) {
+        var types = sameName.map(function (r) {
+          var label = r.type === 'kabkot' ? 'Kabupaten/Kota' : r.type === 'kecamatan' ? 'Kecamatan' : r.type === 'desa' ? 'Desa/Kelurahan' : 'Provinsi';
+          var ctx = r.type === 'desa' ? ' (Kec. ' + r.kabkot + ')' : r.type === 'kecamatan' ? ' (Kab. ' + r.kabkot + ')' : r.type === 'kabkot' ? ' (' + r.provinsi + ')' : '';
+          return label + ': ' + r.name + ctx;
+        });
+        return { ambiguous: true, name: best.name, options: types, results: sameName };
+      }
+    }
+
+    return { type: best.type, name: best.name, kode: best.kode, provinsi: best.provinsi, kabkot: best.kabkot };
   }
 
   function computeBboxFromCenter(lat, lng, deltaDeg) {
@@ -1257,9 +1333,13 @@
     }
     var match = searchRegionByName(regionQuery);
     if (!match) return 'Wilayah **"' + regionQuery + '"** tidak ditemukan. Coba nama provinsi, kabupaten, atau kota yang lebih lengkap.\n\n_Contoh: "Jawa Timur", "Kota Bandung", "Kabupaten Sleman"_.';
+    if (match.ambiguous) {
+      var opts = match.options.map(function (o, i) { return (i + 1) + '. ' + o; }).join('\n');
+      return '**"' + match.name + '"** ditemukan di beberapa tingkat:\n\n' + opts + '\n\nKetik salah satu secara lengkap, contoh: **"' + match.options[0].split(': ')[1] + '"**.';
+    }
 
-    if (typeof resetAllLayers === 'function') {
-      try { resetAllLayers(); } catch (e) { console.warn('[AI] resetAllLayers error:', e); }
+    if (typeof window.resetAllLayers === 'function') {
+      try { window.resetAllLayers(); } catch (e) { console.warn('[AI] resetAllLayers error:', e); }
     }
     if (typeof showGeoidBoundary === 'function') {
       try { await showGeoidBoundary(match.kode); } catch (e) { console.warn('[AI] showGeoidBoundary error:', e); }
@@ -1363,7 +1443,7 @@
 
     var topoLevel = match.type === 'provinsi' ? 'provinsi' : 'kabupaten';
     var topoResult = null;
-    try { if (typeof window.runDemAnalysis === 'function') topoResult = await window.runDemAnalysis(match.kode, topoLevel); } catch (e) {}
+    try { if (typeof window.runDemAnalysis === 'function') topoResult = await window.runDemAnalysis(match.kode, topoLevel, null, { skipOverlay: true }); } catch (e) {}
     if (topoResult && topoResult.elevMin !== undefined) {
       var floodKm2 = topoResult.floodAreaHa > 0 ? (topoResult.floodAreaHa / 100).toFixed(1) : null;
       var erosionKm2 = topoResult.erosionAreaHa > 0 ? (topoResult.erosionAreaHa / 100).toFixed(1) : null;
@@ -1513,6 +1593,11 @@
   }
 
   async function getAnswer(intent, text, regionMatch) {
+    // Handle ambiguous region match across all intents
+    if (regionMatch && regionMatch.ambiguous) {
+      var opts = regionMatch.options.map(function (o, i) { return (i + 1) + '. ' + o; }).join('\n');
+      return '**"' + regionMatch.name + '"** ditemukan di beberapa tingkat:\n\n' + opts + '\n\nKetik salah satu secara lengkap, contoh: **"' + regionMatch.options[0].split(': ')[1] + '"**.';
+    }
     switch (intent) {
       case 'region': return await formatRegionAnswer(text);
       case 'hotspot': return await formatHotspotAnswer(text, regionMatch);
@@ -1727,13 +1812,18 @@
     var intent = parseIntent(text);
     if (intent === 'help' && text.trim().toLowerCase() !== 'region') {
       var regionMatch = searchRegionByName(text);
-      if (regionMatch) intent = 'region';
+      if (regionMatch && !regionMatch.ambiguous) intent = 'region';
+      if (regionMatch && regionMatch.ambiguous) {
+        var opts = regionMatch.options.map(function (o, i) { return (i + 1) + '. ' + o; }).join('\n');
+        typeWriteMessage('**"' + regionMatch.name + '"** ditemukan di beberapa tingkat:\n\n' + opts + '\n\nKetik salah satu secara lengkap, contoh: **"' + regionMatch.options[0].split(': ')[1] + '"**.');
+        return;
+      }
     }
     var regionMatch = null;
     if (intent !== 'region' && intent !== 'help' && intent !== 'basemap' && intent !== 'layers' && intent !== 'viewport' && intent !== 'summary') {
       regionMatch = searchRegionByName(text);
     }
-    var needsLoading = intent === 'region' || regionMatch;
+    var needsLoading = intent === 'region' || (regionMatch && !regionMatch.ambiguous);
     if (needsLoading) showAiLoading(regionMatch ? 'Mencari data ' + regionMatch.name : 'Mencari data wilayah');
     try {
       var answer = await getAnswer(intent, text, regionMatch);
@@ -1769,6 +1859,9 @@
     sheetOpen = false;
     sheetMinimized = false;
     sheet.classList.remove('ais-sheet-open', 'ais-sheet-minimized');
+    if (typeof window.resetAllLayers === 'function') {
+      try { window.resetAllLayers(); } catch (e) {}
+    }
   }
 
   function minimizeAiSheet() {
