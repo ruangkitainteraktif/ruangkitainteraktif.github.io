@@ -74,6 +74,24 @@
 
   function normaliseForecast(payload) {
     var raw = firstForecast(payload, 0);
+    var tMin = null, tMax = null, rhMin = null, rhMax = null;
+    var hourly = payload.forecast_day1 || payload.forecast || [];
+    if (!Array.isArray(hourly)) hourly = [];
+    for (var i = 0; i < hourly.length; i++) {
+      var h = hourly[i];
+      if (h.temp_avg != null) {
+        var t = Number(h.temp_avg);
+        if (tMin === null || t < tMin) tMin = t;
+        if (tMax === null || t > tMax) tMax = t;
+      }
+      if (h.rh_avg != null) {
+        var rh = Number(h.rh_avg);
+        if (rhMin === null || rh < rhMin) rhMin = rh;
+        if (rhMax === null || rh > rhMax) rhMax = rh;
+      }
+    }
+    if (tMin === null) { tMin = raw.temp_avg || raw.temperature || ''; tMax = tMin; }
+    if (rhMin === null) { rhMin = raw.rh_avg || raw.humidity || ''; rhMax = rhMin; }
     return {
       weather: raw.weather || raw.weather_desc || raw.weather_text || '',
       weather_desc: raw.weather_desc || raw.description || '',
@@ -87,8 +105,8 @@
       current_to: raw.current_to || (raw.current && raw.current.to) || '',
       current_speed_min: raw.current_speed_min || (raw.current && raw.current.speed) || '',
       current_speed_max: raw.current_speed_max || (raw.current && raw.current.speed) || '',
-      visibility: raw.visibility || '', temp_min: raw.temp_min || raw.temperature || '', temp_max: raw.temp_max || raw.temperature || '',
-      rh_min: raw.rh_min || raw.humidity || '', rh_max: raw.rh_max || raw.humidity || '',
+      visibility: raw.visibility || '', temp_min: tMin, temp_max: tMax,
+      rh_min: rhMin, rh_max: rhMax,
       warning_desc: raw.warning_desc || raw.warning || '', valid_from: raw.valid_from || raw.datetime || raw.time || '', valid_to: raw.valid_to || ''
     };
   }
