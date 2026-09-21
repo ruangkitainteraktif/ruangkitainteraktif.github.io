@@ -369,7 +369,7 @@
     };
 
     if (progressCb) progressCb(90, 'Membuat overlay peta...');
-    if (options.skipOverlay !== true) {
+    if (!options || options.skipOverlay !== true) {
       createElevationOverlay(elevData, results);
     }
 

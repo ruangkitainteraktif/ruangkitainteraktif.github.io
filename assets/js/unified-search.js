@@ -180,6 +180,15 @@
         setAdmText('adm-kecamatan', item.kecamatan);
         setAdmText('adm-desa', item.type === 'desa' ? item.name : '-');
       }
+
+      if (typeof window.openAiSheet === 'function') {
+        window.openAiSheet();
+        setTimeout(function () {
+          if (typeof window._aiSendQuick === 'function') {
+            window._aiSendQuick(-1, item.name);
+          }
+        }, 400);
+      }
     }
   }
 

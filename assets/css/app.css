@@ -2108,6 +2108,29 @@
     }
     .quick-layer-bar::-webkit-scrollbar { height: 6px; }
     .quick-layer-bar::-webkit-scrollbar-thumb { border-radius: 999px; background: #9fb3c8; }
+    .minimize-all-btn {
+      display: none;
+      position: absolute;
+      top: 108px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-size: 9px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,.1);
+    }
+    .minimize-all-btn:hover { background: #e2e8f0; color: #1e293b; border-color: #94a3b8; }
+    .minimize-all-btn svg { flex-shrink: 0; }
     .ql-btn {
       display: flex;
       align-items: center;
@@ -3790,6 +3813,7 @@
         font-size: 9px;
       }
       .ql-btn svg { width: 14px; height: 14px; }
+      .minimize-all-btn { display: none !important; }
 
       .geoid-leaflet-popup { 
         max-width: min(320px, calc(100vw - 32px)) !important;
@@ -6551,7 +6575,6 @@
       /* ── Hide all minimize buttons on mobile ── */
       .dm-sidebar-minimize,
       .lg-sidebar-minimize,
-      #hotspot-sheet .hs-sheet-minimize,
       #geopangan-sheet .gp-sheet-minimize,
       #geotools-sheet .gs-sheet-minimize,
       #attr-table-sheet .at-sheet-minimize { display: none !important; }

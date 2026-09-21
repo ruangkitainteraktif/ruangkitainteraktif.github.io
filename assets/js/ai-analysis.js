@@ -300,7 +300,7 @@
       else if (qnCompact.indexOf(snCompact) !== -1 && snCompact.length > 3) score = 30;
       if (score > 0) score += (contextBonus || 0);
       if (score > 0) {
-        results.push({ score: score, type: type, name: item.name, kode: item.kode, provinsi: item.provinsi || item.name, kabkot: item.kabkot || '' });
+        results.push({ score: score, type: type, name: item.name, kode: item.kode, provinsi: item.provinsi || item.name, kabkot: item.kabkot || '', kecamatan: item.kecamatan || '' });
       }
     }
 
@@ -333,13 +333,13 @@
           if (hasContext(loc.kecamatan)) bonus += 20;
           if (hasContext(loc.kabkota)) bonus += 15;
           if (hasContext(loc.provinsi)) bonus += 10;
-          addResult(loc.desa, { name: loc.desa || loc.kecamatan, kode: loc.kode, provinsi: loc.provinsi, kabkot: loc.kabkota }, 'desa', bonus);
+          addResult(loc.desa, { name: loc.desa || loc.kecamatan, kode: loc.kode, provinsi: loc.provinsi, kabkot: loc.kabkota, kecamatan: loc.kecamatan }, 'desa', bonus);
         } else if (loc.searchText && (norm(loc.searchText).indexOf(qn) !== -1 || loc.searchText.replace(/\s+/g, '').indexOf(qnCompact) !== -1)) {
           var bonus2 = 0;
           if (hasContext(loc.kecamatan)) bonus2 += 20;
           if (hasContext(loc.kabkota)) bonus2 += 15;
           if (hasContext(loc.provinsi)) bonus2 += 10;
-          addResult(loc.searchText, { name: loc.desa || loc.kecamatan, kode: loc.kode, provinsi: loc.provinsi, kabkot: loc.kabkota }, 'desa', bonus2);
+          addResult(loc.searchText, { name: loc.desa || loc.kecamatan, kode: loc.kode, provinsi: loc.provinsi, kabkot: loc.kabkota, kecamatan: loc.kecamatan }, 'desa', bonus2);
         }
       }
     }
@@ -384,7 +384,7 @@
       }
     }
 
-    return { type: best.type, name: best.name, kode: best.kode, provinsi: best.provinsi, kabkot: best.kabkot };
+    return { type: best.type, name: best.name, kode: best.kode, provinsi: best.provinsi, kabkot: best.kabkot, kecamatan: best.kecamatan || '' };
   }
 
   function computeBboxFromCenter(lat, lng, deltaDeg) {
@@ -1409,9 +1409,20 @@
 
     var levelLabel = { provinsi: 'Provinsi', kabkot: 'Kabupaten/Kota', kecamatan: 'Kecamatan', desa: 'Desa/Kelurahan' };
     var s = '**Profil Wilayah: ' + match.name + '**\n';
-    s += (levelLabel[match.type] || match.type) + ' | Kode: ' + match.kode;
-    if (match.provinsi && match.type !== 'provinsi') s += ' | ' + match.provinsi;
-    s += '\n\n';
+    s += (levelLabel[match.type] || match.type) + ' | Kode: ' + match.kode + '\n';
+    var hierarchy = [];
+    if (match.type === 'desa') {
+      if (match.kecamatan) hierarchy.push('Kec. ' + match.kecamatan);
+      if (match.kabkot) hierarchy.push(match.kabkot);
+      if (match.provinsi) hierarchy.push(match.provinsi);
+    } else if (match.type === 'kecamatan') {
+      if (match.kabkot) hierarchy.push(match.kabkot);
+      if (match.provinsi) hierarchy.push(match.provinsi);
+    } else if (match.type === 'kabkot') {
+      if (match.provinsi) hierarchy.push(match.provinsi);
+    }
+    if (hierarchy.length) s += hierarchy.join(' > ') + '\n';
+    s += '\n';
 
     var boundary = null;
     try { boundary = await fetchRegionBoundaryData(match.kode); } catch (e) {}
@@ -1820,21 +1831,7 @@
   function loadChatHistory() { try { chatHistory = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY) || '[]'); } catch (e) { chatHistory = []; } }
 
   function showWelcomeMessage() {
-    addChatMessage('ai', 'Selamat datang! Ketik nama wilayah untuk melihat profil lengkap: data penduduk, topografi, land cover, cuaca, harga pangan, dan CCTV.');
-    var allSuggestions = [
-      { emoji: '🏙️', name: 'Jakarta', q: 'Jakarta' }, { emoji: '🏙️', name: 'Surabaya', q: 'Surabaya' },
-      { emoji: '🏙️', name: 'Bandung', q: 'Bandung' }, { emoji: '🏙️', name: 'Semarang', q: 'Semarang' },
-      { emoji: '🏙️', name: 'Yogyakarta', q: 'Yogyakarta' }, { emoji: '🏙️', name: 'Medan', q: 'Medan' },
-      { emoji: '🏙️', name: 'Makassar', q: 'Makassar' }, { emoji: '🏙️', name: 'Denpasar', q: 'Denpasar' },
-      { emoji: '🏘️', name: 'Desa Sukamaju', q: 'Desa Sukamaju' }, { emoji: '🏘️', name: 'Desa Cilangkap', q: 'Desa Cilangkap' },
-      { emoji: '🏘️', name: 'Desa Adat Kuta', q: 'Desa Adat Kuta' }, { emoji: '🏘️', name: 'Desa Pemecutan', q: 'Desa Pemecutan' }
-    ];
-    for (var i = allSuggestions.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var tmp = allSuggestions[i]; allSuggestions[i] = allSuggestions[j]; allSuggestions[j] = tmp; }
-    var picks = allSuggestions.slice(0, 3);
-    var chipsHtml = '<div class="ais-welcome-btns">';
-    picks.forEach(function (p) { chipsHtml += '<button class="ais-welcome-btn" onclick="window._aiSendQuick(-1,\'' + p.q.replace(/'/g, "\\'") + '\')">' + p.emoji + ' ' + p.name + '</button>'; });
-    chipsHtml += '</div>';
-    addChatMessage('ai', '\x00RAW' + chipsHtml + 'RAW\x00');
+    addChatMessage('ai', 'Selamat datang! Ketik nama wilayah untuk melihat profil lengkap.');
   }
 
   window._aiClearChat = function () {

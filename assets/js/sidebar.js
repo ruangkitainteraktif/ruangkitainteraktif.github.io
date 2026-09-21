@@ -23,6 +23,21 @@
     if (button) button.setAttribute('aria-expanded', String(!collapsed));
   }
 
+  function minimizeAllSheets() {
+    if (typeof minimizeGeotoolsSheet === 'function') minimizeGeotoolsSheet();
+    if (typeof minimizeAttrTableSheet === 'function') minimizeAttrTableSheet();
+    if (typeof minimizeAiSheet === 'function') minimizeAiSheet();
+    if (typeof minimizeDrawSidebar === 'function') minimizeDrawSidebar();
+    if (typeof minimizeLegendSidebar === 'function') minimizeLegendSidebar();
+    var hs = document.getElementById('hotspot-sheet');
+    if (hs && hs.classList.contains('sheet-open')) { if (typeof toggleHotspotSheet === 'function') toggleHotspotSheet(); }
+    var gp = document.getElementById('geopangan-sheet');
+    if (gp && gp.classList.contains('sheet-open')) { if (typeof toggleGeopanganSheet === 'function') toggleGeopanganSheet(); }
+    var sidebar = document.getElementById('sidebar-left');
+    if (sidebar && !sidebar.classList.contains('collapsed')) toggleSidebar();
+  }
+  window.minimizeAllSheets = minimizeAllSheets;
+
   // Toggle Detail Panel
   function toggleDetailPanel(show = null) {
     const panel = document.getElementById('detail-panel');
