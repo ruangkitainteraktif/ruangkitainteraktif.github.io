@@ -756,13 +756,6 @@
 
         <!-- TAB: GEOTOOLS -->
         <div id="tab-geotools" class="tab-content">
-          <div class="gt-donation-banner">
-            <div class="gt-donation-text">Dukung RuangKita</div>
-            <div class="gt-donation-btns">
-              <a href="https://saweria.co/maspannn" target="_blank" rel="noopener" class="gt-donation-btn gt-donation-saweria">Saweria</a>
-              <a href="https://www.paypal.com/paypalme/panjidanutirto" target="_blank" rel="noopener" class="gt-donation-btn gt-donation-paypal">PayPal</a>
-            </div>
-          </div>
           <div class="geotools-main-tabs">
             <button class="geotools-main-tab-btn" data-maintab="geotoolsTabGeonusa" onclick="openGeotoolsMainTab(this)">GeoNusa</button>
             <button class="geotools-main-tab-btn" data-maintab="geotoolsTabGeoportal" onclick="openGeotoolsMainTab(this)">GeoPortal</button>
@@ -1049,6 +1042,10 @@
                     </div>
                   </div>
                   <button id="btnRunLbs" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Hitung Luas Sawah</button>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">
+                    <button id="btnClearLbs" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Hapus Layer</button>
+                    <button id="btnDetailLbs" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Detail</button>
+                  </div>
                   <div id="lbsResultArea" style="display:none;margin-top:8px;padding:10px;background:#fff;border:1px solid #bbf7d0;border-radius:6px;font-size:11px;"></div>
                 </div>
               </section>
@@ -1087,6 +1084,10 @@
                   </div>
                   <label class="geoportal-filter" style="margin-top:2px;display:none;"><input type="checkbox" id="overlayClipVillage" checked><span>Clip ke Batas Wilayah</span></label>
                   <button id="btnRunOverlay" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Jalankan</button>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">
+                    <button id="btnClearKta" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Hapus Layer</button>
+                    <button id="btnDetailKta" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Detail</button>
+                  </div>
                 </div>
               </section>
             </div>
@@ -1119,6 +1120,10 @@
                     </div>
                   </div>
                   <button id="btnRunNdvi" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Analisis NDVI</button>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">
+                    <button id="btnClearNdvi" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Hapus Layer</button>
+                    <button id="btnDetailNdvi" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Detail</button>
+                  </div>
                 </div>
               </section>
             </div>
@@ -1151,6 +1156,10 @@
                     </div>
                   </div>
                   <button id="btnRunLandcover" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#0d9488;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;" onmouseover="this.style.background='#0f766e'" onmouseout="this.style.background='#0d9488'">Jalankan Analisis</button>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">
+                    <button id="btnClearLandcover" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#0d9488;background:#fff;border:1px solid #0d9488;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdfa'" onmouseout="this.style.background='#fff'">Hapus Layer</button>
+                    <button id="btnDetailLandcover" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#0d9488;background:#fff;border:1px solid #0d9488;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdfa'" onmouseout="this.style.background='#fff'">Detail</button>
+                  </div>
                 </div>
                 <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #d0dde8;">
                   <label class="geotani-form-label" style="font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.03em;">Legenda LULC</label>
@@ -1234,6 +1243,10 @@
                   </div>
                   <div id="satupetaInfo" style="display:none;font-size:11px;color:#475569;padding:6px 0;"></div>
                   <button id="satupetaToggleBtn" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:none;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Tampilkan Layer</button>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">
+                    <button id="btnClearSatupeta" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Hapus Layer</button>
+                    <button id="btnDetailSatupeta" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Detail</button>
+                  </div>
                 </div>
               </section>
             </div>

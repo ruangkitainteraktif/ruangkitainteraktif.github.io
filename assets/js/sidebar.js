@@ -237,3 +237,161 @@
   }
 
   window.addEventListener('resize', applyCctvSearchVisibility);
+
+  /* ── GeoTani: Reset Layer + Detail Buttons ── */
+  function initGeotaniButtons() {
+    function showBtn(id) { var el = document.getElementById(id); if (el) el.style.display = ''; }
+    function hideBtn(id) { var el = document.getElementById(id); if (el) el.style.display = 'none'; }
+
+    function showDetailPopup(title, html) {
+      var overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;';
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) document.body.removeChild(overlay); });
+      var box = document.createElement('div');
+      box.style.cssText = 'background:#fff;border-radius:10px;max-width:min(600px,90vw);max-height:70vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.2);';
+      box.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e5e7eb;background:#f9fafb;">'
+        + '<strong style="font-size:13px;color:#1e293b;">' + title + '</strong>'
+        + '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;cursor:pointer;font-size:18px;color:#94a3b8;padding:0 4px;">&times;</button>'
+        + '</div>'
+        + '<div style="overflow:auto;padding:12px 16px;font-size:11px;">' + html + '</div>';
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+    }
+
+    function makeDetailTable(rows) {
+      if (!rows.length) return '<em>Tidak ada data.</em>';
+      var keys = Object.keys(rows[0]);
+      var h = '<table style="width:100%;border-collapse:collapse;font-size:11px;">';
+      h += '<thead><tr>' + keys.map(function (k) { return '<th style="text-align:left;padding:6px 8px;border-bottom:2px solid #e5e7eb;color:#64748b;font-weight:600;">' + k + '</th>'; }).join('') + '</tr></thead>';
+      h += '<tbody>';
+      rows.forEach(function (r, i) {
+        h += '<tr style="background:' + (i % 2 ? '#f9fafb' : '#fff') + ';">';
+        keys.forEach(function (k) { h += '<td style="padding:5px 8px;border-bottom:1px solid #f1f5f9;color:#334155;">' + (r[k] != null ? r[k] : '-') + '</td>'; });
+        h += '</tr>';
+      });
+      h += '</tbody></table>';
+      return h;
+    }
+
+    /* LBS */
+    var lbsLayerActive = false;
+    var origClearLbs = window.clearLbsAnalysis;
+    window.clearLbsAnalysis = function () {
+      if (typeof origClearLbs === 'function') origClearLbs();
+      lbsLayerActive = false; hideBtn('btnClearLbs'); hideBtn('btnDetailLbs');
+    };
+    var lbsRunBtn = document.getElementById('btnRunLbs');
+    if (lbsRunBtn) {
+      var origLbsHandler = lbsRunBtn.onclick;
+      lbsRunBtn.addEventListener('click', function () {
+        setTimeout(function () {
+          var resultArea = document.getElementById('lbsResultArea');
+          if (resultArea && resultArea.style.display !== 'none' && resultArea.innerHTML.trim()) {
+            lbsLayerActive = true; showBtn('btnClearLbs'); showBtn('btnDetailLbs');
+          }
+        }, 500);
+      });
+    }
+    var btnClearLbs = document.getElementById('btnClearLbs');
+    if (btnClearLbs) btnClearLbs.addEventListener('click', function () { if (typeof window.clearLbsAnalysis === 'function') window.clearLbsAnalysis(); });
+    var btnDetailLbs = document.getElementById('btnDetailLbs');
+    if (btnDetailLbs) btnDetailLbs.addEventListener('click', function () {
+      var resultArea = document.getElementById('lbsResultArea');
+      if (resultArea) showDetailPopup('Detail LBS', resultArea.innerHTML);
+    });
+
+    /* KTA */
+    var btnClearKta = document.getElementById('btnClearKta');
+    if (btnClearKta) btnClearKta.addEventListener('click', function () { if (typeof clearOverlay === 'function') clearOverlay(); hideBtn('btnClearKta'); hideBtn('btnDetailKta'); });
+    var btnRunOverlay = document.getElementById('btnRunOverlay');
+    if (btnRunOverlay) {
+      btnRunOverlay.addEventListener('click', function () {
+        setTimeout(function () {
+          if (typeof erosiSawahOverlayLayer !== 'undefined' && erosiSawahOverlayLayer) {
+            showBtn('btnClearKta'); showBtn('btnDetailKta');
+          }
+        }, 1000);
+      });
+    }
+    var btnDetailKta = document.getElementById('btnDetailKta');
+    if (btnDetailKta) btnDetailKta.addEventListener('click', function () {
+      if (typeof erosiSawahOverlayLayer !== 'undefined' && erosiSawahOverlayLayer) {
+        var rows = [];
+        erosiSawahOverlayLayer.eachLayer(function (l) {
+          if (l.feature && l.feature.properties) {
+            var p = l.feature.properties;
+            rows.push({ Nama: p.namaobj || p.nmobj || '-', Luas: p.luas_ha ? p.luas_ha + ' ha' : '-', Erosi: p.erosi || p.koderosi || '-' });
+          }
+        });
+        showDetailPopup('Detail KTA Overlay', makeDetailTable(rows));
+      }
+    });
+
+    /* NDVI */
+    var btnClearNdvi = document.getElementById('btnClearNdvi');
+    if (btnClearNdvi) btnClearNdvi.addEventListener('click', function () { if (typeof window.clearNdviAnalysis === 'function') window.clearNdviAnalysis(); hideBtn('btnClearNdvi'); hideBtn('btnDetailNdvi'); });
+    var btnRunNdvi = document.getElementById('btnRunNdvi');
+    if (btnRunNdvi) {
+      btnRunNdvi.addEventListener('click', function () {
+        setTimeout(function () {
+          if (typeof ndviLayer !== 'undefined' && ndviLayer) {
+            showBtn('btnClearNdvi'); showBtn('btnDetailNdvi');
+          }
+        }, 1500);
+      });
+    }
+    var btnDetailNdvi = document.getElementById('btnDetailNdvi');
+    if (btnDetailNdvi) btnDetailNdvi.addEventListener('click', function () {
+      var report = document.querySelector('#geotani-ndvi-panel .ndvi-report, #geotani-ndvi-panel [id*=report]');
+      if (report) { showDetailPopup('Detail NDVI', report.innerHTML); return; }
+      showDetailPopup('Detail NDVI', '<em>Analisis sedang ditampilkan di peta. Gunakan popup pada polygon untuk detail.</em>');
+    });
+
+    /* Landcover */
+    var btnClearLandcover = document.getElementById('btnClearLandcover');
+    if (btnClearLandcover) btnClearLandcover.addEventListener('click', function () { if (typeof window.clearLandcoverAnalysis === 'function') window.clearLandcoverAnalysis(); hideBtn('btnClearLandcover'); hideBtn('btnDetailLandcover'); });
+    var btnRunLandcover = document.getElementById('btnRunLandcover');
+    if (btnRunLandcover) {
+      btnRunLandcover.addEventListener('click', function () {
+        setTimeout(function () {
+          if (typeof landcoverLayer !== 'undefined' && landcoverLayer) {
+            showBtn('btnClearLandcover'); showBtn('btnDetailLandcover');
+          }
+        }, 1500);
+      });
+    }
+    var btnDetailLandcover = document.getElementById('btnDetailLandcover');
+    if (btnDetailLandcover) btnDetailLandcover.addEventListener('click', function () {
+      var report = document.querySelector('#geotani-landcover-panel .landcover-report, #geotani-landcover-panel [id*=report]');
+      if (report) { showDetailPopup('Detail Land Cover', report.innerHTML); return; }
+      showDetailPopup('Detail Land Cover', '<em>Analisis sedang ditampilkan di peta. Gunakan popup pada polygon untuk detail.</em>');
+    });
+
+    /* Satupeta */
+    var btnClearSatupeta = document.getElementById('btnClearSatupeta');
+    if (btnClearSatupeta) btnClearSatupeta.addEventListener('click', function () { if (typeof SatupetaDownloader !== 'undefined') SatupetaDownloader.clearSelection(); hideBtn('btnClearSatupeta'); hideBtn('btnDetailSatupeta'); });
+    var origFetchDisplay = window.SatupetaDownloader && SatupetaDownloader.run;
+    if (typeof SatupetaDownloader !== 'undefined') {
+      var origRun = SatupetaDownloader.run;
+      SatupetaDownloader.run = function (kode) {
+        if (typeof origRun === 'function') origRun.call(SatupetaDownloader, kode);
+        setTimeout(function () {
+          var info = document.getElementById('satupetaInfo');
+          if (info && info.style.display !== 'none' && info.innerHTML.trim()) {
+            showBtn('btnClearSatupeta'); showBtn('btnDetailSatupeta');
+          }
+        }, 1500);
+      };
+    }
+    var btnDetailSatupeta = document.getElementById('btnDetailSatupeta');
+    if (btnDetailSatupeta) btnDetailSatupeta.addEventListener('click', function () {
+      var info = document.getElementById('satupetaInfo');
+      if (info) showDetailPopup('Detail Penggunaan Tanah', info.innerHTML);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGeotaniButtons);
+  } else {
+    initGeotaniButtons();
+  }

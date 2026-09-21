@@ -6056,26 +6056,27 @@
       #hotspot-sheet .hs-sheet-head { padding: 0 16px 10px; }
       #hotspot-sheet.sheet-minimized {
         /* Posisi tepat di bawah toolbar Quick Layer pada layar mobile. */
-        top: 104px;
+        top: 100px;
         right: auto;
         bottom: auto;
         left: 50%;
-        width: min(330px, calc(100vw - 24px));
-        height: 52px;
+        width: min(220px, calc(100vw - 48px));
+        height: 36px;
         border: 1px solid rgba(255, 255, 255, .72);
-        border-radius: 18px;
+        border-radius: 14px;
         background: rgba(255, 255, 255, .92);
-        box-shadow: 0 10px 26px rgba(15, 23, 42, .16);
+        box-shadow: 0 4px 14px rgba(15, 23, 42, .12);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         transform: translateX(-50%);
+        z-index: 998;
       }
       #hotspot-sheet.sheet-minimized .hs-sheet-handle,
       #hotspot-sheet.sheet-minimized .hs-sheet-body { display: none; }
       #hotspot-sheet.sheet-minimized .hs-sheet-head {
-        min-height: 52px;
+        min-height: 36px;
         box-sizing: border-box;
-        padding: 10px 16px;
+        padding: 6px 12px;
         border-bottom: 0;
       }
     }
@@ -6494,25 +6495,26 @@
         -webkit-overflow-scrolling: touch;
       }
       #geopangan-sheet.sheet-minimized {
-        top: 104px;
+        top: 100px;
         right: auto;
         bottom: auto;
         left: 50%;
-        width: min(330px, calc(100vw - 24px));
-        height: 52px;
+        width: min(220px, calc(100vw - 48px));
+        height: 36px;
         visibility: visible;
         border: 1px solid rgba(255, 255, 255, .72);
-        border-radius: 18px;
+        border-radius: 14px;
         background: rgba(255, 255, 255, .92);
-        box-shadow: 0 10px 26px rgba(15, 23, 42, .16);
+        box-shadow: 0 4px 14px rgba(15, 23, 42, .12);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         transform: translateX(-50%);
+        z-index: 998;
       }
       #geopangan-sheet.sheet-minimized .gp-sheet-handle,
       #geopangan-sheet.sheet-minimized .gp-sheet-body { display: none; }
       #geopangan-sheet.sheet-minimized .gp-sheet-head {
-        min-height: 52px;
+        min-height: 36px;
         box-sizing: border-box;
         padding: 10px 16px;
         border-bottom: 0;

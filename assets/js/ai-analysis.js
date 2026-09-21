@@ -1698,41 +1698,6 @@
       }
     }
 
-    var POPULAR_REGIONS = {
-      provinsi: [
-        { name: 'DKI Jakarta', q: 'Jakarta' }, { name: 'Jawa Barat', q: 'Jawa Barat' },
-        { name: 'Jawa Timur', q: 'Jawa Timur' }, { name: 'Jawa Tengah', q: 'Jawa Tengah' },
-        { name: 'Sumatera Utara', q: 'Sumatera Utara' }, { name: 'Bali', q: 'Bali' },
-        { name: 'Kalimantan Timur', q: 'Kalimantan Timur' }, { name: 'Sulawesi Selatan', q: 'Sulawesi Selatan' }
-      ],
-      kabkot: [
-        { name: 'Kota Bandung', q: 'Kota Bandung' }, { name: 'Kota Surabaya', q: 'Kota Surabaya' },
-        { name: 'Kota Semarang', q: 'Kota Semarang' }, { name: 'Kota Yogyakarta', q: 'Kota Yogyakarta' },
-        { name: 'Kota Medan', q: 'Kota Medan' }, { name: 'Kota Makassar', q: 'Kota Makassar' },
-        { name: 'Kota Denpasar', q: 'Kota Denpasar' }, { name: 'Kota Bogor', q: 'Kota Bogor' }
-      ],
-      kecamatan: [
-        { name: 'Kec. Denpasar Selatan', q: 'Denpasar Selatan' }, { name: 'Kec. Sukamakmur', q: 'Sukamakmur' },
-        { name: 'Kec. Cimanggis', q: 'Cimanggis' }, { name: 'Kec. Tegallalang', q: 'Tegallalang' },
-        { name: 'Kec. Ubud', q: 'Ubud' }, { name: 'Kec. Cibiru', q: 'Cibiru' }
-      ],
-      desa: [
-        { name: 'Desa Sukamaju', q: 'Sukamaju' }, { name: 'Desa Pemecutan', q: 'Pemecutan' },
-        { name: 'Desa Adat Kuta', q: 'Desa Adat Kuta' }, { name: 'Desa Cilangkap', q: 'Cilangkap' },
-        { name: 'Desa Kedungjati', q: 'Kedungjati' }, { name: 'Desa Wisata Candirejo', q: 'Candirejo' }
-      ]
-    };
-    var popRegions = POPULAR_REGIONS[match.type] || POPULAR_REGIONS.provinsi;
-    var shuffled = popRegions.slice();
-    for (var si = shuffled.length - 1; si > 0; si--) { var sj = Math.floor(Math.random() * (si + 1)); var st = shuffled[si]; shuffled[si] = shuffled[sj]; shuffled[sj] = st; }
-    var regionChipsHtml = '<div class="ais-welcome-btns">';
-    shuffled.slice(0, 3).forEach(function (r) {
-      var safeQ = r.q.replace(/'/g, "\\'");
-      regionChipsHtml += '<button class="ais-welcome-btn" onclick="window._aiSendQuick(-1,\'' + safeQ + '\')">' + r.name + '</button>';
-    });
-    regionChipsHtml += '</div><div class="ais-hint-modern">Klik nama wilayah di atas atau ketik langsung di kolom chat</div>';
-    s += '\x00RAW' + regionChipsHtml + 'RAW\x00';
-
     return s;
   }
 
