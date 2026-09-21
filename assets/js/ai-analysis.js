@@ -596,7 +596,7 @@
     { intent: 'hidrologi', patterns: ['hidrologi', 'sungai', 'banjir', 'debit', 'dam', 'tma', 'sih3', 'bbws', 'citarum', 'curah hujan'] },
     { intent: 'penduduk', patterns: ['penduduk', 'demografi', 'sensus penduduk', 'jumlah penduduk', 'populasi', 'dukcapil'] },
     { intent: 'pangan', patterns: ['harga', 'beras', 'commodity', 'food price', 'bi harga', 'komoditas'] },
-    { intent: 'lahan', patterns: ['lahan', 'tutupan', 'irigasi', 'sawah dilindungi', 'lahan baku', 'pertanahan', 'atrbpn', 'persil', 'rtrw'] },
+    { intent: 'lahan', patterns: ['lahan', 'tutupan', 'irigasi', 'sawah dilindungi', 'lahan baku', 'pertanahan', 'atrbpn', 'persil', 'rtrw', 'penggunaan tanah', 'land use', 'peta penggunaan', 'ptnobj'] },
     { intent: 'maritim', patterns: ['laut', 'gelombang', 'swell', 'maritim', 'perairan', 'pelabuhan'] },
     { intent: 'bencana', patterns: ['bencana', 'longsor', 'evakuasi', 'patahan', 'jalur evakuasi'] },
     { intent: 'sensorgempa', patterns: ['sensor', 'seismic', 'stasiun', 'geofon'] },
@@ -859,6 +859,17 @@
         }
         if (!lahans.lbs && !lahans.lsd) {
           s += 'Tidak ada data lahan sawah untuk wilayah ini.\n';
+        }
+        var ptData = null;
+        try { ptData = await fetchPenggunaanTanah(regionMatch.kode, boundary.bbox); } catch (e) {}
+        if (ptData && ptData.types.length) {
+          s += '\n**Penggunaan Tanah 10K:**\n';
+          s += '- Total: **' + fmt(ptData.totalPolygons) + '** polygon | Luas: **' + ptData.totalHa.toFixed(2) + ' ha**\n';
+          ptData.types.slice(0, 5).forEach(function (t) {
+            var pct = ptData.totalHa > 0 ? ((t.ha / ptData.totalHa) * 100).toFixed(1) : '0';
+            s += '- ' + t.name + ': **' + t.ha.toFixed(2) + ' ha** (' + pct + '%)\n';
+          });
+          if (ptData.types.length > 5) s += '- _...dan ' + (ptData.types.length - 5) + ' jenis lainnya_\n';
         }
       }
     }
@@ -1135,6 +1146,57 @@
     return result;
   }
 
+  async function fetchPenggunaanTanah(kode, bbox) {
+    if (!bbox) return null;
+    try {
+      var minX = bbox.west || bbox[0], minY = bbox.south || bbox[1];
+      var maxX = bbox.east || bbox[2], maxY = bbox.north || bbox[3];
+      var envelope = JSON.stringify({ xmin: minX, ymin: minY, xmax: maxX, ymax: maxY, spatialReference: { wkid: 4326 } });
+      var offset = 0;
+      var all = [];
+      var PAGE = 1000;
+      var loop = function () {
+        var params = new URLSearchParams({
+          f: 'json', returnGeometry: 'false', where: '1=1',
+          geometry: envelope, geometryType: 'esriGeometryEnvelope',
+          spatialRel: 'esriSpatialRelIntersects', inSR: '4326',
+          outFields: 'ptnobjname,ig25k_penggunaan10k_ar_area',
+          resultOffset: String(offset), resultRecordCount: String(PAGE)
+        });
+        var ctrl = new AbortController();
+        var t = setTimeout(function () { ctrl.abort(); }, 15000);
+        return fetch('https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/3/query?' + params.toString(), { signal: ctrl.signal })
+          .then(function (r) { clearTimeout(t); return r.json(); })
+          .then(function (data) {
+            if (data.features) all = all.concat(data.features);
+            if (data.exceededTransferLimit && data.features && data.features.length > 0) {
+              offset += PAGE;
+              return loop();
+            }
+            return all;
+          });
+      };
+      var features = await loop();
+      if (!features.length) return null;
+      var types = {};
+      var totalHa = 0;
+      features.forEach(function (f) {
+        var a = f.attributes || {};
+        var name = a.ptnobjname || 'Lainnya';
+        var ha = parseFloat(a.ig25k_penggunaan10k_ar_area) || 0;
+        if (!types[name]) types[name] = { name: name, count: 0, ha: 0 };
+        types[name].count++;
+        types[name].ha += ha / 10000;
+        totalHa += ha / 10000;
+      });
+      var sorted = Object.values(types).sort(function (a, b) { return b.ha - a.ha; });
+      return { types: sorted, totalPolygons: features.length, totalHa: totalHa };
+    } catch (e) {
+      console.warn('[AI] fetchPenggunaanTanah error:', e);
+      return null;
+    }
+  }
+
   var LULC_CLASSES = [
     { id: 1, band: 1, name: 'Air', color: '#419bdf' },
     { id: 2, band: 2, name: 'Hutan/Pohon', color: '#397d49' },
@@ -1402,6 +1464,19 @@
         if (lsdPct) s += ' (' + lsdPct + '% dari luas wilayah)';
         s += '\n';
       }
+      s += '\n';
+    }
+
+    var ptData = null;
+    try { ptData = await fetchPenggunaanTanah(match.kode, bbox); } catch (e) {}
+    if (ptData && ptData.types.length) {
+      s += '**Penggunaan Tanah 10K:**\n';
+      s += '- Total polygon: **' + fmt(ptData.totalPolygons) + '** | Luas total: **' + ptData.totalHa.toFixed(2) + ' ha**\n';
+      ptData.types.slice(0, 5).forEach(function (t) {
+        var pct = ptData.totalHa > 0 ? ((t.ha / ptData.totalHa) * 100).toFixed(1) : '0';
+        s += '- ' + t.name + ': **' + t.ha.toFixed(2) + ' ha** (' + pct + '%, ' + t.count + ' polygon)\n';
+      });
+      if (ptData.types.length > 5) s += '- _...dan ' + (ptData.types.length - 5) + ' jenis lainnya_\n';
       s += '\n';
     }
 

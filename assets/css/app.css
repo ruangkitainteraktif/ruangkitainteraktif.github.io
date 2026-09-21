@@ -2948,6 +2948,28 @@
       background: #fff; color: #385773; outline: none;
       box-sizing: border-box;
     }
+    .satupeta-kab-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 10px; font-size: 11px; cursor: pointer;
+      border-bottom: 1px solid #f0f0f0; transition: background .1s;
+    }
+    .satupeta-kab-item:hover { background: #f0f7ff; }
+    .satupeta-kab-name { font-weight: 600; color: #1e293b; font-size: 11px; }
+    .satupeta-kab-prov { font-size: 10px; color: #64748b; margin-left: 8px; }
+    .satupeta-kab-empty { font-size: 11px; color: #94a3b8; text-align: center; cursor: default; }
+    .satupeta-kab-empty:hover { background: none; }
+    .satupeta-loading { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #475569; }
+    .satupeta-spinner {
+      width: 12px; height: 12px; border: 2px solid #d0dde8;
+      border-top-color: #16a34a; border-radius: 50%;
+      animation: satupeta-spin .6s linear infinite; flex-shrink: 0;
+    }
+    @keyframes satupeta-spin { to { transform: rotate(360deg); } }
+    .satupeta-close-btn {
+      background: none; border: none; cursor: pointer; padding: 2px;
+      color: #94a3b8; transition: color .15s; flex-shrink: 0;
+    }
+    .satupeta-close-btn:hover { color: #ef4444; }
     .geotani-form-label {
       font-size: 10px; color: #54708d; font-weight: 600;
       display: block; margin-bottom: 3px;
@@ -5842,6 +5864,7 @@
     .agol-geo-krb      { background: linear-gradient(135deg, #831843, #be185d); }
     .agol-geo-kawasan  { background: linear-gradient(135deg, #14532d, #16a34a); }
     .agol-geo-kttht    { background: linear-gradient(135deg, #1e3a5f, #0369a1); }
+    .agol-geo-satupeta { background: linear-gradient(135deg, #14532d, #22c55e); }
     .agol-geo-kawasan .agol-popup-badge { font-size: 10px; padding: 3px 10px; border-radius: 5px; letter-spacing: .02em; }
     .agol-geo-kawasan .agol-popup-title { font-size: 15px; }
 

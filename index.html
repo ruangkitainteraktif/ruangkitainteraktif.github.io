@@ -1010,6 +1010,11 @@
                 <span class="geotani-card-title">KTA Analysis</span>
                 <span class="geotani-card-desc">Ketahanan Pangan</span>
               </button>
+              <button id="geotani-satupeta-tab" class="geotani-analysis-card" type="button" role="tab" aria-selected="false" aria-controls="geotani-satupeta-panel" onclick="openGeotaniAnalysisTab('satupeta')">
+                <span class="geotani-card-icon">🌿</span>
+                <span class="geotani-card-title">Penggunaan Tanah</span>
+                <span class="geotani-card-desc">10K SatuPeta</span>
+              </button>
             </div>
             <div id="geotani-lbs-panel" class="geotani-analysis-panel active" role="tabpanel" aria-labelledby="geotani-lbs-tab">
               <section class="geotani-kta-card" aria-labelledby="lbsOverlayTitle">
@@ -1198,6 +1203,33 @@
                     <div id="dem-progress-text" style="font-size:10px;color:#64748b;margin-top:4px;">Memuat data elevasi...</div>
                   </div>
                   <div id="dem-report-container" style="display:none;"></div>
+                </div>
+              </section>
+            </div>
+            <div id="geotani-satupeta-panel" class="geotani-analysis-panel" role="tabpanel" aria-labelledby="geotani-satupeta-tab" hidden>
+              <section class="geotani-kta-card">
+                <h5>Penggunaan Tanah 10K</h5>
+                <div style="display:grid;gap:10px;margin-top:8px;">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                    <div>
+                      <label class="geotani-form-label">Level</label>
+                      <select id="satupetaLevelMode" class="geotani-form-select">
+                        <option value="desa" selected>Desa/Kelurahan</option>
+                        <option value="kabupaten">Kabupaten/Kota</option>
+                      </select>
+                    </div>
+                    <div style="position:relative;">
+                      <label id="satupetaLevelLabel" class="geotani-form-label">Cari nama wilayah</label>
+                      <div style="position:relative;">
+                        <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
+                        <input type="text" id="satupetaKabSearch" placeholder="Pilih nama wilayah..." autocomplete="off" class="geotani-form-input-search" />
+                      </div>
+                      <div id="satupetaKabResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
+                      <div id="satupetaKabSelected" style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;"></div>
+                    </div>
+                  </div>
+                  <div id="satupetaInfo" style="display:none;font-size:11px;color:#475569;padding:6px 0;"></div>
+                  <button id="satupetaToggleBtn" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:none;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Tampilkan Layer</button>
                 </div>
               </section>
             </div>
@@ -1954,6 +1986,7 @@
 
   <script src="assets/js/overlay-village-search.js"></script>
   <script src="assets/js/erosi-kta.js"></script>
+  <script src="assets/js/satupeta-downloader.js"></script>
   <script src="assets/js/crop-health.js"></script>
   <script src="assets/js/ndvi-analysis.js"></script>
   <script src="assets/js/landcover-analysis.js"></script>
