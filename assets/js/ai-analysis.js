@@ -2059,7 +2059,7 @@
       showWelcomeMessage();
     }
     var input = $('ais-chat-input');
-    if (input) { setTimeout(function () { input.focus(); }, 300); }
+    if (input && window.innerWidth > 768) { setTimeout(function () { input.focus(); }, 300); }
   }
 
   function closeAiSheet() {

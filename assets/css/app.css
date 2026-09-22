@@ -2460,7 +2460,10 @@
       min-height: 36px; box-sizing: border-box;
       padding: 6px 14px; border-bottom: 0;
     }
-    #ai-sheet.ais-sheet-minimized .ais-sheet-title { cursor: pointer; font-size: 11px; }
+    #ai-sheet.ais-sheet-minimized .ais-sheet-title {
+      cursor: pointer; font-size: 11px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
 
     /* SIDEBAR KIRI */
     #sidebar-left {
