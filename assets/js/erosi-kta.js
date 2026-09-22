@@ -459,17 +459,45 @@ function showKtaPopup(lat, lon, encodedKode) {
       </div>
       <div class="kta-popup-body">
         ${ktaContent}
+        ${(lastKtaData && lastKtaData.intersections && lastKtaData.intersections.length) ? `
+        <div style="margin-top:8px;padding:6px 8px;background:#f5f7fa;border-radius:4px;">
+          <div style="font-size:9px;font-weight:600;color:#455a64;margin-bottom:4px;">📊 Detail Fitur (${lastKtaData.intersections.length} polygon)</div>
+          <div style="max-height:120px;overflow-y:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:9px;">
+              <thead><tr style="position:sticky;top:0;background:#e8f5e9;">
+                <th style="padding:3px 4px;text-align:left;border-bottom:1px solid #c8e6c9;color:#2e7d32;">No</th>
+                <th style="padding:3px 4px;text-align:left;border-bottom:1px solid #c8e6c9;color:#2e7d32;">Kelas Erosi</th>
+                <th style="padding:3px 4px;text-align:right;border-bottom:1px solid #c8e6c9;color:#2e7d32;">Luas (Ha)</th>
+              </tr></thead>
+              <tbody>
+                ${lastKtaData.intersections.slice(0, 30).map((f, i) => {
+                  const p = f.properties || {};
+                  const kelas = p.erosi_kelas || '-';
+                  const luas = p.area_ha != null ? Number(p.area_ha).toLocaleString('id-ID', {maximumFractionDigits: 4}) : '-';
+                  const ktaItem = (typeof getKtaByKelasName === 'function') ? getKtaByKelasName(kelas) : null;
+                  const clr = ktaItem ? ktaItem.color : '#78909c';
+                  return '<tr style="background:' + (i % 2 ? '#f9fafb' : '#fff') + ';"><td style="padding:2px 4px;border-bottom:1px solid #f1f5f9;color:#64748b;">' + (i + 1) + '</td><td style="padding:2px 4px;border-bottom:1px solid #f1f5f9;color:' + clr + ';font-weight:600;">' + kelas + '</td><td style="padding:2px 4px;border-bottom:1px solid #f1f5f9;text-align:right;color:#334155;">' + luas + '</td></tr>';
+                }).join('')}
+                ${lastKtaData.intersections.length > 30 ? '<tr><td colspan="3" style="padding:3px 4px;color:#94a3b8;font-style:italic;text-align:center;">...dan ' + (lastKtaData.intersections.length - 30) + ' lainnya</td></tr>' : ''}
+              </tbody>
+            </table>
+          </div>
+        </div>` : ''}
       </div>
       <div class="kta-popup-footer" style="padding:8px 12px;background:#f0f7ff;border-top:1px solid #e0e8f0;text-align:center;">
         <span style="font-size:9px;color:#64748b;">Sumber: BIG SatuPeta</span>
-        <div style="display:flex;justify-content:center;gap:8px;margin-top:6px;">
+        <div style="display:flex;justify-content:center;gap:8px;margin-top:6px;flex-wrap:wrap;">
           <button class="kta-btn-print" onclick="printKtaPdf()">
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M6 9V2h12v7"/>
-              <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+              <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 01-2 2h-2"/>
               <rect x="6" y="14" width="12" height="8"/>
             </svg>
             Cetak PDF
+          </button>
+          <button onclick="if(typeof clearOverlay==='function'){clearOverlay();if(this.closest('.leaflet-popup'))map.closePopup();}" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border:none;border-radius:8px;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;font-size:11px;font-weight:600;cursor:pointer;box-shadow:0 2px 6px rgba(220,38,38,.2);transition:all .2s;" onmouseover="this.style.background='linear-gradient(135deg,#b91c1c,#dc2626)'" onmouseout="this.style.background='linear-gradient(135deg,#dc2626,#ef4444)'">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+            Reset Polygon
           </button>
         </div>
       </div>

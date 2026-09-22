@@ -821,7 +821,7 @@
         results.forEach(function (item) {
           var div = document.createElement('div');
           div.style.cssText = 'padding:8px 10px;cursor:pointer;font-size:11px;border-bottom:1px solid #f1f5f9;';
-          div.textContent = item.nama;
+          div.textContent = `${item.nama} (${item.kode})`;
           div.addEventListener('mouseenter', function () { this.style.background = '#f1f5f9'; });
           div.addEventListener('mouseleave', function () { this.style.background = ''; });
           div.addEventListener('click', function () {
