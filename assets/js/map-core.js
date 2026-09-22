@@ -6,8 +6,8 @@
   // 1. Inisialisasi Peta
   // Pusat awal: Tengah Indonesia (antara Sulawesi & Kalimantan)
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
-  const initialCenter = [-1.0, 121.0];
-  const initialZoom = isMobile ? 5 : 5;
+  const initialCenter = isMobile ? [-6.1924, 106.8234] : [-1.0, 121.0];
+  const initialZoom = isMobile ? 14 : 5;
   const map = L.map('map', { zoomControl: false, preferCanvas: true, maxZoom: 19, minZoom: 4 }).setView(initialCenter, initialZoom);
   window.map = map;
 
@@ -35,6 +35,16 @@ L.control.scale({
     'esri-satellite': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
       attribution: 'Mas Pannn'
+    }),
+    'petadasar-bpn': L.TileLayer.wmsCached('https://petadasar.meritech.cloud/wms', {
+      layers: 'petadasar',
+      format: 'image/png',
+      transparent: true,
+      crs: L.CRS.EPSG3857,
+      version: '1.3.0',
+      maxZoom: 19,
+      minZoom: 14,
+      attribution: 'ATR/BPN'
     }),
     'esri-dark-gray': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
@@ -775,6 +785,9 @@ L.control.scale({
         if (sel) sel.value = name;
         map.fire('basemapchanged', { basemap: name });
         return;
+      } else if (name === 'petadasar-bpn') {
+        baseTileLayers['esri-satellite'].addTo(map);
+        baseTileLayers[name].addTo(map);
       } else {
         baseTileLayers[name].addTo(map);
       }
@@ -832,7 +845,7 @@ L.control.scale({
   }
 
   function applyInitialStartupDefaults() {
-    currentBasemapName = 'esri-dark-gray';
+    currentBasemapName = 'petadasar-bpn';
     baseBasemapName = 'esri-dark-gray';
     setBaseMap(currentBasemapName);
     if (typeof window.toggleProvinceBoundary === 'function') {
@@ -1022,6 +1035,7 @@ L.control.scale({
   };
   const satelliteBasemapLabels = {
     'esri-satellite': 'Esri Satellite',
+    'petadasar-bpn': 'Peta Dasar ATR/BPN',
     'modis-terra': 'MODIS Terra',
     'modis-aqua': 'MODIS Aqua',
     'viirs-noaa20': 'VIIRS NOAA-20',
@@ -2755,6 +2769,7 @@ L.control.scale({
           group: 'Satelit',
           layers: [
             { id: 'esri-satellite', label: 'Esri Satellite' },
+            { id: 'petadasar-bpn', label: 'Peta Dasar ATR/BPN' },
             { id: 'bmkg-himawari', label: 'Himawari-9 IR (BMKG)' },
             { id: 'bmkg-himawari-nc', label: 'Himawari-9 Natural Color (BMKG)' },
             { id: 'bmkg-himawari-wv', label: 'Himawari-9 Water Vapor (BMKG)' },
