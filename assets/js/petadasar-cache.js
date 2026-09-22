@@ -9,7 +9,7 @@
 
   var DB_NAME  = 'petadasar-bpn-cache';
   var DB_STORE = 'tiles';
-  var DB_VER   = 1;
+  var DB_VER   = 2;
   var MAX_CACHE = 800;
 
   var _db = null;
@@ -86,7 +86,7 @@
   /* ── Custom Cached WMS Tile Layer ── */
   L.TileLayer.WMS_Cached = L.TileLayer.WMS.extend({
 
-    _createTile: function (coords, done) {
+    createTile: function (coords, done) {
       var tile = L.DomUtil.create('img', '');
       tile.alt = '';
       tile.setAttribute('role', 'presentation');
@@ -97,23 +97,34 @@
 
     _loadTileCached: function (tile, coords, done) {
       var self = this;
-      var key  = cacheKey(coords);
       var src  = this.getTileUrl(coords);
+      // Include the rendered URL so a change to the WMS request cannot reuse
+      // an incompatible tile from a previous layer configuration.
+      var key  = src;
+
+      function setTileSource(source) {
+        tile.onload = function () {
+          if (source.indexOf('blob:') === 0) URL.revokeObjectURL(source);
+          self._tileOnLoad(done, tile);
+        };
+        tile.onerror = function () {
+          if (source.indexOf('blob:') === 0) URL.revokeObjectURL(source);
+          self._tileOnError(done, tile);
+        };
+        tile.src = source;
+      }
 
       dbGet(key, function (cached) {
         if (cached) {
-          var blobUrl = URL.createObjectURL(cached);
-          tile.onload = function () {
-            URL.revokeObjectURL(blobUrl);
-            L.DomEvent.on(tile, 'load', L.bind(self._tileOnLoad, self, done, tile));
-          };
-          tile.onerror = L.bind(self._tileOnError, self, done, tile);
-          tile.src = blobUrl;
+          setTileSource(URL.createObjectURL(cached));
           return;
         }
 
         fetch(src)
-          .then(function (res) { return res.blob(); })
+          .then(function (res) {
+            if (!res.ok) throw new Error('WMS request failed: ' + res.status);
+            return res.blob();
+          })
           .then(function (blob) {
             if (blob && blob.size > 100) {
               dbCount(function (cnt) {
@@ -121,18 +132,10 @@
                 dbPut(key, blob);
               });
             }
-            var blobUrl = URL.createObjectURL(blob);
-            tile.onload = function () {
-              URL.revokeObjectURL(blobUrl);
-              L.DomEvent.on(tile, 'load', L.bind(self._tileOnLoad, self, done, tile));
-            };
-            tile.onerror = L.bind(self._tileOnError, self, done, tile);
-            tile.src = blobUrl;
+            setTileSource(URL.createObjectURL(blob));
           })
           .catch(function () {
-            tile.onload = L.bind(self._tileOnLoad, self, done, tile);
-            tile.onerror = L.bind(self._tileOnError, self, done, tile);
-            tile.src = src;
+            setTileSource(src);
           });
       });
     }

@@ -23,7 +23,7 @@
       keywords: ['gempa','bencana','patahan','evakuasi','seismic','sensor']
     },
     'Ketahanan Pangan': {
-      ids: ['toggleFsvaLayer','bps-lbs-2024','toggleSawahDilindungi','toggleSawahNasional50k','arcgis-sawah-2023','arcgis-sawah-2019','arcgis-kawasan-padi','arcgis-kawasan-jagung','arcgis-kawasan-kedelai','toggleSebaranPasar','toggleSppgSebaranLayer','toggleSppgDistrictLayer','toggleSppgLayer'],
+       ids: ['toggleFsvaLayer','bps-lbs-2024','toggleSawahDilindungi','toggleSawahNasional50k','arcgis-sawah-2023','arcgis-sawah-2019','arcgis-kawasan-padi','arcgis-kawasan-jagung','arcgis-kawasan-kedelai','opt-padi-penggerek','opt-padi-wbc','opt-padi-tikus','opt-padi-blas','opt-padi-kresek','opt-padi-tungro','opt-padi-kerdil','opt-jagung-lalat','opt-jagung-penggerek','opt-jagung-tikus','opt-jagung-blay','opt-jagung-penggerek-tongkol','opt-jagung-ulat-litura','opt-jagung-ulat-frugiperda','opt-kedelai-tikus','opt-kedelai-penggerek-polong','opt-kedelai-penggulung','opt-kedelai-ulat-litura','opt-kedelai-ulat-jengkal','toggleSebaranPasar','toggleSppgSebaranLayer','toggleSppgDistrictLayer','toggleSppgLayer'],
       keywords: ['pangan','fsva','sawah','pasar','kementan','badan pangan']
     },
     'Sensus Pertanian 2023': {

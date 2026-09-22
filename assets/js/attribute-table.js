@@ -476,7 +476,7 @@
       outFields: ['*'],
       props: []
     },
-    'arcgis-kawasan-kedelai': {
+     'arcgis-kawasan-kedelai': {
       name: 'Kawasan Kedelai (Kementan)',
       type: 'arcgis',
       url: 'https://sig02.pertanian.go.id/server/rest/services/Kawasan/Peta_Kawasan_Kedelai/MapServer/0/query',
@@ -674,6 +674,10 @@
     var sheet = document.getElementById('attr-table-sheet');
     if (!sheet) return;
     var config = ATTR_LAYER_REGISTRY[toggleId];
+    // Support dynamic OPT pest toggles via window.OPT_ATTR_DATA
+    if (!config && toggleId.indexOf('opt-') === 0 && window.OPT_ATTR_DATA && window.OPT_ATTR_DATA[toggleId]) {
+      config = window.OPT_ATTR_DATA[toggleId];
+    }
     // Support dynamic SIH3 toggles without enumerating every id in the registry
     if (!config) {
       var m;
@@ -848,6 +852,15 @@
           .then(function (r) { return r.json(); })
           .then(function (data) {
             if (!_currentLayer || _currentLayer.id !== arcId) return collected;
+            // Some ArcGIS servers (e.g. siperditan OPT) do not support pagination
+            if (data && data.error && /pagination|resultOffset/i.test(String(data.error.message || ''))) {
+              return fetch(baseQ)
+                .then(function (r2) { return r2.json(); })
+                .then(function (d2) {
+                  if (!_currentLayer || _currentLayer.id !== arcId) return collected;
+                  return collected.concat(parseArcFeatures(d2)).slice(0, MAX_RECORDS);
+                });
+            }
             var page = parseArcFeatures(data);
             var merged = collected.concat(page);
             if (page.length < PAGE || merged.length >= MAX_RECORDS) return merged;
@@ -861,6 +874,17 @@
           var total = (cntData && cntData.count != null) ? cntData.count : 0;
           if (total === 0) { _currentFeatures = []; _currentPage = 1; renderAttrContent(); return; }
           var capped = total > MAX_RECORDS;
+          if (config.noPagination) {
+            return fetch(baseQ).then(function (r) { return r.json(); }).then(function (d) {
+              if (!_currentLayer || _currentLayer.id !== arcId) return;
+              _currentFeatures = parseArcFeatures(d).slice(0, MAX_RECORDS);
+              _currentPage = 1;
+              renderAttrContent();
+            }).catch(function () {
+              if (_currentLayer && _currentLayer.id === arcId && arcContent)
+                arcContent.innerHTML = '<div class="at-empty">Gagal memuat data atribut.</div>';
+            });
+          }
           return fetchSequential(0, []).then(function (allFeats) {
             if (!_currentLayer || _currentLayer.id !== arcId) return;
             _currentFeatures = allFeats;
@@ -1229,6 +1253,7 @@
   function hasAttrSupport(toggleId) {
     // Also support SIH3 dynamic toggles by pattern so buttons show without manual registry entries
     if (/^toggleSih3Dpu_/.test(toggleId) || /^toggleSih3Cit_/.test(toggleId)) return true;
+    if (toggleId.indexOf('opt-') === 0 && window.OPT_ATTR_DATA && window.OPT_ATTR_DATA[toggleId]) return true;
     return !!(ATTR_LAYER_REGISTRY[toggleId] || WMS_ATTR_REGISTRY[toggleId]);
   }
   window.hasAttrSupport = hasAttrSupport;

@@ -125,7 +125,7 @@
     'arcgis-sawah-2019': 'Data LBS 2019 tidak tersedia.',
     'arcgis-kawasan-padi': 'Data Kawasan Padi tidak tersedia.',
     'arcgis-kawasan-jagung': 'Data Kawasan Jagung tidak tersedia.',
-    'arcgis-kawasan-kedelai': 'Data Kawasan Kedelai tidak tersedia.',
+         'arcgis-kawasan-kedelai': 'Data Kawasan Kedelai tidak tersedia.',
     'toggleBumiPersilLayer': 'Data Persil Tanah (ATRBPN) tidak tersedia.',
     'toggleFsvaLayer': 'Data FSVA 2025 (Badan Pangan) tidak tersedia.',
     'toggleWorldPlatesLayer': 'Data Zona Patahan Dunia (USGS) tidak tersedia.',

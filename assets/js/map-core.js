@@ -8,7 +8,7 @@
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
   const initialCenter = isMobile ? [-6.1924, 106.8234] : [-1.0, 121.0];
   const initialZoom = isMobile ? 14 : 5;
-  const map = L.map('map', { zoomControl: false, preferCanvas: true, maxZoom: 19, minZoom: 4 }).setView(initialCenter, initialZoom);
+  const map = L.map('map', { zoomControl: false, preferCanvas: true, maxZoom: 22, minZoom: 4 }).setView(initialCenter, initialZoom);
   window.map = map;
 
   // Close all other popups when a new popup opens (prevent popup stacking)
@@ -42,7 +42,11 @@ L.control.scale({
       transparent: true,
       crs: L.CRS.EPSG3857,
       version: '1.3.0',
-      maxZoom: 19,
+      tileSize: 512,
+      keepBuffer: 1,
+      updateWhenIdle: true,
+      updateWhenZooming: false,
+      maxZoom: 22,
       minZoom: 14,
       attribution: 'ATR/BPN'
     }),
@@ -81,6 +85,11 @@ L.control.scale({
     'google-maps': L.tileLayer('https://mt0.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
       maxZoom: 19,
       attribution: 'Mas Pannn'
+    }),
+    'google-satellite-kh': L.tileLayer('https://khms{s}.google.com/kh/v=1015?x={x}&y={y}&z={z}', {
+      subdomains: ['0', '1', '2', '3'],
+      maxZoom: 20,
+      attribution: 'Google'
     }),
     'modis-terra': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/{Time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', {
       maxZoom: 12,
@@ -538,7 +547,7 @@ L.control.scale({
   }
   window.toggleOmiLayer = toggleOmiLayer;
 
-  let currentBasemapName = 'esri-dark-gray';
+  let currentBasemapName = 'google-maps';
   window.currentBasemapName = currentBasemapName;
   let baseBasemapName = 'esri-dark-gray';
   let currentRdtrOpacity = 0.8;
@@ -786,8 +795,9 @@ L.control.scale({
         map.fire('basemapchanged', { basemap: name });
         return;
       } else if (name === 'petadasar-bpn') {
-        baseTileLayers['esri-satellite'].addTo(map);
         baseTileLayers[name].addTo(map);
+        // Tampilkan detail awal Peta Dasar pada Bundaran HI (Air Mancur).
+        map.setView([-6.194979, 106.823049], 19);
       } else {
         baseTileLayers[name].addTo(map);
       }
@@ -845,7 +855,7 @@ L.control.scale({
   }
 
   function applyInitialStartupDefaults() {
-    currentBasemapName = 'petadasar-bpn';
+    currentBasemapName = 'google-maps';
     baseBasemapName = 'esri-dark-gray';
     setBaseMap(currentBasemapName);
     if (typeof window.toggleProvinceBoundary === 'function') {
@@ -1035,6 +1045,7 @@ L.control.scale({
   };
   const satelliteBasemapLabels = {
     'esri-satellite': 'Esri Satellite',
+    'google-satellite-kh': 'Google Satellite',
     'petadasar-bpn': 'Peta Dasar ATR/BPN',
     'modis-terra': 'MODIS Terra',
     'modis-aqua': 'MODIS Aqua',
@@ -1486,8 +1497,11 @@ L.control.scale({
           'st2023:utp_ihk_13', 'st2023:utp_ihk_14', 'st2023:utp_ihk_15', 'st2023:utp_ihk_16', 'st2023:utp_ihk_17',
           'bps-lbs-2024',
           'arcgis-sawah-2023', 'arcgis-sawah-2019',
-          'arcgis-kawasan-padi', 'arcgis-kawasan-jagung', 'arcgis-kawasan-kedelai'
-        ];
+            'arcgis-kawasan-padi', 'arcgis-kawasan-jagung', 'arcgis-kawasan-kedelai',
+            'opt-padi-penggerek', 'opt-padi-wbc', 'opt-padi-tikus', 'opt-padi-blas', 'opt-padi-kresek', 'opt-padi-tungro', 'opt-padi-kerdil',
+            'opt-jagung-lalat', 'opt-jagung-penggerek', 'opt-jagung-tikus', 'opt-jagung-blay', 'opt-jagung-penggerek-tongkol', 'opt-jagung-ulat-litura', 'opt-jagung-ulat-frugiperda',
+            'opt-kedelai-tikus', 'opt-kedelai-penggerek-polong', 'opt-kedelai-penggulung', 'opt-kedelai-ulat-litura', 'opt-kedelai-ulat-jengkal'
+         ];
         toggles.forEach(id => {
           const el = document.getElementById(id);
           if (el && el.checked) {
@@ -1498,7 +1512,15 @@ L.control.scale({
 
         if (typeof toggleTollRoadLayer === 'function') toggleTollRoadLayer(false);
         if (typeof toggleNonTollRoadLayer === 'function') toggleNonTollRoadLayer(false);
-        if (typeof toggleNationalRoadLayer === 'function') toggleNationalRoadLayer(false);
+         if (typeof toggleNationalRoadLayer === 'function') toggleNationalRoadLayer(false);
+
+        // 1b. Matikan semua OPT layer
+        if (typeof window.toggleOPTPest === 'function') {
+          ['opt-padi-penggerek','opt-padi-wbc','opt-padi-tikus','opt-padi-blas','opt-padi-kresek','opt-padi-tungro','opt-padi-kerdil',
+           'opt-jagung-lalat','opt-jagung-penggerek','opt-jagung-tikus','opt-jagung-blay','opt-jagung-penggerek-tongkol','opt-jagung-ulat-litura','opt-jagung-ulat-frugiperda',
+           'opt-kedelai-tikus','opt-kedelai-penggerek-polong','opt-kedelai-penggulung','opt-kedelai-ulat-litura','opt-kedelai-ulat-jengkal'
+          ].forEach(function (k) { window.toggleOPTPest(k, false); });
+        }
 
         // 2. Matikan semua geoportal WMS/WFS layers
         geoportalLayers.forEach((layer) => {
@@ -2769,6 +2791,7 @@ L.control.scale({
           group: 'Satelit',
           layers: [
             { id: 'esri-satellite', label: 'Esri Satellite' },
+            { id: 'google-satellite-kh', label: 'Google Satellite' },
             { id: 'petadasar-bpn', label: 'Peta Dasar ATR/BPN' },
             { id: 'bmkg-himawari', label: 'Himawari-9 IR (BMKG)' },
             { id: 'bmkg-himawari-nc', label: 'Himawari-9 Natural Color (BMKG)' },
@@ -2836,11 +2859,41 @@ L.control.scale({
           { id: 'toggleSppgSebaranLayer', label: 'Sebaran SPPG Indonesia' },
           { id: 'toggleSppgDistrictLayer', label: 'SPPG per Kabupaten/Kota' },
           { id: 'toggleSppgLayer', label: 'SPPG Indonesia' }
-        ]}
-      ]
-    },
-    {
-      cat: 'Sensus Pertanian 2023',
+         ]}
+       ]
+     },
+      {
+        cat: 'Pertanian',
+        subcats: [
+          { subcat: 'Padi', layers: [
+            { id: 'opt-padi-penggerek', label: 'Penggerek Batang' },
+            { id: 'opt-padi-wbc', label: 'Wereng Batang Cokelat (WBC)' },
+            { id: 'opt-padi-tikus', label: 'Tikus' },
+            { id: 'opt-padi-blas', label: 'Blas' },
+            { id: 'opt-padi-kresek', label: 'Kresek' },
+            { id: 'opt-padi-tungro', label: 'Tungro' },
+            { id: 'opt-padi-kerdil', label: 'Kerdil Rumput' }
+          ]},
+          { subcat: 'Jagung', layers: [
+            { id: 'opt-jagung-lalat', label: 'Lalat Bibit' },
+            { id: 'opt-jagung-penggerek', label: 'Penggerek Batang' },
+            { id: 'opt-jagung-tikus', label: 'Tikus' },
+            { id: 'opt-jagung-blay', label: 'Blai' },
+            { id: 'opt-jagung-penggerek-tongkol', label: 'Penggerek Tongkol' },
+            { id: 'opt-jagung-ulat-litura', label: 'Ulat Grayak Litura' },
+            { id: 'opt-jagung-ulat-frugiperda', label: 'Ulat Grayak Frugiperda' }
+          ]},
+          { subcat: 'Kedelai', layers: [
+            { id: 'opt-kedelai-tikus', label: 'Tikus' },
+            { id: 'opt-kedelai-penggerek-polong', label: 'Penggerek Polong' },
+            { id: 'opt-kedelai-penggulung', label: 'Penggulung Daun' },
+            { id: 'opt-kedelai-ulat-litura', label: 'Ulat Grayak Litura' },
+            { id: 'opt-kedelai-ulat-jengkal', label: 'Ulat Jengkal' }
+          ]}
+        ]
+      },
+      {
+        cat: 'Sensus Pertanian 2023',
       subcats: [
         { subcat: 'Batas Administrasi', layers: [
           { id: 'st2023:batas_desa', label: 'Batas Desa' },
@@ -3117,6 +3170,12 @@ L.control.scale({
     savePinnedLayers();
   }
   loadPinnedLayers();
+  // Peta Dasar selalu tampil sebagai pin pertama pada katalog layer.
+  var _petadasarPinIndex = _pinnedLayers.indexOf('petadasar-bpn');
+  if (_petadasarPinIndex >= 0) _pinnedLayers.splice(_petadasarPinIndex, 1);
+  _pinnedLayers.unshift('petadasar-bpn');
+  if (_pinnedLayers.length > PINNED_MAX) _pinnedLayers.pop();
+  savePinnedLayers();
 
   function toggleLayerCatalog() {
     var dd = document.getElementById('layerCatalogDropdown');
@@ -3456,8 +3515,9 @@ L.control.scale({
           id === 'bps-lbs-2024' ||
           id.indexOf('arcgis-') === 0 ||
           id === 'toggleChlorophyllOverlay' ||
-          id === 'toggleParOverlay' ||
-          id === 'toggleSawahDilindungi' ||
+           id === 'toggleParOverlay' ||
+           (id.indexOf('opt-') === 0 && typeof window.toggleOPTPest === 'function') ||
+           (id === 'toggleSawahDilindungi' && typeof window.toggleSawahDilindungiLayer === 'function') ||
           id === 'toggleSawahNasional50k' ||
           id === 'toggleErosiLayer' ||
           id === 'toggleBpsTutupanLahan' ||
@@ -3500,8 +3560,11 @@ L.control.scale({
         if (id === 'toggleSppgLayer' && typeof window.toggleSppg === 'function') {
           window.toggleSppg(cb.checked);
         }
-        if (id === 'toggleSppgDistrictLayer' && typeof window.toggleSppgDistrictLayer === 'function') {
-          window.toggleSppgDistrictLayer(cb.checked);
+         if (id === 'toggleSppgDistrictLayer' && typeof window.toggleSppgDistrictLayer === 'function') {
+           window.toggleSppgDistrictLayer(cb.checked);
+         }
+        if (id.indexOf('opt-') === 0 && typeof window.toggleOPTPest === 'function') {
+          window.toggleOPTPest(id, cb.checked);
         }
         if (id === 'toggleTollRoad' && typeof window.toggleTollRoadLayer === 'function') {
           window.toggleTollRoadLayer(cb.checked);
