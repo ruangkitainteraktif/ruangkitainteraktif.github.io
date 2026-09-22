@@ -371,7 +371,7 @@
       });
     }
 
-    const outline = L.geoJSON(boundaryFeature, { style: { color: '#1f5f33', weight: 2, fillOpacity: 0 } }).addTo(ndviLayer);
+    const outline = L.geoJSON(boundaryFeature, { style: { color: '#1f5f33', weight: 2, fill: false } }).addTo(ndviLayer);
     outline.bindPopup(popupContent, { maxWidth: 340, className: 'ndvi-leaflet-popup' });
     const bounds = ndviLayer.getBounds();
     if (bounds.isValid()) map.fitBounds(bounds.pad(0.12), { maxZoom: 14, duration: 0.6 });

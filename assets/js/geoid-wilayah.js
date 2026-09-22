@@ -1844,7 +1844,7 @@ async function fetchLuasSawah(kode) {
       clearTimeout(sTimeout);
       if (!sRes.ok) {
         console.warn('fetchLuasSawah: ArcGIS Sawah fetch failed', sRes.status);
-        return null;
+        break;
       }
       const sData = await sRes.json();
       const features = sData.features || [];
@@ -1853,6 +1853,48 @@ async function fetchLuasSawah(kode) {
       offset += 1000;
     } while (offset < 5000);
 
+    // Fallback: BIG KSP LBS Nasional 50K
+    if (!allSawahFeatures.length) {
+      console.warn('fetchLuasSawah: Sawah 2023 kosong, fallback ke BIG KSP LBS 50K...');
+      try {
+        const LBS5K_URL = 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/36/query';
+        let fOffset = 0;
+        do {
+          const fParams = new URLSearchParams({
+            f: 'json', returnGeometry: 'true',
+            where: '1=1', geometry: envelope,
+            geometryType: 'esriGeometryEnvelope',
+            inSR: '4326', spatialRel: 'esriSpatialRelIntersects',
+            outFields: 'objectid,wadmpr,wadmkk,q_name19,luas_polyg',
+            outSR: '4326',
+            resultOffset: String(fOffset),
+            resultRecordCount: '1000'
+          });
+          const fAbort = new AbortController();
+          const fTimeout = setTimeout(() => fAbort.abort(), 15000);
+          const fRes = await fetch(`${LBS5K_URL}?${fParams}`, { signal: fAbort.signal });
+          clearTimeout(fTimeout);
+          if (!fRes.ok) break;
+          const fData = await fRes.json();
+          const feats = (fData.features || []).map(f => ({
+            attributes: {
+              OBJECTID: f.attributes?.objectid,
+              WADMPR: f.attributes?.wadmpr || '',
+              WADMKK: f.attributes?.wadmkk || '',
+              Jenis_Lahan_Sawah: f.attributes?.q_name19 || 'Sawah',
+              Luas_Ha: f.attributes?.luas_polyg ? Number(f.attributes.luas_polyg) : 0
+            },
+            geometry: f.geometry
+          }));
+          allSawahFeatures = allSawahFeatures.concat(feats);
+          if (!feats.length || feats.length < 1000) break;
+          if (!fData.exceededTransferLimit) break;
+          fOffset += 1000;
+        } while (fOffset < 5000);
+      } catch (e) {
+        console.warn('fetchLuasSawah: fallback LBS 50K error:', e);
+      }
+    }
 
     if (!allSawahFeatures.length) {
       console.warn('fetchLuasSawah: no sawah features');

@@ -177,7 +177,7 @@
       if (typeof setAdmText === 'function') {
         setAdmText('adm-provinsi', item.provinsi);
         setAdmText('adm-kabkota', item.type === 'kabkot' ? item.name : item.kabkot);
-        setAdmText('adm-kecamatan', item.kecamatan);
+        setAdmText('adm-kecamatan', item.type === 'kecamatan' ? item.name : item.kecamatan);
         setAdmText('adm-desa', item.type === 'desa' ? item.name : '-');
       }
 
@@ -185,7 +185,12 @@
         window.openAiSheet();
         setTimeout(function () {
           if (typeof window._aiSendQuick === 'function') {
-            window._aiSendQuick(-1, item.name);
+            var levelPrefix = '';
+            if (item.type === 'provinsi') levelPrefix = 'Provinsi ';
+            else if (item.type === 'kabkot') levelPrefix = '';
+            else if (item.type === 'kecamatan') levelPrefix = 'Kecamatan ';
+            else if (item.type === 'desa') levelPrefix = 'Desa ';
+            window._aiSendQuick(-1, levelPrefix + item.name);
           }
         }, 400);
       }

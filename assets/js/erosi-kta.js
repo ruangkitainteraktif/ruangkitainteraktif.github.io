@@ -522,10 +522,11 @@ function toggleErosiLayer(visible) {
   }
 }
 
-// ---- Fetch Sawah Features in Envelope (ArcGIS Sawah 2023) ----
+// ---- Fetch Sawah Features in Envelope (ArcGIS Sawah 2023 + fallback BIG KSP LBS 50K) ----
 const SAWAH_2023_URL = 'https://sig02.pertanian.go.id/server/rest/services/Sawah/Sawah2023/MapServer/0/query';
+const LBS_50K_URL = 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/36/query';
 
-async function fetchSawahInEnvelope(minX, minY, maxX, maxY) {
+async function fetchSawahPertanian(minX, minY, maxX, maxY) {
   try {
     const envelope = `${minX},${minY},${maxX},${maxY}`;
     let allFeatures = [];
@@ -559,9 +560,65 @@ async function fetchSawahInEnvelope(minX, minY, maxX, maxY) {
 
     return allFeatures;
   } catch (e) {
-    console.warn('fetchSawahInEnvelope error:', e);
+    console.warn('[LBS] fetchSawahPertanian error:', e);
     return [];
   }
+}
+
+async function fetchLbs50kFallback(minX, minY, maxX, maxY) {
+  try {
+    const envelope = `${minX},${minY},${maxX},${maxY}`;
+    let allFeatures = [];
+    let offset = 0;
+    const maxPerRequest = 1000;
+
+    do {
+      const params = new URLSearchParams({
+        f: 'json', returnGeometry: 'true', where: '1=1',
+        geometry: envelope, geometryType: 'esriGeometryEnvelope',
+        inSR: '4326', spatialRel: 'esriSpatialRelIntersects',
+        outFields: 'objectid,wadmpr,wadmkk,q_name19,luas_polyg',
+        outSR: '4326',
+        resultOffset: String(offset),
+        resultRecordCount: String(maxPerRequest),
+        returnCountOnly: 'false'
+      });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 20000);
+      const res = await fetch(`${LBS_50K_URL}?${params}`, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!res.ok) break;
+      const data = await res.json();
+      const features = (data.features || []).map(f => ({
+        attributes: {
+          OBJECTID: f.attributes?.objectid,
+          WADMPR: f.attributes?.wadmpr || '',
+          WADMKK: f.attributes?.wadmkk || '',
+          Jenis_Lahan_Sawah: f.attributes?.q_name19 || 'Sawah',
+          Luas_Ha: f.attributes?.luas_polyg ? Number(f.attributes.luas_polyg) : 0
+        },
+        geometry: f.geometry
+      }));
+      allFeatures = allFeatures.concat(features);
+      if (!features.length || features.length < maxPerRequest) break;
+      const exceeded = data.exceededTransferLimit;
+      if (!exceeded) break;
+      offset += maxPerRequest;
+    } while (true);
+
+    return allFeatures;
+  } catch (e) {
+    console.warn('[LBS] fetchLbs50kFallback error:', e);
+    return [];
+  }
+}
+
+async function fetchSawahInEnvelope(minX, minY, maxX, maxY) {
+  let features = await fetchSawahPertanian(minX, minY, maxX, maxY);
+  if (features.length) return features;
+
+  console.warn('[LBS] Sawah 2023 kosong, fallback ke BIG KSP LBS 50K...');
+  return await fetchLbs50kFallback(minX, minY, maxX, maxY);
 }
 
 // ---- Fetch Kawasan Pertanian in Envelope ----

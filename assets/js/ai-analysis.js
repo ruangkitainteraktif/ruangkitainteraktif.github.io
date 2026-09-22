@@ -1258,14 +1258,27 @@
   }
 
   var GEOPANGAN_KEY_COMMODITIES = [
-    { id: 'com_1', name: 'Beras', satuan: 'kg' },
-    { id: 'com_10', name: 'Telur Ayam', satuan: 'kg' },
-    { id: 'com_14', name: 'Cabai Merah', satuan: 'kg' },
-    { id: 'com_16', name: 'Cabai Rawit', satuan: 'kg' },
-    { id: 'com_20', name: 'Minyak Goreng', satuan: 'kg' },
-    { id: 'com_22', name: 'Gula Pasir', satuan: 'kg' },
-    { id: 'com_7', name: 'Daging Ayam', satuan: 'kg' },
-    { id: 'com_8', name: 'Daging Sapi', satuan: 'kg' }
+    { id: 'com_1', name: 'Beras Kualitas Bawah I', satuan: 'kg', cat: 'Beras' },
+    { id: 'com_2', name: 'Beras Kualitas Bawah II', satuan: 'kg', cat: 'Beras' },
+    { id: 'com_3', name: 'Beras Kualitas Medium I', satuan: 'kg', cat: 'Beras' },
+    { id: 'com_4', name: 'Beras Kualitas Medium II', satuan: 'kg', cat: 'Beras' },
+    { id: 'com_5', name: 'Beras Kualitas Super I', satuan: 'kg', cat: 'Beras' },
+    { id: 'com_6', name: 'Beras Kualitas Super II', satuan: 'kg', cat: 'Beras' },
+    { id: 'com_7', name: 'Daging Ayam Ras Segar', satuan: 'kg', cat: 'Daging Ayam' },
+    { id: 'com_8', name: 'Daging Sapi Kualitas 1', satuan: 'kg', cat: 'Daging Sapi' },
+    { id: 'com_9', name: 'Daging Sapi Kualitas 2', satuan: 'kg', cat: 'Daging Sapi' },
+    { id: 'com_10', name: 'Telur Ayam Ras Segar', satuan: 'kg', cat: 'Telur Ayam' },
+    { id: 'com_11', name: 'Bawang Merah Ukuran Sedang', satuan: 'kg', cat: 'Bawang Merah' },
+    { id: 'com_12', name: 'Bawang Putih Ukuran Sedang', satuan: 'kg', cat: 'Bawang Putih' },
+    { id: 'com_13', name: 'Cabai Merah Besar', satuan: 'kg', cat: 'Cabai Merah' },
+    { id: 'com_14', name: 'Cabai Merah Keriting', satuan: 'kg', cat: 'Cabai Merah' },
+    { id: 'com_15', name: 'Cabai Rawit Hijau', satuan: 'kg', cat: 'Cabai Rawit' },
+    { id: 'com_16', name: 'Cabai Rawit Merah', satuan: 'kg', cat: 'Cabai Rawit' },
+    { id: 'com_17', name: 'Minyak Goreng Curah', satuan: 'kg', cat: 'Minyak Goreng' },
+    { id: 'com_18', name: 'Minyak Goreng Kemasan Bermerk 1', satuan: 'kg', cat: 'Minyak Goreng' },
+    { id: 'com_19', name: 'Minyak Goreng Kemasan Bermerk 2', satuan: 'kg', cat: 'Minyak Goreng' },
+    { id: 'com_20', name: 'Gula Pasir Kualitas Premium', satuan: 'kg', cat: 'Gula Pasir' },
+    { id: 'com_21', name: 'Gula Pasir Lokal', satuan: 'kg', cat: 'Gula Pasir' }
   ];
   var GEOPANGAN_PROXY = [
     function (u) { return 'https://api.cors.lol/?url=' + encodeURIComponent(u); },
@@ -1348,13 +1361,45 @@
                 var chg = ((latestVal - prevVal) / prevVal * 100).toFixed(1);
                 trend = parseFloat(chg) > 0 ? ' +_chg_' + chg + '%' : parseFloat(chg) < 0 ? ' _chg_' + chg + '%' : '';
               }
-              results.push({ name: com.name, price: latestVal, satuan: com.satuan, trend: trend, date: firstDate });
+              results.push({ name: com.name, price: latestVal, satuan: com.satuan, trend: trend, date: firstDate, cat: com.cat });
             }
           }
         }
       } catch (e) {}
     }
     return results.length ? results : null;
+  }
+
+  async function fetchFsvaData(kode) {
+    if (!kode) return null;
+    var kabCode = String(kode).split('.').slice(0, 2).join('.');
+    var fsvaWmsUrl = 'https://geoportal.badanpangan.go.id/geoserver/palapa/wms';
+    var props = 'WADMPR,WADMKK,KDPKAB,RANK,NCPR,P_NCPR,ENERGI,P_ENERG,PROHE,P_PROHE,CBPD,P_CBPD,MISKIN,P_MISKIN,CVHARGA,P_CVHARGA,POU,P_POU,RLSP,P_RLSP,TNPAIR,P_TNPAIR,AMANPANGN,P_AMANPANG,PPH,P_PPH,STUNTING,P_STUNTING';
+    var wfsUrl = fsvaWmsUrl.replace('/wms', '/wfs') + '?service=WFS&version=2.0.0&request=GetFeature&typeName=palapa:FSVA_2025&CQL_FILTER=KDPKAB=%27' + encodeURIComponent(kabCode) + '%27&outputFormat=application/json&count=1&propertyName=' + props;
+
+    async function tryFetch(url) {
+      var c = new AbortController();
+      var t = setTimeout(function () { c.abort(); }, 10000);
+      var r = await fetch(url, { signal: c.signal });
+      clearTimeout(t);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }
+
+    var json = null;
+    try {
+      json = await tryFetch(wfsUrl);
+    } catch (e) {
+      for (var i = 0; i < GEOPANGAN_PROXY.length; i++) {
+        try {
+          json = await tryFetch(GEOPANGAN_PROXY[i](wfsUrl));
+          break;
+        } catch (e2) {}
+      }
+    }
+
+    if (!json || !json.features || !json.features.length) return null;
+    return json.features[0].properties || null;
   }
 
   var _cctvCache = null;
@@ -1389,12 +1434,13 @@
         '- "Jawa Timur"\n' +
         '- "Kota Bandung"\n' +
         '- "Kabupaten Sleman"\n' +
-        '- "DKI Jakarta"\n' +
-        '- "Bali"\n\n' +
+        '- "Kecamatan Coblong"\n' +
+        '- "Desa Sukamaju"\n\n' +
+        'Gunakan prefix **Provinsi**, **Kabupaten**, **Kota**, **Kecamatan**, atau **Desa** untuk hasil lebih akurat.\n\n' +
         '_Data yang ditampilkan: luas wilayah, penduduk, lahan sawah, topografi, hotspot, gempa, dan gunung api terdekat._';
     }
     var match = searchRegionByName(regionQuery);
-    if (!match) return 'Wilayah **"' + regionQuery + '"** tidak ditemukan. Coba nama provinsi, kabupaten, atau kota yang lebih lengkap.\n\n_Contoh: "Jawa Timur", "Kota Bandung", "Kabupaten Sleman"_.';
+    if (!match) return 'Wilayah **"' + regionQuery + '"** tidak ditemukan. Coba nama provinsi, kabupaten, kota, kecamatan, atau desa yang lebih lengkap.\n\n_Contoh: "Jawa Timur", "Kota Bandung", "Kecamatan Coblong", "Desa Sukamaju"_.';
     if (match.ambiguous) {
       var opts = match.options.map(function (o, i) { return (i + 1) + '. ' + o; }).join('\n');
       return '**"' + match.name + '"** ditemukan di beberapa tingkat:\n\n' + opts + '\n\nKetik salah satu secara lengkap, contoh: **"' + match.options[0].split(': ')[1] + '"**.';
@@ -1550,26 +1596,28 @@
         s += '\n';
       }
 
-      var quakes = await findNearestQuakes(centerLat, centerLng, 3);
-      if (quakes.length) {
-        s += '**Gempa Terdekat:**\n';
-        quakes.forEach(function (q, i) {
-          s += (i + 1) + '. M ' + q.mag.toFixed(1) + ' — **' + fmt(Math.round(q.dist)) + ' km** (' + q.wilayah + ')\n';
-        });
-        s += '\n';
-      }
-
-      var volcanoes = await findNearestVolcanoes(centerLat, centerLng, match.name);
-      if (volcanoes.length) {
-        s += '**Gunung Terdekat:**\n';
-        var STATUS_COLOR_EMOJI = { 1: '🟢', 2: '🟡', 3: '🟠', 4: '🔴' };
-        volcanoes.forEach(function (v, i) {
-          var emoji = STATUS_COLOR_EMOJI[v.statusId] || '⚪';
-          s += (i + 1) + '. ' + v.name + ' (' + fmt(Math.round(v.dist)) + ' km) — ' + emoji + ' ' + v.status;
-          if (v.elevation) s += ' | ' + fmt(v.elevation) + ' mdpl';
+      if (match.type !== 'provinsi') {
+        var quakes = await findNearestQuakes(centerLat, centerLng, 3);
+        if (quakes.length) {
+          s += '**Gempa Terdekat:**\n';
+          quakes.forEach(function (q, i) {
+            s += (i + 1) + '. M ' + q.mag.toFixed(1) + ' — **' + fmt(Math.round(q.dist)) + ' km** (' + q.wilayah + ')\n';
+          });
           s += '\n';
-        });
-        s += '\n';
+        }
+
+        var volcanoes = await findNearestVolcanoes(centerLat, centerLng, match.name);
+        if (volcanoes.length) {
+          s += '**Gunung Terdekat:**\n';
+          var STATUS_COLOR_EMOJI = { 1: '🟢', 2: '🟡', 3: '🟠', 4: '🔴' };
+          volcanoes.forEach(function (v, i) {
+            var emoji = STATUS_COLOR_EMOJI[v.statusId] || '⚪';
+            s += (i + 1) + '. ' + v.name + ' (' + fmt(Math.round(v.dist)) + ' km) — ' + emoji + ' ' + v.status;
+            if (v.elevation) s += ' | ' + fmt(v.elevation) + ' mdpl';
+            s += '\n';
+          });
+          s += '\n';
+        }
       }
     }
 
@@ -1624,22 +1672,76 @@
     if (match.type === 'provinsi') {
       var gpData = null;
       try { gpData = await fetchGeopanganData(match.kode); } catch (e) {}
-      if (gpData) {
+      if (gpData && gpData.length) {
         s += '**Harga Pangan (PIHPS BI):**\n';
+        var grouped = {};
+        var catOrder = [];
         gpData.forEach(function (item) {
-          var priceStr = 'Rp ' + Math.round(item.price).toLocaleString('id-ID') + '/' + item.satuan;
-          s += '- ' + item.name + ': **' + priceStr + '**';
-          if (item.trend) {
-            var trendStr = item.trend.replace('_chg_', '').replace('+', ' ↗ ').replace('-', ' ↘ ');
-            s += trendStr;
-          }
-          s += '\n';
+          var cat = item.cat || 'Lainnya';
+          if (!grouped[cat]) { grouped[cat] = []; catOrder.push(cat); }
+          grouped[cat].push(item);
+        });
+        catOrder.forEach(function (cat) {
+          s += '- **' + cat + ':**\n';
+          grouped[cat].forEach(function (item) {
+            var priceStr = 'Rp ' + Math.round(item.price).toLocaleString('id-ID') + '/' + item.satuan;
+            s += '  - ' + item.name + ': **' + priceStr + '**';
+            if (item.trend) {
+              var trendStr = item.trend.replace('_chg_', '').replace('+', ' ↗ ').replace('-', ' ↘ ');
+              s += trendStr;
+            }
+            s += '\n';
+          });
         });
         s += '\n';
       }
     }
 
-    if (centerLat != null && centerLng != null) {
+    if (match.type === 'kabkot') {
+      var fsvaProps = null;
+      try { fsvaProps = await fetchFsvaData(match.kode); } catch (e) {}
+      if (fsvaProps && fsvaProps.RANK) {
+        var rankLabel = function (r) {
+          r = Number(r);
+          if (r <= 5) return 'Sangat Baik';
+          if (r <= 10) return 'Baik';
+          if (r <= 20) return 'Sedang';
+          return 'Rentan';
+        };
+        var rankColor = function (r) {
+          r = Number(r);
+          if (r <= 5) return '#16a34a';
+          if (r <= 10) return '#65a30d';
+          if (r <= 20) return '#ca8a04';
+          return '#dc2626';
+        };
+        s += '**FSVA 2025 (Ketahanan & Kerentanan Pangan):**\n';
+        s += '- Peringkat Nasional: **#' + fsvaProps.RANK + ' dari 514 kab/kota**\n\n';
+        var fsvaIndicators = [
+          ['Penduduk Miskin', fsvaProps.NCPR, fsvaProps.P_NCPR, '%'],
+          ['Ketersediaan Energi', fsvaProps.ENERGI, fsvaProps.P_ENERG, '%'],
+          ['Protein Hewani', fsvaProps.PROHE, fsvaProps.P_PROHE, '%'],
+          ['Konsumsi Beras', fsvaProps.CBPD, fsvaProps.P_CBPD, '%'],
+          ['Kemiskinan', fsvaProps.MISKIN, fsvaProps.P_MISKIN, '%'],
+          ['Harga & Ketersediaan Pangan', fsvaProps.CVHARGA, fsvaProps.P_CVHARGA, ''],
+          ['Pelayanan Air Minum', fsvaProps.POU, fsvaProps.P_POU, '%'],
+          ['Rasio Lahan Sawah', fsvaProps.RLSP, fsvaProps.P_RLSP, '%'],
+          ['Tanaman Pangan', fsvaProps.TNPAIR, fsvaProps.P_TNPAIR, '%'],
+          ['Indeks Ketahanan Pangan', fsvaProps.AMANPANGN, fsvaProps.P_AMANPANG, '%'],
+          ['Pencemaran Habitat', fsvaProps.PPH, fsvaProps.P_PPH, '%'],
+          ['Prevalensi Stunting', fsvaProps.STUNTING, fsvaProps.P_STUNTING, '%']
+        ];
+        fsvaIndicators.forEach(function (ind) {
+          var label = ind[0], val = ind[1], rank = ind[2], unit = ind[3];
+          if (val == null) return;
+          var rl = rankLabel(rank);
+          s += '- ' + label + ': **' + parseFloat(val).toFixed(1) + unit + '** (' + rl + ', #' + rank + ')\n';
+        });
+        s += '\n';
+      }
+    }
+
+    if (centerLat != null && centerLng != null && match.type !== 'provinsi') {
       var cctvs = await findNearestCctv(centerLat, centerLng, 5);
       if (cctvs.length) {
         s += '**CCTV Terdekat:**\n';
@@ -1708,7 +1810,9 @@
       '- "Jawa Timur"\n' +
       '- "Kota Bandung"\n' +
       '- "Kabupaten Sleman"\n' +
+      '- "Kecamatan Coblong"\n' +
       '- "Desa Sukamaju"\n\n' +
+      'Gunakan prefix **Provinsi**, **Kabupaten**, **Kota**, **Kecamatan**, atau **Desa** untuk hasil lebih akurat.\n\n' +
       'Atau pilih quick action di bawah untuk analisis cepat.';
   }
 
@@ -1796,7 +1900,7 @@
   function loadChatHistory() { try { chatHistory = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY) || '[]'); } catch (e) { chatHistory = []; } }
 
   function showWelcomeMessage() {
-    addChatMessage('ai', 'Selamat datang! Ketik nama wilayah untuk melihat profil lengkap.');
+    addChatMessage('ai', '**Selamat datang di Tanya Ruang!**\n\nKetik nama wilayah untuk melihat profil lengkapnya.\n\n**Contoh:**\n- "Jawa Timur"\n- "Kota Bandung"\n- "Kecamatan Coblong"\n- "Desa Sukamaju"\n\nGunakan prefix **Provinsi**, **Kabupaten**, **Kota**, **Kecamatan**, atau **Desa** untuk hasil lebih akurat.');
   }
 
   window._aiClearChat = function () {

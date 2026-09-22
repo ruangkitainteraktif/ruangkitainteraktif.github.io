@@ -325,7 +325,7 @@
     }
 
     const outline = L.geoJSON(boundaryFeature, {
-      style: { color: '#0d9488', weight: 2, fillOpacity: 0 }
+      style: { color: '#0d9488', weight: 2, fill: false }
     }).addTo(landcoverLayer);
 
     const popupHtml = buildLandcoverPopupHtml(boundary.name, boundary, distribution, totalPixels, analysisAreaHa);

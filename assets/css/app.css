@@ -3075,7 +3075,7 @@
     .ndvi-popup-body {
       padding: 12px 14px;
       background: #fff;
-      max-height: 45vh;
+      max-height: 40vh;
       overflow-y: auto;
     }
 
@@ -3248,7 +3248,7 @@
     }
     .landcover-popup-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #99f6e4; }
     .landcover-popup-header strong { display: block; font-size: 14px; font-weight: 700; line-height: 1.2; position: relative; z-index: 1; }
-    .landcover-popup-body { padding: 12px 14px; background: #fff; max-height: 45vh; overflow-y: auto; }
+    .landcover-popup-body { padding: 12px 14px; background: #fff; max-height: 40vh; overflow-y: auto; }
     .landcover-popup-section-title { font-size: 10px; font-weight: 700; color: #374151; margin-bottom: 6px; letter-spacing: .03em; text-transform: uppercase; }
     .landcover-popup-footer {
       padding: 8px 14px;
@@ -3900,7 +3900,7 @@
       .ndvi-popup { width: 100% !important; min-width: 280px; }
       .ndvi-popup-header { padding: 12px 12px 10px; }
       .ndvi-popup-header strong { font-size: 13px; }
-      .ndvi-popup-body { padding: 10px 12px; max-height: 55vh; }
+      .ndvi-popup-body { padding: 10px 12px; max-height: 40vh; }
       .ndvi-popup-summary { gap: 6px; }
       .ndvi-popup-stat-grid { gap: 3px 6px; font-size: 9px; }
       .ndvi-popup-dist-row { grid-template-columns: 60px 1fr 28px; }
