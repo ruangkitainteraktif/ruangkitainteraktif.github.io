@@ -1197,6 +1197,17 @@
   }
   window.minimizeAttrTableSheet = minimizeAttrTableSheet;
 
+  function restoreAttrTableSheet() {
+    var sheet = document.getElementById('attr-table-sheet');
+    if (!sheet) return;
+    _attrTableMinimized = false;
+    sheet.classList.remove('attr-table-sheet-minimized');
+    sheet.classList.add('attr-table-sheet-open');
+    document.body.classList.add('attr-table-sheet-open');
+    document.body.classList.remove('attr-table-sheet-minimized');
+  }
+  window.restoreAttrTableSheet = restoreAttrTableSheet;
+
   function toggleAttrTableSheet() {
     var sheet = document.getElementById('attr-table-sheet');
     if (!sheet) return;

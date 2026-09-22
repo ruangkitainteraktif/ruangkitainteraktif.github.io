@@ -2442,19 +2442,25 @@
     /* Minimized state */
     #ai-sheet.ais-sheet-minimized {
       top: auto; right: auto; bottom: 12px; left: 50%;
-      width: min(330px, calc(100vw - 24px));
-      height: 52px;
-      border-radius: 26px;
+      width: min(220px, calc(100vw - 48px));
+      height: 36px;
+      border-radius: 18px;
       transform: translateX(-50%);
       visibility: visible;
+      z-index: 100;
+      border: 1px solid var(--border-color);
+      background: var(--bg-glass-light);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      box-shadow: 0 4px 16px rgba(0,0,0,.08);
     }
     #ai-sheet.ais-sheet-minimized .ais-sheet-handle,
     #ai-sheet.ais-sheet-minimized .ais-sheet-body { display: none; }
     #ai-sheet.ais-sheet-minimized .ais-sheet-head {
-      min-height: 52px; box-sizing: border-box;
-      padding: 10px 16px; border-bottom: 0;
+      min-height: 36px; box-sizing: border-box;
+      padding: 6px 14px; border-bottom: 0;
     }
-    #ai-sheet.ais-sheet-minimized .ais-sheet-title { cursor: pointer; }
+    #ai-sheet.ais-sheet-minimized .ais-sheet-title { cursor: pointer; font-size: 11px; }
 
     /* SIDEBAR KIRI */
     #sidebar-left {
@@ -4091,11 +4097,21 @@
       }
       #ai-sheet .ais-sheet-head { padding: 0 16px 10px; }
       #ai-sheet.ais-sheet-minimized {
-        top: 104px; right: auto; bottom: auto; left: 50%;
-        width: min(330px, calc(100vw - 24px));
-        height: 52px;
-        border-radius: 18px;
+        top: 100px; right: auto; bottom: auto; left: 50%;
+        width: min(260px, calc(100vw - 48px));
+        height: 36px;
+        border-radius: 14px;
         transform: translateX(-50%);
+        visibility: visible;
+        border: 1px solid rgba(255, 255, 255, .72);
+        background: rgba(255, 255, 255, .92);
+        box-shadow: 0 4px 14px rgba(15, 23, 42, .12);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        z-index: 100;
+      }
+      #ai-sheet.ais-sheet-minimized .ais-sheet-head {
+        min-height: 36px; box-sizing: border-box; padding: 4px 12px; border-bottom: 0;
       }
     }
 
@@ -6060,7 +6076,7 @@
         right: auto;
         bottom: auto;
         left: 50%;
-        width: min(220px, calc(100vw - 48px));
+        width: min(260px, calc(100vw - 48px));
         height: 36px;
         border: 1px solid rgba(255, 255, 255, .72);
         border-radius: 14px;
@@ -6069,7 +6085,7 @@
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         transform: translateX(-50%);
-        z-index: 998;
+        z-index: 100;
       }
       #hotspot-sheet.sheet-minimized .hs-sheet-handle,
       #hotspot-sheet.sheet-minimized .hs-sheet-body { display: none; }
@@ -6155,19 +6171,20 @@
     #geotools-sheet .gs-sheet-minimize:hover { background: var(--border-color); }
     #geotools-sheet.gs-sheet-minimized {
       top: auto; right: auto; bottom: 12px; left: 50%;
-      width: min(330px, calc(100vw - 24px));
-      height: 52px;
-      border-radius: 26px;
+      width: min(220px, calc(100vw - 48px));
+      height: 36px;
+      border-radius: 18px;
       transform: translateX(-50%);
       visibility: visible;
+      z-index: 100;
     }
     #geotools-sheet.gs-sheet-minimized .gs-sheet-handle,
     #geotools-sheet.gs-sheet-minimized .gs-sheet-body { display: none; }
     #geotools-sheet.gs-sheet-minimized .gs-sheet-head {
-      min-height: 52px; box-sizing: border-box;
-      padding: 10px 16px; border-bottom: 0;
+      min-height: 36px; box-sizing: border-box;
+      padding: 6px 14px; border-bottom: 0;
     }
-    #geotools-sheet.gs-sheet-minimized .gs-sheet-title { cursor: pointer; }
+    #geotools-sheet.gs-sheet-minimized .gs-sheet-title { cursor: pointer; font-size: 11px; }
     #geotools-sheet .gs-sheet-body {
       flex: 1 1 auto; min-height: 0; overflow-y: auto;
       padding: 12px 16px 16px; -webkit-overflow-scrolling: touch;
@@ -6251,18 +6268,19 @@
     }
     .dm-sidebar.dm-sidebar-minimized {
       top: auto; right: auto; bottom: 50px; left: 50%;
-      width: min(330px, calc(100vw - 24px));
-      height: 52px;
-      border-radius: 26px;
+      width: min(220px, calc(100vw - 48px));
+      height: 36px;
+      border-radius: 18px;
       transform: translateX(-50%);
       visibility: visible;
+      z-index: 100;
     }
     .dm-sidebar.dm-sidebar-minimized .dm-sidebar-body { display: none; }
     .dm-sidebar.dm-sidebar-minimized .dm-sidebar-head {
-      min-height: 52px; box-sizing: border-box;
-      padding: 10px 16px; border-bottom: 0;
+      min-height: 36px; box-sizing: border-box;
+      padding: 6px 14px; border-bottom: 0;
     }
-    .dm-sidebar.dm-sidebar-minimized .dm-sidebar-title { cursor: pointer; }
+    .dm-sidebar.dm-sidebar-minimized .dm-sidebar-title { cursor: pointer; font-size: 11px; }
 
     /* ── Legend Sidebar (Desktop) ── */
     .lg-sidebar {
@@ -6311,18 +6329,19 @@
     .lg-sidebar.dm-sidebar-minimized,
     .lg-sidebar.lg-sidebar-minimized {
       top: auto; right: auto; bottom: 80px; left: 50%;
-      width: min(330px, calc(100vw - 24px));
-      height: 52px;
-      border-radius: 26px;
+      width: min(220px, calc(100vw - 48px));
+      height: 36px;
+      border-radius: 18px;
       transform: translateX(-50%);
       visibility: visible;
+      z-index: 100;
     }
     .lg-sidebar.lg-sidebar-minimized .lg-sidebar-body { display: none; }
     .lg-sidebar.lg-sidebar-minimized .lg-sidebar-head {
-      min-height: 52px; box-sizing: border-box;
-      padding: 10px 16px; border-bottom: 0;
+      min-height: 36px; box-sizing: border-box;
+      padding: 6px 14px; border-bottom: 0;
     }
-    .lg-sidebar.lg-sidebar-minimized .lg-sidebar-title { cursor: pointer; }
+    .lg-sidebar.lg-sidebar-minimized .lg-sidebar-title { cursor: pointer; font-size: 11px; }
     [data-theme="dark"] .lg-sidebar { background: var(--bg-primary); color: var(--text-primary); }
 
     /* ── Attribute Table Sheet (Desktop: kanan) ── */
@@ -6363,14 +6382,16 @@
     #attr-table-sheet .at-sheet-body::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
     #attr-table-sheet.attr-table-sheet-minimized {
       top: auto; right: auto; bottom: 12px; left: 50%;
-      width: min(330px, calc(100vw - 24px)); height: 52px;
-      border-radius: 26px; transform: translateX(-50%); visibility: visible;
+      width: min(220px, calc(100vw - 48px)); height: 36px;
+      border-radius: 18px; transform: translateX(-50%); visibility: visible;
+      z-index: 100;
     }
     #attr-table-sheet.attr-table-sheet-minimized .at-sheet-handle,
     #attr-table-sheet.attr-table-sheet-minimized .at-sheet-body { display: none; }
     #attr-table-sheet.attr-table-sheet-minimized .at-sheet-head {
-      min-height: 52px; box-sizing: border-box; padding: 10px 16px; border-bottom: 0;
+      min-height: 36px; box-sizing: border-box; padding: 6px 14px; border-bottom: 0;
     }
+    #attr-table-sheet.attr-table-sheet-minimized .at-sheet-title { cursor: pointer; font-size: 11px; }
 
     /* ── Attr Table Inner Styles ── */
     .at-controls { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
@@ -6499,7 +6520,7 @@
         right: auto;
         bottom: auto;
         left: 50%;
-        width: min(220px, calc(100vw - 48px));
+        width: min(260px, calc(100vw - 48px));
         height: 36px;
         visibility: visible;
         border: 1px solid rgba(255, 255, 255, .72);
@@ -6509,7 +6530,7 @@
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         transform: translateX(-50%);
-        z-index: 998;
+        z-index: 100;
       }
       #geopangan-sheet.sheet-minimized .gp-sheet-handle,
       #geopangan-sheet.sheet-minimized .gp-sheet-body { display: none; }
@@ -6544,11 +6565,19 @@
         padding: 8px 12px 20px;
       }
       #geotools-sheet.gs-sheet-minimized {
-        top: auto; right: 0; bottom: 56px; left: 0;
-        width: 100%; height: 52px;
-        border-radius: 18px 18px 0 0;
-        transform: translateY(0);
+        top: auto; right: auto; bottom: 72px; left: 50%;
+        width: min(260px, calc(100vw - 48px));
+        height: 36px;
+        border-radius: 14px;
+        transform: translateX(-50%);
+        border: 1px solid rgba(255, 255, 255, .72);
+        background: rgba(255, 255, 255, .92);
+        box-shadow: 0 4px 14px rgba(15, 23, 42, .12);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        z-index: 100;
       }
+      #geotools-sheet.gs-sheet-minimized .gs-sheet-head { min-height: 36px; padding: 4px 12px; }
 
       /* ── Draw & Measure Sidebar (Mobile) ── */
       .dm-sidebar {
@@ -6559,10 +6588,15 @@
       }
       .dm-sidebar.dm-sidebar-open { transform: translateY(0); visibility: visible; }
       .dm-sidebar.dm-sidebar-minimized {
-        top: auto; right: 0; bottom: 56px; left: 0;
-        width: 100%; height: 52px;
-        border-radius: 18px 18px 0 0;
-        transform: translateY(0);
+        top: auto; right: auto; bottom: 72px; left: 50%;
+        width: min(260px, calc(100vw - 48px)); height: 36px;
+        border-radius: 14px; transform: translateX(-50%);
+        border: 1px solid rgba(255, 255, 255, .72);
+        background: rgba(255, 255, 255, .92);
+        box-shadow: 0 4px 14px rgba(15, 23, 42, .12);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        z-index: 100;
       }
 
       /* ── Legend Sidebar (Mobile) ── */
@@ -6573,13 +6607,24 @@
         transform: translateY(100%);
       }
       .lg-sidebar.lg-sidebar-open { transform: translateY(0); visibility: visible; }
+      .lg-sidebar.lg-sidebar-minimized {
+        top: auto; right: auto; bottom: 72px; left: 50%;
+        width: min(260px, calc(100vw - 48px)); height: 36px;
+        border-radius: 14px; transform: translateX(-50%);
+        border: 1px solid rgba(255, 255, 255, .72);
+        background: rgba(255, 255, 255, .92);
+        box-shadow: 0 4px 14px rgba(15, 23, 42, .12);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        z-index: 100;
+      }
+      .lg-sidebar.lg-sidebar-minimized .lg-sidebar-body { display: none; }
+      .lg-sidebar.lg-sidebar-minimized .lg-sidebar-head {
+        min-height: 36px; box-sizing: border-box; padding: 4px 12px; border-bottom: 0;
+      }
 
-      /* ── Hide all minimize buttons on mobile ── */
-      .dm-sidebar-minimize,
-      .lg-sidebar-minimize,
-      #geopangan-sheet .gp-sheet-minimize,
-      #geotools-sheet .gs-sheet-minimize,
-      #attr-table-sheet .at-sheet-minimize { display: none !important; }
+      /* ── Hide minimize buttons that don't apply on mobile ── */
+      #geopangan-sheet .gp-sheet-minimize { display: none !important; }
 
       /* ── FAB → Bottom Navigation Bar (Mobile: Floating Glass) ── */
       .map-fab-wrap {
@@ -6749,20 +6794,20 @@
       #attr-table-sheet .at-sheet-head { padding: 4px 16px 10px; }
       #attr-table-sheet .at-sheet-body { padding: 8px 12px 20px; }
       #attr-table-sheet.attr-table-sheet-minimized {
-        top: auto; right: 0; bottom: 56px; left: 0;
-        width: 100%; height: 52px;
-        border-radius: 16px 16px 0 0;
-        transform: translateY(0);
+        top: auto; right: auto; bottom: 72px; left: 50%;
+        width: min(260px, calc(100vw - 48px)); height: 36px;
+        border-radius: 14px; transform: translateX(-50%);
         border: 1px solid rgba(255, 255, 255, .72);
         background: rgba(255, 255, 255, .92);
-        box-shadow: 0 -2px 12px rgba(0,0,0,.1);
+        box-shadow: 0 4px 14px rgba(15, 23, 42, .12);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
+        z-index: 100;
       }
       #attr-table-sheet.attr-table-sheet-minimized .at-sheet-handle,
       #attr-table-sheet.attr-table-sheet-minimized .at-sheet-body { display: none; }
       #attr-table-sheet.attr-table-sheet-minimized .at-sheet-head {
-        min-height: 52px; box-sizing: border-box; padding: 10px 16px; border-bottom: 0;
+        min-height: 36px; box-sizing: border-box; padding: 4px 12px; border-bottom: 0;
       }
     }
 
