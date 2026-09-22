@@ -517,6 +517,7 @@
     togglePm25Rgb: { name: 'PM2.5 Air Quality (BMKG PCM)', type: 'raster' },
     toggleHthRgb: { name: 'Hari Tanpa Hujan (BMKG HTH)', type: 'raster' },
     toggleMaritimeAngin: { name: 'Angin Laut (Wind Speed)', type: 'raster' },
+    toggleGhrsstSstAnomali: { name: 'SST Anomaly (GHRSST MUR)', type: 'raster' },
     toggleMaritimeGelombang: { name: 'Tinggi Gelombang', type: 'raster' },
     toggleMaritimeSwell: { name: 'Swell (Primary Swell)', type: 'raster' },
     toggleMaritimeWindSea: { name: 'Gelombang Angin (Wind Sea)', type: 'raster' },

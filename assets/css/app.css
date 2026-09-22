@@ -2159,6 +2159,7 @@
     #qlHujan.active     { background: #06b6d4; }
     #qlRadar.active     { background: #059669; }
     #qlProvinsi.active  { background: #0d9488; }
+    #qlSstAnomali.active { background: #0284c7; }
 
     .radar-timestamp {
       position: absolute;
@@ -9931,4 +9932,123 @@
     [data-theme="dark"] .sppgd-popup-item { border-color: var(--border-color); }
     [data-theme="dark"] .sppgd-popup-item-name { color: var(--text-primary); }
     [data-theme="dark"] .sppgd-tooltip { background: var(--bg-card); color: var(--text-primary); }
+
+/* ── GHRSST SST Anomaly Time Slider (BMKG pattern) ── */
+.ghrsst-time-slider-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg-glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 6px 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      transition: opacity 0.2s, transform 0.2s;
+}
+.ghrsst-ts-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+}
+.ghrsst-ts-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-align: center;
+      letter-spacing: 0.02em;
+}
+.ghrsst-ts-btn {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      color: #0284c7;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      flex-shrink: 0;
+      padding: 0;
+}
+.ghrsst-ts-btn:hover {
+      background: #e0f2fe;
+      color: #075985;
+}
+.ghrsst-ts-btn:active {
+      background: #bae6fd;
+}
+.ghrsst-ts-slider-wrap {
+      flex: 1;
+      min-width: 0;
+}
+.ghrsst-ts-slider {
+      width: 100%;
+      height: 4px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: linear-gradient(90deg, #e0f2fe 0%, #0284c7 100%);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+}
+.ghrsst-ts-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #0284c7;
+      border: 2px solid #fff;
+      box-shadow: 0 1px 6px rgba(2,132,199,0.4);
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+}
+.ghrsst-ts-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      box-shadow: 0 2px 10px rgba(2,132,199,0.5);
+}
+.ghrsst-ts-slider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #0284c7;
+      border: 2px solid #fff;
+      box-shadow: 0 1px 6px rgba(2,132,199,0.4);
+      cursor: pointer;
+}
+.ghrsst-ts-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      justify-content: center;
+}
+.ghrsst-ts-date {
+      font-size: 11px;
+      font-weight: 600;
+      color: #334155;
+      white-space: nowrap;
+      text-align: center;
+      letter-spacing: -0.01em;
+}
+.ghrsst-ts-layer {
+      font-size: 10px;
+      font-weight: 600;
+      color: #64748b;
+      white-space: nowrap;
+      text-align: center;
+      letter-spacing: -0.01em;
+}
+@media (max-width: 768px) {
+  .ghrsst-time-slider-wrap {
+    width: min(280px, calc(100vw - 32px));
+    padding: 4px 8px;
+  }
+  .ghrsst-ts-btn { width: 24px; height: 24px; }
+  .ghrsst-ts-date { font-size: 10px; }
+  .ghrsst-ts-layer { font-size: 9px; }
+}
 

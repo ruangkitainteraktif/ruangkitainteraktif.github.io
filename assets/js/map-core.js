@@ -260,6 +260,160 @@ L.control.scale({
   };
   window.omiLayers = omiLayers;
 
+  /* ── GHRSST SST Anomaly (NASA GIBS WMS) ── */
+  var _ghrsstLayer = null;
+  var _ghrsstCtrl = null;
+  var _ghrsstCurrentOffset = 2;
+  var GHRSST_START = '2002-07-01';
+  var GHRSST_MIN_OFFSET = 2;
+
+  function _ghrsstDateStr(offsetDays) {
+    var d = new Date();
+    d.setDate(d.getDate() - offsetDays);
+    return d.toISOString().slice(0, 10);
+  }
+  function _ghrsstMaxOffset() {
+    var start = new Date(GHRSST_START);
+    var now = new Date();
+    return Math.max(GHRSST_MIN_OFFSET, Math.floor((now - start) / 864e5) - 2);
+  }
+  function _ghrsstApply() {
+    var ds = _ghrsstDateStr(_ghrsstCurrentOffset);
+    if (_ghrsstLayer) _ghrsstLayer.setParams({ time: ds });
+    if (_ghrsstCtrl && _ghrsstCtrl._dateEl) _ghrsstCtrl._dateEl.textContent = ds;
+    if (_ghrsstCtrl && _ghrsstCtrl._slider) _ghrsstCtrl._slider.value = String(_ghrsstCurrentOffset);
+  }
+
+  function _createGhrsstTimeSlider() {
+    if (_ghrsstCtrl) return;
+    var maxOff = _ghrsstMaxOffset();
+    _ghrsstCurrentOffset = GHRSST_MIN_OFFSET;
+
+    _ghrsstCtrl = L.control({ position: 'bottomcenter' });
+    _ghrsstCtrl.onAdd = function () {
+      var wrap = L.DomUtil.create('div', 'ghrsst-time-slider-wrap');
+      L.DomEvent.disableClickPropagation(wrap);
+      L.DomEvent.disableScrollPropagation(wrap);
+
+      var controlsRow = L.DomUtil.create('div', 'ghrsst-ts-controls', wrap);
+
+      var prevBtn = L.DomUtil.create('button', 'ghrsst-ts-btn ghrsst-ts-prev', controlsRow);
+      prevBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
+      prevBtn.title = 'Lebih baru';
+
+      var sliderWrap = L.DomUtil.create('div', 'ghrsst-ts-slider-wrap', controlsRow);
+      var slider = L.DomUtil.create('input', 'ghrsst-ts-slider', sliderWrap);
+      slider.type = 'range';
+      slider.min = String(GHRSST_MIN_OFFSET);
+      slider.max = String(maxOff);
+      slider.value = String(GHRSST_MIN_OFFSET);
+      slider.step = '1';
+
+      var nextBtn = L.DomUtil.create('button', 'ghrsst-ts-btn ghrsst-ts-next', controlsRow);
+      nextBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+      nextBtn.title = 'Lebih lama';
+
+      var infoRow = L.DomUtil.create('div', 'ghrsst-ts-info', wrap);
+      var dateDisplay = L.DomUtil.create('span', 'ghrsst-ts-date', infoRow);
+      dateDisplay.textContent = _ghrsstDateStr(1);
+
+      var layerLabel = L.DomUtil.create('span', 'ghrsst-ts-layer', infoRow);
+      layerLabel.textContent = 'GHRSST SST Anomaly';
+
+      slider.addEventListener('input', function () {
+        _ghrsstCurrentOffset = parseInt(this.value, 10);
+        _ghrsstApply();
+      });
+      prevBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (_ghrsstCurrentOffset > GHRSST_MIN_OFFSET) {
+          _ghrsstCurrentOffset--;
+          _ghrsstApply();
+        }
+      });
+      nextBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (_ghrsstCurrentOffset < maxOff) {
+          _ghrsstCurrentOffset++;
+          _ghrsstApply();
+        }
+      });
+
+      _ghrsstCtrl._dateEl = dateDisplay;
+      _ghrsstCtrl._slider = slider;
+      return wrap;
+    };
+
+    ensureBottomCenterControlCorner();
+    _ghrsstCtrl.addTo(map);
+  }
+  function _removeGhrsstTimeSlider() {
+    if (_ghrsstCtrl) {
+      map.removeControl(_ghrsstCtrl);
+      _ghrsstCtrl = null;
+    }
+  }
+
+  function ensureBottomCenterControlCorner() {
+    if (map._controlCorners.bottomcenter) return;
+    map._controlCorners.bottomcenter = L.DomUtil.create('div', 'leaflet-bottom leaflet-center', map._controlContainer);
+  }
+
+  function toggleGhrsstSstAnomali(visible) {
+    if (visible) {
+      if (_ghrsstLayer && map.hasLayer(_ghrsstLayer)) return;
+      var dateStr = _ghrsstDateStr(GHRSST_MIN_OFFSET);
+      _ghrsstLayer = L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi', {
+        layers: 'GHRSST_L4_MUR_Sea_Surface_Temperature_Anomalies',
+        format: 'image/png',
+        transparent: true,
+        crs: L.CRS.EPSG3857,
+        attribution: 'NASA GIBS / GHRSST',
+        opacity: 0.75,
+        version: '1.3.0',
+        time: dateStr
+      }).addTo(map);
+      _createGhrsstTimeSlider();
+      showGhrsstLegend();
+    } else {
+      if (_ghrsstLayer && map.hasLayer(_ghrsstLayer)) map.removeLayer(_ghrsstLayer);
+      _ghrsstLayer = null;
+      _removeGhrsstTimeSlider();
+      hideGhrsstLegend();
+    }
+  }
+  window.toggleGhrsstSstAnomali = toggleGhrsstSstAnomali;
+
+  function showGhrsstLegend() {
+    if (typeof addUnifiedLegend !== 'function') return;
+    var existing = document.querySelector('[data-legend-id="ghrsst-sst"]');
+    if (existing) existing.remove();
+    var el = L.DomUtil.create('div', 'omi-legend leaflet-bar');
+    L.DomEvent.disableClickPropagation(el);
+    L.DomEvent.disableScrollPropagation(el);
+    var titleEl = L.DomUtil.create('div', 'omi-legend-title', el);
+    titleEl.textContent = 'SST Anomaly (GHRSST MUR)';
+    var bar = L.DomUtil.create('div', 'himawari-legend-bar', el);
+    bar.style.background = 'linear-gradient(90deg,#08306b,#08519c,#2171b5,#4292c6,#6baed6,#9ecae1,#c6dbef,#f7fbff,#fee0d2,#fcbba1,#fc9272,#fb6a4a,#ef3b2c,#cb181d,#a50f15,#67000d)';
+    bar.style.height = '14px';
+    bar.style.borderRadius = '3px';
+    var labelsRow = L.DomUtil.create('div', 'himawari-legend-labels', el);
+    labelsRow.style.display = 'flex';
+    labelsRow.style.justifyContent = 'space-between';
+    labelsRow.style.fontSize = '10px';
+    ['-4', '-3', '-2', '-1', '0', '+1', '+2', '+3', '+4'].forEach(function (lbl) {
+      var span = document.createElement('span');
+      span.textContent = lbl;
+      labelsRow.appendChild(span);
+    });
+    var unitEl = L.DomUtil.create('div', 'himawari-legend-unit', el);
+    unitEl.textContent = '°C dari rata-rata | Resolusi: 1km | Sumber: NASA GIBS / GHRSST MUR';
+    addUnifiedLegend('ghrsst-sst', typeof createLegendWithToggle === 'function' ? createLegendWithToggle(el) : el);
+  }
+  function hideGhrsstLegend() {
+    if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('ghrsst-sst');
+  }
+
   var _activeOmiLegendKey = null;
   var _omiLegendControl = null;
 
@@ -1290,6 +1444,7 @@ L.control.scale({
           'toggleWindAnim', 'toggleWindRgb', 'toggleRhRgb', 'toggleTp24Rgb',
           'togglePm25Rgb', 'toggleHthRgb',
           'toggleMaritimeAngin', 'toggleMaritimeGelombang', 'toggleMaritimeSwell', 'toggleMaritimeWindSea',
+          'toggleGhrsstSstAnomali',
           'toggleSawahDilindungi', 'toggleSawahNasional50k',
           'toggleBppLayer', 'toggleSawitLayer', 'toggleErosiLayer',
           'toggleHotspotLayer', 'toggleKawasanHutanLayer', 'toggleGambutLayer', 'toggleKhLayer', 'togglePippibLayer',
@@ -1389,6 +1544,9 @@ L.control.scale({
         // 4c. Matikan VIIRS NOAA-20 & ECMWF Fire layers
         toggleViirsNoaa20Layer(false);
         toggleEcmwfFireLayer(false);
+
+        // 4d. Matikan GHRSST SST Anomaly & time slider
+        toggleGhrsstSstAnomali(false);
 
         // 5. Matikan GeoID boundary layer
         if (typeof geoidBoundaryLayer !== 'undefined' && geoidBoundaryLayer && map.hasLayer(geoidBoundaryLayer)) {
@@ -2280,7 +2438,8 @@ L.control.scale({
       qlPerairan:  { target: 'toggleCuacaPerairanLayer',    type: 'checkbox' },
       qlGambut:    { target: 'togglePeatlandLayer',         type: 'checkbox' },
       qlSawit:     { target: 'toggleSawitNasionalLayer',    type: 'checkbox' },
-      qlGunungApi: { target: 'toggleVolcanoLayer',          type: 'checkbox' }
+      qlGunungApi: { target: 'toggleVolcanoLayer',          type: 'checkbox' },
+      qlSstAnomali:{ type: 'toggle-fn',                    fn: toggleGhrsstSstAnomali }
     };
 
     function syncToolbarState() {
@@ -2300,7 +2459,8 @@ L.control.scale({
           else if (c.fn === toggleEcmwfFireLayer) isOn = !!(ecmwfFireLayer && map.hasLayer(ecmwfFireLayer));
           else if (c.fn === toggleHujanLayer) isOn = typeof isHujanLayerActive === 'function' && isHujanLayerActive();
           else if (btnId === 'qlRadar') isOn = typeof window.isBmkgRadarActive === 'function' && window.isBmkgRadarActive();
-          else if (btnId === 'qlProvinsi') isOn = typeof isProvinceBoundaryActive === 'function' && isProvinceBoundaryActive();
+            else if (btnId === 'qlProvinsi') isOn = typeof isProvinceBoundaryActive === 'function' && isProvinceBoundaryActive();
+            else if (c.fn === toggleGhrsstSstAnomali) isOn = !!(_ghrsstLayer && map.hasLayer(_ghrsstLayer));
           btn.classList.toggle('active', isOn);
         } else {
           btn.classList.toggle('active', currentBasemapName === c.target);
@@ -2326,6 +2486,7 @@ L.control.scale({
             else if (c.fn === toggleHujanLayer) isOn = typeof isHujanLayerActive === 'function' && isHujanLayerActive();
             else if (btnId === 'qlRadar') isOn = typeof window.isBmkgRadarActive === 'function' && window.isBmkgRadarActive();
           else if (btnId === 'qlProvinsi') isOn = typeof isProvinceBoundaryActive === 'function' && isProvinceBoundaryActive();
+            else if (c.fn === toggleGhrsstSstAnomali) isOn = !!(_ghrsstLayer && map.hasLayer(_ghrsstLayer));
             if (c.fn) c.fn(!isOn);
           } else {
             if (currentBasemapName === c.target) setBaseMap('google-maps');
@@ -2740,7 +2901,8 @@ L.control.scale({
       subcats: [
         { subcat: 'Laut', layers: [
           { id: 'toggleChlorophyllOverlay', label: 'Chlorophyll-a Laut (NASA)' },
-          { id: 'toggleParOverlay', label: 'PAR - Radiasi Fotosintesis (NASA)' }
+          { id: 'toggleParOverlay', label: 'PAR - Radiasi Fotosintesis (NASA)' },
+          { id: 'toggleGhrsstSstAnomali', label: 'SST Anomaly (GHRSST MUR)' }
         ]},
         { subcat: 'Aerosol', layers: [
           { id: 'omi-aerosol-index', label: 'UV Aerosol Index (OMI/Aura)' },
@@ -3400,6 +3562,9 @@ L.control.scale({
         }
         if (id === 'toggleBmkgPrecip10days' && typeof window.toggleBmkgPrecip10days === 'function') {
           window.toggleBmkgPrecip10days(cb.checked);
+        }
+        if (id === 'toggleGhrsstSstAnomali' && typeof window.toggleGhrsstSstAnomali === 'function') {
+          window.toggleGhrsstSstAnomali(cb.checked);
         }
         updateCatCount(cb.closest('.lc-category'));
         var attrBtn = cb.closest('.lc-item').querySelector('.lc-attr-btn');

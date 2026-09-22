@@ -39,7 +39,7 @@
       keywords: ['lingkungan','chlorophyll','aerosol','so2','no2','par','radiasi']
     },
     'Meteorologi': {
-      ids: ['toggleWindRgb','toggleRhRgb','toggleTp24Rgb','togglePm25Rgb','toggleHthRgb','toggleBmkgPrecip10days','toggleCuacaPerairanLayer','toggleCuacaPelabuhanLayer','toggleMaritimeAngin','toggleMaritimeGelombang','toggleMaritimeSwell','toggleMaritimeWindSea'],
+      ids: ['toggleWindRgb','toggleRhRgb','toggleTp24Rgb','togglePm25Rgb','toggleHthRgb','toggleBmkgPrecip10days','toggleCuacaPerairanLayer','toggleCuacaPelabuhanLayer','toggleMaritimeAngin','toggleMaritimeGelombang','toggleMaritimeSwell','toggleMaritimeWindSea','toggleGhrsstSstAnomali'],
       keywords: ['cuaca','angin','hujan','pm25','suhu','kelembaban','gelombang','maritim','perairan','pelabuhan']
     },
     'Kualitas Udara': {
@@ -707,8 +707,8 @@
 
   async function formatCuacaAnswer(text, regionMatch) {
     var active = [];
-    var weatherIds = ['toggleWindRgb','toggleRhRgb','toggleTp24Rgb','togglePm25Rgb','toggleHthRgb','toggleBmkgPrecip10days','toggleCuacaPerairanLayer','toggleCuacaPelabuhanLayer'];
-    var labels = { toggleWindRgb: 'Wind Speed (GFS)', toggleRhRgb: 'Relative Humidity', toggleTp24Rgb: 'Precipitation 24 Jam', togglePm25Rgb: 'PM2.5 (BMKG PCM)', toggleHthRgb: 'Hari Tanpa Hujan', toggleBmkgPrecip10days: 'Prakiraan Hujan 10 Hari', toggleCuacaPerairanLayer: 'Cuaca Perairan', toggleCuacaPelabuhanLayer: 'Cuaca Pelabuhan' };
+    var weatherIds = ['toggleWindRgb','toggleRhRgb','toggleTp24Rgb','togglePm25Rgb','toggleHthRgb','toggleBmkgPrecip10days','toggleCuacaPerairanLayer','toggleCuacaPelabuhanLayer','toggleGhrsstSstAnomali'];
+    var labels = { toggleWindRgb: 'Wind Speed (GFS)', toggleRhRgb: 'Relative Humidity', toggleTp24Rgb: 'Precipitation 24 Jam', togglePm25Rgb: 'PM2.5 (BMKG PCM)', toggleHthRgb: 'Hari Tanpa Hujan', toggleBmkgPrecip10days: 'Prakiraan Hujan 10 Hari', toggleCuacaPerairanLayer: 'Cuaca Perairan', toggleCuacaPelabuhanLayer: 'Cuaca Pelabuhan', toggleGhrsstSstAnomali: 'SST Anomaly (GHRSST)' };
     weatherIds.forEach(function (id) {
       var el = document.getElementById(id);
       if ((el && el.checked) || (window._layerCatalogState && window._layerCatalogState[id])) active.push(labels[id] || id);

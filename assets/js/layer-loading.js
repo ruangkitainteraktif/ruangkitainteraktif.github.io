@@ -58,6 +58,7 @@
     'toggleMaritimeGelombang': 'Data Tinggi Gelombang tidak tersedia.',
     'toggleMaritimeSwell': 'Data Swell tidak tersedia.',
     'toggleMaritimeWindSea': 'Data Wind Sea tidak tersedia.',
+    'toggleGhrsstSstAnomali': 'Data SST Anomaly tidak tersedia.',
     'toggleTollRoad': 'Data Jalan Tol tidak tersedia.',
     'toggleNationalRoad': 'Data Jalan Nasional tidak tersedia.',
     'toggleNonTollRoad': 'Data Jalan Non Tol tidak tersedia.',
