@@ -678,6 +678,9 @@
     if (!config && toggleId.indexOf('opt-') === 0 && window.OPT_ATTR_DATA && window.OPT_ATTR_DATA[toggleId]) {
       config = window.OPT_ATTR_DATA[toggleId];
     }
+    if (!config && window.KATEGORI_OPT_ATTR_DATA && window.KATEGORI_OPT_ATTR_DATA[toggleId]) {
+      config = window.KATEGORI_OPT_ATTR_DATA[toggleId];
+    }
     // Support dynamic SIH3 toggles without enumerating every id in the registry
     if (!config) {
       var m;
@@ -1254,6 +1257,7 @@
     // Also support SIH3 dynamic toggles by pattern so buttons show without manual registry entries
     if (/^toggleSih3Dpu_/.test(toggleId) || /^toggleSih3Cit_/.test(toggleId)) return true;
     if (toggleId.indexOf('opt-') === 0 && window.OPT_ATTR_DATA && window.OPT_ATTR_DATA[toggleId]) return true;
+    if (window.KATEGORI_OPT_ATTR_DATA && window.KATEGORI_OPT_ATTR_DATA[toggleId]) return true;
     return !!(ATTR_LAYER_REGISTRY[toggleId] || WMS_ATTR_REGISTRY[toggleId]);
   }
   window.hasAttrSupport = hasAttrSupport;

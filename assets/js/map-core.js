@@ -1521,6 +1521,9 @@ L.control.scale({
            'opt-kedelai-tikus','opt-kedelai-penggerek-polong','opt-kedelai-penggulung','opt-kedelai-ulat-litura','opt-kedelai-ulat-jengkal'
           ].forEach(function (k) { window.toggleOPTPest(k, false); });
         }
+        if (typeof window.toggleKategoriWilayahOpt === 'function' && window.KATEGORI_OPT_ATTR_DATA) {
+          Object.keys(window.KATEGORI_OPT_ATTR_DATA).forEach(function (k) { window.toggleKategoriWilayahOpt(k, false); });
+        }
 
         // 2. Matikan semua geoportal WMS/WFS layers
         geoportalLayers.forEach((layer) => {
@@ -2865,7 +2868,7 @@ L.control.scale({
       {
         cat: 'Pertanian',
         subcats: [
-          { subcat: 'Padi', layers: [
+          { subcat: 'Rekap Serangan OPT — Padi', layers: [
             { id: 'opt-padi-penggerek', label: 'Penggerek Batang' },
             { id: 'opt-padi-wbc', label: 'Wereng Batang Cokelat (WBC)' },
             { id: 'opt-padi-tikus', label: 'Tikus' },
@@ -2874,7 +2877,7 @@ L.control.scale({
             { id: 'opt-padi-tungro', label: 'Tungro' },
             { id: 'opt-padi-kerdil', label: 'Kerdil Rumput' }
           ]},
-          { subcat: 'Jagung', layers: [
+          { subcat: 'Rekap Serangan OPT — Jagung', layers: [
             { id: 'opt-jagung-lalat', label: 'Lalat Bibit' },
             { id: 'opt-jagung-penggerek', label: 'Penggerek Batang' },
             { id: 'opt-jagung-tikus', label: 'Tikus' },
@@ -2883,12 +2886,30 @@ L.control.scale({
             { id: 'opt-jagung-ulat-litura', label: 'Ulat Grayak Litura' },
             { id: 'opt-jagung-ulat-frugiperda', label: 'Ulat Grayak Frugiperda' }
           ]},
-          { subcat: 'Kedelai', layers: [
+          { subcat: 'Rekap Serangan OPT — Kedelai', layers: [
             { id: 'opt-kedelai-tikus', label: 'Tikus' },
             { id: 'opt-kedelai-penggerek-polong', label: 'Penggerek Polong' },
             { id: 'opt-kedelai-penggulung', label: 'Penggulung Daun' },
             { id: 'opt-kedelai-ulat-litura', label: 'Ulat Grayak Litura' },
             { id: 'opt-kedelai-ulat-jengkal', label: 'Ulat Jengkal' }
+          ]},
+          { subcat: 'Kategori Wilayah Serangan OPT — Padi (Musim Hujan)', layers: [
+            { id: 'kategori-opt-hujan-penggerek-batang', label: 'Penggerek Batang' },
+            { id: 'kategori-opt-hujan-wereng-batang-cokelat', label: 'Wereng Batang Cokelat' },
+            { id: 'kategori-opt-hujan-tikus', label: 'Tikus' },
+            { id: 'kategori-opt-hujan-blas', label: 'Blas' },
+            { id: 'kategori-opt-hujan-kresek', label: 'Kresek' },
+            { id: 'kategori-opt-hujan-tungro', label: 'Tungro' },
+            { id: 'kategori-opt-hujan-kerdil-rumput', label: 'Kerdil Rumput' }
+          ]},
+          { subcat: 'Kategori Wilayah Serangan OPT — Padi (Musim Kemarau)', layers: [
+            { id: 'kategori-opt-kemarau-penggerek-batang', label: 'Penggerek Batang' },
+            { id: 'kategori-opt-kemarau-wereng-batang-cokelat', label: 'Wereng Batang Cokelat' },
+            { id: 'kategori-opt-kemarau-tikus', label: 'Tikus' },
+            { id: 'kategori-opt-kemarau-blas', label: 'Blas' },
+            { id: 'kategori-opt-kemarau-kresek', label: 'Kresek' },
+            { id: 'kategori-opt-kemarau-tungro', label: 'Tungro' },
+            { id: 'kategori-opt-kemarau-kerdil-rumput', label: 'Kerdil Rumput' }
           ]}
         ]
       },
@@ -3517,6 +3538,7 @@ L.control.scale({
           id === 'toggleChlorophyllOverlay' ||
            id === 'toggleParOverlay' ||
            (id.indexOf('opt-') === 0 && typeof window.toggleOPTPest === 'function') ||
+           (id.indexOf('kategori-opt-') === 0 && typeof window.toggleKategoriWilayahOpt === 'function') ||
            (id === 'toggleSawahDilindungi' && typeof window.toggleSawahDilindungiLayer === 'function') ||
           id === 'toggleSawahNasional50k' ||
           id === 'toggleErosiLayer' ||
@@ -3565,6 +3587,9 @@ L.control.scale({
          }
         if (id.indexOf('opt-') === 0 && typeof window.toggleOPTPest === 'function') {
           window.toggleOPTPest(id, cb.checked);
+        }
+        if (id.indexOf('kategori-opt-') === 0 && typeof window.toggleKategoriWilayahOpt === 'function') {
+          window.toggleKategoriWilayahOpt(id, cb.checked);
         }
         if (id === 'toggleTollRoad' && typeof window.toggleTollRoadLayer === 'function') {
           window.toggleTollRoadLayer(cb.checked);
