@@ -289,6 +289,7 @@
         'Hutan Lindung': '#38a800',
         'Hutan Produksi Tetap': '#ffff00',
         'Hutan Produksi Terbatas': '#aaff00',
+        'Hutan Produksi Yang Dapat Dikonversi': '#ff73df',
         'Hutan Produksi yang Dapat Dikonversi': '#ff73df',
         'Areal Penggunaan Lain': '#e0e0e0',
         'Tubuh Air': '#00c5ff',
@@ -296,6 +297,192 @@
       }
     }
   };
+
+  var DUK_BASE = 'https://gis.dukcapil.kemendagri.go.id/arcgis/rest/services/';
+
+  function dukNameFields(keys) {
+    var labels = {
+      nama_prop: 'Provinsi', nama_kab: 'Kab/Kota', nama_kec: 'Kecamatan', nama_kel: 'Desa'
+    };
+    return keys.map(function (k) {
+      return { key: k, label: labels[k.toLowerCase()] || k };
+    });
+  }
+
+  function dukMetricFields(opts) {
+    opts = opts || {};
+    var f = [
+      { key: 'jumlah_penduduk', label: 'Penduduk', type: 'num' },
+      { key: 'jumlah_kk', label: 'Jumlah KK', type: 'num' },
+      { key: 'kepadatan_penduduk', label: 'Kepadatan', type: 'num' },
+      { key: 'luas_wilayah', label: 'Luas (km²)', type: 'km2' },
+      { key: 'pria', label: 'Pria', type: 'num' },
+      { key: 'wanita', label: 'Wanita', type: 'num' },
+      { key: 'belum_kawin', label: 'Belum Kawin', type: 'num' },
+      { key: 'kawin', label: 'Kawin', type: 'num' },
+      { key: 'cerai_hidup', label: 'Cerai Hidup', type: 'num' },
+      { key: 'cerai_mati', label: 'Cerai Mati', type: 'num' },
+      { key: 'perpindahan_pddk', label: 'Pindah', type: 'num' },
+      { key: 'jml_meninggal', label: 'Meninggal', type: 'num' }
+    ];
+    if (opts.withLahir) f.push({ key: 'jml_lahir', label: 'Lahir', type: 'num' });
+    f.push(
+      { key: 'perubahan_data', label: 'Perubahan Data', type: 'num' },
+      { key: opts.rekamKey || 'jml_rekam_wktp', label: 'Rekam E-KTP', type: 'num' },
+      { key: 'islam', label: 'Islam', type: 'num' },
+      { key: 'kristen', label: 'Kristen', type: 'num' },
+      { key: 'katholik', label: 'Katolik', type: 'num' },
+      { key: 'hindu', label: 'Hindu', type: 'num' },
+      { key: 'budha', label: 'Buddha', type: 'num' },
+      { key: 'konghucu', label: 'Konghucu', type: 'num' },
+      { key: 'kepercayaan', label: 'Kepercayaan', type: 'num' },
+      { key: 'u0', label: 'Umur 0-4', type: 'num' },
+      { key: 'u5', label: 'Umur 5-9', type: 'num' },
+      { key: 'u10', label: 'Umur 10-14', type: 'num' },
+      { key: 'u15', label: 'Umur 15-19', type: 'num' },
+      { key: 'u20', label: 'Umur 20-24', type: 'num' },
+      { key: 'u25', label: 'Umur 25-29', type: 'num' },
+      { key: 'u30', label: 'Umur 30-34', type: 'num' },
+      { key: 'u35', label: 'Umur 35-39', type: 'num' },
+      { key: 'u40', label: 'Umur 40-44', type: 'num' },
+      { key: 'u45', label: 'Umur 45-49', type: 'num' },
+      { key: 'u50', label: 'Umur 50-54', type: 'num' },
+      { key: 'u55', label: 'Umur 55-59', type: 'num' },
+      { key: 'u60', label: 'Umur 60-64', type: 'num' },
+      { key: 'u65', label: 'Umur 65-69', type: 'num' },
+      { key: 'u70', label: 'Umur 70-74', type: 'num' },
+      { key: 'u75', label: 'Umur 75+', type: 'num' },
+      { key: 'lhr_2020', label: 'Lahir 2020', type: 'num' },
+      { key: 'lhr_2021', label: 'Lahir 2021', type: 'num' },
+      { key: 'lhr_2022', label: 'Lahir 2022', type: 'num' },
+      { key: 'lhr_2023', label: 'Lahir 2023', type: 'num' },
+      { key: 'lhr_2024', label: 'Lahir 2024', type: 'num' },
+      { key: 'lhr_sebelum_2020', label: 'Lahir sebelum 2020', type: 'num' },
+      { key: 'lhr_sebelum_2021', label: 'Lahir sebelum 2021', type: 'num' },
+      { key: 'lhr_sebelum_2022', label: 'Lahir sebelum 2022', type: 'num' },
+      { key: 'lhr_sebelum_2023', label: 'Lahir sebelum 2023', type: 'num' },
+      { key: 'lhr_sebelum_2024', label: 'Lahir sebelum 2024', type: 'num' },
+      { key: 'pertumbuhan_2020', label: 'Tumbuh 2020', type: 'num' },
+      { key: 'pertumbuhan_2021', label: 'Tumbuh 2021', type: 'num' },
+      { key: 'pertumbuhan_2022', label: 'Tumbuh 2022', type: 'num' },
+      { key: 'pertumbuhan_2023', label: 'Tumbuh 2023', type: 'num' },
+      { key: 'pertumbuhan_2024', label: 'Tumbuh 2024', type: 'num' },
+      { key: 'pendidikan3_4', label: 'Pendidikan 3-4 th', type: 'num' },
+      { key: 'pendidikan5', label: 'Pendidikan 5 th', type: 'num' },
+      { key: 'pendidikan6_11', label: 'Pendidikan 6-11 th', type: 'num' },
+      { key: 'pendidikan12_14', label: 'Pendidikan 12-14 th', type: 'num' },
+      { key: 'pendidikan15_17', label: 'Pendidikan 15-17 th', type: 'num' },
+      { key: 'pendidikan18_22', label: 'Pendidikan 18-22 th', type: 'num' },
+      { key: 'tidak_blm_sekolah', label: 'Tidak/Blm Sekolah', type: 'num' },
+      { key: 'belum_tamat_sd', label: 'Belum Tamat SD', type: 'num' },
+      { key: 'tamat_sd', label: 'Tamat SD', type: 'num' },
+      { key: 'sltp', label: 'SLTP', type: 'num' },
+      { key: 'slta', label: 'SLTA', type: 'num' },
+      { key: 'd1_dan_d2', label: 'D1/D2', type: 'num' },
+      { key: 'd3', label: 'D3', type: 'num' },
+      { key: 's1', label: 'S1', type: 'num' },
+      { key: 's2', label: 'S2', type: 'num' },
+      { key: 's3', label: 'S3', type: 'num' },
+      { key: 'o', label: 'Gol. Darah O', type: 'num' },
+      { key: 'o_', label: 'Gol. Darah O+', type: 'num' },
+      { key: 'o1', label: 'Gol. Darah O-', type: 'num' },
+      { key: 'a', label: 'Gol. Darah A', type: 'num' },
+      { key: 'a_', label: 'Gol. Darah A+', type: 'num' },
+      { key: 'a1', label: 'Gol. Darah A-', type: 'num' },
+      { key: 'b', label: 'Gol. Darah B', type: 'num' },
+      { key: 'b_', label: 'Gol. Darah B-', type: 'num' },
+      { key: 'b1', label: 'Gol. Darah B+', type: 'num' },
+      { key: 'ab', label: 'Gol. Darah AB', type: 'num' },
+      { key: 'ab_', label: 'Gol. Darah AB-', type: 'num' },
+      { key: 'ab1', label: 'Gol. Darah AB+', type: 'num' },
+      { key: 'tidak_tahu', label: 'Gol. Darah Tidak Tahu', type: 'num' },
+      { key: 'belum_tidak_bekerja', label: 'Belum/Tidak Bekerja', type: 'num' },
+      { key: 'pensiunan', label: 'Pensiunan', type: 'num' },
+      { key: 'mengurus_rumah_tangga', label: 'Mengurus RT', type: 'num' },
+      { key: 'perdagangan', label: 'Perdagangan', type: 'num' },
+      { key: 'perawat', label: 'Perawat', type: 'num' },
+      { key: 'nelayan', label: 'Nelayan', type: 'num' },
+      { key: 'pelajar_mahasiswa', label: 'Pelajar/Mahasiswa', type: 'num' },
+      { key: 'guru', label: 'Guru', type: 'num' },
+      { key: 'wiraswasta', label: 'Wiraswasta', type: 'num' },
+      { key: 'pengacara', label: 'Pengacara', type: 'num' },
+      { key: 'lainnya', label: 'Pekerjaan Lainnya', type: 'num' }
+    );
+    if (opts.withKabCount) {
+      f.unshift(
+        { key: 'jumlah_kabupaten', label: 'Jumlah Kabupaten', type: 'num' },
+        { key: 'jumlah_kota', label: 'Jumlah Kota', type: 'num' },
+        { key: 'jumlah_kecamatan', label: 'Jumlah Kecamatan', type: 'num' },
+        { key: 'jumlah_desa', label: 'Jumlah Desa', type: 'num' },
+        { key: 'jumlah_kelurahan', label: 'Jumlah Kelurahan', type: 'num' }
+      );
+    } else if (opts.withAdminCounts) {
+      f.unshift(
+        { key: 'jumlah_kecamatan', label: 'Jumlah Kecamatan', type: 'num' },
+        { key: 'jumlah_desa', label: 'Jumlah Desa', type: 'num' },
+        { key: 'jumlah_kelurahan', label: 'Jumlah Kelurahan', type: 'num' }
+      );
+    }
+    return f;
+  }
+
+  function makeDukSource(cfg) {
+    var names = dukNameFields(cfg.nameKeys);
+    var metrics = dukMetricFields(cfg);
+    var tableFields = names.concat(metrics);
+    var extraFields = names.concat(metrics.filter(function (fd) {
+      return fd.key !== 'luas_wilayah';
+    }));
+    return {
+      label: cfg.label,
+      query: DUK_BASE + cfg.service + '/MapServer/' + cfg.layer + '/query',
+      nameField: cfg.nameKeys[cfg.nameKeys.length - 1],
+      titleField: cfg.nameKeys[cfg.nameKeys.length - 1],
+      areaField: 'luas_wilayah',
+      areaUnit: 'km2',
+      dateField: null,
+      nameLabel: 'Nama',
+      emptyMessage: 'Tidak ada data penduduk di wilayah ini.',
+      loadingMessage: 'Memuat data penduduk...',
+      source: 'Dukcapil Kemendagri',
+      tableFields: tableFields,
+      extraFields: extraFields
+    };
+  }
+
+  LAYER_SOURCES['duk-prop'] = makeDukSource({
+    label: 'Penduduk Provinsi (Dukcapil)',
+    service: 'AGR_VISUAL_PROP_FIX',
+    layer: 1,
+    nameKeys: ['nama_prop'],
+    withLahir: true,
+    withKabCount: true
+  });
+  LAYER_SOURCES['duk-kab'] = makeDukSource({
+    label: 'Penduduk Kabupaten (Dukcapil)',
+    service: 'AGR_VISUAL_KAB_202401',
+    layer: 0,
+    nameKeys: ['nama_prop', 'nama_kab'],
+    withLahir: true,
+    withAdminCounts: true
+  });
+  LAYER_SOURCES['duk-kec'] = makeDukSource({
+    label: 'Penduduk Kecamatan (Dukcapil)',
+    service: 'AGR_VISUAL_KEC_FIX',
+    layer: 2,
+    nameKeys: ['nama_prop', 'nama_kab', 'nama_kec'],
+    withLahir: false,
+    withAdminCounts: true
+  });
+  LAYER_SOURCES['duk-kel'] = makeDukSource({
+    label: 'Penduduk Desa (Dukcapil)',
+    service: 'AGR_VISUAL_KEL_202401',
+    layer: 0,
+    nameKeys: ['NAMA_PROP', 'NAMA_KAB', 'NAMA_KEC', 'NAMA_KEL'],
+    withLahir: true,
+    rekamKey: 'JML_REKAM'
+  });
+
   var KAB_URL = 'assets/data/bps/geojson/kabupaten.geojson';
   var PROV_URL = 'assets/data/bps/geojson/provinsi.geojson';
   var DESA_URL = 'assets/data/kode_wilayah.json';
@@ -573,7 +760,17 @@
     if (m2 == null || isNaN(m2)) return '-';
     var ha = m2 / 10000;
     if (ha >= 1) return ha.toFixed(2) + ' ha';
-    return m2.toFixed(0) + ' m\u00B2';
+    return m2.toFixed(0) + ' m²';
+  }
+
+  function formatNum(v) {
+    if (v == null || v === '' || isNaN(v)) return '-';
+    return Number(v).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+  }
+
+  function formatKm2(v) {
+    if (v == null || v === '' || isNaN(v)) return '-';
+    return Number(v).toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' km²';
   }
 
   function formatDate(epoch) {
@@ -591,7 +788,7 @@
       return {
         type: 'Feature',
         properties: props,
-        geometry: { type: 'Polygon', coordinates: geom.rings }
+        geometry: esriRingsToPolygon(geom.rings)
       };
     }
     if (geom.paths) {
@@ -802,7 +999,7 @@
 
     var loop = function () {
       var url = currentSource().query
-        + '?where=1%3D1&outFields=*&returnGeometry=true'
+        + '?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326'
         + '&geometry=' + encodeURIComponent(envelopeJson)
         + '&geometryType=esriGeometryEnvelope'
         + '&spatialRel=esriSpatialRelIntersects'
@@ -1089,6 +1286,8 @@
       if (fd.type === 'date') return esc(formatDate(v));
       if (fd.type === 'area') return esc(formatLuas(v));
       if (fd.type === 'ha') return esc(formatHa(v));
+      if (fd.type === 'km2') return esc(formatKm2(v));
+      if (fd.type === 'num') return esc(formatNum(v));
       if (fd.type === 'nameMap') return esc(resolveName(src, v) || String(v));
       return esc(String(v));
     }
@@ -1226,6 +1425,22 @@
     return { km: null, ha: (turf.area(gj) / 10000).toFixed(2) };
   }
 
+  function isSliverClip(intersection, featureGj, boundary) {
+    if (!intersection || !intersection.geometry) return false;
+    if (isPointGeom(intersection) || isLineGeom(intersection)) return false;
+    var interArea = 0;
+    try { interArea = turf.area(intersection); } catch (e) { return false; }
+    if (interArea < 100) return true;
+    var featureArea = 0;
+    var boundaryArea = 0;
+    try { featureArea = turf.area(featureGj); } catch (e) {}
+    try { boundaryArea = turf.area(boundary); } catch (e) {}
+    if (featureArea > 0 && boundaryArea > 0) {
+      return (interArea / featureArea < 0.02) && (interArea / boundaryArea < 0.02);
+    }
+    return false;
+  }
+
   /* ---- Main: fetch + clip + display ---- */
   function fetchAndDisplay() {
     if (!state.selectedBoundary || !window.map) return;
@@ -1286,6 +1501,7 @@
           try {
             var intersection = clipFeatureToBoundary(gj, clipBoundary);
             if (intersection && intersection.geometry) {
+              if (isSliverClip(intersection, gj, clipBoundary)) { skipped++; return; }
               var p = gj.properties || {};
               var m = measureClip(intersection);
               if (m.ha != null) p._area_ha = m.ha;
@@ -1406,16 +1622,20 @@
   function buildPopup(feature) {
     var p = feature.properties || {};
     var src = currentSource();
-    var nameVal = resolveName(src, p[src.nameField]);
+    var nameVal = resolveName(src, src.nameField ? getFieldVal(p, src.nameField) : null);
+    var titleVal = src.titleField ? getFieldVal(p, src.titleField) : null;
     var color = getColor(nameVal, src);
     var html = '<div class="agol-popup" style="min-width:240px">';
     html += '<div class="agol-popup-header agol-geo-satupeta">';
     html += '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:' + color + ';"></span>' + esc(src.label) + '</div>';
-    html += '<div class="agol-popup-title">' + esc((src.titleField ? p[src.titleField] : null) || nameVal || p.namobj || p.NAMOBJ || '-') + '</div>';
+    html += '<div class="agol-popup-title">' + esc(titleVal || nameVal || p.namobj || p.NAMOBJ || '-') + '</div>';
     html += '</div>';
     html += '<div class="agol-popup-body"><div class="agol-popup-fields">';
-    if (src.areaField && p[src.areaField] != null) {
-      var areaTxt = src.areaUnit === 'ha' ? formatHa(p[src.areaField]) : formatLuas(p[src.areaField]);
+    var areaRaw = src.areaField ? getFieldVal(p, src.areaField) : null;
+    if (areaRaw != null) {
+      var areaTxt = src.areaUnit === 'ha' ? formatHa(areaRaw)
+        : src.areaUnit === 'km2' ? formatKm2(areaRaw)
+        : formatLuas(areaRaw);
       html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Luas</span><span class="agol-popup-field-value">' + areaTxt + '</span></div>';
     }
     if (src.geomKind === 'point') {
@@ -1436,7 +1656,10 @@
       src.extraFields.forEach(function (fd) {
         var v = getFieldVal(p, fd.key);
         if (v == null || v === '') return;
-        var txt = fd.type === 'ha' ? formatHa(v) : String(v);
+        var txt = fd.type === 'ha' ? formatHa(v)
+          : fd.type === 'km2' ? formatKm2(v)
+          : fd.type === 'num' ? formatNum(v)
+          : String(v);
         html += '<div class="agol-popup-field"><span class="agol-popup-field-label">' + esc(fd.label) + '</span><span class="agol-popup-field-value">' + esc(txt) + '</span></div>';
       });
     }
@@ -1483,19 +1706,40 @@
     kecamatan: { label: 'Cari nama kecamatan', ph: 'Ketik nama kecamatan...' },
     desa: { label: 'Cari nama desa', ph: 'Ketik nama desa...' }
   };
+  var DUK_BY_LEVEL = {
+    provinsi: 'duk-prop',
+    kabupaten: 'duk-kab',
+    kecamatan: 'duk-kec',
+    desa: 'duk-kel'
+  };
+  var LEVEL_BY_DUK = {
+    'duk-prop': 'provinsi',
+    'duk-kab': 'kabupaten',
+    'duk-kec': 'kecamatan',
+    'duk-kel': 'desa'
+  };
 
-  function onLevelChange() {
-    var sel = document.getElementById('satupetaLevelMode');
+  function applyLevelLabels() {
+    var t = LEVEL_TEXT[state.level] || LEVEL_TEXT.desa;
     var label = document.getElementById('satupetaLevelLabel');
     var input = document.getElementById('satupetaKabSearch');
-    if (sel) state.level = sel.value;
-    var t = LEVEL_TEXT[state.level] || LEVEL_TEXT.desa;
     if (label) label.textContent = t.label;
     if (input) {
       input.value = '';
       input.placeholder = t.ph;
     }
+  }
+
+  function onLevelChange() {
+    var sel = document.getElementById('satupetaLevelMode');
+    if (sel) state.level = sel.value;
+    applyLevelLabels();
     clearSelection();
+    var layerSel = document.getElementById('satupetaInputLayer');
+    if (layerSel && LEVEL_BY_DUK[layerSel.value]) {
+      var next = DUK_BY_LEVEL[state.level];
+      if (next && layerSel.value !== next) layerSel.value = next;
+    }
   }
 
   /* ---- Init ---- */
@@ -1527,6 +1771,13 @@
     var layerSel = document.getElementById('satupetaInputLayer');
     if (layerSel) {
       layerSel.addEventListener('change', function () {
+        var wantLevel = LEVEL_BY_DUK[layerSel.value];
+        if (wantLevel && state.level !== wantLevel) {
+          state.level = wantLevel;
+          var levelSel = document.getElementById('satupetaLevelMode');
+          if (levelSel) levelSel.value = wantLevel;
+          applyLevelLabels();
+        }
         if (state.selectedBoundary) fetchAndDisplay();
       });
     }
