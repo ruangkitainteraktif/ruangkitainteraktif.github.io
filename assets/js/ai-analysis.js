@@ -32,7 +32,7 @@
     },
     'ATRBPN': {
       ids: ['toggleBumiPersilLayer','toggleRtrwTmsLayer','toggleLsdTmsLayer','toggleLbsTmsLayer','toggleDiTmsLayer','toggleSaluranIrTmsLayer'],
-      keywords: ['persil','rtrw','sawah dilindungi','lahan baku sawah','irigasi','atrbpn','pertanahan']
+      keywords: ['persil','rtrw','sawah dilindungi','lahan baku sawah','irigasi','atrbpn','pertanahan','znt','zona nilai tanah','kawasan hutan','jabatan batas','blbi']
     },
     'Lingkungan': {
       ids: ['toggleChlorophyllOverlay','toggleParOverlay','omi-aerosol-index','omi-aod-abs','omi-modis-terra-aod','omi-modis-aqua-aod','omi-so2','omi-so2-pbl','omps-noaa20-so2-lt','omi-no2'],
@@ -63,6 +63,10 @@
       keywords: ['terrain','hillshade','batnas','batas provinsi','jalan tol','jalan nasional','tutupan lahan','demnas','label']
     }
   };
+
+  if (window.ATRBPN_WMS_IDS && LAYER_CATEGORIES['ATRBPN']) {
+    LAYER_CATEGORIES['ATRBPN'].ids = LAYER_CATEGORIES['ATRBPN'].ids.concat(window.ATRBPN_WMS_IDS);
+  }
 
   /* === Data Extractors === */
   function extractHotspotData() {

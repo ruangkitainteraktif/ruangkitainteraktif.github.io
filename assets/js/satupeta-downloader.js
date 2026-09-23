@@ -679,7 +679,37 @@
         });
         if (og.children.length) sel.appendChild(og);
       });
+      var layerSearch = document.getElementById('satupetaLayerSearch');
+      if (layerSearch) filterLayerOptions(layerSearch.value);
     });
+  }
+
+  function filterLayerOptions(query) {
+    var sel = document.getElementById('satupetaInputLayer');
+    if (!sel) return;
+    var q = String(query || '').trim().toLowerCase();
+    var i;
+    var opts = sel.querySelectorAll('option');
+    for (i = 0; i < opts.length; i++) {
+      var opt = opts[i];
+      if (opt.selected) {
+        opt.hidden = false;
+        continue;
+      }
+      var text = (opt.textContent || '').toLowerCase();
+      var val = (opt.value || '').toLowerCase();
+      var match = !q || text.indexOf(q) !== -1 || val.indexOf(q) !== -1;
+      opt.hidden = !match;
+    }
+    var groups = sel.querySelectorAll('optgroup');
+    for (i = 0; i < groups.length; i++) {
+      var og = groups[i];
+      var any = false;
+      for (var j = 0; j < og.options.length; j++) {
+        if (!og.options[j].hidden) { any = true; break; }
+      }
+      og.hidden = !any;
+    }
   }
 
   var COLORS = {
@@ -1766,6 +1796,19 @@
     var levelSel = document.getElementById('satupetaLevelMode');
     if (levelSel) {
       levelSel.addEventListener('change', onLevelChange);
+    }
+
+    var layerSearch = document.getElementById('satupetaLayerSearch');
+    if (layerSearch) {
+      layerSearch.addEventListener('input', function () {
+        filterLayerOptions(this.value);
+      });
+      layerSearch.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          this.value = '';
+          filterLayerOptions('');
+        }
+      });
     }
 
     var layerSel = document.getElementById('satupetaInputLayer');
