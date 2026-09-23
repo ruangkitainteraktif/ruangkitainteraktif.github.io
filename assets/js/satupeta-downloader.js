@@ -297,6 +297,7 @@
     }
   };
   var KAB_URL = 'assets/data/bps/geojson/kabupaten.geojson';
+  var PROV_URL = 'assets/data/bps/geojson/provinsi.geojson';
   var DESA_URL = 'assets/data/kode_wilayah.json';
   var BIG_RBI_BASE = 'https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH/';
   var BIG_SERVICE_BASE = 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/';
@@ -528,6 +529,9 @@
     layer: null,
     visible: false,
     kabData: null,
+    provData: null,
+    provDataGeo: null,
+    kecData: null,
     desaData: null,
     selectedFeature: null,
     selectedBoundary: null,
@@ -627,12 +631,31 @@
       });
   }
 
-  /* ---- Load Desa (kode_wilayah.json) ---- */
+  /* ---- Load Provinsi GeoJSON ---- */
+  function loadProvGeo() {
+    if (state.provDataGeo) return Promise.resolve(state.provDataGeo);
+    return fetch(PROV_URL)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        state.provDataGeo = data;
+        return data;
+      });
+  }
+
+  /* ---- Load Desa/Prov/Kec (kode_wilayah.json) ---- */
   function loadDesa() {
-    if (state.desaData) return Promise.resolve(state.desaData);
+    if (state.desaData && state.provData && state.kecData) {
+      return Promise.resolve(state.desaData);
+    }
     return fetch(DESA_URL)
       .then(function (r) { return r.json(); })
       .then(function (data) {
+        state.provData = data.filter(function (item) {
+          return item.kode && item.kode.split('.').length === 1;
+        });
+        state.kecData = data.filter(function (item) {
+          return item.kode && item.kode.split('.').length === 3;
+        });
         state.desaData = data.filter(function (item) {
           return item.kode && item.kode.split('.').length === 4;
         });
@@ -660,12 +683,34 @@
   function fetchBoundary(kode, attempt) {
     attempt = attempt || 0;
     var parts = String(kode || '').split('.');
+
+    /* Provinsi (depth 1): local BPS geojson (fast, offline) */
+    if (parts.length === 1) {
+      return loadProvGeo().then(function (gj) {
+        var f = gj && gj.features && gj.features.find(function (ft) {
+          return String(ft.properties && ft.properties.kdprov) === kode;
+        });
+        if (!f || !f.geometry) return null;
+        return ensureMultiPolygon({
+          type: 'Feature',
+          properties: { name: (f.properties.nmprov || ''), kode: kode },
+          geometry: f.geometry
+        });
+      }).catch(function () { return null; });
+    }
+
     var url;
     if (parts.length === 4) {
       url = BIG_RBI_BASE + 'BATAS_DESAKEL_AR/MapServer/0/query?where='
         + encodeURIComponent("KDEPUM='" + kode + "'")
         + '&f=json&returnGeometry=true&outSR=4326'
         + '&outFields=KDEPUM,NAMOBJ,WADMKK,WADMPR,LUASWH&geometryPrecision=5';
+    } else if (parts.length === 3) {
+      /* Kecamatan: BIG RBI BATAS_KECAMATAN_AR by KDCPUM */
+      url = BIG_RBI_BASE + 'BATAS_KECAMATAN_AR/MapServer/0/query?where='
+        + encodeURIComponent("KDCPUM='" + kode + "'")
+        + '&f=json&returnGeometry=true&outSR=4326'
+        + '&outFields=NAMOBJ,KDCPUM,KDPKAB,KDPPUM,LUASWH&geometryPrecision=5';
     } else if (parts.length === 2) {
       url = BIG_RBI_BASE + 'BATAS_KABKOTA_AR/MapServer/0/query?where='
         + encodeURIComponent("KDPKAB='" + kode + "'")
@@ -794,43 +839,63 @@
       return;
     }
     var q = query.toUpperCase();
+    var results = [];
+    var html = '';
 
-    if (state.level === 'kabupaten') {
+    if (state.level === 'provinsi') {
+      if (!state.provData) { container.style.display = 'none'; return; }
+      results = state.provData.filter(function (item) {
+        return item.nama.toUpperCase().indexOf(q) !== -1;
+      }).slice(0, 10);
+      html = results.map(function (item) {
+        return '<div class="satupeta-kab-item" data-type="prov" data-kode="' + esc(item.kode) + '">'
+          + '<span class="satupeta-kab-name">' + esc(item.nama) + '</span>'
+          + '<span class="satupeta-kab-prov">' + esc(item.kode) + '</span>'
+          + '</div>';
+      }).join('');
+    } else if (state.level === 'kabupaten') {
       if (!state.kabData) { container.style.display = 'none'; return; }
-      var results = state.kabData.features.filter(function (f) {
+      results = state.kabData.features.filter(function (f) {
         var name = (f.properties.nmkab || '').toUpperCase();
         var prov = (f.properties.nmprov || '').toUpperCase();
         return name.indexOf(q) !== -1 || prov.indexOf(q) !== -1;
       }).slice(0, 10);
-
-      if (!results.length) {
-        container.innerHTML = '<div class="satupeta-kab-item satupeta-kab-empty">Tidak ditemukan</div>';
-      } else {
-        container.innerHTML = results.map(function (f) {
-          var p = f.properties;
-          var idx = state.kabData.features.indexOf(f);
-          return '<div class="satupeta-kab-item" data-type="kab" data-idx="' + idx + '">'
-            + '<span class="satupeta-kab-name">' + esc(p.nmkab) + '</span>'
-            + '<span class="satupeta-kab-prov">' + esc(p.nmprov) + '</span>'
-            + '</div>';
-        }).join('');
-      }
-    } else {
-      if (!state.desaData) { container.style.display = 'none'; return; }
-      var results = state.desaData.filter(function (item) {
+      html = results.map(function (f) {
+        var p = f.properties;
+        var idx = state.kabData.features.indexOf(f);
+        return '<div class="satupeta-kab-item" data-type="kab" data-idx="' + idx + '">'
+          + '<span class="satupeta-kab-name">' + esc(p.nmkab) + '</span>'
+          + '<span class="satupeta-kab-prov">' + esc(p.nmprov) + '</span>'
+          + '</div>';
+      }).join('');
+    } else if (state.level === 'kecamatan') {
+      if (!state.kecData) { container.style.display = 'none'; return; }
+      results = state.kecData.filter(function (item) {
         return item.nama.toUpperCase().indexOf(q) !== -1;
       }).slice(0, 10);
+      html = results.map(function (item) {
+        return '<div class="satupeta-kab-item" data-type="kec" data-kode="' + esc(item.kode) + '">'
+          + '<span class="satupeta-kab-name">' + esc(item.nama) + '</span>'
+          + '<span class="satupeta-kab-prov">' + esc(item.kode) + '</span>'
+          + '</div>';
+      }).join('');
+    } else {
+      if (!state.desaData) { container.style.display = 'none'; return; }
+      results = state.desaData.filter(function (item) {
+        return item.nama.toUpperCase().indexOf(q) !== -1;
+      }).slice(0, 10);
+      html = results.map(function (item) {
+        return '<div class="satupeta-kab-item" data-type="desa" data-kode="' + esc(item.kode) + '">'
+          + '<span class="satupeta-kab-name">' + esc(item.nama) + '</span>'
+          + '<span class="satupeta-kab-prov">' + esc(item.kode) + '</span>'
+          + '</div>';
+      }).join('');
+    }
 
-      if (!results.length) {
-        container.innerHTML = '<div class="satupeta-kab-item satupeta-kab-empty">Tidak ditemukan</div>';
-      } else {
-        container.innerHTML = results.map(function (item, i) {
-          return '<div class="satupeta-kab-item" data-type="desa" data-kode="' + esc(item.kode) + '">'
-            + '<span class="satupeta-kab-name">' + esc(item.nama) + '</span>'
-            + '<span class="satupeta-kab-prov">' + esc(item.kode) + '</span>'
-            + '</div>';
-        }).join('');
-      }
+    if (!results.length) {
+      container.innerHTML = '<div class="satupeta-kab-item satupeta-kab-empty">Tidak ditemukan</div>';
+    } else {
+      container.innerHTML = html;
     }
     container.style.display = 'block';
 
@@ -844,6 +909,16 @@
           var feat = state.kabData.features[idx];
           input.value = feat.properties.nmkab;
           selectKabupaten(feat);
+        } else if (type === 'prov') {
+          var pk = el.getAttribute('data-kode');
+          var pitem = state.provData.find(function (d) { return d.kode === pk; });
+          input.value = pitem ? pitem.nama : pk;
+          selectProvinsi(pk, pitem ? pitem.nama : '');
+        } else if (type === 'kec') {
+          var kk = el.getAttribute('data-kode');
+          var kitem = state.kecData.find(function (d) { return d.kode === kk; });
+          input.value = kitem ? kitem.nama : kk;
+          selectKecamatan(kk, kitem ? kitem.nama : '');
         } else {
           var kode = el.getAttribute('data-kode');
           var item = state.desaData.find(function (d) { return d.kode === kode; });
@@ -905,6 +980,46 @@
     fetchBoundary(kode).then(function (boundary) {
       if (!boundary) {
         if (info) info.innerHTML = 'Gagal memuat batas desa dari BIG RBI. Coba lagi.';
+        return;
+      }
+      state.selectedFeature = { properties: { kode: kode, nama: nama }, geometry: boundary.geometry };
+      state.selectedBoundary = boundary;
+      updateSelectedLabel(nama, kode);
+      drawSelOutline(boundary);
+      fetchAndDisplay();
+    });
+  }
+
+  function selectProvinsi(kode, nama) {
+    var info = document.getElementById('satupetaInfo');
+    if (info) {
+      info.style.display = 'block';
+      info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> Memuat batas provinsi...</div>';
+    }
+
+    fetchBoundary(kode).then(function (boundary) {
+      if (!boundary) {
+        if (info) info.innerHTML = 'Gagal memuat batas provinsi. Coba lagi.';
+        return;
+      }
+      state.selectedFeature = { properties: { kode: kode, nama: nama }, geometry: boundary.geometry };
+      state.selectedBoundary = boundary;
+      updateSelectedLabel(nama, 'Provinsi');
+      drawSelOutline(boundary);
+      fetchAndDisplay();
+    });
+  }
+
+  function selectKecamatan(kode, nama) {
+    var info = document.getElementById('satupetaInfo');
+    if (info) {
+      info.style.display = 'block';
+      info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> Memuat batas kecamatan...</div>';
+    }
+
+    fetchBoundary(kode).then(function (boundary) {
+      if (!boundary) {
+        if (info) info.innerHTML = 'Gagal memuat batas kecamatan dari BIG RBI. Coba lagi.';
         return;
       }
       state.selectedFeature = { properties: { kode: kode, nama: nama }, geometry: boundary.geometry };
@@ -1362,15 +1477,23 @@
   }
 
   /* ---- Level mode change ---- */
+  var LEVEL_TEXT = {
+    provinsi: { label: 'Cari nama provinsi', ph: 'Ketik nama provinsi...' },
+    kabupaten: { label: 'Cari nama kabupaten', ph: 'Ketik nama kabupaten...' },
+    kecamatan: { label: 'Cari nama kecamatan', ph: 'Ketik nama kecamatan...' },
+    desa: { label: 'Cari nama desa', ph: 'Ketik nama desa...' }
+  };
+
   function onLevelChange() {
     var sel = document.getElementById('satupetaLevelMode');
     var label = document.getElementById('satupetaLevelLabel');
     var input = document.getElementById('satupetaKabSearch');
     if (sel) state.level = sel.value;
-    if (label) label.textContent = state.level === 'desa' ? 'Cari nama desa' : 'Cari nama kabupaten';
+    var t = LEVEL_TEXT[state.level] || LEVEL_TEXT.desa;
+    if (label) label.textContent = t.label;
     if (input) {
       input.value = '';
-      input.placeholder = state.level === 'desa' ? 'Ketik nama desa...' : 'Ketik nama kabupaten...';
+      input.placeholder = t.ph;
     }
     clearSelection();
   }
@@ -1410,6 +1533,7 @@
 
     loadKab();
     loadDesa();
+    loadProvGeo();
     populateBigLayers();
 
     var origOpenGeotani = window.openGeotaniAnalysisTab;
@@ -1419,6 +1543,7 @@
         state.visible = true;
         loadKab();
         loadDesa();
+        loadProvGeo();
       }
     };
   }
