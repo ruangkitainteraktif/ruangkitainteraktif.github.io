@@ -123,6 +123,38 @@
         'Not Classified': '#686868'
       }
     },
+    'erosi-big': {
+      label: 'Peta Rawan Erosi (BIG)',
+      query: 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/KEHUTANAN/MapServer/14/query',
+      nameField: 'klas_erosi',
+      titleField: 'klas_erosi',
+      areaField: null,
+      dateField: null,
+      nameLabel: 'Kelas Erosi',
+      emptyMessage: 'Tidak ada polygon peta rawan erosi di wilayah ini.',
+      loadingMessage: 'Memuat data peta rawan erosi...',
+      source: 'BIG KSP SatuPeta - Peta Rawan Erosi',
+      tableFields: [
+        { key: 'klas_erosi', label: 'Kelas Erosi' },
+        { key: 'bpdashl', label: 'BPDASHL' },
+        { key: 'namobj', label: 'Nama Objek' },
+        { key: 'remark', label: 'Keterangan' }
+      ],
+      extraFields: [
+        { key: 'bpdashl', label: 'BPDASHL' },
+        { key: 'namobj', label: 'Nama' },
+        { key: 'remark', label: 'Keterangan' },
+        { key: 'metadata', label: 'Metadata' },
+        { key: 'fcode', label: 'Kode' }
+      ],
+      colors: {
+        '<= 15 Ton/Ha/Tahun': '#4caf50',
+        '> 15 - 60 Ton/Ha/Tahun': '#8bc34a',
+        '> 60 - 180 Ton/Ha/Tahun': '#ff9800',
+        '> 180 - 480 Ton/Ha/Tahun': '#f44336',
+        '> 480 Ton/Ha/Tahun': '#b71c1c'
+      }
+    },
     penggunaan10k: {
       label: 'Penggunaan Tanah 10K',
       query: 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/3/query',
@@ -267,12 +299,199 @@
   var KAB_URL = 'assets/data/bps/geojson/kabupaten.geojson';
   var DESA_URL = 'assets/data/kode_wilayah.json';
   var BIG_RBI_BASE = 'https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH/';
+  var BIG_SERVICE_BASE = 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/';
+  var BIG_FOLDERS = [
+    'BATAS_WILAYAH',
+    'KAWASAN_KHUSUS_DAN_TRANSMIGRASI',
+    'KEHUTANAN',
+    'PERENCANAAN_RUANG',
+    'PERIZINAN_DAN_PERTANAHAN',
+    'SARANA_PRASARANA',
+    'SUMBER_DAYA_ALAM_DAN_LINGKUNGAN'
+  ];
+  var BIG_FOLDER_LABELS = {
+    BATAS_WILAYAH: 'Batas Wilayah',
+    KAWASAN_KHUSUS_DAN_TRANSMIGRASI: 'Kawasan Khusus & Transmigrasi',
+    KEHUTANAN: 'Kehutanan',
+    PERENCANAAN_RUANG: 'Perencanaan Ruang',
+    PERIZINAN_DAN_PERTANAHAN: 'Perizinan & Pertanahan',
+    SARANA_PRASARANA: 'Sarana Prasarana',
+    SUMBER_DAYA_ALAM_DAN_LINGKUNGAN: 'SDA & Lingkungan'
+  };
+  var BIG_SKIP = {
+    KEHUTANAN: { 14: 1 },
+    SUMBER_DAYA_ALAM_DAN_LINGKUNGAN: { 3: 1, 9: 1, 36: 1, 43: 1, 59: 1 }
+  };
   var PAGE_SIZE = 1000;
 
   function currentSource() {
     var sel = document.getElementById('satupetaInputLayer');
     var id = (sel && sel.value) || 'penggunaan10k';
     return LAYER_SOURCES[id] || LAYER_SOURCES.penggunaan10k;
+  }
+
+  function bigOptionValue(folder, layerId) {
+    return 'big:' + folder + ':' + layerId;
+  }
+
+  function findSourceByQuery(query) {
+    var keys = Object.keys(LAYER_SOURCES);
+    for (var i = 0; i < keys.length; i++) {
+      if (LAYER_SOURCES[keys[i]].query === query) return LAYER_SOURCES[keys[i]];
+    }
+    return null;
+  }
+
+  function buildBigSource(folder, layerId, meta) {
+    var queryUrl = BIG_SERVICE_BASE + folder + '/MapServer/' + layerId + '/query';
+    var existing = findSourceByQuery(queryUrl);
+    if (existing) return existing;
+
+    var fields = meta.fields || [];
+    var names = fields.map(function (f) { return f.name; });
+    var lower = {};
+    names.forEach(function (n) { lower[n.toLowerCase()] = n; });
+
+    var namePriority = [
+      'namobj', 'namaobj', 'ptnobjname', 'deskripsi', 'klas_erosi', 'fungsikws',
+      'kerentanan', 'lsd', 'umurobj', 'simobj', 'jenis', 'klasifikasi', 'remark',
+      'keterangan', 'unit_morf', 'kom_lrg'
+    ];
+    var nameField = null;
+    for (var i = 0; i < namePriority.length; i++) {
+      if (lower[namePriority[i]]) { nameField = lower[namePriority[i]]; break; }
+    }
+    if (!nameField) {
+      var skip = {
+        objectid: 1, fcode: 1, srs_id: 1, metadata: 1, shape: 1, ruleid: 1,
+        updated: 1, pyear: 1, locid: 1, lfaccode: 1, wadmpr: 1, wadmkk: 1
+      };
+      for (var j = 0; j < fields.length; j++) {
+        var f = fields[j];
+        if (skip[f.name.toLowerCase()]) continue;
+        if (f.type === 'esriFieldTypeString') { nameField = f.name; break; }
+      }
+    }
+    if (!nameField) nameField = names[0] || 'objectid';
+
+    var areaField = null;
+    var areaUnit = null;
+    for (var a = 0; a < names.length; a++) {
+      var an = names[a];
+      var al = an.toLowerCase();
+      if (al === 'luasha' || al === 'shape_area') { areaField = an; areaUnit = al === 'luasha' ? 'ha' : null; break; }
+      if (/^(luas|area)/.test(al) && !areaField) {
+        areaField = an;
+        areaUnit = /ha/.test(al) ? 'ha' : null;
+      }
+    }
+
+    var shortLabels = {
+      wadmpr: 'Provinsi', wadmkk: 'Kab/Kota', wadmkc: 'Kecamatan',
+      remark: 'Keterangan', keterangan: 'Keterangan', metadata: 'Metadata',
+      fcode: 'Kode', namobj: 'Nama', ptnobjname: 'Jenis', kelas: 'Kelas',
+      klasifikasi: 'Klasifikasi', jenis: 'Jenis', deskripsi: 'Deskripsi'
+    };
+    var used = {};
+    var tableFields = [];
+    function addField(key, label, type) {
+      if (!key || used[key]) return false;
+      used[key] = 1;
+      tableFields.push({ key: key, label: label, type: type });
+      return true;
+    }
+    addField(nameField, 'Nama');
+    if (areaField) addField(areaField, 'Luas', areaUnit === 'ha' ? 'ha' : 'area');
+    for (var t = 0; t < fields.length && tableFields.length < 5; t++) {
+      var tf = fields[t];
+      if (used[tf.name] || tf.name.toLowerCase() === 'shape') continue;
+      if (
+        tf.type === 'esriFieldTypeString' ||
+        tf.type === 'esriFieldTypeInteger' ||
+        tf.type === 'esriFieldTypeDouble'
+      ) {
+        addField(tf.name, shortLabels[tf.name.toLowerCase()] || tf.name);
+      }
+    }
+
+    var extraFields = [];
+    for (var e = 0; e < fields.length && extraFields.length < 4; e++) {
+      var ef = fields[e];
+      if (used[ef.name] || ef.name.toLowerCase() === 'shape') continue;
+      if (ef.type === 'esriFieldTypeString' || ef.type === 'esriFieldTypeInteger') {
+        extraFields.push({ key: ef.name, label: shortLabels[ef.name.toLowerCase()] || ef.name });
+      }
+    }
+
+    var geomKind = null;
+    if (meta.geometryType === 'esriGeometryPolyline') geomKind = 'line';
+    else if (meta.geometryType === 'esriGeometryPoint') geomKind = 'point';
+
+    var label = meta.name || ('BIG Layer ' + layerId);
+    return {
+      label: label + ' (BIG)',
+      query: queryUrl,
+      nameField: nameField,
+      titleField: nameField,
+      areaField: areaField,
+      areaUnit: areaUnit,
+      dateField: null,
+      nameLabel: 'Jenis',
+      geomKind: geomKind,
+      emptyMessage: 'Tidak ada fitur di wilayah ini.',
+      loadingMessage: 'Memuat ' + label + '...',
+      source: 'BIG KSP SatuPeta - ' + (BIG_FOLDER_LABELS[folder] || folder),
+      tableFields: tableFields,
+      extraFields: extraFields
+    };
+  }
+
+  function ensureCurrentSource() {
+    var sel = document.getElementById('satupetaInputLayer');
+    var id = (sel && sel.value) || 'penggunaan10k';
+    if (LAYER_SOURCES[id]) return Promise.resolve(LAYER_SOURCES[id]);
+    if (id.indexOf('big:') !== 0) return Promise.resolve(LAYER_SOURCES.penggunaan10k);
+    var parts = id.split(':');
+    if (parts.length < 3) return Promise.resolve(LAYER_SOURCES.penggunaan10k);
+    var folder = parts[1];
+    var layerId = parts[2];
+    var metaUrl = BIG_SERVICE_BASE + folder + '/MapServer/' + layerId + '?f=json';
+    return fetch(metaUrl)
+      .then(function (r) { return r.json(); })
+      .then(function (meta) {
+        if (!meta || meta.error) throw new Error((meta && meta.error && meta.error.message) || 'Layer meta error');
+        LAYER_SOURCES[id] = buildBigSource(folder, layerId, meta);
+        return LAYER_SOURCES[id];
+      });
+  }
+
+  function populateBigLayers() {
+    var sel = document.getElementById('satupetaInputLayer');
+    if (!sel) return Promise.resolve();
+    return Promise.all(
+      BIG_FOLDERS.map(function (folder) {
+        return fetch(BIG_SERVICE_BASE + folder + '/MapServer?f=json')
+          .then(function (r) { return r.json(); })
+          .catch(function () { return null; });
+      })
+    ).then(function (results) {
+      results.forEach(function (meta, i) {
+        if (!meta || !meta.layers) return;
+        var folder = BIG_FOLDERS[i];
+        var skip = BIG_SKIP[folder] || {};
+        var og = document.createElement('optgroup');
+        og.label = 'BIG — ' + (BIG_FOLDER_LABELS[folder] || folder);
+        meta.layers.forEach(function (layer) {
+          if (!layer.geometryType) return;
+          if (skip[layer.id]) return;
+          var opt = document.createElement('option');
+          opt.value = bigOptionValue(folder, layer.id);
+          opt.textContent = layer.name || ('Layer ' + layer.id);
+          og.appendChild(opt);
+        });
+        if (og.children.length) sel.appendChild(og);
+      });
+    });
   }
 
   var COLORS = {
@@ -768,7 +987,8 @@
       html += '<div class="at-table-wrap" style="width:100%;max-width:100%;min-width:0;max-height:220px;margin:0;overflow-x:auto;overflow-y:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border-color);border-radius:6px;">';
       html += '<table class="at-table"><thead><tr><th class="at-th-no">No</th>';
       fields.forEach(function (fd) { html += '<th>' + esc(fd.label) + '</th>'; });
-      html += '<th>' + (currentSource().geomKind === 'line' ? 'Panjang (Clip)' : 'Luas (Clip)') + '</th></tr></thead><tbody>';
+      var gk = currentSource().geomKind;
+      html += '<th>' + (gk === 'line' ? 'Panjang (Clip)' : gk === 'point' ? 'Titik' : 'Luas (Clip)') + '</th></tr></thead><tbody>';
       slice.forEach(function (f, i) {
         var p = f.properties || {};
         html += '<tr><td class="at-td-no">' + (start + i + 1) + '</td>';
@@ -776,7 +996,9 @@
           var v = cellVal(f, fd);
           html += '<td title="' + v.replace(/"/g, '&quot;') + '">' + v + '</td>';
         });
-        if (p._panjang_km != null && p._area_ha == null) {
+        if (gk === 'point') {
+          html += '<td>-</td></tr>';
+        } else if (p._panjang_km != null && p._area_ha == null) {
           html += '<td>' + esc(String(p._panjang_km)) + ' km</td></tr>';
         } else {
           html += '<td>' + (p._area_ha ? esc(String(p._area_ha)) + ' ha' : '-') + '</td></tr>';
@@ -807,6 +1029,20 @@
   function isLineGeom(gj) {
     var t = gj && gj.geometry && gj.geometry.type;
     return t === 'LineString' || t === 'MultiLineString';
+  }
+
+  function isPointGeom(gj) {
+    var t = gj && gj.geometry && gj.geometry.type;
+    return t === 'Point' || t === 'MultiPoint';
+  }
+
+  function clipPointFeature(gj, boundary) {
+    try {
+      if (turf.booleanWithin(gj, boundary) || turf.booleanIntersects(gj, boundary)) return gj;
+      return null;
+    } catch (e) {
+      return gj;
+    }
   }
 
   function clipLineFeature(gj, boundary) {
@@ -861,11 +1097,13 @@
   }
 
   function clipFeatureToBoundary(gj, boundary) {
+    if (isPointGeom(gj)) return clipPointFeature(gj, boundary);
     if (isLineGeom(gj)) return clipLineFeature(gj, boundary);
     return turf.intersect(turf.featureCollection([gj, boundary]));
   }
 
   function measureClip(gj) {
+    if (isPointGeom(gj)) return { km: null, ha: null };
     if (isLineGeom(gj)) {
       try { return { km: (turf.length(gj, { units: 'kilometers' }) || 0).toFixed(2), ha: null }; }
       catch (e) { return { km: null, ha: null }; }
@@ -880,6 +1118,26 @@
     state.loading = true;
 
     var info = document.getElementById('satupetaInfo');
+    if (info) {
+      info.style.display = 'block';
+      info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> Menyiapkan layer...</div>';
+    }
+
+    ensureCurrentSource()
+      .then(function () { runFetchAndDisplay(info); })
+      .catch(function (err) {
+        state.loading = false;
+        if (info) info.innerHTML = 'Gagal memuat konfigurasi layer. Coba lagi.';
+        console.error('SatupetaDownloader ensureSource:', err);
+      });
+  }
+
+  function runFetchAndDisplay(info) {
+    if (!state.selectedBoundary || !window.map) {
+      state.loading = false;
+      return;
+    }
+
     if (info) {
       info.style.display = 'block';
       info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> ' + esc(currentSource().loadingMessage || 'Memuat data...') + '</div>';
@@ -955,15 +1213,19 @@
         var lenTotal = clipped.reduce(function (s, f) { return s + parseFloat(f.properties._panjang_km || 0); }, 0);
         var labelName = props.nmkab || props.nama || props.kode || '-';
         var labelSub = props.nmprov || props.kode || '';
+        var isPointSrc = currentSource().geomKind === 'point';
+        var geomWord = isLineSrc ? 'garis' : (isPointSrc ? 'titik' : 'polygon');
         var unitHtml = isLineSrc
           ? 'Panjang: <strong>' + lenTotal.toFixed(2) + ' km</strong>'
-          : 'Luas: <strong>' + areaTotal.toFixed(2) + ' ha</strong>';
+          : (isPointSrc
+              ? 'Jumlah: <strong>' + clipped.length + ' titik</strong>'
+              : 'Luas: <strong>' + areaTotal.toFixed(2) + ' ha</strong>');
 
         var detailHtml = '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">'
           + '<div>'
           + '<div style="font-weight:700;font-size:12px;">' + esc(labelName) + (labelSub ? ', ' + esc(labelSub) : '') + '</div>'
           + '<div style="font-size:10px;color:#64748b;margin-top:2px;">'
-          + 'API: <strong>' + totalFetched + '</strong> feature &middot; Di dalam wilayah: <strong>' + clipped.length + '</strong> ' + (isLineSrc ? 'garis' : 'polygon') + ' &middot; ' + unitHtml
+          + 'API: <strong>' + totalFetched + '</strong> feature &middot; Di dalam wilayah: <strong>' + clipped.length + '</strong> ' + geomWord + ' &middot; ' + unitHtml
           + (skipped > 0 ? ' &middot; Skip: ' + skipped : '')
           + '</div>'
           + '</div>'
@@ -982,6 +1244,9 @@
             if (isLineSrc) {
               return { color: color, weight: 1.6, opacity: 0.9 };
             }
+            if (isPointSrc) {
+              return { color: color, weight: 1, opacity: 0.95 };
+            }
             return {
               color: color,
               weight: 1.2,
@@ -989,6 +1254,18 @@
               fillColor: color,
               fillOpacity: 0.35
             };
+          },
+          pointToLayer: function (f, latlng) {
+            var src = currentSource();
+            var color = getColor(resolveName(src, f.properties[src.nameField]), src);
+            return L.circleMarker(latlng, {
+              radius: 5,
+              color: color,
+              weight: 1.5,
+              opacity: 0.95,
+              fillColor: color,
+              fillOpacity: 0.75
+            });
           },
           onEachFeature: function (f, l) {
             l.bindPopup(buildPopup(f), { maxWidth: 320, className: 'agol-leaflet-popup' });
@@ -1026,7 +1303,9 @@
       var areaTxt = src.areaUnit === 'ha' ? formatHa(p[src.areaField]) : formatLuas(p[src.areaField]);
       html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Luas</span><span class="agol-popup-field-value">' + areaTxt + '</span></div>';
     }
-    if (p._panjang_km != null && p._area_ha == null) {
+    if (src.geomKind === 'point') {
+      html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Titik</span><span class="agol-popup-field-value">Ada di wilayah</span></div>';
+    } else if (p._panjang_km != null && p._area_ha == null) {
       html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Panjang (Clip)</span><span class="agol-popup-field-value">' + esc(String(p._panjang_km)) + ' km</span></div>';
     } else {
       html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Luas (Clip)</span><span class="agol-popup-field-value">' + (p._area_ha ? p._area_ha + ' ha' : '-') + '</span></div>';
@@ -1131,6 +1410,7 @@
 
     loadKab();
     loadDesa();
+    populateBigLayers();
 
     var origOpenGeotani = window.openGeotaniAnalysisTab;
     window.openGeotaniAnalysisTab = function (tabId) {
