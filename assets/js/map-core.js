@@ -2854,63 +2854,11 @@ L.control.scale({
           { id: 'toggleDiTmsLayer', label: 'Daerah Irigasi' },
           { id: 'toggleSaluranIrTmsLayer', label: 'Saluran Irigasi' }
         ]},
-        { subcat: 'ZNT', layers: [
-          { id: 'atrbpn-wms-zntrange-zntrange', label: 'ZNTRANGE' },
-          { id: 'atrbpn-wms-zntrange-igt', label: 'ZNTRANGE (IGT)' },
-          { id: 'atrbpn-wms-zntrange-djbpd', label: 'ZNTRANGE (DJBPD)' },
-          { id: 'atrbpn-wms-znt1025-znt1025', label: 'znt1025' },
-          { id: 'atrbpn-wms-znt15-znt15', label: 'znt15' },
-          { id: 'atrbpn-wms-znt2025-znt2025', label: 'znt2025' },
-          { id: 'atrbpn-wms-znt-100-znt-100', label: 'znt_100' },
-          { id: 'atrbpn-wms-znt-djp-kemenkeu', label: 'znt_djp' },
-          { id: 'atrbpn-wms-zntbandungraya-zntbandungraya', label: 'zntbandungraya' },
-          { id: 'atrbpn-wms-zntdki-zntdki', label: 'zntdki' },
-          { id: 'atrbpn-wms-zntdki1025-zntdki1025', label: 'zntdki1025' },
-          { id: 'atrbpn-wms-zntkaltim-zntkaltim', label: 'zntkaltim' },
-          { id: 'atrbpn-wms-zntkotamalang-zntkotamalang', label: 'zntkotamalang' },
-          { id: 'atrbpn-wms-zntkotapadang-zntkotapadang', label: 'zntkotapadang' },
-          { id: 'atrbpn-wms-zntpadang-zntpadang', label: 'zntpadang' },
-          { id: 'atrbpn-wms-zntpangkajene-zntpangkajene', label: 'zntpangkajene' },
-          { id: 'atrbpn-wms-zntpemalang-zntpemalang', label: 'zntpemalang' },
-          { id: 'atrbpn-wms-zntsidoarjo-zntsidoarjo', label: 'ZNT Sidoarjo' }
-        ]},
-        { subcat: 'Persil & Pertanahan', layers: [
-          { id: 'atrbpn-wms-dir-pengendalian-data-hgu-hgb-hp-dirpengendalian', label: 'Dit. Pengendalian HGU/HGB/HP' },
-          { id: 'atrbpn-wms-persilberdasarkanstatuspendaftaran-petabpn', label: 'Persil per Status Pendaftaran' },
-          { id: 'atrbpn-wms-v-letakpersil-umum', label: 'Letak Persil' },
-          { id: 'atrbpn-wms-hgu-djp-djp-hgu', label: 'HGU DJP' },
-          { id: 'atrbpn-wms-persil15-persil15', label: 'Persil15' },
-          { id: 'atrbpn-wms-persil-tuban-tuban', label: 'Persil Tuban' }
-        ]},
         { subcat: 'Sawah', layers: [
           { id: 'atrbpn-wms-lsd-umum', label: 'Lahan Sawah Dilindungi' },
           { id: 'atrbpn-wms-lahanbakusawah-new-sawah', label: 'Lahan Baku Sawah 2024' },
           { id: 'atrbpn-wms-lsd-12-provinsi-sawah', label: 'LSD 12 Provinsi' },
           { id: 'atrbpn-wms-lsd-8-provinsi-sawah', label: 'LSD 8 Provinsi' }
-        ]},
-        { subcat: 'Kawasan Hutan', layers: [
-          { id: 'atrbpn-wms-penetapan-kawasan-hutan-umum', label: 'Penetapan Kawasan Hutan' },
-          { id: 'atrbpn-wms-penunjukan-kawasan-hutan-umum', label: 'Penunjukan Kawasan Hutan' },
-          { id: 'atrbpn-wms-hplhgb-hplhgb', label: 'HPL HGB' },
-          { id: 'atrbpn-wms-hplhgbhp-hplhgbhp', label: 'HPL HGB HP' }
-        ]},
-        { subcat: 'Tematik Lain', layers: [
-          { id: 'atrbpn-wms-toponim-umum', label: 'Toponim' },
-          { id: 'atrbpn-wms-blbi-umum', label: 'BLBI' },
-          { id: 'atrbpn-wms-blbipoint-umum', label: 'BLBI Titik' },
-          { id: 'atrbpn-wms-penggunaantanah-penggunaantanah', label: 'Penggunaan Tanah' },
-          { id: 'atrbpn-wms-admdesacirebon-lampung', label: 'Admin Desa Cirebon' },
-          { id: 'atrbpn-wms-btdki-btdki', label: 'Batas Tanah DKI 2' },
-          { id: 'atrbpn-wms-btdki-old-btdki', label: 'Batas Tanah DKI (old)' },
-          { id: 'atrbpn-wms-djpk-layer-djpk-nomorhak', label: 'DJP-K Nomor Hak' },
-          { id: 'atrbpn-wms-hortikultura-hortikultura', label: 'hortikultura' },
-          { id: 'atrbpn-wms-inventarisasi-aset-atrbpn', label: 'Inventarisasi Aset' },
-          { id: 'atrbpn-wms-jb-24-25-jb-24-25', label: 'Jabatan Batas 2024-2025' },
-          { id: 'atrbpn-wms-kerawanan-banjir-rawan-banjir', label: 'Kerawanan Banjir' },
-          { id: 'atrbpn-wms-laut-laut', label: 'Laut' },
-          { id: 'atrbpn-wms-layer-2023-2025-jb-2023-2025', label: 'Jabatan Batas 2023-2025' },
-          { id: 'atrbpn-wms-layer-2023-2025-2-jb-2023-2025', label: 'Jabatan Batas 2023-2025 (2)' },
-          { id: 'atrbpn-wms-prov22-prov22', label: 'Provinsi (prov22)' }
         ]}
       ]
     },

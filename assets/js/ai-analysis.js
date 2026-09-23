@@ -32,7 +32,7 @@
     },
     'ATRBPN': {
       ids: ['toggleBumiPersilLayer','toggleRtrwTmsLayer','toggleLsdTmsLayer','toggleLbsTmsLayer','toggleDiTmsLayer','toggleSaluranIrTmsLayer'],
-      keywords: ['persil','rtrw','sawah dilindungi','lahan baku sawah','irigasi','atrbpn','pertanahan','znt','zona nilai tanah','kawasan hutan','jabatan batas','blbi']
+      keywords: ['rtrw','sawah dilindungi','lahan baku sawah','irigasi','atrbpn']
     },
     'Lingkungan': {
       ids: ['toggleChlorophyllOverlay','toggleParOverlay','omi-aerosol-index','omi-aod-abs','omi-modis-terra-aod','omi-modis-aqua-aod','omi-so2','omi-so2-pbl','omps-noaa20-so2-lt','omi-no2'],
