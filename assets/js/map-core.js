@@ -937,6 +937,7 @@ L.control.scale({
       closeFAB();
       el.click();
     });
+    return item;
   }
 
   function closeFAB() {
@@ -1791,14 +1792,17 @@ L.control.scale({
 
   document.getElementById('resetLayersBtn').addEventListener('click', resetAllLayers);
   window.resetAllLayers = resetAllLayers;
+  window.getLayerCatalogData = function () { return LAYER_CATALOG_DATA; };
 
   /* ── Pindahkan tombol ke dalam FAB ── */
   setTimeout(function () {
     moveToFAB('.draw-fab-wrap', 'Gambar & Ukur');
     moveToFAB('.geoportal-print-btn', 'Cetak Peta');
     createGeotoolsFAB();
-    moveToFAB('.leaflet-control-locate', 'Lokasi Saya');
+    var locateItem = moveToFAB('.leaflet-control-locate', 'Lokasi Saya');
+    if (locateItem) locateItem.classList.add('map-fab-locate');
     createLegendFAB();
+    createAttrTableFAB();
 
     /* ── Zoom Control di bawah tengah ── */
     var zoomWrap = document.querySelector('.zoom-control-wrap');
@@ -2337,13 +2341,11 @@ L.control.scale({
     '25': 'PrediksiCH_Agustus2026_update_11-08-2026_093044.geojson',
     '26': 'PrediksiCH_September2026_update_11-08-2026_093056.geojson',
     '27': 'HTH_WS%20Citarum_Agustus%202026_Dasarian%201_09-09-2026_134245.geojson',
-    '28': 'KETAT_WS_Citarum.geojson',
-    '29': 'Hidrogeologi.geojson',
     '30': 'CAT_April2026.geojson',
     '31': 'PrediksiCH_Oktober2026_11-08-2026_093118.geojson'
   };
 
-  var SIH3_CIT_SIZES = { '28': 20.5, '29': 71.9 };
+  var SIH3_CIT_SIZES = {};
 
   var SIH3_CIT_STYLE = {
     batas: { color: '#8b5cf6', weight: 2, dashArray: '6 4', fillOpacity: 0, interactive: true },
@@ -2353,7 +2355,7 @@ L.control.scale({
   var SIH3_CIT_COLORS = {
     '19': '#3b82f6', '20': '#10b981', '21': '#f59e0b', '22': '#8b5cf6',
     '23': '#06b6d4', '24': '#f97316', '25': '#ef4444', '26': '#ec4899',
-    '27': '#14b8a6', '28': '#a855f7', '29': '#6366f1', '30': '#84cc16', '31': '#e11d48'
+    '27': '#14b8a6', '30': '#84cc16', '31': '#e11d48'
   };
 
   function _buildSih3CitStyle(fileId) {
@@ -2766,6 +2768,21 @@ L.control.scale({
     });
   }
 
+  /* ── Attribute Table Picker FAB Button ── */
+  function createAttrTableFAB() {
+    if (!__fabItems) __fabItems = document.querySelector('.map-fab-items');
+    if (!__fabItems) return;
+    var item = L.DomUtil.create('button', 'map-fab-item attr-table-fab');
+    item.title = 'Semua Tabel';
+    item.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>';
+    __fabItems.appendChild(item);
+    item.addEventListener('click', function (e) {
+      e.stopPropagation();
+      closeFAB();
+      if (typeof window.openAttrTablePicker === 'function') window.openAttrTablePicker();
+    });
+  }
+
   /* ═══════════════════════════════════════
      Layer Catalog Dropdown
      ═══════════════════════════════════════ */
@@ -3139,8 +3156,6 @@ L.control.scale({
           { id: 'toggleSih3Cit_31', label: 'Prakiraan CH Oktober 2026' }
         ]},
         { subcat: 'BBWS Citarum - Hidrogeologi', layers: [
-          { id: 'toggleSih3Cit_28', label: '⚠️ Ketersediaan Air Tanah (20.5 MB)' },
-          { id: 'toggleSih3Cit_29', label: '⚠️ Hidrogeologi (71.9 MB)' },
           { id: 'toggleSih3Cit_30', label: 'Cekungan Air Tanah' }
         ]}
       ]

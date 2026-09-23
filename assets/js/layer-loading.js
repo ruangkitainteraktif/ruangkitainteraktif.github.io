@@ -199,8 +199,6 @@
     'toggleSih3Cit_26': 'Data Prakiraan CH September 2026 tidak tersedia.',
     'toggleSih3Cit_27': 'Data Hari Tanpa Hujan Klimatologi tidak tersedia.',
     'toggleSih3Cit_31': 'Data Prakiraan CH Oktober 2026 tidak tersedia.',
-    'toggleSih3Cit_28': 'Data Ketersediaan Air Tanah tidak tersedia.',
-    'toggleSih3Cit_29': 'Data Hidrogeologi tidak tersedia.',
     'toggleSih3Cit_30': 'Data Cekungan Air Tanah tidak tersedia.'
   };
 

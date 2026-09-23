@@ -13,6 +13,42 @@
   var _wmsClickHandler = null;
   var _attrTableOpen = false;
   var _attrTableMinimized = false;
+  var _pickerLayerId = null;
+
+  function pickerLayerActive(id) {
+    var on = false;
+    var el = document.getElementById(id);
+    if (el && el.type === 'checkbox' && el.checked) on = true;
+    var catCb = document.querySelector('.lc-item input[data-layer-id="' + id + '"]');
+    if (catCb && catCb.checked) on = true;
+    return on;
+  }
+
+  function setPickerLayerActive(id, on) {
+    if (!id || pickerLayerActive(id) === on) return;
+    if (typeof window.buildLayerCatalogIfNeeded === 'function') window.buildLayerCatalogIfNeeded();
+    var catCb = document.querySelector('.lc-item input[data-layer-id="' + id + '"]');
+    if (catCb) {
+      if (catCb.checked !== on) {
+        catCb.checked = on;
+        catCb.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      return;
+    }
+    var sideCb = document.getElementById(id);
+    if (sideCb && sideCb.type === 'checkbox') {
+      if (sideCb.checked !== on) {
+        sideCb.checked = on;
+        sideCb.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+  }
+
+  function releasePickerLayer() {
+    var id = _pickerLayerId;
+    _pickerLayerId = null;
+    if (id && pickerLayerActive(id)) setPickerLayerActive(id, false);
+  }
 
   /* ── Layer Registry ── */
   var ATTR_LAYER_REGISTRY = {
@@ -711,6 +747,8 @@
     _searchQuery = '';
 
     document.getElementById('atSheetTitleText').textContent = config.name;
+    var backBtn = document.getElementById('atSheetBackBtn');
+    if (backBtn) backBtn.style.display = '';
     sheet.classList.add('attr-table-sheet-open');
     sheet.classList.remove('attr-table-sheet-minimized');
     _attrTableOpen = true;
@@ -734,6 +772,8 @@
     if (!sheet) return;
 
     document.getElementById('atSheetTitleText').textContent = config.name;
+    var backBtn = document.getElementById('atSheetBackBtn');
+    if (backBtn) backBtn.style.display = '';
     sheet.classList.add('attr-table-sheet-open');
     sheet.classList.remove('attr-table-sheet-minimized');
     _attrTableOpen = true;
@@ -1199,6 +1239,164 @@
     content.innerHTML = html;
   }
 
+  /* ── Unified Attribute Table Picker ── */
+  function attrPickerBadge(toggleId) {
+    if (WMS_ATTR_REGISTRY[toggleId]) return { label: 'WMS', cls: 'badge-wms' };
+    if (toggleId.indexOf('opt-') === 0 || toggleId.indexOf('kategori-opt-') === 0) return { label: 'ArcGIS', cls: 'badge-arcgis' };
+    var cfg = ATTR_LAYER_REGISTRY[toggleId];
+    var t = cfg && cfg.type ? cfg.type : '';
+    if (t === 'cluster') return { label: 'Cluster', cls: 'badge-cluster' };
+    if (t === 'dss') return { label: 'DSS', cls: 'badge-dss' };
+    if (t === 'feature' || t === 'vector') return { label: 'Feature', cls: 'badge-feature' };
+    return { label: 'Vektor', cls: 'badge-vektor' };
+  }
+
+  function collectAttrPickerItems() {
+    var catalog = typeof window.getLayerCatalogData === 'function' ? window.getLayerCatalogData() : null;
+    var items = [];
+    if (!catalog) return items;
+    var seen = {};
+    function pushLayer(id, label, catName) {
+      if (!id || seen[id] || !hasAttrSupport(id)) return;
+      seen[id] = true;
+      items.push({ id: id, label: label || id, cat: catName || '' });
+    }
+    catalog.forEach(function (cat) {
+      if (cat.type === 'basemap') return;
+      var catName = cat.cat || '';
+      (cat.subcats || []).forEach(function (sc) {
+        (sc.layers || []).forEach(function (l) { pushLayer(l.id, l.label, catName); });
+      });
+      (cat.layers || []).forEach(function (l) { pushLayer(l.id, l.label, catName); });
+      (cat.groups || []).forEach(function (g) {
+        (g.layers || []).forEach(function (l) { pushLayer(l.id, l.label, catName); });
+      });
+    });
+    return items;
+  }
+
+  function openAttrTablePicker() {
+    var sheet = document.getElementById('attr-table-sheet');
+    if (!sheet) return;
+    releasePickerLayer();
+    disableWmsClick();
+    _currentLayer = null;
+    _currentFeatures = [];
+    _searchQuery = '';
+
+    document.getElementById('atSheetTitleText').textContent = 'Semua Tabel Atribut';
+    var backBtn = document.getElementById('atSheetBackBtn');
+    if (backBtn) backBtn.style.display = 'none';
+
+    sheet.classList.add('attr-table-sheet-open');
+    sheet.classList.remove('attr-table-sheet-minimized');
+    _attrTableOpen = true;
+    _attrTableMinimized = false;
+    document.body.classList.add('attr-table-sheet-open');
+    document.body.classList.remove('attr-table-sheet-minimized');
+
+    var items = collectAttrPickerItems().map(function (it) {
+      var b = attrPickerBadge(it.id);
+      it.badge = b;
+      it.labelLc = (it.cat + ' ' + it.label).toLowerCase();
+      return it;
+    });
+    var content = document.getElementById('at-sheet-content');
+    if (!content) return;
+
+    var cats = [];
+    var types = [];
+    items.forEach(function (it) {
+      if (it.cat && cats.indexOf(it.cat) === -1) cats.push(it.cat);
+      if (types.indexOf(it.badge.label) === -1) types.push(it.badge.label);
+    });
+    cats.sort(function (a, b) { return a.localeCompare(b, 'id'); });
+    types.sort(function (a, b) { return a.localeCompare(b, 'id'); });
+
+    var html = '<div class="at-picker-toolbar">' +
+      '<input type="text" class="at-picker-search" id="atPickerSearch" placeholder="Cari layer…" autocomplete="off">' +
+      '<div class="at-picker-filters">' +
+        '<select class="at-picker-select" id="atPickerCat" aria-label="Filter kategori"><option value="">Semua kategori</option>' +
+          cats.map(function (c) { return '<option value="' + escAttr(c) + '">' + escAttr(c) + '</option>'; }).join('') +
+        '</select>' +
+        '<select class="at-picker-select" id="atPickerType" aria-label="Filter tipe"><option value="">Semua tipe</option>' +
+          types.map(function (t) { return '<option value="' + escAttr(t) + '">' + escAttr(t) + '</option>'; }).join('') +
+        '</select>' +
+        '<select class="at-picker-select" id="atPickerSort" aria-label="Urutkan">' +
+          '<option value="name-asc" selected>Nama A–Z</option>' +
+          '<option value="name-desc">Nama Z–A</option>' +
+          '<option value="cat-asc">Kategori</option>' +
+        '</select>' +
+      '</div>' +
+      '</div>';
+    html += '<div class="at-info" id="atPickerCount">' + items.length + ' layer</div>';
+    html += '<ul class="at-picker-list" id="atPickerList"></ul>';
+    html += '<div class="at-picker-empty" id="atPickerEmpty" style="display:none">Tidak ada layer cocok</div>';
+    content.innerHTML = html;
+
+    function renderPickerList() {
+      var q = (search.value || '').trim().toLowerCase();
+      var catSel = (catF && catF.value) || '';
+      var typeSel = (typeF && typeF.value) || '';
+      var sortSel = (sortF && sortF.value) || 'name-asc';
+
+      var filtered = items.filter(function (it) {
+        if (q && it.labelLc.indexOf(q) === -1) return false;
+        if (catSel && it.cat !== catSel) return false;
+        if (typeSel && it.badge.label !== typeSel) return false;
+        return true;
+      });
+      filtered.sort(function (a, b) {
+        if (sortSel === 'name-desc') return b.label.localeCompare(a.label, 'id');
+        if (sortSel === 'cat-asc') {
+          var c = (a.cat || '').localeCompare(b.cat || '', 'id');
+          return c !== 0 ? c : a.label.localeCompare(b.label, 'id');
+        }
+        return a.label.localeCompare(b.label, 'id');
+      });
+
+      list.innerHTML = filtered.map(function (it) {
+        return '<li class="at-picker-item" data-picker-id="' + escAttr(it.id) + '">' +
+          '<span class="at-picker-label">' + escAttr(it.label) + (it.cat ? ' <span class="at-info">· ' + escAttr(it.cat) + '</span>' : '') + '</span>' +
+          '<span class="at-picker-badge ' + it.badge.cls + '">' + it.badge.label + '</span></li>';
+      }).join('');
+
+      list.querySelectorAll('.at-picker-item').forEach(function (li) {
+        li.addEventListener('click', function () {
+          var id = li.getAttribute('data-picker-id');
+          if (!id) return;
+          releasePickerLayer();
+          if (!pickerLayerActive(id)) {
+            setPickerLayerActive(id, true);
+            _pickerLayerId = id;
+          }
+          if (isWmsAttrLayer(id)) openWmsAttrTable(id);
+          else openAttrTable(id);
+        });
+      });
+
+      var count = document.getElementById('atPickerCount');
+      if (count) count.textContent = filtered.length + ' layer';
+      var empty = document.getElementById('atPickerEmpty');
+      if (empty) empty.style.display = filtered.length ? 'none' : '';
+    }
+
+    var search = document.getElementById('atPickerSearch');
+    var catF = document.getElementById('atPickerCat');
+    var typeF = document.getElementById('atPickerType');
+    var sortF = document.getElementById('atPickerSort');
+    var list = document.getElementById('atPickerList');
+
+    if (search) search.addEventListener('input', renderPickerList);
+    if (catF) catF.addEventListener('change', renderPickerList);
+    if (typeF) typeF.addEventListener('change', renderPickerList);
+    if (sortF) sortF.addEventListener('change', renderPickerList);
+    if (list) renderPickerList();
+
+    if (_highlightMarker) { map.removeLayer(_highlightMarker); _highlightMarker = null; }
+  }
+  window.openAttrTablePicker = openAttrTablePicker;
+
   /* ── Sheet Controls ── */
   function closeAttrTableSheet() {
     var sheet = document.getElementById('attr-table-sheet');
@@ -1209,9 +1407,12 @@
     _attrTableOpen = false;
     _attrTableMinimized = false;
     disableWmsClick();
+    releasePickerLayer();
     _currentLayer = null;
     _currentFeatures = [];
     _searchQuery = '';
+    var backBtn = document.getElementById('atSheetBackBtn');
+    if (backBtn) backBtn.style.display = 'none';
     if (_highlightMarker) { map.removeLayer(_highlightMarker); _highlightMarker = null; }
   }
   window.closeAttrTableSheet = closeAttrTableSheet;
@@ -1248,6 +1449,8 @@
       sheet.classList.add('attr-table-sheet-open');
       _attrTableOpen = true;
       document.body.classList.add('attr-table-sheet-open');
+    } else {
+      openAttrTablePicker();
     }
   }
   window.toggleAttrTableSheet = toggleAttrTableSheet;

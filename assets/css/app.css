@@ -6376,6 +6376,54 @@
       cursor: pointer; font-size: 16px; transition: background .15s;
     }
     #attr-table-sheet .at-sheet-minimize:hover, #attr-table-sheet .at-sheet-close:hover { background: var(--border-color); }
+    #attr-table-sheet .at-sheet-back {
+      display: grid; width: 28px; height: 28px; place-items: center;
+      border: 0; border-radius: 50%; background: var(--bg-tertiary); color: var(--text-tertiary);
+      cursor: pointer; font-size: 18px; line-height: 1; transition: background .15s;
+    }
+    #attr-table-sheet .at-sheet-back:hover { background: var(--border-color); }
+
+    /* ── Attribute Table Picker ── */
+    .at-picker-search {
+      width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 8px;
+      font-size: 12px; background: var(--bg-secondary); color: var(--text-primary);
+      box-sizing: border-box; outline: none; transition: border-color .15s;
+    }
+    .at-picker-search:focus { border-color: #2563eb; }
+    .at-picker-toolbar { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+    .at-picker-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+    .at-picker-select {
+      flex: 1 1 0; min-width: 0; padding: 6px 8px; border: 1px solid var(--border-color); border-radius: 8px;
+      font-size: 11px; background: var(--bg-secondary); color: var(--text-primary);
+      outline: none; cursor: pointer; transition: border-color .15s;
+    }
+    .at-picker-select:focus { border-color: #2563eb; }
+    .at-picker-list { list-style: none; margin: 0; padding: 0; }
+    .at-picker-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 9px 10px; border-bottom: 1px solid var(--border-color);
+      cursor: pointer; transition: background .12s; font-size: 12px; color: var(--text-primary);
+    }
+    .at-picker-item:last-child { border-bottom: 0; }
+    .at-picker-item:hover { background: rgba(37, 99, 235, .06); }
+    .at-picker-item.is-active { background: rgba(37, 99, 235, .12); }
+    .at-picker-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .at-picker-cat {
+      font-size: 9px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase;
+      color: var(--text-tertiary); margin: 10px 0 4px;
+    }
+    .at-picker-badge {
+      flex: 0 0 auto; padding: 2px 7px; border-radius: 999px;
+      font-size: 9px; font-weight: 700; letter-spacing: .3px;
+      background: var(--bg-tertiary); color: var(--text-tertiary);
+    }
+    .at-picker-badge.badge-wms { background: rgba(34, 197, 94, .14); color: #15803d; }
+    .at-picker-badge.badge-arcgis { background: rgba(37, 99, 235, .14); color: #1d4ed8; }
+    .at-picker-badge.badge-feature { background: rgba(168, 85, 247, .14); color: #7c3aed; }
+    .at-picker-badge.badge-cluster { background: rgba(249, 115, 22, .14); color: #c2410c; }
+    .at-picker-badge.badge-dss { background: rgba(236, 72, 153, .14); color: #be185d; }
+    .at-picker-badge.badge-vektor { background: rgba(6, 182, 212, .14); color: #0e7490; }
+    .at-picker-empty { text-align: center; padding: 24px 16px; color: var(--text-tertiary); font-size: 12px; }
     #attr-table-sheet .at-sheet-body {
       flex: 1 1 auto; min-height: 0; overflow: auto;
       padding: 12px 16px 16px; -webkit-overflow-scrolling: touch;
@@ -6697,6 +6745,7 @@
       .map-fab-item:active {
         transform: scale(0.92) !important;
       }
+      .map-fab-item.map-fab-locate { display: none !important; }
       .map-fab-item:hover {
         background: rgba(0,0,0,0.04) !important;
         box-shadow: none !important;
@@ -6775,7 +6824,8 @@
       body.geopangan-sheet-open:not(.geopangan-sheet-minimized) .map-fab-wrap,
       body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .map-fab-wrap,
       body.dm-sidebar-open:not(.dm-sidebar-minimized) .map-fab-wrap,
-      body.lg-sidebar-open .map-fab-wrap {
+      body.lg-sidebar-open .map-fab-wrap,
+      body.attr-table-sheet-open:not(.attr-table-sheet-minimized) .map-fab-wrap {
         transform: translateX(-50%) translateY(calc(100% + 24px)) !important;
         opacity: 0;
         pointer-events: none;
