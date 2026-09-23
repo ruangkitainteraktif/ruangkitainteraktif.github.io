@@ -222,6 +222,7 @@
   function getLayerName(cb) {
     var id = cb.id || '';
     if (ERROR_MESSAGES[id]) return ERROR_MESSAGES[id];
+    if (id.indexOf('toggleFu') === 0) return 'Data BIG tidak tersedia.';
     var label = cb.closest('.lc-item, .geotools-main-tab-panel, .geoid-check');
     if (label) {
       var lbl = label.querySelector('label, span');

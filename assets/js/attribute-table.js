@@ -747,6 +747,11 @@
     if (!config && window.KATEGORI_OPT_ATTR_DATA && window.KATEGORI_OPT_ATTR_DATA[toggleId]) {
       config = window.KATEGORI_OPT_ATTR_DATA[toggleId];
     }
+    // BIG imagery / foto udara registry (dynamic)
+    if (!config && toggleId.indexOf('toggleFu') === 0 && window.getFuLayerDefs) {
+      var fuDef = window.getFuLayerDefs()[toggleId];
+      if (fuDef) config = { name: fuDef.label, type: 'raster' };
+    }
     // Support dynamic SIH3 toggles without enumerating every id in the registry
     if (!config) {
       var m;
@@ -1493,6 +1498,7 @@
     if (toggleId.indexOf('optp-') === 0 && window.OPTP_ATTR_DATA && window.OPTP_ATTR_DATA[toggleId]) return true;
     if (toggleId.indexOf('opth-') === 0 && window.OPTH_ATTR_DATA && window.OPTH_ATTR_DATA[toggleId]) return true;
     if (window.KATEGORI_OPT_ATTR_DATA && window.KATEGORI_OPT_ATTR_DATA[toggleId]) return true;
+    if (toggleId.indexOf('toggleFu') === 0 && window.getFuLayerDefs && window.getFuLayerDefs()[toggleId]) return true;
     return !!(ATTR_LAYER_REGISTRY[toggleId] || WMS_ATTR_REGISTRY[toggleId]);
   }
   window.hasAttrSupport = hasAttrSupport;

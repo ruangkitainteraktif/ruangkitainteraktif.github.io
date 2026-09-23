@@ -1737,8 +1737,11 @@ L.control.scale({
         var slCb = document.getElementById('toggleSistemLahan');
         if (slCb) slCb.checked = false;
 
-        // Bersihkan foto udara BIG
-        ['toggleFuPadang', 'toggleFuKendari', 'toggleFuBitung', 'toggleFuMakassar', 'toggleFuPlanetScope'].forEach(function (fuId) {
+        // Bersihkan foto udara / imagery BIG
+        var fuClearIds = (typeof window.getFuLayerIds === 'function')
+          ? window.getFuLayerIds()
+          : ['toggleFuPadang', 'toggleFuKendari', 'toggleFuBitung', 'toggleFuMakassar', 'toggleFuPlanetScope', 'toggleFuBanten'];
+        fuClearIds.forEach(function (fuId) {
           if (typeof window.toggleFuLayer === 'function') window.toggleFuLayer(fuId, false);
           var fuEl = document.getElementById(fuId);
           if (fuEl) fuEl.checked = false;
@@ -2868,13 +2871,24 @@ L.control.scale({
     },
     {
       cat: 'BIG',
-      layers: [
-        { id: 'toggleFuPadang', label: 'Foto Udara Padang 0715 (BIG)' },
-        { id: 'toggleFuKendari', label: 'Foto Udara Kendari 2024 (BIG)' },
-        { id: 'toggleFuBitung', label: 'Foto Udara Bitung 2024 (BIG)' },
-        { id: 'toggleFuMakassar', label: 'Foto Udara Makassar 2024 (BIG)' },
-        { id: 'toggleFuPlanetScope', label: 'Basemap PlanetScope Des 2025 (BIG)' }
-      ]
+      subcats: (function () {
+        var g = (typeof window.getFuCatalogGroups === 'function')
+          ? window.getFuCatalogGroups()
+          : { main: [], ctsrt: [], fu: [], digital: [] };
+        var main = g.main && g.main.length ? g.main : [
+          { id: 'toggleFuPadang', label: 'Foto Udara Padang 0715 (BIG)' },
+          { id: 'toggleFuKendari', label: 'Foto Udara Kendari 2024 (BIG)' },
+          { id: 'toggleFuBitung', label: 'Foto Udara Bitung 2024 (BIG)' },
+          { id: 'toggleFuMakassar', label: 'Foto Udara Makassar 2024 (BIG)' },
+          { id: 'toggleFuPlanetScope', label: 'Basemap PlanetScope Des 2025 (BIG)' }
+        ];
+        return [
+          { subcat: 'Utama', layers: main },
+          { subcat: 'Citra CTSRT', layers: g.ctsrt || [] },
+          { subcat: 'Arsip Foto Udara', layers: g.fu || [] },
+          { subcat: 'Peta Digital', layers: g.digital || [] }
+        ];
+      })()
     },
     {
       cat: 'ATRBPN',

@@ -68,6 +68,12 @@
     }
   };
 
+  if (window.getFuLayerIds && LAYER_CATEGORIES['BIG']) {
+    LAYER_CATEGORIES['BIG'].ids = window.getFuLayerIds();
+    LAYER_CATEGORIES['BIG'].keywords = (LAYER_CATEGORIES['BIG'].keywords || []).concat([
+      'ctsrt','foto udara arsip','banten','citra tegak','imagery','orthophoto'
+    ]);
+  }
   if (window.ATRBPN_WMS_IDS && LAYER_CATEGORIES['ATRBPN']) {
     LAYER_CATEGORIES['ATRBPN'].ids = LAYER_CATEGORIES['ATRBPN'].ids.concat(window.ATRBPN_WMS_IDS);
   }
