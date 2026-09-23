@@ -604,6 +604,11 @@ L.control.scale({
   var _noaaBoundaryLayer = null;
   var NOAA_BASEMAPS = ['noaa-true-color', 'noaa-goes-ir'];
 
+  var petadasarIndexLayer = L.tileLayer(
+    'https://petadasar.atrbpn.go.id/main/tmi/{x}/{y}/{z}/' + new Date().getFullYear() + '/0',
+    { minZoom: 5, maxZoom: 19, pane: 'overlayPane', attribution: 'MDP ATR/BPN' }
+  );
+
   function loadNoaaBoundary() {
     if (_noaaBoundaryLayer) { _noaaBoundaryLayer.addTo(map); return; }
     var xhr = new XMLHttpRequest();
@@ -701,6 +706,7 @@ L.control.scale({
     Object.entries(baseTileLayers).forEach(function (entry) {
       if (map.hasLayer(entry[1])) map.removeLayer(entry[1]);
     });
+    if (map.hasLayer(petadasarIndexLayer)) map.removeLayer(petadasarIndexLayer);
 
     if (isHillshade) {
       baseTileLayers[baseBasemapName].addTo(map);
@@ -796,6 +802,7 @@ L.control.scale({
         return;
       } else if (name === 'petadasar-bpn') {
         baseTileLayers[name].addTo(map);
+        if (!map.hasLayer(petadasarIndexLayer)) petadasarIndexLayer.addTo(map);
       } else {
         baseTileLayers[name].addTo(map);
       }

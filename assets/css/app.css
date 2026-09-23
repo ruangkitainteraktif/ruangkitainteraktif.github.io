@@ -2261,7 +2261,8 @@
     #ai-sheet .ais-sheet-minimize:hover,
     #ai-sheet .ais-sheet-close:hover { background: var(--border-color); }
     #ai-sheet .ais-sheet-body {
-      flex: 1 1 auto; min-height: 0; overflow-y: auto;
+      flex: 1 1 auto; min-height: 0; overflow: hidden;
+      display: flex; flex-direction: column;
       padding: 12px 16px 16px;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: thin;
