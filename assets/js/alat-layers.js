@@ -86,9 +86,102 @@
     setAlatStatus(`✅ ${name} dimuat: ${geojson.features.length} fitur ditampilkan.`);
   }
 
+  function isEsriFeatureSet(obj) {
+    return !!obj && typeof obj === 'object' &&
+      Array.isArray(obj.features) &&
+      (obj.geometryType || obj.fieldAliases || obj.spatialReference) &&
+      obj.features.length > 0 &&
+      obj.features[0] != null &&
+      obj.features[0].attributes !== undefined &&
+      obj.features[0].geometry !== undefined;
+  }
+
+  function esriRingsToPolygon(rings) {
+    const outers = [], holes = [];
+    for (let i = 0; i < rings.length; i++) {
+      const r = rings[i];
+      let a = 0;
+      for (let j = 0; j < r.length - 1; j++) a += r[j][0] * r[j + 1][1] - r[j + 1][0] * r[j][1];
+      if (a / 2 < 0) outers.push(r);
+      else holes.push(r);
+    }
+    if (!outers.length) { outers.push(rings[0]); holes.push(...rings.slice(1)); }
+    if (outers.length === 1) return { type: 'Polygon', coordinates: [outers[0]].concat(holes) };
+    return {
+      type: 'MultiPolygon',
+      coordinates: outers.map((o, idx) => idx === 0 ? [o].concat(holes) : [o])
+    };
+  }
+
+  function esriGeometryToGeoJSON(geom, geometryType) {
+    if (!geom) return null;
+    if (Array.isArray(geom.rings) && geom.rings.length) {
+      return esriRingsToPolygon(geom.rings);
+    }
+    if (Array.isArray(geom.paths) && geom.paths.length) {
+      if (geom.paths.length === 1) return { type: 'LineString', coordinates: geom.paths[0] };
+      return { type: 'MultiLineString', coordinates: geom.paths };
+    }
+    if (typeof geom.x === 'number' && typeof geom.y === 'number') {
+      return { type: 'Point', coordinates: [geom.x, geom.y] };
+    }
+    if (typeof geom.points === 'object' && geom.points) {
+      return { type: 'MultiPoint', coordinates: geom.points };
+    }
+    const gt = String(geometryType || '');
+    if (/Polygon/i.test(gt) && Array.isArray(geom.rings)) {
+      return esriRingsToPolygon(geom.rings);
+    }
+    if (/Polyline/i.test(gt) && Array.isArray(geom.paths)) {
+      return geom.paths.length === 1
+        ? { type: 'LineString', coordinates: geom.paths[0] }
+        : { type: 'MultiLineString', coordinates: geom.paths };
+    }
+    if (/Point/i.test(gt) && typeof geom.x === 'number') {
+      return { type: 'Point', coordinates: [geom.x, geom.y] };
+    }
+    throw new Error('Geometri Esri tidak dikenali.');
+  }
+
+  function esriSpatialRefIsLonLat(sr) {
+    if (!sr) return true;
+    const wkid = sr.latestWkid || sr.wkid;
+    if (wkid === 4326 || wkid === 4269) return true;
+    if (wkid === 3857 || wkid === 102100 || wkid === 102113) return false;
+    return true;
+  }
+
+  function esriJsonToGeoJSON(esri) {
+    const sr = esri.spatialReference;
+    if (sr && !esriSpatialRefIsLonLat(sr)) {
+      throw new Error('Spatial Reference bukan WGS84 (EPSG:4326). Ekspor ulang dengan outSR=4326 atau f=geojson.');
+    }
+    const geometryType = esri.geometryType || '';
+    const features = [];
+    for (let i = 0; i < esri.features.length; i++) {
+      const f = esri.features[i];
+      if (!f) continue;
+      const geometry = esriGeometryToGeoJSON(f.geometry, geometryType);
+      if (!geometry) continue;
+      features.push({
+        type: 'Feature',
+        properties: (f.attributes != null) ? f.attributes : {},
+        geometry
+      });
+    }
+    if (!features.length) throw new Error('Tidak ada fitur valid dalam Esri JSON.');
+    return {
+      geojson: { type: 'FeatureCollection', features },
+      meta: {
+        featureCount: features.length,
+        exceededTransferLimit: esri.exceededTransferLimit === true
+      }
+    };
+  }
+
   function loadGeoJSONFile() {
     const input = document.getElementById('geojsonFileInput');
-    const file = input.files && input.files[0];
+    const file = input && input.files && input.files[0];
     if (!file) {
       setAlatStatus('⚠️ Pilih file GeoJSON terlebih dahulu.', true);
       return;
@@ -96,11 +189,33 @@
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const geojson = JSON.parse(e.target.result);
-        if (!geojson || geojson.type !== 'FeatureCollection' || !Array.isArray(geojson.features)) {
-          throw new Error('Format GeoJSON tidak valid (harus FeatureCollection).');
+        const parsed = JSON.parse(e.target.result);
+        let geojson;
+        let note = '';
+        let typeLabel = 'GeoJSON';
+        if (parsed && parsed.type === 'FeatureCollection' && Array.isArray(parsed.features)) {
+          geojson = parsed;
+        } else if (isEsriFeatureSet(parsed)) {
+          const r = esriJsonToGeoJSON(parsed);
+          geojson = r.geojson;
+          typeLabel = 'Esri JSON';
+          if (r.meta.exceededTransferLimit) {
+            note = ` (peringatan: transfer terpotong — hanya ${r.meta.featureCount} fitur; ekspor ulang dengan paging atau f=geojson untuk data lengkap)`;
+          }
+        } else if (parsed && Array.isArray(parsed.features) && parsed.features.length &&
+                   parsed.features[0] && parsed.features[0].geometry && parsed.features[0].attributes) {
+          const r = esriJsonToGeoJSON(parsed);
+          geojson = r.geojson;
+          typeLabel = 'Esri JSON';
+        } else {
+          throw new Error(
+            'Format tidak dikenali (harus GeoJSON FeatureCollection atau ArcGIS/Esri FeatureSet). ' +
+            'Tips: jika unduhan dari ArcGIS REST, tambahkan &f=geojson&outSR=4326 pada URL query.'
+          );
         }
-        addAlatLayer(file.name.replace(/\.(geojson|json)$/i, ''), 'GeoJSON', geojson);
+        const name = file.name.replace(/\.(geojson|json)$/i, '');
+        addAlatLayer(name, typeLabel, geojson);
+        if (note) setAlatStatus(`✅ ${name} dimuat: ${geojson.features.length} fitur ditampilkan${note}.`);
       } catch (err) {
         setAlatStatus(`❌ Gagal memuat GeoJSON: ${err.message}`, true);
       }

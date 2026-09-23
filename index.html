@@ -828,7 +828,7 @@
                   <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                 </div>
                 <div class="geotools-dropzone-text">Klik atau seret file ke sini</div>
-                <div class="geotools-dropzone-accept">.geojson atau .json</div>
+                <div class="geotools-dropzone-accept">.geojson / .json / ArcGIS (Esri) JSON</div>
               </div>
               <div class="geotools-dropzone-filename">Tidak ada file yang dipilih</div>
             </label>
@@ -1337,8 +1337,10 @@
 
           <!-- Panel: GeoWatch -->
           <div id="geotoolsTabGeoWatch" class="geotools-main-tab-panel">
-            <h4 style="font-size:15px; margin-bottom:5px;">CCTV Analysis</h4>
-            <p class="geotools-desc" style="margin-bottom:20px;">Klik pencarian untuk melihat lokasi cctv.</p>
+            <div class="geopangan-sticky-header" style="background:transparent; border-bottom:0; padding-left:0; padding-right:0; margin-left:0; margin-right:0;">
+              <h4 style="font-size:15px; margin-bottom:4px;">CCTV Analysis</h4>
+              <p class="geotools-desc" style="margin-bottom:12px;">Klik pencarian untuk melihat lokasi cctv.</p>
+            </div>
             <div id="cctv-search-sheet">
               <div class="cctv-sheet-handle" onclick="toggleCctvSheet()"></div>
               <div class="cctv-card cctv-search-card" style="margin-top:0;">
@@ -2013,6 +2015,8 @@
     <script src="assets/js/bnpb-hillshade.js"></script>
     <script src="assets/js/geologi-bnpb.js"></script>
     <script src="assets/js/province-boundary-vector.js"></script>
+    <script src="assets/js/sistemlahan-mvt.js"></script>
+    <script src="assets/js/fu-aerial-overlay.js"></script>
     <script src="assets/js/chlorophyll-par-overlay.js"></script>
     <script src="assets/js/modis-time-slider.js"></script>
     <script src="assets/js/modis-aqua-time-slider.js"></script>

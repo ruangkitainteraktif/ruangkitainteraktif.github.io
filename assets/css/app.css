@@ -3942,7 +3942,7 @@
         margin-top: 10px;
         background: transparent;
         box-shadow: none;
-        padding: 0;
+        padding: 10px;
         border: 1px solid #e0e0e0;
       }
       #cctv-search-sheet.sheet-open {
@@ -3960,7 +3960,7 @@
       }
       #cctv-search-sheet #cctvStatus,
       #cctv-search-sheet #cctvResults {
-        padding: 0 15px;
+        padding: 0 5px;
       }
       #cctv-search-sheet #cctvResults {
         flex: 1 1 auto;
@@ -5462,6 +5462,33 @@
     .wind-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
     .wind-legend-unit { font-size: 8px; color: #94a3b8; margin-top: 6px; font-style: italic; }
 
+    /* ── Sistem Lahan (KODE L SYS) legend ── */
+    .sistemlahan-legend { min-width: 168px; max-width: 220px; }
+    .sistemlahan-legend-sub {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #64748b;
+      margin: -2px 0 6px;
+      text-transform: uppercase;
+    }
+    .sistemlahan-legend-items {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px 8px;
+      max-height: 220px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .sistemlahan-legend-items::-webkit-scrollbar { width: 4px; }
+    .sistemlahan-legend-items::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+    .sistemlahan-legend-items .wind-legend-item { font-size: 8px; gap: 4px; }
+    .sistemlahan-legend-items .wind-legend-dot {
+      width: 9px;
+      height: 9px;
+      border: 1px solid rgba(15, 23, 42, 0.18);
+    }
+
     /* ── Himawari Legend ── */
     .himawari-legend {
       background: rgba(255,255,255,0.96);
@@ -5921,7 +5948,7 @@
     /* CCTV */
     .cctv-filter { display: grid; gap: 8px; margin: 10px 0; }
     .cctv-filter input, .cctv-filter select { width: 100%; padding: 8px 9px; border: 1px solid #d7e2eb; border-radius: 8px; font: inherit; font-size: 11px; }
-    .cctv-results { display: grid; gap: 7px; max-height: 380px; overflow-y: auto; }
+    .cctv-results { display: grid; gap: 7px; max-height: 380px; overflow-y: auto; padding-bottom: 2px; }
     .cctv-card { padding: 9px; border: 1px solid #e3edf5; border-radius: 10px; background: #fff; box-shadow: 0 3px 9px rgba(24,73,111,.05); cursor: pointer; }
     .cctv-card:hover { border-color: #1494ca; background: #f3fbff; }
     .cctv-card strong { display: block; overflow: hidden; color: #16466c; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
@@ -5973,6 +6000,8 @@
     }
     #cctv-search-sheet { margin-top: 10px; }
     .cctv-sheet-handle { display: none; }
+    #geotoolsTabGeoWatch { padding-bottom: 4px; }
+    #geotoolsTabGeoWatch #cctv-search-sheet { margin-top: 12px; }
 
     /* ── Hotspot Sidebar (Desktop: kanan) ── */
     #hotspot-sheet {
@@ -6882,13 +6911,13 @@
     }
     .cctv-card-header {
       display: flex; align-items: center; gap: 6px;
-      padding: 10px 12px; background: linear-gradient(110deg, #066aa8, #1198c7); border-bottom: 1px solid #066aa8;
+      padding: 10px 14px; background: linear-gradient(110deg, #066aa8, #1198c7); border-bottom: 1px solid #066aa8;
       border-radius: 13px 13px 0 0;
       font-size: 12px; font-weight: 700; color: #fff;
     }
     .cctv-card-header svg { color: #fff; flex-shrink: 0; }
-    .cctv-search-card .cctv-card-body { padding: 12px; }
-    .cctv-search-body { display: grid; gap: 10px; }
+    .cctv-search-card .cctv-card-body { padding: 14px 16px 16px; }
+    .cctv-search-body { display: grid; gap: 12px; }
     .cctv-search-body input, .cctv-search-body select {
       width: 100%; height: 40px; padding: 7px 11px; margin-bottom: 0;
       border: 1px solid #d5e3ed; border-radius: 9px; font-size: 12px;
@@ -8812,6 +8841,7 @@
     .unified-legend-section .choropleth-legend,
     .unified-legend-section .geoportal-legend,
     .unified-legend-section .atrbpn-legend,
+    .unified-legend-section .sistemlahan-legend,
     .unified-legend-section .geologi-bnpb-legend {
       width: 100%;
       background: rgba(255,255,255,0.96) !important;
@@ -8834,6 +8864,7 @@
     .unified-legend-section .choropleth-legend-title,
     .unified-legend-section .geoportal-legend-title,
     .unified-legend-section .atrbpn-legend-title,
+    .unified-legend-section .sistemlahan-legend-sub,
     .unified-legend-section .geologi-bnpb-legend-title {
       color: #0f172a !important;
     }
@@ -9656,7 +9687,8 @@
       background: var(--bg-card);
       border-color: var(--border-color);
     }
-    [data-theme="dark"] .wind-legend {
+    [data-theme="dark"] .wind-legend,
+    [data-theme="dark"] .sistemlahan-legend {
       background: var(--bg-glass);
       border-color: var(--border-color);
     }

@@ -150,6 +150,8 @@
     'toggleHillshade': 'Data Hillshade tidak tersedia.',
     'toggleBatnas': 'Data Batnas (Batimetri) tidak tersedia.',
     'toggleProvinceBoundary': 'Data Batas Provinsi (PBF) tidak tersedia.',
+    'toggleSistemLahan': 'Data Sistem Lahan (InaLAND) tidak tersedia.',
+    'toggleFuPadang': 'Data Foto Udara Padang (BIG) tidak tersedia.',
     'toggleSih3Dpu_78': 'Data Titik Sampling Kualitas Air tidak tersedia.',
     'toggleSih3Dpu_73': 'Data Sensor Banjir BPBD Jatim tidak tersedia.',
     'toggleSih3Dpu_70': 'Data Pos Tinggi Muka Air Dam tidak tersedia.',

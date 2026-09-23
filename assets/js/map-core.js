@@ -796,8 +796,6 @@ L.control.scale({
         return;
       } else if (name === 'petadasar-bpn') {
         baseTileLayers[name].addTo(map);
-        // Tampilkan detail awal Peta Dasar pada Bundaran HI (Air Mancur).
-        map.setView([-6.194979, 106.823049], 19);
       } else {
         baseTileLayers[name].addTo(map);
       }
@@ -1726,6 +1724,16 @@ L.control.scale({
         if (typeof window.toggleProvinceBoundary === 'function') window.toggleProvinceBoundary(false);
         var pbCb = document.getElementById('toggleProvinceBoundary');
         if (pbCb) pbCb.checked = false;
+
+        // Bersihkan sistem lahan MVT
+        if (typeof window.toggleSistemLahan === 'function') window.toggleSistemLahan(false);
+        var slCb = document.getElementById('toggleSistemLahan');
+        if (slCb) slCb.checked = false;
+
+        // Bersihkan foto udara BIG
+        if (typeof window.toggleFuPadang === 'function') window.toggleFuPadang(false);
+        var fuCb = document.getElementById('toggleFuPadang');
+        if (fuCb) fuCb.checked = false;
 
         // Bersihkan layer geologi BIG
         var bigGeoToggles = ['togglePetaGeologi', 'toggleGeostruktur', 'togglePatahanAktif', 'toggleLikuifaksi', 'toggleKarst'];
@@ -2850,6 +2858,12 @@ L.control.scale({
       ]
     },
     {
+      cat: 'BIG',
+      layers: [
+        { id: 'toggleFuPadang', label: 'Foto Udara Padang 0715 (BIG)' }
+      ]
+    },
+    {
       cat: 'ATRBPN',
       subcats: [
         { subcat: 'Tile Populer', layers: [
@@ -3289,7 +3303,8 @@ L.control.scale({
         { id: 'toggleBpsTutupanLahan', label: 'Peta Tutupan Lahan 100m (KSA BPS)' },
         { id: 'toggleTollRoad', label: 'Jalan Tol Pulau Jawa' },
         { id: 'toggleNationalRoad', label: 'Jalan Nasional' },
-        { id: 'toggleEoxOverlay', label: 'Labels Overlay (EOX)' }
+        { id: 'toggleEoxOverlay', label: 'Labels Overlay (EOX)' },
+        { id: 'toggleSistemLahan', label: 'Sistem Lahan (InaLAND MVT)' }
       ]
     }
   ];
@@ -3686,7 +3701,9 @@ L.control.scale({
            id.indexOf('atrbpn-wms-') === 0 ||
            id === 'toggleSekolahLayer' ||
           id.indexOf('omi-') === 0 ||
-          id === 'toggleEoxOverlay';
+           id === 'toggleEoxOverlay' ||
+           (id === 'toggleSistemLahan' && typeof window.toggleSistemLahan === 'function') ||
+           (id === 'toggleFuPadang' && typeof window.toggleFuPadang === 'function');
         if (!hasWindowToggle) {
           var el = findLayerById(id);
           if (el) {
@@ -3807,6 +3824,12 @@ L.control.scale({
         }
         if (id === 'toggleBmkgTimezone' && typeof window.toggleBmkgTimezone === 'function') {
           window.toggleBmkgTimezone(cb.checked);
+        }
+        if (id === 'toggleSistemLahan' && typeof window.toggleSistemLahan === 'function') {
+          window.toggleSistemLahan(cb.checked);
+        }
+        if (id === 'toggleFuPadang' && typeof window.toggleFuPadang === 'function') {
+          window.toggleFuPadang(cb.checked);
         }
         if (id === 'toggleBmkgPrecip10days' && typeof window.toggleBmkgPrecip10days === 'function') {
           window.toggleBmkgPrecip10days(cb.checked);

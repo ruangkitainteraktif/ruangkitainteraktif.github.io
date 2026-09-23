@@ -30,9 +30,13 @@
       ids: ['st2023:batas_desa','st2023:batas_kecamatan','st2023:batas_kabupaten','st2023:batas_provinsi','st2023:dasymetric_utp','st2023:dasymetric_utp_tp','st2023:dasymetric_utp_horti','st2023:dasymetric_utp_holti','st2023:dasymetric_utp_hutan','st2023:dasymetric_utp_ikan','st2023:dasymetric_utp_kebun','st2023:dasymetric_utp_milenial','st2023:dasymetric_utp_ternak','st2023:dasymetric_utp_urban','st2023:geotagging','st2023:geotagging_tanaman_pangan','st2023:geotagging_hortikultura','st2023:geotagging_kebun','st2023:geotagging_hutan','st2023:geotagging_ikan','st2023:geotagging_ternak','st2023:infrastruktur_pertanian','st2023:gurem_lahan_vw','st2023:utp_ihk_01','st2023:utp_ihk_02','st2023:utp_ihk_03','st2023:utp_ihk_04','st2023:utp_ihk_05','st2023:utp_ihk_06','st2023:utp_ihk_07','st2023:utp_ihk_08','st2023:utp_ihk_09','st2023:utp_ihk_10','st2023:utp_ihk_11','st2023:utp_ihk_12','st2023:utp_ihk_13','st2023:utp_ihk_14','st2023:utp_ihk_15','st2023:utp_ihk_16','st2023:utp_ihk_17'],
       keywords: ['sensus','pertanian','utp','ihk','geotagging','dasymetric']
     },
+    'BIG': {
+      ids: ['toggleFuPadang'],
+      keywords: ['foto udara','citra','big','padang','aerial','penginderaan']
+    },
     'ATRBPN': {
       ids: ['toggleBumiPersilLayer','toggleRtrwTmsLayer','toggleLsdTmsLayer','toggleLbsTmsLayer','toggleDiTmsLayer','toggleSaluranIrTmsLayer'],
-      keywords: ['rtrw','sawah dilindungi','lahan baku sawah','irigasi','atrbpn']
+      keywords: ['rtrw','sawah dilindungi','lahan baku sawah','atrbpn']
     },
     'Lingkungan': {
       ids: ['toggleChlorophyllOverlay','toggleParOverlay','omi-aerosol-index','omi-aod-abs','omi-modis-terra-aod','omi-modis-aqua-aod','omi-so2','omi-so2-pbl','omps-noaa20-so2-lt','omi-no2'],
@@ -59,8 +63,8 @@
       keywords: ['hidrologi','sungai','banjir','debit','dam','tma','hujan','sih3','bbws','citarum']
     },
     'Terrain & Lainnya': {
-      ids: ['toggleDemnasOverlay','toggleHillshade','toggleBatnas','toggleProvinceBoundary','toggleBmkgTimezone','toggleBpsTutupanLahan','toggleTollRoad','toggleNationalRoad','toggleEoxOverlay'],
-      keywords: ['terrain','hillshade','batnas','batas provinsi','jalan tol','jalan nasional','tutupan lahan','demnas','label']
+      ids: ['toggleDemnasOverlay','toggleHillshade','toggleBatnas','toggleProvinceBoundary','toggleBmkgTimezone','toggleBpsTutupanLahan','toggleTollRoad','toggleNationalRoad','toggleEoxOverlay','toggleSistemLahan'],
+      keywords: ['terrain','hillshade','batnas','batas provinsi','jalan tol','jalan nasional','tutupan lahan','demnas','label','sistem lahan','jenis lahan','inaland','land system']
     }
   };
 

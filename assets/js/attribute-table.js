@@ -620,6 +620,14 @@
     toggleBatnas: {
       name: 'Batnas (Batimetri)',
       type: 'raster'
+    },
+    toggleSistemLahan: {
+      name: 'Sistem Lahan (InaLAND MVT)',
+      type: 'raster'
+    },
+    toggleFuPadang: {
+      name: 'Foto Udara Padang 0715 (BIG)',
+      type: 'raster'
     }
   };
 
