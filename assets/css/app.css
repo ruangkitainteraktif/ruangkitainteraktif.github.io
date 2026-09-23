@@ -7173,6 +7173,27 @@
       box-shadow: 0 4px 16px rgba(249,115,22,.35); 
     }
 
+    /* Export GeoTIFF Petadasar */
+    .petadasar-export-block {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .petadasar-export-block .geotools-btn:disabled {
+      opacity: .7;
+      cursor: wait;
+      transform: none;
+      box-shadow: 0 2px 8px rgba(8,145,178,.25);
+    }
+    .petadasar-tiff-status {
+      margin-bottom: 0;
+    }
+    .petadasar-tiff-status--error {
+      color: #b91c1c;
+      background: #fef2f2;
+    }
+
     /* Timeline Steps */
     .geotools-steps {
       padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 10px;
