@@ -628,6 +628,22 @@
     toggleFuPadang: {
       name: 'Foto Udara Padang 0715 (BIG)',
       type: 'raster'
+    },
+    toggleFuKendari: {
+      name: 'Foto Udara Kendari 2024 (BIG)',
+      type: 'raster'
+    },
+    toggleFuBitung: {
+      name: 'Foto Udara Bitung 2024 (BIG)',
+      type: 'raster'
+    },
+    toggleFuMakassar: {
+      name: 'Foto Udara Makassar 2024 (BIG)',
+      type: 'raster'
+    },
+    toggleFuPlanetScope: {
+      name: 'Basemap PlanetScope Des 2025 (BIG)',
+      type: 'raster'
     }
   };
 

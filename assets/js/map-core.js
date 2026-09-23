@@ -1738,9 +1738,11 @@ L.control.scale({
         if (slCb) slCb.checked = false;
 
         // Bersihkan foto udara BIG
-        if (typeof window.toggleFuPadang === 'function') window.toggleFuPadang(false);
-        var fuCb = document.getElementById('toggleFuPadang');
-        if (fuCb) fuCb.checked = false;
+        ['toggleFuPadang', 'toggleFuKendari', 'toggleFuBitung', 'toggleFuMakassar', 'toggleFuPlanetScope'].forEach(function (fuId) {
+          if (typeof window.toggleFuLayer === 'function') window.toggleFuLayer(fuId, false);
+          var fuEl = document.getElementById(fuId);
+          if (fuEl) fuEl.checked = false;
+        });
 
         // Bersihkan layer geologi BIG
         var bigGeoToggles = ['togglePetaGeologi', 'toggleGeostruktur', 'togglePatahanAktif', 'toggleLikuifaksi', 'toggleKarst'];
@@ -2867,7 +2869,11 @@ L.control.scale({
     {
       cat: 'BIG',
       layers: [
-        { id: 'toggleFuPadang', label: 'Foto Udara Padang 0715 (BIG)' }
+        { id: 'toggleFuPadang', label: 'Foto Udara Padang 0715 (BIG)' },
+        { id: 'toggleFuKendari', label: 'Foto Udara Kendari 2024 (BIG)' },
+        { id: 'toggleFuBitung', label: 'Foto Udara Bitung 2024 (BIG)' },
+        { id: 'toggleFuMakassar', label: 'Foto Udara Makassar 2024 (BIG)' },
+        { id: 'toggleFuPlanetScope', label: 'Basemap PlanetScope Des 2025 (BIG)' }
       ]
     },
     {
@@ -3710,7 +3716,7 @@ L.control.scale({
           id.indexOf('omi-') === 0 ||
            id === 'toggleEoxOverlay' ||
            (id === 'toggleSistemLahan' && typeof window.toggleSistemLahan === 'function') ||
-           (id === 'toggleFuPadang' && typeof window.toggleFuPadang === 'function');
+            (id.indexOf('toggleFu') === 0 && typeof window.toggleFuLayer === 'function');
         if (!hasWindowToggle) {
           var el = findLayerById(id);
           if (el) {
@@ -3835,8 +3841,8 @@ L.control.scale({
         if (id === 'toggleSistemLahan' && typeof window.toggleSistemLahan === 'function') {
           window.toggleSistemLahan(cb.checked);
         }
-        if (id === 'toggleFuPadang' && typeof window.toggleFuPadang === 'function') {
-          window.toggleFuPadang(cb.checked);
+        if (id.indexOf('toggleFu') === 0 && typeof window.toggleFuLayer === 'function') {
+          window.toggleFuLayer(id, cb.checked);
         }
         if (id === 'toggleBmkgPrecip10days' && typeof window.toggleBmkgPrecip10days === 'function') {
           window.toggleBmkgPrecip10days(cb.checked);

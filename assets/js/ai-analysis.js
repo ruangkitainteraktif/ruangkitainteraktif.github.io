@@ -31,8 +31,8 @@
       keywords: ['sensus','pertanian','utp','ihk','geotagging','dasymetric']
     },
     'BIG': {
-      ids: ['toggleFuPadang'],
-      keywords: ['foto udara','citra','big','padang','aerial','penginderaan']
+      ids: ['toggleFuPadang','toggleFuKendari','toggleFuBitung','toggleFuMakassar','toggleFuPlanetScope'],
+      keywords: ['foto udara','citra','big','padang','aerial','penginderaan','kendari','bitung','makassar','sulawesi','orthophoto','futile','planetscope','planet','basemap']
     },
     'ATRBPN': {
       ids: ['toggleBumiPersilLayer','toggleRtrwTmsLayer','toggleLsdTmsLayer','toggleLbsTmsLayer','toggleDiTmsLayer','toggleSaluranIrTmsLayer'],
