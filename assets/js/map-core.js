@@ -809,6 +809,7 @@ L.control.scale({
     }
 
     currentBasemapName = name;
+    window.currentBasemapName = name;
     var select = document.getElementById('basemapSelect');
     if (select) select.value = name;
     map.fire('basemapchanged', { basemap: name });
@@ -861,6 +862,7 @@ L.control.scale({
 
   function applyInitialStartupDefaults() {
     currentBasemapName = 'google-maps';
+    window.currentBasemapName = 'google-maps';
     baseBasemapName = 'esri-dark-gray';
     setBaseMap(currentBasemapName);
     if (typeof window.toggleProvinceBoundary === 'function') {

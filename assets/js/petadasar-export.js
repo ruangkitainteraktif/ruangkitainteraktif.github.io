@@ -7,6 +7,7 @@
 
   var WMS_URL = 'https://petadasar.meritech.cloud/wms';
   var MAX_DIM = 4096;
+  var BASEMAP_ID = 'petadasar-bpn';
   var PROXIES = [
     function (u) {
       return 'https://images.weserv.nl/?url=' + encodeURIComponent(u) + '&output=png';
@@ -76,6 +77,12 @@
       + '&WIDTH=' + width + '&HEIGHT=' + height;
   }
 
+  function looksLikePng(blob, buf) {
+    if (!buf || buf.byteLength < 24) return false;
+    var u8 = new Uint8Array(buf, 0, 8);
+    return u8[0] === 0x89 && u8[1] === 0x50 && u8[2] === 0x4e && u8[3] === 0x47;
+  }
+
   async function fetchPng(url) {
     var lastErr = null;
     for (var i = 0; i < PROXIES.length; i++) {
@@ -83,9 +90,17 @@
       try {
         var res = await fetch(proxied, { mode: 'cors' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
-        var blob = await res.blob();
-        if (!blob || blob.size < 50) throw new Error('Respons kosong');
-        return blob;
+        var buf = await res.arrayBuffer();
+        if (!buf || buf.byteLength < 50) throw new Error('Respons kosong');
+        if (!looksLikePng(res, buf)) {
+          var head = '';
+          try { head = new TextDecoder().decode(new Uint8Array(buf, 0, Math.min(300, buf.byteLength))); } catch (e) {}
+          if (/too large|ExceptionReport|InvalidParameterValue/i.test(head)) {
+            throw new Error('Server WMS: gambar melebihi batas (maks 4096 px).');
+          }
+          throw new Error('Respons bukan PNG.');
+        }
+        return new Blob([buf], { type: 'image/png' });
       } catch (e) {
         lastErr = e;
       }
@@ -146,6 +161,68 @@
     URL.revokeObjectURL(url);
   }
 
+  function isPetadasarActive(fromEvent) {
+    if (fromEvent && fromEvent !== true && fromEvent !== false) {
+      if (fromEvent === BASEMAP_ID) return true;
+      if (typeof fromEvent === 'object' && fromEvent.basemap) {
+        return fromEvent.basemap === BASEMAP_ID;
+      }
+      if (typeof fromEvent === 'string') return fromEvent === BASEMAP_ID;
+    }
+    if (window.currentBasemapName === BASEMAP_ID) return true;
+    var sel = document.getElementById('basemapSelect');
+    if (sel && sel.value === BASEMAP_ID) return true;
+    var radio = document.querySelector('input[name="lc-basemap"][data-basemap-id="' + BASEMAP_ID + '"], input[name="lc-basemap-pin"][data-basemap-id="' + BASEMAP_ID + '"]');
+    if (radio && radio.checked) return true;
+    return false;
+  }
+
+  function syncExportVisibility(fromEvent) {
+    var block = document.getElementById('petadasarExportBlock');
+    var hint = document.getElementById('petadasarTiffHint');
+    if (!block) return;
+    var show = isPetadasarActive(fromEvent);
+    block.style.display = show ? '' : 'none';
+    if (hint) hint.style.display = show ? '' : 'none';
+    if (!show) {
+      setStatus('');
+      var btn = document.getElementById('petadasarTiffBtn');
+      if (btn) { btn.disabled = false; btn.classList.remove('petadasar-export-busy'); }
+    }
+  }
+
+  function bindBasemapVisibility() {
+    syncExportVisibility();
+    if (!window.map || typeof window.map.on !== 'function') {
+      var tries = 0;
+      var t = setInterval(function () {
+        tries++;
+        if (window.map && typeof window.map.on === 'function') {
+          clearInterval(t);
+          if (!bindBasemapVisibility._bound) {
+            bindBasemapVisibility._bound = true;
+            window.map.on('basemapchanged', function (e) {
+              syncExportVisibility(e);
+            });
+          }
+          syncExportVisibility();
+        } else if (tries > 40) {
+          clearInterval(t);
+        }
+      }, 250);
+      return;
+    }
+    if (bindBasemapVisibility._bound) {
+      syncExportVisibility();
+      return;
+    }
+    bindBasemapVisibility._bound = true;
+    window.map.on('basemapchanged', function (e) {
+      syncExportVisibility(e);
+    });
+    syncExportVisibility();
+  }
+
   async function exportPetadasarGeoTiff() {
     if (typeof window.GeoTIFF === 'undefined' || typeof window.GeoTIFF.writeArrayBuffer !== 'function') {
       setStatus('Library geotiff.js belum termuat. Muat ulang halaman.', true);
@@ -153,6 +230,10 @@
     }
     if (!window.map || !L) {
       setStatus('Peta tidak siap.', true);
+      return;
+    }
+    if (!isPetadasarActive()) {
+      setStatus('Basemap aktif bukan Peta Dasar ATR/BPN.', true);
       return;
     }
 
@@ -164,11 +245,7 @@
       var bbox = getWebMercatorBbox();
       var wmsUrl = buildGetMapUrl(bbox, size.w, size.h);
 
-      if (window.currentBasemapName !== 'petadasar-bpn') {
-        setStatus('Info: basemap aktif bukan Peta Dasar ATR/BPN — export tetap memakai WMS petadasar.');
-      } else {
-        setStatus('Mengunduh citra WMS (' + size.w + '×' + size.h + ')…');
-      }
+      setStatus('Mengunduh citra WMS (' + size.w + '×' + size.h + ', maks ' + MAX_DIM + ' px)…');
 
       var pngBlob = await fetchPng(wmsUrl);
       setStatus('Decode & encode GeoTIFF…');
@@ -206,4 +283,25 @@
   }
 
   window.exportPetadasarGeoTiff = exportPetadasarGeoTiff;
+  window.syncPetadasarExportVisibility = syncExportVisibility;
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindBasemapVisibility);
+  } else {
+    bindBasemapVisibility();
+  }
+  // late-binding if script runs before map exists
+  if (!window.map) {
+    var bootTries = 0;
+    var bootTimer = setInterval(function () {
+      bootTries++;
+      if (window.map) {
+        clearInterval(bootTimer);
+        bindBasemapVisibility();
+      } else if (bootTries > 40) {
+        clearInterval(bootTimer);
+        syncExportVisibility();
+      }
+    }, 250);
+  }
 })();

@@ -474,7 +474,7 @@
         '.sat-export-btn', '.geoportal-print-btn', '.reset-layers-btn',
         '.basemap-control-wrap', '.leaflet-control-zoom', '.leaflet-control-locate',
         '.unified-search', '.leaflet-control-scale', '.detail-panel-btn',
-        '#detail-panel', '.map-insight-cards', '.quick-layer-bar',
+        '#detail-panel', '.map-insight-cards', '.quick-layer-bar', '.petadasar-export-block',
         '.geoid-marker-wrap', '.leaflet-control-mouse-position',
         '.wind-legend', '.himawari-legend', '.maritime-legend',
         '.leaflet-control-legend', '.legend-wrap',
