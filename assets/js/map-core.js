@@ -1525,6 +1525,12 @@ L.control.scale({
         if (typeof window.toggleKategoriWilayahOpt === 'function' && window.KATEGORI_OPT_ATTR_DATA) {
           Object.keys(window.KATEGORI_OPT_ATTR_DATA).forEach(function (k) { window.toggleKategoriWilayahOpt(k, false); });
         }
+        if (typeof window.toggleOPTPerkebunan === 'function' && window.OPTP_LAYER_IDS) {
+          window.OPTP_LAYER_IDS.forEach(function (k) { window.toggleOPTPerkebunan(k, false); });
+        }
+        if (typeof window.toggleOPTHorti === 'function' && window.OPTH_LAYER_IDS) {
+          window.OPTH_LAYER_IDS.forEach(function (k) { window.toggleOPTHorti(k, false); });
+        }
 
         // 2. Matikan semua geoportal WMS/WFS layers
         geoportalLayers.forEach((layer) => {
@@ -2935,6 +2941,110 @@ L.control.scale({
             { id: 'kategori-opt-kemarau-kresek', label: 'Kresek' },
             { id: 'kategori-opt-kemarau-tungro', label: 'Tungro' },
             { id: 'kategori-opt-kemarau-kerdil-rumput', label: 'Kerdil Rumput' }
+          ]},
+          { subcat: 'Kategori Endemis OPT — Cengkeh', layers: [
+            { id: 'optp-cengkeh-penggerek-batang', label: 'Penggerek Batang (Nothopeus sp.)' }
+          ]},
+          { subcat: 'Kategori Endemis OPT — Jambu Mete', layers: [
+            { id: 'optp-jambu-mete-ulat-kipat', label: 'Ulat Kipat' },
+            { id: 'optp-jambu-mete-kepik-penghisap', label: 'Kepik Penghisap (Helopeltis sp.)' },
+            { id: 'optp-jambu-mete-wereng-pucuk', label: 'Wereng Pucuk (Sanurus sp.)' }
+          ]},
+          { subcat: 'Kategori Endemis OPT — Kakao', layers: [
+            { id: 'optp-kakao-penggerek-buah-kakao', label: 'Penggerek Buah Kakao' },
+            { id: 'optp-kakao-kepik-penghisap-buah', label: 'Kepik Penghisap Buah (Helopeltis sp.)' },
+            { id: 'optp-kakao-penyakit-vascular-streak-dieback', label: 'Penyakit Vascular Streak Dieback (VSD)' },
+            { id: 'optp-kakao-penyakit-busuk-buah', label: 'Penyakit Busuk Buah' }
+          ]},
+          { subcat: 'Kategori Endemis OPT — Kapas', layers: [
+            { id: 'optp-kapas-heliothis-sp', label: 'Heliothis sp.' }
+          ]},
+          { subcat: 'Kategori Endemis OPT — Karet', layers: [
+            { id: 'optp-karet-jamur-akar-putih', label: 'Jamur Akar Putih' },
+            { id: 'optp-karet-gugur-daun-pestalotiopsis', label: 'Gugur Daun Pestalotiopsis' },
+            { id: 'optp-karet-gugur-daun-colletotrichum', label: 'Gugur Daun Colletotrichum' },
+            { id: 'optp-karet-penyakit-bidang-sadap', label: 'Penyakit Bidang Sadap' },
+            { id: 'optp-karet-jamur-upas', label: 'Jamur Upas' },
+            { id: 'optp-karet-rayap', label: 'Rayap' }
+          ]},
+          { subcat: 'Kategori Endemis OPT — Kelapa', layers: [
+            { id: 'optp-kelapa-oryctes-rhinoceros', label: 'Oryctes rhinoceros' },
+            { id: 'optp-kelapa-brontispa-longissima', label: 'Brontispa longissima' },
+            { id: 'optp-kelapa-belalang-padang', label: 'Belalang Padang (Sexava spp.)' },
+            { id: 'optp-kelapa-aspidiotus-destructor', label: 'Aspidiotus destructor' },
+            { id: 'optp-kelapa-busuk-pucuk-kelapa', label: 'Busuk Pucuk Kelapa (Phytophthora palmivora)' }
+          ]},
+          { subcat: 'Kategori Endemis OPT — Kelapa Sawit', layers: [
+            { id: 'optp-kelapa-sawit-ulat-api', label: 'Ulat Api' },
+            { id: 'optp-kelapa-sawit-babi-hutan', label: 'Babi Hutan' },
+            { id: 'optp-kelapa-sawit-tikus', label: 'Tikus' },
+            { id: 'optp-kelapa-sawit-busuk-pangkal-batang', label: 'Busuk Pangkal Batang' }
+          ]},
+          { subcat: 'Kategori Endemis OPT — Kopi', layers: [
+            { id: 'optp-kopi-penggerek-batang-kopi', label: 'Penggerek Batang Kopi' },
+            { id: 'optp-kopi-karat-daun', label: 'Karat daun (Hemileia vastatrix)' },
+            { id: 'optp-kopi-kutu-putih', label: 'Kutu Putih' }
+          ]},
+          { subcat: 'Kategori Endemis OPT — Lada', layers: [
+            { id: 'optp-lada-busuk-pangkal-batang', label: 'Busuk Pangkal Batang' },
+            { id: 'optp-lada-dasynus-piperis', label: 'Dasynus piperis' },
+            { id: 'optp-lada-lophobaris-piperis', label: 'Lophobaris piperis' },
+            { id: 'optp-lada-penyakit-kuning', label: 'Penyakit Kuning (nematoda)' },
+            { id: 'optp-lada-keriting-daun', label: 'Keriting Daun' },
+            { id: 'optp-lada-jamur-pirang', label: 'Jamur Pirang' }
+          ]},
+          { subcat: 'Kategori Endemis OPT — Nilam', layers: [
+            { id: 'optp-nilam-ulat-daun', label: 'Ulat Daun' },
+            { id: 'optp-nilam-budok', label: 'Budok' },
+            { id: 'optp-nilam-busuk-batang', label: 'Busuk Batang' },
+            { id: 'optp-nilam-belalang', label: 'Belalang' }
+          ]},
+          { subcat: 'Kategori Endemis OPT — Pala', layers: [
+            { id: 'optp-pala-penyakit-busuk-buah', label: 'Penyakit Busuk Buah' },
+            { id: 'optp-pala-hama-penggerek-batang', label: 'Hama Penggerek Batang' }
+          ]},
+          { subcat: 'Kategori Endemis OPT — Sagu', layers: [
+            { id: 'optp-sagu-oryctes-rhinoceros', label: 'Oryctes rhinoceros' },
+            { id: 'optp-sagu-babi-hutan', label: 'Babi Hutan' },
+            { id: 'optp-sagu-artona-catoxantha', label: 'Artona catoxantha' }
+          ]},
+          { subcat: 'Kategori Endemis OPT — Tebu', layers: [
+            { id: 'optp-tebu-tikus', label: 'Tikus (Rattus sp.)' },
+            { id: 'optp-tebu-uret', label: 'Uret (Lepidiota stigma)' },
+            { id: 'optp-tebu-penggerek-pucuk', label: 'Penggerek Pucuk (Scirpophaga sp.)' },
+            { id: 'optp-tebu-penggerek-batang', label: 'Penggerek Batang (Chilo sp.)' },
+            { id: 'optp-tebu-luka-api', label: 'Luka Api' }
+          ]},
+          { subcat: 'Kategori Endemis OPT — Teh', layers: [
+            { id: 'optp-teh-helopeltis-sp', label: 'Helopeltis sp.' },
+            { id: 'optp-teh-cacar-daun-teh', label: 'Cacar Daun Teh' },
+            { id: 'optp-teh-wereng-pucuk-teh', label: 'Wereng Pucuk Teh' }
+          ]},
+          { subcat: 'Kategori Endemis OPT — Tembakau', layers: [
+            { id: 'optp-tembakau-lanas', label: 'Lanas' },
+            { id: 'optp-tembakau-spodoptera-sp', label: 'Spodoptera sp.' },
+            { id: 'optp-tembakau-myzus-sp', label: 'Myzus sp.' },
+            { id: 'optp-tembakau-tobacco-mosaic-virus', label: 'Tobacco Mosaic Virus (TMV)' },
+            { id: 'optp-tembakau-aphis-sp', label: 'Aphis sp.' },
+            { id: 'optp-tembakau-heliothis-sp', label: 'Heliothis sp.' }
+          ]},
+          { subcat: 'Kategori Endemis OPT — Vanili', layers: [
+            { id: 'optp-vanili-busuk-batang', label: 'Busuk Batang' }
+          ]},
+          { subcat: 'Rekap Serangan OPT — Aneka Cabai', layers: [
+            { id: 'opth-cabai-antraknosa', label: 'Antraknosa (Colletotrichum spp.)' },
+            { id: 'opth-cabai-lalat-buah', label: 'Lalat Buah (Bactrocera spp.)' },
+            { id: 'opth-cabai-layu-fusarium', label: 'Layu Fusarium (Fusarium oxysporum)' },
+            { id: 'opth-cabai-trips', label: 'Trips (Thrips spp.)' },
+            { id: 'opth-cabai-virus-keriting', label: 'Virus Keriting' },
+            { id: 'opth-cabai-virus-kuning', label: 'Virus Kuning' }
+          ]},
+          { subcat: 'Rekap Serangan OPT — Bawang Merah', layers: [
+            { id: 'opth-bawang-merah-embun-tepung', label: 'Embun Tepung (Perenospora destructor)' },
+            { id: 'opth-bawang-merah-lalat-pengorok-daun', label: 'Lalat Pengorok Daun (Liriomyza sp.)' },
+            { id: 'opth-bawang-merah-mati-pucuk', label: 'Mati Pucuk (Phytophora sp.)' },
+            { id: 'opth-bawang-merah-trotol-bercak-ungu', label: 'Trotol/Bercak Ungu (Alternaria porri)' },
+            { id: 'opth-bawang-merah-ulat-bawang', label: 'Ulat Bawang (Spodoptera exigua)' }
           ]}
         ]
       },
@@ -3561,6 +3671,8 @@ L.control.scale({
           id === 'toggleChlorophyllOverlay' ||
            id === 'toggleParOverlay' ||
            (id.indexOf('opt-') === 0 && typeof window.toggleOPTPest === 'function') ||
+           (id.indexOf('optp-') === 0 && typeof window.toggleOPTPerkebunan === 'function') ||
+           (id.indexOf('opth-') === 0 && typeof window.toggleOPTHorti === 'function') ||
            (id.indexOf('kategori-opt-') === 0 && typeof window.toggleKategoriWilayahOpt === 'function') ||
            (id === 'toggleSawahDilindungi' && typeof window.toggleSawahDilindungiLayer === 'function') ||
           id === 'toggleSawahNasional50k' ||
@@ -3611,6 +3723,12 @@ L.control.scale({
          }
         if (id.indexOf('opt-') === 0 && typeof window.toggleOPTPest === 'function') {
           window.toggleOPTPest(id, cb.checked);
+        }
+        if (id.indexOf('optp-') === 0 && typeof window.toggleOPTPerkebunan === 'function') {
+          window.toggleOPTPerkebunan(id, cb.checked);
+        }
+        if (id.indexOf('opth-') === 0 && typeof window.toggleOPTHorti === 'function') {
+          window.toggleOPTHorti(id, cb.checked);
         }
         if (id.indexOf('kategori-opt-') === 0 && typeof window.toggleKategoriWilayahOpt === 'function') {
           window.toggleKategoriWilayahOpt(id, cb.checked);

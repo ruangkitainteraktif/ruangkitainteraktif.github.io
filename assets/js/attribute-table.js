@@ -714,6 +714,12 @@
     if (!config && toggleId.indexOf('opt-') === 0 && window.OPT_ATTR_DATA && window.OPT_ATTR_DATA[toggleId]) {
       config = window.OPT_ATTR_DATA[toggleId];
     }
+    if (!config && toggleId.indexOf('optp-') === 0 && window.OPTP_ATTR_DATA && window.OPTP_ATTR_DATA[toggleId]) {
+      config = window.OPTP_ATTR_DATA[toggleId];
+    }
+    if (!config && toggleId.indexOf('opth-') === 0 && window.OPTH_ATTR_DATA && window.OPTH_ATTR_DATA[toggleId]) {
+      config = window.OPTH_ATTR_DATA[toggleId];
+    }
     if (!config && window.KATEGORI_OPT_ATTR_DATA && window.KATEGORI_OPT_ATTR_DATA[toggleId]) {
       config = window.KATEGORI_OPT_ATTR_DATA[toggleId];
     }
@@ -1242,7 +1248,7 @@
   /* ── Unified Attribute Table Picker ── */
   function attrPickerBadge(toggleId) {
     if (WMS_ATTR_REGISTRY[toggleId]) return { label: 'WMS', cls: 'badge-wms' };
-    if (toggleId.indexOf('opt-') === 0 || toggleId.indexOf('kategori-opt-') === 0) return { label: 'ArcGIS', cls: 'badge-arcgis' };
+    if (toggleId.indexOf('opt-') === 0 || toggleId.indexOf('optp-') === 0 || toggleId.indexOf('opth-') === 0 || toggleId.indexOf('kategori-opt-') === 0) return { label: 'ArcGIS', cls: 'badge-arcgis' };
     var cfg = ATTR_LAYER_REGISTRY[toggleId];
     var t = cfg && cfg.type ? cfg.type : '';
     if (t === 'cluster') return { label: 'Cluster', cls: 'badge-cluster' };
@@ -1460,6 +1466,8 @@
     // Also support SIH3 dynamic toggles by pattern so buttons show without manual registry entries
     if (/^toggleSih3Dpu_/.test(toggleId) || /^toggleSih3Cit_/.test(toggleId)) return true;
     if (toggleId.indexOf('opt-') === 0 && window.OPT_ATTR_DATA && window.OPT_ATTR_DATA[toggleId]) return true;
+    if (toggleId.indexOf('optp-') === 0 && window.OPTP_ATTR_DATA && window.OPTP_ATTR_DATA[toggleId]) return true;
+    if (toggleId.indexOf('opth-') === 0 && window.OPTH_ATTR_DATA && window.OPTH_ATTR_DATA[toggleId]) return true;
     if (window.KATEGORI_OPT_ATTR_DATA && window.KATEGORI_OPT_ATTR_DATA[toggleId]) return true;
     return !!(ATTR_LAYER_REGISTRY[toggleId] || WMS_ATTR_REGISTRY[toggleId]);
   }

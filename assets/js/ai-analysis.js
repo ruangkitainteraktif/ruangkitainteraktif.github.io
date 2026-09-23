@@ -67,6 +67,18 @@
   if (window.ATRBPN_WMS_IDS && LAYER_CATEGORIES['ATRBPN']) {
     LAYER_CATEGORIES['ATRBPN'].ids = LAYER_CATEGORIES['ATRBPN'].ids.concat(window.ATRBPN_WMS_IDS);
   }
+  if (window.OPTP_LAYER_IDS && LAYER_CATEGORIES['Ketahanan Pangan']) {
+    LAYER_CATEGORIES['Ketahanan Pangan'].ids = LAYER_CATEGORIES['Ketahanan Pangan'].ids.concat(window.OPTP_LAYER_IDS);
+    LAYER_CATEGORIES['Ketahanan Pangan'].keywords = (LAYER_CATEGORIES['Ketahanan Pangan'].keywords || []).concat([
+      'perkebunan','opt perkebunan','cengkeh','kakao','karet','kelapa sawit','sawit','kopi','lada','nilam','pala','sagu','tebu','teh','tembakau','vanili','endemis opt'
+    ]);
+  }
+  if (window.OPTH_LAYER_IDS && LAYER_CATEGORIES['Ketahanan Pangan']) {
+    LAYER_CATEGORIES['Ketahanan Pangan'].ids = LAYER_CATEGORIES['Ketahanan Pangan'].ids.concat(window.OPTH_LAYER_IDS);
+    LAYER_CATEGORIES['Ketahanan Pangan'].keywords = (LAYER_CATEGORIES['Ketahanan Pangan'].keywords || []).concat([
+      'horti','hortikultura','cabai','bawang merah','opt horti'
+    ]);
+  }
 
   /* === Data Extractors === */
   function extractHotspotData() {
