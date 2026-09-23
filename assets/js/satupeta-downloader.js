@@ -1,11 +1,279 @@
 (function () {
   'use strict';
 
-  var API_URL = 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/3/query';
+  var LAYER_SOURCES = {
+    'lsd-50k': {
+      label: 'LSD 50K (BIG)',
+      query: 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/59/query',
+      nameField: 'lsd',
+      titleField: 'lsd',
+      areaField: 'luasha',
+      areaUnit: 'ha',
+      dateField: null,
+      nameLabel: 'Jenis',
+      emptyMessage: 'Tidak ada polygon LSD 50K di wilayah ini.',
+      loadingMessage: 'Memuat data LSD 50K...',
+      source: 'BIG KSP SatuPeta - LSD 50K',
+      tableFields: [
+        { key: 'lsd', label: 'Jenis' },
+        { key: 'luasha', label: 'Luas', type: 'ha' },
+        { key: 'wadmkk', label: 'Kab/Kota' },
+        { key: 'fgsfrf', label: 'Fungsi' }
+      ],
+      extraFields: [
+        { key: 'wadmpr', label: 'Provinsi' },
+        { key: 'wadmkk', label: 'Kab/Kota' },
+        { key: 'ctkswh', label: 'Cetak Sawah' },
+        { key: 'remark', label: 'Keterangan' }
+      ],
+      colors: {
+        'Lahan Sawah yang Dilindungi di Dalam Kawasan Hutan': '#ffaa00',
+        'Lahan Sawah yang Dilindungi di Luar Kawasan Hutan': '#aaff00'
+      }
+    },
+    'lbs-50k': {
+      label: 'LBS 50K (BIG)',
+      query: 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/36/query',
+      nameField: 'q_name19',
+      titleField: 'q_name19',
+      areaField: 'luas_polyg',
+      areaUnit: 'ha',
+      dateField: null,
+      nameLabel: 'Nama',
+      emptyMessage: 'Tidak ada polygon LBS 50K di wilayah ini.',
+      loadingMessage: 'Memuat data LBS 50K...',
+      source: 'BIG KSP SatuPeta - LBS 50K',
+      tableFields: [
+        { key: 'q_name19', label: 'Nama' },
+        { key: 'luas_polyg', label: 'Luas', type: 'ha' },
+        { key: 'wadmkk', label: 'Kab/Kota' },
+        { key: 'wadmpr', label: 'Provinsi' }
+      ],
+      extraFields: [
+        { key: 'wadmpr', label: 'Provinsi' },
+        { key: 'wadmkk', label: 'Kab/Kota' }
+      ],
+      colors: {
+        'Sawah': '#e6fcc0'
+      }
+    },
+    'likuifaksi-big': {
+      label: 'Kerentanan Likuifaksi (BIG)',
+      query: 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/43/query',
+      nameField: 'kerentanan',
+      titleField: 'namobj',
+      areaField: null,
+      dateField: null,
+      nameLabel: 'Kerentanan',
+      emptyMessage: 'Tidak ada polygon kerentanan likuifaksi di wilayah ini.',
+      loadingMessage: 'Memuat data kerentanan likuifaksi...',
+      source: 'BIG KSP SatuPeta - Kerentanan Likuifaksi 1:100K',
+      tableFields: [
+        { key: 'kerentanan', label: 'Kerentanan', type: 'nameMap' },
+        { key: 'namobj', label: 'Nama Objek' },
+        { key: 'metadata', label: 'Metadata' }
+      ],
+      extraFields: [
+        { key: 'keterangan', label: 'Keterangan' },
+        { key: 'metadata', label: 'Metadata' }
+      ],
+      nameMap: {
+        '1': 'Tinggi',
+        '2': 'Sedang',
+        '3': 'Rendah'
+      },
+      colors: {
+        'Tinggi': '#dc2626',
+        'Sedang': '#f59e0b',
+        'Rendah': '#a78bfa'
+      }
+    },
+    'geostruktur-big': {
+      label: 'Geologi Geostruktur (BIG)',
+      query: 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/9/query',
+      nameField: 'namaobj',
+      titleField: 'namaobj',
+      areaField: null,
+      dateField: null,
+      nameLabel: 'Jenis',
+      geomKind: 'line',
+      emptyMessage: 'Tidak ada garis geostruktur di wilayah ini.',
+      loadingMessage: 'Memuat data geologi geostruktur...',
+      source: 'BIG KSP SatuPeta - Geostruktur',
+      tableFields: [
+        { key: 'namaobj', label: 'Jenis' },
+        { key: 'klsstr', label: 'Kelas Struktur' },
+        { key: 'remark', label: 'Nama' },
+        { key: 'fcode', label: 'Kode' }
+      ],
+      extraFields: [
+        { key: 'klsstr', label: 'Kelas Struktur' },
+        { key: 'remark', label: 'Nama' },
+        { key: 'fcode', label: 'Kode' }
+      ],
+      colors: {
+        'Lipatan': '#df5da7',
+        'Scarp': '#e8e8e8',
+        'Foliasi': '#d9d9d9',
+        'Patahan': '#c5c5c5',
+        'Rekahan': '#b5b5b5',
+        'Kelurusan': '#a1a1a1',
+        'Sumbu Lipatan': '#8e8e8e',
+        'Pematang Pantai': '#7a7a7a',
+        'Not Classified': '#686868'
+      }
+    },
+    penggunaan10k: {
+      label: 'Penggunaan Tanah 10K',
+      query: 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/3/query',
+      nameField: 'ptnobjname',
+      titleField: 'ptnobjname',
+      areaField: 'ig25k_penggunaan10k_ar_area',
+      dateField: 'ptndate',
+      emptyMessage: 'Tidak ada polygon penggunaan tanah di wilayah ini.',
+      loadingMessage: 'Memuat data penggunaan tanah...',
+      source: 'KSP SatuPeta',
+      tableFields: [
+        { key: 'ptnobjname', label: 'Jenis' },
+        { key: 'ig25k_penggunaan10k_ar_area', label: 'Luas', type: 'area' },
+        { key: 'ptndate', label: 'Tanggal', type: 'date' },
+        { key: 'fcode', label: 'Kode' }
+      ]
+    },
+    'geologi-bnpb': {
+      label: 'Peta Geologi (BNPB)',
+      query: 'https://gis.bnpb.go.id/server/rest/services/thematic/PETA_GEOLOGI/MapServer/1/query',
+      nameField: 'UMUROBJ',
+      titleField: 'NAMOBJ',
+      areaField: null,
+      dateField: null,
+      emptyMessage: 'Tidak ada polygon geologi di wilayah ini.',
+      loadingMessage: 'Memuat data peta geologi...',
+      source: 'BNPB - Peta Geologi Indonesia',
+      tableFields: [
+        { key: 'NAMOBJ', label: 'Nama' },
+        { key: 'UMUROBJ', label: 'Umur' },
+        { key: 'SIMOBJ', label: 'Simbol' },
+        { key: 'FCODE', label: 'Kode' }
+      ],
+      colors: {
+        'Holosen': '#8b50c7', 'Kuarter': '#62c232', 'Neogen': '#ba5a30',
+        'Miocene': '#4aaec2', 'Miosen': '#4aaec2', 'Oligocene': '#c22d61',
+        'Paleogen': '#c9b34f', 'Pra Tersier': '#235ca6', 'Meso - Paleo': '#3da167',
+        'Paleo - Meso': '#3da167', 'Tersier': '#c932a4', 'Mesozoikum': '#2523a6',
+        'Jura': '#709c3b', 'Triassic': '#b52634', 'Trias': '#b52634',
+        'Paleozoikum': '#32bfaa', 'Perm': '#9c6d22', 'Permian': '#9c6d22',
+        'Pre-Permia': '#27a847', 'Carbonifer': '#c9c42e', 'Karbon': '#c9c42e',
+        'Permo Karbon': '#3982b3', 'Kapur': '#2c49bf', 'Devonian': '#9e423f',
+        'Silurian': '#9924ad', 'Ordovician': '#9c3379', 'Prakambrium': '#5433a3',
+        'Proteroz': '#a0b336'
+      }
+    },
+    'kh-esdm': {
+      label: 'Kawasan Hutan (ESDM)',
+      query: 'https://geoportal.esdm.go.id/gis1/rest/services/Kawasan_Hutan/MapServer/0/query',
+      nameField: 'deskripsi',
+      titleField: 'deskripsi',
+      areaField: 'lskkws',
+      areaUnit: 'ha',
+      dateField: 'tglskkws',
+      nameLabel: 'Fungsi',
+      emptyMessage: 'Tidak ada polygon kawasan hutan di wilayah ini.',
+      loadingMessage: 'Memuat data kawasan hutan (ESDM)...',
+      source: 'Geoportal ESDM',
+      tableFields: [
+        { key: 'deskripsi', label: 'Fungsi' },
+        { key: 'lskkws', label: 'Luas', type: 'ha' },
+        { key: 'noskkws', label: 'No. SK' },
+        { key: 'fcode', label: 'Kode' }
+      ],
+      extraFields: [
+        { key: 'namobj', label: 'Nama' },
+        { key: 'noskkws', label: 'No. SK' },
+        { key: 'remark', label: 'Keterangan' }
+      ],
+      colors: {
+        'Kawasan Konservasi': '#c500ff',
+        'Kawasan Konservasi Laut': '#ffffff',
+        'Hutan Lindung': '#38a800',
+        'Hutan Produksi Tetap': '#ffff00',
+        'Hutan Produksi Terbatas': '#aaff00',
+        'Hutan Produksi Yang Dapat Dikonversi': '#ff73df',
+        'Hutan Produksi yang Dapat Dikonversi': '#ff73df',
+        'Areal Penggunaan Lain': '#e0e0e0',
+        'Tubuh Air': '#00c5ff',
+        'Tidak Terdefinisi': '#ff5500'
+      }
+    },
+    'kh-kemenhut': {
+      label: 'Kawasan Hutan (Kemenhut)',
+      query: 'https://simontana.kehutanan.go.id/arcgis/rest/services/simontana/kh/MapServer/0/query',
+      nameField: 'fungsikws',
+      titleField: null,
+      areaField: 'lskpnjk',
+      areaUnit: 'ha',
+      dateField: 'tglskpnjk',
+      nameLabel: 'Fungsi',
+      emptyMessage: 'Tidak ada polygon kawasan hutan di wilayah ini.',
+      loadingMessage: 'Memuat data kawasan hutan (Kemenhut)...',
+      source: 'SIMANTAN KLHK',
+      tableFields: [
+        { key: 'fungsikws', label: 'Fungsi', type: 'nameMap' },
+        { key: 'lskpnjk', label: 'Luas', type: 'ha' },
+        { key: 'noskpnjk', label: 'No. SK' },
+        { key: 'wadmkk', label: 'Kabupaten' }
+      ],
+      extraFields: [
+        { key: 'namobj', label: 'Nama' },
+        { key: 'wadmpr', label: 'Provinsi' },
+        { key: 'wadmkk', label: 'Kabupaten' },
+        { key: 'noskpnjk', label: 'No. SK' },
+        { key: 'keterangan', label: 'Keterangan' }
+      ],
+      nameMap: {
+        '1': 'Kawasan Konservasi',
+        '1001': 'Hutan Lindung',
+        '1002': 'Kawasan Konservasi',
+        '1003': 'Hutan Produksi Tetap',
+        '1004': 'Hutan Produksi Terbatas',
+        '1005': 'Hutan Produksi yang Dapat Dikonversi',
+        '1007': 'Areal Penggunaan Lain',
+        '10021': 'Kawasan Konservasi',
+        '10022': 'Kawasan Konservasi',
+        '10023': 'Kawasan Konservasi',
+        '10024': 'Kawasan Konservasi',
+        '10025': 'Kawasan Konservasi',
+        '10026': 'Kawasan Konservasi',
+        '100201': 'Kawasan Konservasi',
+        '100202': 'Kawasan Konservasi Laut',
+        '100211': 'Kawasan Konservasi Laut',
+        '100221': 'Kawasan Konservasi Laut',
+        '100241': 'Kawasan Konservasi Laut',
+        '100251': 'Kawasan Konservasi Laut'
+      },
+      colors: {
+        'Kawasan Konservasi': '#c500ff',
+        'Kawasan Konservasi Laut': '#ffffff',
+        'Hutan Lindung': '#38a800',
+        'Hutan Produksi Tetap': '#ffff00',
+        'Hutan Produksi Terbatas': '#aaff00',
+        'Hutan Produksi yang Dapat Dikonversi': '#ff73df',
+        'Areal Penggunaan Lain': '#e0e0e0',
+        'Tubuh Air': '#00c5ff',
+        'Tidak Terdefinisi': '#ff5500'
+      }
+    }
+  };
   var KAB_URL = 'assets/data/bps/geojson/kabupaten.geojson';
   var DESA_URL = 'assets/data/kode_wilayah.json';
-  var BOUNDARY_API = 'https://wilayah.smartartstudio.my.id/api/boundaries/';
+  var BIG_RBI_BASE = 'https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH/';
   var PAGE_SIZE = 1000;
+
+  function currentSource() {
+    var sel = document.getElementById('satupetaInputLayer');
+    var id = (sel && sel.value) || 'penggunaan10k';
+    return LAYER_SOURCES[id] || LAYER_SOURCES.penggunaan10k;
+  }
 
   var COLORS = {
     'Sawah Irigasi 2x Padi/thn': '#2ecc71',
@@ -44,18 +312,32 @@
     desaData: null,
     selectedFeature: null,
     selectedBoundary: null,
+    outlineLayer: null,
     clipped: [],
     loading: false,
     fetchAbort: null
   };
 
-  function getColor(name) {
+  function getColor(name, src) {
     if (!name) return DEFAULT_COLOR;
-    if (COLORS[name]) return COLORS[name];
-    var key = Object.keys(COLORS).find(function (k) {
+    var map = (src && src.colors) || COLORS;
+    if (map[name]) return map[name];
+    var key = Object.keys(map).find(function (k) {
       return k.toLowerCase() === name.toLowerCase();
     });
-    return key ? COLORS[key] : DEFAULT_COLOR;
+    return key ? map[key] : DEFAULT_COLOR;
+  }
+
+  function resolveName(src, v) {
+    if (v == null || v === '') return null;
+    if (!src || !src.nameMap) return String(v);
+    var s = String(v);
+    return src.nameMap[s] || src.nameMap[s.slice(0, 4)] || src.nameMap[s.slice(0, 3)] || String(v);
+  }
+
+  function formatHa(v) {
+    if (v == null || isNaN(v)) return '-';
+    return Number(v).toLocaleString('id-ID', { maximumFractionDigits: 1 }) + ' ha';
   }
 
   function esc(s) {
@@ -139,11 +421,51 @@
       });
   }
 
-  /* ---- Fetch boundary from API ---- */
-  function fetchBoundary(kode) {
-    var url = BOUNDARY_API + kode;
+  /* ---- Fetch boundary from BIG RBI ---- */
+  function esriRingsToPolygon(rings) {
+    var outers = [], holes = [];
+    for (var i = 0; i < rings.length; i++) {
+      var r = rings[i], a = 0;
+      for (var j = 0; j < r.length - 1; j++) a += r[j][0] * r[j + 1][1] - r[j + 1][0] * r[j][1];
+      if (a / 2 < 0) outers.push(r);
+      else holes.push(r);
+    }
+    if (!outers.length) { outers = [rings[0]]; holes = rings.slice(1); }
+    if (outers.length === 1) return { type: 'Polygon', coordinates: [outers[0]].concat(holes) };
+    return {
+      type: 'MultiPolygon',
+      coordinates: outers.map(function (o, idx) { return idx === 0 ? [o].concat(holes) : [o]; })
+    };
+  }
+
+  function fetchBoundary(kode, attempt) {
+    attempt = attempt || 0;
+    var parts = String(kode || '').split('.');
+    var url;
+    if (parts.length === 4) {
+      url = BIG_RBI_BASE + 'BATAS_DESAKEL_AR/MapServer/0/query?where='
+        + encodeURIComponent("KDEPUM='" + kode + "'")
+        + '&f=json&returnGeometry=true&outSR=4326'
+        + '&outFields=KDEPUM,NAMOBJ,WADMKK,WADMPR,LUASWH&geometryPrecision=5';
+    } else if (parts.length === 2) {
+      url = BIG_RBI_BASE + 'BATAS_KABKOTA_AR/MapServer/0/query?where='
+        + encodeURIComponent("KDPKAB='" + kode + "'")
+        + '&f=json&returnGeometry=true&outSR=4326'
+        + '&outFields=NAMOBJ,KDPKAB&geometryPrecision=5';
+    } else {
+      return Promise.resolve(null);
+    }
+
+    var retry = function () {
+      if (attempt < 3) {
+        return new Promise(function (res) { setTimeout(res, 700 * (attempt + 1)); })
+          .then(function () { return fetchBoundary(kode, attempt + 1); });
+      }
+      return null;
+    };
+
     var ctrl = new AbortController();
-    var timeout = setTimeout(function () { ctrl.abort(); }, 15000);
+    var timeout = setTimeout(function () { ctrl.abort(); }, 20000);
     return fetch(url, { signal: ctrl.signal })
       .then(function (r) {
         clearTimeout(timeout);
@@ -151,21 +473,58 @@
         return r.json();
       })
       .then(function (data) {
-        if (!data.path || !data.path.length) return null;
-        var rings = data.path.map(function (ring) {
-          return ring.map(function (p) { return [p[1], p[0]]; });
-        });
-        return {
+        if (data && data.status === 'error') {
+          throw new Error((data.messages && data.messages[0]) || 'BIG error');
+        }
+        var f = data.features && data.features[0];
+        if (!f || !f.geometry || !f.geometry.rings || !f.geometry.rings.length) {
+          if (attempt < 3) return retry();
+          return null;
+        }
+        var a = f.attributes || {};
+        return ensureMultiPolygon({
           type: 'Feature',
-          properties: { name: data.nama || '' },
-          geometry: { type: 'Polygon', coordinates: rings }
-        };
+          properties: { name: a.NAMOBJ || a.namobj || '', kode: kode },
+          geometry: esriRingsToPolygon(f.geometry.rings)
+        });
       })
       .catch(function (e) {
         clearTimeout(timeout);
-        console.warn('[Satupeta] fetchBoundary failed:', e.message);
+        if (attempt < 3) return retry();
+        console.warn('[Satupeta] fetchBoundary BIG failed:', e.message);
         return null;
       });
+  }
+
+  function drawSelOutline(boundary) {
+    clearSelOutline();
+    if (!boundary || !window.map) return;
+    try {
+      var gj = boundary;
+      if (typeof turf !== 'undefined' && turf.rewind) {
+        try { gj = turf.rewind(boundary); } catch (e) { gj = boundary; }
+      }
+      state.outlineLayer = L.geoJSON(gj, {
+        interactive: false,
+        style: function () {
+          return { color: '#2563eb', weight: 2.5, opacity: 0.95, dashArray: '7 5', fill: false };
+        }
+      });
+      state.outlineLayer.addTo(window.map);
+      state.outlineLayer.bringToFront();
+    } catch (e) { console.warn('[Satupeta] drawSelOutline gagal:', e); }
+  }
+
+  function clearSelOutline() {
+    if (state.outlineLayer && window.map) {
+      window.map.removeLayer(state.outlineLayer);
+    }
+    state.outlineLayer = null;
+  }
+
+  function rewindSafe(gj) {
+    if (typeof turf === 'undefined' || !turf.rewind || !gj) return gj;
+    try { return turf.rewind(gj); } catch (e) { return gj; }
   }
 
   /* ---- Fetch pages with spatial filter ---- */
@@ -178,7 +537,7 @@
     var info = document.getElementById('satupetaInfo');
 
     var loop = function () {
-      var url = API_URL
+      var url = currentSource().query
         + '?where=1%3D1&outFields=*&returnGeometry=true'
         + '&geometry=' + encodeURIComponent(envelopeJson)
         + '&geometryType=esriGeometryEnvelope'
@@ -196,7 +555,7 @@
         .then(function (data) {
           if (data.features) all = all.concat(data.features);
           if (info) {
-            info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> Mengambil data... ' + all.length + ' polygon</div>';
+            info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> Mengambil data... ' + all.length + ' fitur</div>';
           }
           if (data.exceededTransferLimit && data.features && data.features.length > 0) {
             offset += PAGE_SIZE;
@@ -290,14 +649,31 @@
   }
 
   function selectKabupaten(feature) {
-    state.selectedFeature = feature;
+    var p = feature.properties;
+    var kode = p.kdprov && p.kdkab
+      ? (p.kdprov + '.' + p.kdkab)
+      : (p.idkab ? (String(p.idkab).slice(0, 2) + '.' + String(p.idkab).slice(2)) : '');
+
+    state.selectedFeature = {
+      properties: Object.assign({}, p, { nama: p.nmkab, nmkab: p.nmkab, nmprov: p.nmprov }),
+      geometry: feature.geometry
+    };
     state.selectedBoundary = ensureMultiPolygon({
       type: 'Feature',
-      properties: feature.properties,
+      properties: p,
       geometry: feature.geometry
     });
-    updateSelectedLabel(feature.properties.nmkab, feature.properties.nmprov);
-    fetchAndDisplay();
+    updateSelectedLabel(p.nmkab, p.nmprov);
+    drawSelOutline(state.selectedBoundary);
+
+    fetchBoundary(kode).then(function (boundary) {
+      if (boundary) {
+        state.selectedBoundary = boundary;
+        state.selectedFeature.geometry = boundary.geometry;
+        drawSelOutline(boundary);
+      }
+      fetchAndDisplay();
+    });
   }
 
   function selectDesa(kode, nama) {
@@ -309,17 +685,24 @@
 
     fetchBoundary(kode).then(function (boundary) {
       if (!boundary) {
-        if (info) info.innerHTML = 'Gagal memuat batas desa. Coba lagi.';
+        if (info) info.innerHTML = 'Gagal memuat batas desa dari BIG RBI. Coba lagi.';
         return;
       }
       state.selectedFeature = { properties: { kode: kode, nama: nama }, geometry: boundary.geometry };
       state.selectedBoundary = boundary;
       updateSelectedLabel(nama, kode);
+      drawSelOutline(boundary);
       fetchAndDisplay();
     });
   }
 
   function clearSelection() {
+    clearSelOutline();
+    if (state.fetchAbort) {
+      state.fetchAbort.abort();
+      state.fetchAbort = null;
+    }
+    state.loading = false;
     state.selectedFeature = null;
     state.selectedBoundary = null;
     state.clipped = [];
@@ -333,6 +716,161 @@
     }
     var info = document.getElementById('satupetaInfo');
     if (info) info.style.display = 'none';
+    clearFeatureTable();
+  }
+
+  function clearFeatureTable() {
+    var wrap = document.getElementById('satupetaFeatureTable');
+    if (wrap) {
+      wrap.style.display = 'none';
+      wrap.innerHTML = '';
+    }
+  }
+
+  function getFieldVal(props, key) {
+    if (props[key] != null && props[key] !== '') return props[key];
+    var up = key.toUpperCase();
+    if (props[up] != null && props[up] !== '') return props[up];
+    var low = key.toLowerCase();
+    if (props[low] != null && props[low] !== '') return props[low];
+    return null;
+  }
+
+  function renderFeatureTable() {
+    var wrap = document.getElementById('satupetaFeatureTable');
+    if (!wrap) return;
+    var feats = state.clipped;
+    var src = currentSource();
+    if (!feats || !feats.length) { clearFeatureTable(); return; }
+
+    var fields = src.tableFields || [];
+    var pageSize = 50;
+    var page = 1;
+    var totalPages = Math.max(1, Math.ceil(feats.length / pageSize));
+
+    function cellVal(f, fd) {
+      var p = f.properties || {};
+      var v = getFieldVal(p, fd.key);
+      if (v == null) return '-';
+      if (fd.type === 'date') return esc(formatDate(v));
+      if (fd.type === 'area') return esc(formatLuas(v));
+      if (fd.type === 'ha') return esc(formatHa(v));
+      if (fd.type === 'nameMap') return esc(resolveName(src, v) || String(v));
+      return esc(String(v));
+    }
+
+    function render() {
+      var start = (page - 1) * pageSize;
+      var slice = feats.slice(start, start + pageSize);
+      var html = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0 4px;">'
+        + '<strong style="font-size:11px;color:var(--text-primary);">Tabel Feature — ' + esc(src.label) + '</strong>'
+        + '<span style="font-size:10px;color:var(--text-tertiary);">' + feats.length + ' baris</span></div>';
+      html += '<div class="at-table-wrap" style="width:100%;max-width:100%;min-width:0;max-height:220px;margin:0;overflow-x:auto;overflow-y:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border-color);border-radius:6px;">';
+      html += '<table class="at-table"><thead><tr><th class="at-th-no">No</th>';
+      fields.forEach(function (fd) { html += '<th>' + esc(fd.label) + '</th>'; });
+      html += '<th>' + (currentSource().geomKind === 'line' ? 'Panjang (Clip)' : 'Luas (Clip)') + '</th></tr></thead><tbody>';
+      slice.forEach(function (f, i) {
+        var p = f.properties || {};
+        html += '<tr><td class="at-td-no">' + (start + i + 1) + '</td>';
+        fields.forEach(function (fd) {
+          var v = cellVal(f, fd);
+          html += '<td title="' + v.replace(/"/g, '&quot;') + '">' + v + '</td>';
+        });
+        if (p._panjang_km != null && p._area_ha == null) {
+          html += '<td>' + esc(String(p._panjang_km)) + ' km</td></tr>';
+        } else {
+          html += '<td>' + (p._area_ha ? esc(String(p._area_ha)) + ' ha' : '-') + '</td></tr>';
+        }
+      });
+      html += '</tbody></table></div>';
+      if (totalPages > 1) {
+        html += '<div class="at-pagination">'
+          + '<button class="at-page-btn" type="button" data-ft-page="prev"' + (page <= 1 ? ' disabled' : '') + '>&lsaquo; Prev</button>'
+          + '<span style="font-size:11px;color:var(--text-tertiary);">' + page + ' / ' + totalPages + '</span>'
+          + '<button class="at-page-btn" type="button" data-ft-page="next"' + (page >= totalPages ? ' disabled' : '') + '>Next &rsaquo;</button>'
+          + '</div>';
+      }
+      wrap.innerHTML = html;
+      wrap.style.display = 'block';
+      wrap.querySelectorAll('[data-ft-page]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (btn.getAttribute('data-ft-page') === 'prev' && page > 1) page--;
+          else if (btn.getAttribute('data-ft-page') === 'next' && page < totalPages) page++;
+          else return;
+          render();
+        });
+      });
+    }
+    render();
+  }
+
+  function isLineGeom(gj) {
+    var t = gj && gj.geometry && gj.geometry.type;
+    return t === 'LineString' || t === 'MultiLineString';
+  }
+
+  function clipLineFeature(gj, boundary) {
+    try {
+      var lines = [];
+      if (gj.geometry.type === 'LineString') {
+        lines.push(turf.lineString(gj.geometry.coordinates));
+      } else {
+        gj.geometry.coordinates.forEach(function (coords) {
+          lines.push(turf.lineString(coords));
+        });
+      }
+      var bPolys = boundary.geometry.type === 'MultiPolygon'
+        ? boundary.geometry.coordinates.map(function (c) { return turf.polygon(c); })
+        : [boundary];
+      var kept = [];
+      lines.forEach(function (line) {
+        var hitPoly = null;
+        for (var i = 0; i < bPolys.length; i++) {
+          if (turf.booleanIntersects(line, bPolys[i])) { hitPoly = bPolys[i]; break; }
+        }
+        if (!hitPoly) return;
+        var parts = [line];
+        try {
+          parts = turf.lineSplit(line, turf.polygonToLine(hitPoly)).features;
+        } catch (e) { /* keep whole line */ }
+        parts.forEach(function (seg) {
+          try {
+            if (turf.booleanWithin(seg, hitPoly) || turf.booleanContains(hitPoly, seg)) {
+              kept.push(seg);
+            } else {
+              for (var j = 0; j < bPolys.length; j++) {
+                if (turf.booleanIntersects(seg, bPolys[j])) { kept.push(seg); return; }
+              }
+            }
+          } catch (e) {
+            kept.push(seg);
+          }
+        });
+      });
+      if (!kept.length) return null;
+      var geom = kept.length === 1
+        ? kept[0].geometry
+        : { type: 'MultiLineString', coordinates: kept.map(function (s) {
+            return s.geometry.type === 'LineString' ? s.geometry.coordinates : s.geometry.coordinates[0];
+          }) };
+      return { type: 'Feature', properties: gj.properties, geometry: geom };
+    } catch (e) {
+      if (turf.booleanIntersects(gj, boundary)) return gj;
+      return null;
+    }
+  }
+
+  function clipFeatureToBoundary(gj, boundary) {
+    if (isLineGeom(gj)) return clipLineFeature(gj, boundary);
+    return turf.intersect(turf.featureCollection([gj, boundary]));
+  }
+
+  function measureClip(gj) {
+    if (isLineGeom(gj)) {
+      try { return { km: (turf.length(gj, { units: 'kilometers' }) || 0).toFixed(2), ha: null }; }
+      catch (e) { return { km: null, ha: null }; }
+    }
+    return { km: null, ha: (turf.area(gj) / 10000).toFixed(2) };
   }
 
   /* ---- Main: fetch + clip + display ---- */
@@ -344,7 +882,7 @@
     var info = document.getElementById('satupetaInfo');
     if (info) {
       info.style.display = 'block';
-      info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> Memuat data penggunaan tanah...</div>';
+      info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> ' + esc(currentSource().loadingMessage || 'Memuat data...') + '</div>';
     }
 
     if (state.layer) {
@@ -352,12 +890,15 @@
       state.layer = null;
     }
     state.clipped = [];
+    clearFeatureTable();
 
     var ctrl = new AbortController();
     state.fetchAbort = ctrl;
 
     var boundaryBbox = turf.bbox(state.selectedBoundary);
     var props = state.selectedFeature.properties;
+    var clipBoundary = rewindSafe(state.selectedBoundary);
+    var isLineSrc = currentSource().geomKind === 'line';
 
     fetchPagesWithBBox(boundaryBbox, ctrl.signal)
       .then(function (features) {
@@ -367,12 +908,15 @@
         features.forEach(function (f) {
           var gj = attrToGeoJSON(f);
           if (!gj) { skipped++; return; }
+          if (!isLineGeom(gj)) gj = rewindSafe(gj);
 
           try {
-            var intersection = turf.intersect(turf.featureCollection([gj, state.selectedBoundary]));
+            var intersection = clipFeatureToBoundary(gj, clipBoundary);
             if (intersection && intersection.geometry) {
               var p = gj.properties || {};
-              p._area_ha = (turf.area(intersection) / 10000).toFixed(2);
+              var m = measureClip(intersection);
+              if (m.ha != null) p._area_ha = m.ha;
+              if (m.km != null) p._panjang_km = m.km;
               clipped.push({
                 type: 'Feature',
                 properties: p,
@@ -386,33 +930,40 @@
         state.loading = false;
 
         if (!clipped.length) {
-          if (info) info.innerHTML = 'Tidak ada polygon penggunaan tanah di wilayah ini.';
+          if (info) info.innerHTML = esc(currentSource().emptyMessage || 'Tidak ada fitur di wilayah ini.');
+          clearFeatureTable();
           return;
         }
 
         var types = {};
+        var src = currentSource();
+        var nameField = src.nameField;
         clipped.forEach(function (f) {
-          var name = f.properties.ptnobjname || 'Lainnya';
+          var name = resolveName(src, f.properties[nameField]) || 'Lainnya';
           if (!types[name]) types[name] = 0;
           types[name]++;
         });
         var typeList = Object.keys(types).sort(function (a, b) { return types[b] - types[a]; });
         var typeHtml = typeList.map(function (t) {
-          var color = getColor(t);
+          var color = getColor(t, src);
           return '<span style="display:inline-flex;align-items:center;gap:4px;margin:2px 0;font-size:10px;">'
             + '<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' + color + ';flex-shrink:0;"></span>'
             + esc(t) + ' <strong>' + types[t] + '</strong></span>';
         }).join('');
 
         var areaTotal = clipped.reduce(function (s, f) { return s + parseFloat(f.properties._area_ha || 0); }, 0);
+        var lenTotal = clipped.reduce(function (s, f) { return s + parseFloat(f.properties._panjang_km || 0); }, 0);
         var labelName = props.nmkab || props.nama || props.kode || '-';
         var labelSub = props.nmprov || props.kode || '';
+        var unitHtml = isLineSrc
+          ? 'Panjang: <strong>' + lenTotal.toFixed(2) + ' km</strong>'
+          : 'Luas: <strong>' + areaTotal.toFixed(2) + ' ha</strong>';
 
         var detailHtml = '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">'
           + '<div>'
           + '<div style="font-weight:700;font-size:12px;">' + esc(labelName) + (labelSub ? ', ' + esc(labelSub) : '') + '</div>'
           + '<div style="font-size:10px;color:#64748b;margin-top:2px;">'
-          + 'API: <strong>' + totalFetched + '</strong> feature &middot; Di dalam wilayah: <strong>' + clipped.length + '</strong> polygon &middot; Luas: <strong>' + areaTotal.toFixed(2) + ' ha</strong>'
+          + 'API: <strong>' + totalFetched + '</strong> feature &middot; Di dalam wilayah: <strong>' + clipped.length + '</strong> ' + (isLineSrc ? 'garis' : 'polygon') + ' &middot; ' + unitHtml
           + (skipped > 0 ? ' &middot; Skip: ' + skipped : '')
           + '</div>'
           + '</div>'
@@ -422,10 +973,15 @@
           + '<div style="display:flex;flex-wrap:wrap;gap:2px 10px;margin-top:6px;padding-top:6px;border-top:1px solid #f0f0f0;">' + typeHtml + '</div>';
 
         if (info) info.innerHTML = detailHtml;
+        renderFeatureTable();
 
         var layer = L.geoJSON(turf.featureCollection(clipped), {
           style: function (f) {
-            var color = getColor(f.properties.ptnobjname);
+            var src = currentSource();
+            var color = getColor(resolveName(src, f.properties[src.nameField]), src);
+            if (isLineSrc) {
+              return { color: color, weight: 1.6, opacity: 0.9 };
+            }
             return {
               color: color,
               weight: 1.2,
@@ -440,6 +996,8 @@
         });
         layer.addTo(window.map);
         state.layer = layer;
+        layer.bringToFront();
+        if (state.outlineLayer) state.outlineLayer.bringToFront();
 
         var bbox4326 = [boundaryBbox[0], boundaryBbox[1], boundaryBbox[2], boundaryBbox[3]];
         window.map.fitBounds([[bbox4326[1], bbox4326[0]], [bbox4326[3], bbox4326[2]]], { padding: [40, 40] });
@@ -455,19 +1013,44 @@
   /* ---- Popup HTML ---- */
   function buildPopup(feature) {
     var p = feature.properties || {};
-    var color = getColor(p.ptnobjname);
+    var src = currentSource();
+    var nameVal = resolveName(src, p[src.nameField]);
+    var color = getColor(nameVal, src);
     var html = '<div class="agol-popup" style="min-width:240px">';
     html += '<div class="agol-popup-header agol-geo-satupeta">';
-    html += '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:' + color + ';"></span>Penggunaan Tanah 10K</div>';
-    html += '<div class="agol-popup-title">' + esc(p.ptnobjname || p.namobj || '-') + '</div>';
+    html += '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:' + color + ';"></span>' + esc(src.label) + '</div>';
+    html += '<div class="agol-popup-title">' + esc((src.titleField ? p[src.titleField] : null) || nameVal || p.namobj || p.NAMOBJ || '-') + '</div>';
     html += '</div>';
     html += '<div class="agol-popup-body"><div class="agol-popup-fields">';
-    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Luas</span><span class="agol-popup-field-value">' + formatLuas(p.ig25k_penggunaan10k_ar_area) + '</span></div>';
-    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Luas (Clip)</span><span class="agol-popup-field-value">' + (p._area_ha ? p._area_ha + ' ha' : '-') + '</span></div>';
-    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Tanggal</span><span class="agol-popup-field-value">' + formatDate(p.ptndate) + '</span></div>';
-    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Kode</span><span class="agol-popup-field-value">' + esc(p.fcode || '-') + '</span></div>';
+    if (src.areaField && p[src.areaField] != null) {
+      var areaTxt = src.areaUnit === 'ha' ? formatHa(p[src.areaField]) : formatLuas(p[src.areaField]);
+      html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Luas</span><span class="agol-popup-field-value">' + areaTxt + '</span></div>';
+    }
+    if (p._panjang_km != null && p._area_ha == null) {
+      html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Panjang (Clip)</span><span class="agol-popup-field-value">' + esc(String(p._panjang_km)) + ' km</span></div>';
+    } else {
+      html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Luas (Clip)</span><span class="agol-popup-field-value">' + (p._area_ha ? p._area_ha + ' ha' : '-') + '</span></div>';
+    }
+    if (src.dateField && p[src.dateField]) {
+      html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Tanggal</span><span class="agol-popup-field-value">' + formatDate(p[src.dateField]) + '</span></div>';
+    }
+    if (nameVal) {
+      var nameLabel = src.nameLabel || (src.nameField === 'UMUROBJ' ? 'Umur Geologi' : 'Jenis');
+      html += '<div class="agol-popup-field"><span class="agol-popup-field-label">' + nameLabel + '</span><span class="agol-popup-field-value">' + esc(nameVal) + '</span></div>';
+    }
+    if (src.extraFields) {
+      src.extraFields.forEach(function (fd) {
+        var v = getFieldVal(p, fd.key);
+        if (v == null || v === '') return;
+        var txt = fd.type === 'ha' ? formatHa(v) : String(v);
+        html += '<div class="agol-popup-field"><span class="agol-popup-field-label">' + esc(fd.label) + '</span><span class="agol-popup-field-value">' + esc(txt) + '</span></div>';
+      });
+    }
+    if (p.fcode || p.FCODE) {
+      html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Kode</span><span class="agol-popup-field-value">' + esc(p.fcode || p.FCODE) + '</span></div>';
+    }
     html += '</div></div>';
-    html += '<div class="agol-popup-footer"><span>Sumber: KSP SatuPeta</span></div>';
+    html += '<div class="agol-popup-footer"><span>Sumber: ' + esc(src.source || '-') + '</span></div>';
     html += '</div>';
     return html;
   }
@@ -483,6 +1066,7 @@
 
   /* ---- Cleanup ---- */
   function cleanup() {
+    clearSelOutline();
     if (state.fetchAbort) {
       state.fetchAbort.abort();
       state.fetchAbort = null;
@@ -492,6 +1076,7 @@
       state.layer = null;
     }
     state.clipped = [];
+    clearFeatureTable();
     state.loading = false;
     state.selectedFeature = null;
     state.selectedBoundary = null;
@@ -537,12 +1122,19 @@
       levelSel.addEventListener('change', onLevelChange);
     }
 
+    var layerSel = document.getElementById('satupetaInputLayer');
+    if (layerSel) {
+      layerSel.addEventListener('change', function () {
+        if (state.selectedBoundary) fetchAndDisplay();
+      });
+    }
+
     loadKab();
     loadDesa();
 
     var origOpenGeotani = window.openGeotaniAnalysisTab;
     window.openGeotaniAnalysisTab = function (tabId) {
-      if (origOpenGeotani) origOpenGeotani(tabId);
+      if (origOpenGeotani) origOpenGeotani('satupeta');
       if (tabId === 'satupeta') {
         state.visible = true;
         loadKab();

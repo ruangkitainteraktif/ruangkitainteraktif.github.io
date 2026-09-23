@@ -354,20 +354,19 @@
         </svg>
         <span>Hujan</span>
       </button>
-      <button type="button" class="ql-btn" id="qlRadar" title="Radar Cuaca BMKG">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/><path d="M12 6a6 6 0 0 1 6 6"/>
-          <circle cx="12" cy="12" r="2" fill="currentColor"/>
-        </svg>
-        <span>Radar</span>
-        <span class="ql-badge">NEW</span>
-      </button>
       <button type="button" class="ql-btn" id="qlProvinsi" title="Batas Provinsi (PBF)">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 6l3-3h12l3 3"/><path d="M3 6v14l9-3 9 3V6"/>
           <path d="M12 3v18"/>
         </svg>
         <span>Boundaries</span>
+      </button>
+      <button type="button" class="ql-btn" id="qlRadar" title="Radar Cuaca BMKG">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/><path d="M12 6a6 6 0 0 1 6 6"/>
+          <circle cx="12" cy="12" r="2" fill="currentColor"/>
+        </svg>
+        <span>Radar</span>
       </button>
       <button type="button" class="ql-btn" id="qlViirsNoaa20" title="VIIRS NOAA-20 Thermal Anomalies">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -992,7 +991,7 @@
             <h4 style="font-size:15px; margin-bottom:4px;">GeoTani Analysis</h4>
             <p class="geotools-desc" style="margin-bottom:20px;">Petakan, Analisis, dan Optimalkan</p>
             <div class="geotani-analysis-cards" role="tablist" aria-label="Menu analisis Geotani">
-              <button id="geotani-lbs-tab" class="geotani-analysis-card active" type="button" role="tab" aria-selected="true" aria-controls="geotani-lbs-panel" onclick="openGeotaniAnalysisTab('lbs')">
+              <button id="geotani-lbs-tab" class="geotani-analysis-card" type="button" role="tab" aria-selected="false" aria-controls="geotani-lbs-panel" onclick="openGeotaniAnalysisTab('lbs')">
                 <span class="geotani-card-icon">🌾</span>
                 <span class="geotani-card-title">LBS Analysis</span>
                 <span class="geotani-card-desc">Lahan Baku Sawah</span>
@@ -1017,13 +1016,13 @@
                 <span class="geotani-card-title">KTA Analysis</span>
                 <span class="geotani-card-desc">Ketahanan Pangan</span>
               </button>
-              <button id="geotani-satupeta-tab" class="geotani-analysis-card" type="button" role="tab" aria-selected="false" aria-controls="geotani-satupeta-panel" onclick="openGeotaniAnalysisTab('satupeta')">
+              <button id="geotani-satupeta-tab" class="geotani-analysis-card active" type="button" role="tab" aria-selected="true" aria-controls="geotani-satupeta-panel" onclick="openGeotaniAnalysisTab('satupeta')">
                 <span class="geotani-card-icon">🌿</span>
-                <span class="geotani-card-title">Penggunaan Tanah</span>
-                <span class="geotani-card-desc">10K SatuPeta</span>
+                <span class="geotani-card-title">Analisis Spasial</span>
+                <span class="geotani-card-desc">Penggunaan Tanah 10K</span>
               </button>
             </div>
-            <div id="geotani-lbs-panel" class="geotani-analysis-panel active" role="tabpanel" aria-labelledby="geotani-lbs-tab">
+            <div id="geotani-lbs-panel" class="geotani-analysis-panel" role="tabpanel" aria-labelledby="geotani-lbs-tab" hidden>
               <section class="geotani-kta-card" aria-labelledby="lbsOverlayTitle">
                 <h5 id="lbsOverlayTitle">LBS</h5>
                 <div style="display:grid;gap:10px;margin-top:8px;">
@@ -1229,10 +1228,22 @@
                 </div>
               </section>
             </div>
-            <div id="geotani-satupeta-panel" class="geotani-analysis-panel" role="tabpanel" aria-labelledby="geotani-satupeta-tab" hidden>
+            <div id="geotani-satupeta-panel" class="geotani-analysis-panel active" role="tabpanel" aria-labelledby="geotani-satupeta-tab">
               <section class="geotani-kta-card">
-                <h5>Penggunaan Tanah 10K</h5>
                 <div style="display:grid;gap:10px;margin-top:8px;">
+                  <div>
+                    <label class="geotani-form-label">Input Layer 1</label>
+                    <select id="satupetaInputLayer" class="geotani-form-select">
+                      <option value="lsd-50k" selected>LSD 50K (BIG)</option>
+                      <option value="lbs-50k">LBS 50K (BIG)</option>
+                      <option value="likuifaksi-big">Kerentanan Likuifaksi (BIG)</option>
+                      <option value="geostruktur-big">Geologi Geostruktur (BIG)</option>
+                      <option value="penggunaan10k">Penggunaan Tanah 10K (SatuPeta)</option>
+                      <option value="geologi-bnpb">Peta Geologi (BNPB)</option>
+                      <option value="kh-esdm">Kawasan Hutan (ESDM)</option>
+                      <option value="kh-kemenhut">Kawasan Hutan (Kemenhut)</option>
+                    </select>
+                  </div>
                   <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
                     <div>
                       <label class="geotani-form-label">Level</label>
@@ -1252,6 +1263,7 @@
                     </div>
                   </div>
                   <div id="satupetaInfo" style="display:none;font-size:11px;color:#475569;padding:6px 0;"></div>
+                  <div id="satupetaFeatureTable" style="display:none;"></div>
                   <button id="satupetaToggleBtn" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:none;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Tampilkan Layer</button>
                   <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">
                     <button id="btnClearSatupeta" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Hapus Layer</button>

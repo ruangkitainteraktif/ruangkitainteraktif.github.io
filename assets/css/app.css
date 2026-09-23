@@ -2954,7 +2954,7 @@
       min-height: 0;
     }
 
-    .geotani-analysis-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 12px 0 16px; }
+    .geotani-analysis-cards { display: none !important; }
     .geotani-analysis-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 8px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-card); cursor: pointer; transition: all .2s ease; text-align: center; }
     .geotani-analysis-card:hover { border-color: var(--accent-green); background: var(--bg-card-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(22, 163, 74, .1); }
     .geotani-analysis-card.active { border-color: var(--accent-green); background: var(--bg-card-active); box-shadow: 0 2px 8px rgba(22, 163, 74, .2); }
@@ -2963,8 +2963,13 @@
     .geotani-analysis-card.active .geotani-card-title { color: var(--accent-green); }
     .geotani-card-desc { font-size: 9px; color: var(--text-muted); font-weight: 500; }
     .geotani-analysis-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
-    .geotani-analysis-panel { display: none; }
+    .geotani-analysis-panel { display: none !important; }
     .geotani-analysis-panel.active { display: block; }
+    #geotani-satupeta-panel { display: block !important; }
+    #geotani-satupeta-panel .geotani-kta-card > div { min-width: 0; }
+    #satupetaFeatureTable { min-width: 0; max-width: 100%; width: 100%; box-sizing: border-box; }
+    #satupetaFeatureTable .at-table-wrap { width: 100%; max-width: 100%; min-width: 0; margin: 0; overflow-x: auto !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch; }
+    #satupetaFeatureTable .at-table { width: max-content; min-width: 100%; }
     .geotani-kta-card { margin: 0; padding: 13px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-card); }
     .geotani-kta-card h5 { display: flex; align-items: center; gap: 6px; margin: 0 0 5px; color: var(--text-primary); font-size: 13px; text-transform: none; letter-spacing: normal; }
     .geotani-kta-card h5::before { content: '◈'; color: var(--accent-green); font-size: 15px; }
