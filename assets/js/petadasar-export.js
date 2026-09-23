@@ -17,8 +17,14 @@
     }
   ];
 
-  function setStatus(msg, isError) {
+  var _statusTimer = null;
+
+  function setStatus(msg, isError, autoHideMs) {
     var el = document.getElementById('petadasarTiffStatus');
+    if (_statusTimer) {
+      clearTimeout(_statusTimer);
+      _statusTimer = null;
+    }
     if (!el) return;
     if (!msg) {
       el.style.display = 'none';
@@ -29,6 +35,12 @@
     el.style.display = '';
     el.textContent = msg;
     el.classList.toggle('petadasar-tiff-status--error', !!isError);
+    if (autoHideMs) {
+      _statusTimer = setTimeout(function () {
+        _statusTimer = null;
+        setStatus('');
+      }, autoHideMs);
+    }
   }
 
   function setBusy(busy) {
@@ -225,15 +237,15 @@
 
   async function exportPetadasarGeoTiff() {
     if (typeof window.GeoTIFF === 'undefined' || typeof window.GeoTIFF.writeArrayBuffer !== 'function') {
-      setStatus('Library geotiff.js belum termuat. Muat ulang halaman.', true);
+      setStatus('Library geotiff.js belum termuat. Muat ulang halaman.', true, 8000);
       return;
     }
     if (!window.map || !L) {
-      setStatus('Peta tidak siap.', true);
+      setStatus('Peta tidak siap.', true, 8000);
       return;
     }
     if (!isPetadasarActive()) {
-      setStatus('Basemap aktif bukan Peta Dasar ATR/BPN.', true);
+      setStatus('Basemap aktif bukan Peta Dasar ATR/BPN.', true, 8000);
       return;
     }
 
@@ -273,10 +285,10 @@
       var zoom = window.map.getZoom();
       var name = buildFilename(zoom, decoded.width, decoded.height);
       downloadArrayBuffer(buffer, name);
-      setStatus('Berhasil: ' + name + ' (' + decoded.width + '×' + decoded.height + ', EPSG:3857).');
+      setStatus('Berhasil: ' + name + ' (' + decoded.width + '×' + decoded.height + ', EPSG:3857).', false, 4000);
     } catch (err) {
       console.error('[petadasar-export]', err);
-      setStatus('Gagal export: ' + (err && err.message ? err.message : err), true);
+      setStatus('Gagal export: ' + (err && err.message ? err.message : err), true, 8000);
     } finally {
       setBusy(false);
     }
