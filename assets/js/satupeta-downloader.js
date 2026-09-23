@@ -525,7 +525,7 @@
   var DEFAULT_COLOR = '#3498db';
 
   var state = {
-    level: 'desa',
+    level: 'kabupaten',
     layer: null,
     visible: false,
     kabData: null,
