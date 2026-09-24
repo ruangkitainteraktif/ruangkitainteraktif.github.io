@@ -23,6 +23,61 @@
   ];
   var lastRegionMatch = null;
 
+  /* === Offline Q&A Knowledge Base === */
+  var _qaCache = null;
+  var _qaLoadPromise = null;
+  var QA_THRESHOLD = 30;
+
+  function loadQa() {
+    if (_qaCache) return Promise.resolve(_qaCache);
+    if (_qaLoadPromise) return _qaLoadPromise;
+    _qaLoadPromise = fetch('assets/data/qa.json')
+      .then(function (r) { if (!r.ok) throw new Error('qa http'); return r.json(); })
+      .then(function (data) { _qaCache = (data && data.entries) || []; return _qaCache; })
+      .catch(function () { _qaCache = []; _qaLoadPromise = null; return _qaCache; });
+    return _qaLoadPromise;
+  }
+
+  function matchQa(text) {
+    return loadQa().then(function (entries) {
+      if (!entries.length) return null;
+      var norm = function (s) { return (s || '').toLowerCase().replace(/[^a-z0-9.\s]+/g, ' ').replace(/\s+/g, ' ').trim(); };
+      var qn = norm(text);
+      var qTokens = qn.split(/\s+/).filter(function (t) { return t.length >= 2; });
+      var qCompact = qn.replace(/\s+/g, '');
+      var best = null;
+      var bestScore = 0;
+      entries.forEach(function (e) {
+        var score = 0;
+        var terms = (e.terms || []).concat([e.id || '']);
+        terms.forEach(function (term) {
+          var tn = norm(term);
+          if (!tn) return;
+          if (qn === tn || qn.indexOf(tn) !== -1 || tn.indexOf(qn) !== -1 && qn.length >= 4) score += Math.max(score, 40);
+          else if (qTokens.some(function (t) { return tn.indexOf(t) !== -1 || t.indexOf(tn) !== -1; })) score += 12;
+        });
+        if (e.question && (qn.indexOf(norm(e.question)) !== -1 || norm(e.question).indexOf(qn) !== -1)) score = Math.max(score, 55);
+        if (score > bestScore) { bestScore = score; best = e; }
+      });
+      if (bestScore >= QA_THRESHOLD && best) return best;
+      return null;
+    });
+  }
+
+  function formatQaAnswer(entry) {
+    var s = entry.answer || '';
+    if (entry.related && entry.related.length) {
+      var btns = '<div class="ais-welcome-btns">';
+      entry.related.forEach(function (r) {
+        var q = ('Apa itu ' + r + '?').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        btns += '<button type="button" class="ais-welcome-btn" onclick="window._aiSendQuick(-1,\'' + q + '\')">' + r + '</button>';
+      });
+      btns += '</div>';
+      s += '\n\n_Terkait:_\n' + '\x00RAW' + btns + 'RAW\x00';
+    }
+    return s;
+  }
+
   function $(id) { return document.getElementById(id); }
   function fmt(n) { return n == null ? '-' : Number(n).toLocaleString('id-ID'); }
 
@@ -2442,11 +2497,13 @@
 
   function formatHelpAnswer() {
     return '**Tanya Ruang — Bantuan**\n\n' +
-      'Tanya Ruang menjawab pertanyaan seputar **data spasial dan peta**: profil wilayah, gempa, kekeringan, hotspot, kehutanan, geologi, dll.\n\n' +
+      'Tanya Ruang menjawab pertanyaan seputar **data spasial dan peta Indonesia**: profil wilayah, gempa, kekeringan, hotspot, kehutanan, geologi, istilah SIG, dan cara pakai peta.\n\n' +
+      '**Cakupan:** istilah geospasial, layer, wilayah Indonesia, bencana, lingkungan.\n' +
+      '**Di luar cakupan:** pengetahuan umum, berita, resep, kode program, dll.\n\n' +
       '**Contoh:**\n' +
       '- "Jawa Timur" (profil wilayah)\n' +
       '- "Kekeringan Kabupaten Sleman"\n' +
-      '- "Riwayat gempa Jawa Timur"\n' +
+      '- "Apa itu SPI?"\n' +
       '- "Layer apa saja yang aktif?"\n\n' +
       'Gunakan prefix **Provinsi**, **Kabupaten**, **Kota**, **Kecamatan**, atau **Desa** untuk hasil lebih akurat.\n\n' +
       '_Pilih quick action di bawah untuk analisis cepat:_\n' +
@@ -2457,6 +2514,10 @@
     // Handle ambiguous region match across all intents
     if (regionMatch && regionMatch.ambiguous) {
       return formatDisambiguation(regionMatch);
+    }
+    if (intent === 'help') {
+      var qa = await matchQa(text);
+      if (qa) return formatQaAnswer(qa);
     }
     switch (intent) {
       case 'region': return await formatRegionAnswer(text);
@@ -2656,9 +2717,22 @@
     if (input) input.value = '';
     addChatMessage('user', text);
     var intent = parseIntent(text);
+    // Offline KB first for definitional questions, even if a topic intent matched
+    if (/^(apa itu|apa yang dimaksud|jelaskan|definisi|arti dari|what is)\b/i.test(text.trim())) {
+      var qaHit = await matchQa(text);
+      if (qaHit) {
+        typeWriteMessage(formatQaAnswer(qaHit));
+        return;
+      }
+    }
     var regionMatch = null;
     var acceptsRegion = intent !== 'help' && intent !== 'basemap' && intent !== 'layers' && intent !== 'viewport' && intent !== 'summary';
     if (intent === 'help' && text.trim().toLowerCase() !== 'region') {
+      var qaHelp = await matchQa(text);
+      if (qaHelp) {
+        typeWriteMessage(formatQaAnswer(qaHelp));
+        return;
+      }
       regionMatch = searchRegionByName(text);
       if (regionMatch && !regionMatch.ambiguous) intent = 'region';
       if (regionMatch && regionMatch.ambiguous) {
