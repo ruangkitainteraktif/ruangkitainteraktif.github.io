@@ -8,6 +8,8 @@
   var hotspotLegendControl = null;
   var hotspotDataLoaded = false;
   var hotspotFeatures = [];
+  var hotspotLoadPending = false;
+  var hotspotPendingCallbacks = [];
 
   function getConfidenceColor(level) {
     if (level === 'high') return '#dc2626';
@@ -33,15 +35,29 @@
 
   function loadHotspotData(callback) {
     if (hotspotDataLoaded) { callback(true); return; }
+    if (hotspotLoadPending) {
+      hotspotPendingCallbacks.push(callback);
+      return;
+    }
+    hotspotLoadPending = true;
+    hotspotPendingCallbacks.push(callback);
+    var finish = function (ok) {
+      hotspotLoadPending = false;
+      var cbs = hotspotPendingCallbacks.slice();
+      hotspotPendingCallbacks.length = 0;
+      cbs.forEach(function (cb) {
+        try { cb(ok); } catch (e) {}
+      });
+    };
     fetchHotspotData(function (err, geojson) {
       if (err || !geojson || !geojson.features) {
         console.error('[Hotspot] Gagal fetch:', err);
-        callback(false);
+        finish(false);
         return;
       }
       hotspotFeatures = geojson.features;
       hotspotDataLoaded = true;
-      callback(true);
+      finish(true);
     });
   }
 
@@ -295,6 +311,11 @@
   window.showHotspotLayer = showHotspotLayer;
   window.hideHotspotLayer = hideHotspotLayer;
   window.getHotspotFeatures = function () { return hotspotFeatures; };
+  window.ensureHotspotData = function () {
+    return new Promise(function (resolve) {
+      loadHotspotData(function (ok) { resolve(ok); });
+    });
+  };
 })();
 
 /* ── Luas Kebakaran Chart ── */

@@ -274,9 +274,12 @@
   var _regionBoundaryCache = {};
 
   function normalizeRegionQuery(text) {
-    var q = text.toLowerCase()
-      .replace(/^(profil|info|data|detail|informasi|tentang|untuk|di|pulau|penduduk|jumlah|populasi|demografi|hotspot|gempa|gunung|cuaca|udara|lahan|iklim|curah|hujan|angin|suhu|banjir|longsor|kebakaran|erupsi|magma|sawah|pertanian)\s*/g, '')
-      .trim();
+    var q = text.toLowerCase();
+    var prev = null;
+    while (q !== prev) {
+      prev = q;
+      q = q.replace(/^(profil|info|data|detail|informasi|tentang|untuk|di|pulau|penduduk|jumlah|populasi|demografi|hotspot|karhutla|gempa|earthquake|magnitudo|getaran|richter|gunung|api|vulkanik|erupsi|magma|cuaca|udara|polusi|aqi|lahan|iklim|curah|hujan|angin|suhu|banjir|longsor|kebakaran|hutan|sawah|pertanian|kekeringan|kekering|spi|spei|kering|drought|riwayat|katalog|historical|quake|data\s+gempa)\s*/g, '').trim();
+    }
     return q;
   }
 
@@ -604,6 +607,275 @@
     return quakes.slice(0, limit || 5);
   }
 
+  async function fetchHistoricalQuakesBbox(bbox, minMag, limit) {
+    if (!bbox) return [];
+    var HIST_QUERY = 'https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/Historical_Quakes/FeatureServer/0/query';
+    var geom = JSON.stringify({
+      xmin: bbox.west, ymin: bbox.south, xmax: bbox.east, ymax: bbox.north,
+      spatialReference: { wkid: 4326 }
+    });
+    var params = new URLSearchParams({
+      f: 'json', returnGeometry: 'false',
+      where: 'mag >= ' + (minMag || 4),
+      geometry: geom, geometryType: 'esriGeometryEnvelope',
+      inSR: '4326', spatialRel: 'esriSpatialRelIntersects',
+      outFields: 'id,mag,magType,place,depth,kmDepth,time,alert,tsunami,status,url,title',
+      outSR: '4326',
+      orderByFields: 'mag DESC',
+      resultRecordCount: String(limit || 5)
+    });
+    var ctrl = new AbortController();
+    var t = setTimeout(function () { ctrl.abort(); }, 12000);
+    try {
+      var res = await fetch(HIST_QUERY + '?' + params.toString(), { signal: ctrl.signal });
+      clearTimeout(t);
+      if (!res.ok) return [];
+      var data = await res.json();
+      var feats = (data && data.features) || [];
+      return feats.map(function (f) {
+        var a = f.attributes || {};
+        return {
+          mag: parseFloat(a.mag) || 0,
+          place: a.place || a.title || '-',
+          depthKm: a.kmDepth != null ? a.kmDepth : a.depth,
+          timeMs: a.time,
+          tsunami: a.tsunami === 1 || a.tsunami === '1',
+          url: a.url || null
+        };
+      }).filter(function (q) { return q.mag > 0; });
+    } catch (e) {
+      clearTimeout(t);
+      return [];
+    }
+  }
+
+  async function fetchViirsHotspotBbox(bbox, limit) {
+    if (!bbox) return null;
+    var URL_Q = 'https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/Satellite_VIIRS_Thermal_Hotspots_and_Fire_Activity/FeatureServer/0/query';
+    var geom = JSON.stringify({
+      xmin: bbox.west, ymin: bbox.south, xmax: bbox.east, ymax: bbox.north,
+      spatialReference: { wkid: 4326 }
+    });
+    var params = new URLSearchParams({
+      f: 'json', returnGeometry: 'false',
+      where: 'hours_old <= 24',
+      geometry: geom, geometryType: 'esriGeometryEnvelope',
+      inSR: '4326', spatialRel: 'esriSpatialRelIntersects',
+      outFields: 'OBJECTID,confidence,frp,hours_old,latitude,longitude',
+      outSR: '4326',
+      orderByFields: 'hours_old ASC',
+      resultRecordCount: String(limit || 5000)
+    });
+    var ctrl = new AbortController();
+    var t = setTimeout(function () { ctrl.abort(); }, 12000);
+    try {
+      var res = await fetch(URL_Q + '?' + params.toString(), { signal: ctrl.signal });
+      clearTimeout(t);
+      if (!res.ok) return null;
+      var data = await res.json();
+      var feats = (data && data.features) || [];
+      if (!feats.length) return { total: 0, high: 0, medium: 0, low: 0, source: 'VIIRS' };
+      var high = 0, medium = 0, low = 0;
+      feats.forEach(function (f) {
+        var c = String((f.attributes && f.attributes.confidence) || '').toLowerCase();
+        if (c === 'high') high++;
+        else if (c === 'nominal' || c === 'medium') medium++;
+        else low++;
+      });
+      return { total: feats.length, high: high, medium: medium, low: low, source: 'VIIRS' };
+    } catch (e) {
+      clearTimeout(t);
+      return null;
+    }
+  }
+
+  function droughtGridLabel(g) {
+    var n = parseInt(g, 10);
+    if (isNaN(n)) return 'Normal';
+    var m = {
+      '-3': 'Kekeringan ekstrem', '-2': 'Kekeringan parah', '-1': 'Kekeringan sedang',
+      '0': 'Normal',
+      '1': 'Lembap ringan', '2': 'Lembap berat', '3': 'Lembap ekstrem'
+    };
+    return m[String(n)] || 'Normal';
+  }
+
+  function formatDroughtLine(label, d) {
+    if (!d) return null;
+    var s = '- ' + label + ': ';
+    if (d.dominant != null) {
+      s += 'dominan **' + d.dominant + '** (' + droughtGridLabel(d.dominant) + ')';
+    } else {
+      s += 'tidak ada data';
+    }
+    if (d.dryPct != null) s += ' · kering ≤−1: **' + d.dryPct + '%**';
+    if (d.recDate) s += ' · ' + d.recDate;
+    return s;
+  }
+
+  async function fetchDroughtIndex(base, layerIds, bbox, labelPrefix) {
+    if (!bbox) return null;
+    var out = {};
+    for (var i = 0; i < layerIds.length; i++) {
+      var layerId = layerIds[i];
+      var geom = JSON.stringify({
+        xmin: bbox.west, ymin: bbox.south, xmax: bbox.east, ymax: bbox.north,
+        spatialReference: { wkid: 4326 }
+      });
+      var stats = JSON.stringify([{
+        statisticType: 'count',
+        onStatisticField: 'OBJECTID',
+        outStatisticFieldName: 'cnt'
+      }]);
+      var params = new URLSearchParams({
+        f: 'json', returnGeometry: 'false', where: '1=1',
+        geometry: geom, geometryType: 'esriGeometryEnvelope',
+        inSR: '4326', spatialRel: 'esriSpatialRelIntersects',
+        outStatistics: stats,
+        groupByFieldsForStatistics: 'gridcode',
+        orderByFields: 'cnt DESC',
+        resultRecordCount: '20'
+      });
+      var ctrl = new AbortController();
+      var t = setTimeout(function () { ctrl.abort(); }, 10000);
+      try {
+        var res = await fetch(base + '/' + layerId + '/query?' + params.toString(), { signal: ctrl.signal });
+        clearTimeout(t);
+        if (!res.ok) continue;
+        var data = await res.json();
+        var feats = (data && data.features) || [];
+        if (!feats.length) continue;
+
+        var totalCnt = 0;
+        var dryCnt = 0;
+        var dominant = null;
+        var dominantCnt = -1;
+        feats.forEach(function (f) {
+          var a = f.attributes || {};
+          var code = a.gridcode;
+          var cnt = a.cnt || 0;
+          if (code == null) return;
+          totalCnt += cnt;
+          if (parseInt(code, 10) <= -1) dryCnt += cnt;
+          if (cnt > dominantCnt) { dominantCnt = cnt; dominant = code; }
+        });
+        if (!totalCnt) continue;
+
+        var dateParams = new URLSearchParams({
+          f: 'json', returnGeometry: 'false', where: '1=1',
+          geometry: geom, geometryType: 'esriGeometryEnvelope',
+          inSR: '4326', spatialRel: 'esriSpatialRelIntersects',
+          outFields: 'Rec_Date',
+          orderByFields: 'Rec_Date DESC',
+          resultRecordCount: '1'
+        });
+        var recDate = null;
+        try {
+          var dctrl = new AbortController();
+          var dt = setTimeout(function () { dctrl.abort(); }, 8000);
+          var dres = await fetch(base + '/' + layerId + '/query?' + dateParams.toString(), { signal: dctrl.signal });
+          clearTimeout(dt);
+          if (dres.ok) {
+            var djson = await dres.json();
+            var df = djson.features && djson.features[0];
+            if (df && df.attributes && df.attributes.Rec_Date) {
+              var dd = new Date(df.attributes.Rec_Date);
+              if (!isNaN(dd.getTime())) {
+                var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+                recDate = pad(dd.getUTCDate()) + '/' + pad(dd.getUTCMonth() + 1) + '/' + dd.getUTCFullYear();
+              }
+            }
+          }
+        } catch (e2) {}
+
+        out[labelPrefix + i] = {
+          dominant: dominant,
+          dryPct: Math.round((dryCnt / totalCnt) * 100),
+          recDate: recDate
+        };
+      } catch (e) {
+        clearTimeout(t);
+      }
+    }
+    return Object.keys(out).length ? out : null;
+  }
+
+  async function fetchKekeringanData(kode, bbox) {
+    if (!bbox) return null;
+    try {
+      var SPI_BASE = 'https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/SPI_recent/FeatureServer';
+      var SPEI_BASE = 'https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/SPEI_v1_recent/FeatureServer';
+      var spi = await fetchDroughtIndex(SPI_BASE, [0, 1], bbox, 'spi');
+      var spei = await fetchDroughtIndex(SPEI_BASE, [0, 1], bbox, 'spei');
+      if (!spi && !spei) return null;
+      return { spi: spi, spei: spei };
+    } catch (e) {
+      console.warn('[AI] fetchKekeringanData error:', e);
+      return null;
+    }
+  }
+
+  function appendKekeringanBlock(s, kekData) {
+    if (!kekData) return;
+    var has = false;
+    if (kekData.spi) {
+      var l1 = formatDroughtLine('SPI 1 Bulan', kekData.spi.spi0);
+      var l3 = formatDroughtLine('SPI 3 Bulan', kekData.spi.spi1);
+      if (l1 || l3) {
+        s += '**Kekeringan (SPI/SPEI):**\n';
+        has = true;
+        if (l1) s += l1 + '\n';
+        if (l3) s += l3 + '\n';
+      }
+    }
+    if (kekData.spei) {
+      var s1 = formatDroughtLine('SPEI 1 Bulan', kekData.spei.spei0);
+      var s3 = formatDroughtLine('SPEI 3 Bulan', kekData.spei.spei1);
+      if (s1 || s3) {
+        if (!has) s += '**Kekeringan (SPI/SPEI):**\n';
+        if (s1) s += s1 + '\n';
+        if (s3) s += s3 + '\n';
+      }
+    }
+    if (has) s += '\n';
+  }
+
+  async function formatKekeringanAnswer(text, regionMatch) {
+    if (!regionMatch || regionMatch.ambiguous) {
+      return '**Kekeringan (SPI/SPEI)**\n\nKetik nama wilayah, contoh: **"kekeringan Kabupaten Sleman"** atau **"SPI Jawa Timur"**.';
+    }
+    var boundary = null;
+    try { boundary = await fetchRegionBoundaryData(regionMatch.kode); } catch (e) {}
+    if (!boundary || !boundary.bbox) {
+      return 'Tidak bisa memuat batas wilayah untuk analisis kekeringan.';
+    }
+    var d = null;
+    try { d = await fetchKekeringanData(regionMatch.kode, boundary.bbox); } catch (e) {}
+    var s = '**Kekeringan (SPI/SPEI) — ' + regionMatch.name + '**\n\n';
+    if (!d) {
+      s += 'Tidak ada data SPI/SPEI untuk wilayah ini.\n';
+      return s;
+    }
+    if (d.spi) {
+      s += '**SPI (Standardized Precipitation Index):**\n';
+      var l1 = formatDroughtLine('SPI 1 Bulan', d.spi.spi0);
+      var l3 = formatDroughtLine('SPI 3 Bulan', d.spi.spi1);
+      if (l1) s += l1 + '\n';
+      if (l3) s += l3 + '\n';
+      s += '\n';
+    }
+    if (d.spei) {
+      s += '**SPEI (Precipitation-Evapotranspiration Index):**\n';
+      var s1 = formatDroughtLine('SPEI 1 Bulan', d.spei.spei0);
+      var s3 = formatDroughtLine('SPEI 3 Bulan', d.spei.spei1);
+      if (s1) s += s1 + '\n';
+      if (s3) s += s3 + '\n';
+      s += '\n';
+    }
+    s += '_Gridcode: −3 ekstrem kering … −1 sedang · 0 normal · +1..+3 lembap. Sumber: SPI/SPEI recent._';
+    return s;
+  }
+
   async function findNearestVolcanoes(centerLat, centerLng, regionName) {
     var volcanoes = [];
     if (typeof window._volcanoDataCache !== 'undefined' && window._volcanoDataCache) {
@@ -672,7 +944,8 @@
     { intent: 'bencana', patterns: ['bencana', 'longsor', 'evakuasi', 'patahan', 'jalur evakuasi'] },
     { intent: 'sensorgempa', patterns: ['sensor', 'seismic', 'stasiun', 'geofon'] },
     { intent: 'hotspot', patterns: ['hotspot', 'karhutla', 'kebakaran hutan', 'kebakaran lahan'] },
-    { intent: 'gempa', patterns: ['gempa', 'earthquake', 'magnitudo', 'getaran', 'richter'] },
+    { intent: 'gempa', patterns: ['gempa', 'earthquake', 'magnitudo', 'getaran', 'richter', 'riwayat gempa', 'katalog gempa', 'historical quake'] },
+    { intent: 'kekeringan', patterns: ['kekeringan', 'kekering', 'spi', 'spei', 'kering', 'drought'] },
     { intent: 'layers', patterns: ['layer aktif', 'layer apa', 'tampil', 'menampilkan', 'overlay aktif'] },
     { intent: 'viewport', patterns: ['lokasi', 'posisi', 'koordinat', 'viewport', 'sekarang', 'area ini'] },
     { intent: 'summary', patterns: ['ringkasan', 'summary', 'semua data', 'kondisi', 'overview'] },
@@ -692,8 +965,27 @@
 
   /* === Answer Formatters === */
   async function formatHotspotAnswer(text, regionMatch) {
+    if (typeof window.ensureHotspotData === 'function') {
+      try { await window.ensureHotspotData(); } catch (e) {}
+    }
     var d = extractHotspotData();
-    if (!d) return 'Tidak ada data hotspot yang tersedia. Aktifkan layer Hotspot terlebih dahulu.';
+    if (!d) {
+      var viirsAll = null;
+      if (regionMatch) {
+        try {
+          var b = await fetchRegionBoundaryData(regionMatch.kode);
+          if (b && b.bbox) viirsAll = await fetchViirsHotspotBbox(b.bbox);
+        } catch (e) {}
+      }
+      if (viirsAll) {
+        var sv = '**Data Hotspot (fallback VIIRS):**\n';
+        sv += '- Total: **' + fmt(viirsAll.total) + '** titik (≤24 jam)\n';
+        sv += '- High: **' + fmt(viirsAll.high) + '** | Medium: **' + fmt(viirsAll.medium) + '** | Low: **' + fmt(viirsAll.low) + '**\n\n';
+        sv += '_Sumber: Satellite VIIRS. Aktifkan layer Hotspot Karhutla (SIPONGI) untuk detail lokasi._';
+        return sv;
+      }
+      return 'Tidak ada data hotspot yang tersedia. Aktifkan layer Hotspot terlebih dahulu.';
+    }
     var s = '**Data Hotspot Karhutla (24 Jam)**\n\n';
     s += 'Total: **' + fmt(d.total) + '** titik\n';
     s += 'Confidence: High=**' + fmt(d.confidence.high) + '**, Medium=**' + fmt(d.confidence.medium) + '**, Low=**' + fmt(d.confidence.low) + '**\n\n';
@@ -720,7 +1012,14 @@
             });
           }
         } else {
-          s += 'Tidak ada hotspot dalam bbox wilayah ini.\n';
+          var viirs = null;
+          try { viirs = await fetchViirsHotspotBbox(boundary.bbox); } catch (e) {}
+          if (viirs && viirs.total > 0) {
+            s += 'Tidak ada hotspot SIPONGI. Fallback **VIIRS** ≤24 jam:\n';
+            s += '- Total: **' + fmt(viirs.total) + '** titik | High: **' + fmt(viirs.high) + '** | Medium: **' + fmt(viirs.medium) + '** | Low: **' + fmt(viirs.low) + '**\n';
+          } else {
+            s += 'Tidak ada hotspot dalam bbox wilayah ini.\n';
+          }
         }
       }
     }
@@ -729,23 +1028,27 @@
 
   async function formatGempaAnswer(text, regionMatch) {
     var d = extractGempaData();
-    if (!d) return 'Tidak ada data gempa yang tersedia.';
-    var s = '**Data Gempa BMKG**\n\n';
-    if (d.latest) {
-      var L = d.latest;
-      s += '**Gempa Terbaru:**\n';
-      s += 'Wilayah: ' + (L.Wilayah || L.place || L.lokasi || '-') + '\n';
-      s += 'Magnitude: **' + (L.Magnitude || L.mag || '-') + '**\n';
-      s += 'Kedalaman: ' + (L.Kedalaman || L.depth || '-') + ' km\n';
-      s += 'Waktu: ' + (L.Date || L.time || '-') + '\n\n';
-    }
-    s += 'Total Signifikan (M5.0+): **' + fmt(d.totalSignificant) + '**\n';
-    s += 'Total Dirasakan: **' + fmt(d.totalFelt) + '**\n\n';
-    if (d.items.length) {
-      s += '**Daftar Gempa:**\n';
-      d.items.forEach(function (e, i) {
-        s += (i + 1) + '. M' + (e.mag || '-') + ' - ' + (e.place || '-') + ' (Kedalaman: ' + (e.depth || '-') + ' km)\n';
-      });
+    var s = '';
+    if (d) {
+      s += '**Data Gempa BMKG**\n\n';
+      if (d.latest) {
+        var L = d.latest;
+        s += '**Gempa Terbaru:**\n';
+        s += 'Wilayah: ' + (L.Wilayah || L.place || L.lokasi || '-') + '\n';
+        s += 'Magnitude: **' + (L.Magnitude || L.mag || '-') + '**\n';
+        s += 'Kedalaman: ' + (L.Kedalaman || L.depth || '-') + ' km\n';
+        s += 'Waktu: ' + (L.Date || L.time || '-') + '\n\n';
+      }
+      s += 'Total Signifikan (M5.0+): **' + fmt(d.totalSignificant) + '**\n';
+      s += 'Total Dirasakan: **' + fmt(d.totalFelt) + '**\n\n';
+      if (d.items.length) {
+        s += '**Daftar Gempa:**\n';
+        d.items.forEach(function (e, i) {
+          s += (i + 1) + '. M' + (e.mag || '-') + ' - ' + (e.place || '-') + ' (Kedalaman: ' + (e.depth || '-') + ' km)\n';
+        });
+      }
+    } else if (!regionMatch) {
+      return 'Tidak ada data gempa yang tersedia.';
     }
     if (regionMatch) {
       var boundary = await fetchRegionBoundaryData(regionMatch.kode);
@@ -758,6 +1061,18 @@
           });
         } else {
           s += '\n---\nTidak ada data gempa di sekitar ' + regionMatch.name + '.\n';
+        }
+
+        var minMag = regionMatch.type === 'provinsi' ? 5 : 4;
+        var hist = await fetchHistoricalQuakesBbox(boundary.bbox, minMag, 5);
+        if (hist.length) {
+          s += '\n**Riwayat Gempa (Katalog USGS):**\n';
+          hist.forEach(function (q, i) {
+            var depth = q.depthKm != null ? q.depthKm + ' km' : '-';
+            s += (i + 1) + '. M ' + q.mag.toFixed(1) + ' — ' + q.place +
+              ' (kedalaman ' + depth + (q.tsunami ? ', **tsunami**' : '') + ')\n';
+          });
+          s += '\n';
         }
       }
     }
@@ -1600,7 +1915,7 @@ async function formatLahanAnswer(text, regionMatch) {
   async function formatRegionAnswer(text) {
     var regionQuery = parseRegionFromText(text);
     if (!regionQuery || /^(region|wilayah|area|daerah|pulau|provinsi|kabupaten|kota|kecamatan|desa|kelurahan)$/.test(regionQuery)) {
-      return '**Cari Wilayah**\n\nKetik nama wilayah untuk melihat profil lengkapnya.\n\n' +
+      return '**Cari Wilayah**\n\nKetik nama wilayah untuk melihat profil lengkapnya (luas, penduduk, kekeringan, hotspot, gempa, riwayat gempa USGS, gunung api).\n\n' +
         '**Contoh:**\n' +
         '- "Jawa Timur"\n' +
         '- "Kota Bandung"\n' +
@@ -1608,7 +1923,7 @@ async function formatLahanAnswer(text, regionMatch) {
         '- "Kecamatan Coblong"\n' +
         '- "Desa Sukamaju"\n\n' +
         'Gunakan prefix **Provinsi**, **Kabupaten**, **Kota**, **Kecamatan**, atau **Desa** untuk hasil lebih akurat.\n\n' +
-        '_Data yang ditampilkan: luas wilayah, penduduk, lahan sawah, topografi, hotspot, gempa, dan gunung api terdekat._';
+        '_Data yang ditampilkan: luas wilayah, penduduk, lahan sawah, penggunaan tanah, kekeringan (SPI/SPEI), topografi, hotspot, gempa & riwayat gempa USGS, dan gunung api terdekat._';
     }
     var match = searchRegionByName(regionQuery);
     if (!match) return 'Wilayah **"' + regionQuery + '"** tidak ditemukan. Coba nama provinsi, kabupaten, kota, kecamatan, atau desa yang lebih lengkap.\n\n_Contoh: "Jawa Timur", "Kota Bandung", "Kecamatan Coblong", "Desa Sukamaju"_.';
@@ -1712,6 +2027,12 @@ async function formatLahanAnswer(text, regionMatch) {
       s += '\n';
     }
 
+    var kekData = null;
+    if (bbox) {
+      try { kekData = await fetchKekeringanData(match.kode, bbox); } catch (e) {}
+      appendKekeringanBlock(s, kekData);
+    }
+
     if (centerLat != null && centerLng != null) {
       if (!bbox) bbox = computeBboxFromCenter(centerLat, centerLng, 0.5);
 
@@ -1761,13 +2082,33 @@ async function formatLahanAnswer(text, regionMatch) {
         s += '- Isya: **' + (t.Isha || '-') + '**\n\n';
       }
 
+      if (typeof window.ensureHotspotData === 'function') {
+        try { await window.ensureHotspotData(); } catch (e) {}
+      }
       var hs = countHotspotsInBbox(bbox);
-      if (hs) {
-        s += '**Hotspot Karhutla (24 Jam):**\n';
+      var hsSource = 'SIPONGI';
+      if (!hs) {
+        try { hs = await fetchViirsHotspotBbox(bbox); } catch (e) {}
+        if (hs) hsSource = 'VIIRS';
+      }
+      if (hs && hs.total > 0) {
+        s += '**Hotspot Karhutla (24 Jam, ' + hsSource + '):**\n';
         s += '- Total: **' + fmt(hs.total) + '** titik\n';
         if (hs.high > 0) s += '- High: **' + fmt(hs.high) + '**\n';
         if (hs.medium > 0) s += '- Medium: **' + fmt(hs.medium) + '**\n';
         if (hs.low > 0) s += '- Low: **' + fmt(hs.low) + '**\n';
+        s += '\n';
+      }
+
+      var histMinMag = match.type === 'provinsi' ? 5 : 4;
+      var histQuakes = await fetchHistoricalQuakesBbox(bbox, histMinMag, 5);
+      if (histQuakes.length) {
+        s += '**Riwayat Gempa (Katalog USGS):**\n';
+        histQuakes.forEach(function (q, i) {
+          var depth = q.depthKm != null ? q.depthKm + ' km' : '-';
+          s += (i + 1) + '. M ' + q.mag.toFixed(1) + ' — ' + q.place +
+            ' (kedalaman ' + depth + (q.tsunami ? ', **tsunami**' : '') + ')\n';
+        });
         s += '\n';
       }
 
@@ -1980,7 +2321,7 @@ async function formatLahanAnswer(text, regionMatch) {
 
   function formatHelpAnswer() {
     return '**Cari Wilayah**\n\n' +
-      'Ketik nama wilayah untuk melihat profil lengkapnya: luas, penduduk, topografi, hotspot, gempa, gunung api.\n\n' +
+      'Ketik nama wilayah untuk melihat profil lengkapnya: luas, penduduk, topografi, kekeringan, hotspot, gempa, riwayat gempa USGS, gunung api.\n\n' +
       '**Contoh:**\n' +
       '- "Jawa Timur"\n' +
       '- "Kota Bandung"\n' +
@@ -2001,6 +2342,7 @@ async function formatLahanAnswer(text, regionMatch) {
       case 'region': return await formatRegionAnswer(text);
       case 'hotspot': return await formatHotspotAnswer(text, regionMatch);
       case 'gempa': return await formatGempaAnswer(text, regionMatch);
+      case 'kekeringan': return await formatKekeringanAnswer(text, regionMatch);
       case 'basemap': return formatBasemapAnswer();
       case 'cuaca': return await formatCuacaAnswer(text, regionMatch);
       case 'udara': return await formatUdaraAnswer(text, regionMatch);
@@ -2074,7 +2416,7 @@ async function formatLahanAnswer(text, regionMatch) {
   function loadChatHistory() { try { chatHistory = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY) || '[]'); } catch (e) { chatHistory = []; } }
 
   function showWelcomeMessage() {
-    addChatMessage('ai', '**Selamat datang di Tanya Ruang!**\n\nKetik nama wilayah untuk melihat profil lengkapnya.\n\n**Contoh:**\n- "Jawa Timur"\n- "Kota Bandung"\n- "Kecamatan Coblong"\n- "Desa Sukamaju"\n\nGunakan prefix **Provinsi**, **Kabupaten**, **Kota**, **Kecamatan**, atau **Desa** untuk hasil lebih akurat.');
+    addChatMessage('ai', '**Selamat datang di Tanya Ruang!**\n\nKetik nama wilayah untuk melihat profil lengkapnya (termasuk kekeringan SPI/SPEI, hotspot, riwayat gempa USGS).\n\n**Contoh:**\n- "Jawa Timur"\n- "Kota Bandung"\n- "Kecamatan Coblong"\n- "Desa Sukamaju"\n- "Kekeringan Kabupaten Sleman"\n- "Riwayat gempa Jawa Timur"\n\nGunakan prefix **Provinsi**, **Kabupaten**, **Kota**, **Kecamatan**, atau **Desa** untuk hasil lebih akurat.');
   }
 
   window._aiClearChat = function () {
