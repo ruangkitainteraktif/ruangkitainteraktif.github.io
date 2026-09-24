@@ -1086,6 +1086,7 @@
 
   /* ── Main: load and display ── */
   async function loadAndDisplay() {
+    if (typeof window.clearSp2kpGeoPangan === 'function') window.clearSp2kpGeoPangan();
     try {
       if (!loaded) {
         loaded = true;
@@ -1639,6 +1640,10 @@
   document.addEventListener('DOMContentLoaded', function () {
     var loadBtn = $('geopanganLoadBtn');
     if (loadBtn) loadBtn.addEventListener('click', loadAndDisplay);
+    var resetBtn = $('geopanganResetBtn');
+    if (resetBtn) resetBtn.addEventListener('click', function () {
+      if (typeof window.clearGeopanganLayers === 'function') window.clearGeopanganLayers();
+    });
     var chkPasar = $('toggleSebaranPasar');
     if (chkPasar) chkPasar.addEventListener('change', function () { toggleSebaranPasar(this.checked); });
     var chkSppg = $('toggleSppgLayer');

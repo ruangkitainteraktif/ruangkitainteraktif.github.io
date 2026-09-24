@@ -1315,52 +1315,106 @@
 
           <!-- Panel: GeoPangan -->
           <div id="geotoolsTabGeoPangan" class="geotools-main-tab-panel">
-            <div class="geopangan-sticky-header">
-              <h4 style="font-size:15px; margin-bottom:4px;">GeoPangan</h4>
-              <p class="geotools-desc" style="margin-bottom:25px;">Harga Pangan Nasional - PIHPS Bank Indonesia</p>
-              <div class="cctv-card">
-                <div class="cctv-card-header">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                  <span>Cari Wilayah - Harga Pangan</span>
-                </div>
-                <div class="cctv-card-body">
-                  <div class="geopangan-field">
-                    <label style="margin-top:12px;">Jenis Pasar</label>
-                    <select id="geopanganPriceType">
-                      <option value="1">Pasar Tradisional</option>
-                      <option value="2">Pasar Modern (Supermarket/Minimarket)</option>
-                      <option value="3">Pedagang Besar / Grosir</option>
-                      <option value="4">Produsen</option>
-                    </select>
+            <div class="geopangan-source-tabs" role="tablist" aria-label="Sumber GeoPangan">
+              <button type="button" class="geopangan-source-tab active" data-geopangan-source="pihps" role="tab" aria-selected="true" aria-controls="geopangan-pihps-panel">PIHPS / BI</button>
+              <button type="button" class="geopangan-source-tab" data-geopangan-source="sp2kp" role="tab" aria-selected="false" aria-controls="geopangan-sp2kp-panel">SP2KP</button>
+            </div>
+            <div id="geopangan-pihps-panel" class="geopangan-source-panel active" role="tabpanel" aria-hidden="false" data-geopangan-source-panel="pihps">
+              <div class="geopangan-sticky-header">
+                <h4 style="font-size:15px; margin-bottom:4px;">GeoPangan</h4>
+                <p class="geotools-desc" style="margin-bottom:25px;">Harga Pangan Nasional - PIHPS Bank Indonesia</p>
+                <div class="cctv-card">
+                  <div class="cctv-card-header">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <span>Cari Wilayah - Harga pangan</span>
                   </div>
-                  <div class="geopangan-field">
-                    <label>Komoditas</label>
-                    <select id="geopanganCommodity"></select>
-                  </div>
-                  <div class="geopangan-field">
-                    <label>Provinsi</label>
-                    <select id="geopanganProvince">
-                      <option value="">Semua Provinsi</option>
-                    </select>
-                  </div>
-                  <div class="geopangan-field" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                    <div>
-                      <label>Dari</label>
-                      <input type="date" id="geopanganDateStart" />
+                  <div class="cctv-card-body">
+                    <div class="geopangan-field">
+                      <label style="margin-top:12px;">Jenis Pasar</label>
+                      <select id="geopanganPriceType">
+                        <option value="1">Pasar Tradisional</option>
+                        <option value="2">Pasar Modern (Supermarket/Minimarket)</option>
+                        <option value="3">Pedagang Besar / Grosir</option>
+                        <option value="4">Produsen</option>
+                      </select>
                     </div>
-                    <div>
-                      <label>Sampai</label>
-                      <input type="date" id="geopanganDateEnd" />
+                    <div class="geopangan-field">
+                      <label>Komoditas</label>
+                      <select id="geopanganCommodity"></select>
                     </div>
+                    <div class="geopangan-field">
+                      <label>Provinsi</label>
+                      <select id="geopanganProvince">
+                        <option value="">Semua Provinsi</option>
+                      </select>
+                    </div>
+                    <div class="geopangan-field" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                      <div>
+                        <label>Dari</label>
+                        <input type="date" id="geopanganDateStart" />
+                      </div>
+                      <div>
+                        <label>Sampai</label>
+                        <input type="date" id="geopanganDateEnd" />
+                      </div>
+                    </div>
+                    <button id="geopanganLoadBtn" class="geopangan-btn" style="margin-top:4px;">Tampilkan</button>
                   </div>
-                  <button id="geopanganLoadBtn" class="geopangan-btn" style="margin-top:4px;">Tampilkan</button>
                 </div>
               </div>
+              <div id="geopangan-table-home">
+                <div id="geopanganResult"></div>
+                <div id="geopanganTable"></div>
+                <div id="sppgSebaranTable"></div>
+                <button id="geopanganResetBtn" type="button" class="geopangan-btn geopangan-reset-btn" style="margin-top:10px;">Reset Layer PIHPS</button>
+              </div>
             </div>
-            <div id="geopangan-table-home">
-              <div id="geopanganResult"></div>
-              <div id="geopanganTable"></div>
-              <div id="sppgSebaranTable"></div>
+            <div id="geopangan-sp2kp-panel" class="geopangan-source-panel" role="tabpanel" aria-hidden="true" data-geopangan-source-panel="sp2kp">
+              <div class="cctv-card">
+                <div class="cctv-card-header">
+                  <span>SP2KP</span>
+                </div>
+                <div class="cctv-card-body">
+                  <p class="geotools-desc" style="font-size:11px;margin:12px 0;">Choropleth Harga Numerik Tertimbang (HNT) dan disparitas harga provinsi dari Sistem Pemantauan Pasar Kebutuhan Pokok Kementerian Perdagangan.</p>
+                  <div class="geopangan-field">
+                    <label>Variant / Komoditas SP2KP</label>
+                    <select id="sp2kpVariantSelect"></select>
+                  </div>
+                  <div class="geopangan-field">
+                    <label>Tanggal HNT</label>
+                    <input type="date" id="sp2kpLatestDate" />
+                  </div>
+                  <button id="sp2kpLoadBtn" class="geopangan-btn" style="margin-top:4px;">Tampilkan Choropleth SP2KP</button>
+                  <div id="sp2kpStatus" class="cctv-message" style="display:none;margin-top:10px;"></div>
+                  <div id="sp2kpResult"></div>
+                  <div id="sp2kpTable"></div>
+                  <button id="sp2kpResetBtn" type="button" class="geopangan-btn geopangan-reset-btn" style="margin-top:10px;">Reset Layer SP2KP</button>
+                  <div style="margin-top:14px;padding-top:12px;border-top:1px solid #dbe7e1;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <strong style="font-size:12px;color:#24523a;">Periode histori HNT</strong>
+                      <span style="margin-left:auto;font-size:9px;color:#64748b;">Tabel dan grafik terpisah</span>
+                    </div>
+                    <p class="geotools-desc" style="font-size:10px;margin:5px 0 10px;">Pilih rentang tanggal untuk melihat perkembangan HNT nasional.</p>
+                    <div class="geopangan-field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                      <div>
+                        <label>Dari</label>
+                        <input type="date" id="sp2kpHistoryStart" />
+                      </div>
+                      <div>
+                        <label>Sampai</label>
+                        <input type="date" id="sp2kpHistoryEnd" />
+                      </div>
+                    </div>
+                    <button id="sp2kpHistoryLoadBtn" class="geopangan-btn" style="margin-top:4px;">Muat histori HNT</button>
+                    <div id="sp2kpHistoryStatus" class="cctv-message" style="display:none;margin-top:10px;"></div>
+                    <div id="sp2kpHistoryTable"></div>
+                    <div id="sp2kpHistoryCard" style="display:none;margin-top:12px;padding:10px;border:1px solid #dbe7e1;border-radius:8px;background:#fbfefc;">
+                      <div class="sp2kp-chart-title">Series Perkembangan Harga Nasional Tertimbang (HNT) - SEBULAN TERAKHIR</div>
+                      <div style="height:170px;margin-top:8px;"><canvas id="sp2kpHistoryChart"></canvas></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -2296,6 +2350,7 @@
   <script src="assets/js/karst.js"></script>
   <script src="assets/js/concessions-layer.js"></script>
   <script src="assets/js/geopangan.js"></script>
+  <script src="assets/js/sp2kp-geopangan.js"></script>
   <script src="assets/js/sppg-district.js"></script>
   <script src="assets/js/ai-analysis.js"></script>
 

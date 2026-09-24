@@ -218,7 +218,10 @@
       var gempaPanel = document.getElementById('gempa-subtab-gempa');
       if (gempaPanel && gempaPanel.classList.contains('active') && typeof loadEarthquakeData === 'function') loadEarthquakeData();
     }
-    if (tabId === 'geotoolsTabGeoPangan' && typeof window.geopanganAutoLoad === 'function') window.geopanganAutoLoad();
+    if (tabId === 'geotoolsTabGeoPangan') {
+      if (typeof window.openGeoPanganSourceTab === 'function') window.openGeoPanganSourceTab('pihps');
+      else if (typeof window.geopanganAutoLoad === 'function') window.geopanganAutoLoad();
+    }
     if (tabId === 'geotoolsTabGeoWatch') {
       if (typeof window.loadCctvData === 'function') {
         window.loadCctvData().then(function () {
