@@ -1472,6 +1472,14 @@
                 </span>
               </label>
               <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleHistoricalQuakes">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Katalog Gempa Global (USGS)</span>
+                  <small id="historicalQuakesInfo">Gempa per viewport · zoom untuk M5+/M6+ (USGS)</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
                 <input type="checkbox" id="toggleSensorSeismic">
                 <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
                 <span class="cctv-layer-info">
@@ -1485,6 +1493,30 @@
                 <span class="cctv-layer-info">
                   <span class="cctv-layer-name">Sensor Global</span>
                   <small id="sensorGlobalInfo">Stasiun sensor global (GEOFON/GSN)</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleViirsHotspots">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Hotspot VIIRS (Global)</span>
+                  <small id="viirsHotspotsInfo">Hotspot thermal · filter per zoom (NASA/NOAA)</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleModisHotspots48">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Hotspot MODIS (48 Jam)</span>
+                  <small id="modisHotspots48Info">Terra/Aqua · filter confidence per zoom</small>
+                </span>
+              </label>
+              <label class="cctv-layer-toggle">
+                <input type="checkbox" id="toggleModisHotspots7d">
+                <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                <span class="cctv-layer-info">
+                  <span class="cctv-layer-name">Hotspot MODIS (7 Hari)</span>
+                  <small id="modisHotspots7dInfo">Terra/Aqua · filter confidence per zoom</small>
                 </span>
               </label>
             </div>
@@ -1696,6 +1728,30 @@
                 <label class="cctv-layer-toggle"><input type="checkbox" data-airvisual-layer="airvisual-no2"><span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="cctv-layer-info"><span class="cctv-layer-name">NO2</span><small>Nitrogen dioksida dari AirVisual</small></span></label>
                 <label class="cctv-layer-toggle"><input type="checkbox" data-airvisual-layer="airvisual-so2"><span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="cctv-layer-info"><span class="cctv-layer-name">SO2</span><small>Sulfur dioksida dari AirVisual</small></span></label>
                 <label class="cctv-layer-toggle"><input type="checkbox" data-airvisual-layer="airvisual-co"><span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="cctv-layer-info"><span class="cctv-layer-name">CO</span><small>Karbon monoksida dari AirVisual</small></span></label>
+                <label class="cctv-layer-toggle">
+                  <input type="checkbox" id="toggleOpenaqPm25">
+                  <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">PM2.5 (OpenAQ)</span>
+                    <small id="openaqPm25Info">Stasiun OpenAQ PM2.5 (live)</small>
+                  </span>
+                </label>
+                <label class="cctv-layer-toggle">
+                  <input type="checkbox" id="toggleOpenaqPm10">
+                  <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">PM10 (OpenAQ)</span>
+                    <small id="openaqPm10Info">Stasiun OpenAQ PM10 (live)</small>
+                  </span>
+                </label>
+                <label class="cctv-layer-toggle">
+                  <input type="checkbox" id="toggleOpenaqPm1">
+                  <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">PM1 (OpenAQ)</span>
+                    <small id="openaqPm1Info">Stasiun OpenAQ PM1 (live)</small>
+                  </span>
+                </label>
               </div>
             </div>
           </div>
@@ -1788,11 +1844,107 @@
                   </span>
                 </label>
                 <label class="cctv-layer-toggle">
-                  <input type="checkbox" id="toggleMaritimeWindSea">
+                  <input type="checkbox" id="toggleGhrsstSstAnomali">
                   <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
                   <span class="cctv-layer-info">
-                    <span class="cctv-layer-name">Gelombang Angin</span>
-                    <small id="maritimeWindSeaInfo">Wind Sea Direction</small>
+                    <span class="cctv-layer-name">SST Anomaly (GHRSST MUR) <span style="display:inline-block;padding:1px 4px;font-size:7px;font-weight:700;color:#fff;background:#dc2626;border-radius:4px;vertical-align:middle;margin-left:2px;">NEW</span></span>
+                    <small>Selisih Suhu Permukaan Laut dari rata-rata (NASA GIBS)</small>
+                  </span>
+                </label>
+              </div>
+            </div>
+            <div class="cctv-card" style="margin-bottom:12px;">
+              <div class="cctv-card-header">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10"/></svg>
+                <span>SPI — Standardized Precipitation Index</span>
+              </div>
+              <div class="cctv-card-body cctv-layers">
+                <label class="cctv-layer-toggle">
+                  <input type="checkbox" id="toggleSpi1m">
+                  <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">SPI 1 Bulan</span>
+                    <small id="spi1mInfo">Indeks kekeringan 1 bulan (recent)</small>
+                  </span>
+                </label>
+                <label class="cctv-layer-toggle">
+                  <input type="checkbox" id="toggleSpi3m">
+                  <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">SPI 3 Bulan</span>
+                    <small id="spi3mInfo">Indeks kekeringan 3 bulan (recent)</small>
+                  </span>
+                </label>
+                <label class="cctv-layer-toggle">
+                  <input type="checkbox" id="toggleSpi6m">
+                  <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">SPI 6 Bulan</span>
+                    <small id="spi6mInfo">Indeks kekeringan 6 bulan (recent)</small>
+                  </span>
+                </label>
+                <label class="cctv-layer-toggle">
+                  <input type="checkbox" id="toggleSpi9m">
+                  <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">SPI 9 Bulan</span>
+                    <small id="spi9mInfo">Indeks kekeringan 9 bulan (recent)</small>
+                  </span>
+                </label>
+                <label class="cctv-layer-toggle">
+                  <input type="checkbox" id="toggleSpi12m">
+                  <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">SPI 12 Bulan</span>
+                    <small id="spi12mInfo">Indeks kekeringan 12 bulan (recent)</small>
+                  </span>
+                </label>
+              </div>
+            </div>
+            <div class="cctv-card" style="margin-bottom:12px;">
+              <div class="cctv-card-header">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10"/></svg>
+                <span>SPEI — Standardized Precipitation-Evapotranspiration Index</span>
+              </div>
+              <div class="cctv-card-body cctv-layers">
+                <label class="cctv-layer-toggle">
+                  <input type="checkbox" id="toggleSpei1m">
+                  <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">SPEI 1 Bulan</span>
+                    <small id="spei1mInfo">Indeks kekeringan 1 bulan (recent)</small>
+                  </span>
+                </label>
+                <label class="cctv-layer-toggle">
+                  <input type="checkbox" id="toggleSpei3m">
+                  <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">SPEI 3 Bulan</span>
+                    <small id="spei3mInfo">Indeks kekeringan 3 bulan (recent)</small>
+                  </span>
+                </label>
+                <label class="cctv-layer-toggle">
+                  <input type="checkbox" id="toggleSpei6m">
+                  <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">SPEI 6 Bulan</span>
+                    <small id="spei6mInfo">Indeks kekeringan 6 bulan (recent)</small>
+                  </span>
+                </label>
+                <label class="cctv-layer-toggle">
+                  <input type="checkbox" id="toggleSpei9m">
+                  <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">SPEI 9 Bulan</span>
+                    <small id="spei9mInfo">Indeks kekeringan 9 bulan (recent)</small>
+                  </span>
+                </label>
+                <label class="cctv-layer-toggle">
+                  <input type="checkbox" id="toggleSpei12m">
+                  <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <span class="cctv-layer-info">
+                    <span class="cctv-layer-name">SPEI 12 Bulan</span>
+                    <small id="spei12mInfo">Indeks kekeringan 12 bulan (recent)</small>
                   </span>
                 </label>
               </div>
@@ -2052,6 +2204,12 @@
     <script src="assets/js/sensor-seismic.js"></script>
     <script src="assets/js/sensor-global.js"></script>
     <script src="assets/js/history-gempa.js"></script>
+    <script src="assets/js/historical-quakes.js"></script>
+    <script src="assets/js/viirs-hotspots.js"></script>
+    <script src="assets/js/modis-hotspots.js"></script>
+    <script src="assets/js/openaq-pm.js"></script>
+    <script src="assets/js/spi-recent.js"></script>
+    <script src="assets/js/spei-recent.js"></script>
     <script src="assets/js/dem-analysis.js"></script>
     <script src="assets/js/cctv.js"></script>
     <script src="assets/js/detail-subtab.js"></script>

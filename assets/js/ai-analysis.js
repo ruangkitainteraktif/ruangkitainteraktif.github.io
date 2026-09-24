@@ -19,8 +19,8 @@
   /* === Category Layer Mapping === */
   var LAYER_CATEGORIES = {
     'Gempa & Bencana': {
-      ids: ['toggleLatestEarthquake','toggleSignificantMarkers','toggleFeltMarkers','toggleFaultLayer','toggleFaultLayerNew','toggleWorldPlatesLayer','toggleJalurEvakuasi','toggleHistoryGempa','toggleKatalogGempa','toggleSensorSeismic','toggleSensorGlobal'],
-      keywords: ['gempa','bencana','patahan','evakuasi','seismic','sensor']
+      ids: ['toggleLatestEarthquake','toggleSignificantMarkers','toggleFeltMarkers','toggleFaultLayer','toggleFaultLayerNew','toggleWorldPlatesLayer','toggleJalurEvakuasi','toggleHistoryGempa','toggleKatalogGempa','toggleHistoricalQuakes','toggleSensorSeismic','toggleSensorGlobal','toggleViirsHotspots','toggleModisHotspots48','toggleModisHotspots7d'],
+      keywords: ['gempa','bencana','patahan','evakuasi','seismic','sensor','usgs','pager','hotspot','viirs','modis','karhutla','kebakaran','frp','thermal']
     },
     'Ketahanan Pangan': {
        ids: ['toggleFsvaLayer','bps-lbs-2024','toggleSawahDilindungi','toggleSawahNasional50k','arcgis-sawah-2023','arcgis-sawah-2019','arcgis-kawasan-padi','arcgis-kawasan-jagung','arcgis-kawasan-kedelai','arcgis-vt-lbs-2024','arcgis-vt-lbs-2019','opt-padi-penggerek','opt-padi-wbc','opt-padi-tikus','opt-padi-blas','opt-padi-kresek','opt-padi-tungro','opt-padi-kerdil','opt-jagung-lalat','opt-jagung-penggerek','opt-jagung-tikus','opt-jagung-blay','opt-jagung-penggerek-tongkol','opt-jagung-ulat-litura','opt-jagung-ulat-frugiperda','opt-kedelai-tikus','opt-kedelai-penggerek-polong','opt-kedelai-penggulung','opt-kedelai-ulat-litura','opt-kedelai-ulat-jengkal','toggleSebaranPasar','toggleSppgSebaranLayer','toggleSppgDistrictLayer','toggleSppgLayer'],
@@ -43,12 +43,12 @@
       keywords: ['lingkungan','chlorophyll','aerosol','so2','no2','par','radiasi']
     },
     'Meteorologi': {
-      ids: ['toggleWindRgb','toggleRhRgb','toggleTp24Rgb','togglePm25Rgb','toggleHthRgb','toggleBmkgPrecip10days','toggleCuacaPerairanLayer','toggleCuacaPelabuhanLayer','toggleMaritimeAngin','toggleMaritimeGelombang','toggleMaritimeSwell','toggleMaritimeWindSea','toggleGhrsstSstAnomali'],
-      keywords: ['cuaca','angin','hujan','pm25','suhu','kelembaban','gelombang','maritim','perairan','pelabuhan']
+      ids: ['toggleWindRgb','toggleRhRgb','toggleTp24Rgb','togglePm25Rgb','toggleHthRgb','toggleBmkgPrecip10days','toggleCuacaPerairanLayer','toggleCuacaPelabuhanLayer','toggleMaritimeAngin','toggleMaritimeGelombang','toggleMaritimeSwell','toggleMaritimeWindSea','toggleGhrsstSstAnomali','toggleSpi1m','toggleSpi3m','toggleSpi6m','toggleSpi9m','toggleSpi12m','toggleSpei1m','toggleSpei3m','toggleSpei6m','toggleSpei9m','toggleSpei12m'],
+      keywords: ['cuaca','angin','hujan','pm25','suhu','kelembaban','gelombang','maritim','perairan','pelabuhan','spi','spei','kekeringan','kering']
     },
     'Kualitas Udara': {
-      ids: ['toggleAirVisualPm25','toggleAirVisualPm10','toggleAirVisualO3','toggleAirVisualNo2','toggleAirVisualSo2','toggleAirVisualCo'],
-      keywords: ['udara','polusi','aqi','pm10','o3','no2','so2','co','kualitas udara']
+      ids: ['toggleAirVisualPm25','toggleAirVisualPm10','toggleAirVisualO3','toggleAirVisualNo2','toggleAirVisualSo2','toggleAirVisualCo','toggleOpenaqPm25','toggleOpenaqPm10','toggleOpenaqPm1'],
+      keywords: ['udara','polusi','aqi','pm10','pm1','pm25','openaq','o3','no2','so2','co','kualitas udara']
     },
     'Kehutanan': {
       ids: ['toggleConcessionsLayer','toggleProtectedLayer','toggleMangroveLayer','togglePeatlandLayer','toggleKawasanHutanLayer','toggleGambutLayer','toggleKhLayer','togglePippibLayer','toggleSawitNasionalLayer','toggleSawitPerkebunanLayer','toggleRehabDasLayer','togglePerkebunanPl24Layer','toggleRktnSumateraLayer','toggleRktnSulawesiLayer','toggleRktnPapuaLayer','toggleRktnMalukuLayer','toggleRktnKalimantanLayer','toggleRktnJawaLayer','toggleRktnBaliNtLayer'],

@@ -1681,11 +1681,62 @@ L.control.scale({
         if (typeof hideOmiLegend === 'function') hideOmiLegend();
 
         // Bersihkan layer sensor & katalog gempa
-        document.querySelectorAll('#toggleKatalogGempa, #toggleSensorSeismic, #toggleSensorGlobal, #toggleHistoryGempa, #toggleSignificantMarkers, #toggleFeltMarkers, #toggleLatestEarthquake').forEach(function (cb) {
+        document.querySelectorAll('#toggleKatalogGempa, #toggleHistoricalQuakes, #toggleSensorSeismic, #toggleSensorGlobal, #toggleHistoryGempa, #toggleSignificantMarkers, #toggleFeltMarkers, #toggleLatestEarthquake, #toggleViirsHotspots, #toggleModisHotspots48, #toggleModisHotspots7d, #toggleOpenaqPm25, #toggleOpenaqPm10, #toggleOpenaqPm1, #toggleSpi1m, #toggleSpi3m, #toggleSpi6m, #toggleSpi9m, #toggleSpi12m, #toggleSpei1m, #toggleSpei3m, #toggleSpei6m, #toggleSpei9m, #toggleSpei12m').forEach(function (cb) {
           if (cb) cb.checked = false;
         });
         if (typeof isKatalogGempaActive === 'function' && isKatalogGempaActive()) {
           document.getElementById('toggleKatalogGempa')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isHistoricalQuakesActive === 'function' && isHistoricalQuakesActive()) {
+          document.getElementById('toggleHistoricalQuakes')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isViirsHotspotsActive === 'function' && isViirsHotspotsActive()) {
+          document.getElementById('toggleViirsHotspots')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isModisHotspots48Active === 'function' && isModisHotspots48Active()) {
+          document.getElementById('toggleModisHotspots48')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isModisHotspots7dActive === 'function' && isModisHotspots7dActive()) {
+          document.getElementById('toggleModisHotspots7d')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isOpenaqPm25Active === 'function' && isOpenaqPm25Active()) {
+          document.getElementById('toggleOpenaqPm25')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isOpenaqPm10Active === 'function' && isOpenaqPm10Active()) {
+          document.getElementById('toggleOpenaqPm10')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isOpenaqPm1Active === 'function' && isOpenaqPm1Active()) {
+          document.getElementById('toggleOpenaqPm1')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isSpi1mActive === 'function' && isSpi1mActive()) {
+          document.getElementById('toggleSpi1m')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isSpi3mActive === 'function' && isSpi3mActive()) {
+          document.getElementById('toggleSpi3m')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isSpi6mActive === 'function' && isSpi6mActive()) {
+          document.getElementById('toggleSpi6m')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isSpi9mActive === 'function' && isSpi9mActive()) {
+          document.getElementById('toggleSpi9m')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isSpi12mActive === 'function' && isSpi12mActive()) {
+          document.getElementById('toggleSpi12m')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isSpei1mActive === 'function' && isSpei1mActive()) {
+          document.getElementById('toggleSpei1m')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isSpei3mActive === 'function' && isSpei3mActive()) {
+          document.getElementById('toggleSpei3m')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isSpei6mActive === 'function' && isSpei6mActive()) {
+          document.getElementById('toggleSpei6m')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isSpei9mActive === 'function' && isSpei9mActive()) {
+          document.getElementById('toggleSpei9m')?.dispatchEvent(new Event('change'));
+        }
+        if (typeof isSpei12mActive === 'function' && isSpei12mActive()) {
+          document.getElementById('toggleSpei12m')?.dispatchEvent(new Event('change'));
         }
         if (typeof isSensorSeismicActive === 'function' && isSensorSeismicActive()) {
           document.getElementById('toggleSensorSeismic')?.dispatchEvent(new Event('change'));
@@ -2943,8 +2994,12 @@ L.control.scale({
         { id: 'toggleJalurEvakuasi', label: 'Jalur Evakuasi (BNPB)' },
         { id: 'toggleHistoryGempa', label: 'Riwayat Gempa BMKG' },
         { id: 'toggleKatalogGempa', label: 'Katalog Gempa BMKG' },
+        { id: 'toggleHistoricalQuakes', label: 'Katalog Gempa Global (USGS)' },
         { id: 'toggleSensorSeismic', label: 'Sensor Seismic BMKG' },
-        { id: 'toggleSensorGlobal', label: 'Sensor Global (GEOFON)' }
+        { id: 'toggleSensorGlobal', label: 'Sensor Global (GEOFON)' },
+        { id: 'toggleViirsHotspots', label: 'Hotspot VIIRS (Global)' },
+        { id: 'toggleModisHotspots48', label: 'Hotspot MODIS (48 Jam)' },
+        { id: 'toggleModisHotspots7d', label: 'Hotspot MODIS (7 Hari)' }
       ]
     },
     {
@@ -2994,7 +3049,24 @@ L.control.scale({
           { id: 'toggleAirVisualO3', label: 'O3 - Ozon (AirVisual)', dataAttr: 'airvisual-o3' },
           { id: 'toggleAirVisualNo2', label: 'NO2 - Nitrogen Dioksida (AirVisual)', dataAttr: 'airvisual-no2' },
           { id: 'toggleAirVisualSo2', label: 'SO2 - Sulfur Dioksida (AirVisual)', dataAttr: 'airvisual-so2' },
-          { id: 'toggleAirVisualCo', label: 'CO - Karbon Monoksida (AirVisual)', dataAttr: 'airvisual-co' }
+          { id: 'toggleAirVisualCo', label: 'CO - Karbon Monoksida (AirVisual)', dataAttr: 'airvisual-co' },
+          { id: 'toggleOpenaqPm25', label: 'PM2.5 (OpenAQ)' },
+          { id: 'toggleOpenaqPm10', label: 'PM10 (OpenAQ)' },
+          { id: 'toggleOpenaqPm1', label: 'PM1 (OpenAQ)' }
+        ]},
+        { subcat: 'SPI (Kekeringan)', layers: [
+          { id: 'toggleSpi1m', label: 'SPI 1 Bulan' },
+          { id: 'toggleSpi3m', label: 'SPI 3 Bulan' },
+          { id: 'toggleSpi6m', label: 'SPI 6 Bulan' },
+          { id: 'toggleSpi9m', label: 'SPI 9 Bulan' },
+          { id: 'toggleSpi12m', label: 'SPI 12 Bulan' }
+        ]},
+        { subcat: 'SPEI (Kekeringan)', layers: [
+          { id: 'toggleSpei1m', label: 'SPEI 1 Bulan' },
+          { id: 'toggleSpei3m', label: 'SPEI 3 Bulan' },
+          { id: 'toggleSpei6m', label: 'SPEI 6 Bulan' },
+          { id: 'toggleSpei9m', label: 'SPEI 9 Bulan' },
+          { id: 'toggleSpei12m', label: 'SPEI 12 Bulan' }
         ]}
       ]
     },

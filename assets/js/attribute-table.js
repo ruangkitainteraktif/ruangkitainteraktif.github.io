@@ -210,6 +210,136 @@
         return [ll.lat, ll.lng];
       }
     },
+    toggleHistoricalQuakes: {
+      name: 'Katalog Gempa Global (USGS)',
+      type: 'cluster',
+      getLayer: function () { return window.historicalQuakesLayerObj || null; },
+      props: ['mag', 'place', 'depth', 'time', 'alert', 'tsunami', 'status', 'id'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng();
+        return [ll.lat, ll.lng];
+      }
+    },
+    toggleViirsHotspots: {
+      name: 'Hotspot VIIRS (Global)',
+      type: 'cluster',
+      getLayer: function () { return window.viirsHotspotsLayerObj || null; },
+      props: ['OBJECTID', 'confidence', 'frp', 'satellite', 'acq_time', 'hours_old', 'daynight', 'bright_ti4'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng();
+        return [ll.lat, ll.lng];
+      }
+    },
+    toggleModisHotspots48: {
+      name: 'Hotspot MODIS (48 Jam)',
+      type: 'cluster',
+      getLayer: function () { return window.modisHotspots48LayerObj || null; },
+      props: ['OBJECTID', 'CONFIDENCE', 'FRP', 'SATELLITE', 'ACQ_DATE', 'HOURS_OLD', 'DAYNIGHT', 'BRIGHTNESS'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng();
+        return [ll.lat, ll.lng];
+      }
+    },
+    toggleModisHotspots7d: {
+      name: 'Hotspot MODIS (7 Hari)',
+      type: 'cluster',
+      getLayer: function () { return window.modisHotspots7dLayerObj || null; },
+      props: ['OBJECTID', 'CONFIDENCE', 'FRP', 'SATELLITE', 'ACQ_DATE', 'HOURS_OLD', 'DAYNIGHT', 'BRIGHTNESS'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng();
+        return [ll.lat, ll.lng];
+      }
+    },
+    toggleOpenaqPm25: {
+      name: 'PM2.5 (OpenAQ)',
+      type: 'cluster',
+      getLayer: function () { return window.openaqPm25LayerObj || null; },
+      props: ['OBJECTID', 'location', 'city', 'country_name', 'value', 'unit', 'lastUpdated', 'owner_name'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng();
+        return [ll.lat, ll.lng];
+      }
+    },
+    toggleOpenaqPm10: {
+      name: 'PM10 (OpenAQ)',
+      type: 'cluster',
+      getLayer: function () { return window.openaqPm10LayerObj || null; },
+      props: ['OBJECTID', 'location', 'city', 'country_name', 'value', 'unit', 'lastUpdated', 'owner_name'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng();
+        return [ll.lat, ll.lng];
+      }
+    },
+    toggleOpenaqPm1: {
+      name: 'PM1 (OpenAQ)',
+      type: 'cluster',
+      getLayer: function () { return window.openaqPm1LayerObj || null; },
+      props: ['OBJECTID', 'location', 'city', 'country_name', 'value', 'unit', 'lastUpdated', 'owner_name'],
+      getLatLng: function (m) {
+        var ll = m.getLatLng();
+        return [ll.lat, ll.lng];
+      }
+    },
+    toggleSpi1m: {
+      name: 'SPI 1 Bulan',
+      type: 'geojson',
+      getLayer: function () { return window.spi1mLayerObj || null; },
+      props: ['OBJECTID', 'gridcode', 'Rec_Date']
+    },
+    toggleSpi3m: {
+      name: 'SPI 3 Bulan',
+      type: 'geojson',
+      getLayer: function () { return window.spi3mLayerObj || null; },
+      props: ['OBJECTID', 'gridcode', 'Rec_Date']
+    },
+    toggleSpi6m: {
+      name: 'SPI 6 Bulan',
+      type: 'geojson',
+      getLayer: function () { return window.spi6mLayerObj || null; },
+      props: ['OBJECTID', 'gridcode', 'Rec_Date']
+    },
+    toggleSpi9m: {
+      name: 'SPI 9 Bulan',
+      type: 'geojson',
+      getLayer: function () { return window.spi9mLayerObj || null; },
+      props: ['OBJECTID', 'gridcode', 'Rec_Date']
+    },
+    toggleSpi12m: {
+      name: 'SPI 12 Bulan',
+      type: 'geojson',
+      getLayer: function () { return window.spi12mLayerObj || null; },
+      props: ['OBJECTID', 'gridcode', 'Rec_Date']
+    },
+    toggleSpei1m: {
+      name: 'SPEI 1 Bulan',
+      type: 'geojson',
+      getLayer: function () { return window.spei1mLayerObj || null; },
+      props: ['OBJECTID', 'gridcode', 'Rec_Date']
+    },
+    toggleSpei3m: {
+      name: 'SPEI 3 Bulan',
+      type: 'geojson',
+      getLayer: function () { return window.spei3mLayerObj || null; },
+      props: ['OBJECTID', 'gridcode', 'Rec_Date']
+    },
+    toggleSpei6m: {
+      name: 'SPEI 6 Bulan',
+      type: 'geojson',
+      getLayer: function () { return window.spei6mLayerObj || null; },
+      props: ['OBJECTID', 'gridcode', 'Rec_Date']
+    },
+    toggleSpei9m: {
+      name: 'SPEI 9 Bulan',
+      type: 'geojson',
+      getLayer: function () { return window.spei9mLayerObj || null; },
+      props: ['OBJECTID', 'gridcode', 'Rec_Date']
+    },
+    toggleSpei12m: {
+      name: 'SPEI 12 Bulan',
+      type: 'geojson',
+      getLayer: function () { return window.spei12mLayerObj || null; },
+      props: ['OBJECTID', 'gridcode', 'Rec_Date']
+    },
     toggleSensorSeismic: {
       name: 'Sensor Seismic BMKG',
       type: 'cluster',
