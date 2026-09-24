@@ -83,6 +83,17 @@
     return coords.z + '/' + coords.x + '/' + coords.y;
   }
 
+  /* Fallback XYZ per-tile (CORS kosong → muat via <img>, tanpa IndexedDB).
+     Endpoint hanya punya tile z16–z21; di luar rentang itu biarkan error. */
+  var XYZ_FALLBACK_BASE = 'https://petadasar.meritech.cloud/tile/';
+  var XYZ_FALLBACK_MIN_Z = 16;
+  var XYZ_FALLBACK_MAX_Z = 21;
+
+  function xyzFallbackUrl(coords) {
+    if (coords.z < XYZ_FALLBACK_MIN_Z || coords.z > XYZ_FALLBACK_MAX_Z) return null;
+    return XYZ_FALLBACK_BASE + coords.z + '/' + coords.x + '/' + coords.y + '.jpg';
+  }
+
   /* ── Custom Cached WMS Tile Layer ── */
   L.TileLayer.WMS_Cached = L.TileLayer.WMS.extend({
 
@@ -109,6 +120,14 @@
         };
         tile.onerror = function () {
           if (source.indexOf('blob:') === 0) URL.revokeObjectURL(source);
+          if (!tile._xyzFallbackTried) {
+            var xyz = xyzFallbackUrl(coords);
+            if (xyz) {
+              tile._xyzFallbackTried = true;
+              tile.src = xyz;
+              return;
+            }
+          }
           self._tileOnError(done, tile);
         };
         tile.src = source;

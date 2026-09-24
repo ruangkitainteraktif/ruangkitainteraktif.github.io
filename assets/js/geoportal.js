@@ -1268,8 +1268,14 @@
   }
 
   async function _loadLegendGraphic(url) {
+    let fetchTimer = null;
+    let imgTimer = null;
     try {
-      const res = await fetch(url, { mode: 'cors' });
+      const ctrl = new AbortController();
+      fetchTimer = setTimeout(() => ctrl.abort(), 8000);
+      const res = await fetch(url, { mode: 'cors', signal: ctrl.signal });
+      clearTimeout(fetchTimer);
+      fetchTimer = null;
       if (!res.ok) return null;
       const blob = await res.blob();
       if (!blob || !blob.type || blob.type.indexOf('image') !== 0) return null;
@@ -1281,12 +1287,80 @@
       });
       const im = await new Promise((resolve, reject) => {
         const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = reject;
+        imgTimer = setTimeout(() => reject(new Error('image timeout')), 5000);
+        img.onload = () => { clearTimeout(imgTimer); imgTimer = null; resolve(img); };
+        img.onerror = () => { clearTimeout(imgTimer); imgTimer = null; reject(new Error('image error')); };
         img.src = dataUrl;
       });
       return { dataUrl, w: im.naturalWidth, h: im.naturalHeight };
-    } catch (e) { return null; }
+    } catch (e) {
+      if (fetchTimer) clearTimeout(fetchTimer);
+      if (imgTimer) clearTimeout(imgTimer);
+      return null;
+    }
+  }
+
+  /* ── Shared map capture: wait tiles + proxy non-CORS images ── */
+  function _waitTilesReady(maxMs) {
+    maxMs = maxMs || 6000;
+    return new Promise(function (resolve) {
+      var start = Date.now();
+      (function tick() {
+        var pending = 0;
+        var imgs = document.querySelectorAll('.leaflet-container img');
+        for (var i = 0; i < imgs.length; i++) {
+          if (!imgs[i].complete) pending++;
+        }
+        if (pending === 0 || Date.now() - start >= maxMs) { resolve(); return; }
+        setTimeout(tick, 120);
+      })();
+    });
+  }
+
+  function _captureProxySrc(src) {
+    if (!src) return src;
+    if (src.indexOf('data:') === 0 || src.indexOf('blob:') === 0) return src;
+    if (src.indexOf('images.weserv.nl') !== -1) return src;
+    var full = src.indexOf('//') === 0 ? (location.protocol + src) : src;
+    if (full.indexOf('http://') !== 0 && full.indexOf('https://') !== 0) return src;
+    return 'https://images.weserv.nl/?url=' + encodeURIComponent(full);
+  }
+
+  async function captureMapCanvas(opts) {
+    opts = opts || {};
+    var container = document.querySelector('.leaflet-container');
+    if (!container) throw new Error('Peta tidak siap');
+    map.invalidateSize();
+    await _waitTilesReady(opts.tileWaitMs || 6000);
+    await new Promise(function (r) { setTimeout(r, 350); });
+    return html2canvas(container, {
+      useCORS: true,
+      allowTaint: false,
+      scale: opts.scale || 2,
+      logging: false,
+      backgroundColor: '#e8e8e8',
+      imageTimeout: 15000,
+      ignoreElements: opts.ignoreElements || function (el) {
+        return el.id === 'print-loading-overlay' || el.id === 'print-error-overlay';
+      },
+      onclone: function (doc) {
+        var c = doc.querySelector('.leaflet-container');
+        if (!c) return;
+        var imgs = c.querySelectorAll('img');
+        for (var i = 0; i < imgs.length; i++) {
+          var img = imgs[i];
+          var src = img.getAttribute('src') || '';
+          if (!src || src.indexOf('data:') === 0) continue;
+          var proxied = _captureProxySrc(src);
+          if (proxied !== src) {
+            img.setAttribute('crossorigin', 'anonymous');
+            img.setAttribute('src', proxied);
+          } else if (src.indexOf('http') === 0 || src.indexOf('//') === 0) {
+            img.setAttribute('crossorigin', 'anonymous');
+          }
+        }
+      }
+    });
   }
 
   /* ── Phase 1: Prepare print data ── */
@@ -1348,15 +1422,15 @@
     const panelH = mapFrameH;
 
     let mapImg = null;
+    let exportCanvas = null;
+    let exportBbox = null;
     let effLonMin = null, effLonMax = null, effLatMin = null, effLatMax = null;
     let mCX = mapFrameX + mapFrameW / 2, mCY = mapFrameY + mapFrameH / 2;
 
     try {
       const leafletContainer = document.querySelector('.leaflet-container');
       if (leafletContainer) {
-        map.invalidateSize();
-        await new Promise(r => setTimeout(r, 1500));
-        const mapCanvas = await html2canvas(leafletContainer, { useCORS: true, allowTaint: false, scale: 2, logging: false, backgroundColor: '#e8e8e8', ignoreElements: function(el) { return el.id === 'print-loading-overlay' || el.id === 'print-error-overlay'; } });
+        const mapCanvas = await captureMapCanvas({ tileWaitMs: 6000, scale: 2 });
         const canvasAspect = mapCanvas.width / mapCanvas.height;
         const frameAspect = mapFrameW / mapFrameH;
         let cropX, cropY, cropW, cropH;
@@ -1381,6 +1455,19 @@
         effLatMax = latMax - (latMax - latMin) * (0.5 - fy / 2);
         effLatMin = latMax - (latMax - latMin) * (0.5 + fy / 2);
         mCX = mapFrameX + mapFrameW / 2; mCY = mapFrameY + mapFrameH / 2;
+
+        exportBbox = { lonMin: lonMin, lonMax: lonMax, latMin: latMin, latMax: latMax };
+        const EX_MAX = 4096;
+        if (mapCanvas.width > EX_MAX || mapCanvas.height > EX_MAX) {
+          const exScale = EX_MAX / Math.max(mapCanvas.width, mapCanvas.height);
+          const dc = document.createElement('canvas');
+          dc.width = Math.max(1, Math.round(mapCanvas.width * exScale));
+          dc.height = Math.max(1, Math.round(mapCanvas.height * exScale));
+          dc.getContext('2d').drawImage(mapCanvas, 0, 0, dc.width, dc.height);
+          exportCanvas = dc;
+        } else {
+          exportCanvas = mapCanvas;
+        }
       }
     } catch (e) {
       console.warn('[PrintGeoportal] Gagal menangkap peta:', e);
@@ -1403,11 +1490,17 @@
     getActiveLbsVtLayers().forEach(a => {
       legendItems.push({ kind: 'arcgis', label: _arcgisLabels[a.layerKey] || a.label });
     });
-    await Promise.all(legendItems.map(async it => {
-      if (it.kind !== 'wms') return;
-      const r = await _loadLegendGraphic(buildGeoportalLegendGraphicUrl(it.wmsUrl, it.layerName));
-      if (r && r.w > 2 && r.h > 2) { it.img = r.dataUrl; it.iw = r.w; it.ih = r.h; }
-    }));
+    await (async () => {
+      const loadAll = Promise.all(legendItems.map(async it => {
+        if (it.kind !== 'wms') return;
+        const r = await _loadLegendGraphic(buildGeoportalLegendGraphicUrl(it.wmsUrl, it.layerName));
+        if (r && r.w > 2 && r.h > 2) { it.img = r.dataUrl; it.iw = r.w; it.ih = r.h; }
+      }));
+      let timer = null;
+      const timeout = new Promise(resolve => { timer = setTimeout(resolve, 12000); });
+      await Promise.race([loadAll, timeout]);
+      if (timer) clearTimeout(timer);
+    })();
 
     const satLegends = (typeof window.SATELLITE_LEGENDS !== 'undefined') ? window.SATELLITE_LEGENDS : null;
     const bmLegend = satLegends && satLegends[currentBasemapName] ? satLegends[currentBasemapName] : null;
@@ -1419,6 +1512,7 @@
 
     return {
       hiddenEls, titleText, bmFriendly, mapImg, legendItems, bmLegend, activeNames,
+      exportCanvas, exportBbox,
       pageW, pageH, margin, titleH, bottomStripH,
       mapFrameX, mapFrameY, mapFrameW, mapFrameH,
       panelX, panelW, panelH, mCX, mCY,
@@ -1449,6 +1543,8 @@
     actions.innerHTML = '<button class="print-preview-cancel">\u2715 Batal</button><button class="print-preview-confirm">\uD83D\uDCBB Cetak PDF</button>';
     overlay.appendChild(container);
     overlay.appendChild(actions);
+    const spinnerEarly = overlay.querySelector('.print-preview-spinner');
+    if (spinnerEarly) spinnerEarly.style.display = 'none';
 
     const ctx = canvas.getContext('2d');
 
@@ -1493,15 +1589,114 @@
 
     actions.querySelector('.print-preview-cancel').addEventListener('click', function () {
       overlay.remove();
+      data.exportCanvas = null;
       data.hiddenEls.forEach(h => { if (h.restore) try { h.restore(); } catch (e) {} });
       try { map.invalidateSize(); } catch (e) {}
     });
 
     actions.querySelector('.print-preview-confirm').addEventListener('click', function () {
       overlay.remove();
+      data.exportCanvas = null;
       generatePDF(data);
     });
   }
+
+  /* ── Global Export TIF — viewport langsung, tanpa alur cetak ── */
+  async function exportViewportGeoTiff(btn) {
+    const orig = btn && btn.innerHTML;
+    function setLabel(msg) {
+      if (!btn) return;
+      btn.innerHTML = msg;
+    }
+    function fail(msg) {
+      console.error('[ExportTIF]', msg);
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Gagal';
+        setTimeout(function () { if (orig != null) btn.innerHTML = orig; }, 4000);
+      }
+    }
+    if (typeof window.GeoTIFF === 'undefined' || typeof window.GeoTIFF.writeArrayBuffer !== 'function') {
+      return fail('GeoTIFF.js belum termuat');
+    }
+    if (typeof html2canvas !== 'function') return fail('html2canvas belum termuat');
+    const leafletContainer = document.querySelector('.leaflet-container');
+    if (!leafletContainer || !window.map) return fail('Peta tidak siap');
+    if (btn) { btn.disabled = true; btn.textContent = '…'; setLabel('…'); }
+    try {
+      setLabel('📷');
+      const mapCanvas = await captureMapCanvas({
+        tileWaitMs: 6000, scale: 2,
+        ignoreElements: function (el) {
+          return el.id === 'print-loading-overlay' || el.id === 'print-error-overlay'
+            || el.id === 'print-preview-overlay'
+            || (el.classList && (el.classList.contains('map-fab-wrap') || el.classList.contains('print-area-buttons')));
+        }
+      });
+      const EX_MAX = 4096;
+      let canvas = mapCanvas;
+      if (mapCanvas.width > EX_MAX || mapCanvas.height > EX_MAX) {
+        const exScale = EX_MAX / Math.max(mapCanvas.width, mapCanvas.height);
+        const dc = document.createElement('canvas');
+        dc.width = Math.max(1, Math.round(mapCanvas.width * exScale));
+        dc.height = Math.max(1, Math.round(mapCanvas.height * exScale));
+        dc.getContext('2d').drawImage(mapCanvas, 0, 0, dc.width, dc.height);
+        canvas = dc;
+      }
+      const w = canvas.width, h = canvas.height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const rgba = ctx.getImageData(0, 0, w, h).data;
+      const rgb = new Uint8Array(w * h * 3);
+      for (let i = 0, j = 0; i < rgba.length; i += 4, j += 3) {
+        const a = rgba[i + 3] / 255;
+        rgb[j] = Math.round(rgba[i] * a + 255 * (1 - a));
+        rgb[j + 1] = Math.round(rgba[i + 1] * a + 255 * (1 - a));
+        rgb[j + 2] = Math.round(rgba[i + 2] * a + 255 * (1 - a));
+      }
+      const vb = map.getBounds();
+      const sw = L.CRS.EPSG3857.project(vb.getSouthWest());
+      const ne = L.CRS.EPSG3857.project(vb.getNorthEast());
+      const sx = (ne.x - sw.x) / w;
+      const sy = (ne.y - sw.y) / h;
+      const metadata = {
+        width: w,
+        height: h,
+        SamplesPerPixel: [3],
+        BitsPerSample: [8, 8, 8],
+        PhotometricInterpretation: 2,
+        PlanarConfiguration: 1,
+        Compression: 1,
+        ModelPixelScale: [sx, sy, 0],
+        ModelTiepoint: [0, 0, 0, sw.x, ne.y, 0],
+        GTModelTypeGeoKey: 1,
+        GTRasterTypeGeoKey: 1,
+        ProjectedCSTypeGeoKey: 3857
+      };
+      setLabel('⬇️');
+      const buffer = await window.GeoTIFF.writeArrayBuffer(rgb, metadata);
+      const d = new Date();
+      const pad2 = function (n) { return n < 10 ? '0' + n : String(n); };
+      const date = d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate());
+      const name = 'viewport-' + date + '-z' + map.getZoom() + '-' + w + 'x' + h + '.tif';
+      const blob = new Blob([buffer], { type: 'image/tiff' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.download = name;
+      a.href = url;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '✓';
+        setTimeout(function () { if (orig != null) btn.innerHTML = orig; }, 4000);
+      }
+    } catch (err) {
+      fail(err && err.message ? err.message : String(err));
+    }
+  }
+  window.exportViewportGeoTiff = exportViewportGeoTiff;
 
   function _drawPreviewOverlay(ctx, data, s, cW, cH) {
     const { mapFrameX, mapFrameY, mapFrameW, mapFrameH, panelX, panelW, panelH,
@@ -1978,17 +2173,23 @@
 
   async function _startPrint() {
     const btn = document.querySelector('.geoportal-print-btn');
-    if (btn) { btn.disabled = true; btn.innerHTML = window.GEOPORTAL_PRINT_SPINNER || '\u23F3'; }
+    if (btn) { btn.disabled = true; btn.innerHTML = window.GEOPORTAL_PRINT_SPINNER || '⏳'; }
     showPrintLoading();
     try {
-      const data = await preparePrintData();
+      let timer = null;
+      const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('Timeout menyiapkan data cetak (45s)')), 45000);
+      });
+      const data = await Promise.race([preparePrintData(), timeout]);
+      if (timer) clearTimeout(timer);
       hidePrintLoading();
-      if (btn) { btn.disabled = false; btn.innerHTML = window.GEOPORTAL_PRINT_ICON || '\uD83D\uDCBB'; }
+      if (btn) { btn.disabled = false; btn.innerHTML = window.GEOPORTAL_PRINT_ICON || '💻'; }
       renderPreviewCanvas(data);
     } catch (err) {
       console.error('[PrintGeoportal] Gagal mempersiapkan data:', err);
       showPrintError(err && err.message ? err.message : String(err));
       hidePrintLoading();
-      if (btn) { btn.disabled = false; btn.innerHTML = window.GEOPORTAL_PRINT_ICON || '\uD83D\uDCBB'; }
+      if (btn) { btn.disabled = false; btn.innerHTML = window.GEOPORTAL_PRINT_ICON || '💻'; }
     }
   }
+

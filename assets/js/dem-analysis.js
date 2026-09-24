@@ -830,6 +830,11 @@
             searchInput.value = item.nama;
             resultsDiv.style.display = 'none';
             if (selectedDiv) { selectedDiv.textContent = item.nama + ' (' + item.kode + ')'; selectedDiv.style.display = 'block'; }
+            if (typeof showGeoidBoundary === 'function') {
+              var parts = String(item.kode || '').split('.');
+              var z = parts.length === 4 ? 14 : 10;
+              showGeoidBoundary(item.kode, z);
+            }
           });
           resultsDiv.appendChild(div);
         });

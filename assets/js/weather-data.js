@@ -77,7 +77,7 @@
             kabkot: loc.kabkota,
             provinsi: loc.provinsi,
             kode: kecCode,
-            searchText: normalizeWeatherSearch([loc.kecamatan, loc.kabkota, loc.provinsi].join(' '))
+            searchText: normalizeWeatherSearch([loc.kecamatan, loc.kabkota, loc.provinsi, kecCode].join(' '))
           });
         }
       }
@@ -94,7 +94,7 @@
             name: loc.kabkota,
             provinsi: loc.provinsi,
             kode: kabkotCode,
-            searchText: normalizeWeatherSearch([loc.kabkota, loc.provinsi].join(' '))
+            searchText: normalizeWeatherSearch([loc.kabkota, loc.provinsi, kabkotCode].join(' '))
           });
         }
       }
@@ -110,7 +110,7 @@
             level: 'provinsi',
             name: loc.provinsi,
             kode: provCode,
-            searchText: normalizeWeatherSearch(loc.provinsi)
+            searchText: normalizeWeatherSearch([loc.provinsi, provCode].join(' '))
           });
         }
       }

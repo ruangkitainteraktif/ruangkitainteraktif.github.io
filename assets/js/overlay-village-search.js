@@ -67,9 +67,14 @@
         input.value = item.nama;
         window._selectedVillageKode = item.kode;
         window._selectedOverlayLevel = getLevelMode();
-        selectedEl.textContent = `\u2713 ${item.nama} (${item.kode})`;
+        selectedEl.textContent = `✓ ${item.nama} (${item.kode})`;
         selectedEl.style.display = 'block';
         container.style.display = 'none';
+        if (typeof showGeoidBoundary === 'function') {
+          const parts = String(item.kode || '').split('.');
+          const z = parts.length === 4 ? 14 : 10;
+          showGeoidBoundary(item.kode, z);
+        }
       });
       container.appendChild(div);
     });

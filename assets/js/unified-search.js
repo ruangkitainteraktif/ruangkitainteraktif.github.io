@@ -4,11 +4,40 @@
     return normalizeWeatherSearch(value);
   }
 
-  function searchUnifiedDesa(query) {
+  function unifiedStripPrefix(query) {
+    var levelFilter = null;
+    var wantKota = false;
+    var m = query.match(/^(provinsi|kabupaten|kota|kecamatan|desa|kelurahan)\s+/);
+    if (m) {
+      var p = m[1];
+      if (p === 'provinsi') levelFilter = 'provinsi';
+      else if (p === 'kabupaten') levelFilter = 'kabkot';
+      else if (p === 'kota') { levelFilter = 'kabkot'; wantKota = true; }
+      else if (p === 'kecamatan') levelFilter = 'kecamatan';
+      else levelFilter = 'desa';
+      query = query.slice(m[0].length);
+    }
+    return { query: query, levelFilter: levelFilter, wantKota: wantKota };
+  }
+
+  function unifiedTokens(query) {
+    return query.replace(/[(),.]/g, ' ').split(/\s+/).filter(function (t) { return t.length >= 2; });
+  }
+
+  function unifiedMatch(searchText, query, tokens) {
+    if (searchText.includes(query)) return true;
+    if (/^\d{2}(?:\.\d{2}){0,2}(?:\.\d{4})?$/.test(query)) return false;
+    if (tokens.length >= 2) {
+      return tokens.every(function (t) { return searchText.includes(t); });
+    }
+    return false;
+  }
+
+  function searchUnifiedDesa(query, tokens) {
     if (!weatherSearchLocations || !weatherSearchLocations.length) return [];
     const results = [];
     for (const loc of weatherSearchLocations) {
-      if (loc.searchText.includes(query)) {
+      if (unifiedMatch(loc.searchText, query, tokens)) {
         results.push({
           type: 'desa',
           name: loc.desa,
@@ -23,11 +52,11 @@
     return results;
   }
 
-  function searchUnifiedProvinsi(query) {
+  function searchUnifiedProvinsi(query, tokens) {
     if (!provinsiSearchIndex || !provinsiSearchIndex.length) return [];
     const results = [];
     for (const item of provinsiSearchIndex) {
-      if (item.searchText.includes(query)) {
+      if (unifiedMatch(item.searchText, query, tokens)) {
         results.push({
           type: 'provinsi',
           name: item.name,
@@ -40,28 +69,34 @@
     return results;
   }
 
-  function searchUnifiedKabkot(query) {
+  function searchUnifiedKabkot(query, tokens, wantKota) {
     if (!kabkotaSearchIndex || !kabkotaSearchIndex.length) return [];
     const results = [];
     for (const item of kabkotaSearchIndex) {
-      if (item.searchText.includes(query)) {
+      if (unifiedMatch(item.searchText, query, tokens)) {
         results.push({
           type: 'kabkot',
           name: item.name,
           provinsi: item.provinsi,
-          kode: item.kode
+          kode: item.kode,
+          _isKota: String(item.name).toLowerCase().indexOf('kota ') === 0
         });
-        if (results.length >= 5) break;
+        if (results.length >= 10) break;
       }
     }
-    return results;
+    if (wantKota) {
+      results.sort(function (a, b) { return (b._isKota ? 1 : 0) - (a._isKota ? 1 : 0); });
+    }
+    return results.slice(0, 5).map(function (r) {
+      return { type: r.type, name: r.name, provinsi: r.provinsi, kode: r.kode };
+    });
   }
 
-  function searchUnifiedKecamatan(query) {
+  function searchUnifiedKecamatan(query, tokens) {
     if (!kecamatanSearchIndex || !kecamatanSearchIndex.length) return [];
     const results = [];
     for (const item of kecamatanSearchIndex) {
-      if (item.searchText.includes(query)) {
+      if (unifiedMatch(item.searchText, query, tokens)) {
         results.push({
           type: 'kecamatan',
           name: item.name,
@@ -92,6 +127,20 @@
       }
     }
     return results;
+  }
+
+  function runUnifiedSearch(rawQuery) {
+    var stripped = unifiedStripPrefix(rawQuery);
+    var query = stripped.query;
+    var levelFilter = stripped.levelFilter;
+    var wantKota = stripped.wantKota;
+    var tokens = unifiedTokens(query);
+    var provResults = levelFilter && levelFilter !== 'provinsi' ? [] : searchUnifiedProvinsi(query, tokens);
+    var kabkotResults = levelFilter && levelFilter !== 'kabkot' ? [] : searchUnifiedKabkot(query, tokens, wantKota);
+    var kecResults = levelFilter && levelFilter !== 'kecamatan' ? [] : searchUnifiedKecamatan(query, tokens);
+    var desaResults = levelFilter && levelFilter !== 'desa' ? [] : searchUnifiedDesa(query, tokens);
+    var cctvResults = levelFilter ? [] : searchUnifiedCctv(query);
+    return [...provResults, ...kabkotResults, ...kecResults, ...desaResults, ...cctvResults];
   }
 
   function renderUnifiedResults(items) {
@@ -190,7 +239,21 @@
             else if (item.type === 'kabkot') levelPrefix = '';
             else if (item.type === 'kecamatan') levelPrefix = 'Kecamatan ';
             else if (item.type === 'desa') levelPrefix = 'Desa ';
-            window._aiSendQuick(-1, levelPrefix + item.name);
+            var ctx = [];
+            if (item.type === 'desa') {
+              if (item.kecamatan) ctx.push(item.kecamatan);
+              if (item.kabkot) ctx.push(item.kabkot);
+              if (item.provinsi) ctx.push(item.provinsi);
+            } else if (item.type === 'kecamatan') {
+              if (item.kabkot) ctx.push(item.kabkot);
+              if (item.provinsi) ctx.push(item.provinsi);
+            } else if (item.type === 'kabkot') {
+              if (item.provinsi) ctx.push(item.provinsi);
+            }
+            var aiText = levelPrefix + item.name;
+            if (ctx.length) aiText += ', ' + ctx.join(', ');
+            if (item.kode) aiText += ' (' + item.kode + ')';
+            window._aiSendQuick(-1, aiText);
           }
         }, 400);
       }
@@ -210,12 +273,7 @@
 
       unifiedSearchTimer = setTimeout(async () => {
         if (!cctvLoaded && typeof loadCctvData === 'function') loadCctvData();
-        const provResults = searchUnifiedProvinsi(query);
-        const kabkotResults = searchUnifiedKabkot(query);
-        const kecResults = searchUnifiedKecamatan(query);
-        const desaResults = searchUnifiedDesa(query);
-        const cctvResults = searchUnifiedCctv(query);
-        renderUnifiedResults([...provResults, ...kabkotResults, ...kecResults, ...desaResults, ...cctvResults]);
+        renderUnifiedResults(runUnifiedSearch(query));
       }, 80);
     });
 
@@ -223,12 +281,7 @@
       const query = unifiedNormalize(this.value.trim());
       if (query.length >= 2) {
         if (!cctvLoaded && typeof loadCctvData === 'function') loadCctvData();
-        const provResults = searchUnifiedProvinsi(query);
-        const kabkotResults = searchUnifiedKabkot(query);
-        const kecResults = searchUnifiedKecamatan(query);
-        const desaResults = searchUnifiedDesa(query);
-        const cctvResults = searchUnifiedCctv(query);
-        renderUnifiedResults([...provResults, ...kabkotResults, ...kecResults, ...desaResults, ...cctvResults]);
+        renderUnifiedResults(runUnifiedSearch(query));
       }
     });
 

@@ -1198,7 +1198,7 @@
     });
   }
 
-  function drawSelOutline(boundary) {
+  function drawSelOutline(boundary, fly) {
     clearSelOutline();
     if (!boundary || !window.map) return;
     try {
@@ -1214,6 +1214,12 @@
       });
       state.outlineLayer.addTo(window.map);
       state.outlineLayer.bringToFront();
+      if (fly !== false) {
+        var b = state.outlineLayer.getBounds();
+        if (b && b.isValid()) {
+          window.map.flyToBounds(b.pad(0.15), { maxZoom: 14, duration: 0.8, padding: [40, 40] });
+        }
+      }
     } catch (e) { console.warn('[Satupeta] drawSelOutline gagal:', e); }
   }
 
@@ -1406,7 +1412,7 @@
       if (boundary) {
         state.selectedBoundary = boundary;
         state.selectedFeature.geometry = boundary.geometry;
-        drawSelOutline(boundary);
+        drawSelOutline(boundary, false);
       }
     });
   }
@@ -1422,7 +1428,7 @@
     fetchBoundary(kode).then(function (boundary) {
       if (state.pendingBoundaryKode !== kode) return;
       if (!boundary) {
-        setBoundaryErrorInfo('Gagal memuat batas desa. Klik "Tampilkan Layer" untuk coba lagi.');
+        setBoundaryErrorInfo('Gagal memuat batas desa. Klik "Tampilkan Data" untuk coba lagi.');
         return;
       }
       state.selectedFeature = { properties: { kode: kode, nama: nama }, geometry: boundary.geometry };
@@ -1444,7 +1450,7 @@
     fetchBoundary(kode).then(function (boundary) {
       if (state.pendingBoundaryKode !== kode) return;
       if (!boundary) {
-        setBoundaryErrorInfo('Gagal memuat batas provinsi. Klik "Tampilkan Layer" untuk coba lagi.');
+        setBoundaryErrorInfo('Gagal memuat batas provinsi. Klik "Tampilkan Data" untuk coba lagi.');
         return;
       }
       state.selectedFeature = { properties: { kode: kode, nama: nama }, geometry: boundary.geometry };
@@ -1466,7 +1472,7 @@
     fetchBoundary(kode).then(function (boundary) {
       if (state.pendingBoundaryKode !== kode) return;
       if (!boundary) {
-        setBoundaryErrorInfo('Gagal memuat batas kecamatan. Klik "Tampilkan Layer" untuk coba lagi.');
+        setBoundaryErrorInfo('Gagal memuat batas kecamatan. Klik "Tampilkan Data" untuk coba lagi.');
         return;
       }
       state.selectedFeature = { properties: { kode: kode, nama: nama }, geometry: boundary.geometry };
@@ -1741,7 +1747,7 @@
           state.selectedFeature = Object.assign({}, state.pendingFeature, { geometry: boundary.geometry });
         }
         state.selectedBoundary = boundary;
-        drawSelOutline(boundary);
+        drawSelOutline(boundary, false);
         var info = document.getElementById('satupetaInfo');
         if (info) info.style.display = 'none';
         fetchAndDisplay();

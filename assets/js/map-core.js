@@ -1825,13 +1825,14 @@ L.control.scale({
 
   /* ── Pindahkan tombol ke dalam FAB ── */
   setTimeout(function () {
+    createGeotoolsFAB();
+    createAttrTableFAB();
     moveToFAB('.draw-fab-wrap', 'Gambar & Ukur');
     moveToFAB('.geoportal-print-btn', 'Cetak Peta');
-    createGeotoolsFAB();
+    createExportTiffFAB();
+    createLegendFAB();
     var locateItem = moveToFAB('.leaflet-control-locate', 'Lokasi Saya');
     if (locateItem) locateItem.classList.add('map-fab-locate');
-    createLegendFAB();
-    createAttrTableFAB();
 
     /* ── Zoom Control di bawah tengah ── */
     var zoomWrap = document.querySelector('.zoom-control-wrap');
@@ -2766,6 +2767,21 @@ L.control.scale({
     document.body.classList.remove('geotools-sheet-minimized');
   }
   window.restoreGeotoolsSheet = restoreGeotoolsSheet;
+
+  /* ── Export TIF FAB (viewport GeoTIFF) ── */
+  function createExportTiffFAB() {
+    if (!__fabItems) __fabItems = document.querySelector('.map-fab-items');
+    if (!__fabItems) return;
+    var item = L.DomUtil.create('button', 'map-fab-item export-tiff-fab');
+    item.title = 'Export TIF';
+    item.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+    __fabItems.appendChild(item);
+    item.addEventListener('click', function (e) {
+      e.stopPropagation();
+      closeFAB();
+      if (typeof window.exportViewportGeoTiff === 'function') window.exportViewportGeoTiff(item);
+    });
+  }
 
   /* ── GeoTools FAB Button ── */
   function createGeotoolsFAB() {

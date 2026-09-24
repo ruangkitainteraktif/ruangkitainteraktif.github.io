@@ -353,9 +353,14 @@
         window._selectedLandcoverVillageKode = item.kode;
         window._selectedLandcoverAreaName = item.nama;
         input.value = item.nama;
-        selected.textContent = `\u2713 ${item.nama} (${item.kode})`;
+        selected.textContent = `✓ ${item.nama} (${item.kode})`;
         selected.style.display = 'block';
         results.style.display = 'none';
+        if (typeof showGeoidBoundary === 'function') {
+          const parts = String(item.kode || '').split('.');
+          const z = parts.length === 4 ? 14 : 10;
+          showGeoidBoundary(item.kode, z);
+        }
       });
       results.appendChild(option);
     });

@@ -2474,9 +2474,14 @@ document.addEventListener('DOMContentLoaded', () => {
             lbsInput.value = item.nama;
             window._selectedLbsVillageKode = item.kode;
             window._selectedLbsAreaName = item.nama;
-            lbsSelected.textContent = `\u2713 ${item.nama} (${item.kode})`;
+            lbsSelected.textContent = `✓ ${item.nama} (${item.kode})`;
             lbsSelected.style.display = 'block';
             lbsResults.style.display = 'none';
+            if (typeof showGeoidBoundary === 'function') {
+              const parts = String(item.kode || '').split('.');
+              const z = parts.length === 4 ? 14 : 10;
+              showGeoidBoundary(item.kode, z);
+            }
           });
           lbsResults.appendChild(div);
         });

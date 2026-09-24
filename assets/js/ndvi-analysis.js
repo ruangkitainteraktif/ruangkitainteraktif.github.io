@@ -398,6 +398,11 @@
         selected.textContent = `✓ ${item.nama} (${item.kode})`;
         selected.style.display = 'block';
         results.style.display = 'none';
+        if (typeof showGeoidBoundary === 'function') {
+          const parts = String(item.kode || '').split('.');
+          const z = parts.length === 4 ? 14 : 10;
+          showGeoidBoundary(item.kode, z);
+        }
       });
       results.appendChild(option);
     });
