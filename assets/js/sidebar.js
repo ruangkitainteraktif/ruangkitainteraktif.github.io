@@ -211,6 +211,9 @@
     for (var j = 0; j < panels.length; j++) panels[j].classList.remove('active');
     var target = document.getElementById(tabId);
     if (target) target.classList.add('active');
+    if (tabId === 'geotoolsTabDemnas' && window.DemnasDownload && typeof window.DemnasDownload.load === 'function') {
+      window.DemnasDownload.load().catch(function () {});
+    }
     if (tabId === 'geotoolsTabGeoPulse') {
       var gempaPanel = document.getElementById('gempa-subtab-gempa');
       if (gempaPanel && gempaPanel.classList.contains('active') && typeof loadEarthquakeData === 'function') loadEarthquakeData();

@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=14">
+  <link rel="stylesheet" href="assets/css/app.css?v=17">
 
 </head>
 
@@ -782,11 +782,12 @@
             <button class="geotools-main-tab-btn" data-maintab="geotoolsTabGeoPulse" onclick="openGeotoolsMainTab(this)">GeoPulse</button>
             <button class="geotools-main-tab-btn" data-maintab="geotoolsTabGeoPangan" onclick="openGeotoolsMainTab(this)">GeoPangan</button>
             <button class="geotools-main-tab-btn" data-maintab="geotoolsTabGeoWatch" onclick="openGeotoolsMainTab(this)">GeoWatch</button>
-            <button class="geotools-main-tab-btn active" data-maintab="geotoolsTabMuatData" onclick="openGeotoolsMainTab(this)">Muat Data</button>
+            <button class="geotools-main-tab-btn" data-maintab="geotoolsTabDemnas" onclick="openGeotoolsMainTab(this)">GeoRaster</button>
+            <button class="geotools-main-tab-btn active" data-maintab="geotoolsTabMuatData" onclick="openGeotoolsMainTab(this)">GeoData</button>
           </div>
 
-          <!-- Panel: Muat Data -->
           <div id="geotoolsTabMuatData" class="geotools-main-tab-panel active">
+            <div class="geotools-2col-main">
             <div class="geoid-subtabs">
             <button class="geoid-subtab-btn" data-subtab="alat-tab-shp" onclick="openGeoidSubtab(this)">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 18l9 4 9-4"/></svg>
@@ -939,7 +940,25 @@
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
             Hapus Semua Layer
           </button>
-          </div>
+              </div>
+            </div>
+
+             <div id="geotoolsTabDemnas" class="geotools-main-tab-panel">
+              <div class="geotools-2col-side">
+                 <h4 style="font-size:13px; margin-bottom:4px;">Unduh DEMNAS</h4>
+                <p class="geotools-desc" style="margin-bottom:12px; font-size:11px;">Pilih index raster DEMNAS untuk melihat polygon dan mengunduh TIFF tanpa token.</p>
+                <label class="geotani-form-label" for="demnasNamobjSelect">Index DEMNAS (OBJECTID / Name)</label>
+                <select id="demnasNamobjSelect" class="geotani-form-input" size="1">
+                  <option value="">Memuat katalog DEMNAS…</option>
+                </select>
+                <div id="demnasIndexSelected" style="display:none;margin-top:8px;padding:6px 8px;font-size:10px;color:#166534;background:#f0fdf4;border-radius:4px;"></div>
+                <button id="demnasDownloadBtn" class="geotools-btn" type="button" style="margin-top:12px;width:100%;">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Unduh DEMNAS TIFF
+                </button>
+                 <div id="demnasStatus" class="cctv-message" style="display:none; margin-top:12px;"></div>
+              </div>
+            </div>
 
           <!-- Panel: Geonusa -->
           <div id="geotoolsTabGeonusa" class="geotools-main-tab-panel">
@@ -2196,6 +2215,7 @@
     <script src="assets/js/petadasar-export.js"></script>
 
     <script src="assets/js/geoportal.js"></script>
+    <script src="assets/js/demnas-download.js"></script>
     <script src="assets/js/geoportal-search.js"></script>
     <script src="assets/js/sidebar.js"></script>
     <script src="assets/js/earthquake.js"></script>

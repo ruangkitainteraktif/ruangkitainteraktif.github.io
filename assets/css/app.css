@@ -553,6 +553,13 @@
       to { transform: rotate(360deg); }
     }
 
+    /* Download DEMNAS */
+    #demnasStatus.demnas-status--error {
+      color: #991b1b;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+    }
+
     /* Satellite Export */
     .sat-export-btn {
       display: grid;
@@ -3667,7 +3674,7 @@
     /* ── GeoTools Main Tabs (Muat Data | Geonusa) ── */
     .geotools-main-tabs {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 8px;
       margin-bottom: 14px;
     }
@@ -3685,9 +3692,32 @@
     }
     .geotools-main-tab-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
     .geotools-main-tab-btn.active { background: var(--accent); color: var(--text-inverse); box-shadow: 0 2px 6px rgba(8,145,178,.3); }
-    .geotools-main-tab-btn:last-child { grid-column: 1 / -1; }
     .geotools-main-tab-panel { display: none; overflow-x: hidden; }
     .geotools-main-tab-panel.active { display: block; }
+
+    /* DEMNAS panel: Muat Data | Unduh DEMNAS */
+    .geotools-2col {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
+    .geotools-2col-main,
+    .geotools-2col-side { min-width: 0; }
+    .geotools-2col-side {
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      background: var(--bg-secondary);
+      position: sticky;
+      top: 0;
+    }
+    .geotools-2col-side .geotools-steps { margin-bottom: 12px; }
+    .geotools-2col-side .geotools-step { padding: 6px 8px; font-size: 11px; }
+    @media (max-width: 420px) {
+      .geotools-2col { grid-template-columns: 1fr; }
+      .geotools-2col-side { position: static; }
+    }
 
     .info-card {
       background: var(--bg-secondary);
