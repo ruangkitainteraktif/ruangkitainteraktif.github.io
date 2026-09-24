@@ -272,73 +272,6 @@
       font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase;
       letter-spacing: .05em; padding: 8px 8px 2px 28px;
     }
-    .sih3-leaflet-popup { max-width: 320px !important; }
-    .sih3-leaflet-popup .leaflet-popup-content-wrapper {
-      border-radius: 14px; padding: 0; overflow: hidden; box-shadow: 0 6px 24px rgba(59,130,246,0.12); border: none;
-    }
-    .sih3-leaflet-popup .leaflet-popup-content { width: auto !important; margin: 0; }
-    .sih3-leaflet-popup .leaflet-popup-tip { box-shadow: 3px 3px 8px rgba(59,130,246,0.12); }
-    .sih3-popup {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      min-width: 220px;
-      color: #0f172a;
-      background: #fff;
-      overflow: hidden;
-    }
-    .sih3-popup-header {
-      position: relative;
-      padding: 12px 14px 10px;
-      color: #fff;
-      background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
-      overflow: hidden;
-    }
-    .sih3-popup-header::before {
-      content: '';
-      position: absolute;
-      top: -20px; right: -20px;
-      width: 70px; height: 70px;
-      background: rgba(255,255,255,0.06);
-      border-radius: 50%;
-      pointer-events: none;
-    }
-    .sih3-popup-header > * { position: relative; z-index: 1; }
-    .sih3-popup-badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      background: rgba(255,255,255,0.2); border-radius: 4px;
-      padding: 2px 8px; font-size: 10px; font-weight: 600; margin-bottom: 6px;
-    }
-    .sih3-popup-title {
-      font-size: 14px; font-weight: 700;
-    }
-    .sih3-popup-subtitle {
-      font-size: 11px; opacity: 0.85;
-    }
-    .sih3-popup-body {
-      padding: 10px 14px;
-      max-height: 35vh;
-      overflow-y: auto;
-    }
-    .sih3-popup-row {
-      display: block; padding: 6px 0; border-bottom: 1px solid #f1f5f9;
-    }
-    .sih3-popup-row:last-child { border-bottom: none; }
-    .sih3-popup-label {
-      display: block; font-size: 10px; color: #64748b; margin-bottom: 4px;
-    }
-    .sih3-popup-value {
-      display: block; font-size: 11px; font-weight: 600; color: #1e293b; text-align: left; white-space: normal; overflow: visible; max-width: none;
-    }
-    .sih3-popup-highlight {
-      color: #2563eb;
-    }
-    .sih3-popup-footer {
-      background: #f8fafc; padding: 8px 14px; border-top: 1px solid #e5e7eb;
-      font-size: 8px; color: #94a3b8; font-style: italic;
-      text-align: center;
-    }
-    .sih3-dpu-marker {
-      background: transparent; border: none;
-    }
     .lc-attr-btn {
       display: none; padding: 2px 4px; border: none; border-radius: 4px;
       background: transparent; color: #94a3b8; cursor: pointer; transition: color .15s, background .15s;
@@ -5494,33 +5427,6 @@
     .wind-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
     .wind-legend-unit { font-size: 8px; color: #94a3b8; margin-top: 6px; font-style: italic; }
 
-    /* ── Sistem Lahan (KODE L SYS) legend ── */
-    .sistemlahan-legend { min-width: 168px; max-width: 220px; }
-    .sistemlahan-legend-sub {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      color: #64748b;
-      margin: -2px 0 6px;
-      text-transform: uppercase;
-    }
-    .sistemlahan-legend-items {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2px 8px;
-      max-height: 220px;
-      overflow-y: auto;
-      padding-right: 4px;
-    }
-    .sistemlahan-legend-items::-webkit-scrollbar { width: 4px; }
-    .sistemlahan-legend-items::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
-    .sistemlahan-legend-items .wind-legend-item { font-size: 8px; gap: 4px; }
-    .sistemlahan-legend-items .wind-legend-dot {
-      width: 9px;
-      height: 9px;
-      border: 1px solid rgba(15, 23, 42, 0.18);
-    }
-
     /* ── Himawari Legend ── */
     .himawari-legend {
       background: rgba(255,255,255,0.96);
@@ -8908,7 +8814,6 @@
     .unified-legend-section .choropleth-legend,
     .unified-legend-section .geoportal-legend,
     .unified-legend-section .atrbpn-legend,
-    .unified-legend-section .sistemlahan-legend,
     .unified-legend-section .geologi-bnpb-legend {
       width: 100%;
       background: rgba(255,255,255,0.96) !important;
@@ -8931,7 +8836,6 @@
     .unified-legend-section .choropleth-legend-title,
     .unified-legend-section .geoportal-legend-title,
     .unified-legend-section .atrbpn-legend-title,
-    .unified-legend-section .sistemlahan-legend-sub,
     .unified-legend-section .geologi-bnpb-legend-title {
       color: #0f172a !important;
     }
@@ -9486,13 +9390,6 @@
     [data-theme="dark"] .lc-pin-btn-active:hover { color: #f59e0b; background: rgba(245,158,11,.18); }
     [data-theme="dark"] .lc-unpin-all { border-color: #d97706; color: #fbbf24; }
     [data-theme="dark"] .lc-unpin-all:hover { background: #d97706; color: #fff; }
-    [data-theme="dark"] .sih3-popup-body { background: var(--bg-primary); }
-    [data-theme="dark"] .sih3-popup-title { color: var(--text-primary); }
-    [data-theme="dark"] .sih3-popup-subtitle { color: var(--text-secondary); }
-    [data-theme="dark"] .sih3-popup-row { border-color: var(--border-color); }
-    [data-theme="dark"] .sih3-popup-label { color: var(--text-secondary); }
-    [data-theme="dark"] .sih3-popup-value { color: var(--text-primary); }
-    [data-theme="dark"] .sih3-popup-footer { background: var(--bg-secondary); border-color: var(--border-color); }
     [data-theme="dark"] .dm-sidebar { background: var(--bg-primary); color: var(--text-primary); }
     [data-theme="dark"] .dm-sidebar-option { background: var(--bg-secondary); border-color: var(--border-color); }
     [data-theme="dark"] .dm-sidebar-option:hover { background: var(--bg-card-hover); }
@@ -9754,8 +9651,7 @@
       background: var(--bg-card);
       border-color: var(--border-color);
     }
-    [data-theme="dark"] .wind-legend,
-    [data-theme="dark"] .sistemlahan-legend {
+    [data-theme="dark"] .wind-legend {
       background: var(--bg-glass);
       border-color: var(--border-color);
     }

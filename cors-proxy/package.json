@@ -1,0 +1,12 @@
+{
+  "name": "kta-cors-proxy",
+  "private": true,
+  "version": "1.0.0",
+  "devDependencies": {
+    "wrangler": "4.137.0"
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "workerd": true
+  }
+}

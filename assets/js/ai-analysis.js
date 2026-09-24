@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AI Geospatial Analysis — Query Engine
  * Keyword-based data analysis from map features (no LLM).
  */
@@ -58,13 +58,9 @@
       ids: ['toggleGeologiBNPB','toggleVolcanoLayer','toggleKrbGunungApi','toggleKrbTitik','togglePetaGeologi','toggleGeostruktur','togglePatahanAktif','toggleLikuifaksi','toggleKarst'],
       keywords: ['geologi','gunung api','volcano','karst','likuifaksi','geostruktur','patahan aktif']
     },
-    'Hidrologi': {
-      ids: ['toggleSih3Dpu_78','toggleSih3Dpu_73','toggleSih3Dpu_70','toggleSih3Dpu_19','toggleSih3Dpu_18','toggleSih3Dpu_16','toggleSih3Dpu_81','toggleSih3Dpu_14','toggleSih3Dpu_21','toggleSih3Dpu_20','toggleSih3Dpu_31','toggleSih3Dpu_45','toggleSih3Dpu_17','toggleSih3Dpu_15','toggleSih3Dpu_44','toggleSih3Dpu_38','toggleSih3Dpu_41','toggleSih3Dpu_13','toggleSih3Dpu_39','toggleSih3Dpu_12','toggleSih3Dpu_40','toggleSih3Dpu_10','toggleSih3Dpu_69','toggleSih3Dpu_84','toggleSih3Dpu_90','toggleSih3Dpu_85','toggleSih3Dpu_77','toggleSih3Dpu_68','toggleSih3Dpu_89','toggleSih3Dpu_80','toggleSih3Dpu_83','toggleSih3Dpu_43','toggleSih3Dpu_54','toggleSih3Dpu_32','toggleSih3Dpu_36','toggleSih3Dpu_29','toggleSih3Cit_16','toggleSih3Cit_17','toggleSih3Cit_18','toggleSih3Cit_19','toggleSih3Cit_20','toggleSih3Cit_21','toggleSih3Cit_22','toggleSih3Cit_23','toggleSih3Cit_24','toggleSih3Cit_25','toggleSih3Cit_26','toggleSih3Cit_27','toggleSih3Cit_30','toggleSih3Cit_31'],
-      keywords: ['hidrologi','sungai','banjir','debit','dam','tma','hujan','sih3','bbws','citarum']
-    },
     'Terrain & Lainnya': {
-      ids: ['toggleDemnasOverlay','toggleHillshade','toggleBatnas','toggleProvinceBoundary','toggleBmkgTimezone','toggleBpsTutupanLahan','toggleTollRoad','toggleNationalRoad','toggleEoxOverlay','toggleSistemLahan'],
-      keywords: ['terrain','hillshade','batnas','batas provinsi','jalan tol','jalan nasional','tutupan lahan','demnas','label','sistem lahan','jenis lahan','inaland','land system']
+      ids: ['toggleDemnasOverlay','toggleHillshade','toggleBatnas','toggleProvinceBoundary','toggleBmkgTimezone','toggleBpsTutupanLahan','toggleTollRoad','toggleNationalRoad','toggleEoxOverlay'],
+      keywords: ['terrain','hillshade','batnas','batas provinsi','jalan tol','jalan nasional','tutupan lahan','demnas','label']
     }
   };
 
@@ -669,7 +665,6 @@
     { intent: 'gunung', patterns: ['gunung', 'api', 'vulkanik', 'erupsi', 'magma', 'pvmbg', 'krb gunung'] },
     { intent: 'hutan', patterns: ['hutan', 'konsesi', 'mangrove', 'gambut', 'wdpa', 'gfw', 'sawit', 'rktn', 'kawasan hutan'] },
     { intent: 'geologi', patterns: ['geologi', 'geostruktur', 'karst', 'likuifaksi', 'patahan aktif', 'batuan'] },
-    { intent: 'hidrologi', patterns: ['hidrologi', 'sungai', 'banjir', 'debit', 'dam', 'tma', 'sih3', 'bbws', 'citarum', 'curah hujan'] },
     { intent: 'penduduk', patterns: ['penduduk', 'demografi', 'sensus penduduk', 'jumlah penduduk', 'populasi', 'dukcapil'] },
     { intent: 'pangan', patterns: ['harga', 'beras', 'commodity', 'food price', 'bi harga', 'komoditas'] },
     { intent: 'lahan', patterns: ['lahan', 'tutupan', 'irigasi', 'sawah dilindungi', 'lahan baku', 'pertanahan', 'atrbpn', 'persil', 'rtrw', 'penggunaan tanah', 'land use', 'peta penggunaan', 'ptnobj'] },
@@ -877,40 +872,7 @@
     return s;
   }
 
-  function formatGeologiAnswer() {
-    var ids = LAYER_CATEGORIES['Geologi'].ids;
-    var count = countActiveInCategory(ids);
-    var s = '**Data Geologi**\n\n';
-    if (!count) {
-      var recIds = ['toggleGeologiBNPB','toggleVolcanoLayer','togglePetaGeologi','toggleGeostruktur','togglePatahanAktif','toggleLikuifaksi','toggleKarst'];
-      var recLabels = { toggleGeologiBNPB: 'Peta Geologi (BNPB)', toggleVolcanoLayer: 'Gunung Api (PVMBG)', togglePetaGeologi: 'Peta Geologi (BIG)', toggleGeostruktur: 'Geostruktur (BIG)', togglePatahanAktif: 'Patahan Aktif 1:50K (BIG)', toggleLikuifaksi: 'Likuifaksi (BIG)', toggleKarst: 'Kawasan Karst (BIG)' };
-      s += 'Tidak ada layer geologi aktif.\n\n**Rekomendasi layer:**\n';
-      s += recGrid(recIds, recLabels);
-      return s;
-    }
-    s += 'Layer aktif: **' + count + '**\n\n';
-    ids.forEach(function (id) {
-      if (isLayerActiveById(id)) s += '- ' + id + '\n';
-    });
-    return s;
-  }
-
-  function formatHidrologiAnswer() {
-    var ids = LAYER_CATEGORIES['Hidrologi'].ids;
-    var count = countActiveInCategory(ids);
-    var s = '**Data Hidrologi**\n\n';
-    if (!count) {
-      var recIds = ['toggleSih3Dpu_78','toggleSih3Dpu_32','toggleSih3Dpu_36','toggleSih3Cit_19','toggleSih3Cit_23'];
-      var recLabels = { toggleSih3Dpu_78: 'Kualitas Air', toggleSih3Dpu_32: 'Pos Hujan Utama BMKG', toggleSih3Dpu_36: 'Pos Hujan Otomatis BMKG', toggleSih3Cit_19: 'Pos Duga Air (Citarum)', toggleSih3Cit_23: 'Pos Curah Hujan (Citarum)' };
-      s += 'Tidak ada layer hidrologi aktif.\n\n**Rekomendasi layer:**\n';
-      s += recGrid(recIds, recLabels);
-      return s;
-    }
-    s += 'Layer aktif: **' + count + '**\n';
-    return s;
-  }
-
-  async function formatLahanAnswer(text, regionMatch) {
+async function formatLahanAnswer(text, regionMatch) {
     var ids = LAYER_CATEGORIES['ATRBPN'].ids;
     var count = countActiveInCategory(ids);
     var s = '**Data Lahan & Pertanahan**\n\n';
@@ -1357,9 +1319,7 @@
     { id: 'com_21', name: 'Gula Pasir Lokal', satuan: 'kg', cat: 'Gula Pasir' }
   ];
   var GEOPANGAN_PROXY = [
-    function (u) { return 'https://api.cors.lol/?url=' + encodeURIComponent(u); },
-    function (u) { return 'https://proxy.killcors.com/?url=' + encodeURIComponent(u); },
-    function (u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); }
+    function (u) { return 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=' + encodeURIComponent(u); }
   ];
   var GEOPANGAN_PROV_MAP = {
     '11': 1, '12': 2, '13': 3, '14': 4, '15': 6, '16': 8, '17': 7, '18': 10,
@@ -1908,7 +1868,6 @@
       case 'gunung': return await formatGunungAnswer(text, regionMatch);
       case 'hutan': return formatHutanAnswer();
       case 'geologi': return formatGeologiAnswer();
-      case 'hidrologi': return formatHidrologiAnswer();
       case 'penduduk': return formatPendudukAnswer();
       case 'pangan': return formatPanganAnswer();
       case 'lahan': return await formatLahanAnswer(text, regionMatch);

@@ -621,10 +621,6 @@
       name: 'Batnas (Batimetri)',
       type: 'raster'
     },
-    toggleSistemLahan: {
-      name: 'Sistem Lahan (InaLAND MVT)',
-      type: 'raster'
-    },
     toggleFuPadang: {
       name: 'Foto Udara Padang 0715 (BIG)',
       type: 'raster'
@@ -751,29 +747,6 @@
     if (!config && toggleId.indexOf('toggleFu') === 0 && window.getFuLayerDefs) {
       var fuDef = window.getFuLayerDefs()[toggleId];
       if (fuDef) config = { name: fuDef.label, type: 'raster' };
-    }
-    // Support dynamic SIH3 toggles without enumerating every id in the registry
-    if (!config) {
-      var m;
-      if ((m = toggleId.match(/^toggleSih3Dpu_(.+)$/))) {
-        var sid = m[1];
-        var labelEl = document.querySelector('[data-layer-id="' + toggleId + '"] label');
-        var name = labelEl && labelEl.textContent ? labelEl.textContent.trim() : ('SIH3 DPU ' + sid);
-        config = {
-          name: name,
-          type: 'cluster',
-          getLayer: function () { return window._sih3DpuCache && window._sih3DpuCache[sid] ? window._sih3DpuCache[sid] : null; }
-        };
-      } else if ((m = toggleId.match(/^toggleSih3Cit_(.+)$/))) {
-        var cid = m[1];
-        var labelEl2 = document.querySelector('[data-layer-id="' + toggleId + '"] label');
-        var name2 = labelEl2 && labelEl2.textContent ? labelEl2.textContent.trim() : ('SIH3 Citarum ' + cid);
-        config = {
-          name: name2,
-          type: 'cluster',
-          getLayer: function () { return window._sih3CitCache && window._sih3CitCache[cid] ? window._sih3CitCache[cid] : null; }
-        };
-      }
     }
     if (!config) return;
 
@@ -1492,8 +1465,7 @@
 
   /* ── Check if layer has attr support ── */
   function hasAttrSupport(toggleId) {
-    // Also support SIH3 dynamic toggles by pattern so buttons show without manual registry entries
-    if (/^toggleSih3Dpu_/.test(toggleId) || /^toggleSih3Cit_/.test(toggleId)) return true;
+
     if (toggleId.indexOf('opt-') === 0 && window.OPT_ATTR_DATA && window.OPT_ATTR_DATA[toggleId]) return true;
     if (toggleId.indexOf('optp-') === 0 && window.OPTP_ATTR_DATA && window.OPTP_ATTR_DATA[toggleId]) return true;
     if (toggleId.indexOf('opth-') === 0 && window.OPTH_ATTR_DATA && window.OPTH_ATTR_DATA[toggleId]) return true;

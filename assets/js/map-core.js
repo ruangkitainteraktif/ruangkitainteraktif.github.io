@@ -1741,11 +1741,6 @@ L.control.scale({
         var pbCb = document.getElementById('toggleProvinceBoundary');
         if (pbCb) pbCb.checked = false;
 
-        // Bersihkan sistem lahan MVT
-        if (typeof window.toggleSistemLahan === 'function') window.toggleSistemLahan(false);
-        var slCb = document.getElementById('toggleSistemLahan');
-        if (slCb) slCb.checked = false;
-
         // Bersihkan foto udara / imagery BIG
         var fuClearIds = (typeof window.getFuLayerIds === 'function')
           ? window.getFuLayerIds()
@@ -1797,10 +1792,6 @@ L.control.scale({
         // 10c. Bersihkan unified legend & slider
         if (typeof clearUnifiedLegend === 'function') clearUnifiedLegend();
         if (typeof clearUnifiedSlider === 'function') clearUnifiedSlider();
-
-        // 10d. Bersihkan layer SIH3
-        if (typeof cleanupSih3DpuLayers === 'function') cleanupSih3DpuLayers();
-        if (typeof cleanupSih3CitarumLayers === 'function') cleanupSih3CitarumLayers();
 
         // 10e. Uncheck ALL layer catalog checkboxes (lc_ prefixed) and trigger their handlers
         var lcDd = document.getElementById('layerCatalogDropdown');
@@ -2065,9 +2056,7 @@ L.control.scale({
   var fsvaLegendCtrl = null;
   var fsvaWmsUrl = 'https://geoportal.badanpangan.go.id/geoserver/palapa/wms';
   var fsvaProxies = [
-    function (url) { return 'https://api.cors.lol/?url=' + encodeURIComponent(url); },
-    function (url) { return 'https://proxy.killcors.com/?url=' + encodeURIComponent(url); },
-    function (url) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url); }
+    function (url) { return 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=' + encodeURIComponent(url); }
   ];
 
   function fsvaFetchJson(url) {
@@ -2264,238 +2253,6 @@ L.control.scale({
     }
   }
   window.toggleFsvaLayer = toggleFsvaLayer;
-
-  /* ═══════════════════════════════════════════════════════
-     SIH3 - Dinas PU SDA Jatim (API-based markers)
-     ═══════════════════════════════════════════════════════ */
-  var SIH3_DPU_API = 'https://sih3.dpuair.jatimprov.go.id/main/get_data/view/{id}/label';
-  var _sih3DpuLayers = {};
-  var _sih3DpuCache = {};
-
-  var SIH3_DPU_ICONS = {
-    'Pos Hujan': { color: '#3b82f6', icon: '🌧️' },
-    'Pos Duga Air': { color: '#10b981', icon: '💧' },
-    'Pos Muka Air Tanah': { color: '#f59e0b', icon: '🌍' }
-  };
-
-  function _buildSih3DpuIcon(jenisPos) {
-    var cfg = SIH3_DPU_ICONS[jenisPos] || { color: '#6b7280', icon: '📍' };
-    return L.divIcon({
-      className: 'sih3-dpu-marker',
-      html: '<div style="background:' + cfg.color + ';width:22px;height:22px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:11px;">' + cfg.icon + '</div>',
-      iconSize: [22, 22],
-      iconAnchor: [11, 11]
-    });
-  }
-
-  function _buildSih3DpuPopup(props) {
-    var jenis = props.jenis_pos || '-';
-    var cfg = SIH3_DPU_ICONS[jenis] || { color: '#6b7280', icon: '📍' };
-    // If jenis is very long or indicates 'Pos Tinggi', don't show badge — use title only
-    var showBadge = true;
-    try { if (/Pos\s*Tinggi/i.test(jenis) || (jenis && jenis.length > 28)) showBadge = false; } catch (e) {}
-    var badgeHtml = showBadge ? ('<div class="sih3-popup-badge"><span>' + cfg.icon + '</span> ' + jenis + '</div>') : '';
-    return '<div class="sih3-popup sih3-dpu-popup">' +
-      '<div class="sih3-popup-header" style="background:linear-gradient(135deg,' + cfg.color + ',' + cfg.color + 'cc)">' +
-        badgeHtml +
-        '<div class="sih3-popup-title">' + (props.name || '-') + '</div>' +
-        // Remove subtitle 'Kewenangan' from header — use title only
-        '' +
-      '</div>' +
-      '<div class="sih3-popup-body">' +
-        // Kewenangan moved to title/subtitle — remove duplicate row
-        '' +
-        '<div class="sih3-popup-row"><div class="sih3-popup-label">Jenis Input</div><div class="sih3-popup-value">' + (props.tipe_input || '-') + '</div></div>' +
-        '<div class="sih3-popup-row"><div class="sih3-popup-label">Nilai</div><div class="sih3-popup-value sih3-popup-highlight">' + (props.nilai || '-') + '</div></div>' +
-        '<div class="sih3-popup-row"><div class="sih3-popup-label">Tanggal</div><div class="sih3-popup-value">' + (props.tanggal || '-') + ' ' + (props.jam ? props.jam + ':00' : '') + '</div></div>' +
-      '</div>' +
-      '<div class="sih3-popup-footer">SIH3 Dinas PU SDA Jatim</div>' +
-    '</div>';
-  }
-
-  function toggleSih3DpuLayer(viewId, show) {
-    if (show) {
-      if (_sih3DpuLayers[viewId] && map.hasLayer(_sih3DpuLayers[viewId])) return;
-      if (_sih3DpuCache[viewId]) {
-        _sih3DpuLayers[viewId] = _sih3DpuCache[viewId];
-        _sih3DpuLayers[viewId].addTo(map);
-        return;
-      }
-      var url = SIH3_DPU_API.replace('{id}', viewId);
-      fsvaFetchJson(url).then(function(data) {
-        if (!Array.isArray(data) || data.length === 0) return;
-        // Use MarkerClusterGroup for point data to improve performance and UX
-        var cluster = L.markerClusterGroup({ maxClusterRadius: 45 });
-        data.forEach(function(item) {
-          var lat = parseFloat(item.lat);
-          var lng = parseFloat(item.long);
-          if (isNaN(lat) || isNaN(lng)) return;
-          var m = L.marker([lat, lng], { icon: _buildSih3DpuIcon(item.jenis_pos) })
-            .bindPopup(_buildSih3DpuPopup(item), { maxWidth: 280, className: 'sih3-leaflet-popup' });
-          m.on('click', function () { flyToMarker(this); });
-          cluster.addLayer(m);
-        });
-        _sih3DpuCache[viewId] = cluster;
-        _sih3DpuLayers[viewId] = cluster;
-        cluster.addTo(map);
-      }).catch(function(err) {
-        console.warn('[SIH3 DPU] Gagal load view ' + viewId + ':', err.message);
-      });
-    } else {
-      if (_sih3DpuLayers[viewId] && map.hasLayer(_sih3DpuLayers[viewId])) {
-        map.removeLayer(_sih3DpuLayers[viewId]);
-      }
-      delete _sih3DpuLayers[viewId];
-    }
-  }
-  window.toggleSih3DpuLayer = toggleSih3DpuLayer;
-
-  function cleanupSih3DpuLayers() {
-    Object.keys(_sih3DpuLayers).forEach(function(k) {
-      if (_sih3DpuLayers[k] && map.hasLayer(_sih3DpuLayers[k])) map.removeLayer(_sih3DpuLayers[k]);
-    });
-    _sih3DpuLayers = {};
-  }
-
-  /* ═══════════════════════════════════════════════════════
-     SIH3 - BBWS Citarum (GeoJSON direct)
-     ═══════════════════════════════════════════════════════ */
-  var SIH3_CIT_BASE = 'https://sih3.wscitarum.id/public/storage/geospasial/';
-  var _sih3CitLayers = {};
-  var _sih3CitCache = {};
-
-  var SIH3_CIT_FILES = {
-    '16': 'Batas_DAS.geojson',
-    '17': 'Batas_WSCitarum.geojson',
-    '18': 'Batas_KabKot.geojson',
-    '19': 'PDA_semua_instansi.geojson',
-    '20': 'Kualitas_BBWS_2_2025.geojson',
-    '21': 'Kualitas_DLH_2_2025.geojson',
-    '22': 'PosKualitasAir_BBWS_PJT_DLH.geojson',
-    '23': 'pch_semua_instansi.geojson',
-    '24': 'AnalisisCH_Juni2026_29-07-2026_093519.geojson',
-    '25': 'PrediksiCH_Agustus2026_update_11-08-2026_093044.geojson',
-    '26': 'PrediksiCH_September2026_update_11-08-2026_093056.geojson',
-    '27': 'HTH_WS%20Citarum_Agustus%202026_Dasarian%201_09-09-2026_134245.geojson',
-    '30': 'CAT_April2026.geojson',
-    '31': 'PrediksiCH_Oktober2026_11-08-2026_093118.geojson'
-  };
-
-  var SIH3_CIT_SIZES = {};
-
-  var SIH3_CIT_STYLE = {
-    batas: { color: '#8b5cf6', weight: 2, dashArray: '6 4', fillOpacity: 0, interactive: true },
-    point: { radius: 5, weight: 1, fillOpacity: 0.85 }
-  };
-
-  var SIH3_CIT_COLORS = {
-    '19': '#3b82f6', '20': '#10b981', '21': '#f59e0b', '22': '#8b5cf6',
-    '23': '#06b6d4', '24': '#f97316', '25': '#ef4444', '26': '#ec4899',
-    '27': '#14b8a6', '30': '#84cc16', '31': '#e11d48'
-  };
-
-  function _buildSih3CitStyle(fileId) {
-    if (fileId === '16' || fileId === '17' || fileId === '18') return SIH3_CIT_STYLE.batas;
-    var color = SIH3_CIT_COLORS[fileId] || '#3b82f6';
-    return { radius: 5, weight: 1, color: color, fillColor: color, fillOpacity: 0.85 };
-  }
-
-  function _buildSih3CitPopup(props, fileId) {
-    var rows = '';
-    Object.keys(props).forEach(function(k) {
-      if (props[k] && props[k] !== 'N/A' && props[k] !== 'null') {
-        rows += '<div class="sih3-popup-row"><span class="sih3-popup-label">' + k + '</span><span class="sih3-popup-value">' + props[k] + '</span></div>';
-      }
-    });
-    return '<div class="sih3-popup sih3-cit-popup">' +
-      '<div class="sih3-popup-header" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)">' +
-        '<div class="sih3-popup-badge"><span>💧</span> BBWS Citarum</div>' +
-        '<div class="sih3-popup-title">' + (props.name || 'Data') + '</div>' +
-      '</div>' +
-      '<div class="sih3-popup-body">' + rows + '</div>' +
-      '<div class="sih3-popup-footer">SIH3 WS Citarum</div>' +
-    '</div>';
-  }
-
-  function toggleSih3CitarumLayer(fileId, show) {
-    if (show) {
-      if (_sih3CitLayers[fileId] && map.hasLayer(_sih3CitLayers[fileId])) return;
-      if (SIH3_CIT_SIZES[fileId]) {
-        L.popup().setLatLng(map.getCenter()).setContent(
-          '<div style="padding:8px;text-align:center;">' +
-            '<div style="font-size:13px;font-weight:600;margin-bottom:4px;">⚠️ File Terlalu Besar</div>' +
-            '<div style="font-size:11px;color:#64748b;">Ukuran: ~' + SIH3_CIT_SIZES[fileId] + ' MB<br>Memuat file ini dapat memperlambat peta.</div>' +
-          '</div>'
-        ).openOn(map);
-        return;
-      }
-      if (_sih3CitCache[fileId]) {
-        _sih3CitLayers[fileId] = _sih3CitCache[fileId];
-        _sih3CitLayers[fileId].addTo(map);
-        return;
-      }
-      var fileName = SIH3_CIT_FILES[fileId];
-      if (!fileName) return;
-      var url = SIH3_CIT_BASE + fileName;
-      fsvaFetchJson(url).then(function(geojson) {
-        var style = _buildSih3CitStyle(fileId);
-          // If the GeoJSON contains point features, render them as clustered markers
-          var hasPoint = Array.isArray(geojson.features) && geojson.features.some(function(f){ return f.geometry && f.geometry.type === 'Point'; });
-          if (hasPoint) {
-            var cluster = L.markerClusterGroup({ maxClusterRadius: 45 });
-            geojson.features.forEach(function(f) {
-              if (!f.geometry || f.geometry.type !== 'Point') return;
-              var coords = f.geometry.coordinates;
-              var lat = coords[1], lng = coords[0];
-              var color = SIH3_CIT_COLORS[fileId] || '#3b82f6';
-              var icon = L.divIcon({
-                className: 'sih3-cit-marker',
-                html: '<div style="background:' + color + ';width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.2);"></div>',
-                iconSize: [16,16], iconAnchor: [8,8]
-              });
-              var m = L.marker([lat, lng], { icon: icon })
-                .bindPopup(_buildSih3CitPopup(f.properties, fileId), { maxWidth: 300, className: 'sih3-leaflet-popup' });
-              m.on('click', function () { flyToMarker(this); });
-              cluster.addLayer(m);
-            });
-            _sih3CitCache[fileId] = cluster;
-            _sih3CitLayers[fileId] = cluster;
-            cluster.addTo(map);
-          } else {
-            var layer = L.geoJSON(geojson, {
-              style: function() { return style; },
-              pointToLayer: function(feature, latlng) {
-                var color = SIH3_CIT_COLORS[fileId] || '#3b82f6';
-                return L.circleMarker(latlng, { radius: 5, weight: 1, color: color, fillColor: color, fillOpacity: 0.85 });
-              },
-              onEachFeature: function(feature, layer) {
-                layer.bindPopup(_buildSih3CitPopup(feature.properties, fileId), { maxWidth: 300, className: 'sih3-leaflet-popup' });
-                // fly-to when polygon/line/circleMarker clicked
-                layer.on('click', function () { flyToPolygon(this); });
-              }
-            });
-            _sih3CitCache[fileId] = layer;
-            _sih3CitLayers[fileId] = layer;
-            layer.addTo(map);
-          }
-      }).catch(function(err) {
-        console.warn('[SIH3 Citarum] Gagal load file ' + fileId + ':', err.message);
-      });
-    } else {
-      if (_sih3CitLayers[fileId] && map.hasLayer(_sih3CitLayers[fileId])) {
-        map.removeLayer(_sih3CitLayers[fileId]);
-      }
-      delete _sih3CitLayers[fileId];
-    }
-  }
-  window.toggleSih3CitarumLayer = toggleSih3CitarumLayer;
-
-  function cleanupSih3CitarumLayers() {
-    Object.keys(_sih3CitLayers).forEach(function(k) {
-      if (_sih3CitLayers[k] && map.hasLayer(_sih3CitLayers[k])) map.removeLayer(_sih3CitLayers[k]);
-    });
-    _sih3CitLayers = {};
-  }
 
   /* ═══════════════════════════════════════════════════════
      QUICK LAYER TOOLBAR
@@ -3280,75 +3037,6 @@ L.control.scale({
       ]
     },
     {
-      cat: 'Hidrologi',
-      subcats: [
-        { subcat: 'Dinas PU SDA Jatim - Hidrologi', layers: [
-          { id: 'toggleSih3Dpu_78', label: 'Titik Sampling Kualitas Air' },
-          { id: 'toggleSih3Dpu_73', label: 'Sensor Banjir BPBD Jatim' },
-          { id: 'toggleSih3Dpu_70', label: 'Pos Tinggi Muka Air Dam Provinsi' },
-          { id: 'toggleSih3Dpu_19', label: 'Pos Hujan WS Brantas PJT 1' },
-          { id: 'toggleSih3Dpu_18', label: 'Pos Hujan WS Bengawan Solo PJT 1' },
-          { id: 'toggleSih3Dpu_16', label: 'Pos Hujan WS BBWS Solo' },
-          { id: 'toggleSih3Dpu_81', label: 'Pos Hujan PU SDA' },
-          { id: 'toggleSih3Dpu_14', label: 'Pos Hujan BBWS Brantas' },
-          { id: 'toggleSih3Dpu_21', label: 'Pos Duga Air WS Brantas PJT 1' },
-          { id: 'toggleSih3Dpu_20', label: 'Pos Duga Air WS Bengawan Solo PJT 1' },
-          { id: 'toggleSih3Dpu_31', label: 'Pos Duga Air PU SDA' },
-          { id: 'toggleSih3Dpu_45', label: 'Pos Duga Air Jam-jaman PU SDA' },
-          { id: 'toggleSih3Dpu_17', label: 'Pos Duga Air BBWS Solo' },
-          { id: 'toggleSih3Dpu_15', label: 'Pos Duga Air BBWS Brantas' },
-          { id: 'toggleSih3Dpu_44', label: 'Hujan Jam-jaman PU SDA' },
-          { id: 'toggleSih3Dpu_38', label: 'Hujan Harian WS Welang Rejoso' },
-          { id: 'toggleSih3Dpu_41', label: 'Hujan Harian WS Pekalen Sampean' },
-          { id: 'toggleSih3Dpu_13', label: 'Hujan Harian WS Madura Bawean' },
-          { id: 'toggleSih3Dpu_39', label: 'Hujan Harian WS Brantas' },
-          { id: 'toggleSih3Dpu_12', label: 'Hujan Harian WS Bondoyudo Bedadung' },
-          { id: 'toggleSih3Dpu_40', label: 'Hujan Harian WS Bengawan Solo' },
-          { id: 'toggleSih3Dpu_10', label: 'Hujan Harian WS Baru Bajulmati' },
-          { id: 'toggleSih3Dpu_69', label: 'Data TMA Harian PUPR Pamekasan' },
-          { id: 'toggleSih3Dpu_84', label: 'Data Prediksi TMA PU SDA' },
-          { id: 'toggleSih3Dpu_90', label: 'Data Prediksi Hujan Jam-jaman' },
-          { id: 'toggleSih3Dpu_85', label: 'Data Prediksi Debit Sungai' },
-          { id: 'toggleSih3Dpu_77', label: 'Data Meteorologi Juanda' },
-          { id: 'toggleSih3Dpu_68', label: 'Data Hujan Harian PUPR Pamekasan' },
-          { id: 'toggleSih3Dpu_89', label: 'Data Debit Sungai PU SDA' },
-          { id: 'toggleSih3Dpu_80', label: 'AWLR Bidang Sungai Waduk Pantai' }
-        ]},
-        { subcat: 'Dinas PU SDA Jatim - Hidrogeologi', layers: [
-          { id: 'toggleSih3Dpu_83', label: 'Telemetri TMA Tanah ESDM' },
-          { id: 'toggleSih3Dpu_43', label: 'Sumur Pantau ESDM' },
-          { id: 'toggleSih3Dpu_54', label: 'Sumur Pantau Badan Usaha' }
-        ]},
-        { subcat: 'Dinas PU SDA Jatim - Hidrometeorologi', layers: [
-          { id: 'toggleSih3Dpu_32', label: 'Pos Hujan Utama BMKG' },
-          { id: 'toggleSih3Dpu_36', label: 'Pos Hujan Otomatis BMKG' },
-          { id: 'toggleSih3Dpu_29', label: 'Peta Peringatan Dini Kekeringan' }
-        ]},
-        { subcat: 'BBWS Citarum - Batas Wilayah', layers: [
-          { id: 'toggleSih3Cit_16', label: 'Batas DAS WS Citarum' },
-          { id: 'toggleSih3Cit_17', label: 'Batas WS Citarum' },
-          { id: 'toggleSih3Cit_18', label: 'Kab/Kota WS Citarum' }
-        ]},
-        { subcat: 'BBWS Citarum - Hidrologi', layers: [
-          { id: 'toggleSih3Cit_19', label: 'Pos Duga Air (PDA)' },
-          { id: 'toggleSih3Cit_20', label: 'Status Kualitas Air BBWS' },
-          { id: 'toggleSih3Cit_21', label: 'Status Kualitas Air DLH' },
-          { id: 'toggleSih3Cit_22', label: 'Titik Pos Pantau Kualitas Air' }
-        ]},
-        { subcat: 'BBWS Citarum - Hidrometeorologi', layers: [
-          { id: 'toggleSih3Cit_23', label: 'Pos Curah Hujan (PCH)' },
-          { id: 'toggleSih3Cit_24', label: 'Analisis CH Juni 2026' },
-          { id: 'toggleSih3Cit_25', label: 'Prakiraan CH Agustus 2026' },
-          { id: 'toggleSih3Cit_26', label: 'Prakiraan CH September 2026' },
-          { id: 'toggleSih3Cit_27', label: 'Hari Tanpa Hujan Klimatologi' },
-          { id: 'toggleSih3Cit_31', label: 'Prakiraan CH Oktober 2026' }
-        ]},
-        { subcat: 'BBWS Citarum - Hidrogeologi', layers: [
-          { id: 'toggleSih3Cit_30', label: 'Cekungan Air Tanah' }
-        ]}
-      ]
-    },
-    {
       cat: 'Terrain & Lainnya',
       layers: [
         { id: 'toggleDemnasOverlay', label: 'Terrain Overlay (SRTM)' },
@@ -3359,8 +3047,7 @@ L.control.scale({
         { id: 'toggleBpsTutupanLahan', label: 'Peta Tutupan Lahan 100m (KSA BPS)' },
         { id: 'toggleTollRoad', label: 'Jalan Tol Pulau Jawa' },
         { id: 'toggleNationalRoad', label: 'Jalan Nasional' },
-        { id: 'toggleEoxOverlay', label: 'Labels Overlay (EOX)' },
-        { id: 'toggleSistemLahan', label: 'Sistem Lahan (InaLAND MVT)' }
+        { id: 'toggleEoxOverlay', label: 'Labels Overlay (EOX)' }
       ]
     }
   ];
@@ -3734,8 +3421,6 @@ L.control.scale({
           (id === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') ||
           (id === 'toggleHujanLayer') ||
           (id === 'toggleFsvaLayer' && typeof window.toggleFsvaLayer === 'function') ||
-          (id.indexOf('toggleSih3Dpu_') === 0 && typeof window.toggleSih3DpuLayer === 'function') ||
-          (id.indexOf('toggleSih3Cit_') === 0 && typeof window.toggleSih3CitarumLayer === 'function') ||
           id.indexOf('st2023:') === 0 ||
           id === 'bps-lbs-2024' ||
           id.indexOf('arcgis-') === 0 ||
@@ -3758,7 +3443,6 @@ L.control.scale({
            id === 'toggleSekolahLayer' ||
           id.indexOf('omi-') === 0 ||
            id === 'toggleEoxOverlay' ||
-           (id === 'toggleSistemLahan' && typeof window.toggleSistemLahan === 'function') ||
             (id.indexOf('toggleFu') === 0 && typeof window.toggleFuLayer === 'function');
         if (!hasWindowToggle) {
           var el = findLayerById(id);
@@ -3836,12 +3520,6 @@ L.control.scale({
         if (id === 'toggleFsvaLayer' && typeof window.toggleFsvaLayer === 'function') {
           window.toggleFsvaLayer(cb.checked);
         }
-        if (id.indexOf('toggleSih3Dpu_') === 0 && typeof window.toggleSih3DpuLayer === 'function') {
-          window.toggleSih3DpuLayer(id.replace('toggleSih3Dpu_', ''), cb.checked);
-        }
-        if (id.indexOf('toggleSih3Cit_') === 0 && typeof window.toggleSih3CitarumLayer === 'function') {
-          window.toggleSih3CitarumLayer(id.replace('toggleSih3Cit_', ''), cb.checked);
-        }
         if (id.indexOf('st2023:') === 0 && typeof window.toggleBpsSt2023Layer === 'function') {
           window.toggleBpsSt2023Layer(id, cb.checked);
         }
@@ -3880,9 +3558,6 @@ L.control.scale({
         }
         if (id === 'toggleBmkgTimezone' && typeof window.toggleBmkgTimezone === 'function') {
           window.toggleBmkgTimezone(cb.checked);
-        }
-        if (id === 'toggleSistemLahan' && typeof window.toggleSistemLahan === 'function') {
-          window.toggleSistemLahan(cb.checked);
         }
         if (id.indexOf('toggleFu') === 0 && typeof window.toggleFuLayer === 'function') {
           window.toggleFuLayer(id, cb.checked);

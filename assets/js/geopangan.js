@@ -10,9 +10,7 @@
   var BPS_INFLASI_BULANAN_URL_126 = 'https://webapi.bps.go.id/v1/api/list/model/data/lang/ind/domain/0000/var/2262/th/126/key/4c135b6a06a97bd32fd0476067e0a5dd';
 
   var PROXY_LIST = [
-    function (url) { return 'https://api.cors.lol/?url=' + encodeURIComponent(url); },
-    function (url) { return 'https://proxy.killcors.com/?url=' + encodeURIComponent(url); },
-    function (url) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url); }
+    function (url) { return 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=' + encodeURIComponent(url); }
   ];
 
   var BPS_VERVAR_TO_PROV = {

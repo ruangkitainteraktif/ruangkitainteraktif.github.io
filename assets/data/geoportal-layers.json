@@ -14227,10 +14227,6 @@
           "label": "Gempa 22"
         },
         {
-          "id": "geonode:geohidrologi_ar",
-          "label": "Geohidrologi Ar"
-        },
-        {
           "id": "geonode:geologi_ar",
           "label": "Geologi Ar"
         },
@@ -16008,10 +16004,6 @@
           "label": "2023 JASLING SOSIAL BUDAYA WARISAN BUDAYA AR 50K"
         },
         {
-          "id": "SIH3:2_pch_2025_08",
-          "label": "2 Pch 2025 08"
-        },
-        {
           "id": "DISLAUTKAN:4_MIL_LAUT_ADMINLAUT_AR_250K",
           "label": "4 MIL LAUT ADMINLAUT AR 250K"
         },
@@ -16086,22 +16078,6 @@
         {
           "id": "DISLAUTKAN:ALURPLAYAR_LN_250K",
           "label": "ALURPLAYAR LN 250K"
-        },
-        {
-          "id": "SIH3:ANALISIS_CH_082025_DAS1",
-          "label": "ANALISIS CH 082025 DAS1"
-        },
-        {
-          "id": "SIH3:ANALISIS_CH_082025_DAS2",
-          "label": "ANALISIS CH 082025 DAS2"
-        },
-        {
-          "id": "SIH3:ANALISIS_CH_082025_DAS3",
-          "label": "ANALISIS CH 082025 DAS3"
-        },
-        {
-          "id": "SIH3:ANALISIS_SH_082025_DAS2",
-          "label": "ANALISIS SH 082025 DAS2"
         },
         {
           "id": "DISLAUTKAN:ARAH_ARUS_MBARAT_PT_50K",
@@ -17836,10 +17812,6 @@
           "label": "PA LOKASITRANSMIGRASI LN 1K"
         },
         {
-          "id": "SIH3:PCH_BWS_Kal_3",
-          "label": "PCH BWS Kal 3"
-        },
-        {
           "id": "DPUPR:PELABUHAN_PT_50K",
           "label": "PELABUHAN PT 50K"
         },
@@ -18264,10 +18236,6 @@
           "label": "SEBARAN PROKLIM 2023 PT"
         },
         {
-          "id": "SIH3:SH_DASARIAN",
-          "label": "SH DASARIAN"
-        },
-        {
           "id": "DISDAG:SINGKONG_20220923_AR_5K",
           "label": "SINGKONG 20220923 AR 5K"
         },
@@ -18632,52 +18600,8 @@
           "label": "Administrasi Ln"
         },
         {
-          "id": "SIH3:aktual_ch_bulanan_april_2026_bmkg_kalsel",
-          "label": "Aktual Ch Bulanan April 2026 Bmkg Kalsel"
-        },
-        {
-          "id": "SIH3:aktual_ch_bulanan_april_bmkg_kalteng",
-          "label": "Aktual Ch Bulanan April Bmkg Kalteng"
-        },
-        {
-          "id": "SIH3:aktual_ch_bulanan_juli_2026_bmkg_kalteng",
-          "label": "Aktual Ch Bulanan Juli 2026 Bmkg Kalteng"
-        },
-        {
-          "id": "SIH3:aktual_ch_bulanan_juni_2026_bmkg_kalteng",
-          "label": "Aktual Ch Bulanan Juni 2026 Bmkg Kalteng"
-        },
-        {
-          "id": "SIH3:aktual_ch_bulanan_mei_2026_bmkg_kalteng",
-          "label": "Aktual Ch Bulanan Mei 2026 Bmkg Kalteng"
-        },
-        {
-          "id": "SIH3:alat_otomatis_2025",
-          "label": "Alat Otomatis 2025"
-        },
-        {
-          "id": "SIH3:analisishujanbulanan_ar",
-          "label": "Analisishujanbulanan Ar"
-        },
-        {
-          "id": "SIH3:analisishujanbulanan_ar_2026",
-          "label": "Analisishujanbulanan Ar 2026"
-        },
-        {
           "id": "BPKAD:asettanahbmn_ar_asetbangunanpemprovkalsel_5k_2026",
           "label": "Asettanahbmn Ar Asetbangunanpemprovkalsel 5k 2026"
-        },
-        {
-          "id": "SIH3:awlr_atab_bws",
-          "label": "Awlr Atab Bws"
-        },
-        {
-          "id": "SIH3:awlr",
-          "label": "Awlr"
-        },
-        {
-          "id": "SIH3:badan_air_garis_sempadan_sungai_kecamatan_banjarmasin_utara",
-          "label": "Badan Air Garis Sempadan Sungai Kecamatan Banjarmasin Utara"
         },
         {
           "id": "DINKES:covid_19_kalsel_01_04_2020_pagi",
@@ -18856,10 +18780,6 @@
           "label": "D3tlh Lahan 2026"
         },
         {
-          "id": "SIH3:daerahaliransungai_ar",
-          "label": "Daerahaliransungai Ar"
-        },
-        {
           "id": "DESDM:genlistrik_pt_2023",
           "label": "Genlistrik Pt 2023"
         },
@@ -18944,60 +18864,12 @@
           "label": "Lahan Kritis Ar 50k 2024"
         },
         {
-          "id": "SIH3:lokasi_pda",
-          "label": "Lokasi Pda"
-        },
-        {
           "id": "DISHUT:neracapenutuplahankwh_ar",
           "label": "Neracapenutuplahankwh Ar"
         },
         {
           "id": "DPMD:niaga_pt_peta_bumdes",
           "label": "Niaga Pt Peta Bumdes"
-        },
-        {
-          "id": "SIH3:pch_bmkg_kalsel",
-          "label": "Pch Bmkg Kalsel"
-        },
-        {
-          "id": "SIH3:pch_bmkg_kalteng",
-          "label": "Pch Bmkg Kalteng"
-        },
-        {
-          "id": "SIH3:pch_bpdas_barito",
-          "label": "Pch Bpdas Barito"
-        },
-        {
-          "id": "SIH3:pch_bws_manual",
-          "label": "Pch Bws Manual"
-        },
-        {
-          "id": "SIH3:pch_pt_pupr_2026_manual",
-          "label": "Pch Pt Pupr 2026 Manual"
-        },
-        {
-          "id": "SIH3:pch_pupr_kalteng",
-          "label": "Pch Pupr Kalteng"
-        },
-        {
-          "id": "SIH3:pda_bws_manual",
-          "label": "Pda Bws Manual"
-        },
-        {
-          "id": "SIH3:pda_pln",
-          "label": "Pda Pln"
-        },
-        {
-          "id": "SIH3:pda_pupr_kalsel",
-          "label": "Pda Pupr Kalsel"
-        },
-        {
-          "id": "SIH3:pda_pupr_kalsel_2026_manual",
-          "label": "Pda Pupr Kalsel 2026 Manual"
-        },
-        {
-          "id": "SIH3:pda_pupr_kalteng",
-          "label": "Pda Pupr Kalteng"
         },
         {
           "id": "BAPPEDA:pemerintahan_pt_rkpd",
@@ -19008,68 +18880,12 @@
           "label": "Pemerintahan Pt Rkpd 2026"
         },
         {
-          "id": "SIH3:ph_kalteng_2025",
-          "label": "Ph Kalteng 2025"
-        },
-        {
           "id": "DISHUT:piaps_rev_x_ar_250k",
           "label": "Piaps Rev X Ar 250k"
         },
         {
           "id": "DISHUT:pippib_periode_1_tahun_2026_ar",
           "label": "Pippib Periode 1 Tahun 2026 Ar"
-        },
-        {
-          "id": "SIH3:pkl_bpdas_barito_",
-          "label": "Pkl Bpdas Barito"
-        },
-        {
-          "id": "SIH3:pkl_bws_manual",
-          "label": "Pkl Bws Manual"
-        },
-        {
-          "id": "SIH3:pkl_pupr_kalteng_",
-          "label": "Pkl Pupr Kalteng"
-        },
-        {
-          "id": "SIH3:pos_duga_air",
-          "label": "Pos Duga Air"
-        },
-        {
-          "id": "SIH3:pos_hidrologi_pln",
-          "label": "Pos Hidrologi Pln"
-        },
-        {
-          "id": "SIH3:pos_kekeruhan_pupr_kalsel",
-          "label": "Pos Kekeruhan Pupr Kalsel"
-        },
-        {
-          "id": "SIH3:pos_pasut_pupr_bjm",
-          "label": "Pos Pasut Pupr Bjm"
-        },
-        {
-          "id": "SIH3:pos_pasut_puprbjm",
-          "label": "Pos Pasut Puprbjm"
-        },
-        {
-          "id": "SIH3:pos_sumur_bor_esdm_kalsel",
-          "label": "Pos Sumur Bor Esdm Kalsel"
-        },
-        {
-          "id": "SIH3:pos_sumur_pantau_esdm_kalsel",
-          "label": "Pos Sumur Pantau Esdm Kalsel"
-        },
-        {
-          "id": "SIH3:pos_titik_kualitas_air_dlh_kalsel",
-          "label": "Pos Titik Kualitas Air Dlh Kalsel"
-        },
-        {
-          "id": "SIH3:pos_titik_kualitas_air_pln",
-          "label": "Pos Titik Kualitas Air Pln"
-        },
-        {
-          "id": "SIH3:pos_titik_pantau_dlh_prov_kalteng",
-          "label": "Pos Titik Pantau Dlh Prov Kalteng"
         },
         {
           "id": "DLH:posdugaair_pt_2025",
@@ -19080,72 +18896,12 @@
           "label": "Posdugaair Pt 50k 2026"
         },
         {
-          "id": "SIH3:posdugaair_pt_bws",
-          "label": "Posdugaair Pt Bws"
-        },
-        {
-          "id": "SIH3:poshidrologi_pt",
-          "label": "Poshidrologi Pt"
-        },
-        {
-          "id": "SIH3:poshujan_pt",
-          "label": "Poshujan Pt"
-        },
-        {
-          "id": "SIH3:poshujan_pt_2026",
-          "label": "Poshujan Pt 2026"
-        },
-        {
-          "id": "SIH3:poshujan_pt_50k_puprkalsel",
-          "label": "Poshujan Pt 50k Puprkalsel"
-        },
-        {
-          "id": "SIH3:poshujan_pt_BARITO",
-          "label": "Poshujan Pt BARITO"
-        },
-        {
-          "id": "SIH3:poshujan_pt_bpdasbarito",
-          "label": "Poshujan Pt Bpdasbarito"
-        },
-        {
-          "id": "SIH3:poshujan_pt_pupr",
-          "label": "Poshujan Pt Pupr"
-        },
-        {
-          "id": "SIH3:posklimatologi_pt_bws",
-          "label": "Posklimatologi Pt Bws"
-        },
-        {
-          "id": "SIH3:prediksi_ch_bulanan_juli_2026_bmkg_kalteng",
-          "label": "Prediksi Ch Bulanan Juli 2026 Bmkg Kalteng"
-        },
-        {
-          "id": "SIH3:prediksi_ch_bulanan_juni_2026_bmkg_kalsel",
-          "label": "Prediksi Ch Bulanan Juni 2026 Bmkg Kalsel"
-        },
-        {
-          "id": "SIH3:prediksi_ch_bulanan_juni_2026_bmkg_kalteng",
-          "label": "Prediksi Ch Bulanan Juni 2026 Bmkg Kalteng"
-        },
-        {
-          "id": "SIH3:prediksi_ch_bulanan_september_2026",
-          "label": "Prediksi Ch Bulanan September 2026"
-        },
-        {
           "id": "DINKES:puskesmas_pt",
           "label": "Puskesmas Pt"
         },
         {
-          "id": "SIH3:raster_to_polygon",
-          "label": "Raster To Polygon"
-        },
-        {
           "id": "SATPOLPPDAMKAR:rawan_trantibumlinmas_2025",
           "label": "Rawan Trantibumlinmas 2025"
-        },
-        {
-          "id": "SIH3:rtp_082025",
-          "label": "Rtp 082025"
         },
         {
           "id": "GEOPARK:rutebarat_ln_50k",
@@ -19174,10 +18930,6 @@
         {
           "id": "DPKP:sawah_ar",
           "label": "Sawah Ar"
-        },
-        {
-          "id": "SIH3:sh_rtp_082025",
-          "label": "Sh Rtp 082025"
         },
         {
           "id": "GEOPARK:situsrutebarat_pt_50k",
@@ -19210,14 +18962,6 @@
         {
           "id": "SATPOLPPDAMKAR:trantibumlinmas_konsos_pt_2026",
           "label": "Trantibumlinmas Konsos Pt 2026"
-        },
-        {
-          "id": "SIH3:watershed1_polygon_merge1",
-          "label": "Watershed1 Polygon Merge1"
-        },
-        {
-          "id": "SIH3:ws_barito_",
-          "label": "Ws Barito"
         }
       ]
     },
@@ -29175,7 +28919,7 @@
           "label": "Tutupanlahan Ar 50k"
         }
       ]
-      },
+    },
     {
       "id": "hstkab",
       "title": "Kabupaten Hulu Sungai Tengah",
@@ -30827,10 +30571,10 @@
           "label": "Penderita_Hiv"
         },
         {
-          "id": "geospasial_mjl:restoran_321020240308112236", 
-          "label": "Restoran_321020240308112236" 
-        } 
+          "id": "geospasial_mjl:restoran_321020240308112236",
+          "label": "Restoran_321020240308112236"
+        }
       ]
     }
-  ] 
+  ]
 }

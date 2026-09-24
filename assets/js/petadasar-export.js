@@ -13,7 +13,7 @@
       return 'https://images.weserv.nl/?url=' + encodeURIComponent(u) + '&output=png';
     },
     function (u) {
-      return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u);
+      return 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=' + encodeURIComponent(u);
     }
   ];
 
