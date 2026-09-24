@@ -288,13 +288,9 @@
     var prev = null;
     while (q !== prev) {
       prev = q;
-      q = q.replace(/^(profil|info|data|detail|informasi|tentang|untuk|di|pulau|penduduk|jumlah|populasi|demografi|hotspot|karhutla|gempa|earthquake|magnitudo|getaran|richter|gunung|api|vulkanik|erupsi|magma|cuaca|udara|polusi|aqi|lahan|iklim|curah|hujan|angin|suhu|banjir|longsor|kebakaran|hutan|sawah|pertanian|kekeringan|kekering|spi|spei|kering|drought|riwayat|katalog|historical|quake|data\s+gempa)\s*/g, '').trim();
+      q = q.replace(/^(profil|info|data|detail|informasi|tentang|untuk|di|pulau|penduduk|jumlah|populasi|demografi|population|warga|hotspot|karhutla|titik panas|fire|kebakaran hutan|gempa|earthquake|magnitudo|getaran|richter|lindu|guncangan|seisme|gunung|api|vulkanik|erupsi|magma|volcano|volcanic|cuaca|weather|iklim|udara|polusi|aqi|lahan|iklim|curah|hujan|angin|suhu|banjir|longsor|kebakaran|hutan|sawah|pertanian|kekeringan|kekering|spi|spei|kering|drought|kemarau|musim kering|riwayat|katalog|historical|quake|data\s+gempa)\s*/g, '').trim();
     }
     return q;
-  }
-
-  function stripAdminPrefix(q) {
-    return q.replace(/^(provinsi|kabupaten|kota|kecamatan|desa|kelurahan)\s*/g, '').trim();
   }
 
   function searchRegionByName(text) {
@@ -941,36 +937,95 @@
 
   /* === Intent Parser === */
   var INTENT_RULES = [
-    { intent: 'basemap', patterns: ['basemap', 'peta dasar', 'satelit himawari', 'viirs', 'modis', 'terrain basemap'] },
+    { intent: 'basemap', patterns: ['basemap', 'peta dasar', 'satelit himawari', 'terrain basemap'] },
     { intent: 'cuaca', patterns: ['cuaca', 'angin', 'hujan', 'suhu', 'kelembaban', 'humid', 'precipitation', 'gfs', 'forecast'] },
-    { intent: 'udara', patterns: ['udara', 'polusi', 'aqi', 'pm10', 'pm2.5 airvisual', 'kualitas udara', 'o3', 'no2 airvisual', 'so2 airvisual', 'co karbon'] },
-    { intent: 'gunung', patterns: ['gunung', 'api', 'vulkanik', 'erupsi', 'magma', 'pvmbg', 'krb gunung'] },
+    { intent: 'udara', patterns: ['udara', 'polusi', 'aqi', 'pm10', 'pm2.5', 'kualitas udara', 'o3', 'no2', 'so2', 'openaq'] },
+    { intent: 'gunung', patterns: ['gunung', 'vulkanik', 'erupsi', 'magma', 'pvmbg', 'krb gunung'] },
     { intent: 'hutan', patterns: ['hutan', 'konsesi', 'mangrove', 'gambut', 'wdpa', 'gfw', 'sawit', 'rktn', 'kawasan hutan'] },
     { intent: 'geologi', patterns: ['geologi', 'geostruktur', 'karst', 'likuifaksi', 'patahan aktif', 'batuan'] },
     { intent: 'penduduk', patterns: ['penduduk', 'demografi', 'sensus penduduk', 'jumlah penduduk', 'populasi', 'dukcapil'] },
-    { intent: 'pangan', patterns: ['harga', 'beras', 'commodity', 'food price', 'bi harga', 'komoditas'] },
+    { intent: 'pangan', patterns: ['harga beras', 'harga pangan', 'commodity', 'food price', 'bi harga', 'komoditas pangan'] },
     { intent: 'lahan', patterns: ['lahan', 'tutupan', 'irigasi', 'sawah dilindungi', 'lahan baku', 'pertanahan', 'atrbpn', 'persil', 'rtrw', 'penggunaan tanah', 'land use', 'peta penggunaan', 'ptnobj'] },
     { intent: 'maritim', patterns: ['laut', 'gelombang', 'swell', 'maritim', 'perairan', 'pelabuhan'] },
     { intent: 'bencana', patterns: ['bencana', 'longsor', 'evakuasi', 'patahan', 'jalur evakuasi'] },
-    { intent: 'sensorgempa', patterns: ['sensor', 'seismic', 'stasiun', 'geofon'] },
-    { intent: 'hotspot', patterns: ['hotspot', 'karhutla', 'kebakaran hutan', 'kebakaran lahan'] },
+    { intent: 'sensorgempa', patterns: ['sensor seismic', 'stasiun seismic', 'geofon', 'sensor gempa'] },
+    { intent: 'hotspot', patterns: ['hotspot', 'karhutla', 'kebakaran hutan', 'kebakaran lahan', 'titik panas'] },
     { intent: 'gempa', patterns: ['gempa', 'earthquake', 'magnitudo', 'getaran', 'richter', 'riwayat gempa', 'katalog gempa', 'historical quake'] },
     { intent: 'kekeringan', patterns: ['kekeringan', 'kekering', 'spi', 'spei', 'kering', 'drought'] },
     { intent: 'layers', patterns: ['layer aktif', 'layer apa', 'tampil', 'menampilkan', 'overlay aktif'] },
     { intent: 'viewport', patterns: ['lokasi', 'posisi', 'koordinat', 'viewport', 'sekarang', 'area ini'] },
     { intent: 'summary', patterns: ['ringkasan', 'summary', 'semua data', 'kondisi', 'overview'] },
-    { intent: 'region', patterns: ['pulau ', 'provinsi ', 'kabupaten ', 'kota ', 'kecamatan ', 'desa ', 'kelurahan ', 'wilayah ', 'region'] }
+    { intent: 'region', patterns: ['pulau', 'provinsi', 'kabupaten', 'kota', 'kecamatan', 'desa', 'kelurahan', 'wilayah', 'region'] }
   ];
 
+  var INTENT_SYNONYMS = {
+    gempa: ['lindu', 'guncangan', 'seisme'],
+    kekeringan: ['kemarau', 'musim kering'],
+    hotspot: ['fire', 'karhutla'],
+    penduduk: ['population', 'warga'],
+    cuaca: ['weather', 'iklim'],
+    gunung: ['api gunung', 'volcano', 'volcanic'],
+    pangan: ['harga', 'beras', 'komoditas'],
+    sensorgempa: ['sensor', 'seismic', 'stasiun'],
+    basemap: ['viirs', 'modis', 'satelit']
+  };
+
+  var KATA_TANYA = /\b(apa|siapa|dimana|di mana|kapan|kenapa|mengapa|bagaimana|cara|jelaskan|tolong|berapa|informasi|info|cek|lihat|tampilkan|carikan)\b/;
+
+  function intentPatternRe(pat) {
+    var escaped = String(pat).toLowerCase().replace(/[^a-z0-9.]+/g, ' ').replace(/\s+/g, ' ').trim()
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+    if (!escaped) return null;
+    return new RegExp('(?:^|\\s)' + escaped + '(?:\\s|$)');
+  }
+
   function parseIntent(text) {
-    var t = text.toLowerCase();
+    var raw = (text || '').toLowerCase();
+    var clean = raw.replace(/[^a-z0-9.\s]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!clean) return 'help';
+    var padded = ' ' + clean + ' ';
+    var collapsed = ' ' + clean.replace(/([a-z])\1+/g, '$1') + ' ';
+    var scores = {};
+    INTENT_RULES.forEach(function (rule) {
+      var s = 0;
+      rule.patterns.forEach(function (p) {
+        var re = intentPatternRe(p);
+        if (re && re.test(padded)) s += 1.5;
+        else if (re && re.test(collapsed)) s += 1.5;
+      });
+      (INTENT_SYNONYMS[rule.intent] || []).forEach(function (p) {
+        var re = intentPatternRe(p);
+        if (re && re.test(padded)) s += 1.2;
+        else if (re && re.test(collapsed)) s += 1.0;
+      });
+      scores[rule.intent] = s;
+    });
+    if (KATA_TANYA.test(padded)) {
+      Object.keys(scores).forEach(function (k) { if (scores[k] > 0) scores[k] += 0.3; });
+    }
+    if (scores.gunung && !/\b(erupsi|vulkan|volcano|volcanic|pvmbg|magma|gunung)\b/.test(padded)) {
+      scores.gunung = 0;
+    }
+    if (scores.pangan && /\b(harga)\s+(tanah|properti|rumah|lahan|gedung|sewa|tanah)\b/.test(padded)) {
+      scores.pangan = 0;
+    }
+    if (scores.viewport) {
+      var bestOther = 0;
+      Object.keys(scores).forEach(function (k) {
+        if (k !== 'viewport' && scores[k] > bestOther) bestOther = scores[k];
+      });
+      if (bestOther >= 1.5) scores.viewport = 0;
+    }
+    var best = null;
+    var bestScore = 1.5;
     for (var i = 0; i < INTENT_RULES.length; i++) {
-      var r = INTENT_RULES[i];
-      for (var j = 0; j < r.patterns.length; j++) {
-        if (t.indexOf(r.patterns[j]) !== -1) return r.intent;
+      var intent = INTENT_RULES[i].intent;
+      if (scores[intent] >= bestScore) {
+        bestScore = scores[intent];
+        best = intent;
       }
     }
-    return 'help';
+    return best || 'help';
   }
 
   /* === Answer Formatters === */
