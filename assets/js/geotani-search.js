@@ -26,7 +26,8 @@
   /* ArcGIS KEMENTAN layers */
   var ARCGIS_IDS = [
     'arcgis-sawah-2023', 'arcgis-sawah-2019',
-    'arcgis-kawasan-padi', 'arcgis-kawasan-jagung', 'arcgis-kawasan-kedelai'
+    'arcgis-kawasan-padi', 'arcgis-kawasan-jagung', 'arcgis-kawasan-kedelai',
+    'arcgis-vt-lbs-2024', 'arcgis-vt-lbs-2019'
   ];
 
   /* Special layers (toggle functions defined elsewhere) */

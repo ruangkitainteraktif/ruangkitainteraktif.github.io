@@ -487,6 +487,9 @@
   var PROV_URL = 'assets/data/bps/geojson/provinsi.geojson';
   var DESA_URL = 'assets/data/kode_wilayah.json';
   var BIG_RBI_BASE = 'https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH/';
+  var GEOPORTAL_DESA_BASE = 'https://geoportal.pertanian.go.id/arcgis/rest/services/Hosted/Batas_Administrasi_Desa_2/FeatureServer/0/';
+  var GEOPORTAL_KEC_BASE = 'https://geoportal.pertanian.go.id/arcgis/rest/services/Batas_Administrasi/MapServer/0/';
+  var WILAYAH_BOUNDARY_API = 'https://wilayah.smartartstudio.my.id/api/boundaries/';
   var BIG_SERVICE_BASE = 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/';
   var BIG_FOLDERS = [
     'BATAS_WILAYAH',
@@ -752,6 +755,9 @@
     desaData: null,
     selectedFeature: null,
     selectedBoundary: null,
+    pendingBoundaryKode: null,
+    pendingBoundaryNama: null,
+    pendingFeature: null,
     outlineLayer: null,
     clipped: [],
     loading: false,
@@ -907,6 +913,248 @@
     };
   }
 
+  function queryEsriBoundary(opts) {
+    var url = opts.baseUrl + 'query?where='
+      + encodeURIComponent(opts.where)
+      + '&f=json&returnGeometry=true&outSR=4326'
+      + '&outFields=' + opts.outFields + '&geometryPrecision=5';
+    if (opts.geometry) {
+      url += '&geometry=' + encodeURIComponent(opts.geometry)
+        + '&geometryType=esriGeometryEnvelope&inSR=4326'
+        + '&spatialRel=esriSpatialRelIntersects';
+    }
+    var ctrl = new AbortController();
+    var timeout = setTimeout(function () { ctrl.abort(); }, opts.timeoutMs || 12000);
+    return fetch(url, { signal: ctrl.signal })
+      .then(function (r) {
+        clearTimeout(timeout);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        if (data && data.status === 'error') {
+          throw new Error((data.messages && data.messages[0]) || 'ESRI error');
+        }
+        var f = data.features && data.features[0];
+        if (!f || !f.geometry || !f.geometry.rings || !f.geometry.rings.length) {
+          return null;
+        }
+        var a = f.attributes || {};
+        var name = a.NAMOBJ || a.namobj || a.WADMKD || a.wadmkd || a.WADMKC || a.wadmkc || a.WADMKK || a.wadmkk || '';
+        return ensureMultiPolygon({
+          type: 'Feature',
+          properties: { name: name, kode: opts.kode },
+          geometry: esriRingsToPolygon(f.geometry.rings)
+        });
+      })
+      .catch(function (e) {
+        clearTimeout(timeout);
+        throw e;
+      });
+  }
+
+  function queryWilayahBoundary(opts) {
+    var url = WILAYAH_BOUNDARY_API + encodeURIComponent(opts.kode);
+    var ctrl = new AbortController();
+    var timeout = setTimeout(function () { ctrl.abort(); }, opts.timeoutMs || 8000);
+    return fetch(url, { signal: ctrl.signal })
+      .then(function (r) {
+        clearTimeout(timeout);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.path || !data.path.length) return null;
+        var rings = [];
+        data.path.forEach(function (a) {
+          if (Array.isArray(a[0][0])) {
+            a.forEach(function (r) { rings.push(r); });
+          } else {
+            rings.push(a);
+          }
+        });
+        rings = rings.filter(function (r) { return r && r.length >= 4; });
+        if (!rings.length) return null;
+        var geoRings = rings.map(function (r) {
+          return r.map(function (p) { return [p[1], p[0]]; });
+        });
+        return ensureMultiPolygon({
+          type: 'Feature',
+          properties: { name: data.nama || '', kode: opts.kode },
+          geometry: esriRingsToPolygon(geoRings)
+        });
+      })
+      .catch(function (e) {
+        clearTimeout(timeout);
+        throw e;
+      });
+  }
+
+  function geoJsonBbox(geom) {
+    if (typeof turf !== 'undefined' && turf.bbox && geom) {
+      try { return turf.bbox({ type: 'Feature', properties: {}, geometry: geom }); } catch (e) {}
+    }
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    (function walk(c) {
+      if (typeof c[0] === 'number') {
+        if (c[0] < minX) minX = c[0];
+        if (c[0] > maxX) maxX = c[0];
+        if (c[1] < minY) minY = c[1];
+        if (c[1] > maxY) maxY = c[1];
+        return;
+      }
+      for (var i = 0; i < c.length; i++) walk(c[i]);
+    })(geom.coordinates);
+    return [minX, minY, maxX, maxY];
+  }
+
+  function queryLocalKabBoundary(kode) {
+    return loadKab().then(function (gj) {
+      var parts = String(kode).split('.');
+      var f = gj && gj.features && gj.features.find(function (ft) {
+        var p = ft.properties || {};
+        return (p.kdprov === parts[0] && p.kdkab === parts[1]) || String(p.idkab) === (parts[0] + parts[1]);
+      });
+      if (!f || !f.geometry) return null;
+      return ensureMultiPolygon({
+        type: 'Feature',
+        properties: { name: f.properties.nmkab || '', kode: kode },
+        geometry: f.geometry
+      });
+    }).catch(function () { return null; });
+  }
+
+  function runBoundarySource(src) {
+    if (src.local === 'kab') return queryLocalKabBoundary(src.kode);
+    if (src.api === 'wilayah') return queryWilayahBoundary(src);
+    return queryEsriBoundary(src);
+  }
+
+  /* First success wins (race); all fail → null */
+  function raceBoundarySources(sources) {
+    return new Promise(function (resolve) {
+      var pending = sources.length;
+      var done = false;
+      if (!pending) { resolve(null); return; }
+      sources.forEach(function (src) {
+        runBoundarySource(src).then(function (b) {
+          if (done) return;
+          if (b) { done = true; resolve(b); return; }
+          pending -= 1;
+          if (pending === 0) resolve(null);
+        }).catch(function (e) {
+          console.warn('[Satupeta] boundary source failed:', e.message);
+          if (done) return;
+          pending -= 1;
+          if (pending === 0) resolve(null);
+        });
+      });
+    });
+  }
+
+  /* Sequential: try sources in order until one returns a boundary */
+  function sequentialBoundarySources(sources, attempt) {
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return Promise.resolve(null);
+      var src = sources[i++];
+      return runBoundarySource(src).catch(function (e) {
+        console.warn('[Satupeta] boundary source failed:', e.message);
+        return null;
+      }).then(function (b) {
+        if (b) return b;
+        return next();
+      });
+    }
+    return next();
+  }
+
+  /* Race primary sources; on failure run fallback sources sequentially */
+  function runBoundarySources(sources) {
+    var primary = sources.filter(function (s) { return !s.fallback; });
+    var fallbacks = sources.filter(function (s) { return s.fallback; });
+    return raceBoundarySources(primary).then(function (b) {
+      if (b) return b;
+      return sequentialBoundarySources(fallbacks);
+    });
+  }
+
+  function buildDesaSources(kode) {
+    return [
+      {
+        baseUrl: BIG_RBI_BASE + 'BATAS_DESAKEL_AR/MapServer/0/',
+        where: "KDEPUM='" + kode + "'",
+        outFields: 'KDEPUM,NAMOBJ,WADMKD,WADMKK,WADMPR,LUASWH',
+        kode: kode,
+        timeoutMs: 8000
+      },
+      {
+        baseUrl: GEOPORTAL_DESA_BASE,
+        where: "kdepum='" + kode + "'",
+        outFields: 'kdepum,namobj,wadmkd,wadmkk,wadmpr,luaswh',
+        kode: kode,
+        timeoutMs: 12000
+      },
+      {
+        api: 'wilayah',
+        kode: kode,
+        timeoutMs: 8000,
+        fallback: true
+      }
+    ];
+  }
+
+  function buildKecSources(kode, nama) {
+    var parts = String(kode).split('.');
+    var sources = [
+      {
+        baseUrl: BIG_RBI_BASE + 'BATAS_KECAMATAN_AR/MapServer/0/',
+        where: "KDCPUM='" + kode + "'",
+        outFields: 'NAMOBJ,KDCPUM,KDPKAB,KDPPUM,LUASWH',
+        kode: kode,
+        timeoutMs: 8000
+      }
+    ];
+    var pending = Promise.resolve(sources);
+    if (nama && parts.length === 3) {
+      pending = loadKab().then(function (gj) {
+        var f = gj && gj.features && gj.features.find(function (ft) {
+          var p = ft.properties || {};
+          return (p.kdprov === parts[0] && p.kdkab === parts[1]) || String(p.idkab) === (parts[0] + parts[1]);
+        });
+        if (!f || !f.geometry) return sources;
+        var b = geoJsonBbox(f.geometry);
+        var pad = 0.01;
+        sources.push({
+          baseUrl: GEOPORTAL_KEC_BASE,
+          where: "UPPER(WADMKC)='" + String(nama).toUpperCase().replace(/'/g, "''") + "'",
+          geometry: [(b[0] - pad), (b[1] - pad), (b[2] + pad), (b[3] + pad)].join(','),
+          outFields: 'WADMKC',
+          kode: kode,
+          timeoutMs: 12000
+        });
+        return sources;
+      }).catch(function () { return sources; });
+    }
+    return pending.then(function (list) {
+      list.push({ api: 'wilayah', kode: kode, timeoutMs: 8000, fallback: true });
+      return list;
+    });
+  }
+
+  function buildKabSources(kode) {
+    return [
+      {
+        baseUrl: BIG_RBI_BASE + 'BATAS_KABKOTA_AR/MapServer/0/',
+        where: "KDPKAB='" + kode + "'",
+        outFields: 'NAMOBJ,KDPKAB',
+        kode: kode,
+        timeoutMs: 8000
+      },
+      { local: 'kab', kode: kode, fallback: true }
+    ];
+  }
+
   function fetchBoundary(kode, attempt) {
     attempt = attempt || 0;
     var parts = String(kode || '').split('.');
@@ -926,65 +1174,28 @@
       }).catch(function () { return null; });
     }
 
-    var url;
+    var build;
     if (parts.length === 4) {
-      url = BIG_RBI_BASE + 'BATAS_DESAKEL_AR/MapServer/0/query?where='
-        + encodeURIComponent("KDEPUM='" + kode + "'")
-        + '&f=json&returnGeometry=true&outSR=4326'
-        + '&outFields=KDEPUM,NAMOBJ,WADMKK,WADMPR,LUASWH&geometryPrecision=5';
+      build = Promise.resolve(buildDesaSources(kode));
     } else if (parts.length === 3) {
-      /* Kecamatan: BIG RBI BATAS_KECAMATAN_AR by KDCPUM */
-      url = BIG_RBI_BASE + 'BATAS_KECAMATAN_AR/MapServer/0/query?where='
-        + encodeURIComponent("KDCPUM='" + kode + "'")
-        + '&f=json&returnGeometry=true&outSR=4326'
-        + '&outFields=NAMOBJ,KDCPUM,KDPKAB,KDPPUM,LUASWH&geometryPrecision=5';
+      build = buildKecSources(kode, state.pendingBoundaryNama || '');
     } else if (parts.length === 2) {
-      url = BIG_RBI_BASE + 'BATAS_KABKOTA_AR/MapServer/0/query?where='
-        + encodeURIComponent("KDPKAB='" + kode + "'")
-        + '&f=json&returnGeometry=true&outSR=4326'
-        + '&outFields=NAMOBJ,KDPKAB&geometryPrecision=5';
+      build = Promise.resolve(buildKabSources(kode));
     } else {
       return Promise.resolve(null);
     }
 
-    var retry = function () {
-      if (attempt < 3) {
+    return build.then(function (sources) {
+      return runBoundarySources(sources);
+    }).then(function (boundary) {
+      if (boundary) return boundary;
+      if (attempt < 2) {
         return new Promise(function (res) { setTimeout(res, 700 * (attempt + 1)); })
           .then(function () { return fetchBoundary(kode, attempt + 1); });
       }
+      console.warn('[Satupeta] fetchBoundary all sources failed for', kode);
       return null;
-    };
-
-    var ctrl = new AbortController();
-    var timeout = setTimeout(function () { ctrl.abort(); }, 20000);
-    return fetch(url, { signal: ctrl.signal })
-      .then(function (r) {
-        clearTimeout(timeout);
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      })
-      .then(function (data) {
-        if (data && data.status === 'error') {
-          throw new Error((data.messages && data.messages[0]) || 'BIG error');
-        }
-        var f = data.features && data.features[0];
-        if (!f || !f.geometry || !f.geometry.rings || !f.geometry.rings.length) {
-          if (attempt < 3) return retry();
-          return null;
-        }
-        var a = f.attributes || {};
-        return ensureMultiPolygon({
-          type: 'Feature',
-          properties: { name: a.NAMOBJ || a.namobj || '', kode: kode },
-          geometry: esriRingsToPolygon(f.geometry.rings)
-        });
-      })
-      .catch(function (e) {
-        clearTimeout(timeout);
-        if (attempt < 3) return retry();
-        console.warn('[Satupeta] fetchBoundary BIG failed:', e.message);
-        return null;
-      });
+    });
   }
 
   function drawSelOutline(boundary) {
@@ -1184,81 +1395,117 @@
       properties: p,
       geometry: feature.geometry
     });
+    state.pendingBoundaryKode = kode;
+    state.pendingBoundaryNama = p.nmkab;
     updateSelectedLabel(p.nmkab, p.nmprov);
     drawSelOutline(state.selectedBoundary);
+    showToggleButton();
 
     fetchBoundary(kode).then(function (boundary) {
+      if (state.pendingBoundaryKode !== kode) return;
       if (boundary) {
         state.selectedBoundary = boundary;
         state.selectedFeature.geometry = boundary.geometry;
         drawSelOutline(boundary);
       }
-      fetchAndDisplay();
     });
   }
 
   function selectDesa(kode, nama) {
-    var info = document.getElementById('satupetaInfo');
-    if (info) {
-      info.style.display = 'block';
-      info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> Memuat batas wilayah...</div>';
-    }
+    state.pendingBoundaryKode = kode;
+    state.pendingBoundaryNama = nama;
+    state.pendingFeature = { properties: { kode: kode, nama: nama } };
+    updateSelectedLabel(nama, kode);
+    showToggleButton();
+    setBoundaryLoadingInfo('Memuat batas desa...');
 
     fetchBoundary(kode).then(function (boundary) {
+      if (state.pendingBoundaryKode !== kode) return;
       if (!boundary) {
-        if (info) info.innerHTML = 'Gagal memuat batas desa dari BIG RBI. Coba lagi.';
+        setBoundaryErrorInfo('Gagal memuat batas desa. Klik "Tampilkan Layer" untuk coba lagi.');
         return;
       }
       state.selectedFeature = { properties: { kode: kode, nama: nama }, geometry: boundary.geometry };
       state.selectedBoundary = boundary;
-      updateSelectedLabel(nama, kode);
       drawSelOutline(boundary);
-      fetchAndDisplay();
+      var info = document.getElementById('satupetaInfo');
+      if (info) info.style.display = 'none';
     });
   }
 
   function selectProvinsi(kode, nama) {
-    var info = document.getElementById('satupetaInfo');
-    if (info) {
-      info.style.display = 'block';
-      info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> Memuat batas provinsi...</div>';
-    }
+    state.pendingBoundaryKode = kode;
+    state.pendingBoundaryNama = nama;
+    state.pendingFeature = { properties: { kode: kode, nama: nama } };
+    updateSelectedLabel(nama, 'Provinsi');
+    showToggleButton();
+    setBoundaryLoadingInfo('Memuat batas provinsi...');
 
     fetchBoundary(kode).then(function (boundary) {
+      if (state.pendingBoundaryKode !== kode) return;
       if (!boundary) {
-        if (info) info.innerHTML = 'Gagal memuat batas provinsi. Coba lagi.';
+        setBoundaryErrorInfo('Gagal memuat batas provinsi. Klik "Tampilkan Layer" untuk coba lagi.');
         return;
       }
       state.selectedFeature = { properties: { kode: kode, nama: nama }, geometry: boundary.geometry };
       state.selectedBoundary = boundary;
-      updateSelectedLabel(nama, 'Provinsi');
       drawSelOutline(boundary);
-      fetchAndDisplay();
+      var info = document.getElementById('satupetaInfo');
+      if (info) info.style.display = 'none';
     });
   }
 
   function selectKecamatan(kode, nama) {
-    var info = document.getElementById('satupetaInfo');
-    if (info) {
-      info.style.display = 'block';
-      info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> Memuat batas kecamatan...</div>';
-    }
+    state.pendingBoundaryKode = kode;
+    state.pendingBoundaryNama = nama;
+    state.pendingFeature = { properties: { kode: kode, nama: nama } };
+    updateSelectedLabel(nama, kode);
+    showToggleButton();
+    setBoundaryLoadingInfo('Memuat batas kecamatan...');
 
     fetchBoundary(kode).then(function (boundary) {
+      if (state.pendingBoundaryKode !== kode) return;
       if (!boundary) {
-        if (info) info.innerHTML = 'Gagal memuat batas kecamatan dari BIG RBI. Coba lagi.';
+        setBoundaryErrorInfo('Gagal memuat batas kecamatan. Klik "Tampilkan Layer" untuk coba lagi.');
         return;
       }
       state.selectedFeature = { properties: { kode: kode, nama: nama }, geometry: boundary.geometry };
       state.selectedBoundary = boundary;
-      updateSelectedLabel(nama, kode);
       drawSelOutline(boundary);
-      fetchAndDisplay();
+      var info = document.getElementById('satupetaInfo');
+      if (info) info.style.display = 'none';
     });
+  }
+
+  function setBoundaryLoadingInfo(msg) {
+    var info = document.getElementById('satupetaInfo');
+    if (info) {
+      info.style.display = 'block';
+      info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> ' + esc(msg) + '</div>';
+    }
+  }
+
+  function setBoundaryErrorInfo(msg) {
+    var info = document.getElementById('satupetaInfo');
+    if (info) {
+      info.style.display = 'block';
+      info.innerHTML = esc(msg);
+    }
+  }
+
+  function showToggleButton() {
+    var btn = document.getElementById('satupetaToggleBtn');
+    if (btn) btn.style.display = '';
+  }
+
+  function hideToggleButton() {
+    var btn = document.getElementById('satupetaToggleBtn');
+    if (btn) btn.style.display = 'none';
   }
 
   function clearSelection() {
     clearSelOutline();
+    hideToggleButton();
     if (state.fetchAbort) {
       state.fetchAbort.abort();
       state.fetchAbort = null;
@@ -1266,6 +1513,9 @@
     state.loading = false;
     state.selectedFeature = null;
     state.selectedBoundary = null;
+    state.pendingBoundaryKode = null;
+    state.pendingBoundaryNama = null;
+    state.pendingFeature = null;
     state.clipped = [];
     var sel = document.getElementById('satupetaKabSelected');
     if (sel) sel.style.display = 'none';
@@ -1473,8 +1723,33 @@
 
   /* ---- Main: fetch + clip + display ---- */
   function fetchAndDisplay() {
-    if (!state.selectedBoundary || !window.map) return;
+    if (!window.map) return;
     if (state.loading) return;
+
+    if (!state.selectedBoundary && state.pendingBoundaryKode) {
+      setBoundaryLoadingInfo('Memuat batas wilayah...');
+      state.loading = true;
+      var retryKode = state.pendingBoundaryKode;
+      fetchBoundary(retryKode).then(function (boundary) {
+        state.loading = false;
+        if (state.pendingBoundaryKode !== retryKode) return;
+        if (!boundary) {
+          setBoundaryErrorInfo('Gagal memuat batas wilayah. Coba lagi.');
+          return;
+        }
+        if (state.pendingFeature) {
+          state.selectedFeature = Object.assign({}, state.pendingFeature, { geometry: boundary.geometry });
+        }
+        state.selectedBoundary = boundary;
+        drawSelOutline(boundary);
+        var info = document.getElementById('satupetaInfo');
+        if (info) info.style.display = 'none';
+        fetchAndDisplay();
+      });
+      return;
+    }
+
+    if (!state.selectedBoundary) return;
     state.loading = true;
 
     var info = document.getElementById('satupetaInfo');
@@ -1590,8 +1865,8 @@
           + (skipped > 0 ? ' &middot; Skip: ' + skipped : '')
           + '</div>'
           + '</div>'
-          + '<button class="satupeta-close-btn" onclick="SatupetaDownloader.clearSelection()" title="Tutup layer">'
-          + '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+          + '<button class="satupeta-close-btn" onclick="SatupetaDownloader.clearSelection()" title="Tutup layer" aria-label="Tutup layer">'
+          + '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
           + '</button></div>'
           + '<div style="display:flex;flex-wrap:wrap;gap:2px 10px;margin-top:6px;padding-top:6px;border-top:1px solid #f0f0f0;">' + typeHtml + '</div>';
 
@@ -1774,6 +2049,13 @@
 
   /* ---- Init ---- */
   function init() {
+    var toggleBtn = document.getElementById('satupetaToggleBtn');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', function () {
+        fetchAndDisplay();
+      });
+    }
+
     var searchInput = document.getElementById('satupetaKabSearch');
     if (searchInput) {
       var debounce = null;

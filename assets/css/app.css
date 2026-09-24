@@ -3005,10 +3005,18 @@
     }
     @keyframes satupeta-spin { to { transform: rotate(360deg); } }
     .satupeta-close-btn {
-      background: none; border: none; cursor: pointer; padding: 2px;
-      color: #94a3b8; transition: color .15s; flex-shrink: 0;
+      background: #fee2e2; border: 1px solid #fca5a5; cursor: pointer;
+      width: 30px; height: 30px; padding: 0; border-radius: 50%;
+      color: #dc2626; display: inline-flex; align-items: center; justify-content: center;
+      transition: all .15s; flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(220, 38, 38, .25);
     }
-    .satupeta-close-btn:hover { color: #ef4444; }
+    .satupeta-close-btn:hover {
+      background: #dc2626; border-color: #b91c1c; color: #fff;
+      transform: scale(1.1);
+      box-shadow: 0 2px 6px rgba(220, 38, 38, .4);
+    }
+    .satupeta-close-btn:active { transform: scale(.96); }
     .geotani-form-label {
       font-size: 10px; color: #54708d; font-weight: 600;
       display: block; margin-bottom: 3px;

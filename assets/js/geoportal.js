@@ -524,7 +524,9 @@
     'arcgis-sawah-2019': 'LBS 2019 (Kementan)',
     'arcgis-kawasan-padi': 'Kawasan Padi (Kementan)',
     'arcgis-kawasan-jagung': 'Kawasan Jagung (Kementan)',
-    'arcgis-kawasan-kedelai': 'Kawasan Kedelai (Kementan)'
+    'arcgis-kawasan-kedelai': 'Kawasan Kedelai (Kementan)',
+    'arcgis-vt-lbs-2024': 'LBS 2024 (Vektor)',
+    'arcgis-vt-lbs-2019': 'LBS 2019 (Vektor)'
   };
 
   function buildGeoportalLegendGraphicUrl(wmsUrl, layerName) {
@@ -551,6 +553,9 @@
     });
     getActiveArcgisLayers().forEach(a => {
       items.push({ kind: 'arcgis', label: ARCGIS_LAYER_LABELS[a.layerKey] || a.layerKey });
+    });
+    getActiveLbsVtLayers().forEach(a => {
+      items.push({ kind: 'arcgis', label: ARCGIS_LAYER_LABELS[a.layerKey] || a.label });
     });
     return items;
   }
@@ -588,7 +593,9 @@
       'arcgis-sawah-2019': 'LBS 2019 (KEMENTAN)',
       'arcgis-kawasan-padi': 'Kawasan Padi (KEMENTAN)',
       'arcgis-kawasan-jagung': 'Kawasan Jagung (KEMENTAN)',
-      'arcgis-kawasan-kedelai': 'Kawasan Kedelai (KEMENTAN)'
+      'arcgis-kawasan-kedelai': 'Kawasan Kedelai (KEMENTAN)',
+      'arcgis-vt-lbs-2024': 'LBS 2024 (Vektor)',
+      'arcgis-vt-lbs-2019': 'LBS 2019 (Vektor)'
     };
     try {
       if (isMapLayerActive(bpsTutupanLahanState.layer)) {
@@ -614,6 +621,9 @@
           }
         });
       }
+      getActiveLbsVtLayers().forEach(a => {
+        items.push({ kind: 'swatch', color: a.color, label: ARCGIS_LABELS[a.layerKey] || a.label });
+      });
     } catch (e) { /* layer modul lain belum siap */ }
     return items;
   }
@@ -793,6 +803,80 @@
     'arcgis-kawasan-kedelai': { url: 'https://sig02.pertanian.go.id/server/rest/services/Kawasan/Peta_Kawasan_Kedelai/MapServer', layers: [0] }
   };
 
+  // ArcGIS Vector Tile: LBS 2019/2024 (Kementan, geoportal.pertanian.go.id)
+  const LBS_VT_CONFIG = {
+    'arcgis-vt-lbs-2024': {
+      base: 'https://geoportal.pertanian.go.id/arcgis/rest/services/Hosted/LBS2024_TILE/VectorTileServer',
+      sourceLayer: 'LBS2023',
+      label: 'LBS 2024 (Vektor)',
+      color: '#00c5ff',
+      fillColor: 'rgba(115,223,255,0.33)'
+    },
+    'arcgis-vt-lbs-2019': {
+      base: 'https://geoportal.pertanian.go.id/arcgis/rest/services/Hosted/LBS2019_TILE/VectorTileServer',
+      sourceLayer: 'LBS2019',
+      label: 'LBS 2019 (Vektor)',
+      color: '#ffaa00',
+      fillColor: 'rgba(255,170,0,0.33)'
+    }
+  };
+  const lbsVtLayers = {};
+
+  function getActiveLbsVtLayers() {
+    return Object.keys(lbsVtLayers)
+      .filter(k => lbsVtLayers[k] && map.hasLayer(lbsVtLayers[k]))
+      .map(k => ({ layerKey: k, label: LBS_VT_CONFIG[k].label, color: LBS_VT_CONFIG[k].color }));
+  }
+
+  function showLbsVtLegend(layerKey) {
+    if (typeof addUnifiedLegend !== 'function') return;
+    const cfg = LBS_VT_CONFIG[layerKey];
+    if (!cfg) return;
+    const div = document.createElement('div');
+    div.innerHTML = '<div class="geoportal-legend-title">' + cfg.label + '</div>'
+      + '<div class="geoportal-legend-item geoportal-legend-row">'
+      + '<span class="geoportal-legend-swatch" style="background:' + cfg.color + ';border:1px solid rgba(15,23,42,.25)"></span>'
+      + '<span class="geoportal-legend-label">Lahan Baku Sawah</span></div>';
+    if (typeof createLegendWithToggle === 'function') addUnifiedLegend(layerKey, createLegendWithToggle(div));
+    else addUnifiedLegend(layerKey, div);
+  }
+
+  function toggleLbsVectorTile(layerKey, visible) {
+    const cfg = LBS_VT_CONFIG[layerKey];
+    if (!cfg) return;
+    if (visible) {
+      if (!lbsVtLayers[layerKey]) {
+        if (!map.getPane('lbsVtPane')) map.createPane('lbsVtPane');
+        map.getPane('lbsVtPane').style.zIndex = '455';
+        const styles = {};
+        styles[cfg.sourceLayer] = {
+          fill: true,
+          color: cfg.color,
+          weight: 1,
+          opacity: 0.95,
+          fillColor: cfg.fillColor,
+          fillOpacity: 1
+        };
+        lbsVtLayers[layerKey] = L.vectorGrid.protobuf(cfg.base + '/tile/{z}/{y}/{x}.pbf', {
+          vectorTileLayerStyles: styles,
+          minZoom: 3,
+          maxZoom: 19,
+          interactive: false,
+          pane: 'lbsVtPane',
+          updateWhenIdle: true
+        });
+      }
+      if (!map.hasLayer(lbsVtLayers[layerKey])) map.addLayer(lbsVtLayers[layerKey]);
+      showLbsVtLegend(layerKey);
+      map.fitBounds([[ -7.75, 110.80 ], [ -7.35, 111.10 ]], { padding: [30, 30], maxZoom: 13 });
+    } else {
+      if (lbsVtLayers[layerKey] && map.hasLayer(lbsVtLayers[layerKey])) {
+        map.removeLayer(lbsVtLayers[layerKey]);
+      }
+      if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend(layerKey);
+    }
+  }
+
   // WMTS KSA BPS (GeoWebCache, grid WebMercatorQuad = XYZ standar)
   const BPS_WMTS_CONFIG = {
     'bps-lbs-2024': { layer: 'ksa:lbs_2024' }
@@ -925,6 +1009,10 @@
   const arcgisSawahLayers = {};
 
   function toggleArcgisSawah(layerKey, visible) {
+    if (LBS_VT_CONFIG[layerKey]) {
+      toggleLbsVectorTile(layerKey, visible);
+      return;
+    }
     const config = ARCGIS_SAWAH_CONFIG[layerKey];
     if (!config) return;
 
@@ -1145,7 +1233,9 @@
     'arcgis-sawah-2019': 'LBS 2019 (Kementan)',
     'arcgis-kawasan-padi': 'Kawasan Padi (Kementan)',
     'arcgis-kawasan-jagung': 'Kawasan Jagung (Kementan)',
-    'arcgis-kawasan-kedelai': 'Kawasan Kedelai (Kementan)'
+    'arcgis-kawasan-kedelai': 'Kawasan Kedelai (Kementan)',
+    'arcgis-vt-lbs-2024': 'LBS 2024 (Vektor)',
+    'arcgis-vt-lbs-2019': 'LBS 2019 (Vektor)'
   };
 
   function _buildLabelMap() {
@@ -1210,6 +1300,7 @@
     const titleNames = [];
     getActiveGeoportalLayers().forEach(a => titleNames.push(_dispName(labelMap, categoryMap, a.layerName)));
     getActiveArcgisLayers().forEach(a => titleNames.push(_arcgisLabels[a.layerKey] || a.layerKey));
+    getActiveLbsVtLayers().forEach(a => titleNames.push(_arcgisLabels[a.layerKey] || a.label));
     let titleText;
     if (titleNames.length === 0) titleText = bmFriendly;
     else titleText = titleNames.slice(0, 3).join(', ') + (titleNames.length > 3 ? ` (+${titleNames.length - 3})` : '');
@@ -1309,6 +1400,9 @@
     getActiveArcgisLayers().forEach(a => {
       legendItems.push({ kind: 'arcgis', label: _arcgisLabels[a.layerKey] || a.layerKey });
     });
+    getActiveLbsVtLayers().forEach(a => {
+      legendItems.push({ kind: 'arcgis', label: _arcgisLabels[a.layerKey] || a.label });
+    });
     await Promise.all(legendItems.map(async it => {
       if (it.kind !== 'wms') return;
       const r = await _loadLegendGraphic(buildGeoportalLegendGraphicUrl(it.wmsUrl, it.layerName));
@@ -1321,6 +1415,7 @@
     const activeNames = [];
     getActiveGeoportalLayers().forEach(a => activeNames.push(_dispName(labelMap, categoryMap, a.layerName)));
     getActiveArcgisLayers().forEach(a => activeNames.push(_arcgisLabels[a.layerKey] || a.layerKey));
+    getActiveLbsVtLayers().forEach(a => activeNames.push(_arcgisLabels[a.layerKey] || a.label));
 
     return {
       hiddenEls, titleText, bmFriendly, mapImg, legendItems, bmLegend, activeNames,

@@ -1506,6 +1506,7 @@ L.control.scale({
           'bps-lbs-2024',
           'arcgis-sawah-2023', 'arcgis-sawah-2019',
             'arcgis-kawasan-padi', 'arcgis-kawasan-jagung', 'arcgis-kawasan-kedelai',
+            'arcgis-vt-lbs-2024', 'arcgis-vt-lbs-2019',
             'opt-padi-penggerek', 'opt-padi-wbc', 'opt-padi-tikus', 'opt-padi-blas', 'opt-padi-kresek', 'opt-padi-tungro', 'opt-padi-kerdil',
             'opt-jagung-lalat', 'opt-jagung-penggerek', 'opt-jagung-tikus', 'opt-jagung-blay', 'opt-jagung-penggerek-tongkol', 'opt-jagung-ulat-litura', 'opt-jagung-ulat-frugiperda',
             'opt-kedelai-tikus', 'opt-kedelai-penggerek-polong', 'opt-kedelai-penggulung', 'opt-kedelai-ulat-litura', 'opt-kedelai-ulat-jengkal'
@@ -2942,6 +2943,10 @@ L.control.scale({
       {
         cat: 'Pertanian',
         subcats: [
+          { subcat: 'Lahan Baku Sawah — Vektor Tile', layers: [
+            { id: 'arcgis-vt-lbs-2024', label: 'LBS 2024 (Vektor)' },
+            { id: 'arcgis-vt-lbs-2019', label: 'LBS 2019 (Vektor)' }
+          ]},
           { subcat: 'Rekap Serangan OPT — Padi', layers: [
             { id: 'opt-padi-penggerek', label: 'Penggerek Batang' },
             { id: 'opt-padi-wbc', label: 'Wereng Batang Cokelat (WBC)' },
