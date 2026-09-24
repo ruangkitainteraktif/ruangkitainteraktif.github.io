@@ -11,7 +11,17 @@
   var CHAT_HISTORY_KEY = 'ruangkita-ai-chat';
   var MAX_CHAT = 50;
 
-  var QUICK_ACTIONS = [];
+  var QUICK_ACTIONS = [
+    { label: 'Profil Jawa Timur', query: 'Jawa Timur' },
+    { label: 'Kekeringan Sleman', query: 'Kekeringan Kabupaten Sleman' },
+    { label: 'Riwayat Gempa Jatim', query: 'Riwayat gempa Jawa Timur' },
+    { label: 'Hotspot Kalimantan', query: 'Hotspot Kalimantan' },
+    { label: 'Layer Aktif', query: 'Layer apa saja yang aktif?' },
+    { label: 'Ringkasan Peta', query: 'Ringkasan peta' },
+    { label: 'Cuaca Jawa Barat', query: 'Cuaca Jawa Barat' },
+    { label: 'Penduduk DKI', query: 'Penduduk DKI Jakarta' }
+  ];
+  var lastRegionMatch = null;
 
   function $(id) { return document.getElementById(id); }
   function fmt(n) { return n == null ? '-' : Number(n).toLocaleString('id-ID'); }
@@ -1115,7 +1125,7 @@
     return s;
   }
 
-  function formatUdaraAnswer() {
+  function formatUdaraAnswer(text, regionMatch) {
     var active = [];
     var airIds = ['toggleAirVisualPm25','toggleAirVisualPm10','toggleAirVisualO3','toggleAirVisualNo2','toggleAirVisualSo2','toggleAirVisualCo'];
     var labels = { toggleAirVisualPm25: 'PM2.5 (AirVisual)', toggleAirVisualPm10: 'PM10 (AirVisual)', toggleAirVisualO3: 'O3 - Ozon (AirVisual)', toggleAirVisualNo2: 'NO2 - Nitrogen Dioksida (AirVisual)', toggleAirVisualSo2: 'SO2 - Sulfur Dioksida (AirVisual)', toggleAirVisualCo: 'CO - Karbon Monoksida (AirVisual)' };
@@ -1187,7 +1197,40 @@
     return s;
   }
 
-async function formatLahanAnswer(text, regionMatch) {
+  function formatGeologiAnswer(text, regionMatch) {
+    var active = [];
+    var geoIds = LAYER_CATEGORIES['Geologi'].ids;
+    var labels = {
+      toggleGeologiBNPB: 'Peta Geologi (BNPB)',
+      toggleVolcanoLayer: 'Gunung Api (PVMBG)',
+      toggleKrbGunungApi: 'KRB Gunung Api (BIG)',
+      toggleKrbTitik: 'Gas Vulkanik (BIG)',
+      togglePetaGeologi: 'Peta Geologi (BIG)',
+      toggleGeostruktur: 'Geostruktur',
+      togglePatahanAktif: 'Patahan Aktif',
+      toggleLikuifaksi: 'Likuifaksi (BIG)',
+      toggleKarst: 'Karst'
+    };
+    geoIds.forEach(function (id) {
+      var el = document.getElementById(id);
+      if ((el && el.checked) || (window._layerCatalogState && window._layerCatalogState[id])) active.push(labels[id] || id);
+    });
+    var s = '**Data Geologi**\n\n';
+    if (!active.length) {
+      s += 'Tidak ada layer geologi aktif.\n\n**Rekomendasi layer:**\n';
+      s += recGrid(geoIds, labels);
+      return s;
+    }
+    s += 'Layer aktif: **' + active.length + '**\n\n';
+    active.forEach(function (l, i) { s += (i + 1) + '. ' + l + '\n'; });
+    if (regionMatch) {
+      s += '\n---\n**Wilayah:** ' + regionMatch.name + '\n';
+      s += '_Aktifkan layer geologi untuk melihat sebaran di peta._\n';
+    }
+    return s;
+  }
+
+  async function formatLahanAnswer(text, regionMatch) {
     var ids = LAYER_CATEGORIES['ATRBPN'].ids;
     var count = countActiveInCategory(ids);
     var s = '**Data Lahan & Pertanahan**\n\n';
@@ -1248,6 +1291,30 @@ async function formatLahanAnswer(text, regionMatch) {
     s += 'Layer aktif: **' + active.length + '**\n\n';
     active.forEach(function (l, i) { s += (i + 1) + '. ' + l + '\n'; });
     return s;
+  }
+
+  function quickActionHtml() {
+    var s = '<div class="ais-welcome-btns">';
+    QUICK_ACTIONS.forEach(function (a) {
+      var q = a.query.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      s += '<button type="button" class="ais-welcome-btn" onclick="window._aiSendQuick(-1,\'' + q + '\')">' + a.label + '</button>';
+    });
+    s += '</div>';
+    return '\x00RAW' + s + 'RAW\x00';
+  }
+
+  function formatDisambiguation(regionMatch) {
+    var opts = regionMatch.options.map(function (o, i) { return (i + 1) + '. ' + o; }).join('\n');
+    var s = '**"' + regionMatch.name + '"** ditemukan di beberapa tingkat:\n\n' + opts + '\n\n_Pilih salah satu:_';
+    var s2 = '<div class="ais-welcome-btns">';
+    (regionMatch.results || []).forEach(function (r) {
+      var prefix = r.type === 'provinsi' ? 'Provinsi ' : r.type === 'kabkot' ? 'Kabupaten ' : r.type === 'kecamatan' ? 'Kecamatan ' : 'Desa ';
+      var query = prefix + r.name + (r.provinsi && r.type !== 'provinsi' ? ', ' + r.provinsi : '');
+      var esc = query.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      s2 += '<button type="button" class="ais-welcome-btn" onclick="window._aiSendQuick(-1,\'' + esc + '\')">' + regionMatch.options[regionMatch.results.indexOf(r)] + '</button>';
+    });
+    s2 += '</div>';
+    return s + '\x00RAW' + s2 + 'RAW\x00';
   }
 
   function formatBencanaAnswer() {
@@ -1928,8 +1995,7 @@ async function formatLahanAnswer(text, regionMatch) {
     var match = searchRegionByName(regionQuery);
     if (!match) return 'Wilayah **"' + regionQuery + '"** tidak ditemukan. Coba nama provinsi, kabupaten, kota, kecamatan, atau desa yang lebih lengkap.\n\n_Contoh: "Jawa Timur", "Kota Bandung", "Kecamatan Coblong", "Desa Sukamaju"_.';
     if (match.ambiguous) {
-      var opts = match.options.map(function (o, i) { return (i + 1) + '. ' + o; }).join('\n');
-      return '**"' + match.name + '"** ditemukan di beberapa tingkat:\n\n' + opts + '\n\nKetik salah satu secara lengkap, contoh: **"' + match.options[0].split(': ')[1] + '"**.';
+      return formatDisambiguation(match);
     }
 
     if (typeof window.resetAllLayers === 'function') {
@@ -2320,23 +2386,22 @@ async function formatLahanAnswer(text, regionMatch) {
   }
 
   function formatHelpAnswer() {
-    return '**Cari Wilayah**\n\n' +
-      'Ketik nama wilayah untuk melihat profil lengkapnya: luas, penduduk, topografi, kekeringan, hotspot, gempa, riwayat gempa USGS, gunung api.\n\n' +
+    return '**Tanya Ruang — Bantuan**\n\n' +
+      'Tanya Ruang menjawab pertanyaan seputar **data spasial dan peta**: profil wilayah, gempa, kekeringan, hotspot, kehutanan, geologi, dll.\n\n' +
       '**Contoh:**\n' +
-      '- "Jawa Timur"\n' +
-      '- "Kota Bandung"\n' +
-      '- "Kabupaten Sleman"\n' +
-      '- "Kecamatan Coblong"\n' +
-      '- "Desa Sukamaju"\n\n' +
+      '- "Jawa Timur" (profil wilayah)\n' +
+      '- "Kekeringan Kabupaten Sleman"\n' +
+      '- "Riwayat gempa Jawa Timur"\n' +
+      '- "Layer apa saja yang aktif?"\n\n' +
       'Gunakan prefix **Provinsi**, **Kabupaten**, **Kota**, **Kecamatan**, atau **Desa** untuk hasil lebih akurat.\n\n' +
-      'Atau pilih quick action di bawah untuk analisis cepat.';
+      '_Pilih quick action di bawah untuk analisis cepat:_\n' +
+      quickActionHtml();
   }
 
   async function getAnswer(intent, text, regionMatch) {
     // Handle ambiguous region match across all intents
     if (regionMatch && regionMatch.ambiguous) {
-      var opts = regionMatch.options.map(function (o, i) { return (i + 1) + '. ' + o; }).join('\n');
-      return '**"' + regionMatch.name + '"** ditemukan di beberapa tingkat:\n\n' + opts + '\n\nKetik salah satu secara lengkap, contoh: **"' + regionMatch.options[0].split(': ')[1] + '"**.';
+      return formatDisambiguation(regionMatch);
     }
     switch (intent) {
       case 'region': return await formatRegionAnswer(text);
@@ -2348,8 +2413,8 @@ async function formatLahanAnswer(text, regionMatch) {
       case 'udara': return await formatUdaraAnswer(text, regionMatch);
       case 'gunung': return await formatGunungAnswer(text, regionMatch);
       case 'hutan': return formatHutanAnswer();
-      case 'geologi': return formatGeologiAnswer();
-      case 'penduduk': return formatPendudukAnswer();
+      case 'geologi': return formatGeologiAnswer(text, regionMatch);
+      case 'penduduk': return formatPendudukAnswer(text, regionMatch);
       case 'pangan': return formatPanganAnswer();
       case 'lahan': return await formatLahanAnswer(text, regionMatch);
       case 'maritim': return formatMaritimAnswer();
@@ -2416,7 +2481,7 @@ async function formatLahanAnswer(text, regionMatch) {
   function loadChatHistory() { try { chatHistory = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY) || '[]'); } catch (e) { chatHistory = []; } }
 
   function showWelcomeMessage() {
-    addChatMessage('ai', '**Selamat datang di Tanya Ruang!**\n\nKetik nama wilayah untuk melihat profil lengkapnya (termasuk kekeringan SPI/SPEI, hotspot, riwayat gempa USGS).\n\n**Contoh:**\n- "Jawa Timur"\n- "Kota Bandung"\n- "Kecamatan Coblong"\n- "Desa Sukamaju"\n- "Kekeringan Kabupaten Sleman"\n- "Riwayat gempa Jawa Timur"\n\nGunakan prefix **Provinsi**, **Kabupaten**, **Kota**, **Kecamatan**, atau **Desa** untuk hasil lebih akurat.');
+    addChatMessage('ai', '**Selamat datang di Tanya Ruang!**\n\nKetik nama wilayah untuk melihat profil lengkapnya (termasuk kekeringan SPI/SPEI, hotspot, riwayat gempa USGS).\n\n**Contoh:**\n- "Jawa Timur"\n- "Kota Bandung"\n- "Kecamatan Coblong"\n- "Desa Sukamaju"\n- "Kekeringan Kabupaten Sleman"\n- "Riwayat gempa Jawa Timur"\n\nGunakan prefix **Provinsi**, **Kabupaten**, **Kota**, **Kecamatan**, atau **Desa** untuk hasil lebih akurat.\n\n_Pilih quick action di bawah:_\n' + quickActionHtml());
   }
 
   window._aiClearChat = function () {
@@ -2428,7 +2493,7 @@ async function formatLahanAnswer(text, regionMatch) {
   window._aiSendQuick = function (idx, directText) {
     if (directText) { sendMessage(directText); return; }
     var action = QUICK_ACTIONS[idx];
-    if (action) sendMessage(action.intent);
+    if (action) sendMessage(action.query || action.intent || action.label);
   };
 
   /* === Typing Animation === */
@@ -2536,19 +2601,25 @@ async function formatLahanAnswer(text, regionMatch) {
     if (input) input.value = '';
     addChatMessage('user', text);
     var intent = parseIntent(text);
+    var regionMatch = null;
+    var acceptsRegion = intent !== 'help' && intent !== 'basemap' && intent !== 'layers' && intent !== 'viewport' && intent !== 'summary';
     if (intent === 'help' && text.trim().toLowerCase() !== 'region') {
-      var regionMatch = searchRegionByName(text);
+      regionMatch = searchRegionByName(text);
       if (regionMatch && !regionMatch.ambiguous) intent = 'region';
       if (regionMatch && regionMatch.ambiguous) {
-        var opts = regionMatch.options.map(function (o, i) { return (i + 1) + '. ' + o; }).join('\n');
-        typeWriteMessage('**"' + regionMatch.name + '"** ditemukan di beberapa tingkat:\n\n' + opts + '\n\nKetik salah satu secara lengkap, contoh: **"' + regionMatch.options[0].split(': ')[1] + '"**.');
+        typeWriteMessage(formatDisambiguation(regionMatch));
         return;
       }
     }
-    var regionMatch = null;
-    if (intent !== 'region' && intent !== 'help' && intent !== 'basemap' && intent !== 'layers' && intent !== 'viewport' && intent !== 'summary') {
+    if (intent !== 'region' && acceptsRegion) {
       regionMatch = searchRegionByName(text);
+      if (!regionMatch && lastRegionMatch) regionMatch = lastRegionMatch;
     }
+    if (intent === 'region' && !regionMatch) {
+      var rm = searchRegionByName(text);
+      if (rm && !rm.ambiguous) regionMatch = rm;
+    }
+    if (regionMatch && !regionMatch.ambiguous) lastRegionMatch = regionMatch;
     var needsLoading = intent === 'region' || (regionMatch && !regionMatch.ambiguous);
     if (needsLoading) showAiLoading(regionMatch ? 'Mencari data ' + regionMatch.name : 'Mencari data wilayah');
     try {
