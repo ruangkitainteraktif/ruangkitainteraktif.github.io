@@ -17,10 +17,9 @@
     const wadmpr = properties.wadmpr || '-';
     const wadmkk = properties.wadmkk || '-';
     const luasha = properties.luasha;
-    const luashaStr = luasha ? `${Number(luasha).toLocaleString('id-ID')} m²` : '-';
+    const luashaStr = luasha ? `${Number(luasha).toLocaleString('id-ID')} ha` : '-';
     const remark = properties.remark || '-';
     const metadata = properties.metadata || '-';
-    const luasHa = luasha ? (Number(luasha) / 10000).toFixed(2) : null;
 
     return `
       <div class="sawah-popup">
@@ -31,7 +30,7 @@
           <div class="sawah-popup-row"><span>Jenis</span><b>${escapeSawahHtml(lsd)}</b></div>
           <div class="sawah-popup-row"><span>Provinsi</span><b>${escapeSawahHtml(wadmpr)}</b></div>
           <div class="sawah-popup-row"><span>Kab/Kota</span><b>${escapeSawahHtml(wadmkk)}</b></div>
-          <div class="sawah-popup-row"><span>Luas</span><b>${escapeSawahHtml(luashaStr)}${luasHa ? ` (${luasHa} Ha)` : ''}</b></div>
+          <div class="sawah-popup-row"><span>Luas</span><b>${escapeSawahHtml(luashaStr)}</b></div>
           <div class="sawah-popup-row"><span>Keterangan</span><b>${escapeSawahHtml(remark)}</b></div>
         </div>
       </div>`;
@@ -42,8 +41,7 @@
     const wadmpr = properties.wadmpr || '-';
     const wadmkk = properties.wadmkk || '-';
     const luasPolyg = properties.luas_polyg;
-    const luasStr = luasPolyg ? `${Number(luasPolyg).toLocaleString('id-ID')} m²` : '-';
-    const luasHa = luasPolyg ? (Number(luasPolyg) / 10000).toFixed(2) : null;
+    const luasStr = luasPolyg ? `${Number(luasPolyg).toLocaleString('id-ID')} ha` : '-';
 
     return `
       <div class="sawah-popup">
@@ -54,7 +52,7 @@
           <div class="sawah-popup-row"><span>Nama</span><b>${escapeSawahHtml(qName)}</b></div>
           <div class="sawah-popup-row"><span>Provinsi</span><b>${escapeSawahHtml(wadmpr)}</b></div>
           <div class="sawah-popup-row"><span>Kab/Kota</span><b>${escapeSawahHtml(wadmkk)}</b></div>
-          <div class="sawah-popup-row"><span>Luas</span><b>${escapeSawahHtml(luasStr)}${luasHa ? ` (${luasHa} Ha)` : ''}</b></div>
+          <div class="sawah-popup-row"><span>Luas</span><b>${escapeSawahHtml(luasStr)}</b></div>
         </div>
       </div>`;
   }

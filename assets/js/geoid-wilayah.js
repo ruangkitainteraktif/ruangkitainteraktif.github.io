@@ -1899,7 +1899,6 @@ async function fetchLuasSawah(kode) {
 
     let totalIntersectedArea = 0;
     let intersectedCount = 0;
-    let useFallback = false;
 
     let villagePolygon;
     try {
@@ -1913,10 +1912,11 @@ async function fetchLuasSawah(kode) {
       if (!feature.geometry || !feature.geometry.rings) continue;
 
       let sawahPolygon;
+      const baseProps = { Luas_Ha: feature.attributes?.Luas_Ha || 0 };
       try {
         sawahPolygon = turf.rewind({
           type: 'Feature',
-          properties: { Luas_Ha: feature.attributes?.Luas_Ha || 0 },
+          properties: baseProps,
           geometry: {
             type: 'Polygon',
             coordinates: feature.geometry.rings
@@ -1925,7 +1925,7 @@ async function fetchLuasSawah(kode) {
       } catch (e) {
         sawahPolygon = {
           type: 'Feature',
-          properties: { Luas_Ha: feature.attributes?.Luas_Ha || 0 },
+          properties: baseProps,
           geometry: {
             type: 'Polygon',
             coordinates: feature.geometry.rings
@@ -1941,15 +1941,20 @@ async function fetchLuasSawah(kode) {
           intersectedCount++;
         }
       } catch (e) {
-        console.warn('fetchLuasSawah: intersection failed, falling back to Luas_Ha sum', e);
-        useFallback = true;
-        break;
+        try {
+          if (turf.booleanWithin(sawahPolygon, villagePolygon)) {
+            totalIntersectedArea += turf.area(sawahPolygon) / 10000;
+            intersectedCount++;
+          }
+        } catch (e2) {
+          console.warn('fetchLuasSawah: skip invalid feature', e2);
+        }
       }
     }
 
-    if (useFallback) {
-      totalIntersectedArea = allSawahFeatures.reduce((sum, f) => sum + (f.attributes?.Luas_Ha || 0), 0);
-      intersectedCount = allSawahFeatures.length;
+    if (intersectedCount > 0 && typeof computePolygonAreaHa === 'function') {
+      const boundaryHa = computePolygonAreaHa(bData.path);
+      if (boundaryHa > 0) totalIntersectedArea = Math.min(totalIntersectedArea, boundaryHa);
     }
 
 

@@ -902,7 +902,9 @@ async function formatLahanAnswer(text, regionMatch) {
         try { ptData = await fetchPenggunaanTanah(regionMatch.kode, boundary.bbox); } catch (e) {}
         if (ptData && ptData.types.length) {
           s += '\n**Penggunaan Tanah 10K:**\n';
-          s += '- Total: **' + fmt(ptData.totalPolygons) + '** polygon | Luas: **' + ptData.totalHa.toFixed(2) + ' ha**\n';
+          s += '- Total: **' + fmt(ptData.totalPolygons) + '** polygon | Luas: **' + ptData.totalHa.toFixed(2) + ' ha**';
+          if (ptData.capped) s += ' _(dibatasi luas wilayah)_';
+          s += '\n';
           ptData.types.slice(0, 5).forEach(function (t) {
             var pct = ptData.totalHa > 0 ? ((t.ha / ptData.totalHa) * 100).toFixed(1) : '0';
             s += '- ' + t.name + ': **' + t.ha.toFixed(2) + ' ha** (' + pct + '%)\n';
@@ -1148,36 +1150,139 @@ async function formatLahanAnswer(text, regionMatch) {
     return s;
   }
 
+  function esriRingsToPolygonGeom(rings) {
+    var outers = [], holes = [];
+    for (var i = 0; i < rings.length; i++) {
+      var r = rings[i];
+      var a = 0;
+      for (var j = 0; j < r.length - 1; j++) a += r[j][0] * r[j + 1][1] - r[j + 1][0] * r[j][1];
+      if (a / 2 < 0) outers.push(r);
+      else holes.push(r);
+    }
+    if (!outers.length) {
+      outers.push(rings[0]);
+      holes = rings.slice(1);
+    }
+    if (outers.length === 1) return { type: 'Polygon', coordinates: [outers[0]].concat(holes) };
+    return {
+      type: 'MultiPolygon',
+      coordinates: outers.map(function (o, idx) { return idx === 0 ? [o].concat(holes) : [o]; })
+    };
+  }
+
+  function boundaryPathToTurfFeature(path) {
+    if (!path || !path.length || typeof turf === 'undefined') return null;
+    var rings = path.map(function (ring) {
+      return ring.map(function (p) { return [p[1], p[0]]; });
+    }).filter(function (r) { return r.length >= 3; });
+    if (!rings.length) return null;
+    var geom;
+    try { geom = esriRingsToPolygonGeom(rings); } catch (e) { return null; }
+    var f = { type: 'Feature', properties: {}, geometry: geom };
+    try { f = turf.rewind(f); } catch (e) {}
+    return f;
+  }
+
+  function esriGeomToTurfFeature(geom) {
+    if (!geom || !Array.isArray(geom.rings) || !geom.rings.length) return null;
+    var rings = geom.rings.filter(function (r) { return Array.isArray(r) && r.length >= 3; });
+    if (!rings.length) return null;
+    try {
+      var f = { type: 'Feature', properties: {}, geometry: esriRingsToPolygonGeom(rings) };
+      try { f = turf.rewind(f); } catch (e2) {}
+      return f;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function clipFeaturesToBoundaryHa(features, boundaryFeature, geometryExtractor) {
+    if (typeof turf === 'undefined' || !boundaryFeature || !features || !features.length) {
+      return { ha: 0, count: 0, clipped: false };
+    }
+    var totalHa = 0;
+    var count = 0;
+    for (var i = 0; i < features.length; i++) {
+      var gj = geometryExtractor(features[i]);
+      if (!gj) continue;
+      try {
+        var intersection = turf.intersect(turf.featureCollection([boundaryFeature, gj]));
+        if (intersection && intersection.geometry) {
+          totalHa += turf.area(intersection) / 10000;
+          count += 1;
+        }
+      } catch (e) {
+        try {
+          if (turf.booleanWithin(gj, boundaryFeature)) {
+            totalHa += turf.area(gj) / 10000;
+            count += 1;
+          }
+        } catch (e2) {}
+      }
+    }
+    return { ha: totalHa, count: count, clipped: true };
+  }
+
+  function clampToBoundaryHa(ha, boundary) {
+    if (!boundary || !(boundary.luasHa > 0)) return { ha: ha, capped: false };
+    if (ha > boundary.luasHa) return { ha: boundary.luasHa, capped: true };
+    return { ha: ha, capped: false };
+  }
+
   async function fetchLahanSawahData(kode, bbox) {
     var result = { lbs: null, lsd: null };
+    var boundary = null;
+    try { boundary = await fetchRegionBoundaryData(kode); } catch (e) {}
+    var boundaryFeature = boundary ? boundaryPathToTurfFeature(boundary.path) : null;
+
     try {
       var sawah = await fetchLuasSawah(kode);
       if (sawah && sawah.sawahHa > 0) {
-        result.lbs = { ha: sawah.sawahHa, count: sawah.count };
+        var lbsClamped = clampToBoundaryHa(sawah.sawahHa, boundary);
+        result.lbs = { ha: Math.round(lbsClamped.ha * 100) / 100, count: sawah.count, capped: lbsClamped.capped };
       }
     } catch (e) {}
-    if (bbox) {
+
+    if (bbox && boundaryFeature) {
       try {
         var envelope = bbox.west + ',' + bbox.south + ',' + bbox.east + ',' + bbox.north;
-        var params = new URLSearchParams({
-          f: 'json', returnGeometry: 'false', where: '1=1',
-          geometry: envelope, geometryType: 'esriGeometryEnvelope',
-          inSR: '4326', spatialRel: 'esriSpatialRelIntersects',
-          outFields: 'wadmpr,wadmkk,luasha'
-        });
-        var ctrl = new AbortController();
-        var t = setTimeout(function () { ctrl.abort(); }, 12000);
-        var res = await fetch('https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/59/query?' + params.toString(), { signal: ctrl.signal });
-        clearTimeout(t);
-        if (res.ok) {
-          var data = await res.json();
-          var feats = data.features || [];
-          var totalHa = 0;
-          feats.forEach(function (f) {
-            var a = f.attributes || {};
-            if (a.luasha && !isNaN(parseFloat(a.luasha))) totalHa += parseFloat(a.luasha);
+        var offset = 0;
+        var allLsd = [];
+        var PAGE = 1000;
+        var fetchPage = function () {
+          var params = new URLSearchParams({
+            f: 'json', returnGeometry: 'true', where: '1=1',
+            geometry: envelope, geometryType: 'esriGeometryEnvelope',
+            inSR: '4326', spatialRel: 'esriSpatialRelIntersects',
+            outSR: '4326', outFields: 'wadmpr,wadmkk,luasha',
+            resultOffset: String(offset), resultRecordCount: String(PAGE)
           });
-          if (totalHa > 0) result.lsd = { ha: Math.round(totalHa * 100) / 100, count: feats.length };
+          var ctrl = new AbortController();
+          var t = setTimeout(function () { ctrl.abort(); }, 12000);
+          return fetch('https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/59/query?' + params.toString(), { signal: ctrl.signal })
+            .then(function (r) { clearTimeout(t); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+            .then(function (data) {
+              if (data.features) allLsd = allLsd.concat(data.features);
+              if (data.exceededTransferLimit && data.features && data.features.length > 0 && offset < 8000) {
+                offset += PAGE;
+                return fetchPage();
+              }
+              return allLsd;
+            });
+        };
+        var feats = await fetchPage();
+        if (feats.length) {
+          var clipped = clipFeaturesToBoundaryHa(feats, boundaryFeature, function (f) {
+            return esriGeomToTurfFeature(f.geometry);
+          });
+          if (clipped.ha > 0) {
+            var lsdClamped = clampToBoundaryHa(clipped.ha, boundary);
+            result.lsd = {
+              ha: Math.round(lsdClamped.ha * 100) / 100,
+              count: clipped.count,
+              capped: lsdClamped.capped
+            };
+          }
         }
       } catch (e) {}
     }
@@ -1187,6 +1292,11 @@ async function formatLahanAnswer(text, regionMatch) {
   async function fetchPenggunaanTanah(kode, bbox) {
     if (!bbox) return null;
     try {
+      var boundary = null;
+      try { boundary = await fetchRegionBoundaryData(kode); } catch (e) {}
+      var boundaryFeature = boundary ? boundaryPathToTurfFeature(boundary.path) : null;
+      if (!boundaryFeature) return null;
+
       var minX = bbox.west || bbox[0], minY = bbox.south || bbox[1];
       var maxX = bbox.east || bbox[2], maxY = bbox.north || bbox[3];
       var envelope = JSON.stringify({ xmin: minX, ymin: minY, xmax: maxX, ymax: maxY, spatialReference: { wkid: 4326 } });
@@ -1195,9 +1305,10 @@ async function formatLahanAnswer(text, regionMatch) {
       var PAGE = 1000;
       var loop = function () {
         var params = new URLSearchParams({
-          f: 'json', returnGeometry: 'false', where: '1=1',
+          f: 'json', returnGeometry: 'true', where: '1=1',
           geometry: envelope, geometryType: 'esriGeometryEnvelope',
           spatialRel: 'esriSpatialRelIntersects', inSR: '4326',
+          outSR: '4326',
           outFields: 'ptnobjname,ig25k_penggunaan10k_ar_area',
           resultOffset: String(offset), resultRecordCount: String(PAGE)
         });
@@ -1207,7 +1318,7 @@ async function formatLahanAnswer(text, regionMatch) {
           .then(function (r) { clearTimeout(t); return r.json(); })
           .then(function (data) {
             if (data.features) all = all.concat(data.features);
-            if (data.exceededTransferLimit && data.features && data.features.length > 0) {
+            if (data.exceededTransferLimit && data.features && data.features.length > 0 && offset < 8000) {
               offset += PAGE;
               return loop();
             }
@@ -1216,19 +1327,43 @@ async function formatLahanAnswer(text, regionMatch) {
       };
       var features = await loop();
       if (!features.length) return null;
+
       var types = {};
       var totalHa = 0;
+      var clippedCount = 0;
       features.forEach(function (f) {
-        var a = f.attributes || {};
-        var name = a.ptnobjname || 'Lainnya';
-        var ha = parseFloat(a.ig25k_penggunaan10k_ar_area) || 0;
-        if (!types[name]) types[name] = { name: name, count: 0, ha: 0 };
-        types[name].count++;
-        types[name].ha += ha / 10000;
-        totalHa += ha / 10000;
+        var p = (f && f.attributes && f.attributes.ptnobjname) || 'Lainnya';
+        var gj = esriGeomToTurfFeature(f && f.geometry);
+        if (!gj) return;
+        var ha = 0;
+        try {
+          var intersection = turf.intersect(turf.featureCollection([boundaryFeature, gj]));
+          if (intersection && intersection.geometry) ha = turf.area(intersection) / 10000;
+          else return;
+        } catch (e) {
+          try {
+            if (!turf.booleanWithin(gj, boundaryFeature)) return;
+            ha = turf.area(gj) / 10000;
+          } catch (e2) { return; }
+        }
+        if (!(ha > 0)) return;
+        if (!types[p]) types[p] = { name: p, count: 0, ha: 0 };
+        types[p].count++;
+        types[p].ha += ha;
+        totalHa += ha;
+        clippedCount++;
       });
+
+      if (!clippedCount) return null;
       var sorted = Object.values(types).sort(function (a, b) { return b.ha - a.ha; });
-      return { types: sorted, totalPolygons: features.length, totalHa: totalHa };
+      sorted.forEach(function (t) { t.ha = Math.round(t.ha * 100) / 100; });
+      var clamped = clampToBoundaryHa(totalHa, boundary);
+      return {
+        types: sorted,
+        totalPolygons: clippedCount,
+        totalHa: Math.round(clamped.ha * 100) / 100,
+        capped: clamped.capped
+      };
     } catch (e) {
       console.warn('[AI] fetchPenggunaanTanah error:', e);
       return null;
@@ -1546,15 +1681,17 @@ async function formatLahanAnswer(text, regionMatch) {
     if (lahanData && (lahanData.lbs || lahanData.lsd)) {
       s += '**Lahan Sawah:**\n';
       if (lahanData.lbs && lahanData.lbs.ha > 0) {
-        var lbsPct = (boundary && boundary.luasHa > 0) ? ((lahanData.lbs.ha / boundary.luasHa) * 100).toFixed(1) : null;
+        var lbsPct = (boundary && boundary.luasHa > 0) ? Math.min(100, (lahanData.lbs.ha / boundary.luasHa) * 100).toFixed(1) : null;
         s += '- LBS 2023: **' + fmt(lahanData.lbs.ha) + ' ha**';
         if (lbsPct) s += ' (' + lbsPct + '% dari luas wilayah)';
+        if (lahanData.lbs.capped) s += ' _(dibatasi)_';
         s += '\n';
       }
       if (lahanData.lsd && lahanData.lsd.ha > 0) {
-        var lsdPct = (boundary && boundary.luasHa > 0) ? ((lahanData.lsd.ha / boundary.luasHa) * 100).toFixed(1) : null;
+        var lsdPct = (boundary && boundary.luasHa > 0) ? Math.min(100, (lahanData.lsd.ha / boundary.luasHa) * 100).toFixed(1) : null;
         s += '- LSD 50K: **' + fmt(lahanData.lsd.ha) + ' ha**';
         if (lsdPct) s += ' (' + lsdPct + '% dari luas wilayah)';
+        if (lahanData.lsd.capped) s += ' _(dibatasi)_';
         s += '\n';
       }
       s += '\n';
@@ -1564,7 +1701,9 @@ async function formatLahanAnswer(text, regionMatch) {
     try { ptData = await fetchPenggunaanTanah(match.kode, bbox); } catch (e) {}
     if (ptData && ptData.types.length) {
       s += '**Penggunaan Tanah 10K:**\n';
-      s += '- Total polygon: **' + fmt(ptData.totalPolygons) + '** | Luas total: **' + ptData.totalHa.toFixed(2) + ' ha**\n';
+      s += '- Total polygon: **' + fmt(ptData.totalPolygons) + '** | Luas total: **' + ptData.totalHa.toFixed(2) + ' ha**';
+      if (ptData.capped) s += ' _(dibatasi luas wilayah)_';
+      s += '\n';
       ptData.types.slice(0, 5).forEach(function (t) {
         var pct = ptData.totalHa > 0 ? ((t.ha / ptData.totalHa) * 100).toFixed(1) : '0';
         s += '- ' + t.name + ': **' + t.ha.toFixed(2) + ' ha** (' + pct + '%, ' + t.count + ' polygon)\n';
