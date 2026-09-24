@@ -1178,7 +1178,7 @@
     })
     .catch(err => console.error('[Geoportal] Gagal memuat geoportal-layers.json:', err));
 
-  function showPrintLoading() {
+  function showPrintLoading(message) {
     let el = document.getElementById('print-loading-overlay');
     if (!el) {
       el = document.createElement('div');
@@ -1190,12 +1190,15 @@
       spin.className = 'print-spinner';
       const txt = document.createElement('div');
       txt.className = 'print-status-text';
+      txt.id = 'print-loading-text';
       txt.textContent = 'Sedang memproses cetak peta…';
       box.appendChild(spin);
       box.appendChild(txt);
       el.appendChild(box);
       document.body.appendChild(el);
     }
+    const txt = document.getElementById('print-loading-text');
+    if (txt) txt.textContent = message || 'Sedang memproses cetak peta…';
     el.style.display = 'flex';
   }
   function hidePrintLoading() {
@@ -1326,12 +1329,37 @@
     return 'https://images.weserv.nl/?url=' + encodeURIComponent(full);
   }
 
+  function _preloadProxyImages(container) {
+    var imgs = container.querySelectorAll('img');
+    var jobs = [];
+    var seen = {};
+    for (var i = 0; i < imgs.length; i++) {
+      var src = imgs[i].getAttribute('src') || '';
+      if (!src || src.indexOf('data:') === 0 || src.indexOf('blob:') === 0) continue;
+      var proxied = _captureProxySrc(src);
+      if (proxied === src || seen[proxied]) continue;
+      seen[proxied] = true;
+      jobs.push(new Promise(function (resolve) {
+        var im = new Image();
+        var done = false;
+        var finish = function () { if (!done) { done = true; resolve(); } };
+        im.onload = finish;
+        im.onerror = finish;
+        im.crossOrigin = 'anonymous';
+        im.src = proxied;
+        setTimeout(finish, 12000);
+      }));
+    }
+    return Promise.all(jobs);
+  }
+
   async function captureMapCanvas(opts) {
     opts = opts || {};
     var container = document.querySelector('.leaflet-container');
     if (!container) throw new Error('Peta tidak siap');
     map.invalidateSize();
     await _waitTilesReady(opts.tileWaitMs || 6000);
+    await _preloadProxyImages(container);
     await new Promise(function (r) { setTimeout(r, 350); });
     return html2canvas(container, {
       useCORS: true,
@@ -1341,7 +1369,9 @@
       backgroundColor: '#e8e8e8',
       imageTimeout: 15000,
       ignoreElements: opts.ignoreElements || function (el) {
-        return el.id === 'print-loading-overlay' || el.id === 'print-error-overlay';
+        if (!el) return false;
+        if (el.id === 'print-loading-overlay' || el.id === 'print-error-overlay') return true;
+        return false;
       },
       onclone: function (doc) {
         var c = doc.querySelector('.leaflet-container');
@@ -1602,36 +1632,101 @@
   }
 
   /* ── Global Export TIF — viewport langsung, tanpa alur cetak ── */
+  const EXPORT_UI_SELECTORS = [
+    '.unified-search', '.map-insight-cards',
+    '.leaflet-control-zoom', '.leaflet-control-locate', '.leaflet-control-scale',
+    '.leaflet-control-mouse-position', '.leaflet-control-layers', '.leaflet-control-attribution',
+    '.reset-layers-btn', '.geoportal-print-btn', '.geoportal-legend',
+    '.basemap-btn', '.basemap-control-wrap',
+    '.detail-panel-btn', '#detail-panel',
+    '.draw-fab-wrap', '.legend-wrap', '.zoom-control-wrap',
+    '.geoid-marker-wrap', '.wind-legend', '.himawari-legend', '.maritime-legend',
+    '.leaflet-control-legend', '.quick-layer-bar', '.petadasar-export-block',
+    '#print-error-overlay',
+    '.print-area-buttons', '.print-area-frame', '.print-area-vignette', '.print-instruction',
+    '.map-fab-wrap', '.map-fab-item', '.map-fab-menu', '.map-fab-overlay', '.map-fab-btn',
+    '.layer-catalog-dropdown', '.layer-catalog-btn', '#geotools-sheet',
+    '.unified-slider-container', '.unified-legend-container',
+    '.modis-time-slider-wrap', '.bmkg-time-slider-wrap', '.sentinel2-time-slider-wrap',
+    '.ze-time-slider-wrap', '.ghrsst-time-slider-wrap',
+    '.modis-ts-title', '.modis-ts-controls', '.modis-ts-info', '.modis-ts-slider-wrap',
+    '.bmkg-ts-title', '.bmkg-ts-controls', '.bmkg-ts-info', '.bmkg-ts-slider-wrap',
+    '.s1rtc-time-slider-wrap', '.s1rtc-ts-title', '.s1rtc-ts-controls', '.s1rtc-ts-info', '.s1rtc-ts-slider-wrap',
+    '.sentinel2-ts-slider-wrap', '.sat-export-btn'
+  ].join(', ');
+
+  function _hideExportUi(hiddenEls) {
+    document.querySelectorAll(EXPORT_UI_SELECTORS).forEach(function (el) {
+      if (el && getComputedStyle(el).display !== 'none') {
+        var prev = el.style.display;
+        el.style.setProperty('display', 'none', 'important');
+        hiddenEls.push(function () { el.style.display = prev; });
+      }
+    });
+    document.querySelectorAll('.leaflet-control-container .leaflet-control, .leaflet-top, .leaflet-bottom').forEach(function (el) {
+      if (el && getComputedStyle(el).display !== 'none') {
+        var prev = el.style.display;
+        el.style.setProperty('display', 'none', 'important');
+        hiddenEls.push(function () { el.style.display = prev; });
+      }
+    });
+  }
+
+  function _isExportIgnoredEl(el) {
+    if (!el || !el.classList) return false;
+    if (el.id === 'print-loading-overlay' || el.id === 'print-error-overlay' || el.id === 'print-preview-overlay') return true;
+    var cls = (typeof el.className === 'string' && el.className) || (el.getAttribute && el.getAttribute('class')) || '';
+    if (!cls) return false;
+    if (cls.indexOf('leaflet-control') !== -1) return true;
+    if (cls.indexOf('leaflet-top') !== -1 || cls.indexOf('leaflet-bottom') !== -1 || cls.indexOf('leaflet-bar') !== -1) return true;
+    if (cls.indexOf('map-fab') !== -1) return true;
+    if (cls.indexOf('time-slider') !== -1 || cls.indexOf('-ts-') !== -1) return true;
+    if (cls.indexOf('unified-slider') !== -1 || cls.indexOf('unified-legend') !== -1) return true;
+    if (cls.indexOf('print-area') !== -1) return true;
+    return false;
+  }
+
   async function exportViewportGeoTiff(btn) {
     const orig = btn && btn.innerHTML;
-    function setLabel(msg) {
-      if (!btn) return;
-      btn.innerHTML = msg;
+    const hiddenEls = [];
+    let succeeded = false;
+    let failedMsg = null;
+
+    function restoreExportUi() {
+      while (hiddenEls.length) {
+        var h = hiddenEls.pop();
+        try { h(); } catch (e) {}
+      }
     }
+
     function fail(msg) {
+      failedMsg = msg;
       console.error('[ExportTIF]', msg);
+      showPrintError('Export GeoTIFF: ' + (msg || 'Terjadi kesalahan.'));
       if (btn) {
         btn.disabled = false;
         btn.textContent = 'Gagal';
         setTimeout(function () { if (orig != null) btn.innerHTML = orig; }, 4000);
       }
     }
+
     if (typeof window.GeoTIFF === 'undefined' || typeof window.GeoTIFF.writeArrayBuffer !== 'function') {
       return fail('GeoTIFF.js belum termuat');
     }
     if (typeof html2canvas !== 'function') return fail('html2canvas belum termuat');
     const leafletContainer = document.querySelector('.leaflet-container');
     if (!leafletContainer || !window.map) return fail('Peta tidak siap');
-    if (btn) { btn.disabled = true; btn.textContent = '…'; setLabel('…'); }
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
+
+    showPrintLoading('Sedang mengekspor GeoTIFF…');
     try {
-      setLabel('📷');
+      _hideExportUi(hiddenEls);
+      map.invalidateSize();
+      await new Promise(function (r) { setTimeout(r, 400); });
+
       const mapCanvas = await captureMapCanvas({
-        tileWaitMs: 6000, scale: 2,
-        ignoreElements: function (el) {
-          return el.id === 'print-loading-overlay' || el.id === 'print-error-overlay'
-            || el.id === 'print-preview-overlay'
-            || (el.classList && (el.classList.contains('map-fab-wrap') || el.classList.contains('print-area-buttons')));
-        }
+        tileWaitMs: 8000, scale: 2,
+        ignoreElements: _isExportIgnoredEl
       });
       const EX_MAX = 4096;
       let canvas = mapCanvas;
@@ -1672,7 +1767,6 @@
         GTRasterTypeGeoKey: 1,
         ProjectedCSTypeGeoKey: 3857
       };
-      setLabel('⬇️');
       const buffer = await window.GeoTIFF.writeArrayBuffer(rgb, metadata);
       const d = new Date();
       const pad2 = function (n) { return n < 10 ? '0' + n : String(n); };
@@ -1687,13 +1781,20 @@
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = '✓';
-        setTimeout(function () { if (orig != null) btn.innerHTML = orig; }, 4000);
-      }
+      succeeded = true;
     } catch (err) {
       fail(err && err.message ? err.message : String(err));
+    } finally {
+      restoreExportUi();
+      hidePrintLoading();
+      try { map.invalidateSize(); } catch (e) {}
+      if (btn && !failedMsg) {
+        btn.disabled = false;
+        if (succeeded) {
+          btn.textContent = '✓';
+          setTimeout(function () { if (orig != null) btn.innerHTML = orig; }, 4000);
+        }
+      }
     }
   }
   window.exportViewportGeoTiff = exportViewportGeoTiff;

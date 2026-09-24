@@ -923,11 +923,17 @@ L.control.scale({
       });
       wrap.appendChild(items);
       wrap.appendChild(btn);
+      if (window.innerWidth > 768) wrap.classList.add('map-fab-open');
       return wrap;
     }
   });
   var __fabCtrl = new MapFABControl().addTo(map);
   var __fabItems = null;
+
+  window.addEventListener('resize', function () {
+    var w = document.querySelector('.map-fab-wrap');
+    if (w && window.innerWidth > 768) w.classList.add('map-fab-open');
+  });
 
   function moveToFAB(selector, title) {
     var el = document.querySelector(selector);
