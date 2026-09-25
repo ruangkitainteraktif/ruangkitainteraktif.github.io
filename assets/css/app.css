@@ -7683,7 +7683,7 @@
     }
     .arcgis-source-toolbar > span { flex: 1; }
     .arcgis-layer-tree {
-      max-height: 360px;
+      max-height: 25vh;
       overflow: auto;
       padding: 6px;
       border: 1px solid #dbe7ee;

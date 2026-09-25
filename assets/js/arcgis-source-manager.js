@@ -275,18 +275,24 @@
     updateSelection();
   }
 
+  var ACTION_BUTTON_IDS = ['arcgisCountBtn', 'arcgisAddSelectedBtn'];
+
   function updateSelection() {
     var count = state.selected.size;
     var countElement = getElement('arcgisSelectionCount');
-    var addButton = getElement('arcgisAddSelectedBtn');
     if (countElement) countElement.textContent = count ? count + ' layer dipilih' : 'Belum ada layer dipilih';
-    if (addButton) addButton.disabled = count === 0;
+    ACTION_BUTTON_IDS.forEach(function (id) {
+      var button = getElement(id);
+      if (button) button.disabled = count === 0;
+    });
   }
 
   function setDiscoveryBusy(busy) {
-    ['arcgisDiscoverBtn', 'arcgisAddSelectedBtn'].forEach(function (id) {
+    ['arcgisDiscoverBtn'].concat(ACTION_BUTTON_IDS).forEach(function (id) {
       var element = getElement(id);
-      if (element) element.disabled = busy || (id === 'arcgisAddSelectedBtn' && state.selected.size === 0);
+      if (!element) return;
+      if (id === 'arcgisDiscoverBtn') element.disabled = busy;
+      else element.disabled = busy || state.selected.size === 0;
     });
     var cancelButton = getElement('arcgisCancelBtn');
     if (cancelButton) {
@@ -495,13 +501,25 @@
     };
   }
 
-  function featureQueryUrl(descriptor, format, offset, count, countOnly, paginated) {
+  function featureQueryUrl(descriptor, format, offset, count, countOnly, paginated, bbox) {
     var url = new URL(descriptor.layerUrl + '/query');
     url.searchParams.set('where', '1=1');
-    url.searchParams.set('outFields', '*');
-    url.searchParams.set('returnGeometry', 'true');
-    url.searchParams.set('outSR', '4326');
+    if (countOnly) {
+      url.searchParams.set('outFields', '');
+      url.searchParams.set('returnGeometry', 'false');
+      url.searchParams.set('outSR', '');
+    } else {
+      url.searchParams.set('outFields', '*');
+      url.searchParams.set('returnGeometry', 'true');
+      url.searchParams.set('outSR', '4326');
+    }
     url.searchParams.set('returnCountOnly', countOnly ? 'true' : 'false');
+    if (bbox && bbox.length === 4) {
+      url.searchParams.set('geometry', bbox.join(','));
+      url.searchParams.set('geometryType', 'esriGeometryEnvelope');
+      url.searchParams.set('inSR', '4326');
+      url.searchParams.set('spatialRel', 'esriSpatialRelIntersects');
+    }
     if (paginated !== false) {
       url.searchParams.set('resultOffset', String(offset || 0));
       url.searchParams.set('resultRecordCount', String(count == null ? ATTRIBUTE_PAGE_SIZE : count));
@@ -520,8 +538,8 @@
     throw new Error('Respons feature ArcGIS tidak valid.');
   }
 
-  function fetchFeaturePage(descriptor, offset, countOnly, paginated) {
-    var url = featureQueryUrl(descriptor, 'json', offset, countOnly ? 0 : ATTRIBUTE_PAGE_SIZE, countOnly, paginated);
+  function fetchFeaturePage(descriptor, offset, countOnly, paginated, bbox) {
+    var url = featureQueryUrl(descriptor, 'json', offset, countOnly ? 0 : ATTRIBUTE_PAGE_SIZE, countOnly, paginated, bbox);
     return fetchJson(url, 'json').then(function (data) {
       if (data && data.error) {
         var error = new Error(data.error.message || 'ArcGIS query gagal');
@@ -828,6 +846,75 @@
     renderAttributePanel();
   }
 
+  function currentBbox() {
+    var mapInstance = getMap();
+    if (!mapInstance) return null;
+    var bounds = mapInstance.getBounds();
+    if (!bounds || !bounds.isValid()) return null;
+    return [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()];
+  }
+
+  function countFeatures(descriptor, bbox) {
+    return fetchFeaturePage(descriptor, 0, true, false, bbox).then(function (data) {
+      return data.count || 0;
+    });
+  }
+
+  async function countSelected() {
+    var tree = getElement('arcgisLayerTree');
+    if (!tree) return;
+    var inputs = tree.querySelectorAll('input[data-arcgis-leaf]:checked');
+    if (!inputs.length) {
+      setStatus('Pilih minimal satu layer.', true);
+      return;
+    }
+    var countButton = getElement('arcgisCountBtn');
+    var buttonText = countButton ? countButton.textContent : '';
+    if (countButton) {
+      countButton.disabled = true;
+      countButton.classList.add('is-loading');
+      countButton.textContent = 'Menghitung…';
+    }
+    setStatus('Menghitung jumlah fitur…');
+    setProgress('0/' + inputs.length + ' layer dihitung');
+    var done = 0;
+    var failed = 0;
+    var summaries = [];
+    try {
+      for (var index = 0; index < inputs.length; index++) {
+        var descriptor = state.leaves[Number(inputs[index].getAttribute('data-arcgis-leaf'))];
+        if (!descriptor) continue;
+        setProgress('Menghitung ' + (index + 1) + '/' + inputs.length + ' · ' + descriptor.name);
+        setStatus('Menghitung fitur ' + descriptor.name + '…');
+        try {
+          if (!descriptor.layerId) throw new Error('Service tanpa sublayer, tidak bisa dihitung');
+          var bbox = descriptor.renderMode === 'feature' ? currentBbox() : null;
+          var viewportCount = await countFeatures(descriptor, bbox);
+          var layerCount = viewportCount;
+          if (bbox) layerCount = await countFeatures(descriptor, null);
+          descriptor.featureCount = viewportCount;
+          descriptor.featureTotal = layerCount;
+          done++;
+          summaries.push(descriptor.name + ': ' + (bbox
+            ? viewportCount.toLocaleString('id-ID') + ' di area pandang · ' + layerCount.toLocaleString('id-ID') + ' total'
+            : layerCount.toLocaleString('id-ID') + ' fitur'));
+        } catch (error) {
+          failed++;
+          summaries.push(descriptor.name + ': ' + (error && error.message ? error.message : String(error)));
+        }
+      }
+    } finally {
+      if (countButton) {
+        countButton.classList.remove('is-loading');
+        countButton.textContent = buttonText;
+      }
+      setProgress('');
+      updateSelection();
+    }
+    setStatus(summaries.join(' · ') || 'Tidak ada layer dihitung.', failed > 0);
+    if (done) console.log('[ArcGIS] hitung fitur:', summaries);
+  }
+
   async function addSelected() {
     var tree = getElement('arcgisLayerTree');
     if (!tree) return;
@@ -877,11 +964,13 @@
     var discoverButton = getElement('arcgisDiscoverBtn');
     var cancelButton = getElement('arcgisCancelBtn');
     var addButton = getElement('arcgisAddSelectedBtn');
+    var countButton = getElement('arcgisCountBtn');
     var attributeSelect = getElement('arcgisAttributeLayerSelect');
     var tree = getElement('arcgisLayerTree');
     if (discoverButton) discoverButton.addEventListener('click', discover);
     if (cancelButton) cancelButton.addEventListener('click', cancelDiscovery);
     if (addButton) addButton.addEventListener('click', addSelected);
+    if (countButton) countButton.addEventListener('click', countSelected);
     if (attributeSelect) {
       attributeSelect.addEventListener('change', function () {
         var record = state.active[this.value];
@@ -912,6 +1001,7 @@
   window.ArcGISRestSourceManager = {
     discover: discover,
     addSelected: addSelected,
+    countSelected: countSelected,
     remove: removeLayer,
     clear: clearDynamicLayers,
     getActive: function () { return state.active; }

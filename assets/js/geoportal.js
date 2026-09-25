@@ -1363,25 +1363,45 @@
     return _snapshotCanvas.toDataURL(TILE_SNAPSHOT_FORMAT, TILE_SNAPSHOT_QUALITY);
   }
 
+  var TILE_SNAPSHOT_CACHE_MAX = 400;
+  var _tileSnapshotCache = {};
+  var _tileSnapshotCacheKeys = [];
+
+  function _rememberTileSnapshot(src, dataUrl) {
+    if (_tileSnapshotCache[src]) return;
+    _tileSnapshotCache[src] = dataUrl;
+    _tileSnapshotCacheKeys.push(src);
+    while (_tileSnapshotCacheKeys.length > TILE_SNAPSHOT_CACHE_MAX) {
+      delete _tileSnapshotCache[_tileSnapshotCacheKeys.shift()];
+    }
+  }
+
+  async function _fetchImageBitmap(target) {
+    var controller = null;
+    var timer = null;
+    try {
+      controller = new AbortController();
+      timer = setTimeout(function () { controller.abort(); }, TILE_SNAPSHOT_TIMEOUT);
+      var res = await fetch(target, { mode: 'cors', signal: controller.signal });
+      if (!res.ok) return null;
+      var type = (res.headers.get('content-type') || '').toLowerCase();
+      if (type && type.indexOf('image/') !== 0) return null;
+      var blob = await res.blob();
+      if (!blob || !blob.size) return null;
+      return await createImageBitmap(blob);
+    } catch (e) {
+      return null;
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+
   async function _fetchTileBitmap(url) {
+    var direct = await _fetchImageBitmap(url);
+    if (direct) return direct;
     for (var i = 0; i < TILE_PROXY_CHAIN.length; i++) {
-      var controller = null;
-      var timer = null;
-      try {
-        controller = new AbortController();
-        timer = setTimeout(function () { controller.abort(); }, TILE_SNAPSHOT_TIMEOUT);
-        var res = await fetch(TILE_PROXY_CHAIN[i](url), { mode: 'cors', signal: controller.signal });
-        if (!res.ok) continue;
-        var type = (res.headers.get('content-type') || '').toLowerCase();
-        if (type && type.indexOf('image/') !== 0) continue;
-        var blob = await res.blob();
-        if (!blob || !blob.size) continue;
-        return await createImageBitmap(blob);
-      } catch (e) {
-        if (e && e.name === 'AbortError') continue;
-      } finally {
-        if (timer) clearTimeout(timer);
-      }
+      var bitmap = await _fetchImageBitmap(TILE_PROXY_CHAIN[i](url));
+      if (bitmap) return bitmap;
     }
     return null;
   }
@@ -1401,6 +1421,7 @@
       if (!src || src.indexOf('data:') === 0) continue;
       if (seen[src]) continue;
       seen[src] = true;
+      if (_tileSnapshotCache[src]) { map[src] = _tileSnapshotCache[src]; continue; }
       if (_imgIsOriginSafe(img, src)) direct.push({ src: src, img: img });
       else remote.push(src);
     }
@@ -1421,6 +1442,7 @@
       } catch (e) {
         url = null;
       }
+      if (url) _rememberTileSnapshot(direct[d].src, url);
       if (url) map[direct[d].src] = url;
       else failed.push(direct[d].src);
       tick();
@@ -1451,6 +1473,7 @@
           }
           if (bitmap.close) bitmap.close();
         }
+        if (dataUrl) _rememberTileSnapshot(src, dataUrl);
         if (dataUrl) map[src] = dataUrl;
         else failed.push(src);
         tick();
@@ -1463,6 +1486,165 @@
     if (workers.length) await Promise.all(workers);
 
     return { map: map, failed: failed, total: total, captured: Object.keys(map).length };
+  }
+
+  var BOUNDARY_GEOJSON_URL = 'assets/data/bps/geojson/provinsi.geojson';
+  var BOUNDARY_GEOJSON_TIMEOUT = 12000;
+  var _boundaryGeoJson = null;
+
+  function _nextFrames(count) {
+    return new Promise(function (resolve) {
+      var left = count;
+      (function step() {
+        if (left-- <= 0) { resolve(); return; }
+        requestAnimationFrame(step);
+      })();
+    });
+  }
+
+  async function _loadBoundaryGeoJson() {
+    if (_boundaryGeoJson) return _boundaryGeoJson;
+    if (typeof fetch !== 'function') return null;
+    var controller = null;
+    var timer = null;
+    try {
+      controller = new AbortController();
+      timer = setTimeout(function () { controller.abort(); }, BOUNDARY_GEOJSON_TIMEOUT);
+      var res = await fetch(BOUNDARY_GEOJSON_URL, { signal: controller.signal });
+      if (!res.ok) return null;
+      var json = await res.json();
+      if (!json || !json.features || !json.features.length) return null;
+      _boundaryGeoJson = json;
+      return json;
+    } catch (e) {
+      return null;
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+
+  async function _addBoundaryGeoJsonLayer() {
+    if (typeof isProvinceBoundaryActive !== 'function' || !isProvinceBoundaryActive()) return null;
+    if (typeof L === 'undefined' || !L.geoJSON) return null;
+    var geo = await _loadBoundaryGeoJson();
+    if (!geo) return null;
+    var layer = L.geoJSON(geo, {
+      interactive: false,
+      style: { color: '#ffffff', weight: 1.2, opacity: 0.85, fill: false }
+    });
+    layer.addTo(map);
+    await _nextFrames(3);
+    return {
+      restore: function () {
+        try {
+          if (map.hasLayer(layer)) map.removeLayer(layer);
+        } catch (e) {}
+      }
+    };
+  }
+
+  var VECTOR_RASTER_CONCURRENCY = 4;
+  var VECTOR_RASTER_TIMEOUT = 6000;
+  var VECTOR_RASTER_BUDGET = 20000;
+  var VECTOR_RASTER_LIMIT = 90;
+
+  function _stylePx(style, key) {
+    var match = new RegExp('(?:^|;)\\s*' + key + '\\s*:\\s*([\\d.]+)px').exec(style || '');
+    return match ? Math.round(parseFloat(match[1])) : 0;
+  }
+
+  function _loadSvgImage(svg) {
+    var style = svg.getAttribute('style') || '';
+    var w = _stylePx(style, 'width') || parseInt(svg.getAttribute('width'), 10) || 0;
+    var h = _stylePx(style, 'height') || parseInt(svg.getAttribute('height'), 10) || 0;
+    if (!w || !h) {
+      var rect = svg.getBoundingClientRect();
+      w = Math.round(rect.width);
+      h = Math.round(rect.height);
+    }
+    if (!w || !h) return null;
+
+    var clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    clone.setAttribute('width', w);
+    clone.setAttribute('height', h);
+    clone.removeAttribute('style');
+    var url = 'data:image/svg+xml;charset=utf-8,' +
+      encodeURIComponent(new XMLSerializer().serializeToString(clone));
+
+    return new Promise(function (resolve) {
+      var img = new Image();
+      var done = false;
+      var finish = function (ok) {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        resolve(ok ? { img: img, w: w, h: h, style: style } : null);
+      };
+      var timer = setTimeout(function () { finish(false); }, VECTOR_RASTER_TIMEOUT);
+      img.onload = function () { finish(true); };
+      img.onerror = function () { finish(false); };
+      img.src = url;
+    });
+  }
+
+  async function _rasterizeVectorTiles(container) {
+    var pane = container.querySelector('.leaflet-map-pane');
+    if (!pane) return { restore: function () {}, failed: 0 };
+    var svgs = Array.prototype.slice.call(pane.querySelectorAll('svg'));
+    if (svgs.length > VECTOR_RASTER_LIMIT) svgs = svgs.slice(0, VECTOR_RASTER_LIMIT);
+    var originals = [];
+    var failed = 0;
+    if (!svgs.length) return { restore: function () {}, failed: 0 };
+
+    var cursor = 0;
+    var startedAt = Date.now();
+    async function worker() {
+      while (cursor < svgs.length) {
+        var svg = svgs[cursor++];
+        if (Date.now() - startedAt > VECTOR_RASTER_BUDGET) { failed++; continue; }
+        var loaded = null;
+        try {
+          loaded = await _loadSvgImage(svg);
+        } catch (e) {
+          loaded = null;
+        }
+        if (!loaded) { failed++; continue; }
+        try {
+          var canvas = document.createElement('canvas');
+          canvas.width = loaded.w;
+          canvas.height = loaded.h;
+          canvas.getContext('2d').drawImage(loaded.img, 0, 0, loaded.w, loaded.h);
+          canvas.setAttribute('style', loaded.style);
+          canvas.style.width = loaded.w + 'px';
+          canvas.style.height = loaded.h + 'px';
+          canvas.className = svg.getAttribute('class') || 'leaflet-tile';
+          if (svg.parentNode) {
+            svg.parentNode.replaceChild(canvas, svg);
+            originals.push({ svg: svg, canvas: canvas });
+          }
+        } catch (e) {
+          failed++;
+        }
+      }
+    }
+
+    var workers = [];
+    var count = Math.min(VECTOR_RASTER_CONCURRENCY, svgs.length);
+    for (var w = 0; w < count; w++) workers.push(worker());
+    await Promise.all(workers);
+
+    return {
+      failed: failed,
+      restore: function () {
+        for (var i = originals.length - 1; i >= 0; i--) {
+          var pair = originals[i];
+          try {
+            if (pair.canvas.parentNode) pair.canvas.parentNode.replaceChild(pair.svg, pair.canvas);
+          } catch (e) {}
+        }
+      }
+    };
   }
 
   function _assertCapturedTiles(canvas, snap) {
@@ -1531,44 +1713,55 @@
     await _waitTilesReady(opts.tileWaitMs || 6000);
     var snap = await _snapshotTileImages(container);
     await new Promise(function (r) { setTimeout(r, 350); });
-    var canvas = await html2canvas(container, {
-      useCORS: true,
-      allowTaint: false,
-      scale: opts.scale || 2,
-      logging: false,
-      backgroundColor: '#e8e8e8',
-      imageTimeout: 15000,
-      ignoreElements: opts.ignoreElements || function (el) {
-        if (!el) return false;
-        if (el.id === 'print-loading-overlay' || el.id === 'print-error-overlay') return true;
-        return false;
-      },
-      onclone: function (doc) {
-        var c = doc.querySelector('.leaflet-container');
-        if (!c) return;
-        var imgs = c.querySelectorAll('img');
-        for (var i = 0; i < imgs.length; i++) {
-          var img = imgs[i];
-          var src = img.getAttribute('src') || '';
-          if (!src || src.indexOf('data:') === 0) continue;
-          var snapshot = snap.map[src];
-          if (snapshot) {
-            img.removeAttribute('crossorigin');
-            img.setAttribute('src', snapshot);
-            continue;
-          }
-          var proxied = _captureProxySrc(src);
-          if (proxied !== src) {
-            img.setAttribute('crossorigin', 'anonymous');
-            img.setAttribute('src', proxied);
-          } else if (src.indexOf('http') === 0 || src.indexOf('//') === 0) {
-            img.setAttribute('crossorigin', 'anonymous');
+    var geoBoundary = await _addBoundaryGeoJsonLayer();
+    var vectors = await _rasterizeVectorTiles(container);
+    var canvas;
+    try {
+      canvas = await html2canvas(container, {
+        useCORS: true,
+        allowTaint: false,
+        scale: opts.scale || 2,
+        logging: false,
+        backgroundColor: '#e8e8e8',
+        imageTimeout: 15000,
+        ignoreElements: opts.ignoreElements || function (el) {
+          if (!el) return false;
+          if (el.id === 'print-loading-overlay' || el.id === 'print-error-overlay') return true;
+          return false;
+        },
+        onclone: function (doc) {
+          var c = doc.querySelector('.leaflet-container');
+          if (!c) return;
+          var imgs = c.querySelectorAll('img');
+          for (var i = 0; i < imgs.length; i++) {
+            var img = imgs[i];
+            var src = img.getAttribute('src') || '';
+            if (!src || src.indexOf('data:') === 0) continue;
+            var snapshot = snap.map[src];
+            if (snapshot) {
+              img.removeAttribute('crossorigin');
+              img.setAttribute('src', snapshot);
+              continue;
+            }
+            var proxied = _captureProxySrc(src);
+            if (proxied !== src) {
+              img.setAttribute('crossorigin', 'anonymous');
+              img.setAttribute('src', proxied);
+            } else if (src.indexOf('http') === 0 || src.indexOf('//') === 0) {
+              img.setAttribute('crossorigin', 'anonymous');
+            }
           }
         }
+      });
+      _assertCapturedTiles(canvas, snap);
+      if (vectors.failed) {
+        console.warn('[PrintGeoportal] ' + vectors.failed + ' layer vektor SVG gagal di-raster.');
       }
-    });
-    _assertCapturedTiles(canvas, snap);
-    return canvas;
+      return canvas;
+    } finally {
+      vectors.restore();
+      if (geoBoundary) geoBoundary.restore();
+    }
   }
 
   /* ── Phase 1: Prepare print data ── */
@@ -2467,7 +2660,7 @@
       }).catch(function () {});
       let timer = null;
       const timeout = new Promise((_, reject) => {
-        timer = setTimeout(() => reject(new Error('Timeout menyiapkan data cetak (90s)')), 90000);
+        timer = setTimeout(() => reject(new Error('Timeout menyiapkan data cetak (150s)')), 150000);
       });
       const data = await Promise.race([prep, timeout]);
       consumed = true;
