@@ -69,6 +69,25 @@
     });
   }
 
+  function setDownloadLoading(active) {
+    var layer = document.getElementById('demnasLoadingLayer');
+    var button = document.getElementById('demnasDownloadBtn');
+    if (layer) layer.hidden = !active;
+    if (button) button.classList.toggle('is-loading', !!active);
+  }
+
+  function setDownloadProgress(percent, message, stage) {
+    var value = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
+    var bar = document.getElementById('demnasLoadingBar');
+    var percentElement = document.getElementById('demnasLoadingPercent');
+    var messageElement = document.getElementById('demnasLoadingMessage');
+    var stageElement = document.getElementById('demnasLoadingStage');
+    if (bar) bar.style.width = value + '%';
+    if (percentElement) percentElement.textContent = value + '%';
+    if (messageElement && message) messageElement.textContent = message;
+    if (stageElement && stage) stageElement.textContent = stage;
+  }
+
   function setPreviewStatus(message, isError) {
     var element = document.getElementById('demnasPreviewStatus');
     if (!element) return;
@@ -748,7 +767,7 @@
     return canvas;
   }
 
-  async function loadRasterResult(feature, boundary) {
+  async function loadRasterResult(feature, boundary, progress) {
     var sheetBounds = featureBounds(feature);
     var bounds = sheetBounds;
     var boundaryBounds = null;
@@ -762,12 +781,16 @@
     for (var sizeIndex = 0; sizeIndex < sizes.length; sizeIndex++) {
       var size = sizes[sizeIndex];
       try {
+        var stageProgress = 12 + sizeIndex * 14;
+        if (progress) progress(stageProgress, 'Meminta raster ' + size + '×' + size + '…', 'Mengunduh');
         setStatus('Mengunduh DEMNAS' + (boundary ? ' hasil clip' : '') + '… resolusi ' + size + '×' + size);
         var metadata = await fetchWithProxy(exportRasterUrl(bounds, size, size), 'json');
         if (!metadata || !metadata.href) {
           throw new Error((metadata && metadata.error && metadata.error.message) || 'exportImage gagal.');
         }
+        if (progress) progress(stageProgress + 4, 'Menerima data raster…', 'Mengunduh');
         var blob = await fetchWithProxy(metadata.href, 'blob');
+        if (progress) progress(stageProgress + 8, 'Membaca file TIFF…', 'Memproses');
         var raster = await readGeoTiffValues(blob);
         var plan = makeExportPlan(bounds, size, size);
         var values = new Float32Array(plan.fullW * plan.fullH);
@@ -787,10 +810,12 @@
             }
           }
         }
+        if (progress) progress(stageProgress + 12, 'Menerapkan mask wilayah…', 'Memproses');
         if (!validPixels) {
           lastError = new Error('Resolusi ' + size + ' tidak memiliki piksel valid di dalam batas wilayah.');
           continue;
         }
+        if (progress) progress(Math.min(88, stageProgress + 16), 'Data raster siap ditulis…', 'Menyusun');
         return {
           values: values,
           plan: plan,
@@ -808,8 +833,8 @@
     throw lastError || new Error('Tidak ada piksel DEMNAS valid pada polygon.');
   }
 
-  async function buildExportBuffer(feature, boundary) {
-    var result = await loadRasterResult(feature, boundary);
+  async function buildExportBuffer(feature, boundary, progress) {
+    var result = await loadRasterResult(feature, boundary, progress);
     setStatus('Menyusun GeoTIFF QGIS… ' + result.size + '×' + result.size);
     var buffer = await writeGeoTiff(result.values, result.plan);
     return { buffer: buffer, result: result };
@@ -1135,6 +1160,8 @@
     }
     _active = true;
     setBusy(true);
+    setDownloadLoading(true);
+    setDownloadProgress(2, 'Menyiapkan export DEMNAS…', 'Menyiapkan');
     setStatus('Menyiapkan export DEMNAS tanpa token…');
     try {
       var boundary = _selectedBoundary;
@@ -1142,10 +1169,16 @@
       var result = null;
       if (boundary && _clipRasterResult && _clipCacheKey === key) {
         result = _clipRasterResult;
+        setDownloadProgress(88, 'Data raster sudah tersedia, menyusun GeoTIFF…', 'Menyusun');
       } else if (boundary && _clipPreviewPromise) {
+        setDownloadProgress(18, 'Menunggu preview raster selesai…', 'Mengunduh');
         result = await _clipPreviewPromise.catch(function () { return null; });
       }
-      if (!result) result = await loadRasterResult(_selectedFeature, boundary);
+      if (!result) {
+        result = await loadRasterResult(_selectedFeature, boundary, function (percent, message, stage) {
+          setDownloadProgress(percent, message, stage);
+        });
+      }
       if (boundary) {
         _clipRasterResult = result;
         _clipCacheKey = key;
@@ -1154,9 +1187,11 @@
           showClipRaster(result);
         }
       }
+      setDownloadProgress(92, 'Menulis GeoTIFF…', 'Menyusun');
       setStatus('Menyusun GeoTIFF QGIS… ' + result.size + '×' + result.size);
       var buffer = await writeGeoTiff(result.values, result.plan);
       if (!buffer || !buffer.byteLength) throw new Error('File TIFF hasil export kosong.');
+      setDownloadProgress(100, 'GeoTIFF selesai dan siap diunduh.', 'Selesai');
       var filename = sheetFilename(_selectedFeature);
       var blob = new Blob([buffer], { type: 'image/tiff' });
       downloadBlob(blob, filename);
@@ -1166,6 +1201,7 @@
       setStatus('Gagal: ' + (error && error.message ? error.message : String(error)), true);
     } finally {
       _active = false;
+      setDownloadLoading(false);
       setBusy(false);
     }
   }
@@ -1208,6 +1244,7 @@
     setStatus('');
     setPreviewStatus('');
     setRecommendationStatus('');
+    setDownloadLoading(false);
     updateAdminVisibility();
     setBusy(false);
   }

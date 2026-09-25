@@ -5,6 +5,7 @@
   'use strict';
 
   var PAGE_SIZE = 100;
+  var ARC_PROXY_PREFIX = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=';
   var _currentLayer = null;
   var _currentFeatures = [];
   var _currentPage = 1;
@@ -14,6 +15,7 @@
   var _attrTableOpen = false;
   var _attrTableMinimized = false;
   var _pickerLayerId = null;
+  var _loadToken = 0;
 
   function pickerLayerActive(id) {
     var on = false;
@@ -934,6 +936,7 @@
   /* ── Load Features ── */
   function loadFeatures() {
     if (!_currentLayer || !_currentLayer.config) return;
+    var loadToken = ++_loadToken;
     var config = _currentLayer.config;
     var features = [];
 
@@ -1003,13 +1006,18 @@
       }
     } else if (config.type === 'arcgis') {
       var arcId = _currentLayer.id;
+      var loadId = loadToken;
       var arcContent = document.getElementById('at-sheet-content');
       if (arcContent) arcContent.innerHTML = '<div class="at-loading">Memuat data dari server…</div>';
       var baseQ = config.url + (config.url.indexOf('?') === -1 ? '?' : '&') +
         'where=1%3D1&outFields=' + encodeURIComponent((config.outFields || ['*']).join(',')) +
         '&returnGeometry=true&outSR=4326&f=json';
-      var PAGE = 2000;
-      var MAX_RECORDS = 50000;
+      var PAGE = 100;
+      var total = 0;
+      var paginationWarning = '';
+      function isCurrentArcRequest() {
+        return _currentLayer && _currentLayer.id === arcId && loadId === _loadToken;
+      }
       function parseArcFeatures(data) {
         var feats = (data && data.features) || [];
         return feats.map(function (feat) {
@@ -1026,61 +1034,79 @@
           return f;
         });
       }
+      function readJsonResponse(response) {
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        return response.json();
+      }
+      function fetchJsonChecked(url) {
+        return fetch(url).then(readJsonResponse).catch(function () {
+          return fetch(ARC_PROXY_PREFIX + encodeURIComponent(url)).then(readJsonResponse);
+        }).then(function (data) {
+          if (data && data.error) {
+            var error = new Error('ArcGIS ' + (data.error.code || '') + ': ' + (data.error.message || 'service error'));
+            error.arcgis = data.error;
+            throw error;
+          }
+          return data;
+        });
+      }
+      function isPaginationError(error) {
+        var details = error && error.arcgis && error.arcgis.details || [];
+        var text = String(error && error.message || '') + ' ' + JSON.stringify(details);
+        return /pagination|resultOffset|resultRecordCount|offset/i.test(text) || (config.noPagination && /invalid request/i.test(text));
+      }
+      function fetchUnpaginated() {
+        return fetchJsonChecked(baseQ).then(function (data) {
+          return parseArcFeatures(data);
+        });
+      }
       function fetchSequential(offset, collected) {
-        if (!_currentLayer || _currentLayer.id !== arcId) return Promise.resolve(collected);
-        if (collected.length >= MAX_RECORDS) return Promise.resolve(collected);
-        return fetch(baseQ + '&resultOffset=' + offset + '&resultRecordCount=' + PAGE)
-          .then(function (r) { return r.json(); })
+        if (!isCurrentArcRequest()) return Promise.resolve(collected);
+        return fetchJsonChecked(baseQ + '&resultOffset=' + offset + '&resultRecordCount=' + PAGE)
           .then(function (data) {
-            if (!_currentLayer || _currentLayer.id !== arcId) return collected;
-            // Some ArcGIS servers (e.g. siperditan OPT) do not support pagination
-            if (data && data.error && /pagination|resultOffset/i.test(String(data.error.message || ''))) {
-              return fetch(baseQ)
-                .then(function (r2) { return r2.json(); })
-                .then(function (d2) {
-                  if (!_currentLayer || _currentLayer.id !== arcId) return collected;
-                  return collected.concat(parseArcFeatures(d2)).slice(0, MAX_RECORDS);
-                });
-            }
+            if (!isCurrentArcRequest()) return collected;
             var page = parseArcFeatures(data);
             var merged = collected.concat(page);
-            if (page.length < PAGE || merged.length >= MAX_RECORDS) return merged;
-            return fetchSequential(offset + PAGE, merged);
+            var nextOffset = offset + page.length;
+            var hasMore = page.length > 0 && (total > 0 ? merged.length < total : (data.exceededTransferLimit === true || page.length >= PAGE));
+            if (arcContent && total) arcContent.innerHTML = '<div class="at-loading">Memuat ' + merged.length.toLocaleString('id-ID') + ' / ' + total.toLocaleString('id-ID') + ' data…</div>';
+            if (!hasMore) {
+              if (!total) total = merged.length;
+              return merged;
+            }
+            return fetchSequential(nextOffset, merged);
+          })
+          .catch(function (error) {
+            if (!isCurrentArcRequest()) return collected;
+            if (!isPaginationError(error)) throw error;
+            return fetchUnpaginated().then(function (features) {
+              paginationWarning = 'Server tidak mendukung pagination; data mungkin tidak lengkap.';
+              return features;
+            });
           });
       }
-      fetch(baseQ + '&returnCountOnly=true')
-        .then(function (r) { return r.json(); })
-        .then(function (cntData) {
-          if (!_currentLayer || _currentLayer.id !== arcId) return;
-          var total = (cntData && cntData.count != null) ? cntData.count : 0;
-          if (total === 0) { _currentFeatures = []; _currentPage = 1; renderAttrContent(); return; }
-          var capped = total > MAX_RECORDS;
-          if (config.noPagination) {
-            return fetch(baseQ).then(function (r) { return r.json(); }).then(function (d) {
-              if (!_currentLayer || _currentLayer.id !== arcId) return;
-              _currentFeatures = parseArcFeatures(d).slice(0, MAX_RECORDS);
-              _currentPage = 1;
-              renderAttrContent();
-            }).catch(function () {
-              if (_currentLayer && _currentLayer.id === arcId && arcContent)
-                arcContent.innerHTML = '<div class="at-empty">Gagal memuat data atribut.</div>';
-            });
-          }
+      fetchJsonChecked(baseQ + '&returnCountOnly=true')
+        .catch(function () { return { count: 0 }; })
+        .then(function (countData) {
+          if (!isCurrentArcRequest()) return;
+          total = Number(countData && countData.count) || 0;
           return fetchSequential(0, []).then(function (allFeats) {
-            if (!_currentLayer || _currentLayer.id !== arcId) return;
+            if (!isCurrentArcRequest()) return;
             _currentFeatures = allFeats;
             _currentPage = 1;
             renderAttrContent();
-            if (capped && arcContent) {
+            if ((total > allFeats.length || paginationWarning) && arcContent) {
               var info = document.createElement('div');
               info.className = 'at-info-bar';
-              info.textContent = 'Menampilkan ' + allFeats.length.toLocaleString('id-ID') + ' dari ' + total.toLocaleString('id-ID') + ' data (maks. ' + MAX_RECORDS.toLocaleString('id-ID') + ')';
+              info.textContent = paginationWarning || ('Menampilkan ' + allFeats.length.toLocaleString('id-ID') + ' dari ' + total.toLocaleString('id-ID') + ' data.');
               arcContent.insertBefore(info, arcContent.firstChild);
             }
           });
-        }).catch(function () {
-          if (_currentLayer && _currentLayer.id === arcId && arcContent)
-            arcContent.innerHTML = '<div class="at-empty">Gagal memuat data atribut.</div>';
+        })
+        .catch(function (error) {
+          if (isCurrentArcRequest() && arcContent) {
+            arcContent.innerHTML = '<div class="at-empty">Gagal memuat data atribut: ' + (error && error.message ? error.message : 'server error') + '</div>';
+          }
         });
       return;
     } else if (config.type === 'pmtiles') {
@@ -1416,6 +1442,7 @@
   function openAttrTablePicker() {
     var sheet = document.getElementById('attr-table-sheet');
     if (!sheet) return;
+    _loadToken++;
     releasePickerLayer();
     disableWmsClick();
     _currentLayer = null;
@@ -1537,6 +1564,7 @@
 
   /* ── Sheet Controls ── */
   function closeAttrTableSheet() {
+    _loadToken++;
     var sheet = document.getElementById('attr-table-sheet');
     if (sheet) {
       sheet.classList.remove('attr-table-sheet-open', 'attr-table-sheet-minimized');

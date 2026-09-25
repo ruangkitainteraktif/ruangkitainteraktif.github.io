@@ -5,6 +5,7 @@
   var MAX_DEPTH = 8;
   var MAX_FOLDERS = 2000;
   var MAX_SERVICES = 4000;
+  var ATTRIBUTE_PAGE_SIZE = 100;
   var state = {
     root: null,
     leaves: [],
@@ -12,6 +13,7 @@
     active: {},
     attributeKey: null,
     attributeRequest: 0,
+    attributePageByKey: {},
     visited: {},
     run: 0,
     cancelled: false,
@@ -489,38 +491,98 @@
           properties: feature && feature.attributes || {},
           geometry: esriGeometryToGeoJson(feature && feature.geometry)
         };
-      }).filter(function (feature) { return !!feature.geometry; })
+      })
     };
   }
 
-  function featureQueryUrl(descriptor, format) {
+  function featureQueryUrl(descriptor, format, offset, count, countOnly, paginated) {
     var url = new URL(descriptor.layerUrl + '/query');
     url.searchParams.set('where', '1=1');
     url.searchParams.set('outFields', '*');
     url.searchParams.set('returnGeometry', 'true');
     url.searchParams.set('outSR', '4326');
-    url.searchParams.set('returnCountOnly', 'false');
-    url.searchParams.set('f', format);
+    url.searchParams.set('returnCountOnly', countOnly ? 'true' : 'false');
+    if (paginated !== false) {
+      url.searchParams.set('resultOffset', String(offset || 0));
+      url.searchParams.set('resultRecordCount', String(count == null ? ATTRIBUTE_PAGE_SIZE : count));
+    }
+    url.searchParams.set('f', format || 'json');
     return url.toString();
   }
 
-  function fetchFeatureGeoJson(descriptor) {
-    return fetchJson(featureQueryUrl(descriptor, 'geojson'), 'geojson').then(function (data) {
-      if (data && data.type === 'FeatureCollection') return data;
-      if (data && Array.isArray(data.features)) return esriFeatureSetToGeoJson(data);
-      throw new Error('Respons feature ArcGIS tidak valid.');
-    }).catch(function () {
-      return fetchJson(featureQueryUrl(descriptor, 'json'), 'json').then(function (data) {
-        return esriFeatureSetToGeoJson(data);
-      });
+  function isPaginationError(error) {
+    return /pagination|resultOffset|resultRecordCount|offset/i.test(String(error && error.message || ''));
+  }
+
+  function featureResponseToGeoJson(data) {
+    if (data && data.type === 'FeatureCollection') return data;
+    if (data && Array.isArray(data.features)) return esriFeatureSetToGeoJson(data);
+    throw new Error('Respons feature ArcGIS tidak valid.');
+  }
+
+  function fetchFeaturePage(descriptor, offset, countOnly, paginated) {
+    var url = featureQueryUrl(descriptor, 'json', offset, countOnly ? 0 : ATTRIBUTE_PAGE_SIZE, countOnly, paginated);
+    return fetchJson(url, 'json').then(function (data) {
+      if (data && data.error) {
+        var error = new Error(data.error.message || 'ArcGIS query gagal');
+        error.arcgis = data.error;
+        throw error;
+      }
+      if (countOnly) return { count: Number(data && data.count) || 0 };
+      var collection = featureResponseToGeoJson(data);
+      return {
+        features: collection.features || [],
+        exceededTransferLimit: data && data.exceededTransferLimit === true
+      };
     });
+  }
+
+  function fetchAllFeatureData(descriptor, onProgress) {
+    return fetchFeaturePage(descriptor, 0, true, false).catch(function () {
+      return { count: 0 };
+    }).then(function (countData) {
+      var total = countData.count || 0;
+      function collect(offset, collected) {
+        if (onProgress) onProgress(collected.length, total);
+        if (total > 0 && collected.length >= total) {
+          return { type: 'FeatureCollection', features: collected, total: total, paginationWarning: '' };
+        }
+        return fetchFeaturePage(descriptor, offset, false, true).then(function (page) {
+          var pageFeatures = page.features || [];
+          var merged = collected.concat(pageFeatures);
+          var nextOffset = offset + pageFeatures.length;
+          var hasMore = pageFeatures.length > 0 && (total > 0 ? merged.length < total : (page.exceededTransferLimit || pageFeatures.length >= ATTRIBUTE_PAGE_SIZE));
+          if (!hasMore) {
+            return { type: 'FeatureCollection', features: merged, total: total || merged.length, paginationWarning: '' };
+          }
+          return collect(nextOffset, merged);
+        }).catch(function (error) {
+          if (!isPaginationError(error)) throw error;
+          return fetchFeaturePage(descriptor, 0, false, false).then(function (page) {
+            return {
+              type: 'FeatureCollection',
+              features: page.features || [],
+              total: total || (page.features || []).length,
+              paginationWarning: 'Server tidak mendukung pagination; data mungkin tidak lengkap.'
+            };
+          });
+        });
+      }
+      return collect(0, []);
+    });
+  }
+
+  function fetchFeatureGeoJson(descriptor, onProgress) {
+    return fetchAllFeatureData(descriptor, onProgress);
   }
 
   async function createFeatureLayer(descriptor) {
     if (typeof L === 'undefined' || !L.geoJSON) throw new Error('Pustaka Leaflet tidak tersedia.');
     var data = await fetchFeatureGeoJson(descriptor);
     descriptor.featureData = data;
+    descriptor.featureTotal = data.paginationWarning ? data.features.length : (data.total || data.features.length);
     descriptor.featureCount = data.features.length;
+    descriptor.paginationWarning = data.paginationWarning || '';
     return L.geoJSON(data, {
       style: function () {
         return { color: '#1d4ed8', weight: 1.5, opacity: 0.9, fillColor: '#60a5fa', fillOpacity: 0.18 };
@@ -606,6 +668,7 @@
       if (mapInstance.hasLayer(record.layer)) mapInstance.removeLayer(record.layer);
     }
     delete state.active[key];
+    delete state.attributePageByKey[key];
     renderActiveLayers();
   }
 
@@ -637,6 +700,14 @@
     if (!table || !record) return;
     var descriptor = record.descriptor;
     var features = attributeFeatures(record);
+    var total = descriptor.featureTotal || features.length;
+    var totalPages = Math.max(1, Math.ceil(total / ATTRIBUTE_PAGE_SIZE));
+    var page = Number(state.attributePageByKey[descriptor.key]) || 1;
+    if (page > totalPages) page = totalPages;
+    if (page < 1) page = 1;
+    state.attributePageByKey[descriptor.key] = page;
+    var start = (page - 1) * ATTRIBUTE_PAGE_SIZE;
+    var visibleFeatures = features.slice(start, start + ATTRIBUTE_PAGE_SIZE);
     var fields = [];
     var fieldSet = {};
     features.forEach(function (feature) {
@@ -649,7 +720,6 @@
       });
     });
     fields = fields.slice(0, 20);
-    var visibleFeatures = features.slice(0, 200);
     if (!fields.length) {
       table.innerHTML = '<div class="arcgis-attribute-empty">Tidak ada field atribut pada layer ini.</div>';
       setAttributeStatus(features.length ? 'Layer tidak memiliki field atribut.' : 'Tidak ada fitur pada layer ini.', !features.length);
@@ -665,8 +735,23 @@
       html += '</tr>';
     });
     html += '</tbody></table></div>';
+    if (totalPages > 1) {
+      html += '<div class="arcgis-attribute-pagination">';
+      html += '<button type="button" data-arcgis-attribute-page="prev"' + (page <= 1 ? ' disabled' : '') + '>‹</button>';
+      html += '<span>Halaman ' + page + ' / ' + totalPages + '</span>';
+      html += '<button type="button" data-arcgis-attribute-page="next"' + (page >= totalPages ? ' disabled' : '') + '>›</button>';
+      html += '</div>';
+    }
     table.innerHTML = html;
-    setAttributeStatus('Menampilkan ' + visibleFeatures.length + ' dari ' + features.length + ' fitur · ' + descriptor.name);
+    setAttributeStatus('Menampilkan ' + (start + 1) + '–' + (start + visibleFeatures.length) + ' dari ' + total + ' fitur · ' + descriptor.name + (descriptor.paginationWarning ? ' · ' + descriptor.paginationWarning : ''));
+    table.querySelectorAll('[data-arcgis-attribute-page]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        if (button.dataset.arcgisAttributePage === 'prev' && page > 1) page--;
+        if (button.dataset.arcgisAttributePage === 'next' && page < totalPages) page++;
+        state.attributePageByKey[descriptor.key] = page;
+        renderAttributeTable(record);
+      });
+    });
   }
 
   function loadAttributeTable(record) {
@@ -685,10 +770,16 @@
       table.setAttribute('data-loaded-key', descriptor.key);
       table.innerHTML = '<div class="arcgis-attribute-loading"><span class="arcgis-attribute-spinner"></span>Memuat data atribut…</div>';
     }
-    fetchFeatureGeoJson(descriptor).then(function (data) {
+    fetchFeatureGeoJson(descriptor, function (loaded, total) {
+      if (requestId !== state.attributeRequest || state.attributeKey !== descriptor.key) return;
+      setAttributeStatus('Memuat ' + loaded.toLocaleString('id-ID') + (total ? ' / ' + total.toLocaleString('id-ID') : '') + ' fitur…');
+    }).then(function (data) {
       if (requestId !== state.attributeRequest || state.attributeKey !== descriptor.key) return;
       descriptor.featureData = data;
+      descriptor.featureTotal = data.paginationWarning ? data.features.length : (data.total || data.features.length);
       descriptor.featureCount = data.features.length;
+      descriptor.paginationWarning = data.paginationWarning || '';
+      state.attributePageByKey[descriptor.key] = 1;
       renderAttributeTable(record);
     }).catch(function (error) {
       if (requestId !== state.attributeRequest || state.attributeKey !== descriptor.key) return;
@@ -727,6 +818,7 @@
       state.attributeKey = records[records.length - 1].descriptor.key;
       currentRecord = records[records.length - 1];
     }
+    if (!state.attributePageByKey[state.attributeKey]) state.attributePageByKey[state.attributeKey] = 1;
     var table = getElement('arcgisAttributeTable');
     if (table && table.getAttribute('data-loaded-key') !== state.attributeKey) loadAttributeTable(currentRecord);
   }

@@ -1061,7 +1061,18 @@
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   Unduh DEMNAS TIFF
                 </button>
-                 <div id="demnasStatus" class="cctv-message" style="display:none; margin-top:12px;"></div>
+                  <div id="demnasStatus" class="cctv-message" style="display:none; margin-top:12px;"></div>
+                  <div id="demnasLoadingLayer" class="demnas-loading-layer" hidden aria-live="polite">
+                    <div class="demnas-loading-head">
+                      <span class="demnas-loading-spinner" aria-hidden="true"></span>
+                      <div>
+                        <strong id="demnasLoadingTitle">Menyiapkan GeoTIFF DEMNAS</strong>
+                        <small id="demnasLoadingMessage">Menyiapkan permintaan raster…</small>
+                      </div>
+                    </div>
+                    <div class="demnas-loading-track"><span id="demnasLoadingBar"></span></div>
+                    <div class="demnas-loading-meta"><span id="demnasLoadingStage">Menyiapkan</span><strong id="demnasLoadingPercent">0%</strong></div>
+                  </div>
               </div>
             </div>
 

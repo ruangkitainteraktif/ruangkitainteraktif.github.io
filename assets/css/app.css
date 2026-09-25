@@ -560,6 +560,78 @@
       border: 1px solid #fecaca;
     }
 
+    #demnasDownloadBtn.is-loading {
+      position: relative;
+      color: transparent;
+    }
+    #demnasDownloadBtn.is-loading svg { opacity: 0; }
+    #demnasDownloadBtn.is-loading::after {
+      content: '';
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      border: 2px solid rgba(255,255,255,.45);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: demnas-loading-spin .7s linear infinite;
+    }
+    .demnas-loading-layer {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #bcdff0;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #f0fbff, #f8fbfd);
+    }
+    .demnas-loading-layer[hidden] { display: none; }
+    .demnas-loading-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .demnas-loading-head strong {
+      display: block;
+      color: #16466c;
+      font-size: 11px;
+    }
+    .demnas-loading-head small {
+      display: block;
+      margin-top: 2px;
+      color: #52728a;
+      font-size: 9px;
+    }
+    .demnas-loading-spinner {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 18px;
+      border: 2px solid #c9e9f5;
+      border-top-color: #007fa8;
+      border-radius: 50%;
+      animation: demnas-loading-spin .7s linear infinite;
+    }
+    @keyframes demnas-loading-spin { to { transform: rotate(360deg); } }
+    .demnas-loading-track {
+      height: 6px;
+      margin-top: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #dceff7;
+    }
+    .demnas-loading-track span {
+      display: block;
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #00a6d6, #007fa8);
+      transition: width .25s ease;
+    }
+    .demnas-loading-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5px;
+      color: #648096;
+      font-size: 9px;
+    }
+    .demnas-loading-meta strong { color: #007fa8; }
     .demnas-recommendation-box {
       margin-top: 9px;
       padding: 9px 10px;
@@ -7797,8 +7869,34 @@
       font-size: 10px;
     }
     .arcgis-attribute-status:empty { display: none; }
-    .arcgis-attribute-table { max-height: 300px; overflow: hidden; background: #fff; }
-    .arcgis-attribute-scroll { max-height: 300px; overflow: auto; }
+    .arcgis-attribute-table { overflow: visible; background: #fff; }
+    .arcgis-attribute-scroll { max-height: 260px; overflow: auto; }
+    .arcgis-attribute-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-top: 1px solid #dce8ef;
+      background: #f8fbfd;
+      color: #52728a;
+      font-size: 10px;
+    }
+    .arcgis-attribute-pagination button {
+      display: grid;
+      width: 24px;
+      height: 24px;
+      place-items: center;
+      border: 1px solid #cbdbe5;
+      border-radius: 6px;
+      background: #fff;
+      color: #0879bf;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+    }
+    .arcgis-attribute-pagination button:hover:not(:disabled) { background: #e8f4fc; }
+    .arcgis-attribute-pagination button:disabled { opacity: .45; cursor: not-allowed; }
     .arcgis-attribute-table table {
       width: max-content;
       min-width: 100%;
