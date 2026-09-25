@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=17">
+  <link rel="stylesheet" href="assets/css/app.css?v=18">
 
 </head>
 
@@ -655,9 +655,34 @@
         </div>
         <div id="alatMeasureResult" class="dm-measure-result"></div>
       </div>
-    </div>
+     </div>
 
-    <!-- LEGEND SIDEBAR -->
+     <div id="measureHud" class="measure-hud" hidden aria-live="polite">
+       <div class="measure-hud-head">
+         <div class="measure-hud-icon" aria-hidden="true">
+           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17L17 4l3 3L7 20H4z"/><path d="M13 8l3 3"/><path d="M10 11l2 2"/><path d="M7 14l3 3"/></svg>
+         </div>
+         <div class="measure-hud-heading">
+           <strong id="measureHudTitle">Pengukuran Jarak</strong>
+           <small id="measureHudHint">Klik titik pada peta</small>
+         </div>
+         <button id="measureHudClose" class="measure-hud-close" type="button" aria-label="Hapus pengukuran">×</button>
+       </div>
+       <div class="measure-hud-reading">
+         <div>
+           <span class="measure-hud-label">Total</span>
+           <strong id="measureHudValue">—</strong>
+         </div>
+         <span id="measureHudMeta" class="measure-hud-meta">0 titik</span>
+       </div>
+        <div class="measure-hud-actions">
+          <button id="measureHudFinish" class="measure-hud-finish" type="button">Selesai</button>
+          <button id="measureHudRemeasure" class="measure-hud-remeasure" type="button" disabled>Ukur Lagi</button>
+          <button id="measureHudReset" class="measure-hud-reset" type="button">Reset</button>
+        </div>
+     </div>
+
+     <!-- LEGEND SIDEBAR -->
     <div id="legendSidebar" class="lg-sidebar">
       <div class="lg-sidebar-head">
         <span class="lg-sidebar-title" onclick="if(document.querySelector('.lg-sidebar').classList.contains('lg-sidebar-minimized')) restoreLegendSidebar()">
@@ -983,7 +1008,7 @@
              <div id="geotoolsTabDemnas" class="geotools-main-tab-panel">
               <div class="geotools-2col-side">
                  <h4 style="font-size:13px; margin-bottom:4px;">Unduh DEMNAS</h4>
-                <p class="geotools-desc" style="margin-bottom:12px; font-size:11px;">Pilih index raster DEMNAS untuk melihat polygon dan mengunduh TIFF tanpa token.</p>
+                 <p class="geotools-desc" style="margin-bottom:12px; font-size:11px;">Pilih index raster DEMNAS untuk memuat wilayah yang dapat direkomendasikan, lalu clip dan unduh TIFF tanpa token.</p>
                  <label class="geotani-form-label" for="demnasSearchInput">Cari DEMNAS</label>
                  <input id="demnasSearchInput" class="geotani-form-input" type="search" placeholder="Ketik Nama atau OBJECTID…" autocomplete="off" />
                  <div id="demnasSearchCount" style="margin-top:5px;font-size:10px;color:#64748b;"></div>
@@ -991,8 +1016,44 @@
                  <select id="demnasNamobjSelect" class="geotani-form-input" size="1">
                   <option value="">Memuat katalog DEMNAS…</option>
                 </select>
-                <div id="demnasIndexSelected" style="display:none;margin-top:8px;padding:6px 8px;font-size:10px;color:#166534;background:#f0fdf4;border-radius:4px;"></div>
-                <button id="demnasDownloadBtn" class="geotools-btn" type="button" style="margin-top:12px;width:100%;">
+                 <div id="demnasIndexSelected" style="display:none;margin-top:8px;padding:6px 8px;font-size:10px;color:#166534;background:#f0fdf4;border-radius:4px;"></div>
+                 <div id="demnasRecommendationBox" class="demnas-recommendation-box" hidden>
+                   <div class="demnas-recommendation-heading"><strong>Rekomendasi wilayah clip</strong><span id="demnasRecommendationCount"></span></div>
+                   <div id="demnasRecommendationStatus" class="demnas-recommendation-status"></div>
+                   <select id="demnasRecommendedSelect" class="geotani-form-input" size="1">
+                     <option value="">Pilih rekomendasi wilayah…</option>
+                   </select>
+                 </div>
+                 <div class="demnas-clip-box">
+                   <div class="demnas-clip-heading"><strong>Clip Batas Wilayah</strong><span>Opsional</span></div>
+                   <label class="geotani-form-label" for="demnasAdminLevel">Tingkat Wilayah</label>
+                   <select id="demnasAdminLevel" class="geotani-form-input">
+                     <option value="">Tanpa clip</option>
+                     <option value="4">Desa/Kelurahan</option>
+                     <option value="3">Kecamatan</option>
+                     <option value="2">Kabupaten/Kota</option>
+                   </select>
+                   <div id="demnasAdminSearchWrap" class="demnas-admin-search-wrap" hidden>
+                     <label class="geotani-form-label" for="demnasAdminSearch">Cari Kode atau Nama</label>
+                     <input id="demnasAdminSearch" class="geotani-form-input" type="search" placeholder="Contoh: 33.01.10.2001" autocomplete="off" />
+                     <select id="demnasAdminSelect" class="geotani-form-input" size="1">
+                       <option value="">Pilih wilayah…</option>
+                     </select>
+                     <div id="demnasAdminSearchCount" class="demnas-admin-search-count"></div>
+                   </div>
+                   <div id="demnasAdminSelected" class="demnas-admin-selected" hidden></div>
+                    <div class="demnas-clip-actions">
+                      <button id="demnasClipRefreshBtn" class="demnas-clip-refresh-btn" type="button" hidden>Perbarui Preview</button>
+                      <button id="demnasClipResetBtn" class="demnas-clip-reset-btn" type="button" hidden>Reset Polygon</button>
+                    </div>
+                    <div id="demnasPreviewStatus" class="demnas-preview-status" aria-live="polite"></div>
+                   <div id="demnasElevationLegend" class="demnas-elevation-legend" hidden>
+                     <strong>Elevasi (mdpl)</strong>
+                     <div class="demnas-elevation-bar"></div>
+                     <div class="demnas-elevation-labels"><span>0</span><span>500</span><span>1.000</span><span>1.500</span><span>2.000+</span></div>
+                   </div>
+                 </div>
+                 <button id="demnasDownloadBtn" class="geotools-btn" type="button" style="margin-top:12px;width:100%;">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   Unduh DEMNAS TIFF
                 </button>

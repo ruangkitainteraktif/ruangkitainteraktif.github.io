@@ -384,6 +384,7 @@
   function clearAlatLayers() {
     alatLayers.forEach(item => map.removeLayer(item.layer));
     if (typeof window.clearArcGISRestLayers === 'function') window.clearArcGISRestLayers();
+    if (window.DemnasDownload && typeof window.DemnasDownload.clear === 'function') window.DemnasDownload.clear();
     alatLayers.length = 0;
     renderAlatLayerList();
     resetGpxAnimationControls();
