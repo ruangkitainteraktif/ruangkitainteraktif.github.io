@@ -26,6 +26,8 @@ const ALLOWED_ORIGINS = new Set([
 // Host suffixes / exact hosts that may be proxied.
 const ALLOWED_HOST_SUFFIXES = [
   ".go.id",
+  ".arcgis.com",
+  ".arcgisonline.com",
   ".go.jp",
   ".or.id",
   ".ac.id",

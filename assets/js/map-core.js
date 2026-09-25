@@ -1477,6 +1477,7 @@ L.control.scale({
 
   function resetAllLayers() {
         _layerCatalogState = {};
+        if (typeof window.clearArcGISRestLayers === 'function') window.clearArcGISRestLayers();
         // 1. Matikan layer jalan & angin (checkbox-driven)
         const toggles = [
           'toggleTollRoad', 'toggleNonTollRoad', 'toggleNationalRoad',

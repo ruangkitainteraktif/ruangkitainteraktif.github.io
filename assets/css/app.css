@@ -3763,9 +3763,36 @@
       color: #fff; 
       box-shadow: 0 2px 8px rgba(8,145,178,.3);
     }
-    .geoid-subtab-btn.active svg { 
-      opacity: 1; 
+    .geoid-subtab-btn.active svg {
+      opacity: 1;
       stroke: #fff;
+    }
+    .geotools-upload-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+    .geotools-upload-tabs .geoid-subtab-btn {
+      min-height: 72px;
+      padding: 10px 6px;
+      border: 1px solid #dbe7ee;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(15, 67, 92, .06);
+    }
+    .geotools-upload-tabs .geoid-subtab-btn:hover {
+      border-color: #70c7df;
+      background: #f5fcfe;
+      box-shadow: 0 3px 8px rgba(8, 145, 178, .12);
+    }
+    .geotools-upload-tabs .geoid-subtab-btn.active {
+      border-color: #0891b2;
+      background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+      box-shadow: 0 3px 9px rgba(8, 145, 178, .25);
     }
     .geoid-subtab-panel { display: none; }
     .geoid-subtab-panel.active { display: block; }
@@ -7216,6 +7243,99 @@
     .geotools-btn--orange:hover { 
       box-shadow: 0 4px 16px rgba(249,115,22,.35); 
     }
+
+    .arcgis-source-action-btn {
+      min-height: 32px;
+      height: 32px;
+      padding: 0 10px;
+      border-radius: 7px;
+      font-size: 10px;
+    }
+    .arcgis-source-card {
+      padding: 12px;
+      border: 1px solid #dbe7ee;
+      border-radius: 10px;
+      background: #fbfdfe;
+    }
+    .arcgis-source-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .arcgis-source-header strong { display: block; color: #16466c; font-size: 12px; }
+    .arcgis-source-header small { display: block; margin-top: 3px; color: #64748b; font-size: 9px; }
+    .arcgis-source-badge {
+      margin-left: auto;
+      padding: 3px 6px;
+      border-radius: 4px;
+      background: #ecfdf5;
+      color: #047857;
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: .04em;
+    }
+    .arcgis-source-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 10px 0 6px;
+      color: #64748b;
+      font-size: 10px;
+    }
+    .arcgis-source-toolbar > span { flex: 1; }
+    .arcgis-layer-tree {
+      max-height: 360px;
+      overflow: auto;
+      padding: 6px;
+      border: 1px solid #dbe7ee;
+      border-radius: 8px;
+      background: #fff;
+      scrollbar-width: thin;
+    }
+    .arcgis-tree-group { margin: 0; }
+    .arcgis-tree-group summary {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 5px;
+      border-radius: 5px;
+      color: #315b78;
+      cursor: pointer;
+      font-size: 10px;
+      list-style: none;
+    }
+    .arcgis-tree-group summary::-webkit-details-marker { display: none; }
+    .arcgis-tree-group summary::before { content: '▸'; color: #7895aa; font-size: 10px; }
+    .arcgis-tree-group[open] > summary::before { content: '▾'; }
+    .arcgis-tree-group summary:hover { background: #f1f7fa; }
+    .arcgis-tree-summary-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+    .arcgis-tree-meta { color: #94a3b8; font-size: 8px; white-space: nowrap; }
+    .arcgis-tree-children { margin-left: 10px; padding-left: 8px; border-left: 1px solid #e5eef3; }
+    .arcgis-tree-leaf {
+      display: grid;
+      grid-template-columns: 16px minmax(0,1fr) auto;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 4px;
+      border-radius: 4px;
+      color: #47677f;
+      font-size: 10px;
+    }
+    .arcgis-tree-leaf:hover { background: #f1f7fa; }
+    .arcgis-tree-leaf input { width: 13px; height: 13px; margin: 0; accent-color: #0891b2; }
+    .arcgis-tree-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .arcgis-tree-type { color: #94a3b8; font-size: 8px; }
+    .arcgis-tree-leaf--disabled { color: #94a3b8; cursor: default; }
+    .arcgis-tree-empty { padding: 12px 4px; color: #94a3b8; font-size: 10px; text-align: center; }
+    .arcgis-popup { min-width: 240px; color: #1e293b; font-family: 'Segoe UI', system-ui, sans-serif; }
+    .arcgis-popup-title { padding: 10px 12px 4px; color: #16466c; font-size: 12px; font-weight: 700; }
+    .arcgis-popup-source { padding: 0 12px 8px; color: #7895aa; font-size: 9px; }
+    .arcgis-popup-body { max-height: 300px; overflow: auto; padding: 0 12px 10px; }
+    .arcgis-popup-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 4px 0; border-top: 1px solid #edf2f5; font-size: 10px; }
+    .arcgis-popup-row span { color: #7895aa; }
+    .arcgis-popup-row strong { max-width: 58%; color: #315b78; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+    .arcgis-leaflet-popup .leaflet-popup-content { margin: 0; }
 
     /* Export GeoTIFF Petadasar — di bawah Quick Layer Bar */
     .petadasar-export-block {

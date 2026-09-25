@@ -15,44 +15,84 @@
     if (typeof stopMeasureMode === 'function') stopMeasureMode();
   }
 
+  function createAlatLayerCard(item) {
+    const card = document.createElement('div');
+    card.className = 'alat-layer-card';
+    const name = document.createElement('strong');
+    name.textContent = item.name;
+    const meta = document.createElement('small');
+    meta.textContent = `${item.type} · ${item.geojson.features.length} fitur`;
+    const btns = document.createElement('div');
+    btns.className = 'alat-layer-card-btns';
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    const isVisible = map.hasLayer(item.layer);
+    toggle.innerHTML = (isVisible
+      ? '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Sembunyikan'
+      : '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24a9.12 9.12 0 00-1.12 3.5"/><path d="M2.16 3.19L1.22 4.13"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Tampilkan');
+    toggle.addEventListener('click', () => {
+      if (map.hasLayer(item.layer)) map.removeLayer(item.layer);
+      else item.layer.addTo(map);
+      renderAlatLayerList();
+    });
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'alat-remove-btn';
+    remove.innerHTML = '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2l-1-14"/></svg> Hapus';
+    remove.addEventListener('click', () => {
+      map.removeLayer(item.layer);
+      const idx = alatLayers.indexOf(item);
+      if (idx > -1) alatLayers.splice(idx, 1);
+      if (item.type === 'GPX' || item.type === 'KML') resetGpxAnimationControls();
+      renderAlatLayerList();
+    });
+    btns.append(toggle, remove);
+    card.append(name, meta, btns);
+    return card;
+  }
+
+  function createArcGISLayerCard(record) {
+    const card = document.createElement('div');
+    card.className = 'alat-layer-card';
+    const name = document.createElement('strong');
+    name.textContent = record.descriptor.name;
+    const meta = document.createElement('small');
+    meta.textContent = record.descriptor.type + ' · ' + (record.descriptor.featureCount == null ? 'ArcGIS REST' : record.descriptor.featureCount + ' fitur');
+    const btns = document.createElement('div');
+    btns.className = 'alat-layer-card-btns';
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    const isVisible = map.hasLayer(record.layer);
+    toggle.innerHTML = isVisible ? 'Sembunyikan' : 'Tampilkan';
+    toggle.addEventListener('click', () => {
+      if (map.hasLayer(record.layer)) map.removeLayer(record.layer);
+      else record.layer.addTo(map);
+      renderAlatLayerList();
+    });
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'alat-remove-btn';
+    remove.textContent = 'Hapus';
+    remove.addEventListener('click', () => {
+      if (window.ArcGISRestSourceManager) window.ArcGISRestSourceManager.remove(record.descriptor.key);
+    });
+    btns.append(toggle, remove);
+    card.append(name, meta, btns);
+    return card;
+  }
+
   function renderAlatLayerList() {
     const list = document.getElementById('alatLayerList');
-    list.replaceChildren(...alatLayers.map(item => {
-      const card = document.createElement('div');
-      card.className = 'alat-layer-card';
-      const name = document.createElement('strong');
-      name.textContent = item.name;
-      const meta = document.createElement('small');
-      meta.textContent = `${item.type} · ${item.geojson.features.length} fitur`;
-      const btns = document.createElement('div');
-      btns.className = 'alat-layer-card-btns';
-      const toggle = document.createElement('button');
-      toggle.type = 'button';
-      const isVisible = map.hasLayer(item.layer);
-      toggle.innerHTML = (isVisible
-        ? '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Sembunyikan'
-        : '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Tampilkan');
-      toggle.addEventListener('click', () => {
-        if (map.hasLayer(item.layer)) map.removeLayer(item.layer);
-        else item.layer.addTo(map);
-        renderAlatLayerList();
-      });
-      const remove = document.createElement('button');
-      remove.type = 'button';
-      remove.className = 'alat-remove-btn';
-      remove.innerHTML = '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg> Hapus';
-      remove.addEventListener('click', () => {
-        map.removeLayer(item.layer);
-        const idx = alatLayers.indexOf(item);
-        if (idx > -1) alatLayers.splice(idx, 1);
-        if (item.type === 'GPX' || item.type === 'KML') resetGpxAnimationControls();
-        renderAlatLayerList();
-      });
-      btns.append(toggle, remove);
-      card.append(name, meta, btns);
-      return card;
-    }));
+    if (!list) return;
+    const cards = alatLayers.map(createAlatLayerCard);
+    if (window.ArcGISRestSourceManager && typeof window.ArcGISRestSourceManager.getActive === 'function') {
+      const active = window.ArcGISRestSourceManager.getActive();
+      Object.keys(active).forEach(key => cards.push(createArcGISLayerCard(active[key])));
+    }
+    list.replaceChildren(...cards);
   }
+
+  window.renderAlatLayerList = renderAlatLayerList;
 
   function addAlatLayer(name, type, geojson) {
     const layer = L.geoJSON(geojson, {
@@ -343,6 +383,7 @@
 
   function clearAlatLayers() {
     alatLayers.forEach(item => map.removeLayer(item.layer));
+    if (typeof window.clearArcGISRestLayers === 'function') window.clearArcGISRestLayers();
     alatLayers.length = 0;
     renderAlatLayerList();
     resetGpxAnimationControls();
