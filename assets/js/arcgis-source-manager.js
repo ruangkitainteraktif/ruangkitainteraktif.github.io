@@ -1,7 +1,6 @@
 (function () {
   'use strict';
 
-  var DEFAULT_SOURCE_URL = 'https://services2.arcgis.com/LvCBNZuwhTWWbvod/ArcGIS/rest/services/Pola_Ruang_Kab_Tanggerang/FeatureServer';
   var PROXY_PREFIX = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=';
   var MAX_DEPTH = 8;
   var MAX_FOLDERS = 2000;
@@ -361,7 +360,11 @@
 
   async function discover() {
     var input = getElement('arcgisSourceUrl');
-    var sourceUrl = input && input.value ? input.value : DEFAULT_SOURCE_URL;
+    if (!input || !input.value.trim()) {
+      setStatus('Masukkan URL ArcGIS terlebih dahulu.', true);
+      return;
+    }
+    var sourceUrl = input.value.trim();
     var runId = ++state.run;
     state.cancelled = false;
     state.root = null;
@@ -665,8 +668,6 @@
   }
 
   function init() {
-    var input = getElement('arcgisSourceUrl');
-    if (input && !input.value) input.value = DEFAULT_SOURCE_URL;
     bindEvents();
   }
 
