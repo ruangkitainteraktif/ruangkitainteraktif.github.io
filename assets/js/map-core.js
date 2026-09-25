@@ -1875,11 +1875,11 @@ L.control.scale({
   /* ── Pindahkan tombol ke dalam FAB ── */
   setTimeout(function () {
     createGeotoolsFAB();
-    createAttrTableFAB();
     moveToFAB('.draw-fab-wrap', 'Gambar & Ukur');
+    createAttrTableFAB();
+    createLegendFAB();
     moveToFAB('.geoportal-print-btn', 'Cetak Peta');
     createExportTiffFAB();
-    createLegendFAB();
     var locateItem = moveToFAB('.leaflet-control-locate', 'Lokasi Saya');
     if (locateItem) locateItem.classList.add('map-fab-locate');
 

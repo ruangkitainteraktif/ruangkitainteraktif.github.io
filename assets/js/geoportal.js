@@ -1329,28 +1329,198 @@
     return 'https://images.weserv.nl/?url=' + encodeURIComponent(full);
   }
 
-  function _preloadProxyImages(container) {
-    var imgs = container.querySelectorAll('img');
-    var jobs = [];
-    var seen = {};
-    for (var i = 0; i < imgs.length; i++) {
-      var src = imgs[i].getAttribute('src') || '';
-      if (!src || src.indexOf('data:') === 0 || src.indexOf('blob:') === 0) continue;
-      var proxied = _captureProxySrc(src);
-      if (proxied === src || seen[proxied]) continue;
-      seen[proxied] = true;
-      jobs.push(new Promise(function (resolve) {
-        var im = new Image();
-        var done = false;
-        var finish = function () { if (!done) { done = true; resolve(); } };
-        im.onload = finish;
-        im.onerror = finish;
-        im.crossOrigin = 'anonymous';
-        im.src = proxied;
-        setTimeout(finish, 12000);
-      }));
+  var TILE_SNAPSHOT_FORMAT = 'image/jpeg';
+  var TILE_SNAPSHOT_QUALITY = 0.92;
+  var TILE_SNAPSHOT_CONCURRENCY = 6;
+  var TILE_SNAPSHOT_TIMEOUT = 6000;
+  var TILE_SNAPSHOT_BUDGET = 25000;
+  var TILE_PROXY_CHAIN = [
+    function (u) { return 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=' + encodeURIComponent(u); },
+    function (u) { return 'https://images.weserv.nl/?url=' + encodeURIComponent(u); }
+  ];
+
+  function _imgIsOriginSafe(img, src) {
+    if (img && (img.crossOrigin === 'anonymous' || img.crossOrigin === 'use-credentials')) return true;
+    if (!src) return false;
+    if (src.indexOf('data:') === 0 || src.indexOf('blob:') === 0) return true;
+    try {
+      return new URL(src, location.href).origin === location.origin;
+    } catch (e) {
+      return false;
     }
-    return Promise.all(jobs);
+  }
+
+  var _snapshotCanvas = null;
+  function _drawToDataUrl(source, w, h) {
+    if (!source || !w || !h) return null;
+    if (!_snapshotCanvas) _snapshotCanvas = document.createElement('canvas');
+    if (_snapshotCanvas.width !== w) _snapshotCanvas.width = w;
+    if (_snapshotCanvas.height !== h) _snapshotCanvas.height = h;
+    var ctx = _snapshotCanvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.clearRect(0, 0, w, h);
+    ctx.drawImage(source, 0, 0, w, h);
+    return _snapshotCanvas.toDataURL(TILE_SNAPSHOT_FORMAT, TILE_SNAPSHOT_QUALITY);
+  }
+
+  async function _fetchTileBitmap(url) {
+    for (var i = 0; i < TILE_PROXY_CHAIN.length; i++) {
+      var controller = null;
+      var timer = null;
+      try {
+        controller = new AbortController();
+        timer = setTimeout(function () { controller.abort(); }, TILE_SNAPSHOT_TIMEOUT);
+        var res = await fetch(TILE_PROXY_CHAIN[i](url), { mode: 'cors', signal: controller.signal });
+        if (!res.ok) continue;
+        var type = (res.headers.get('content-type') || '').toLowerCase();
+        if (type && type.indexOf('image/') !== 0) continue;
+        var blob = await res.blob();
+        if (!blob || !blob.size) continue;
+        return await createImageBitmap(blob);
+      } catch (e) {
+        if (e && e.name === 'AbortError') continue;
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+    }
+    return null;
+  }
+
+  async function _snapshotTileImages(container) {
+    var imgs = container.querySelectorAll('img');
+    var map = {};
+    var failed = [];
+    var direct = [];
+    var remote = [];
+    var seen = {};
+
+    for (var i = 0; i < imgs.length; i++) {
+      var img = imgs[i];
+      if (!img.complete || !img.naturalWidth || !img.naturalHeight) continue;
+      var src = img.getAttribute('src') || '';
+      if (!src || src.indexOf('data:') === 0) continue;
+      if (seen[src]) continue;
+      seen[src] = true;
+      if (_imgIsOriginSafe(img, src)) direct.push({ src: src, img: img });
+      else remote.push(src);
+    }
+
+    var total = direct.length + remote.length;
+    var done = 0;
+    function tick() {
+      done++;
+      if (total > 4 && (done % 4 === 0 || done === total)) {
+        showPrintLoading('Menyiapkan peta: ' + done + '/' + total + ' tile…');
+      }
+    }
+
+    for (var d = 0; d < direct.length; d++) {
+      var url = null;
+      try {
+        url = _drawToDataUrl(direct[d].img, direct[d].img.naturalWidth, direct[d].img.naturalHeight);
+      } catch (e) {
+        url = null;
+      }
+      if (url) map[direct[d].src] = url;
+      else failed.push(direct[d].src);
+      tick();
+    }
+
+    var cursor = 0;
+    var startedAt = Date.now();
+    async function worker() {
+      while (cursor < remote.length) {
+        var src = remote[cursor++];
+        var bitmap = null;
+        if (Date.now() - startedAt > TILE_SNAPSHOT_BUDGET) {
+          failed.push(src);
+          tick();
+          continue;
+        }
+        try {
+          bitmap = await _fetchTileBitmap(src);
+        } catch (e) {
+          bitmap = null;
+        }
+        var dataUrl = null;
+        if (bitmap) {
+          try {
+            dataUrl = _drawToDataUrl(bitmap, bitmap.width, bitmap.height);
+          } catch (e) {
+            dataUrl = null;
+          }
+          if (bitmap.close) bitmap.close();
+        }
+        if (dataUrl) map[src] = dataUrl;
+        else failed.push(src);
+        tick();
+      }
+    }
+
+    var workers = [];
+    var count = Math.min(TILE_SNAPSHOT_CONCURRENCY, remote.length);
+    for (var w = 0; w < count; w++) workers.push(worker());
+    if (workers.length) await Promise.all(workers);
+
+    return { map: map, failed: failed, total: total, captured: Object.keys(map).length };
+  }
+
+  function _assertCapturedTiles(canvas, snap) {
+    if (!canvas || !canvas.width || !canvas.height) {
+      throw new Error('Capture peta gagal: kanvas kosong.');
+    }
+    var snapTotal = (snap && snap.total) || 0;
+    var snapCaptured = (snap && snap.captured) || 0;
+
+    var probe = document.createElement('canvas');
+    var scale = Math.min(1, 160 / canvas.width, 160 / canvas.height);
+    probe.width = Math.max(1, Math.round(canvas.width * scale));
+    probe.height = Math.max(1, Math.round(canvas.height * scale));
+    var pctx = probe.getContext('2d', { willReadFrequently: true });
+    if (!pctx) return;
+    pctx.drawImage(canvas, 0, 0, probe.width, probe.height);
+
+    var data;
+    try {
+      data = pctx.getImageData(0, 0, probe.width, probe.height).data;
+    } catch (e) {
+      return;
+    }
+
+    var counts = {};
+    var total = 0;
+    for (var i = 0; i < data.length; i += 4) {
+      var key = (data[i] >> 4) + ',' + (data[i + 1] >> 4) + ',' + (data[i + 2] >> 4) + ',' + (data[i + 3] >> 4);
+      counts[key] = (counts[key] || 0) + 1;
+      total++;
+    }
+
+    var distinct = 0;
+    var topKey = '';
+    var topCount = 0;
+    for (var k in counts) {
+      if (!Object.prototype.hasOwnProperty.call(counts, k)) continue;
+      distinct++;
+      if (counts[k] > topCount) { topCount = counts[k]; topKey = k; }
+    }
+    if (!total || !topKey) return;
+
+    var parts = topKey.split(',');
+    var lum = 0.299 * (parseInt(parts[0], 10) * 16 + 8)
+      + 0.587 * (parseInt(parts[1], 10) * 16 + 8)
+      + 0.114 * (parseInt(parts[2], 10) * 16 + 8);
+    var frac = topCount / total;
+    var uniformDark = distinct <= 2 && frac >= 0.995 && lum < 14;
+    var nothingCaptured = snapTotal > 0 && snapCaptured === 0;
+    var failedCount = (snap && snap.failed && snap.failed.length) || 0;
+
+    if (uniformDark || nothingCaptured) {
+      throw new Error('Capture peta kosong: ' + failedCount + ' dari ' + snapTotal +
+        ' tile gagal diambil. Ganti basemap atau muat ulang halaman, lalu coba lagi.');
+    }
+    if (failedCount > 0) {
+      console.warn('[PrintGeoportal] ' + failedCount + ' tile gagal diambil saat export.');
+    }
   }
 
   async function captureMapCanvas(opts) {
@@ -1359,9 +1529,9 @@
     if (!container) throw new Error('Peta tidak siap');
     map.invalidateSize();
     await _waitTilesReady(opts.tileWaitMs || 6000);
-    await _preloadProxyImages(container);
+    var snap = await _snapshotTileImages(container);
     await new Promise(function (r) { setTimeout(r, 350); });
-    return html2canvas(container, {
+    var canvas = await html2canvas(container, {
       useCORS: true,
       allowTaint: false,
       scale: opts.scale || 2,
@@ -1381,6 +1551,12 @@
           var img = imgs[i];
           var src = img.getAttribute('src') || '';
           if (!src || src.indexOf('data:') === 0) continue;
+          var snapshot = snap.map[src];
+          if (snapshot) {
+            img.removeAttribute('crossorigin');
+            img.setAttribute('src', snapshot);
+            continue;
+          }
           var proxied = _captureProxySrc(src);
           if (proxied !== src) {
             img.setAttribute('crossorigin', 'anonymous');
@@ -1391,6 +1567,8 @@
         }
       }
     });
+    _assertCapturedTiles(canvas, snap);
+    return canvas;
   }
 
   /* ── Phase 1: Prepare print data ── */
@@ -1501,6 +1679,9 @@
       }
     } catch (e) {
       console.warn('[PrintGeoportal] Gagal menangkap peta:', e);
+      hiddenEls.forEach(function (h) { if (h.restore) try { h.restore(); } catch (err) {} });
+      try { map.invalidateSize(); } catch (err) {}
+      throw e;
     }
 
     const mapBounds = map.getBounds();
@@ -2276,17 +2457,26 @@
     const btn = document.querySelector('.geoportal-print-btn');
     if (btn) { btn.disabled = true; btn.innerHTML = window.GEOPORTAL_PRINT_SPINNER || '⏳'; }
     showPrintLoading();
+    let consumed = false;
     try {
+      const prep = preparePrintData();
+      prep.then(function (data) {
+        if (consumed || !data) return;
+        data.hiddenEls.forEach(function (h) { if (h.restore) try { h.restore(); } catch (e) {} });
+        try { map.invalidateSize(); } catch (e) {}
+      }).catch(function () {});
       let timer = null;
       const timeout = new Promise((_, reject) => {
-        timer = setTimeout(() => reject(new Error('Timeout menyiapkan data cetak (45s)')), 45000);
+        timer = setTimeout(() => reject(new Error('Timeout menyiapkan data cetak (90s)')), 90000);
       });
-      const data = await Promise.race([preparePrintData(), timeout]);
+      const data = await Promise.race([prep, timeout]);
+      consumed = true;
       if (timer) clearTimeout(timer);
       hidePrintLoading();
       if (btn) { btn.disabled = false; btn.innerHTML = window.GEOPORTAL_PRINT_ICON || '💻'; }
       renderPreviewCanvas(data);
     } catch (err) {
+      consumed = true;
       console.error('[PrintGeoportal] Gagal mempersiapkan data:', err);
       showPrintError(err && err.message ? err.message : String(err));
       hidePrintLoading();
