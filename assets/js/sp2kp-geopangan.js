@@ -12,6 +12,7 @@
   var provinceGeoJson = null;
   var activeLayer = null;
   var historyChart = null;
+  var hntChart = null;
 
   function $(id) {
     return document.getElementById(id);
@@ -247,16 +248,100 @@
     window.map.fitBounds(activeLayer.getBounds().pad(0.05));
     addLegend(variant.nama || 'Variant SP2KP', min, max, nationalHnt);
     renderTable(byProvince, variant);
+    renderHntChart(byProvince, variant);
+  }
+
+  function renderHntChart(byProvince, variant) {
+    var card = $('sp2kpHntChartCard');
+    var canvas = $('sp2kpHntChart');
+    var subtitle = $('sp2kpHntChartSubtitle');
+    if (!card || !canvas) return;
+    if (hntChart) {
+      hntChart.destroy();
+      hntChart = null;
+    }
+    var entries = Object.keys(byProvince).map(function (code) {
+      var item = byProvince[code];
+      return {
+        code: code,
+        name: item.nama_provinsi || 'Provinsi ' + code,
+        price: numericValue(item.harga)
+      };
+    }).filter(function (entry) { return entry.price !== null; }).sort(function (a, b) {
+      if (b.price !== a.price) return b.price - a.price;
+      return a.name.localeCompare(b.name, 'id-ID');
+    }).slice(0, 10);
+    if (!entries.length || typeof Chart === 'undefined') {
+      card.style.display = 'none';
+      return;
+    }
+    if (subtitle) subtitle.textContent = (variant.nama || 'SP2KP') + ' • 10 provinsi dengan HNT tertinggi';
+    card.style.display = 'block';
+    hntChart = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: entries.map(function (entry) { return entry.name; }),
+        datasets: [{
+          label: 'Harga HNT',
+          data: entries.map(function (entry) { return entry.price; }),
+          backgroundColor: 'rgba(22,163,74,.82)',
+          borderColor: '#15803d',
+          borderWidth: 1,
+          borderRadius: 4,
+          barThickness: 16
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                return 'HNT: Rp ' + Number(context.raw).toLocaleString('id-ID');
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: {
+              font: { size: 9 },
+              callback: function (value) { return 'Rp ' + Number(value).toLocaleString('id-ID'); }
+            },
+            grid: { color: '#edf2ef' }
+          },
+          y: {
+            ticks: { font: { size: 9 } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
   }
 
   function renderTable(byProvince, variant) {
     var target = $('sp2kpTable');
     if (!target) return;
-    var rows = Object.keys(byProvince).map(function (code) {
+    var entries = Object.keys(byProvince).map(function (code) {
       var item = byProvince[code];
-      var price = numericValue(item.harga);
-      var disparity = numericValue(item.disparitas_pct);
-      return '<tr><td>' + escapeHtml(code) + '</td><td>' + escapeHtml(item.nama_provinsi || '-') + '</td><td>' + (price === null ? '-' : 'Rp ' + price.toLocaleString('id-ID')) + '</td><td>' + (disparity === null ? '-' : disparity.toFixed(2) + '%') + '</td></tr>';
+      return {
+        code: code,
+        name: item.nama_provinsi || '-',
+        price: numericValue(item.harga),
+        disparity: numericValue(item.disparitas_pct)
+      };
+    }).sort(function (a, b) {
+      if (a.price === null && b.price !== null) return 1;
+      if (a.price !== null && b.price === null) return -1;
+      if (a.price !== null && b.price !== null && a.price !== b.price) return b.price - a.price;
+      return a.name.localeCompare(b.name, 'id-ID');
+    });
+    var rows = entries.map(function (entry) {
+      return '<tr><td>' + escapeHtml(entry.code) + '</td><td>' + escapeHtml(entry.name) + '</td><td>' + (entry.price === null ? '-' : 'Rp ' + entry.price.toLocaleString('id-ID')) + '</td><td>' + (entry.disparity === null ? '-' : entry.disparity.toFixed(2) + '%') + '</td></tr>';
     }).join('');
     target.innerHTML = '<div style="overflow:auto;margin-top:12px;"><div class="sp2kp-table-title">Harga HNT</div><div class="sp2kp-table-subtitle">' + escapeHtml(variant.nama || 'SP2KP') + '</div><table class="sp2kp-data-table"><thead><tr><th style="text-align:left;">Kode</th><th style="text-align:left;">Provinsi</th><th style="text-align:right;">Harga</th><th style="text-align:right;">Disparitas HNT</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
@@ -448,6 +533,12 @@
   };
   window.clearSp2kpGeoPangan = function () {
     clearLayer();
+    if (hntChart) {
+      hntChart.destroy();
+      hntChart = null;
+    }
+    var chartCard = $('sp2kpHntChartCard');
+    if (chartCard) chartCard.style.display = 'none';
     clearHistory();
     var result = $('sp2kpResult');
     if (result) result.innerHTML = '';

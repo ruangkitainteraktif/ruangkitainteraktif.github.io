@@ -947,8 +947,11 @@
               <div class="geotools-2col-side">
                  <h4 style="font-size:13px; margin-bottom:4px;">Unduh DEMNAS</h4>
                 <p class="geotools-desc" style="margin-bottom:12px; font-size:11px;">Pilih index raster DEMNAS untuk melihat polygon dan mengunduh TIFF tanpa token.</p>
-                <label class="geotani-form-label" for="demnasNamobjSelect">Index DEMNAS (OBJECTID / Name)</label>
-                <select id="demnasNamobjSelect" class="geotani-form-input" size="1">
+                 <label class="geotani-form-label" for="demnasSearchInput">Cari DEMNAS</label>
+                 <input id="demnasSearchInput" class="geotani-form-input" type="search" placeholder="Ketik Nama atau OBJECTID…" autocomplete="off" />
+                 <div id="demnasSearchCount" style="margin-top:5px;font-size:10px;color:#64748b;"></div>
+                 <label class="geotani-form-label" for="demnasNamobjSelect" style="margin-top:8px;">Index DEMNAS (OBJECTID / Name)</label>
+                 <select id="demnasNamobjSelect" class="geotani-form-input" size="1">
                   <option value="">Memuat katalog DEMNAS…</option>
                 </select>
                 <div id="demnasIndexSelected" style="display:none;margin-top:8px;padding:6px 8px;font-size:10px;color:#166534;background:#f0fdf4;border-radius:4px;"></div>
@@ -1388,6 +1391,11 @@
                   <div id="sp2kpStatus" class="cctv-message" style="display:none;margin-top:10px;"></div>
                   <div id="sp2kpResult"></div>
                   <div id="sp2kpTable"></div>
+                  <div id="sp2kpHntChartCard" style="display:none;margin-top:12px;padding:10px;border:1px solid #dbe7e1;border-radius:8px;background:#fbfefc;">
+                    <div class="sp2kp-table-title">Harga HNT Provinsi — 10 Tertinggi</div>
+                    <div id="sp2kpHntChartSubtitle" class="sp2kp-table-subtitle"></div>
+                    <div style="height:260px;margin-top:8px;"><canvas id="sp2kpHntChart"></canvas></div>
+                  </div>
                   <button id="sp2kpResetBtn" type="button" class="geopangan-btn geopangan-reset-btn" style="margin-top:10px;">Reset Layer SP2KP</button>
                   <div style="margin-top:14px;padding-top:12px;border-top:1px solid #dbe7e1;">
                     <div style="display:flex;align-items:center;gap:8px;">

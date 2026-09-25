@@ -349,6 +349,43 @@
     });
   }
 
+  function filterSelect(query) {
+    var select = document.getElementById('demnasNamobjSelect');
+    var countElement = document.getElementById('demnasSearchCount');
+    if (!select) return;
+    var normalized = String(query || '').trim().toLowerCase();
+    var options = select.querySelectorAll('option');
+    var matched = 0;
+    for (var index = 0; index < options.length; index++) {
+      var option = options[index];
+      if (!option.value) {
+        option.hidden = false;
+        continue;
+      }
+      var text = String(option.textContent || '').toLowerCase();
+      var value = String(option.value || '').toLowerCase();
+      var isMatch = !normalized || text.indexOf(normalized) !== -1 || value.indexOf(normalized) !== -1;
+      if (isMatch) matched++;
+      option.hidden = option.selected ? false : !isMatch;
+    }
+    var groups = select.querySelectorAll('optgroup');
+    for (var groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+      var group = groups[groupIndex];
+      var hasVisibleOption = false;
+      for (var optionIndex = 0; optionIndex < group.options.length; optionIndex++) {
+        if (!group.options[optionIndex].hidden) {
+          hasVisibleOption = true;
+          break;
+        }
+      }
+      group.hidden = !hasVisibleOption;
+    }
+    if (countElement) {
+      var total = _catalog.length;
+      countElement.textContent = normalized ? matched.toLocaleString('id-ID') + ' dari ' + total.toLocaleString('id-ID') + ' index cocok' : total.toLocaleString('id-ID') + ' index dimuat';
+    }
+  }
+
   function findFeature(objectId) {
     for (var index = 0; index < _catalog.length; index++) {
       if (String(_catalog[index].attributes && _catalog[index].attributes.OBJECTID) === String(objectId)) return _catalog[index];
@@ -421,6 +458,8 @@
     setStatus('Memuat katalog DEMNAS dari ImageServer BIG…');
     return loadCatalog().then(function (catalog) {
       populateSelect(catalog);
+      var search = document.getElementById('demnasSearchInput');
+      filterSelect(search ? search.value : '');
       setStatus(catalog.length + ' index DEMNAS dimuat. Pilih index untuk melihat polygon.');
       return catalog;
     }).catch(function (error) {
@@ -432,8 +471,12 @@
   function init() {
     var select = document.getElementById('demnasNamobjSelect');
     var button = document.getElementById('demnasDownloadBtn');
+    var search = document.getElementById('demnasSearchInput');
     if (!select || !button) return;
     button.disabled = false;
+    if (search) search.addEventListener('input', function () {
+      filterSelect(this.value);
+    });
     select.addEventListener('change', function () {
       selectFeature(this.value);
     });
