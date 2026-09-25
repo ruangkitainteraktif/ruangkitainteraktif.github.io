@@ -6,6 +6,7 @@ let measurePoints = [];
 let measurePolyline = null;
 let measureCasingLayer = null;
 let measurePolygon = null;
+let measureExportLayer = null;
 let measureMarkerLayer = null;
 let measureTempLayer = null;
 let adminModalOpenedAt = 0;
@@ -47,6 +48,31 @@ function formatArea(sqMeters) {
   if (sqMeters >= 1000000) return `${(sqMeters / 1000000).toFixed(3)} km²`;
   if (sqMeters >= 10000) return `${(sqMeters / 10000).toFixed(2)} ha`;
   return `${sqMeters.toFixed(1)} m²`;
+}
+
+function setLayerMeasureData(layer, data) {
+  if (layer) layer._measureData = Object.assign({}, layer._measureData || {}, data || {});
+}
+
+function areaMeasureData(areaM2, source) {
+  return {
+    measurement_type: 'area',
+    source: source || 'measure',
+    area_m2: areaM2,
+    area_ha: areaM2 / 10000,
+    area_km2: areaM2 / 1000000,
+    area_display: formatArea(areaM2)
+  };
+}
+
+function distanceMeasureData(distance, source) {
+  return {
+    measurement_type: 'distance',
+    source: source || 'measure',
+    length_m: distance,
+    length_km: distance / 1000,
+    length_display: formatDistance(distance)
+  };
 }
 
 function setMeasureResult(message) {
@@ -115,6 +141,7 @@ function clearMeasureLayers() {
   measurePolyline = null;
   measureCasingLayer = null;
   measurePolygon = null;
+  measureExportLayer = null;
   measureMarkerLayer = null;
   measureTempLayer = null;
 }
@@ -146,6 +173,7 @@ function renderDistanceGeometry() {
     lineCap: 'round',
     lineJoin: 'round'
   }).addTo(measureLayerGroup);
+  measureExportLayer = measurePolyline;
   renderMeasureMarkers();
 }
 
@@ -159,6 +187,7 @@ function renderAreaGeometry() {
     fillColor: '#00a6d6',
     fillOpacity: 0.18
   }).addTo(measureLayerGroup);
+  measureExportLayer = measurePolygon;
 }
 
 function startDraw(type) {
@@ -211,18 +240,24 @@ map.on(L.Draw.Event.CREATED, event => {
     try {
       const latlngs = layer.getLatLngs()[0];
       const areaM2 = L.GeometryUtil.geodesicArea(latlngs);
+      setLayerMeasureData(layer, areaMeasureData(areaM2, 'draw'));
       layer.bindPopup(`<b>Luas:</b> ${formatArea(areaM2)}`);
     } catch (error) {
       layer.bindPopup('Poligon');
     }
   } else if (layer instanceof L.Polyline) {
     const distance = getMeasureDistance(layer.getLatLngs());
+    setLayerMeasureData(layer, distanceMeasureData(distance, 'draw'));
     layer.bindPopup(`<b>Panjang:</b> ${formatDistance(distance)}`);
   } else if (layer instanceof L.Marker) {
     const point = layer.getLatLng();
     layer.bindPopup(`${point.lat.toFixed(6)}, ${point.lng.toFixed(6)}`);
   } else if (layer instanceof L.Circle) {
     const areaM2 = Math.PI * Math.pow(layer.getRadius(), 2);
+    setLayerMeasureData(layer, Object.assign(areaMeasureData(areaM2, 'draw'), {
+      radius_m: layer.getRadius(),
+      radius_display: formatDistance(layer.getRadius())
+    }));
     layer.bindPopup(`<b>Luas:</b> ${formatArea(areaM2)}<br><b>Jari-jari:</b> ${formatDistance(layer.getRadius())}`);
   }
 });
@@ -268,10 +303,12 @@ function finishMeasure() {
   }
   if (finishedMode === 'distance') {
     const distance = getMeasureDistance(measurePoints);
+    setLayerMeasureData(measureExportLayer, distanceMeasureData(distance, 'measure'));
     updateMeasureHud(formatDistance(distance), `${measurePoints.length} titik`, false);
     setMeasureResult(`Jarak total: <b>${formatDistance(distance)}</b>. Klik Ukur Lagi untuk mengulang.`);
   } else {
     const areaM2 = L.GeometryUtil.geodesicArea(measurePolygon.getLatLngs()[0]);
+    setLayerMeasureData(measureExportLayer, areaMeasureData(areaM2, 'measure'));
     updateMeasureHud(formatArea(areaM2), `${measurePoints.length} titik`, false);
     setMeasureResult(`Luas: <b>${formatArea(areaM2)}</b>. Klik Ukur Lagi untuk mengulang.`);
   }
@@ -298,6 +335,7 @@ function handleMeasureMapClick(event) {
   if (measureMode === 'distance') {
     renderDistanceGeometry();
     const distance = getMeasureDistance(measurePoints);
+    setLayerMeasureData(measureExportLayer, distanceMeasureData(distance, 'measure'));
     const canFinish = measurePoints.length >= 2;
     updateMeasureHud(canFinish ? formatDistance(distance) : '—', `${measurePoints.length} titik`, canFinish);
     setMeasureResult(canFinish
@@ -307,6 +345,7 @@ function handleMeasureMapClick(event) {
     renderAreaGeometry();
     if (measurePoints.length >= 3) {
       const areaM2 = L.GeometryUtil.geodesicArea(measurePolygon.getLatLngs()[0]);
+      setLayerMeasureData(measureExportLayer, areaMeasureData(areaM2, 'measure'));
       updateMeasureHud(formatArea(areaM2), `${measurePoints.length} titik`, true);
       setMeasureResult(`Luas: <b>${formatArea(areaM2)}</b>. Klik Selesai atau tambahkan titik.`);
     } else {
@@ -329,25 +368,145 @@ function clearDrawings() {
   setMeasureResult('Semua gambar dan ukuran dihapus.');
 }
 
-function exportDrawings() {
+function getLayerMeasureData(layer) {
+  if (!layer) return null;
+  let data = Object.assign({}, layer._measureData || {});
+  try {
+    if (layer instanceof L.Polygon) {
+      const latlngs = layer.getLatLngs()[0];
+      Object.assign(data, areaMeasureData(L.GeometryUtil.geodesicArea(latlngs), data.source || 'draw'));
+    } else if (layer instanceof L.Polyline) {
+      Object.assign(data, distanceMeasureData(getMeasureDistance(layer.getLatLngs()), data.source || 'draw'));
+    } else if (layer instanceof L.Circle) {
+      const areaM2 = Math.PI * Math.pow(layer.getRadius(), 2);
+      Object.assign(data, areaMeasureData(areaM2, data.source || 'draw'), {
+        radius_m: layer.getRadius(),
+        radius_display: formatDistance(layer.getRadius())
+      });
+    }
+  } catch (error) {
+    return Object.keys(data).length ? data : null;
+  }
+  return Object.keys(data).length ? data : null;
+}
+
+function layerToExportGeoJSON(layer) {
+  if (!layer || typeof layer.toGeoJSON !== 'function') return null;
+  const geojson = layer.toGeoJSON();
+  if (!geojson) return null;
+  const data = getLayerMeasureData(layer);
+  if (data) geojson.properties = Object.assign({}, geojson.properties || {}, data);
+  return geojson;
+}
+
+function collectExportFeatures() {
   const features = [];
   drawLayerGroup.eachLayer(layer => {
-    const geojson = layer.toGeoJSON();
+    const geojson = layerToExportGeoJSON(layer);
     if (geojson) features.push(geojson);
   });
+  if (measureExportLayer) {
+    const geojson = layerToExportGeoJSON(measureExportLayer);
+    if (geojson) features.push(geojson);
+  }
+  return features;
+}
+
+function downloadExportBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportDrawings() {
+  const features = collectExportFeatures();
   if (!features.length) {
     setMeasureResult('Tidak ada gambar untuk diekspor.');
     return;
   }
   const collection = { type: 'FeatureCollection', features };
   const blob = new Blob([JSON.stringify(collection, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'gambar-peta.geojson';
-  link.click();
-  URL.revokeObjectURL(url);
+  downloadExportBlob(blob, 'gambar-peta.geojson');
   setMeasureResult(`${features.length} fitur diekspor sebagai GeoJSON.`);
+}
+
+function shpSafeProperties(properties) {
+  const aliases = {
+    measurement_type: 'meas_type',
+    source: 'src',
+    area_display: 'area_disp',
+    length_display: 'len_disp',
+    radius_display: 'rad_disp'
+  };
+  const result = {};
+  Object.keys(properties || {}).forEach(key => {
+    const name = aliases[key] || key.replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 10);
+    if (Object.prototype.hasOwnProperty.call(result, name)) return;
+    let value = properties[key];
+    if (value === null || value === undefined) value = '';
+    if (typeof value === 'number' && !Number.isFinite(value)) value = '';
+    if (typeof value === 'object') value = JSON.stringify(value);
+    result[name] = value;
+  });
+  return result;
+}
+
+function featureForShp(feature) {
+  return Object.assign({}, feature, {
+    properties: shpSafeProperties(feature.properties)
+  });
+}
+
+function shpTypesForFeatures(features) {
+  const types = {};
+  features.forEach(feature => {
+    const type = feature && feature.geometry && feature.geometry.type;
+    if (type === 'Point' || type === 'MultiPoint') types.point = 'points';
+    if (type === 'LineString' || type === 'MultiLineString') types.polyline = 'lines';
+    if (type === 'Polygon' || type === 'MultiPolygon') types.polygon = 'polygons';
+  });
+  return types;
+}
+
+async function exportDrawingsSHP() {
+  if (typeof shpwrite === 'undefined') {
+    setMeasureResult('Modul pembuat SHP belum siap. Muat ulang halaman lalu coba kembali.', true);
+    return;
+  }
+  const features = collectExportFeatures();
+  if (!features.length) {
+    setMeasureResult('Tidak ada gambar atau pengukuran untuk diekspor.', true);
+    return;
+  }
+  const types = shpTypesForFeatures(features);
+  if (!Object.keys(types).length) {
+    setMeasureResult('Geometry yang tersedia belum dapat diekspor ke SHP.', true);
+    return;
+  }
+  try {
+    setMeasureResult('Menyiapkan SHP ZIP…');
+    const collection = {
+      type: 'FeatureCollection',
+      features: features.map(featureForShp)
+    };
+    const zipData = await shpwrite.zip(collection, {
+      folder: 'gambar_peta',
+      filename: 'gambar_peta',
+      outputType: 'blob',
+      types: types,
+      prj: 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
+    });
+    const blob = zipData instanceof Blob ? zipData : new Blob([zipData], { type: 'application/zip' });
+    downloadExportBlob(blob, 'gambar-peta-shp.zip');
+    setMeasureResult(`${features.length} fitur diekspor sebagai SHP ZIP.`);
+  } catch (error) {
+    setMeasureResult('Gagal membuat SHP: ' + (error && error.message ? error.message : String(error)), true);
+  }
 }
 
 function bindMeasureHud() {
