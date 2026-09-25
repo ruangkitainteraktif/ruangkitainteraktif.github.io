@@ -10,6 +10,8 @@
     leaves: [],
     selected: new Set(),
     active: {},
+    attributeKey: null,
+    attributeRequest: 0,
     visited: {},
     run: 0,
     cancelled: false,
@@ -517,6 +519,7 @@
   async function createFeatureLayer(descriptor) {
     if (typeof L === 'undefined' || !L.geoJSON) throw new Error('Pustaka Leaflet tidak tersedia.');
     var data = await fetchFeatureGeoJson(descriptor);
+    descriptor.featureData = data;
     descriptor.featureCount = data.features.length;
     return L.geoJSON(data, {
       style: function () {
@@ -589,6 +592,7 @@
       if (bounds && bounds.isValid()) mapInstance.fitBounds(bounds.pad(0.1), { maxZoom: 17 });
     }
     state.active[descriptor.key] = record;
+    state.attributeKey = descriptor.key;
     if (descriptor.featureCount === 0) setStatus('Layer ' + descriptor.name + ' tidak memiliki fitur pada area saat ini.', true);
     renderActiveLayers();
   }
@@ -610,8 +614,126 @@
     renderActiveLayers();
   }
 
+  function setAttributeStatus(message, isError) {
+    var element = getElement('arcgisAttributeStatus');
+    if (!element) return;
+    element.textContent = message || '';
+    element.style.color = isError ? '#b91c1c' : '#52728a';
+    element.style.display = message ? '' : 'none';
+  }
+
+  function attributeEligible(record) {
+    var descriptor = record && record.descriptor;
+    return !!(descriptor && (descriptor.featureData || descriptor.renderMode === 'feature' || descriptor.renderMode === 'dynamic'));
+  }
+
+  function attributeFeatures(record) {
+    var data = record && record.descriptor && record.descriptor.featureData;
+    return data && Array.isArray(data.features) ? data.features : [];
+  }
+
+  function renderAttributeTable(record) {
+    var table = getElement('arcgisAttributeTable');
+    if (!table || !record) return;
+    var descriptor = record.descriptor;
+    var features = attributeFeatures(record);
+    var fields = [];
+    var fieldSet = {};
+    features.forEach(function (feature) {
+      var properties = feature && feature.properties || {};
+      Object.keys(properties).forEach(function (field) {
+        if (!fieldSet[field]) {
+          fieldSet[field] = true;
+          fields.push(field);
+        }
+      });
+    });
+    fields = fields.slice(0, 20);
+    var visibleFeatures = features.slice(0, 200);
+    if (!fields.length) {
+      table.innerHTML = '<div class="arcgis-attribute-empty">Tidak ada field atribut pada layer ini.</div>';
+      setAttributeStatus(features.length ? 'Layer tidak memiliki field atribut.' : 'Tidak ada fitur pada layer ini.', !features.length);
+      return;
+    }
+    var html = '<div class="arcgis-attribute-scroll"><table><thead><tr>';
+    fields.forEach(function (field) { html += '<th>' + escapeHtml(field) + '</th>'; });
+    html += '</tr></thead><tbody>';
+    visibleFeatures.forEach(function (feature) {
+      var properties = feature && feature.properties || {};
+      html += '<tr>';
+      fields.forEach(function (field) { html += '<td title="' + escapeHtml(formatValue(properties[field])) + '">' + escapeHtml(formatValue(properties[field])) + '</td>'; });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    table.innerHTML = html;
+    setAttributeStatus('Menampilkan ' + visibleFeatures.length + ' dari ' + features.length + ' fitur · ' + descriptor.name);
+  }
+
+  function loadAttributeTable(record) {
+    if (!record || !attributeEligible(record)) return;
+    var descriptor = record.descriptor;
+    var requestId = ++state.attributeRequest;
+    state.attributeKey = descriptor.key;
+    var table = getElement('arcgisAttributeTable');
+    if (descriptor.featureData) {
+      if (table) table.setAttribute('data-loaded-key', descriptor.key);
+      renderAttributeTable(record);
+      return;
+    }
+    setAttributeStatus('Memuat atribut ' + descriptor.name + '…');
+    if (table) {
+      table.setAttribute('data-loaded-key', descriptor.key);
+      table.innerHTML = '<div class="arcgis-attribute-loading"><span class="arcgis-attribute-spinner"></span>Memuat data atribut…</div>';
+    }
+    fetchFeatureGeoJson(descriptor).then(function (data) {
+      if (requestId !== state.attributeRequest || state.attributeKey !== descriptor.key) return;
+      descriptor.featureData = data;
+      descriptor.featureCount = data.features.length;
+      renderAttributeTable(record);
+    }).catch(function (error) {
+      if (requestId !== state.attributeRequest || state.attributeKey !== descriptor.key) return;
+      if (table) table.innerHTML = '<div class="arcgis-attribute-empty">Gagal memuat atribut layer.</div>';
+      setAttributeStatus(error && error.message ? error.message : 'Gagal memuat atribut layer.', true);
+    });
+  }
+
+  function renderAttributePanel() {
+    var panel = getElement('arcgisAttributePanel');
+    if (!panel) return;
+    var records = Object.keys(state.active).map(function (key) { return state.active[key]; }).filter(attributeEligible);
+    if (!records.length) {
+      panel.hidden = true;
+      state.attributeKey = null;
+      state.attributeRequest++;
+      return;
+    }
+    panel.hidden = false;
+    var select = getElement('arcgisAttributeLayerSelect');
+    if (select) {
+      select.innerHTML = '';
+      records.forEach(function (record) {
+        var option = document.createElement('option');
+        option.value = record.descriptor.key;
+        option.textContent = record.descriptor.name;
+        select.appendChild(option);
+      });
+      if (!records.some(function (record) { return record.descriptor.key === state.attributeKey; })) {
+        state.attributeKey = records[records.length - 1].descriptor.key;
+      }
+      select.value = state.attributeKey;
+    }
+    var currentRecord = state.active[state.attributeKey];
+    if (!currentRecord || !attributeEligible(currentRecord)) {
+      state.attributeKey = records[records.length - 1].descriptor.key;
+      currentRecord = records[records.length - 1];
+    }
+    var table = getElement('arcgisAttributeTable');
+    if (table && table.getAttribute('data-loaded-key') !== state.attributeKey) loadAttributeTable(currentRecord);
+  }
+
   function renderActiveLayers() {
     if (typeof window.renderAlatLayerList === 'function') window.renderAlatLayerList();
+    renderAttributePanel();
   }
 
   async function addSelected() {
@@ -623,22 +745,39 @@
       return;
     }
     var addButton = getElement('arcgisAddSelectedBtn');
-    if (addButton) addButton.disabled = true;
+    var buttonText = addButton ? addButton.textContent : '';
+    if (addButton) {
+      addButton.disabled = true;
+      addButton.classList.add('is-loading');
+      addButton.textContent = 'Memuat layer…';
+    }
+    setStatus('Menyiapkan layer ArcGIS…');
+    setProgress('0/' + inputs.length + ' layer siap');
     var added = 0;
     var failed = 0;
-    for (var index = 0; index < inputs.length; index++) {
-      var input = inputs[index];
-      var descriptor = state.leaves[Number(input.getAttribute('data-arcgis-leaf'))];
-      if (!descriptor) continue;
-      try {
-        await addLayer(descriptor);
-        added++;
-      } catch (error) {
-        failed++;
-        setStatus(error && error.message ? error.message : String(error), true);
+    try {
+      for (var index = 0; index < inputs.length; index++) {
+        var input = inputs[index];
+        var descriptor = state.leaves[Number(input.getAttribute('data-arcgis-leaf'))];
+        if (!descriptor) continue;
+        setProgress('Memuat ' + (index + 1) + '/' + inputs.length + ' · ' + descriptor.name);
+        setStatus('Memuat ' + descriptor.name + '…');
+        try {
+          await addLayer(descriptor);
+          added++;
+        } catch (error) {
+          failed++;
+          setStatus(error && error.message ? error.message : String(error), true);
+        }
       }
+    } finally {
+      if (addButton) {
+        addButton.classList.remove('is-loading');
+        addButton.textContent = buttonText;
+      }
+      setProgress('');
+      updateSelection();
     }
-    updateSelection();
     if (added) setStatus(added + ' layer ditambahkan ke peta.' + (failed ? ' ' + failed + ' layer gagal.' : ''), failed > 0);
   }
 
@@ -646,10 +785,17 @@
     var discoverButton = getElement('arcgisDiscoverBtn');
     var cancelButton = getElement('arcgisCancelBtn');
     var addButton = getElement('arcgisAddSelectedBtn');
+    var attributeSelect = getElement('arcgisAttributeLayerSelect');
     var tree = getElement('arcgisLayerTree');
     if (discoverButton) discoverButton.addEventListener('click', discover);
     if (cancelButton) cancelButton.addEventListener('click', cancelDiscovery);
     if (addButton) addButton.addEventListener('click', addSelected);
+    if (attributeSelect) {
+      attributeSelect.addEventListener('change', function () {
+        var record = state.active[this.value];
+        if (record) loadAttributeTable(record);
+      });
+    }
     if (tree) {
       tree.addEventListener('click', function (event) {
         event.stopPropagation();
