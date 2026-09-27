@@ -4016,26 +4016,34 @@
     .geoid-subtab-panel.active { display: block; }
 
     /* ── GeoTools Main Tabs (Muat Data | Geonusa) ── */
-    .geotools-main-tabs {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-      margin-bottom: 14px;
-    }
-    .geotools-main-tab-btn {
-      padding: 10px 8px;
+    .geotools-dropdown {
+      width: 100%;
+      padding: 10px 32px 10px 12px;
       border: 1px solid var(--border-color);
       border-radius: 8px;
       background: var(--bg-card);
       font-size: 12px;
       font-weight: 600;
-      color: var(--text-tertiary);
+      color: var(--text-primary);
       cursor: pointer;
-      text-align: center;
-      transition: background .15s, color .15s, box-shadow .15s;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+      transition: border-color .15s, box-shadow .15s;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
     }
-    .geotools-main-tab-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
-    .geotools-main-tab-btn.active { background: var(--accent); color: var(--text-inverse); box-shadow: 0 2px 6px rgba(8,145,178,.3); }
+    .geotools-dropdown:hover {
+      border-color: var(--accent);
+      box-shadow: 0 2px 6px rgba(8,145,178,.15);
+    }
+    .geotools-dropdown:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(8,145,178,.2);
+    }
     .geotools-main-tab-panel { display: none; overflow-x: hidden; }
     .geotools-main-tab-panel.active { display: block; }
 
@@ -4157,6 +4165,7 @@
       body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .petadasar-export-block,
       body.dm-sidebar-open:not(.dm-sidebar-minimized) .petadasar-export-block,
       body.lg-sidebar-open .petadasar-export-block,
+      body.pa-panel-open:not(.pa-panel-minimized) .petadasar-export-block,
       body.attr-table-sheet-open:not(.attr-table-sheet-minimized) .petadasar-export-block {
         opacity: 0;
         pointer-events: none;
@@ -6338,6 +6347,8 @@
     }
     #hotspot-sheet.sheet-open { transform: translateX(0); visibility: visible; }
 
+    .leaflet-control-locate { display: none !important; }
+
     /* Jauhkan kontrol Lokasi Saya, Reset, dan Print dari sidebar Hotspot saat terbuka. */
     body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .leaflet-bottom.leaflet-right {
       right: calc(min(380px, calc(100vw - 106px)) + 28px);
@@ -6811,16 +6822,67 @@
       color: var(--text-primary);
     }
     .lg-sidebar.lg-sidebar-open { transform: translateX(0); visibility: visible; }
-    .lg-sidebar-head {
+    /* GeoFarm analysis panel: right sheet on desktop, bottom sheet on mobile. */
+    .pa-panel {
+      position: fixed; top: 120px; right: 12px; bottom: 12px;
+      width: min(320px, calc(100vw - 106px));
+      border-radius: 16px; z-index: 1100;
+      background: var(--bg-primary);
+      box-shadow: 0 8px 32px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.08);
+      transform: translateX(calc(100% + 24px));
+      visibility: hidden;
+      transition: transform .3s ease-in-out, visibility .3s;
+      display: flex; flex-direction: column; overflow: hidden;
+      color: var(--text-primary);
+    }
+    .pa-panel.pa-open { transform: translateX(0); visibility: visible; }
+    /* Mode minimal: panel jadi chip 36px di bawah tengah. Butuh aturan ini
+       sendiri karena .lg-sidebar-minimized tidak ikut terselector .pa-min. */
+    .pa-panel.pa-min {
+      top: auto; right: auto; bottom: 80px; left: 50%;
+      width: min(220px, calc(100vw - 48px));
+      height: 36px;
+      border-radius: 18px;
+    }
+    .pa-panel.pa-min .pa-head {
+      min-height: 36px; box-sizing: border-box;
+      padding: 6px 14px; border-bottom: 0;
+    }
+    .pa-panel.pa-min .pa-list { display: none; }
+    .pa-panel.pa-min .pa-title { cursor: pointer; font-size: 11px; }
+    /* Chip buka-kembali, muncul di slot yang sama dengan mode minimal.
+       Pakai variabel tema (bukan putih hardcoded) agar aman di dark mode. */
+    .pa-reopen-chip {
+      position: fixed; bottom: 80px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 100; margin: 0;
+      display: flex; align-items: center; gap: 7px;
+      min-height: 36px; padding: 6px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      background: var(--bg-primary);
+      box-shadow: 0 4px 14px rgba(15, 23, 42, .12);
+      color: var(--text-primary);
+      font-size: 12px; font-weight: 600;
+      cursor: pointer;
+    }
+    .pa-reopen-chip:hover { background: var(--bg-tertiary); }
+    .pa-reopen-chip[hidden] { display: none; }
+    .lg-sidebar-head, .pa-head {
       display: flex; align-items: center; justify-content: space-between;
       padding: 14px 16px 10px; border-bottom: 1px solid var(--border-color); flex-shrink: 0;
     }
-    .lg-sidebar-title {
+    .lg-sidebar-title, .pa-title {
       display: flex; align-items: center; gap: 6px;
       color: var(--text-primary); font-size: 13px; font-weight: 700;
     }
+    /* Judul panel GeoFarm: nama fitur + badge jumlah polygon. Gaya badge
+       (.pa-count) sudah ada di bawah blok ini; yang ditambah hanya layout. */
+    .pa-title { min-width: 0; gap: 7px; }
+    .pa-title > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pa-title .pa-count { flex: 0 0 auto; white-space: nowrap; font-variant-numeric: tabular-nums; }
     .lg-sidebar-actions { display: flex; align-items: center; gap: 6px; }
-    .lg-sidebar-close {
+    .lg-sidebar-close, .pa-close {
       display: grid; width: 28px; height: 28px; place-items: center;
       border: 0; border-radius: 50%; background: var(--bg-tertiary); color: var(--text-tertiary);
       cursor: pointer; font-size: 16px;
@@ -6831,7 +6893,7 @@
       cursor: pointer; transition: background .15s;
     }
     .lg-sidebar-minimize:hover { background: var(--border-color); }
-    .lg-sidebar-body {
+    .lg-sidebar-body, .pa-list {
       flex: 1 1 auto; min-height: 0; overflow-y: auto;
       padding: 12px 16px 16px; -webkit-overflow-scrolling: touch;
       scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent;
@@ -7163,13 +7225,13 @@
       }
 
       /* ── Legend Sidebar (Mobile) ── */
-      .lg-sidebar {
+      .lg-sidebar, .pa-panel {
         top: auto; right: 0; bottom: 0; left: 0;
         width: 100%; height: 50vh; height: 50dvh;
         border-radius: 18px 18px 0 0;
         transform: translateY(100%);
       }
-      .lg-sidebar.lg-sidebar-open { transform: translateY(0); visibility: visible; }
+      .lg-sidebar.lg-sidebar-open, .pa-panel.pa-open { transform: translateY(0); visibility: visible; }
       .lg-sidebar.lg-sidebar-minimized {
         top: auto; right: auto; bottom: 72px; left: 50%;
         width: min(260px, calc(100vw - 48px)); height: 36px;
@@ -7183,8 +7245,25 @@
       }
       .lg-sidebar.lg-sidebar-minimized .lg-sidebar-body { display: none; }
       .lg-sidebar.lg-sidebar-minimized .lg-sidebar-head {
-        min-height: 36px; box-sizing: border-box; padding: 4px 12px; border-bottom: 0;
+        min-height: 36px; padding: 4px 12px; border-bottom: 0;
       }
+      .pa-panel.pa-min {
+        top: auto; right: auto; bottom: 72px; left: 50%;
+        width: min(260px, calc(100vw - 48px)); height: 36px;
+        border-radius: 14px; transform: translateX(-50%);
+        border: 1px solid rgba(255, 255, 255, .72);
+        background: rgba(255, 255, 255, .92);
+        box-shadow: 0 4px 14px rgba(15, 23, 42, .12);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        visibility: visible;
+        z-index: 100;
+      }
+      .pa-reopen-chip {
+        bottom: 72px;
+        max-width: calc(100vw - 32px);
+      }
+
 
       /* ── Hide minimize buttons that don't apply on mobile ── */
       #geopangan-sheet .gp-sheet-minimize { display: none !important; }
@@ -7314,6 +7393,7 @@
       body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .map-fab-wrap,
       body.dm-sidebar-open:not(.dm-sidebar-minimized) .map-fab-wrap,
       body.lg-sidebar-open .map-fab-wrap,
+      body.pa-panel-open:not(.pa-panel-minimized) .map-fab-wrap,
       body.attr-table-sheet-open:not(.attr-table-sheet-minimized) .map-fab-wrap {
         transform: translateX(-50%) translateY(calc(100% + 24px)) !important;
         opacity: 0;
@@ -8500,6 +8580,98 @@
       color: var(--text-inverse) !important;
       transform: scale(0.95);
     }
+    /* Draw control + Actions (Clear All / Export) — satu kotak tunggal, gaya modern GIS 2026 */
+    .leaflet-draw {
+      background: #fff;
+      border: 2px solid rgba(0, 0, 0, .2);
+      border-radius: 4px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, .12), 0 6px 16px rgba(15, 23, 42, .10);
+    }
+    .leaflet-draw .leaflet-draw-toolbar {
+      margin-top: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+    .leaflet-draw .leaflet-draw-toolbar a {
+      box-sizing: border-box;
+      border: 0;
+      border-bottom: 1px solid rgba(0, 0, 0, .12);
+      border-radius: 0;
+      background-color: #fff;
+      transition: background-color .16s ease;
+    }
+    .leaflet-draw .leaflet-draw-toolbar a:first-child,
+    .leaflet-draw .leaflet-draw-toolbar a:last-child { border-radius: 0; }
+    .leaflet-draw .leaflet-draw-toolbar a:hover { background-color: #f4f4f4; }
+    .leaflet-draw .leaflet-draw-toolbar a.leaflet-disabled,
+    .leaflet-draw .leaflet-draw-toolbar a.leaflet-disabled:hover { background-color: #f4f4f4; }
+    .leaflet-draw > .leaflet-draw-section:last-child .leaflet-draw-toolbar a:last-child {
+      border-bottom: 0;
+      border-radius: 0 0 2px 2px;
+    }
+    .draw-actions-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      position: relative;
+      z-index: auto;
+    }
+    .leaflet-draw > .draw-actions-wrap .draw-actions-btn:first-child { border-radius: 2px 2px 0 0; }
+    .draw-actions-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      margin: 0;
+      border: 0;
+      border-bottom: 1px solid rgba(0, 0, 0, .12);
+      border-radius: 0;
+      background: #fff;
+      color: #1f2937;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: .01em;
+      white-space: nowrap;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background-color .16s ease, color .16s ease;
+    }
+    .draw-actions-label { display: none; }
+    .draw-actions-btn svg {
+      width: 16px;
+      height: 16px;
+      flex: none;
+      transition: transform .16s ease;
+    }
+    .draw-actions-btn:hover {
+      background: #f4f4f4;
+      color: var(--accent);
+    }
+    .draw-actions-btn:hover svg { transform: scale(1.08); }
+    .draw-actions-btn:active { background: #e8eaed; }
+    .draw-actions-btn:focus-visible {
+      outline: 2px solid #0891b2;
+      outline-offset: -2px;
+    }
+    .draw-actions-btn.geojson:hover { background: #dcfce7; color: #16a34a; }
+    .draw-actions-btn.shp:hover { background: #e0f2fe; color: #0284c7; }
+    [data-theme="dark"] .draw-actions-btn:focus-visible { outline-color: #22d3ee; }
+    body.draw-chrome-hidden .draw-actions-wrap,
+    body.draw-chrome-hidden .leaflet-draw { display: none; }
     .leaflet-control-scale-line {
       border-color: var(--text-secondary);
       border-width: 1px 0 0 0;
@@ -9250,6 +9422,12 @@
     }
     .dem-popup-body {
       padding: 10px 14px 12px;
+    }
+    /* Detail topografi: satu kolom, tiap baris penuh lebar popup. */
+    .dem-popup-detail {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
     }
     .dem-popup-row {
       display: grid;
@@ -10864,3 +11042,513 @@
   .ghrsst-ts-layer { font-size: 9px; }
 }
 
+
+/* ── Analisis Polygon (polygon-analysis.js) ─────────────────
+   Geometri panel (posisi, tinggi, radius, head, body) memakai aturan
+   yang sama dengan .lg-sidebar lewat selector bersama di atas, agar
+   keduanya tidak bisa melenceng. Yang di bawah hanya isi kartunya. */
+
+.pa-count {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-card-hover);
+  border-radius: 20px;
+  padding: 2px 8px;
+}
+
+.pa-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pa-list::-webkit-scrollbar { width: 5px; }
+.pa-list::-webkit-scrollbar-track { background: transparent; }
+.pa-list::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+
+.pa-actions { display: flex; align-items: center; gap: 6px; }
+.pa-minimize {
+  display: grid; width: 28px; height: 28px; place-items: center;
+  border: 0; border-radius: 50%; background: var(--bg-tertiary); color: var(--text-tertiary);
+  cursor: pointer; transition: background .15s;
+}
+.pa-minimize:hover { background: var(--border-color); }
+.pa-close:hover { background: var(--border-color); }
+
+.pa-empty {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 18px 10px;
+}
+
+.pa-card {
+  border: 1px solid var(--border-color);
+  border-radius: 11px;
+  padding: 10px;
+  background: var(--bg-card);
+}
+.pa-card-stale { border-color: #f59e0b; }
+
+.pa-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.pa-card-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.pa-card-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+}
+.pa-card-tools { margin-left: auto; }
+.pa-icon {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 1px 5px;
+  border-radius: 5px;
+}
+.pa-icon:hover { background: #fee2e2; color: #dc2626; }
+
+.pa-area {
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.pa-stale {
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 7px;
+  padding: 6px 7px;
+  margin-bottom: 8px;
+}
+.pa-link {
+  border: none;
+  background: transparent;
+  color: #b45309;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.pa-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.pa-spin {
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: pa-spin .7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes pa-spin { to { transform: rotate(360deg); } }
+
+.pa-section { border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 8px; }
+.pa-section:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+.pa-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.pa-section-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.pa-section-tools { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+
+.pa-collapse-btn,
+.pa-eye-btn {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.pa-collapse-btn:hover,
+.pa-eye-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+.pa-collapse-btn svg { transition: transform .2s ease; }
+.pa-collapse-btn.is-collapsed svg { transform: rotate(-90deg); }
+.pa-section.is-collapsed .pa-section-head { margin-bottom: 0; }
+.pa-section.is-collapsed .pa-section-body { display: none; }
+
+.pa-eye-btn.is-on { color: var(--accent); border-color: var(--accent); }
+.pa-eye-btn.is-on:hover { color: var(--accent); }
+.pa-eye-btn:focus-visible,
+.pa-collapse-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.pa-cloud {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+}
+.pa-cloud-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.pa-cloud-label { color: var(--text-secondary); }
+.pa-cloud-value { margin-left: auto; font-weight: 700; }
+.pa-cloud-badge {
+  border: 1px solid;
+  border-radius: 20px;
+  padding: 1px 7px;
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+.pa-block {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px;
+  margin-top: 7px;
+  background: var(--bg-primary);
+}
+.pa-block-muted { font-size: 10.5px; color: var(--text-secondary); }
+/* Judul tiap analisis di dalam section (mis. NDMI, NDRE, NDWI, LST).
+   Dipisah dari .pa-card-head yang dipakai untuk kartu polygon. */
+.pa-item-head {
+  display: flex; align-items: baseline; gap: 6px;
+  margin: -1px 0 6px; padding-bottom: 5px;
+  border-bottom: 1px solid var(--border-color);
+}
+.pa-item-head > b { font-size: 11.5px; font-weight: 700; color: var(--text-primary); }
+.pa-item-head > span { font-size: 9.5px; color: var(--text-secondary); min-width: 0; }
+
+.pa-block-note {
+  font-size: 9.5px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 6px;
+}
+.pa-block-error {
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+.pa-meta { font-size: 9.5px; color: var(--text-secondary); margin-top: 6px; }
+
+.pa-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+.pa-stat {
+  text-align: center;
+  background: var(--bg-card-hover);
+  border-radius: 7px;
+  padding: 5px 2px;
+}
+.pa-stat span { display: block; font-size: 9px; color: var(--text-secondary); margin-bottom: 1px; }
+.pa-stat b { font-size: 11.5px; color: var(--text-primary); }
+
+.pa-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.pa-btn-row .pa-btn { margin-top: 7px; }
+.pa-btn[disabled] { opacity: .6; cursor: progress; }
+
+.pa-trend { padding: 8px 8px 6px; }
+.pa-trend-head { display: flex; flex-direction: column; gap: 1px; margin-bottom: 4px; }
+.pa-trend-title { font-size: 11px; font-weight: 700; color: var(--text-primary); }
+.pa-trend-meta { font-size: 9px; color: var(--text-secondary); }
+.pa-trend-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.pa-trend-grid { stroke: var(--border-color); stroke-width: 1; stroke-dasharray: 2 3; }
+.pa-trend-zero { stroke: var(--text-secondary); stroke-width: 1; opacity: .45; }
+.pa-trend-axis, .pa-trend-x { fill: var(--text-secondary); font-size: 8px; }
+.pa-trend-line { fill: none; stroke: #16a34a; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+.pa-trend-area { stroke: none; }
+.pa-trend-band { stroke: #16a34a; stroke-width: 1.4; opacity: .22; fill: none; stroke-linecap: round; }
+.pa-trend-dot { fill: #16a34a; stroke: var(--bg-card); stroke-width: 1; }
+.pa-trend-dot-cloudy { fill: #fff; stroke: #16a34a; stroke-width: 1.4; }
+.pa-trend-dot:hover { fill: #0f172a; r: 3.4; }
+.pa-trend-legend {
+  display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+  font-size: 9px; color: var(--text-secondary); margin-top: 3px;
+}
+.pa-trend-key { width: 14px; height: 2px; border-radius: 2px; background: #16a34a; }
+.pa-trend-key-band { width: 14px; height: 6px; border-radius: 2px; background: rgba(22, 163, 74, .22); margin-left: 6px; }
+.pa-trend-key-cloudy { width: 8px; height: 8px; border-radius: 50%; border: 1.4px solid #16a34a; background: #fff; margin-left: 6px; }
+.pa-trend-note { font-size: 9px; color: var(--text-secondary); margin-top: 5px; line-height: 1.35; }
+.pa-trend-sum { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 7px; }
+.pa-trend-stat { text-align: center; background: var(--bg-card-hover); border-radius: 7px; padding: 5px 2px; }
+.pa-trend-stat span { display: block; font-size: 9px; color: var(--text-secondary); margin-bottom: 1px; }
+.pa-trend-stat b { font-size: 11.5px; color: var(--text-primary); }
+.pa-trend-stat b.naik { color: #16a34a; }
+.pa-trend-stat b.turun { color: #dc2626; }
+
+.pa-soil-grid { display: flex; flex-direction: column; gap: 4px; }
+.pa-soil-grid-detail { margin-top: 4px; }
+.pa-soil-row {
+  display: grid;
+  grid-template-columns: 52px 1fr 1fr 1fr;
+  gap: 4px;
+  align-items: center;
+  font-size: 10px;
+  background: var(--bg-card-hover);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
+.pa-soil-row-detail { grid-template-columns: 40px repeat(6, 1fr); font-size: 9px; }
+.pa-soil-band { font-weight: 700; color: var(--text-primary); }
+.pa-soil-stat { color: var(--text-secondary); }
+.pa-soil-stat b { color: var(--text-primary); font-weight: 600; }
+
+.pa-cbar { margin-top: 6px; margin-bottom: 10px; }
+.pa-cbar-bar {
+  height: 10px;
+  border-radius: 3px;
+  border: 1px solid var(--border-color);
+}
+.pa-cbar-ticks {
+  position: relative;
+  height: 13px;
+  margin-top: 3px;
+}
+.pa-cbar-tick {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 8.5px;
+  line-height: 1;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.pa-cbar-tick:first-child { transform: none; }
+.pa-cbar-tick:last-child { transform: translateX(-100%); }
+.pa-cbar-classes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 8px;
+  margin-top: 4px;
+}
+.pa-cbar-class {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 8.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.pa-cbar-class i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  border: 1px solid rgba(15, 23, 42, .2);
+  flex-shrink: 0;
+}
+.pa-soil-chart-title { font-size: 10px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+.pa-soil-legend {
+  display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+  font-size: 9px; color: var(--text-secondary); margin-top: 4px;
+}
+.pa-soil-key-bar { width: 10px; height: 10px; border-radius: 2px; background: #2563eb; }
+.pa-soil-key-range { width: 10px; height: 6px; border-radius: 2px; background: #94a3b8; opacity: 0.5; margin-left: 6px; }
+.pa-soil-key-minmax { width: 2px; height: 12px; background: #475569; margin-left: 6px; }
+
+.pa-warn {
+  font-size: 9.5px;
+  color: #92400e;
+  background: #fffbeb;
+  border-radius: 6px;
+  padding: 4px 6px;
+  margin-top: 6px;
+}
+
+#geotoolsTabGeoFarm .geofarm-draw-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  border: 1.5px solid #0891b2;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0891b2, #0e7490);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(8, 145, 178, .25);
+  transition: background .2s, box-shadow .2s, transform .2s;
+}
+#geotoolsTabGeoFarm .geofarm-draw-btn:hover:not([disabled]) {
+  background: linear-gradient(135deg, #0e7490, #155e75);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, .35);
+  transform: translateY(-1px);
+}
+#geotoolsTabGeoFarm .geofarm-draw-btn[disabled] { cursor: progress; }
+#geotoolsTabGeoFarm .pa-list {
+  max-height: 58vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Durante la sesión de dibujo de GeoFarm solo se revela el control de dibujo,
+   no los botones de exportación SHP/GeoJSON. */
+body.geofarm-draw-active .leaflet-draw {
+  display: block !important;
+}
+body.geofarm-draw-active .draw-actions-wrap {
+  display: none !important;
+}
+
+
+.pa-dist { margin-top: 7px; }
+.pa-dist-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+.pa-dist-label { font-size: 9.5px; color: var(--text-secondary); width: 74px; flex-shrink: 0; }
+.pa-dist-bar { flex: 1; height: 6px; background: var(--border-color); border-radius: 4px; overflow: hidden; }
+.pa-dist-bar i { display: block; height: 100%; border-radius: 4px; }
+.pa-dist-value { font-size: 9.5px; color: var(--text-secondary); width: 30px; text-align: right; }
+
+.pa-btn {
+  width: 100%;
+  margin-top: 7px;
+  padding: 5px 8px;
+  font-size: 10.5px;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.pa-btn-ghost {
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+.pa-btn-ghost:hover { background: var(--bg-card-hover); }
+
+@media (max-width: 768px) {
+  .pa-stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+[data-theme="dark"] .pa-stale { background: #422006; border-color: #a16207; color: #fde68a; }
+[data-theme="dark"] .pa-link { color: #fcd34d; }
+[data-theme="dark"] .pa-block-error { background: #450a0a; border-color: #991b1b; color: #fca5a5; }
+[data-theme="dark"] .pa-warn { background: #422006; color: #fde68a; }
+[data-theme="dark"] .pa-icon:hover { background: #450a0a; color: #fca5a5; }
+
+.pa-details { margin-top: 8px; }
+.pa-summary {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 7px;
+  background: var(--bg-primary);
+  list-style: none;
+  user-select: none;
+}
+.pa-summary::-webkit-details-marker { display: none; }
+.pa-summary::before { content: '\25B8\00a0'; display: inline-block; transition: transform .15s; }
+.pa-details[open] > .pa-summary::before { transform: rotate(90deg); }
+.pa-summary:hover { background: var(--bg-card-hover); }
+
+.pa-meta-block { margin-top: 6px; }
+.pa-meta-title {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.pa-meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  border-bottom: 1px dotted var(--border-color);
+}
+.pa-meta-row:last-of-type { border-bottom: none; }
+.pa-meta-key { font-size: 9.5px; color: var(--text-secondary); width: 104px; flex-shrink: 0; }
+.pa-meta-val { font-size: 10.5px; color: var(--text-primary); text-align: right; flex: 1; word-break: break-word; }
+
+.pa-meta-product {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-color);
+}
+.pa-meta-product .pa-meta-key { width: auto; flex-shrink: 0; }
+.pa-meta-product code {
+  flex: 1;
+  font-size: 9px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+  background: var(--bg-card-hover);
+  border-radius: 5px;
+  padding: 4px 5px;
+  word-break: break-all;
+}
+.pa-copy {
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 9.5px;
+  font-weight: 600;
+  border-radius: 5px;
+  padding: 3px 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.pa-copy:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+
+.pa-meta-note {
+  font-size: 9px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-color);
+}

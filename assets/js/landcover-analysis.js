@@ -298,7 +298,7 @@
       properties: {},
       geometry: { type: 'Polygon', coordinates: boundary.rings }
     };
-    const analysisAreaHa = typeof turf !== 'undefined' ? turf.area(boundaryFeature) / 10000 : null;
+    const analysisAreaHa = typeof geoArea !== 'undefined' ? geoArea.areaHaFromGeoJSON(boundaryFeature) : null;
 
     if (typeof turf !== 'undefined' && samples.length) {
       const halfWidth = smallestSpacing(samples.map(s => s.x)) / 2;
@@ -537,7 +537,7 @@
     const builtPct = builtClasses.reduce((sum, c) => sum + c.pct, 0);
 
     const boundaryFeature = { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: boundary.rings } };
-    const analysisAreaHa = typeof turf !== 'undefined' ? turf.area(boundaryFeature) / 10000 : null;
+    const analysisAreaHa = typeof geoArea !== 'undefined' ? geoArea.areaHaFromGeoJSON(boundaryFeature) : null;
 
     const now = new Date();
     const dateStr = `${String(now.getDate()).padStart(2, '0')}${String(now.getMonth() + 1).padStart(2, '0')}${now.getFullYear()}`;

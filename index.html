@@ -642,22 +642,21 @@
             <span class="dm-sidebar-option-label">Area</span>
           </div>
         </div>
-        <div class="dm-sidebar-section-title">Actions</div>
+        <div class="dm-sidebar-section-title">Peta</div>
         <div class="dm-sidebar-grid">
-          <div class="dm-sidebar-option" onclick="clearDrawings()">
-            <div class="dm-sidebar-option-icon" style="background:#fee2e2;color:#dc2626"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></div>
-            <span class="dm-sidebar-option-label">Clear All</span>
+          <div class="dm-sidebar-option" onclick="window.printGeoportalMap && printGeoportalMap(); closeDrawSidebar();">
+            <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M9 18h6"/></svg></div>
+            <span class="dm-sidebar-option-label">Export PDF</span>
           </div>
-           <div class="dm-sidebar-option" onclick="exportDrawings()">
-             <div class="dm-sidebar-option-icon" style="background:#dcfce7;color:#16a34a"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5z"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
-             <span class="dm-sidebar-option-label">Export GeoJSON</span>
-           </div>
-           <div class="dm-sidebar-option" onclick="exportDrawingsSHP()">
-             <div class="dm-sidebar-option-icon" style="background:#e0f2fe;color:#0284c7"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v13H3z"/><path d="M3 7l3-4h12l3 4"/><path d="M8 11h8"/><path d="M8 15h5"/></svg></div>
-             <span class="dm-sidebar-option-label">Export SHP</span>
-           </div>
+          <div class="dm-sidebar-option" onclick="window.exportViewportGeoTiff && exportViewportGeoTiff(this); closeDrawSidebar();">
+            <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+            <span class="dm-sidebar-option-label">Export TIF</span>
+          </div>
+          <div class="dm-sidebar-option" onclick="document.querySelector('.leaflet-control-locate a')?.click(); closeDrawSidebar();">
+            <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg></div>
+            <span class="dm-sidebar-option-label">Lokasi Saya</span>
+          </div>
         </div>
-        <div id="alatMeasureResult" class="dm-measure-result"></div>
       </div>
      </div>
 
@@ -703,6 +702,33 @@
       <div class="lg-sidebar-body" id="legendSidebarBody"></div>
     </div>
 
+    <!-- GEOFARM ANALYSIS PANEL (sheet kanan di desktop, bottom sheet di mobile) -->
+    <div id="polygonAnalysisSidebar" class="pa-panel">
+      <div class="pa-head">
+        <span class="pa-title" data-pa-action="restore">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l-8 5v10l8 5 8-5V7z"/><path d="M12 22V12"/><path d="M4 7l8 5 8-5"/></svg>
+          <span id="polygonAnalysisTitle">GeoFarm</span>
+          <span class="pa-count" id="polygonAnalysisCount">0 polygon</span>
+        </span>
+        <div class="pa-actions">
+          <button class="pa-minimize" type="button" data-pa-action="minimize" aria-label="Minimalkan">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="21"/></svg>
+          </button>
+          <button class="pa-close" type="button" data-pa-action="close" aria-label="Tutup">&#xd7;</button>
+        </div>
+      </div>
+      <div id="polygonAnalysisList" class="pa-list"></div>
+    </div>
+
+    <!-- Chip buka-kembali panel GeoFarm; hanya muncul setelah panel ditutup
+         sementara masih ada hasil analisis. -->
+    <button id="geofarmReopenChip" class="pa-reopen-chip" type="button" hidden
+            onclick="if(window.reopenGeoFarmPanel) window.reopenGeoFarmPanel();">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l-8 5v10l8 5 8-5V7z"/><path d="M12 22V12"/><path d="M4 7l8 5 8-5"/></svg>
+      <span>GeoFarm</span>
+      <span class="pa-count" id="geofarmReopenCount">0 polygon</span>
+    </button>
+
     <!-- SIDEBAR KIRI -->
     <div id="sidebar-left" class="collapsed menu-collapsed sidebar-force-hidden">
       <button class="toggle-sidebar-btn" id="toggleBtn" onclick="toggleSidebar()">
@@ -733,11 +759,11 @@
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
           <span>GEOPORTAL</span>
         </button>
-        <button class="tab-btn" data-label="GEOMET" aria-label="GEOMET" onclick="openTab(event, 'tab-geotools'); setTimeout(function(){ document.querySelector('[data-maintab=geotoolsTabGeoPulse]').click(); setTimeout(function(){ openGempaSubtabById('gempa-subtab-infocuaca'); }, 200); }, 200);" style="display:none">
+         <button class="tab-btn" data-label="GEOMET" aria-label="GEOMET" onclick="openTab(event, 'tab-geotools'); setTimeout(function(){ var dd = document.querySelector('.geotools-dropdown'); if(dd){ dd.value='geotoolsTabGeoPulse'; dd.dispatchEvent(new Event('change')); } setTimeout(function(){ openGempaSubtabById('gempa-subtab-infocuaca'); }, 200); }, 200);" style="display:none">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           <span>GEOMET</span>
         </button>
-        <button class="tab-btn" data-label="GEOPULSE" aria-label="GEOPULSE" onclick="openTab(event, 'tab-geotools'); setTimeout(function(){ document.querySelector('[data-maintab=geotoolsTabGeoPulse]').click(); }, 200);">
+         <button class="tab-btn" data-label="GEOPULSE" aria-label="GEOPULSE" onclick="openTab(event, 'tab-geotools'); setTimeout(function(){ var dd = document.querySelector('.geotools-dropdown'); if(dd){ dd.value='geotoolsTabGeoPulse'; dd.dispatchEvent(new Event('change')); } }, 200);">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
           <span>GEOPULSE</span>
         </button>
@@ -764,7 +790,7 @@
           <div style="text-align:center; padding:40px 20px;">
             <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#94a3b8" stroke-width="1.5" style="margin-bottom:12px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
             <p class="geotools-desc">GeoNusa sekarang ada di tab <b>GeoTools</b>.</p>
-            <button onclick="openTab(null, 'tab-geotools'); setTimeout(function(){ var geonusaBtn = document.querySelector('[data-maintab=geotoolsTabGeonusa]'); if(geonusaBtn) geonusaBtn.click(); }, 200);" style="padding:8px 16px; font-size:12px; font-weight:600; color:#fff; background:#0891b2; border:none; border-radius:6px; cursor:pointer;">Buka GeoTools → Geonusa</button>
+             <button onclick="openTab(null, 'tab-geotools'); setTimeout(function(){ var dd = document.querySelector('.geotools-dropdown'); if(dd){ dd.value='geotoolsTabGeonusa'; dd.dispatchEvent(new Event('change')); } }, 200);" style="padding:8px 16px; font-size:12px; font-weight:600; color:#fff; background:#0891b2; border:none; border-radius:6px; cursor:pointer;">Buka GeoTools → Geonusa</button>
           </div>
         </div>
         <!-- TAB 2: GEOPORTAL -->
@@ -772,7 +798,7 @@
           <div style="text-align:center; padding:40px 20px;">
             <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#94a3b8" stroke-width="1.5" style="margin-bottom:12px;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
             <p class="geotools-desc">Geoportal sekarang ada di tab <b>GeoTools</b>.</p>
-            <button onclick="openTab(null, 'tab-geotools'); setTimeout(function(){ document.querySelector('[data-maintab=geotoolsTabGeoportal]').click(); }, 200);" style="padding:8px 16px; font-size:12px; font-weight:600; color:#fff; background:#0891b2; border:none; border-radius:6px; cursor:pointer;">Buka GeoTools → Geoportal</button>
+             <button onclick="openTab(null, 'tab-geotools'); setTimeout(function(){ var dd = document.querySelector('.geotools-dropdown'); if(dd){ dd.value='geotoolsTabGeoportal'; dd.dispatchEvent(new Event('change')); } }, 200);" style="padding:8px 16px; font-size:12px; font-weight:600; color:#fff; background:#0891b2; border:none; border-radius:6px; cursor:pointer;">Buka GeoTools → Geoportal</button>
           </div>
         </div>
 
@@ -781,7 +807,7 @@
           <div style="text-align:center; padding:40px 20px;">
             <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#94a3b8" stroke-width="1.5" style="margin-bottom:12px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             <p class="geotools-desc">GeoTani sekarang ada di tab <b>GeoTools</b>.</p>
-            <button onclick="openTab(null, 'tab-geotools'); setTimeout(function(){ document.querySelector('[data-maintab=geotoolsTabGeoTani]').click(); }, 200);" style="padding:8px 16px; font-size:12px; font-weight:600; color:#fff; background:#0891b2; border:none; border-radius:6px; cursor:pointer;">Buka GeoTools → GeoTani</button>
+             <button onclick="openTab(null, 'tab-geotools'); setTimeout(function(){ var dd = document.querySelector('.geotools-dropdown'); if(dd){ dd.value='geotoolsTabGeoTani'; dd.dispatchEvent(new Event('change')); } }, 200);" style="padding:8px 16px; font-size:12px; font-weight:600; color:#fff; background:#0891b2; border:none; border-radius:6px; cursor:pointer;">Buka GeoTools → GeoTani</button>
           </div>
         </div>
 
@@ -790,7 +816,7 @@
           <div style="text-align:center; padding:40px 20px;">
             <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#94a3b8" stroke-width="1.5" style="margin-bottom:12px;"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 01.553-.894L9 2l6 3 5.447-2.724A1 1 0 0121 3.382v10.764a1 1 0 01-.553.894L15 18l-6 3z"/><path d="M9 2v20"/><path d="M15 6v15"/></svg>
             <p class="geotools-desc">GeoPangan sekarang ada di tab <b>GeoTools</b>.</p>
-            <button onclick="openTab(null, 'tab-geotools'); setTimeout(function(){ document.querySelector('[data-maintab=geotoolsTabGeoPangan]').click(); }, 200);" style="padding:8px 16px; font-size:12px; font-weight:600; color:#fff; background:#0891b2; border:none; border-radius:6px; cursor:pointer;">Buka GeoTools → GeoPangan</button>
+             <button onclick="openTab(null, 'tab-geotools'); setTimeout(function(){ var dd = document.querySelector('.geotools-dropdown'); if(dd){ dd.value='geotoolsTabGeoPangan'; dd.dispatchEvent(new Event('change')); } }, 200);" style="padding:8px 16px; font-size:12px; font-weight:600; color:#fff; background:#0891b2; border:none; border-radius:6px; cursor:pointer;">Buka GeoTools → GeoPangan</button>
           </div>
         </div>
 
@@ -798,24 +824,27 @@
           <div style="text-align:center; padding:40px 20px;">
             <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#94a3b8" stroke-width="1.5" style="margin-bottom:12px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             <p class="geotools-desc">GeoWatch sekarang ada di tab <b>GeoTools</b>.</p>
-            <button onclick="openTab(null, 'tab-geotools'); setTimeout(function(){ document.querySelector('[data-maintab=geotoolsTabGeoWatch]').click(); }, 200);" style="padding:8px 16px; font-size:12px; font-weight:600; color:#fff; background:#0891b2; border:none; border-radius:6px; cursor:pointer;">Buka GeoTools → GeoWatch</button>
+             <button onclick="openTab(null, 'tab-geotools'); setTimeout(function(){ var dd = document.querySelector('.geotools-dropdown'); if(dd){ dd.value='geotoolsTabGeoWatch'; dd.dispatchEvent(new Event('change')); } }, 200);" style="padding:8px 16px; font-size:12px; font-weight:600; color:#fff; background:#0891b2; border:none; border-radius:6px; cursor:pointer;">Buka GeoTools → GeoWatch</button>
           </div>
         </div>
 
         <!-- TAB: GEOTOOLS -->
         <div id="tab-geotools" class="tab-content">
-          <div class="geotools-main-tabs">
-            <button class="geotools-main-tab-btn" data-maintab="geotoolsTabGeonusa" onclick="openGeotoolsMainTab(this)">GeoNusa</button>
-            <button class="geotools-main-tab-btn" data-maintab="geotoolsTabGeoportal" onclick="openGeotoolsMainTab(this)">GeoPortal</button>
-            <button class="geotools-main-tab-btn" data-maintab="geotoolsTabGeoTani" onclick="openGeotoolsMainTab(this)">GeoTani</button>
-            <button class="geotools-main-tab-btn" data-maintab="geotoolsTabGeoPulse" onclick="openGeotoolsMainTab(this)">GeoPulse</button>
-            <button class="geotools-main-tab-btn" data-maintab="geotoolsTabGeoPangan" onclick="openGeotoolsMainTab(this)">GeoPangan</button>
-            <button class="geotools-main-tab-btn" data-maintab="geotoolsTabGeoWatch" onclick="openGeotoolsMainTab(this)">GeoWatch</button>
-            <button class="geotools-main-tab-btn" data-maintab="geotoolsTabDemnas" onclick="openGeotoolsMainTab(this)">GeoRaster</button>
-            <button class="geotools-main-tab-btn active" data-maintab="geotoolsTabMuatData" onclick="openGeotoolsMainTab(this)">GeoData</button>
-          </div>
+          <select class="geotools-dropdown" onchange="openGeotoolsMainTab(this)">
+                  <option value="geotoolsTabMuatData">GeoData</option>
+                  <option value="geotoolsTabDemnas">GeoRaster</option>
+                  <option value="geotoolsTabGeonusa">GeoNusa</option>
+                  <option value="geotoolsTabGeoportal">GeoPortal</option>
+                  <option value="geotoolsTabGeoTani">GeoTani</option>
+                  <option value="geotoolsTabGeoPulse">GeoPulse</option>
+                  <option value="geotoolsTabGeoFarm" selected>GeoFarm</option>
 
-          <div id="geotoolsTabMuatData" class="geotools-main-tab-panel active">
+            <option value="geotoolsTabGeoPangan">GeoPangan</option>
+            <option value="geotoolsTabGeoWatch">GeoWatch</option>
+          </select>
+
+                <div id="geotoolsTabMuatData" class="geotools-main-tab-panel">
+
             <div class="geotools-2col-main">
              <div class="geoid-subtabs geotools-upload-tabs">
              <button class="geoid-subtab-btn" data-subtab="alat-tab-shp" onclick="openGeoidSubtab(this)">
@@ -2247,12 +2276,19 @@
               </label>
             </div>
             </div>
-            </div>
-          
-          </div>
-        </div>
+             </div>
+             </div>
 
-        <!-- TAB 3: CUACA BMKG -->
+                <div id="geotoolsTabGeoFarm" class="geotools-main-tab-panel active">
+
+            <button id="geofarmDrawPolygonBtn" class="geofarm-draw-btn" type="button" onclick="startGeofarmPolygonDraw()">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l-8 5v10l8 5 8-5V7z"/><path d="M12 22V12"/><path d="M4 7l8 5 8-5"/></svg>
+              Buat Polygon
+            </button>
+          </div>
+             </div>
+
+         <!-- TAB 3: CUACA BMKG -->
         <!-- TAB 3: CUACA BMKG (content moved to tab-gempa sub-tabs) -->
         <div id="tab-cuaca" class="tab-content">
           <div style="text-align:center; padding:40px 20px;">
@@ -2264,7 +2300,7 @@
           <div style="text-align:center; padding:40px 20px;">
             <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#94a3b8" stroke-width="1.5" style="margin-bottom:12px;"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
             <p class="geotools-desc">GeoPulse sekarang ada di tab <b>GeoTools</b>.</p>
-            <button onclick="openTab(null, 'tab-geotools'); setTimeout(function(){ document.querySelector('[data-maintab=geotoolsTabGeoPulse]').click(); }, 200);" style="padding:8px 16px; font-size:12px; font-weight:600; color:#fff; background:#0891b2; border:none; border-radius:6px; cursor:pointer;">Buka GeoTools → GeoPulse</button>
+             <button onclick="openTab(null, 'tab-geotools'); setTimeout(function(){ var dd = document.querySelector('.geotools-dropdown'); if(dd){ dd.value='geotoolsTabGeoPulse'; dd.dispatchEvent(new Event('change')); } }, 200);" style="padding:8px 16px; font-size:12px; font-weight:600; color:#fff; background:#0891b2; border:none; border-radius:6px; cursor:pointer;">Buka GeoTools → GeoPulse</button>
           </div>
         </div>
 
@@ -2357,6 +2393,8 @@
     <!-- Tambahkan proj4 jika SHP menggunakan proyeksi selain WGS84 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
     <script src="https://unpkg.com/@turf/turf@7.1.0/turf.min.js"></script>
+    <script src="https://unpkg.com/geographiclib-geodesic@2.2.0/geographiclib-geodesic.min.js"></script>
+    <script src="assets/js/geodesic-area.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -2374,6 +2412,7 @@
     <script src="assets/js/geologi-bnpb.js"></script>
     <script src="assets/js/province-boundary-vector.js"></script>
     <script src="assets/js/chlorophyll-par-overlay.js"></script>
+
     <script src="assets/js/modis-time-slider.js"></script>
     <script src="assets/js/modis-aqua-time-slider.js"></script>
     <script src="assets/js/viirs-time-slider.js"></script>
@@ -2406,12 +2445,15 @@
     <script src="assets/js/openaq-pm.js"></script>
     <script src="assets/js/spi-recent.js"></script>
     <script src="assets/js/spei-recent.js"></script>
+    <script src="assets/js/terrarium-elevation.js"></script>
     <script src="assets/js/dem-analysis.js"></script>
     <script src="assets/js/cctv.js"></script>
     <script src="assets/js/detail-subtab.js"></script>
      <script src="assets/js/alat-layers.js"></script>
      <script src="assets/js/arcgis-source-manager.js"></script>
-   <script src="assets/js/alat-draw-measure.js"></script>
+    <script src="assets/js/alat-draw-measure.js"></script>
+    <script src="assets/js/geofarm-draw.js"></script>
+   <script src="assets/js/polygon-analysis.js"></script>
   <script src="assets/js/app-boot.js"></script>
 
   <script src="assets/js/overlay-village-search.js"></script>

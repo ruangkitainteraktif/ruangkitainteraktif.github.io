@@ -1705,22 +1705,22 @@
   function measureClip(gj) {
     if (isPointGeom(gj)) return { km: null, ha: null };
     if (isLineGeom(gj)) {
-      try { return { km: (turf.length(gj, { units: 'kilometers' }) || 0).toFixed(2), ha: null }; }
+      try { return { km: ((geoArea.lengthMFromGeoJSON(gj) / 1000) || 0).toFixed(2), ha: null }; }
       catch (e) { return { km: null, ha: null }; }
     }
-    return { km: null, ha: (turf.area(gj) / 10000).toFixed(2) };
+    return { km: null, ha: geoArea.areaHaFromGeoJSON(gj).toFixed(2) };
   }
 
   function isSliverClip(intersection, featureGj, boundary) {
     if (!intersection || !intersection.geometry) return false;
     if (isPointGeom(intersection) || isLineGeom(intersection)) return false;
     var interArea = 0;
-    try { interArea = turf.area(intersection); } catch (e) { return false; }
+    try { interArea = geoArea.areaM2FromGeoJSON(intersection); } catch (e) { return false; }
     if (interArea < 100) return true;
     var featureArea = 0;
     var boundaryArea = 0;
-    try { featureArea = turf.area(featureGj); } catch (e) {}
-    try { boundaryArea = turf.area(boundary); } catch (e) {}
+    try { featureArea = geoArea.areaM2FromGeoJSON(featureGj); } catch (e) {}
+    try { boundaryArea = geoArea.areaM2FromGeoJSON(boundary); } catch (e) {}
     if (featureArea > 0 && boundaryArea > 0) {
       return (interArea / featureArea < 0.02) && (interArea / boundaryArea < 0.02);
     }

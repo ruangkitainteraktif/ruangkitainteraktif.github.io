@@ -1,4 +1,4 @@
-/* ── DEM Topography Analysis — Open-Meteo Elevation API ── */
+/* ── DEM Topography Analysis — AWS Terrain Tiles (utama) + Open-Meteo (cadangan) ── */
 (function () {
   'use strict';
 
@@ -7,6 +7,8 @@
   var KODE_WILAYAH_URL = 'assets/data/kode_wilayah.json';
 
   var demOverlayGroup = L.layerGroup();
+  var demSampleGroup = L.layerGroup();
+  var demSamplesVisible = false;
   var demPolygonLayer = null;
   var demPolygonGeoJSON = null;
   var demnasLayer = null;
@@ -86,7 +88,10 @@
     var BATCH = 100;
     var MAX_RETRIES = 2;
     var results = [];
+    var rateLimited = false;
     for (var i = 0; i < points.length; i += BATCH) {
+      // Kuota harian Open-Meteo sudah habis: retry tidak akan membantu.
+      if (rateLimited) break;
       var batch = points.slice(i, i + BATCH);
       var lats = batch.map(function (p) { return p.lat.toFixed(6); }).join(',');
       var lngs = batch.map(function (p) { return p.lng.toFixed(6); }).join(',');
@@ -94,6 +99,10 @@
       for (var attempt = 0; attempt <= MAX_RETRIES && !success; attempt++) {
         try {
           var res = await fetch(ELEVATION_API + '?latitude=' + lats + '&longitude=' + lngs);
+          if (res.status === 429) {
+            rateLimited = true;
+            break;
+          }
           if (!res.ok) throw new Error('HTTP ' + res.status);
           var json = await res.json();
           if (json.elevation) {
@@ -109,7 +118,7 @@
       }
       if (i + BATCH < points.length) await new Promise(function (r) { setTimeout(r, 150); });
     }
-    return results;
+    return { results: results, rateLimited: rateLimited };
   }
 
   /* ── Grid computation ── */
@@ -232,7 +241,7 @@
   /* ── Area computation ── */
   function computeAreaHa(elevData, polygon) {
     if (elevData.length === 0) return 0;
-    var totalArea = turf.area(polygon) / 10000;
+    var totalArea = geoArea.areaHaFromGeoJSON(polygon);
     return totalArea;
   }
 
@@ -245,7 +254,34 @@
       throw new Error('Gagal memuat batas wilayah');
     }
 
-    var rings = boundary.geometry.rings;
+    var meta = {
+      name: boundary.attributes ? boundary.attributes.name : null,
+      level: level,
+      kode: kode
+    };
+    return analyzeRings(boundary.geometry.rings, meta, progressCb, options);
+  }
+
+  function buildElevationError(terrainError, rateLimited) {
+    var parts = [];
+    if (terrainError) parts.push('Terrarium: ' + terrainError.message);
+    parts.push(rateLimited
+      ? 'Open-Meteo: batas harian API sudah tercapai, coba lagi besok.'
+      : 'Open-Meteo: data tidak dapat dimuat, periksa koneksi lalu coba lagi.');
+    return 'Data elevasi tidak dapat dimuat. ' + parts.join(' ');
+  }
+
+  function elevationSourceLabel(results) {
+    if (!results) return '';
+    if (results.elevSource === 'terrarium') {
+      var res = results.elevResolutionM ? ' ~' + Math.round(results.elevResolutionM) + ' m' : '';
+      return 'Data: AWS Terrain Tiles' + res;
+    }
+    if (results.elevSource === 'openmeteo') return 'Data: Open-Meteo SRTM ~30m';
+    return '';
+  }
+
+  async function analyzeRings(rings, meta, progressCb, options) {
     var polygon;
     if (rings.length === 1) {
       polygon = turf.polygon([rings[0]]);
@@ -262,9 +298,9 @@
       polygon = turf.polygon([outerRing].concat(holes));
     }
 
-    var areaHa = turf.area(polygon) / 10000;
+    var areaHa = geoArea.areaHaFromGeoJSON(polygon);
     var bbox = turf.bbox(polygon);
-    var polygonAreaKm2 = turf.area(polygon) / 1e6;
+    var polygonAreaKm2 = geoArea.areaM2FromGeoJSON(polygon) / 1e6;
 
     var targetPoints = Math.min(1000, Math.max(150, Math.round(areaHa / 3)));
     var spacingDeg = Math.sqrt(polygonAreaKm2 / targetPoints) / 111;
@@ -273,8 +309,35 @@
     if (progressCb) progressCb(15, 'Membuat grid titik sample (spacing: ' + (spacingDeg * 111000).toFixed(0) + 'm)...');
     var gridPoints = generateGridPoints(polygon, spacingDeg);
 
-    if (progressCb) progressCb(20, 'Mengambil data elevasi (' + gridPoints.length + ' titik)...');
-    var elevData = await fetchElevationBatch(gridPoints);
+    if (progressCb) progressCb(18, 'Mengambil data elevasi (' + gridPoints.length + ' titik)...');
+    var elevData = [];
+    var elevSource = null;
+    var elevResolutionM = null;
+    var terrainError = null;
+
+    if (typeof window.fetchTerrariumElevations === 'function') {
+      try {
+        var terrain = await window.fetchTerrariumElevations(gridPoints, bbox, progressCb);
+        elevData = terrain.results;
+        elevResolutionM = terrain.resolutionM;
+        elevSource = 'terrarium';
+      } catch (error) {
+        terrainError = error;
+        console.warn('[DEM] Terrarium gagal, fallback ke Open-Meteo:', error && error.message);
+      }
+    }
+
+    if (!elevData.length) {
+      if (progressCb) progressCb(32, 'Mengambil data elevasi cadangan (Open-Meteo)...');
+      var batch = await fetchElevationBatch(gridPoints);
+      if (batch.results.length) {
+        elevData = batch.results;
+        elevSource = 'openmeteo';
+      } else {
+        // Tanpa data, perhitungan min/max menghasilkan Infinity dan UI menampilkan "- m" tanpa penjelasan.
+        throw new Error(buildElevationError(terrainError, batch.rateLimited));
+      }
+    }
 
     if (progressCb) progressCb(60, 'Menghitung slope & aspect...');
     var gridInfo = buildElevationGrid(elevData, bbox);
@@ -345,11 +408,14 @@
     var depressions = detectDepressions(gridInfo.grid, gridInfo.rows, gridInfo.cols);
 
     var results = {
-      name: boundary.attributes.name || kode,
-      level: level,
-      kode: kode,
+      name: (meta && meta.name) || (meta && meta.kode) || 'Area analisis',
+      level: (meta && meta.level) || 'polygon',
+      kode: (meta && meta.kode) || null,
       areaHa: areaHa,
       pointCount: elevData.length,
+      elevSource: elevSource,
+      elevResolutionM: elevResolutionM,
+      elevSourceLabel: elevationSourceLabel({ elevSource: elevSource, elevResolutionM: elevResolutionM }),
       elevMin: elevMin,
       elevMax: elevMax,
       elevAvg: elevAvg,
@@ -563,6 +629,7 @@
 
   function createElevationOverlay(elevData, results) {
     demOverlayGroup.clearLayers();
+    demSampleGroup.clearLayers();
     demPolygonGeoJSON = results.polygon || null;
 
     // Add polygon boundary
@@ -601,27 +668,39 @@
         fillColor: color,
         fillOpacity: 0.8
       });
-      var slopeInfo = findSlopeAtPoint(d.lat, d.lng, results);
-      var color = elevToColor(d.elev);
-      var aspectVal = findAspectAtPoint(d.lat, d.lng, results);
-      var aspectLabel = aspectVal !== null ? aspectToCompass(aspectVal) : '-';
-      var slopeLabel = slopeInfo.slope !== null ? slopeInfo.slope.toFixed(1) + '°' : '-';
 
       var popupHtml = '<div class="dem-popup">';
       popupHtml += '<div class="dem-popup-header" style="background:linear-gradient(135deg,' + color + ',' + color + 'cc);">';
       popupHtml += '<div class="dem-popup-elev">' + d.elev.toFixed(1) + '<span class="dem-popup-unit"> mdpl</span></div>';
       popupHtml += '<div class="dem-popup-coord">' + d.lat.toFixed(4) + ', ' + d.lng.toFixed(4) + '</div>';
       popupHtml += '</div>';
-      popupHtml += '<div class="dem-popup-body">';
-      popupHtml += '<div class="dem-popup-row"><span class="dem-popup-icon">📐</span><span class="dem-popup-label">Kemiringan</span><span class="dem-popup-val">' + slopeLabel + '</span></div>';
-      popupHtml += '<div class="dem-popup-row"><span class="dem-popup-icon">🧭</span><span class="dem-popup-label">Arah Lereng</span><span class="dem-popup-val">' + aspectLabel + '</span></div>';
-      popupHtml += '<div class="dem-popup-row"><span class="dem-popup-icon">📏</span><span class="dem-popup-label">Ketinggian</span><span class="dem-popup-val">' + d.elev.toFixed(0) + ' m</span></div>';
-      popupHtml += '</div></div>';
+      popupHtml += '</div>';
 
       marker.bindPopup(popupHtml, { maxWidth: 220, className: 'dem-leaflet-popup' });
-      demOverlayGroup.addLayer(marker);
+      demSampleGroup.addLayer(marker);
     });
-    if (map && !map.hasLayer(demOverlayGroup)) demOverlayGroup.addTo(map);
+    if (map) {
+      if (!map.hasLayer(demOverlayGroup)) demOverlayGroup.addTo(map);
+      if (demSamplesVisible && !map.hasLayer(demSampleGroup)) demSampleGroup.addTo(map);
+    }
+  }
+
+  // Sample point topografi disembunyikan terpisah dari batas polygon, agar
+  // garis areal tetap terlihat saat titik sample dimatikan.
+  function toggleDemSamples(visible) {
+    if (!map) return false;
+    if (visible === undefined) visible = !demSamplesVisible;
+    demSamplesVisible = !!visible;
+    if (demSamplesVisible) {
+      if (!map.hasLayer(demSampleGroup)) demSampleGroup.addTo(map);
+    } else if (map.hasLayer(demSampleGroup)) {
+      map.removeLayer(demSampleGroup);
+    }
+    return demSamplesVisible;
+  }
+
+  function isDemSamplesVisible() {
+    return demSamplesVisible;
   }
 
   function buildPolygonPopup(r) {
@@ -638,19 +717,19 @@
     html += '</div>';
     html += '<div class="dem-popup-body" style="padding:8px 14px 12px;">';
 
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;">';
-    html += '<div class="dem-popup-row" style="border:none;"><span class="dem-popup-icon">⛰️</span><span class="dem-popup-label">Elevasi</span><span class="dem-popup-val">' + r.elevMin.toFixed(0) + '–' + r.elevMax.toFixed(0) + ' m</span></div>';
-    html += '<div class="dem-popup-row" style="border:none;"><span class="dem-popup-icon">📊</span><span class="dem-popup-label">Rata-rata</span><span class="dem-popup-val">' + r.elevAvg.toFixed(0) + ' m</span></div>';
-    html += '<div class="dem-popup-row" style="border:none;"><span class="dem-popup-icon">📐</span><span class="dem-popup-label">Kemiringan</span><span class="dem-popup-val">' + r.slopeAvg.toFixed(1) + '°</span></div>';
-    html += '<div class="dem-popup-row" style="border:none;"><span class="dem-popup-icon">🧭</span><span class="dem-popup-label">Aspek</span><span class="dem-popup-val">' + aspectLabel + '</span></div>';
-    html += '<div class="dem-popup-row" style="border:none;"><span class="dem-popup-icon">🟢</span><span class="dem-popup-label">Datar</span><span class="dem-popup-val">' + r.flatPct.toFixed(0) + '%</span></div>';
-    html += '<div class="dem-popup-row" style="border:none;"><span class="dem-popup-icon">🔴</span><span class="dem-popup-label">Curam</span><span class="dem-popup-val">' + r.steepPct.toFixed(0) + '%</span></div>';
-    html += '<div class="dem-popup-row" style="border:none;"><span class="dem-popup-icon">💧</span><span class="dem-popup-label">Genangan</span><span class="dem-popup-val" style="color:#2563eb;">' + r.floodAreaHa.toFixed(1) + ' ha</span></div>';
-    html += '<div class="dem-popup-row" style="border:none;"><span class="dem-popup-icon">⚠️</span><span class="dem-popup-label">Erosi</span><span class="dem-popup-val" style="color:#dc2626;">' + r.erosionAreaHa.toFixed(1) + ' ha</span></div>';
+    html += '<div class="dem-popup-detail">';
+    html += '<div class="dem-popup-row"><span class="dem-popup-icon">⛰️</span><span class="dem-popup-label">Elevasi</span><span class="dem-popup-val">' + r.elevMin.toFixed(0) + '–' + r.elevMax.toFixed(0) + ' m</span></div>';
+    html += '<div class="dem-popup-row"><span class="dem-popup-icon">📊</span><span class="dem-popup-label">Rata-rata</span><span class="dem-popup-val">' + r.elevAvg.toFixed(0) + ' m</span></div>';
+    html += '<div class="dem-popup-row"><span class="dem-popup-icon">📐</span><span class="dem-popup-label">Kemiringan</span><span class="dem-popup-val">' + r.slopeAvg.toFixed(1) + '°</span></div>';
+    html += '<div class="dem-popup-row"><span class="dem-popup-icon">🧭</span><span class="dem-popup-label">Aspek</span><span class="dem-popup-val">' + aspectLabel + '</span></div>';
+    html += '<div class="dem-popup-row"><span class="dem-popup-icon">🟢</span><span class="dem-popup-label">Datar</span><span class="dem-popup-val">' + r.flatPct.toFixed(0) + '%</span></div>';
+    html += '<div class="dem-popup-row"><span class="dem-popup-icon">🔴</span><span class="dem-popup-label">Curam</span><span class="dem-popup-val">' + r.steepPct.toFixed(0) + '%</span></div>';
+    html += '<div class="dem-popup-row"><span class="dem-popup-icon">💧</span><span class="dem-popup-label">Genangan</span><span class="dem-popup-val" style="color:#2563eb;">' + r.floodAreaHa.toFixed(1) + ' ha</span></div>';
+    html += '<div class="dem-popup-row"><span class="dem-popup-icon">⚠️</span><span class="dem-popup-label">Erosi</span><span class="dem-popup-val" style="color:#dc2626;">' + r.erosionAreaHa.toFixed(1) + ' ha</span></div>';
     html += '</div>';
 
     html += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #f1f5f9;font-size:9px;color:#94a3b8;text-align:center;">';
-    html += 'Klik titik grid untuk detail elevasi · Data: SRTM ~30m';
+    html += 'Klik titik grid untuk detail elevasi · ' + escapeHtml(elevationSourceLabel(r) || 'Data elevasi');
     html += '</div></div></div>';
     return html;
   }
@@ -665,7 +744,10 @@
 
   function clearDemOverlay() {
     if (map && map.hasLayer(demOverlayGroup)) map.removeLayer(demOverlayGroup);
+    if (map && map.hasLayer(demSampleGroup)) map.removeLayer(demSampleGroup);
     demOverlayGroup.clearLayers();
+    demSampleGroup.clearLayers();
+    demSamplesVisible = false;
     demPolygonLayer = null;
     demPolygonGeoJSON = null;
     hideDemnas();
@@ -737,7 +819,7 @@
     html += '<span>·</span>';
     html += '<span>' + r.pointCount + ' titik sample</span>';
     html += '<span>·</span>';
-    html += '<span>Data: Open-Meteo SRTM ~30m</span>';
+    html += '<span>' + escapeHtml(elevationSourceLabel(r) || 'Data elevasi') + '</span>';
     html += '</div></div>';
 
     html += '<div style="margin-top:8px;">';
@@ -773,7 +855,13 @@
   window.ensureDemData = ensureDemData;
   window.searchDemAreas = searchDemAreas;
   window.runDemAnalysis = runDemAnalysis;
+  window.runDemAnalysisForPolygon = function(rings, meta, progressCb, options) {
+    return analyzeRings(rings, meta, progressCb, options);
+  };
+  window.createElevationOverlay = createElevationOverlay;
   window.clearDemOverlay = clearDemOverlay;
+  window.toggleDemSamples = toggleDemSamples;
+  window.isDemSamplesVisible = isDemSamplesVisible;
   window.buildTopoReport = buildTopoReport;
 
   /* ── UI initialization ── */

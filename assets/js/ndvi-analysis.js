@@ -209,6 +209,136 @@
     return Number.isFinite(smallest) ? smallest : 100;
   }
 
+  function ndviCloudQuality(cloudPercent) {
+    if (!Number.isFinite(cloudPercent)) {
+      return { label: 'Metadata awan tidak tersedia', short: 'Tidak tersedia', color: '#78909c' };
+    }
+    if (cloudPercent <= 10) {
+      return { label: 'Baik — tutupan awan rendah', short: 'Baik', color: '#2e7d32' };
+    }
+    if (cloudPercent <= 30) {
+      return { label: 'Cukup — sebagian area berpotensi tertutup awan', short: 'Cukup', color: '#b26a00' };
+    }
+    return { label: 'Terbatas — tutupan awan cukup tinggi', short: 'Terbatas', color: '#c62828' };
+  }
+
+  function normalizeCloudPercent(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return NaN;
+    return numeric <= 1 ? numeric * 100 : numeric;
+  }
+
+  const SENTINEL_PLATFORMS = { S2A: 'Sentinel-2A', S2B: 'Sentinel-2B', S2C: 'Sentinel-2C', S2D: 'Sentinel-2D', S2G: 'Sentinel-2G' };
+  const SENTINEL_LEVELS = {
+    MSIL1C: 'Level-1C · atmosfer atas',
+    MSIL2A: 'Level-2A · reflektansi permukaan',
+    S2MSI1C: 'Level-1C · atmosfer atas',
+    S2MSI2A: 'Level-2A · reflektansi permukaan'
+  };
+
+  /** Uraikan ID produk ESA, mis. S2A_MSIL1C_20260709T030151_N0512_R032_T48MYU_20260709T100214 */
+  function parseSentinelProduct(productName) {
+    if (!productName) return null;
+    const parts = String(productName).split('_');
+    if (parts.length < 3) return null;
+    const baseline = /^N(\d{2})(\d{2})$/.exec(parts[3] || '');
+    return {
+      platform: SENTINEL_PLATFORMS[parts[0]] || parts[0] || null,
+      level: SENTINEL_LEVELS[parts[1]] || parts[1] || null,
+      baseline: baseline ? baseline[1] + '.' + baseline[2] : (parts[3] || null),
+      orbit: (parts[4] || '').replace(/^R0*/, '') || null,
+      tile: (parts[5] || '').replace(/^T/, '') || null,
+      raw: productName
+    };
+  }
+
+  function formatSentinelStamp(stamp) {
+    const m = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})$/.exec(String(stamp || ''));
+    if (!m) return null;
+    return `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}:${m[6]} UTC`;
+  }
+
+  async function fetchNdviCloudInfo(bounds, attempt) {
+    if (!bounds || bounds.length !== 4) return null;
+    const retry = attempt || 0;
+    const params = new URLSearchParams({
+      f: 'json',
+      geometry: bounds.join(','),
+      geometryType: 'esriGeometryEnvelope',
+      inSR: '4326',
+      spatialRel: 'esriSpatialRelIntersects',
+      // Katalog juga memuat record latar/"Background" tanpa cloudcover; kosongkan agar tidak terpilih.
+      where: 'cloudcover IS NOT NULL',
+      outFields: 'objectid,name,productname,acquisitiondate,cloudcover,lowps,minps,maxps,highps,tilename,category,datatype_format',
+      returnGeometry: 'true',
+      outSR: '4326',
+      orderByFields: 'cloudcover ASC',
+      resultRecordCount: '1'
+    });
+    const controller = new AbortController();
+    // Katalog Esri/antrean tile sering lambat; gunakan batas yang longgar lalu coba ulang.
+    const timer = setTimeout(() => controller.abort(), 45000);
+    let payload;
+    try {
+      const response = await fetch(`${SENTINEL_CATALOG_URL}?${params}`, { signal: controller.signal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      payload = await response.json();
+      if (payload.error) throw new Error(payload.error.message || 'Permintaan katalog ditolak');
+    } catch (error) {
+      clearTimeout(timer);
+      if (retry < 1) {
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        return fetchNdviCloudInfo(bounds, retry + 1);
+      }
+      console.warn('[NDVI] Metadata awan gagal dimuat:', error);
+      throw new Error('Gagal menghubungi katalog Sentinel-2. Coba lagi beberapa saat.');
+    }
+    clearTimeout(timer);
+
+    if (!Array.isArray(payload.features) || !payload.features.length) return null;
+    const feature = payload.features[0];
+    const attributes = feature.attributes || {};
+    const cloudPercent = normalizeCloudPercent(attributes.cloudcover);
+    const quality = ndviCloudQuality(cloudPercent);
+    const acquired = Number(attributes.acquisitiondate);
+    const hasDate = Number.isFinite(acquired) && acquired > 0;
+    const imageDate = hasDate
+      ? new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }).format(new Date(acquired))
+      : 'Tidak tersedia';
+    const product = parseSentinelProduct(attributes.productname);
+    const geometry = feature.geometry || null;
+    return {
+      objectId: attributes.objectid != null ? attributes.objectid : null,
+      cloudPercent: cloudPercent,
+      imageDate: imageDate,
+      quality: quality,
+      sceneName: attributes.name || null,
+      productName: attributes.productname || null,
+      platform: product ? product.platform : null,
+      level: product ? product.level : null,
+      baseline: product ? product.baseline : null,
+      orbit: product ? product.orbit : null,
+      tile: attributes.tilename || (product ? product.tile : null),
+      sensingUtc: product ? formatSentinelStamp(product.raw.split('_')[2]) : null,
+      resolution: {
+        low: Number.isFinite(Number(attributes.lowps)) ? Number(attributes.lowps) : null,
+        min: Number.isFinite(Number(attributes.minps)) ? Number(attributes.minps) : null,
+        max: Number.isFinite(Number(attributes.maxps)) ? Number(attributes.maxps) : null,
+        high: Number.isFinite(Number(attributes.highps)) ? Number(attributes.highps) : null
+      },
+      acquisitionMs: hasDate ? acquired : null,
+      acquisitionUtc: hasDate
+        ? new Intl.DateTimeFormat('id-GB', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit', timeZone: 'UTC', hour12: false
+        }).format(new Date(acquired)) + ' UTC'
+        : null,
+      category: Number.isFinite(Number(attributes.category)) ? Number(attributes.category) : null,
+      dataFormat: attributes.datatype_format || null,
+      footprint: geometry && Array.isArray(geometry.rings) && geometry.rings.length ? geometry.rings : null
+    };
+  }
+
   function buildNdviDetails(mean, stats, samples, cloudPercent, imageDate, analysisAreaHa) {
     const bands = [
       { label: 'Sangat rendah', min: -Infinity, max: 0, color: '#397ca8' },
@@ -234,10 +364,7 @@
       : mean >= 0.2
         ? `Vegetasi berada pada kondisi sedang; area dengan nilai rendah perlu dipantau.`
         : `Nilai NDVI cenderung rendah; cek kemungkinan lahan terbuka, badan air, atau tanaman stres.`;
-    const quality = !Number.isFinite(cloudPercent) ? { label: 'Metadata awan tidak tersedia', color: '#78909c' }
-      : cloudPercent <= 10 ? { label: 'Baik — tutupan awan rendah', color: '#2e7d32' }
-        : cloudPercent <= 30 ? { label: 'Cukup — sebagian area berpotensi tertutup awan', color: '#b26a00' }
-          : { label: 'Terbatas — tutupan awan cukup tinggi', color: '#c62828' };
+    const quality = ndviCloudQuality(cloudPercent);
     const section = (title, content) => `<div class="ndvi-popup-section"><div class="ndvi-popup-section-title">${title}</div>${content}</div>`;
 
     return {
@@ -254,7 +381,7 @@
     const mean = Number(stats.mean);
     const category = ndviCategory(mean);
     const boundaryFeature = { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: boundary.rings } };
-    const analysisAreaHa = typeof turf !== 'undefined' ? turf.area(boundaryFeature) / 10000 : null;
+    const analysisAreaHa = typeof geoArea !== 'undefined' ? geoArea.areaHaFromGeoJSON(boundaryFeature) : null;
     const imageDate = imageMetadata?.acquisitiondate
       ? new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }).format(new Date(imageMetadata.acquisitiondate))
       : 'Tidak tersedia';
@@ -547,7 +674,7 @@
       ? new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }).format(new Date(imageMetadata.acquisitiondate))
       : 'Tidak tersedia';
     const boundaryFeature = { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: boundary.rings } };
-    const analysisAreaHa = typeof turf !== 'undefined' ? turf.area(boundaryFeature) / 10000 : null;
+    const analysisAreaHa = typeof geoArea !== 'undefined' ? geoArea.areaHaFromGeoJSON(boundaryFeature) : null;
     const totalSamples = samples.length || 1;
 
     const now = new Date();
@@ -907,10 +1034,7 @@
       pdf.line(panelX + 4, py + 1, panelX + cardW, py + 1);
       py += 4;
 
-      const qualityLabel = !Number.isFinite(cloudPercent) ? 'Metadata awan tidak tersedia'
-        : cloudPercent <= 10 ? 'Baik'
-          : cloudPercent <= 30 ? 'Cukup'
-            : 'Terbatas';
+      const qualityLabel = ndviCloudQuality(cloudPercent).short;
       const infoLines = [
         ['Tanggal', imageDate],
         ['Resolusi', '10 m'],
@@ -1021,5 +1145,8 @@
   };
 
   window.fetchNdviStatistics = fetchNdviStatistics;
+  window.fetchNdviCloudInfo = fetchNdviCloudInfo;
+  window.ndviCloudQuality = ndviCloudQuality;
+  window.parseSentinelProduct = parseSentinelProduct;
   window._sentinelToWebMercator = toWebMercator;
 })();

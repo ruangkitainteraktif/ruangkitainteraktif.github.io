@@ -847,7 +847,7 @@ async function computeOverlayIntersection(villageKode, options = {}) {
         try {
           const intersection = turf.intersect(turf.featureCollection([sawahPolyRaw, l2Poly]));
           if (intersection && intersection.geometry) {
-            const areaM2 = turf.area(intersection);
+            const areaM2 = geoArea.areaM2FromGeoJSON(intersection);
             const areaHa = areaM2 / 10000;
             if (areaHa < 0.0001) continue;
             intersection.properties = {
@@ -1760,7 +1760,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const intersection = turf.intersect(turf.featureCollection([sawahPoly, villagePolygon]));
         if (intersection && intersection.geometry) {
-          const areaM2 = turf.area(intersection);
+          const areaM2 = geoArea.areaM2FromGeoJSON(intersection);
           const areaHa = areaM2 / 10000;
           if (areaHa < 0.00001) continue;
           intersection.properties = {
@@ -1860,7 +1860,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           const intersection = turf.intersect(turf.featureCollection([sawahPoly, outerPoly]));
           if (intersection && intersection.geometry) {
-            const areaM2 = turf.area(intersection);
+            const areaM2 = geoArea.areaM2FromGeoJSON(intersection);
             const areaHa = areaM2 / 10000;
             if (areaHa < 0.00001) continue;
             intersection.properties = {

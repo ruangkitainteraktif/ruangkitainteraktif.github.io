@@ -96,7 +96,8 @@
     for (let i = 0; i < tabBtns.length; i++) tabBtns[i].classList.remove("active");
 
     document.getElementById(tabId).classList.add("active");
-    evt.currentTarget.classList.add("active");
+    // evt bisa null saat tab dipanggil dari shortcut/redirect, bukan klik tombol.
+    if (evt && evt.currentTarget) evt.currentTarget.classList.add("active");
     window.currentActiveTab = tabId;
 
     // Collapse Menu Aplikasi after selecting a tab
@@ -201,18 +202,19 @@
   window.openGempaSubtab = openGempaSubtab;
   window.openGeoidSubtab = openGeoidSubtab;
 
-  function openGeotoolsMainTab(btn) {
-    var tabId = btn.getAttribute('data-maintab');
+  function openGeotoolsMainTab(el) {
+    var tabId = el.value || el.getAttribute('data-maintab');
     if (!tabId) return;
-    var tabs = btn.parentElement.querySelectorAll('.geotools-main-tab-btn');
-    for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
-    btn.classList.add('active');
     var panels = document.querySelectorAll('.geotools-main-tab-panel');
     for (var j = 0; j < panels.length; j++) panels[j].classList.remove('active');
     var target = document.getElementById(tabId);
     if (target) target.classList.add('active');
     if (tabId === 'geotoolsTabDemnas' && window.DemnasDownload && typeof window.DemnasDownload.load === 'function') {
       window.DemnasDownload.load().catch(function () {});
+    }
+    if (tabId === 'geotoolsTabGeoFarm') {
+      // Panel hasil GeoFarm bisa ditutup user; buka lagi dari sini.
+      if (typeof window.reopenGeoFarmPanel === 'function') window.reopenGeoFarmPanel();
     }
     if (tabId === 'geotoolsTabGeoPulse') {
       var gempaPanel = document.getElementById('gempa-subtab-gempa');

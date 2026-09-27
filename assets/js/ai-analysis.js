@@ -1700,13 +1700,13 @@
       try {
         var intersection = turf.intersect(turf.featureCollection([boundaryFeature, gj]));
         if (intersection && intersection.geometry) {
-          totalHa += turf.area(intersection) / 10000;
+          totalHa += geoArea.areaHaFromGeoJSON(intersection);
           count += 1;
         }
       } catch (e) {
         try {
           if (turf.booleanWithin(gj, boundaryFeature)) {
-            totalHa += turf.area(gj) / 10000;
+            totalHa += geoArea.areaHaFromGeoJSON(gj);
             count += 1;
           }
         } catch (e2) {}
@@ -1830,12 +1830,12 @@
         var ha = 0;
         try {
           var intersection = turf.intersect(turf.featureCollection([boundaryFeature, gj]));
-          if (intersection && intersection.geometry) ha = turf.area(intersection) / 10000;
+          if (intersection && intersection.geometry) ha = geoArea.areaHaFromGeoJSON(intersection);
           else return;
         } catch (e) {
           try {
             if (!turf.booleanWithin(gj, boundaryFeature)) return;
-            ha = turf.area(gj) / 10000;
+            ha = geoArea.areaHaFromGeoJSON(gj);
           } catch (e2) { return; }
         }
         if (!(ha > 0)) return;

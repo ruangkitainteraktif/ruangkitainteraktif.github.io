@@ -10,6 +10,13 @@ let measureExportLayer = null;
 let measureMarkerLayer = null;
 let measureTempLayer = null;
 let adminModalOpenedAt = 0;
+let drawSessionActive = false;
+let drawHideExportActions = false;
+
+function setDrawHideExportActions(hidden) {
+  drawHideExportActions = hidden === true;
+}
+window.setDrawHideExportActions = setDrawHideExportActions;
 
 function removeDrawControl() {
   if (drawControl) {
@@ -17,6 +24,78 @@ function removeDrawControl() {
     drawControl = null;
   }
 }
+
+function buildDrawActionsWrap() {
+  const wrap = L.DomUtil.create('div', 'draw-actions-wrap');
+  const actions = [
+    {
+      label: 'Export GeoJSON',
+      className: 'geojson',
+      icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5z"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+      run: exportDrawings
+    },
+    {
+      label: 'Export SHP',
+      className: 'shp',
+      icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v13H3z"/><path d="M3 7l3-4h12l3 4"/><path d="M8 11h8"/><path d="M8 15h5"/></svg>',
+      run: exportDrawingsSHP
+    }
+  ];
+  actions.forEach(action => {
+    const button = L.DomUtil.create('button', `draw-actions-btn ${action.className}`, wrap);
+    button.type = 'button';
+    button.innerHTML = `${action.icon}<span class="draw-actions-label">${action.label}</span>`;
+    button.title = action.label;
+    button.setAttribute('aria-label', action.label);
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      action.run();
+    });
+  });
+  L.DomEvent.disableClickPropagation(wrap);
+  L.DomEvent.disableScrollPropagation(wrap);
+  return wrap;
+}
+
+function addDrawActionsControl() {
+  if (!drawControl) return;
+  if (drawHideExportActions) return;
+  const container = drawControl.getContainer ? drawControl.getContainer() : null;
+  if (!container) return;
+  container.insertBefore(buildDrawActionsWrap(), container.firstChild);
+}
+
+function isDrawSidebarOpen() {
+  const sidebar = document.getElementById('drawSidebar');
+  return !!sidebar && sidebar.classList.contains('dm-sidebar-open');
+}
+
+function syncDrawChrome() {
+  const sessionActive = !!measureMode || drawSessionActive ||
+    drawLayerGroup.getLayers().length > 0 || measureLayerGroup.getLayers().length > 0;
+  document.body.classList.toggle('draw-chrome-hidden', !isDrawSidebarOpen() && !sessionActive);
+}
+
+/* Dipanggil dari luar (GeoFarm) untuk mengakhiri sesi gambar. Normalnya
+   drawSessionActive direset oleh event draw:drawstop, tapi saat kontrol
+   dicabut dari luar event itu tidak pernah menyala sehingga status sesi
+   menggantung dan drawControl tetap menunjuk kontrol yang sudah dilepas --
+   startDraw() berikutnya lalu mencoba removeControl() pada kontrol basi.
+   Dipakai juga untuk menyembunyikan kembali chrome gambar. */
+window.stopDrawSession = function () {
+  drawSessionActive = false;
+  stopMeasureMode();
+  removeDrawControl();
+  syncDrawChrome();
+};
+
+(function observeDrawSidebar() {
+  const sidebar = document.getElementById('drawSidebar');
+  if (!sidebar || typeof MutationObserver === 'undefined') return;
+  new MutationObserver(syncDrawChrome).observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+})();
+
+syncDrawChrome();
 
 function formatDistance(meters) {
   if (meters >= 1000) return `${(meters / 1000).toFixed(2)} km`;
@@ -39,6 +118,7 @@ function flattenLatLngs(value) {
 
 function getMeasureDistance(points) {
   const flatPoints = flattenLatLngs(points);
+  if (typeof window.geoArea !== 'undefined') return window.geoArea.lengthM(flatPoints);
   return flatPoints.slice(1).reduce((total, point, index) => (
     total + map.distance(flatPoints[index], point)
   ), 0);
@@ -75,12 +155,13 @@ function distanceMeasureData(distance, source) {
   };
 }
 
-function setMeasureResult(message) {
-  const sidebarResult = document.getElementById('alatMeasureResult');
-  if (sidebarResult) sidebarResult.innerHTML = message || '';
+function setMeasureResult(message, toastType) {
   const hud = document.getElementById('measureHud');
   const hint = document.getElementById('measureHudHint');
   if (hud && !hud.hidden && hint) hint.innerHTML = message || '';
+  if (message && toastType && typeof window.showMapToast === 'function') {
+    window.showMapToast(message, toastType === true || toastType === 'error' ? 'warn' : toastType);
+  }
 }
 
 function getMeasureHud() {
@@ -196,7 +277,7 @@ function startDraw(type) {
     return;
   }
   stopMeasureMode();
-  if (drawControl) map.removeControl(drawControl);
+  removeDrawControl();
   const options = {
     position: 'bottomleft',
     draw: {
@@ -211,6 +292,9 @@ function startDraw(type) {
   };
   drawControl = new L.Control.Draw(options);
   map.addControl(drawControl);
+  addDrawActionsControl();
+  drawSessionActive = true;
+  syncDrawChrome();
   setTimeout(() => {
     const element = document.querySelector('.leaflet-draw-section') || document.querySelector('.leaflet-draw-toolbar');
     if (element) {
@@ -239,7 +323,7 @@ map.on(L.Draw.Event.CREATED, event => {
   if (layer instanceof L.Polygon) {
     try {
       const latlngs = layer.getLatLngs()[0];
-      const areaM2 = L.GeometryUtil.geodesicArea(latlngs);
+      const areaM2 = geoArea.areaM2FromRings(latlngs);
       setLayerMeasureData(layer, areaMeasureData(areaM2, 'draw'));
       layer.bindPopup(`<b>Luas:</b> ${formatArea(areaM2)}`);
     } catch (error) {
@@ -260,13 +344,40 @@ map.on(L.Draw.Event.CREATED, event => {
     }));
     layer.bindPopup(`<b>Luas:</b> ${formatArea(areaM2)}<br><b>Jari-jari:</b> ${formatDistance(layer.getRadius())}`);
   }
+
+  if (layer instanceof L.Polygon && !(layer instanceof L.Rectangle) && typeof window.registerDrawnPolygon === 'function') {
+    try {
+      window.registerDrawnPolygon(layer, geoArea.areaHaFromRings(layer.getLatLngs()[0]));
+    } catch (error) {
+      console.warn('[Polygon] Gagal menyiapkan analisis polygon:', error);
+    }
+  }
+  syncDrawChrome();
+});
+
+map.on('draw:drawstop', () => {
+  drawSessionActive = false;
+  drawHideExportActions = false;
+  syncDrawChrome();
+});
+
+map.on('draw:editstop draw:deleted', () => {
+  syncDrawChrome();
+});
+
+map.on('draw:edited', event => {
+  if (typeof window.markPolygonStale !== 'function' || !event.layers) return;
+  event.layers.eachLayer(layer => {
+    try {
+      window.markPolygonStale(layer);
+    } catch (error) {
+      console.warn('[Polygon] Gagal menandai polygon:', error);
+    }
+  });
 });
 
 function startMeasure(mode) {
-  if (drawControl) {
-    map.removeControl(drawControl);
-    drawControl = null;
-  }
+  removeDrawControl();
   stopMeasureMode();
   measureMode = mode;
   measurePoints = [];
@@ -275,6 +386,7 @@ function startMeasure(mode) {
   setMeasureResult(mode === 'distance'
     ? 'Klik titik pertama pada peta.'
     : 'Klik titik untuk membentuk area.');
+  syncDrawChrome();
 }
 
 function finishMeasure() {
@@ -307,11 +419,12 @@ function finishMeasure() {
     updateMeasureHud(formatDistance(distance), `${measurePoints.length} titik`, false);
     setMeasureResult(`Jarak total: <b>${formatDistance(distance)}</b>. Klik Ukur Lagi untuk mengulang.`);
   } else {
-    const areaM2 = L.GeometryUtil.geodesicArea(measurePolygon.getLatLngs()[0]);
+    const areaM2 = geoArea.areaM2FromRings(measurePolygon.getLatLngs()[0]);
     setLayerMeasureData(measureExportLayer, areaMeasureData(areaM2, 'measure'));
     updateMeasureHud(formatArea(areaM2), `${measurePoints.length} titik`, false);
     setMeasureResult(`Luas: <b>${formatArea(areaM2)}</b>. Klik Ukur Lagi untuk mengulang.`);
   }
+  syncDrawChrome();
 }
 
 function resetMeasure() {
@@ -324,6 +437,7 @@ function stopMeasureMode() {
   measurePoints = [];
   clearMeasureLayers();
   hideMeasureHud();
+  syncDrawChrome();
 }
 
 function handleMeasureMapClick(event) {
@@ -339,15 +453,15 @@ function handleMeasureMapClick(event) {
     const canFinish = measurePoints.length >= 2;
     updateMeasureHud(canFinish ? formatDistance(distance) : '—', `${measurePoints.length} titik`, canFinish);
     setMeasureResult(canFinish
-      ? `Jarak total: <b>${formatDistance(distance)}</b>. Klik Selesai atau tambahkan titik.`
+      ? `Jarak total: <b>${formatDistance(distance)}</b>`
       : 'Klik titik berikutnya untuk mengukur jarak.');
   } else {
     renderAreaGeometry();
     if (measurePoints.length >= 3) {
-      const areaM2 = L.GeometryUtil.geodesicArea(measurePolygon.getLatLngs()[0]);
+      const areaM2 = geoArea.areaM2FromRings(measurePolygon.getLatLngs()[0]);
       setLayerMeasureData(measureExportLayer, areaMeasureData(areaM2, 'measure'));
       updateMeasureHud(formatArea(areaM2), `${measurePoints.length} titik`, true);
-      setMeasureResult(`Luas: <b>${formatArea(areaM2)}</b>. Klik Selesai atau tambahkan titik.`);
+      setMeasureResult(`Luas: <b>${formatArea(areaM2)}</b>`);
     } else {
       updateMeasureHud('—', `${measurePoints.length} titik`, false);
       setMeasureResult(`Klik ${3 - measurePoints.length} titik lagi untuk membentuk area.`);
@@ -361,11 +475,9 @@ function clearDrawings() {
   drawLayerGroup.clearLayers();
   measureLayerGroup.clearLayers();
   stopMeasureMode();
-  if (drawControl) {
-    map.removeControl(drawControl);
-    drawControl = null;
-  }
+  removeDrawControl();
   setMeasureResult('Semua gambar dan ukuran dihapus.');
+  syncDrawChrome();
 }
 
 function getLayerMeasureData(layer) {
@@ -374,7 +486,7 @@ function getLayerMeasureData(layer) {
   try {
     if (layer instanceof L.Polygon) {
       const latlngs = layer.getLatLngs()[0];
-      Object.assign(data, areaMeasureData(L.GeometryUtil.geodesicArea(latlngs), data.source || 'draw'));
+      Object.assign(data, areaMeasureData(geoArea.areaM2FromRings(latlngs), data.source || 'draw'));
     } else if (layer instanceof L.Polyline) {
       Object.assign(data, distanceMeasureData(getMeasureDistance(layer.getLatLngs()), data.source || 'draw'));
     } else if (layer instanceof L.Circle) {
@@ -426,13 +538,13 @@ function downloadExportBlob(blob, filename) {
 function exportDrawings() {
   const features = collectExportFeatures();
   if (!features.length) {
-    setMeasureResult('Tidak ada gambar untuk diekspor.');
+    setMeasureResult('Tidak ada gambar untuk diekspor.', 'error');
     return;
   }
   const collection = { type: 'FeatureCollection', features };
   const blob = new Blob([JSON.stringify(collection, null, 2)], { type: 'application/json' });
   downloadExportBlob(blob, 'gambar-peta.geojson');
-  setMeasureResult(`${features.length} fitur diekspor sebagai GeoJSON.`);
+  setMeasureResult(`${features.length} fitur diekspor sebagai GeoJSON.`, 'info');
 }
 
 function shpSafeProperties(properties) {
@@ -503,7 +615,7 @@ async function exportDrawingsSHP() {
     });
     const blob = zipData instanceof Blob ? zipData : new Blob([zipData], { type: 'application/zip' });
     downloadExportBlob(blob, 'gambar-peta-shp.zip');
-    setMeasureResult(`${features.length} fitur diekspor sebagai SHP ZIP.`);
+    setMeasureResult(`${features.length} fitur diekspor sebagai SHP ZIP.`, 'info');
   } catch (error) {
     setMeasureResult('Gagal membuat SHP: ' + (error && error.message ? error.message : String(error)), true);
   }

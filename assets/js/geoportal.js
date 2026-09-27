@@ -586,6 +586,21 @@
     return !!(layer && map.hasLayer(layer));
   }
 
+  // Tab Geoportal & GeoTani lama sudah jadi halaman pengalihan; isi aslinya
+  // pindah ke panel GeoTools. Deteksi section lewat dropdown yang aktif.
+  const GEO_TOOLS_SECTIONS = {
+    geotoolsTabGeoportal: 'geoportal',
+    geotoolsTabGeoTani: 'geotani'
+  };
+
+  function activeGeoportalSection() {
+    if (window.currentActiveTab === 'tab-geoportal') return 'geoportal';
+    if (window.currentActiveTab === 'tab-geotani') return 'geotani';
+    var dd = document.querySelector('.geotools-dropdown');
+    if (dd && dd.value) return GEO_TOOLS_SECTIONS[dd.value] || '';
+    return '';
+  }
+
   function getGeotaniLegendItems() {
     const items = getSt2023LegendItems();
     const ARCGIS_LABELS = {
@@ -637,9 +652,9 @@
     if (typeof removeUnifiedLegend !== 'function') return;
     removeUnifiedLegend('geoportal');
 
-    const isGpTab = window.currentActiveTab === 'tab-geoportal';
+    const section = activeGeoportalSection();
     let items = [];
-    if (isGpTab) items = getGeoportalLegendItems();
+    if (section === 'geoportal') items = getGeoportalLegendItems();
     else items = getGeotaniLegendItems();
     if (!items.length) {
       geoportalLegendSig = '';
@@ -690,10 +705,26 @@
     clearTimeout(__gpLegendTimer);
     __gpLegendTimer = setTimeout(renderGeoportalLegend, 200);
   }
+  window.scheduleRenderGeoportalLegend = scheduleRenderGeoportalLegend;
 
   if (typeof map !== 'undefined' && map && typeof map.on === 'function') {
     map.on('layeradd layerremove', scheduleRenderGeoportalLegend);
   }
+
+  // Legenda juga harus mengikuti perpindahan panel di dropdown GeoTools.
+  function bindGeoportalSectionHooks() {
+    var dd = document.querySelector('.geotools-dropdown');
+    if (dd && !dd.__gpLegendBound) {
+      dd.__gpLegendBound = true;
+      dd.addEventListener('change', scheduleRenderGeoportalLegend);
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindGeoportalSectionHooks);
+  } else {
+    bindGeoportalSectionHooks();
+  }
+  setTimeout(bindGeoportalSectionHooks, 1500);
 
   function buildArcGISIdentifyParams(url, layers, latlng) {
     const bounds = map.getBounds();
@@ -741,7 +772,7 @@
           .then(results => results.map(r => ({ ...r, layerName: `${st2023LabelFor(layerName)} — ${r.layerName}` })))
       );
       const geotaniPromises = [];
-      if (window.currentActiveTab === 'tab-geotani') {
+      if (activeGeoportalSection() === 'geotani') {
         try {
           if (isMapLayerActive(erosiLayer)) {
             geotaniPromises.push(
@@ -774,9 +805,9 @@
   // kliknya. Capture listener memastikan GetFeatureInfo tetap dipanggil untuk
   // semua layer Geoportal aktif, termasuk polygon.
   map.getContainer().addEventListener('click', async function (event) {
-    const tab = window.currentActiveTab;
-    if (tab !== 'tab-geoportal' && tab !== 'tab-geotani') return;
-    if (tab === 'tab-geotani') {
+    const section = activeGeoportalSection();
+    if (section !== 'geoportal' && section !== 'geotani') return;
+    if (section === 'geotani') {
       let hasManaged = getActiveBpsSt2023Layers().length > 0;
       try { hasManaged = hasManaged || isMapLayerActive(erosiLayer); } catch (e) {}
       if (!hasManaged) return;

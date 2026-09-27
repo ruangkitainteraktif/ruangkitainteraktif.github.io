@@ -4,11 +4,10 @@
   }
 
   // 1. Inisialisasi Peta
-  // Pusat awal: Tengah Indonesia (antara Sulawesi & Kalimantan)
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
-  const initialCenter = isMobile ? [-6.1924, 106.8234] : [-1.0, 121.0];
-  const initialZoom = isMobile ? 14 : 5;
-  const map = L.map('map', { zoomControl: false, preferCanvas: true, maxZoom: 22, minZoom: 4 }).setView(initialCenter, initialZoom);
+  // Pusat awal: Kota Surabaya, level zoom detail perkotaan
+  const INITIAL_CENTER = [-7.2575, 112.7521]; // Surabaya
+  const INITIAL_ZOOM = 13;
+  const map = L.map('map', { zoomControl: false, preferCanvas: true, maxZoom: 22, minZoom: 4 }).setView(INITIAL_CENTER, INITIAL_ZOOM);
   window.map = map;
 
   // Close all other popups when a new popup opens (prevent popup stacking)
@@ -757,7 +756,10 @@ L.control.scale({
         bmkgXhr.timeout = 10000;
         bmkgXhr.onerror = function () {
           bmkgLayer.addTo(map);
-          if (typeof window.toggleProvinceBoundary === 'function' && name !== 'esri-satellite') { window.toggleProvinceBoundary(true); var pbCb = document.getElementById('toggleProvinceBoundary'); if (pbCb) pbCb.checked = true; }
+          // Layer Batas Provinsi (PBF) tidak lagi dinyalakan paksa di sini;
+          // menggambar GeoFarm berulang kali memindahkan basemap ke Google
+          // Satellite, yang sebelumnya memunculkan garis batas itu setiap kali.
+          // Status layer kini sepenuhnya mengikuti centang user.
           map.fire('basemapchanged', { basemap: name });
           showMapToast(SATELLITE_ERROR_MSG[name] || 'Citra BMKG tidak tersedia.', 'error');
         };
@@ -782,7 +784,6 @@ L.control.scale({
             return;
           }
           bmkgLayer.addTo(map);
-          if (typeof window.toggleProvinceBoundary === 'function' && name !== 'esri-satellite') { window.toggleProvinceBoundary(true); var pbCb = document.getElementById('toggleProvinceBoundary'); if (pbCb) pbCb.checked = true; }
           map.fire('basemapchanged', { basemap: name });
         };
         bmkgXhr.send();
@@ -816,22 +817,13 @@ L.control.scale({
 
     var isSatellite = satelliteBasemapLabels.hasOwnProperty(name);
     if (isSatellite) {
-      if (name !== 'esri-satellite' && typeof window.toggleProvinceBoundary === 'function') {
-        window.toggleProvinceBoundary(true);
-        var pbCb = document.getElementById('toggleProvinceBoundary');
-        if (pbCb) pbCb.checked = true;
-      } else if (name === 'esri-satellite' && typeof window.toggleProvinceBoundary === 'function') {
-        window.toggleProvinceBoundary(false);
-        var pbCb = document.getElementById('toggleProvinceBoundary');
-        if (pbCb) pbCb.checked = false;
-      }
+      // Layer Batas Provinsi (PBF) TIDAK lagi dinyalakan/dimatikan otomatis
+      // saat basemap berganti. Sebelumnya setiap basemap satelit memunculkan
+      // garis batas itu -- termasuk saat GeoFarm memindahkan basemap ke Google
+      // Satellite -- dan menimpa centang checkbox milik user. Sekarang layer
+      // hanya berubah lewat Layer Catalog atau tombol Batas Provinsi.
       showLabels();
     } else {
-      if (typeof window.toggleProvinceBoundary === 'function') {
-        window.toggleProvinceBoundary(false);
-        var pbCb = document.getElementById('toggleProvinceBoundary');
-        if (pbCb) pbCb.checked = false;
-      }
       hideLabels();
     }
   }
@@ -865,32 +857,35 @@ L.control.scale({
     window.currentBasemapName = 'google-maps';
     baseBasemapName = 'esri-dark-gray';
     setBaseMap(currentBasemapName);
+
+    // Batas provinsi, angin, PM2.5, dan hujan sengaja NONAKTIF saat opening
+    // supaya peta langsung bersih dan ringan. Semua tetap bisa diaktifkan manual.
     if (typeof window.toggleProvinceBoundary === 'function') {
-      window.toggleProvinceBoundary(true);
-      var pbCb = document.getElementById('toggleProvinceBoundary');
-      if (pbCb) pbCb.checked = true;
+      window.toggleProvinceBoundary(false);
     }
+    var pbCb = document.getElementById('toggleProvinceBoundary');
+    if (pbCb) pbCb.checked = false;
 
     var windToggle = document.getElementById('toggleWindAnim');
     if (windToggle) {
-      windToggle.checked = true;
+      windToggle.checked = false;
       if (typeof window.toggleWindAnimation === 'function') {
-        window.toggleWindAnimation(true);
+        window.toggleWindAnimation(false);
       }
-      if (typeof window.dispatchEvent === 'function') {
+      if (typeof windToggle.dispatchEvent === 'function') {
         windToggle.dispatchEvent(new Event('change', { bubbles: true }));
       }
     } else if (typeof window.toggleWindAnimation === 'function') {
-      window.toggleWindAnimation(true);
+      window.toggleWindAnimation(false);
     }
 
     var pm25Toggle = document.getElementById('toggleAirVisualPm25');
     if (pm25Toggle) {
-      pm25Toggle.checked = true;
+      pm25Toggle.checked = false;
       pm25Toggle.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    if (typeof toggleHujanLayer === 'function') toggleHujanLayer(true);
+    if (typeof toggleHujanLayer === 'function') toggleHujanLayer(false);
   }
 
   setRdtrOpacity(currentRdtrOpacity);
@@ -1484,7 +1479,7 @@ L.control.scale({
           'toggleWindAnim', 'toggleWindRgb', 'toggleRhRgb', 'toggleTp24Rgb',
           'togglePm25Rgb', 'toggleHthRgb',
           'toggleMaritimeAngin', 'toggleMaritimeGelombang', 'toggleMaritimeSwell', 'toggleMaritimeWindSea',
-          'toggleGhrsstSstAnomali',
+           'toggleGhrsstSstAnomali',
           'toggleSawahDilindungi', 'toggleSawahNasional50k',
           'toggleBppLayer', 'toggleSawitLayer', 'toggleErosiLayer',
           'toggleHotspotLayer', 'toggleKawasanHutanLayer', 'toggleGambutLayer', 'toggleKhLayer', 'togglePippibLayer',
@@ -1866,7 +1861,7 @@ L.control.scale({
         const detailBtn = window._detailPanelBtn;
         if (detailBtn) detailBtn.classList.remove('active');
   }
-  window.__geoportalPrintCtrl = new PrintMapControl().addTo(map);
+  window.__geoportalPrintCtrl = new PrintMapControl();
 
   document.getElementById('resetLayersBtn').addEventListener('click', resetAllLayers);
   window.resetAllLayers = resetAllLayers;
@@ -1878,10 +1873,6 @@ L.control.scale({
     moveToFAB('.draw-fab-wrap', 'Gambar & Ukur');
     createAttrTableFAB();
     createLegendFAB();
-    moveToFAB('.geoportal-print-btn', 'Cetak Peta');
-    createExportTiffFAB();
-    var locateItem = moveToFAB('.leaflet-control-locate', 'Lokasi Saya');
-    if (locateItem) locateItem.classList.add('map-fab-locate');
 
     /* ── Zoom Control di bawah tengah ── */
     var zoomWrap = document.querySelector('.zoom-control-wrap');
@@ -3497,8 +3488,8 @@ L.control.scale({
           id.indexOf('st2023:') === 0 ||
           id === 'bps-lbs-2024' ||
           id.indexOf('arcgis-') === 0 ||
-          id === 'toggleChlorophyllOverlay' ||
-           id === 'toggleParOverlay' ||
+           id === 'toggleChlorophyllOverlay' ||
+            id === 'toggleParOverlay' ||
            (id.indexOf('opt-') === 0 && typeof window.toggleOPTPest === 'function') ||
            (id.indexOf('optp-') === 0 && typeof window.toggleOPTPerkebunan === 'function') ||
            (id.indexOf('opth-') === 0 && typeof window.toggleOPTHorti === 'function') ||

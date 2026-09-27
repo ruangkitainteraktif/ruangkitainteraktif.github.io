@@ -1728,31 +1728,11 @@ async function fetchPropertiHarga(lat, lng, radiusMeter = 2000) {
 
 function computePolygonAreaHa(path) {
   if (!Array.isArray(path) || !path.length) { console.warn('[GEOID] computePolygonAreaHa: path empty'); return 0; }
+  if (typeof window.geoArea === 'undefined') { console.warn('[GEOID] computePolygonAreaHa: geoArea tidak tersedia'); return 0; }
 
-  const isCoordinate = value => Array.isArray(value)
-    && value.length >= 2
-    && Number.isFinite(Number(value[0]))
-    && Number.isFinite(Number(value[1]));
-  const collectRings = value => {
-    if (!Array.isArray(value) || !value.length) return [];
-    if (isCoordinate(value[0])) return [value];
-    return value.flatMap(collectRings);
-  };
-  const rings = collectRings(path).filter(ring => ring.length >= 3);
-  if (!rings.length) { console.warn('[GEOID] computePolygonAreaHa: no valid rings'); return 0; }
-
-  const R = 6371000;
-  const ringArea = ring => ring.reduce((area, point, index) => {
-    const [lat1, lng1] = point;
-    const [lat2, lng2] = ring[(index + 1) % ring.length];
-    const lat1Rad = Number(lat1) * Math.PI / 180;
-    const lat2Rad = Number(lat2) * Math.PI / 180;
-    const dLng = (Number(lng2) - Number(lng1)) * Math.PI / 180;
-    return area + dLng * (2 + Math.sin(lat1Rad) + Math.sin(lat2Rad));
-  }, 0) * R * R / 2;
-
-  // Orientasi ring menjaga lubang poligon tetap dikurangi dari luas total.
-  return Math.abs(rings.reduce((total, ring) => total + ringArea(ring), 0)) / 10000;
+  const area = geoArea.areaM2FromRings(path, true);
+  if (!Number.isFinite(area) || area <= 0) { console.warn('[GEOID] computePolygonAreaHa: no valid rings'); return 0; }
+  return area / 10000;
 }
 
 async function fetchLuasWilayah(kode) {
@@ -1936,14 +1916,14 @@ async function fetchLuasSawah(kode) {
       try {
         const intersection = turf.intersect(turf.featureCollection([villagePolygon, sawahPolygon]));
         if (intersection && intersection.geometry) {
-          const areaM2 = turf.area(intersection);
+          const areaM2 = geoArea.areaM2FromGeoJSON(intersection);
           totalIntersectedArea += areaM2 / 10000;
           intersectedCount++;
         }
       } catch (e) {
         try {
           if (turf.booleanWithin(sawahPolygon, villagePolygon)) {
-            totalIntersectedArea += turf.area(sawahPolygon) / 10000;
+            totalIntersectedArea += geoArea.areaHaFromGeoJSON(sawahPolygon);
             intersectedCount++;
           }
         } catch (e2) {

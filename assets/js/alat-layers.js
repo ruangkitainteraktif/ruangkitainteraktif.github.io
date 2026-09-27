@@ -755,11 +755,15 @@
     // Info jarak
     let dist = 0;
     for (let k = 1; k <= i; k++) {
-      dist += L.latLng(coords[k - 1]).distanceTo(L.latLng(coords[k]));
+      dist += typeof window.geoArea !== 'undefined'
+        ? window.geoArea.lengthM([coords[k - 1], coords[k]])
+        : L.latLng(coords[k - 1]).distanceTo(L.latLng(coords[k]));
     }
     let totalDist = 0;
     for (let k = 1; k < coords.length; k++) {
-      totalDist += L.latLng(coords[k - 1]).distanceTo(L.latLng(coords[k]));
+      totalDist += typeof window.geoArea !== 'undefined'
+        ? window.geoArea.lengthM([coords[k - 1], coords[k]])
+        : L.latLng(coords[k - 1]).distanceTo(L.latLng(coords[k]));
     }
     const fmtDist = dist >= 1000 ? (dist / 1000).toFixed(2) + ' km' : Math.round(dist) + ' m';
     const fmtTotal = totalDist >= 1000 ? (totalDist / 1000).toFixed(2) + ' km' : Math.round(totalDist) + ' m';
