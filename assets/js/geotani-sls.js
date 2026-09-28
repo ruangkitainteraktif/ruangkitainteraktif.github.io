@@ -334,7 +334,7 @@ var generasi = 0;
     penulis: 'BPS-Statistics Indonesia',
     periode: '2025-1',
     layer: LAYER_SLS,
-    tautan: 'https://geoserver.bps.go.id/web/wicket/bookmarkable/org.geoserver.web.demo.MapPreviewPage?0&filter=false,' + LAYER_SLS
+    tautan: 'https://www.bps.go.id/'
   };
 
   function creditHtml() {
