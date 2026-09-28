@@ -89,6 +89,16 @@ window.stopDrawSession = function () {
   syncDrawChrome();
 };
 
+/* Memasukkan layer ke feature group gambar agar bisa ikut diedit dan dihapus
+   lewat tool Gambar & Ukur, sama seperti polygon hasil menggambar.
+   Dipakai GeoFarm untuk polygon hasil unggah file SHP/GeoJSON. */
+window.addToDrawLayerGroup = function (layer) {
+  if (!layer) return false;
+  drawLayerGroup.addLayer(layer);
+  syncDrawChrome();
+  return true;
+};
+
 (function observeDrawSidebar() {
   const sidebar = document.getElementById('drawSidebar');
   if (!sidebar || typeof MutationObserver === 'undefined') return;
@@ -361,7 +371,12 @@ map.on('draw:drawstop', () => {
   syncDrawChrome();
 });
 
-map.on('draw:editstop draw:deleted', () => {
+map.on('draw:editstop draw:deleted', (event) => {
+  // Layer yang dihapus lewat tool gambar harus ikut hilang dari panel GeoFarm,
+  // kalau tidak kartunya tertinggal sebagai yatim di daftar.
+  if (event && event.type === 'draw:deleted' && typeof window.removeGeoFarmItemsByLayers === 'function') {
+    window.removeGeoFarmItemsByLayers(event.layers);
+  }
   syncDrawChrome();
 });
 

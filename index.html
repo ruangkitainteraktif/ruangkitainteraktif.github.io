@@ -2285,6 +2285,26 @@
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l-8 5v10l8 5 8-5V7z"/><path d="M12 22V12"/><path d="M4 7l8 5 8-5"/></svg>
               Buat Polygon
             </button>
+            <button id="geofarmUploadBtn" class="geofarm-upload-btn" type="button" onclick="startGeofarmPolygonUpload()">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Unggah Polygon
+            </button>
+            <input type="file" id="geofarmUploadInput" class="geofarm-upload-input"
+                   accept=".shp,.dbf,.shx,.prj,.zip,.geojson,.json" multiple
+                   onchange="handleGeofarmUploadFiles(event)">
+            <details class="geofarm-shp-note">
+              <summary class="geofarm-shp-note-summary">Memakai berkas SHP (.shp)?</summary>
+              <div class="geofarm-shp-note-body">
+                <p>Berkas SHP <b>bukan satu berkas</b>. Pilih beberapa berkas sekaligus, atau kumpulkan menjadi ZIP.</p>
+                <ul>
+                  <li><b>Wajib:</b> <code>.shp</code> (geometri), <code>.dbf</code> (atribut), <code>.shx</code> (indeks)</li>
+                  <li><b>Sangat disarankan:</b> <code>.prj</code> - berisi proyeksi. Tanpa itu, koordinat bisa salah baca dan luas menjadi tidak akurat untuk petak yang memakai proyeksi UTM (WGS 84 / UTM zona 49S untuk wilayah Indonesia)</li>
+                </ul>
+                <p><b>Cara termudah:</b> letakkan <code>.shp</code>, <code>.dbf</code>, <code>.shx</code>, dan <code>.prj</code> dalam satu folder, lalu <b>zip folder tersebut</b> (nama berkas di dalam ZIP harus sama persis, tanpa ekstensi tambahan).</p>
+                <p>Kalau data Anda berformat GeoJSON, cukup pilih satu berkas <code>.geojson</code> - tidak perlu berkas lain.</p>
+              </div>
+            </details>
+            <p class="geofarm-upload-status" id="geofarmUploadStatus" hidden></p>
           </div>
              </div>
 
@@ -2452,8 +2472,10 @@
      <script src="assets/js/alat-layers.js"></script>
      <script src="assets/js/arcgis-source-manager.js"></script>
     <script src="assets/js/alat-draw-measure.js"></script>
-    <script src="assets/js/geofarm-draw.js"></script>
-   <script src="assets/js/polygon-analysis.js"></script>
+<script src="assets/js/geofarm-draw.js"></script>
+<script src="assets/js/geofarm-upload.js"></script>
+<script src="assets/js/polygon-analysis.js"></script>
+
   <script src="assets/js/app-boot.js"></script>
 
   <script src="assets/js/overlay-village-search.js"></script>

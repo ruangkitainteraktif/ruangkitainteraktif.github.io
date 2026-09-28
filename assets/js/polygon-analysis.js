@@ -464,7 +464,7 @@
   }
 
   /**
-   * Metadata adegan untuk indeks spektral. Ketiga indeks dihitung dari
+   * Metadata citra untuk indeks spektral. Ketiga indeks dihitung dari
    * rasterFunction/band yang sama pada ImageServer Sentinel-2 yang sama,
    * jadi satu query katalog cukup untuk semuanya -- dan memang itu adegan
    * yang benar, bukan tebakan. Kegagalan metadata tidak boleh menggagalkan
@@ -480,7 +480,7 @@
       ]);
     } catch (error) {
       item.spectralMeta = null;
-      item.spectralMetaError = 'Metadata adegan tidak dapat dimuat: ' +
+      item.spectralMetaError = 'Metadata citra tidak dapat dimuat: ' +
         (error && error.message ? error.message : 'katalog tidak merespons.');
     }
   }
@@ -2028,7 +2028,7 @@
       '</div>';
   }
 
-  /** Baris metadata adegan untuk satu indeks spektral. */
+  /** Baris metadata citra untuk satu indeks spektral. */
   function spectralMetaHtml(item) {
     const meta = item.spectralMeta;
     if (item.spectralMetaError) {
@@ -2037,7 +2037,7 @@
         '</div>';
     }
     if (!meta) {
-      return '<div class="pa-meta-block"><div class="pa-block-note">Metadata adegan tidak tersedia.</div></div>';
+      return '<div class="pa-meta-block"><div class="pa-block-note">Metadata citra tidak tersedia.</div></div>';
     }
     const quality = meta.quality;
     const cloudValue = Number.isFinite(meta.cloudPercent)
@@ -2063,7 +2063,7 @@
       : '';
 
     return '<div class="pa-meta-block">' +
-      '<div class="pa-meta-title">Metadata adegan</div>' +
+      '<div class="pa-meta-title">Metadata citra</div>' +
       rows + product +
       '</div>';
   }
@@ -2413,7 +2413,11 @@
   }
 
   function cardHtml(item) {
-    const stale = item.stale
+    // Peringatan "geometri diubah" hanya relevan kalau sudah ada hasil di
+    // bawahnya. Polygon hasil unggah yang belum dianalisis akan ikut
+    // bertanda stale saat diedit, dan memunculkan peringatan yang tidak
+    // punya maksud.
+    const stale = item.stale && item.analyzed
       ? '<div class="pa-stale">Geometri diubah — hasil di bawah belum diperbarui. ' +
         '<button class="pa-link" type="button" data-pa-action="rerun" data-pa-id="' + item.id + '">Analisis ulang</button></div>'
       : '';
@@ -2422,18 +2426,43 @@
       ? '<div class="pa-status"><span class="pa-spin"></span>' + escapeHtml(item.busy) + '</div>'
       : '';
 
-    return '<div class="pa-card' + (item.stale ? ' pa-card-stale' : '') + '" data-pa-id="' + item.id + '">' +
-      '<div class="pa-card-head">' +
+    // Polygon hasil unggah belum dianalisis. Section hasil disembunyikan
+    // sampai analisis benar-benar dijalankan, supaya kartu tidak menampilkan
+    // colorbar dan tombol tren yang belum ada artinya.
+    const analyzeBlock = item.analyzed ? '' :
+      '<div class="pa-pending">' +
+        (item.analyzeBusy ? '' :
+          '<div class="pa-pending-text">Belum dianalisis. Luas sudah dihitung; tekan Analisis untuk menghitung NDVI, indeks spektral, dan topografi.</div>') +
+        '<div class="pa-btn-row">' +
+          '<button class="pa-btn pa-btn-primary" type="button" data-pa-action="analyze" data-pa-id="' + item.id + '"' +
+            (item.analyzeBusy ? ' disabled' : '') + '>' +
+            (item.analyzeBusy ? 'Menganalisis…' : 'Analisis') + '</button>' +
+        '</div>' +
+      '</div>';
+
+    const title = item.name ? escapeHtml(item.name) : 'GeoFarm';
+    const sourceTag = item.source === 'upload'
+      ? '<span class="pa-card-source">Unggah</span>'
+      : '';
+
+    const head = '<div class="pa-card-head">' +
         '<div class="pa-card-title">' +
           '<span class="pa-card-index">' + item.index + '</span>' +
-          '<span>GeoFarm</span>' +
+          '<span>' + title + '</span>' +
+          sourceTag +
         '</div>' +
         '<div class="pa-card-tools">' +
           '<button class="pa-icon" type="button" title="Hapus polygon" aria-label="Hapus polygon" data-pa-action="remove" data-pa-id="' + item.id + '">&#xd7;</button>' +
         '</div>' +
-      '</div>' +
-      '<div class="pa-area">' + fmt(item.areaHa, 2) + ' ha · ' + (item.pointCount || 0) + ' titik sample</div>' +
-      stale + busy +
+      '</div>';
+
+    const cardOpen = '<div class="pa-card' + (item.stale ? ' pa-card-stale' : '') + '" data-pa-id="' + item.id + '">';
+    const cardInfo = '<div class="pa-area">' + fmt(item.areaHa, 2) + ' ha · ' + (item.pointCount || 0) + ' titik sample</div>' +
+      analyzeBlock + stale + busy;
+
+    if (!item.analyzed) return cardOpen + head + cardInfo + '</div>';
+
+    return cardOpen + head + cardInfo +
       '<div class="pa-section' + (isSectionCollapsed(item, 'ndvi') ? ' is-collapsed' : '') + '">' +
         sectionHeadHtml(item, 'ndvi', 'NDVI', ndviEyeBtnHtml(item)) +
         '<div class="pa-section-body">' +
@@ -2614,7 +2643,47 @@
       item.terrainError = error && error.message ? error.message : 'Gagal menganalisis topografi.';
       render();
     }
+    // Tandai sudah dianalisis walau sebagian ada yang gagal: kartu lalu
+    // menampilkan tombol "Analisis ulang", bukan tombol pertama kali jalan.
+    item.analyzed = true;
   }
+
+  /**
+   * Menghapus satu item beserta layer, overlay, dan jejak DEM-nya.
+   * Dipakai oleh tombol × di kartu dan oleh event draw:deleted dari modul
+   * gambar, supaya penghapusan lewat peta tidak meninggalkan kartu yatim.
+   */
+  function removeItemById(id) {
+    const item = itemById(id);
+    if (!item) return false;
+    if (item.layer && mapReady() && map.hasLayer(item.layer)) map.removeLayer(item.layer);
+    removeItemOverlay(item);
+    if (state.footprint && state.footprintOwner === item.id && mapReady()) map.removeLayer(state.footprint);
+    if (state.terrainOwner === item.id && typeof window.clearDemOverlay === 'function') window.clearDemOverlay();
+    if (state.footprintOwner === item.id) state.footprintOwner = null;
+    if (state.terrainOwner === item.id) state.terrainOwner = null;
+    state.items = state.items.filter(function (row) { return row.id !== item.id; });
+    renumber();
+    render();
+    if (!state.items.length) closePanel();
+    return true;
+  }
+
+  window.removeGeoFarmItemsByLayers = function (layers) {
+    if (!layers) return 0;
+    const targets = [];
+    layers.eachLayer(function (layer) { targets.push(layer); });
+    let removed = 0;
+    targets.forEach(function (layer) {
+      // Bandingkan objek layer secara langsung; hasil parse SHP/GeoJSON dan
+      // hasil gambar bisa berupa L.geoJSON atau L.Polygon.
+      for (let i = state.items.length - 1; i >= 0; i--) {
+        if (state.items[i].layer === layer && removeItemById(state.items[i].id)) removed++;
+      }
+    });
+    if (removed) render();
+    return removed;
+  };
 
   /* ── Aksi dari panel ── */
 
@@ -2683,16 +2752,12 @@
     }
 
     if (action === 'remove') {
-      if (item.layer && mapReady() && map.hasLayer(item.layer)) map.removeLayer(item.layer);
-      removeItemOverlay(item);
-      if (state.footprint && state.footprintOwner === item.id && mapReady()) map.removeLayer(state.footprint);
-      if (state.terrainOwner === item.id && typeof window.clearDemOverlay === 'function') window.clearDemOverlay();
-      if (state.footprintOwner === item.id) state.footprintOwner = null;
-      if (state.terrainOwner === item.id) state.terrainOwner = null;
-      state.items = state.items.filter(function (row) { return row.id !== item.id; });
-      renumber();
-      render();
-      if (!state.items.length) closePanel();
+      removeItemById(item.id);
+      return;
+    }
+
+    if (action === 'analyze') {
+      if (typeof window.analyzeGeoFarmItem === 'function') window.analyzeGeoFarmItem(item.id);
       return;
     }
 
@@ -2860,13 +2925,18 @@
     return geofarmDrawSession;
   };
 
-  window.registerDrawnPolygon = function (layer, areaHa) {
-    // Hanya polygon dari sesi GeoFarm yang dianalisis. Gambar & Ukur, serta
-    // tool gambar lain, tetap berfungsi tanpa memicu analisis ini.
-    if (!geofarmDrawSession) return null;
+  /**
+   * Satu item GeoFarm, dipakai bersama oleh polygon hasil gambar maupun polygon
+   * hasil unggah file. opts: { name, source, autoAnalyze }.
+   * autoAnalyze:false dipakai alur unggah -- polygon masuk daftar dengan luas
+   * saja, dan pengguna menekan tombol Analisis bila mau menghitungnya. Itu
+   * penting karena satu polygon sudah memakan ~5 permintaan jaringan.
+   */
+  function addPolygonItem(layer, areaHa, opts) {
     if (!layer || !layer.getLatLngs) return null;
     const rings = ringsFromLatLngs(layer.getLatLngs());
     if (!rings.length) return null;
+    const options = opts || {};
 
     state.seq += 1;
     const item = {
@@ -2876,6 +2946,10 @@
       rings: rings,
       bounds: boundsOf(rings),
       areaHa: Number.isFinite(areaHa) ? areaHa : 0,
+      name: options.name || null,
+      source: options.source === 'upload' ? 'upload' : 'draw',
+      analyzed: false,
+      analyzeBusy: false,
       pointCount: 0,
       stale: false,
       busy: null,
@@ -2918,8 +2992,44 @@
     state.items.push(item);
     render();
     openPanel(true);
-    analyzeItem(item);
+    if (options.autoAnalyze !== false) analyzeItem(item);
     return item;
+  }
+
+  window.registerDrawnPolygon = function (layer, areaHa) {
+    // Hanya polygon dari sesi GeoFarm yang dianalisis. Gambar & Ukur, serta
+    // tool gambar lain, tetap berfungsi tanpa memicu analisis ini.
+    if (!geofarmDrawSession) return null;
+    return addPolygonItem(layer, areaHa, { source: 'draw', autoAnalyze: true });
+  };
+
+  /**
+   * Pintu masuk resmi untuk polygon hasil unggah file (SHP/GeoJSON).
+   * Sengaja tanpa penjaga geofarmDrawSession: ini bukan gambar di peta, dan
+   * analisisnya dijalankan manual lewat tombol di panel.
+   */
+  window.registerUploadedPolygon = function (layer, areaHa, name) {
+    return addPolygonItem(layer, areaHa, { name: name || null, source: 'upload', autoAnalyze: false });
+  };
+
+  /** Menjalankan analisis (NDVI, indeks spektral, topografi) untuk satu item. */
+  window.analyzeGeoFarmItem = function (id) {
+    const item = itemById(id);
+    if (!item || item.analyzeBusy) return false;
+    item.analyzeBusy = true;
+    render();
+    analyzeItem(item)
+      .then(function () { item.analyzed = true; })
+      .catch(function (error) {
+        item.analyzed = true;
+        item.ndviError = item.ndviError ||
+          (error && error.message ? error.message : 'Gagal menjalankan analisis.');
+      })
+      .then(function () {
+        item.analyzeBusy = false;
+        render();
+      });
+    return true;
   };
 
   /** Dipanggil sidebar alat dibuka: sisakan GeoFarm minimal agar tidak tertutup. */
