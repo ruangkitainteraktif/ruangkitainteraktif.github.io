@@ -55,28 +55,289 @@
     { label: 'Air terbuka', min: 0.4, max: Infinity, rgb: [10, 60, 130] }
   ];
 
+  /* Ambang berikut disusun dari rentang umum indeks tersebut, bukan dari satu
+     sumber baku. Kalau ingin menyesuaikan, ubah hanya angka min/max di sini. */
+  const EVI_BANDS = [
+    { label: 'Tanpa vegetasi', min: -Infinity, max: 0.05, rgb: [166, 106, 63] },
+    { label: 'Sangat rendah', min: 0.05, max: 0.2, rgb: [214, 190, 120] },
+    { label: 'Rendah', min: 0.2, max: 0.35, rgb: [232, 215, 150] },
+    { label: 'Sedang', min: 0.35, max: 0.5, rgb: [101, 169, 66] },
+    { label: 'Tinggi', min: 0.5, max: 0.7, rgb: [23, 107, 52] },
+    { label: 'Sangat tinggi', min: 0.7, max: Infinity, rgb: [11, 61, 30] }
+  ];
+
+  const MSAVI_BANDS = [
+    { label: 'Tanpa vegetasi', min: -Infinity, max: 0, rgb: [166, 106, 63] },
+    { label: 'Sangat rendah', min: 0, max: 0.15, rgb: [214, 190, 120] },
+    { label: 'Rendah', min: 0.15, max: 0.3, rgb: [232, 215, 150] },
+    { label: 'Sedang', min: 0.3, max: 0.45, rgb: [101, 169, 66] },
+    { label: 'Tinggi', min: 0.45, max: 0.6, rgb: [23, 107, 52] },
+    { label: 'Sangat tinggi', min: 0.6, max: Infinity, rgb: [11, 61, 30] }
+  ];
+
+  /* NBR dibalik arahnya dibanding indeks lain: makin RENDAH makin terbakar. */
+  const NBR_BANDS = [
+    { label: 'Tidak terbakar', min: 0.5, max: Infinity, rgb: [23, 107, 52] },
+    { label: 'Kerusakan kecil', min: 0.3, max: 0.5, rgb: [101, 169, 66] },
+    { label: 'Kerusakan sedang', min: 0.2, max: 0.3, rgb: [232, 215, 150] },
+    { label: 'Kerusakan berat', min: 0.1, max: 0.2, rgb: [214, 120, 60] },
+    { label: 'Terbakar', min: -0.1, max: 0.1, rgb: [180, 60, 40] },
+    { label: 'Terbakar sangat berat', min: -Infinity, max: -0.1, rgb: [110, 30, 25] }
+  ];
+
+  const NDVI705_BANDS = [
+    { label: 'Sangat rendah', min: -Infinity, max: 0.1, rgb: [198, 135, 42] },
+    { label: 'Rendah', min: 0.1, max: 0.25, rgb: [215, 190, 55] },
+    { label: 'Sedang', min: 0.25, max: 0.4, rgb: [101, 169, 66] },
+    { label: 'Tinggi', min: 0.4, max: 0.55, rgb: [23, 107, 52] },
+    { label: 'Sangat tinggi', min: 0.55, max: Infinity, rgb: [11, 61, 30] }
+  ];
+
+  /* ── Rumus indeks ──
+     `compute(v)` menerima array band's SUDAH berskala dan mengembalikan nilai
+     indeks per piksel, atau NaN bila tidak bisa dihitung.
+
+     PENTING soal skala: NDMI/NDRE/NDWI/NBR/NDVI705 adalah RASIO MURNI
+     ((a-b)/(a+b)), jadi skala band saling menghilangkan dan `scale` = 1.
+     Tapi EVI dan MSAVI punya suku "+1" di penyebut; suku itu hanya benar
+     bila reflektansi berada di skala 0-1. Service ArcGIS mengembalikan DN
+     0-10000, jadi keduanya WAJIB memakai scale 0.0001. Tanpa itu EVI bernilai
+     sekitar 2.4 untuk padi sehat (sampah) -- sudah diuji numerik. */
+
+  function eviCompute(v) {
+    const nir = v[0], red = v[1], blue = v[2];
+    const den = nir + 6 * red - 7.5 * blue + 1;
+    return den ? 2.5 * (nir - red) / den : NaN;
+  }
+
+  function msaviCompute(v) {
+    const nir = v[0], red = v[1];
+    const a = 2 * nir + 1;
+    const rad = a * a - 8 * (nir - red);
+    return rad >= 0 ? (a - Math.sqrt(rad)) / 2 : NaN;
+  }
+
+  /* ── Dua sistem penamaan band yang hidup berdampingan ──
+
+     `spec.bands` memakai NOMOR URUT di ArcGIS Sentinel2 ImageServer. Service
+     itu punya 13 band (B01-B12 + B08A) dengan urutan:
+       pos 1-8 = B01-B08, 9 = B08A, 10 = B09, 11 = B10, 12 = B11, 13 = B12
+     Jadi "nomor = nomor" hanya berlaku sampai posisi 8, lalu bergeser.
+     NDMI memakai pos '8,12' untuk mengambil B08 dan B11.
+
+     Sebaliknya TREND_SPECS memakai NAMA ASSET STAC (B02, B08, B12, ...) yang
+     mengikuti penamaan asli Sentinel-2.
+
+     Kedua sistem sama untuk posisi 1-8, dan semua rumus di bawah memakai
+     band's di posisi <= 8 (B02, B04, B05, B06, B08) kecuali B11 lewat pos 12.
+     Jangan memakai pos 13 (B12) di spec.bands tanpa memeriksa ulang. */
+
   /* `hint` ditulis dengan bahasa sehari-hari supaya mudah dibaca petani:
      yang dijelaskan adalah artinya buat praktik, bukan istilah teknis. */
+
+  /* Dimuat otomatis bersama NDVI. */
   const SPECTRAL_INDEXES = [
     {
-      key: 'ndmi', label: 'NDMI', trendKey: 'ndmiTrend', bands: '8,12', table: NDMI_BANDS,
+      key: 'ndmi', label: 'NDMI', trendKey: 'ndmiTrend', bands: '8,12',
+      /* (v[0]-v[1]) dengan urutan band 8,12 menghasilkan (B08−B11)/(B08+B11).
+         JANGAN diganti ndRatio: ndRatio menghitung (v[1]−v[0])/(v[1]+v[0]) dan
+         untuk urutan band ini hasilnya bertanda terbalik. */
+      compute: function (v) { return (v[0] - v[1]) / (v[0] + v[1]); },
+      formula: 'NDMI = (B08 − B11) / (B08 + B11)', table: NDMI_BANDS,
       hint: 'Seberapa lembap daunnya. Makin tinggi, makin banyak air di tumbuhan.'
     },
     {
-      key: 'ndre', label: 'NDRE', trendKey: 'ndreTrend', rule: 'NDVI - with VRE Raw', table: NDRE_BANDS,
+      key: 'ndre', label: 'NDRE', trendKey: 'ndreTrend', rule: 'NDVI - with VRE Raw',
+      formula: 'NDRE = (B08 − B05) / (B08 + B05)', table: NDRE_BANDS,
       hint: 'Seberapa hijau dan rapat daunnya. Makin tinggi, tanaman makin subur.'
     },
     {
-      key: 'ndwi', label: 'NDWI', trendKey: 'ndwiTrend', rule: 'NDWI Raw', table: NDWI_BANDS,
+      key: 'ndwi', label: 'NDWI', trendKey: 'ndwiTrend', rule: 'NDWI Raw',
+      formula: 'NDWI = (B03 − B08) / (B03 + B08)', table: NDWI_BANDS,
       hint: 'Seberapa banyak air di permukaan lahan. Berguna untuk melihat sawah yang disiram atau tergenang.'
     }
   ];
 
+  /* Dimuat manual lewat tombol, satu per satu. Alasannya sederhana: tiap
+     indeks = satu permintaan exportImage, dan menambahkannya ke alur otomatis
+     akan membuat satu polygon memicu banyak permintaan sekaligus. */
+  const EXTRA_INDEXES = [
+    {
+      key: 'evi', label: 'EVI', trendKey: 'eviTrend', bands: '8,4,2', scale: 0.0001,
+      compute: eviCompute, range: [-2, 2], table: EVI_BANDS,
+      formula: 'EVI = 2,5 × (B08 − B04) / (B08 + 6×B04 − 7,5×B02 + 1)',
+      hint: 'Seberapa subur tanamanya, dengan mengabaikan pengaruh tanah dan kabut. Lebih tepat daripada NDVI saat tanaman jarang.'
+    },
+    {
+      key: 'msavi', label: 'MSAVI', trendKey: 'msaviTrend', bands: '8,4', scale: 0.0001,
+      compute: msaviCompute, range: [-2, 2], table: MSAVI_BANDS,
+      formula: 'MSAVI = [2×B08 + 1 − √((2×B08 + 1)² − 8×(B08 − B04))] / 2',
+      hint: 'Mirip EVI, tapi khusus untuk tanaman yang masih kecil dan belum rapat.'
+    },
+    {
+      key: 'nbr', label: 'NBR', trendKey: 'nbrTrend', rule: 'Normalized Burn Ratio',
+      formula: 'NBR = (B08 − B12) / (B08 + B12)', table: NBR_BANDS,
+      hint: 'Seberapa besar kerusakan akibat pembakaran. Makin rendah, makin parah.'
+    },
+    {
+      key: 'ndvi705', label: 'NDVI705', trendKey: 'ndvi705Trend', rule: 'NDVI - VRE only Raw',
+      formula: 'NDVI705 = (B06 − B05) / (B06 + B05)', table: NDVI705_BANDS,
+      hint: 'Seberapa cukup nitrogen di daun, dipakai saat tanaman masih tahap awal.'
+    }
+  ];
+
+  const ALL_INDEXES = SPECTRAL_INDEXES.concat(EXTRA_INDEXES);
+
+  /* Modul laporan PDF (geofarm-report.js) butuh daftar indeks agar bisa
+     menulis kolom yang sama untuk semua indeks. Diberi tahu di sini supaya
+     modul itu tidak perlu tahu urutan definisi indeks di berkas ini. */
+  if (typeof window.setGeoFarmReportIndexSpecs === 'function') {
+    window.setGeoFarmReportIndexSpecs(ALL_INDEXES);
+  }
+
   const state = {
     seq: 0, items: [], minimized: false, closed: false,
+    notice: null, noticeKind: 'info', noticeTimer: 0,
+    completing: false,
     footprint: null, footprintOwner: null,
     terrainOwner: null
   };
+
+  /** Pesan singkat hasil aksi pengguna (ekspor), hilang sendiri. */
+  function showNotice(message, kind) {
+    if (state.noticeTimer) { clearTimeout(state.noticeTimer); state.noticeTimer = 0; }
+    state.notice = message;
+    state.noticeKind = kind === 'error' ? 'error' : 'info';
+    render();
+    state.noticeTimer = setTimeout(function () {
+      state.noticeTimer = 0;
+      state.notice = null;
+      render();
+    }, 6000);
+  }
+
+  /* ── Kontrol export di kepala panel ──
+     Sengaja TIDAK memakai footer: footer yang selalu tampil memakan tinggi
+     sheet虽然 cuma beberapa mm, tapi ikut mengurangi ruang daftar polygon.
+     Kontrol ini baru muncul setelah semua analisis selesai. */
+
+  function exportRootEl() {
+    return document.getElementById('geofarmExport');
+  }
+
+  function exportMenuEl() {
+    return document.getElementById('geofarmExportMenu');
+  }
+
+  function isExportMenuOpen() {
+    var menu = exportMenuEl();
+    return !!menu && !menu.hidden;
+  }
+
+  function openExportMenu() {
+    var menu = exportMenuEl();
+    var root = exportRootEl();
+    if (!menu) return;
+    menu.hidden = false;
+    if (root) root.classList.add('is-open');
+    var toggle = document.getElementById('geofarmExportToggle');
+    if (toggle) toggle.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeExportMenu() {
+    var menu = exportMenuEl();
+    var root = exportRootEl();
+    if (menu) menu.hidden = true;
+    if (root) root.classList.remove('is-open');
+    var toggle = document.getElementById('geofarmExportToggle');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function toggleExportMenu() {
+    if (isExportMenuOpen()) closeExportMenu();
+    else openExportMenu();
+  }
+
+  /**
+   * Kontrol export hanya ditampilkan kalau seluruh daftar polygon sudah
+   * tuntas. Selama belum, yang terlihat di kartu adalah daftar langkah yang
+   * masih harus dikerjakan pengguna.
+   */
+  function renderExportToggle() {
+    var root = exportRootEl();
+    if (!root) return;
+    var ready = state.items.length > 0 && exportReadiness().ready;
+    if (!ready) closeExportMenu();
+    root.hidden = !ready;
+  }
+
+  /* Klik di luar menu dan tombolnya menutup menu. Dipasang sekali, bukan di
+     setiap render(), supaya tidak menumpuk listener. */
+  function bindExportMenu() {
+    if (typeof document === 'undefined' || document.__geofarmExportMenuBound) return;
+    document.__geofarmExportMenuBound = true;
+    document.addEventListener('click', function (event) {
+      if (!isExportMenuOpen()) return;
+      var root = exportRootEl();
+      if (root && root.contains(event.target)) return;
+      closeExportMenu();
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && isExportMenuOpen()) {
+        closeExportMenu();
+        var toggle = document.getElementById('geofarmExportToggle');
+        if (toggle) toggle.focus();
+      }
+    });
+  }
+
+
+  /**
+   * Menjalankan ekspor SHP atau PDF lalu menampilkan hasilnya di panel.
+   * kind: 'shp' atau 'pdf'. PDF ditangani geofarm-report.js supaya file
+   * polygon-analysis.js tidak ikut menanggung tata letak laporan.
+   */
+  function runGeoFarmExport(button, kind) {
+    var isPdf = kind === 'pdf';
+    var fn = isPdf ? window.buildGeoFarmReportPDF : window.exportGeoFarmSHP;
+    if (typeof fn !== 'function') {
+      showNotice(isPdf ? 'Modul laporan PDF belum siap.' : 'Modul ekspor SHP belum siap.', 'error');
+      return;
+    }
+    if (!state.items.length) {
+      showNotice('Tidak ada polygon untuk diekspor.', 'error');
+      return;
+    }
+    /* Penjaga terakhir. Tombolnya memang sudah dikunci lewat UI, tapi ekspor
+       juga bisa dipicu dari kode atau dari klik yang terjadi sebelum statusnya
+       selesai, jadi dicek lagi di sini. */
+    var readiness = exportReadiness();
+    if (!readiness.ready || state.completing) {
+      showNotice(
+        state.completing
+          ? 'Analisis masih berjalan. Tunggu sampai selesai lalu ekspor.'
+          : 'Analisis belum lengkap. ' + gapSummary(readiness),
+        'error'
+      );
+      return;
+    }
+    if (button && button.setAttribute) {
+      button.setAttribute('disabled', 'disabled');
+      button.classList.add('is-busy');
+    }
+    // PDF menerima array item apa adanya; SHP mengambil sendiri dari state.
+    var result = isPdf ? fn(state.items.slice()) : fn();
+    Promise.resolve(result).then(function (res) {
+      if (button && button.removeAttribute) {
+        button.removeAttribute('disabled');
+        button.classList.remove('is-busy');
+      }
+      showNotice(
+        res && res.message ? res.message : 'Ekspor selesai.',
+        res && res.ok === false ? 'error' : 'info'
+      );
+    });
+  }
 
   /* ── util ─────────────────────────────────────────────── */
 
@@ -225,7 +486,8 @@
   /**
    * GeoTIFF satu indeks dari ArcGIS Sentinel2 ImageServer.
    * spec: { rule: 'NDVI Raw' } untuk rasterFunction yang dihitung server,
-   *        { bands: '8,12' } untuk dua band mentah yang digabung sendiri.
+   *        { bands: '8,12' } atau { bands: '8,4,2' } untuk band mentah yang
+   *        dirumuskan sendiri oleh applyIndexFormula.
    * Lihat catatan SPECTRAL_INDEXES soal nomor band.
    */
   function requestIndexGeoTiff(bounds, size, spec) {
@@ -255,8 +517,8 @@
 
   /**
    * Baca seluruh band dari GeoTIFF. Nilai dikembalikan sebagai array
-   * `rasters` (satu elemen per band) supaya indeks dua-band seperti NDMI
-   * bisa digabung sebelum dihitung.
+   * `rasters` (satu elemen per band) supaya indeks berband banyak seperti
+   * NDMI dan EVI bisa dirumuskan ulang sebelum dihitung.
    */
   async function readIndexPixels(blob, fallbackBounds) {
     if (!window.GeoTIFF || typeof window.GeoTIFF.fromBlob !== 'function') {
@@ -307,12 +569,14 @@
   }
 
   /**
-   * Statistik indeks dalam rentang -1..1 (NDVI, NDMI, NDRE, NDWI semuanya
-   * normalized difference, jadi batas validasinya sama). `table` hanya
-   * mengatur class-break untuk sebaran kelas.
+   * Statistik indeks di dalam rentang min..max. Semua indeks di sini
+   * memakai rentang -1..1, tapi batasnya dibuat parametris agar tidak
+   * mengasumsikan; `table` hanya mengatur class-break untuk sebaran kelas.
    */
-  function computeStats(values, mask, table) {
+  function computeStats(values, mask, table, range) {
     const table_ = table || NDVI_BANDS;
+    const lo = range && Number.isFinite(range[0]) ? range[0] : -1;
+    const hi = range && Number.isFinite(range[1]) ? range[1] : 1;
     let count = 0, sum = 0, min = Infinity, max = -Infinity;
     const bands = table_.map(function (band) { return { band: band, count: 0 }; });
     let inside = 0;
@@ -321,8 +585,8 @@
       if (!mask[i]) continue;
       inside++;
       const value = values[i];
-      // Indeks asli selalu -1..1; di luar itu berarti nodata/awan.
-      if (!Number.isFinite(value) || value < -1 || value > 1) continue;
+      // Di luar rentang indeks berarti nodata, awan, atau perhitungan gagal.
+      if (!Number.isFinite(value) || value < lo || value > hi) continue;
       count++;
       sum += value;
       if (value < min) min = value;
@@ -416,21 +680,56 @@
     return stats;
   }
 
-  /** NDMI per-piksel dari dua band: (a - b) / (a + b). */
-  function combineBands(a, b) {
-    const total = Math.min(a.length, b.length);
+  /**
+   * Menerapkan rumus indeks ke seluruh band yang dibaca.
+   * spec.rule  -> server sudah menghitung, rasters[0] langsung dipakai.
+   * spec.bands -> band mentah, dirumuskan ulang lewat spec.compute.
+   * spec.scale -> faktor penskalaan band sebelum dirumuskan. WAJIB 0.0001
+   *               untuk EVI/MSAVI karena rumusnya memuat suku "+1" yang hanya
+   *               benar pada skala 0-1, sedangkan service memberi DN 0-10000.
+   */
+  function applyIndexFormula(rasters, spec) {
+    if (spec.rule) return rasters[0];
+    const total = Math.min.apply(null, rasters.map(function (r) { return r.length; }));
     const out = new Float64Array(total);
+    const scale = Number.isFinite(spec.scale) ? spec.scale : 1;
+    // Jumlah band yang diminta harus sama dengan jumlah band yang benar-benar
+    // dibaca; kalau tidak, hasilnya tidak bisa dipercaya, jadi seluruh piksel
+    // ditandai tidak valid.
+    if (!spec.compute || rasters.length !== spec.bands.split(',').length) {
+      out.fill(NaN);
+      return out;
+    }
+    // `v` dipakai ulang tiap piksel (ribuan-kaliAN di satu polygon) alih-alih
+    // dialokasikan ulang; compute tidak menyimpan referensinya.
+    const v = new Array(rasters.length);
     for (let i = 0; i < total; i++) {
-      const x = a[i];
-      const y = b[i];
-      // Nodata L2A bernilai 0; reflectance dibatasi 10000.
-      if (!x || !y || x > 10000 || y > 10000) {
-        out[i] = NaN;
-        continue;
+      let bad = false;
+      for (let b = 0; b < rasters.length; b++) {
+        const raw = rasters[b][i];
+        // Reflektansi Sentinel-2 yang sah: > 0 sampai 10000. Di luar itu nodata.
+        if (!raw || raw < 0 || raw > 10000) { bad = true; break; }
+        v[b] = raw * scale;
       }
-      out[i] = (x - y) / (x + y);
+      out[i] = bad ? NaN : spec.compute(v);
     }
     return out;
+  }
+
+  /** Menghitung satu indeks spektral untuk satu polygon. */
+  async function computeIndexFor(item, spec, onStatus) {
+    const size = pickSize(item.bounds);
+    if (onStatus) onStatus('Menghitung ' + spec.label + '...');
+    const blob = await requestIndexGeoTiff(item.bounds, size, spec);
+    if (onStatus) onStatus('Membaca piksel ' + spec.label + ' (' + size.w + '×' + size.h + ')...');
+    const raster = await readIndexPixels(blob, item.bounds);
+    const mask = rasterizeMask(item.rings, raster);
+    const values = applyIndexFormula(raster.rasters, spec);
+    const stats = computeStats(values, mask, spec.table, spec.range);
+    if (!stats.count) throw new Error('Tidak ada piksel ' + spec.label + ' valid di dalam polygon.');
+    item[spec.key] = stats;
+    item[spec.key + 'Error'] = null;
+    return stats;
   }
 
   /**
@@ -439,22 +738,10 @@
    * errornya disimpan per indeks.
    */
   async function runSpectral(item, onStatus) {
-    const size = pickSize(item.bounds);
     for (let i = 0; i < SPECTRAL_INDEXES.length; i++) {
       const spec = SPECTRAL_INDEXES[i];
-      onStatus('Menghitung ' + spec.label + '...');
       try {
-        const blob = await requestIndexGeoTiff(item.bounds, size, spec);
-        onStatus('Membaca piksel ' + spec.label + ' (' + size.w + '×' + size.h + ')...');
-        const raster = await readIndexPixels(blob, item.bounds);
-        const mask = rasterizeMask(item.rings, raster);
-        const values = spec.bands
-          ? combineBands(raster.rasters[0], raster.rasters[1])
-          : raster.rasters[0];
-        const stats = computeStats(values, mask, spec.table);
-        if (!stats.count) throw new Error('Tidak ada piksel ' + spec.label + ' valid di dalam polygon.');
-        item[spec.key] = stats;
-        item[spec.key + 'Error'] = null;
+        await computeIndexFor(item, spec, onStatus);
       } catch (error) {
         item[spec.key] = null;
         item[spec.key + 'Error'] = error && error.message ? error.message : 'Gagal menghitung ' + spec.label + '.';
@@ -462,6 +749,49 @@
     }
     await runSpectralMeta(item, onStatus);
   }
+
+  /**
+   * Memuat satu indeks lanjutan (EVI / MSAVI / NBR / NDVI705) saat pengguna
+   * menekan tombolnya. Sengaja satu per klik: tiap indeks adalah satu
+   * permintaan exportImage, jadi memuat semuanya sekaligus saat polygon
+   * digambar akan membuat satu polygon memicu banyak permintaan raster.
+   */
+  async function runExtraIndex(item, spec, onStatus) {
+    try {
+      await computeIndexFor(item, spec, onStatus);
+    } catch (error) {
+      item[spec.key] = null;
+      item[spec.key + 'Error'] = error && error.message ? error.message : 'Gagal menghitung ' + spec.label + '.';
+      throw error;
+    }
+    // Metadata ikut diambil bila belum ada: indeks lanjutan bisa dimuat pada
+    // polygon yang belum dianalisis, dan blok "Rumus & sumber citra" jadi
+    // tidak berguna tanpa tanggal akuisisi serta tutupan awannya.
+    if (!item.spectralMeta && !item.spectralMetaError) {
+      await runSpectralMeta(item, onStatus);
+    }
+  }
+
+  /** Dipanggil dari tombol "Hitung" pada tiap indeks lanjutan. */
+  window.loadGeoFarmIndex = function (id, key) {
+    const item = itemById(id);
+    if (!item) return false;
+    const spec = EXTRA_INDEXES.filter(function (row) { return row.key === key; })[0];
+    if (!spec) return false;
+    const busyKey = spec.key + 'Busy';
+    if (item[busyKey]) return false;
+    item[busyKey] = true;
+    item[spec.key + 'Error'] = null;
+    render();
+    runExtraIndex(item, spec, function (text) { item.busy = text; render(); })
+      .catch(function () { /* pesan errornya sudah tersimpan di item */ })
+      .then(function () {
+        item.busy = null;
+        item[busyKey] = false;
+        render();
+      });
+    return true;
+  };
 
   /**
    * Metadata citra untuk indeks spektral. Ketiga indeks dihitung dari
@@ -581,7 +911,7 @@
     return item.lst;
   }
 
-  /* ── Tren NDVI: Sentinel-2 L2A (STAC + windowed COG read), bulanan ── */
+  /* ── Tren indeks: Sentinel-2 L2A (STAC + windowed COG read), bulanan ── */
 
   const TREND_INITIAL_MONTHS = 6;
   const TREND_STEP_MONTHS = 6;
@@ -741,57 +1071,84 @@
     };
   }
 
+  /* Rasio berurutan: band pertama dikurangi dari band kedua.
+     (pakai) v[1] = plus, v[0] = minus. Semua normalized difference memakai ini. */
+  function ndRatio(v) {
+    return (v[1] - v[0]) / (v[1] + v[0]);
+  }
+
+  /** Nomor band Sentinel-2 -> nama asset STAC, mis. 8 -> "B08". */
+  function trendAssetName(band) {
+    return 'B' + String(band).padStart(2, '0');
+  }
+
   /**
-   * (plus - minus) / (plus + minus) untuk dua band Sentinel-2 L2A.
-   * Dipakai NDVI, NDMI, NDRE, dan NDWI karena semuanya normalized
-   * difference -- hanya pasangan band-nya yang berbeda.
-   * Median + persentil dipakai supaya awan tidak menggeser garis tren.
+   * Ringkasan per Window COG: median + persentil, supaya awan tidak menggeser
+   * garis tren. Dijaga sinkron dengan rumus indeks (spec.compute) sehingga
+   * nilai tren dan nilai sesaat tidak mungkin berbeda.
    */
-  function normalizedDiffFromBands(minus, plus) {
-    const total = Math.min(minus.length, plus.length);
-    const values = [];
-    for (let i = 0; i < total; i++) {
-      const m = minus[i];
-      const p = plus[i];
-      // Nodata L2A bernilai 0; reflectance dibatasi 10000.
-      if (!m || !p || m > 10000 || p > 10000) continue;
-      const value = (p - m) / (p + m);
-      if (!Number.isFinite(value) || value < -1 || value > 1) continue;
-      values.push(value);
+  function trendStatsFromPixels(values, range) {
+    const lo = range && Number.isFinite(range[0]) ? range[0] : -1;
+    const hi = range && Number.isFinite(range[1]) ? range[1] : 1;
+    const list = [];
+    for (let i = 0; i < values.length; i++) {
+      const value = values[i];
+      if (!Number.isFinite(value) || value < lo || value > hi) continue;
+      list.push(value);
     }
-    if (!values.length) return null;
-    values.sort(function (a, b) { return a - b; });
-    const count = values.length;
+    if (!list.length) return null;
+    list.sort(function (a, b) { return a - b; });
+    const count = list.length;
     const mid = count >> 1;
-    const median = count % 2 ? values[mid] : (values[mid - 1] + values[mid]) / 2;
+    const median = count % 2 ? list[mid] : (list[mid - 1] + list[mid]) / 2;
     const pick = function (ratio) {
       const index = Math.min(count - 1, Math.max(0, Math.round((count - 1) * ratio)));
-      return values[index];
+      return list[index];
     };
     return { count: count, median: median, p10: pick(0.1), p90: pick(0.9) };
   }
 
   /**
-   * Pasangan band untuk tiap indeks pada jalur tren STAC.
-   * `minus` dikurangi dari `plus`; assets diambil dari adegan sentinel-2-l2a
-   * yang sama, jadi tidak perlu mosaic ArcGIS.
+   * Band + rumus untuk tiap indeks pada jalur tren STAC.
+   *
+   * PENTING: angka di `bands` di sini adalah nomor band SENTINEL-2 yang asli,
+   * lalu diubah jadi nama asset lewat trendAssetName() ('12' -> 'B12'). Itu
+   * BERBEDA dari `spec.bands` yang memakai urutan ArcGIS, di mana pos '12'
+   * berarti B11. Untuk nomor <= 8 kebetulan sama, jadi kesalahannya mudah
+   * terlewat -- NBR memakai '12,8' di sini (B12+B08) dan tidak punya
+   * spec.bands sama sekali karena dihitung server lewat rasterFunction.
+   *
+   * Karena `bands`, `scale`, dan `compute` punya bentuk yang sama dengan spec
+   * indeks, spec ini bisa langsung dipakai ulang oleh applyIndexFormula:
+   * nilai tren dijamin identik dengan nilai sesaat.
    */
-  const TREND_BANDS = {
-    ndvi: { minus: 'B04', plus: 'B08' },
-    ndmi: { minus: 'B11', plus: 'B08' },
-    ndre: { minus: 'B05', plus: 'B08' },
-    ndwi: { minus: 'B08', plus: 'B03' }
+  const TREND_SPECS = {
+    ndvi: { bands: '4,8', compute: ndRatio },
+    ndmi: { bands: '11,8', compute: ndRatio },
+    ndre: { bands: '5,8', compute: ndRatio },
+    ndwi: { bands: '8,3', compute: ndRatio },
+    evi: { bands: '8,4,2', scale: 0.0001, compute: eviCompute, range: [-2, 2] },
+    msavi: { bands: '8,4', scale: 0.0001, compute: msaviCompute, range: [-2, 2] },
+    nbr: { bands: '12,8', compute: ndRatio },
+    ndvi705: { bands: '5,6', compute: ndRatio }
   };
 
-  async function loadTrendPoint(item, period, bands) {
+  async function loadTrendPoint(item, period, spec) {
     const scene = await stacBestScene(item.bounds, period);
     if (!scene) return null;
-    if (!scene.assets[bands.minus] || !scene.assets[bands.plus]) {
-      throw new Error('Adegan ini tidak memiliki band ' + bands.minus + '/' + bands.plus + '.');
+    const numbers = spec.bands.split(',');
+    const assets = numbers.map(function (band) {
+      const name = trendAssetName(band);
+      if (!scene.assets[name]) {
+        throw new Error('Adegan ini tidak memiliki band ' + name + '.');
+      }
+      return name;
+    });
+    const rasters = [];
+    for (let i = 0; i < assets.length; i++) {
+      rasters.push(await readCogWindow(await signCogUrl(scene.assets[assets[i]].href), item.bounds));
     }
-    const minus = await readCogWindow(await signCogUrl(scene.assets[bands.minus].href), item.bounds);
-    const plus = await readCogWindow(await signCogUrl(scene.assets[bands.plus].href), item.bounds);
-    const stats = normalizedDiffFromBands(minus, plus);
+    const stats = trendStatsFromPixels(applyIndexFormula(rasters, spec), spec.range);
     if (!stats) return null;
     return {
       label: period.label,
@@ -808,12 +1165,12 @@
   // Jaringan sesekali gagal; coba ulang sebelum periode ditandai kosong.
   // `cacheTag` wajib ikut di kunci cache: tiap indeks memakai adegan dan band
   // berbeda, jadi NDMI dan NDRE tidak boleh berbagi hasil.
-  async function fetchTrendPoint(item, period, bands, cacheTag) {
+  async function fetchTrendPoint(item, period, spec, cacheTag) {
     const key = item.id + '|' + cacheTag + '|' + period.key + '|' + TREND_SAMPLE_PX;
     if (trendCache.has(key)) return trendCache.get(key);
     for (let attempt = 1; attempt <= TREND_ATTEMPTS; attempt++) {
       try {
-        const point = await loadTrendPoint(item, period, bands);
+        const point = await loadTrendPoint(item, period, spec);
         const value = point || { label: period.label, mean: NaN, min: NaN, max: NaN, pixels: 0, cloud: NaN, date: '' };
         trendCache.set(key, value);
         return value;
@@ -828,7 +1185,8 @@
 
   async function runIndexTrend(item, onStatus, months, spec) {
     const periods = trendPeriods(months);
-    const bands = TREND_BANDS[spec.key] || TREND_BANDS.ndvi;
+    const trendSpec = TREND_SPECS[spec.key];
+    if (!trendSpec) throw new Error('Tren ' + spec.label + ' belum didukung.');
     const points = new Array(periods.length);
     let cursor = 0;
     let done = 0;
@@ -840,7 +1198,7 @@
         if (typeof onStatus === 'function') {
           onStatus('Mengambil adegan ' + (index + 1) + '/' + periods.length + ': ' + periods[index].label + '…');
         }
-        points[index] = await fetchTrendPoint(item, periods[index], bands, spec.key);
+        points[index] = await fetchTrendPoint(item, periods[index], trendSpec, spec.key);
         done++;
         if (typeof onStatus === 'function') {
           onStatus('Memproses ' + done + '/' + periods.length + ' selesai…');
@@ -2078,21 +2436,36 @@
 
   /** Rumus & sumber band, ditampilkan pada metadata tiap indeks. */
   function indexFormula(spec) {
-    if (spec.key === 'ndmi') return 'NDMI = (B08 − B11) / (B08 + B11)';
-    if (spec.key === 'ndre') return 'NDRE = (B08 − B05) / (B08 + B05)';
-    if (spec.key === 'ndwi') return 'NDWI = (B03 − B08) / (B03 + B08)';
-    return '';
+    return spec.formula || '';
   }
 
-  function indexBlockHtml(item, spec) {
+  /** Tombol muat manual untuk indeks lanjutan (tanpa pembungkus baris tombol). */
+  function loadButtonHtml(item, spec, busy, label) {
+    return '<button class="pa-btn" type="button" data-pa-action="spectral-extra" data-pa-index="' +
+      spec.key + '" data-pa-id="' + item.id + '"' + (busy ? ' disabled' : '') + '>' +
+      (busy ? '<span class="pa-spin"></span> Menghitung ' + escapeHtml(spec.label) + '…' : escapeHtml(label || 'Hitung ' + spec.label)) +
+      '</button>';
+  }
+
+  /* `onDemand` diberikan oleh spectralBlockHtml sesuai kelompoknya, bukan
+     disimpan di spec: dengan begitu indeks yang masuk EXTRA_INDEXES pasti
+     punya tombol muat tanpa perlu flag yang bisa lupa diisi. */
+  function indexBlockHtml(item, spec, onDemand) {
+    const busy = !!item[spec.key + 'Busy'];
     if (item[spec.key + 'Error']) {
       return '<div class="pa-block pa-block-error">' + indexHeadHtml(spec.label, spec.hint) +
-        escapeHtml(item[spec.key + 'Error']) + '</div>';
+        escapeHtml(item[spec.key + 'Error']) +
+        (onDemand ? '<div class="pa-btn-row pa-btn-row-single">' + loadButtonHtml(item, spec, busy, 'Coba lagi') + '</div>' : '') +
+        '</div>';
     }
     const s = item[spec.key];
     if (!s) {
       return '<div class="pa-block pa-block-muted">' + indexHeadHtml(spec.label, spec.hint) +
-        escapeHtml(spec.label) + ' belum dihitung.</div>';
+        (onDemand
+          ? '<div class="pa-note">Belum dihitung. Tekan Hitung bila perlu indeks ini.</div>' +
+            '<div class="pa-btn-row pa-btn-row-single">' + loadButtonHtml(item, spec, busy, 'Hitung') + '</div>'
+          : escapeHtml(spec.label) + ' belum dihitung.') +
+        '</div>';
     }
     const rows = spec.table.map(function (band) {
       const entry = s.bands.filter(function (b) { return b.band === band; })[0];
@@ -2129,6 +2502,7 @@
         '<button class="pa-btn pa-btn-ghost" type="button" data-pa-action="spectral-trend" data-pa-trend="' +
           spec.key + '" data-pa-id="' + item.id + '"' + (trendBusy ? ' disabled' : '') + '>' +
           (trendBusy ? 'Memuat tren ' + spec.label + '…' : escapeHtml(trendButtonLabel(item, spec))) + '</button>' +
+        (onDemand ? loadButtonHtml(item, spec, busy, 'Analisis ulang') : '') +
       '</div>' +
       (trendBusy
         ? '<div class="pa-block pa-block-muted"><span class="pa-spin"></span>' +
@@ -2145,7 +2519,9 @@
         '<summary class="pa-summary">Rumus &amp; sumber citra</summary>' +
         '<div class="pa-block">' +
           metaRow('Rumus', escapeHtml(indexFormula(spec))) +
-          metaRow('Band', escapeHtml(spec.bands ? spec.bands.replace(',', ' + ') : rasterFunctionText(spec))) +
+          metaRow('Band', escapeHtml(spec.bands
+            ? spec.bands.split(',').map(trendAssetName).join(' + ')
+            : rasterFunctionText(spec))) +
           metaRow('Produk', 'Sentinel-2 L2A · 10 m/piksel') +
         '</div>' +
         spectralMetaHtml(item) +
@@ -2153,16 +2529,44 @@
       '</div>';
   }
 
+  /* Band yang dipakai tiap rasterFunction, ditulis eksplisit karena urutan
+     band di ArcGIS tidak sama dengan penamaan Sentinel-2 (B10 Cirrus
+     menyisipkan satu kolom sehingga B11 berada di posisi 12). */
+  const RASTER_FUNCTION_BANDS = {
+    'NDVI - with VRE Raw': 'B08 + B05',
+    'NDWI Raw': 'B03 + B08',
+    'Normalized Burn Ratio': 'B08 + B12',
+    'NDVI - VRE only Raw': 'B06 + B05'
+  };
+
   function rasterFunctionText(spec) {
-    if (spec.rule === 'NDVI - with VRE Raw') return 'B08 + B05 (rasterFunction NDVI - with VRE Raw)';
-    if (spec.rule === 'NDWI Raw') return 'B03 + B08 (rasterFunction NDWI Raw)';
-    return spec.rule || '-';
+    if (!spec.rule) return '-';
+    const bands = RASTER_FUNCTION_BANDS[spec.rule];
+    return bands ? bands + ' (rasterFunction ' + spec.rule + ')' : spec.rule;
   }
 
+  /**
+   * Satu section "Indeks Spektral" berisi tujuh indeks: tiga yang dihitung
+   * otomatis, lalu empat yang dimuat sendiri lewat tombolnya. Dikelompokkan
+   * dengan subjudul supaya jelas mana yang gratis dimuat dan mana yang perlu
+   * menekan tombol -- bukan dua section terpisah, karena semuanya indeks
+   * spektral yang cara membacanya sama.
+   */
   function spectralBlockHtml(item) {
-    return SPECTRAL_INDEXES.map(function (spec) {
-      return indexBlockHtml(item, spec);
+    const auto = SPECTRAL_INDEXES.map(function (spec) {
+      return indexBlockHtml(item, spec, false);
     }).join('');
+
+    const extra = EXTRA_INDEXES.map(function (spec) {
+      return indexBlockHtml(item, spec, true);
+    }).join('');
+
+    if (!extra) return auto;
+    return auto +
+      '<div class="pa-subhead">Indeks lanjutan</div>' +
+      '<div class="pa-note">Tidak dihitung otomatis karena tiap indeks butuh satu ' +
+        'permintaan citra tersendiri. Tekan Hitung hanya untuk yang Anda perlukan.</div>' +
+      extra;
   }
 
   const LST_BANDS = [
@@ -2458,6 +2862,10 @@
 
     const cardOpen = '<div class="pa-card' + (item.stale ? ' pa-card-stale' : '') + '" data-pa-id="' + item.id + '">';
     const cardInfo = '<div class="pa-area">' + fmt(item.areaHa, 2) + ' ha · ' + (item.pointCount || 0) + ' titik sample</div>' +
+      // Daftar langkah di kartu sengaja dihapus: setiap analisis sudah punya
+      // tombolnya sendiri di section terkait, dan tombol Export di kepala panel
+      // baru muncul setelah semuanya selesai. Block pengingat hanya
+      // menduplikasi info yang sudah ada di tempat yang lebih wajar.
       analyzeBlock + stale + busy;
 
     if (!item.analyzed) return cardOpen + head + cardInfo + '</div>';
@@ -2539,7 +2947,12 @@
   function render() {
     const list = listEl();
     if (!list) return;
-    if (!state.items.length) {
+    const hasItems = state.items.length > 0;
+    // Kontrol export di kepala panel hanya muncul setelah semua polygon
+    // tuntas. Tidak ada footer, jadi tidak ada ruang sheet yang terpakai.
+    if (!hasItems) closeExportMenu();
+    renderExportToggle();
+    if (!hasItems) {
       list.innerHTML = '<div class="pa-empty">Belum ada polygon yang dianalisis.</div>';
       const counter = document.getElementById('polygonAnalysisCount');
       if (counter) counter.textContent = '0 polygon';
@@ -2550,7 +2963,11 @@
     // -- index itu dipakai sebagai badge kartu dan sebagai label 'Polygon N'
     // yang dikirim ke backend analyzeItem(). Membalik di sini, bukan dengan
     // unshift(), menjaga nomor itu tetap konsisten saat kartu dihapus.
-    list.innerHTML = state.items.slice().reverse().map(cardHtml).join('');
+    const notice = state.notice
+      ? '<div class="pa-notice' + (state.noticeKind === 'error' ? ' is-error' : '') + '">' +
+          escapeHtml(state.notice) + '</div>'
+      : '';
+    list.innerHTML = notice + state.items.slice().reverse().map(cardHtml).join('');
     const counter = document.getElementById('polygonAnalysisCount');
     if (counter) counter.textContent = state.items.length + ' polygon';
   }
@@ -2710,6 +3127,26 @@
       return;
     }
 
+    /* Aksi panel yang tidak punya data-pa-id. Semuanya harus ditangani
+       SEBELUM penjaga item di bawah -- kalau tidak, tombolnya selalu keluar
+       lebih dulu karena tidak punya polygon. */
+    if (action === 'export-menu') {
+      toggleExportMenu();
+      return;
+    }
+
+    if (action === 'export-shp-all') {
+      closeExportMenu();
+      runGeoFarmExport(button, 'shp');
+      return;
+    }
+
+    if (action === 'export-pdf-all') {
+      closeExportMenu();
+      runGeoFarmExport(button, 'pdf');
+      return;
+    }
+
     const id = button.getAttribute('data-pa-id');
     const item = itemById(id);
     if (!item) return;
@@ -2727,18 +3164,7 @@
     }
 
     if (action === 'lst') {
-      if (item.lstBusy) return;
-      item.lstBusy = true;
-      item.lstError = null;
-      render();
-      runLst(item, function (text) { item.busy = text; render(); }).catch(function (error) {
-        item.lst = null;
-        item.lstError = error && error.message ? error.message : 'Gagal mengambil suhu permukaan.';
-      }).finally(function () {
-        item.busy = null;
-        item.lstBusy = false;
-        render();
-      });
+      runOptionalModule(item, optionalModules()[0]);
       return;
     }
 
@@ -2761,42 +3187,30 @@
       return;
     }
 
+    if (action === 'spectral-extra') {
+      // Hanya indeks lanjutan yang punya tombol muat. Dicari di EXTRA_INDEXES
+      // supaya aksi ini tidak bisa dipakai untuk menjalankan ulang indeks otomatis.
+      const key = button.getAttribute('data-pa-index');
+      const target = EXTRA_INDEXES.filter(function (row) { return row.key === key; })[0];
+      if (!target) return;
+      if (item[target.key + 'Busy']) return;
+      window.loadGeoFarmIndex(item.id, target.key);
+      return;
+    }
+
     if (action === 'ndvi-trend' || action === 'spectral-trend') {
       // Tren NDVI memakai spec null; tren indeks spektral memakai spec-nya
       // sendiri supaya band dan cache-nya terpisah.
       const spec = action === 'spectral-trend'
-        ? SPECTRAL_INDEXES.filter(function (row) { return row.key === button.getAttribute('data-pa-trend'); })[0]
+        ? ALL_INDEXES.filter(function (row) { return row.key === button.getAttribute('data-pa-trend'); })[0]
         : null;
       if (!spec && action === 'spectral-trend') return;
-      const busyKey = spec ? spec.trendKey + 'Busy' : 'ndviTrendBusy';
-      const trendKey = spec ? spec.trendKey : 'ndviTrend';
-      const errorKey = spec ? spec.trendKey + 'Error' : 'ndviTrendError';
-      const name = spec ? spec.label : 'NDVI';
-
-      if (item[busyKey]) return;
-      const current = item[trendKey];
-      const months = current
-        ? Math.min(TREND_MAX_MONTHS, current.months + TREND_STEP_MONTHS)
-        : TREND_INITIAL_MONTHS;
-      item[busyKey] = true;
-      item[errorKey] = null;
-      item.busy = 'Mencari adegan Sentinel-2…';
-      render();
-      const done = function (text) { item.busy = text || null; render(); };
-      runIndexTrend(item, done, months, spec || { key: 'ndvi', label: 'NDVI' })
-        .then(function (trend) {
-          item[trendKey] = trend;
-          item[busyKey] = false;
-          item.busy = null;
-          render();
-        })
-        .catch(function (error) {
-          item[busyKey] = false;
-          item.busy = null;
-          item[trendKey] = null;
-          item[errorKey] = error && error.message ? error.message : 'Gagal memuat tren ' + name + '.';
-          render();
-        });
+      // Modul tren diambil dari optionalModules() yang sama dengan runner
+      // "lengkapi analisis", sehingga keduanya memakai jumlah bulan yang sama.
+      const wanted = spec ? spec.trendKey : 'ndviTrend';
+      const mod = optionalModules().filter(function (row) { return row.data === wanted; })[0];
+      if (!mod) return;
+      runOptionalModule(item, mod);
       return;
     }
 
@@ -2829,24 +3243,8 @@
     }
 
     if (action === 'soil') {
-      if (item.soilBusy) return;
-      item.soilBusy = true;
-      item.soilError = null;
-      render();
-      const done = function (text) { item.busy = text || null; render(); };
-      runSoilMoisture(item, done)
-        .then(function () {
-          item.soilBusy = false;
-          item.busy = null;
-          render();
-        })
-        .catch(function (error) {
-          item.soilBusy = false;
-          item.busy = null;
-          item.soil = null;
-          item.soilError = error && error.message ? error.message : 'Gagal memuat data kelembapan tanah.';
-          render();
-        });
+      // optionalModules()[0] = LST, [1] = kelembapan tanah bulanan.
+      runOptionalModule(item, optionalModules()[1]);
       return;
     }
 
@@ -2908,6 +3306,306 @@
     state.items.forEach(function (item, index) { item.index = index + 1; });
   }
 
+  /* ── Kewajiban analisis sebelum ekspor ──
+     Export dikunci sampai semua polygon melewati seluruh modul. Modul yang
+     SUDAH DIPERCBA dan gagal tetap dihitung selesai: LST misalnya memang
+     tidak ada di wilayah tertutup awan total, dan memaksa pengguna menekan
+     ulang selamanya bukan solusi. Yang dihitung belum selesai hanya modul
+     yang belum pernah dijalankan sama sekali. */
+
+  /* Modul opsional di luar analisis inti. Trend dibangun lewat fungsi
+     terpisah karena butuh spec indeks dan jumlah bulan.
+
+     `store` dipakai hanya kalau runner-nya mengembalikan nilai dan tidak
+     menyimpannya sendiri. runLst dan runSoilMoisture sudah mengisi item-nya
+     sendiri, jadi store-nya kosong; runIndexTrend hanya mengembalikan objek
+     tren tanpa menyimpannya, jadi trend wajib punya store. */
+  function optionalModules() {
+    const mods = [
+      {
+        key: 'lst', label: 'Suhu permukaan (LST)', data: 'lst', err: 'lstError', busy: 'lstBusy',
+        run: function (item, onStatus) { return runLst(item, onStatus); }
+      },
+      {
+        key: 'soil', label: 'Kelembapan tanah', data: 'soil', err: 'soilError', busy: 'soilBusy',
+        run: function (item, onStatus) { return runSoilMoisture(item, onStatus); }
+      }
+    ];
+    const trendSpec = function (spec) {
+      return {
+        key: 'trend-' + spec.key, label: 'Tren ' + spec.label,
+        data: spec.trendKey, err: spec.trendKey + 'Error', busy: spec.trendKey + 'Busy',
+        store: function (item, result) { item[spec.trendKey] = result; },
+        run: function (item, onStatus) {
+          return runIndexTrend(item, onStatus, trendMonthsFor(item, spec.trendKey), spec);
+        }
+      };
+    };
+    return mods
+      .concat([trendSpec({ key: 'ndvi', label: 'NDVI', trendKey: 'ndviTrend' })])
+      .concat(ALL_INDEXES.map(trendSpec));
+  }
+
+  /* Jumlah bulan untuk tren: sama persis dengan yang dipakai tombol di kartu,
+     sehingga jalur "lengkapi analisis" dan klik manual tidak berbeda. */
+  function trendMonthsFor(item, trendKey) {
+    const current = item[trendKey];
+    return current
+      ? Math.min(TREND_MAX_MONTHS, current.months + TREND_STEP_MONTHS)
+      : TREND_INITIAL_MONTHS;
+  }
+
+  /**
+   * Menjalankan satu modul opsional dengan managing status sibuk dan pesan
+   * error. Dipakai bersama oleh tombol di kartu dan olehisi "lengkapi
+   * analisis", jadi keduanya pasti berperilaku sama.
+   * Mengembalikan 'ok' | 'error' | 'busy'.
+   */
+  function runOptionalModule(item, mod, onStatus) {
+    if (item[mod.busy]) return Promise.resolve('busy');
+    item[mod.busy] = true;
+    item[mod.err] = null;
+    item.busy = 'Mengambil ' + mod.label + '…';
+    render();
+    const done = function (text) { item.busy = text || null; render(); };
+    // mod.run bisa melempar sinkron (bukan menolak promise). Kalau dibiarkan,
+    // flag busy tidak pernah dilepas oleh finally di bawah, dan modul itu
+    // terkunci selamanya: setiap klik berikutnya hanya dapat 'busy'.
+    let running;
+    try {
+      running = mod.run(item, done);
+    } catch (error) {
+      item[mod.busy] = false;
+      item[mod.data] = null;
+      item[mod.err] = error && error.message ? error.message : ('Gagal memuat ' + mod.label + '.');
+      item.busy = null;
+      render();
+      return Promise.resolve('error');
+    }
+    return Promise.resolve(running)
+      .then(function (result) {
+        // Hanya modul yang mendeklarasikan store yang perlu disimpan di sini.
+        if (mod.store) mod.store(item, result);
+        return 'ok';
+      })
+      .catch(function (error) {
+        item[mod.data] = null;
+        item[mod.err] = error && error.message ? error.message : ('Gagal memuat ' + mod.label + '.');
+        return 'error';
+      })
+      .finally(function () {
+        item[mod.busy] = false;
+        item.busy = null;
+        render();
+      });
+  }
+
+  /* ── Kesiapan ekspor ── */
+
+  /* Setiap polygon harus melewati daftar modul ini. Indeks spektral dan tren
+     dijumlahkan sebagai satu butir supaya daftar yang tampil di sheet tetap
+     ringkas, bukan 20 baris. */
+  function polygonGaps(item) {
+    const gaps = [];
+    const spectral = [];
+    for (let i = 0; i < ALL_INDEXES.length; i++) {
+      const spec = ALL_INDEXES[i];
+      if (!item[spec.key] && !item[spec.key + 'Error']) spectral.push(spec.label);
+    }
+    if (!item.analyzed) gaps.push('analisis utama');
+    else if (item.stale) gaps.push('analisis ulang (geometri diubah)');
+    if (!item.ndvi && !item.ndviError) gaps.push('NDVI');
+    if (spectral.length) gaps.push(spectral.length + ' indeks spektral');
+    if (!item.terrain && !item.terrainError) gaps.push('topografi');
+    if (!item.lst && !item.lstError) gaps.push('LST');
+    if (!item.soil && !item.soilError) gaps.push('kelembapan tanah');
+    if (!item.ndviTrend && !item.ndviTrendError) gaps.push('tren NDVI');
+    let missingTrend = 0;
+    if (!item.ndviTrend && !item.ndviTrendError) missingTrend += 1;
+    for (let i = 0; i < ALL_INDEXES.length; i++) {
+      const spec = ALL_INDEXES[i];
+      if (!item[spec.trendKey] && !item[spec.trendKey + 'Error']) missingTrend += 1;
+    }
+    if (missingTrend) gaps.push(missingTrend + ' tren');
+    return gaps;
+  }
+
+  /**
+   * Ringkasan kesiapan seluruh daftar polygon. gaps berisi satu entri per
+   * jenis modul yang belum tuntas, beserta berapa polygon yang.route.
+   */
+  function exportReadiness() {
+    const items = state.items;
+    const tally = {};
+    let readyCount = 0;
+    for (let i = 0; i < items.length; i++) {
+      const gaps = polygonGaps(items[i]);
+      if (!gaps.length) readyCount += 1;
+      for (let g = 0; g < gaps.length; g++) {
+        tally[gaps[g]] = (tally[gaps[g]] || 0) + 1;
+      }
+    }
+    const gaps = Object.keys(tally).map(function (label) {
+      return { label: label, count: tally[label] };
+    });
+    // Modul yang paling sering hilang ditampilkan lebih dulu supaya
+    // daftar di sheet langsung mengarah ke bagian terbesar yang belum tuntas.
+    gaps.sort(function (a, b) { return b.count - a.count; });
+    return {
+      ready: items.length > 0 && readyCount === items.length,
+      total: items.length,
+      readyCount: readyCount,
+      gaps: gaps
+    };
+  }
+
+  function gapSummary(readiness) {
+    if (readiness.ready) return 'Semua polygon siap diekspor.';
+    if (!readiness.gaps.length) return readiness.readyCount + ' dari ' + readiness.total + ' polygon lengkap.';
+    return readiness.gaps.slice(0, 2).map(function (g) {
+      return g.count + ' polygon kurang ' + g.label;
+    }).join(', ') + (readiness.gaps.length > 2 ? ', dll.' : '.');
+  }
+
+  /* ── Ekspor SHP ──
+     Geometri diambil dari item.rings, bukan dari layer Leaflet: rings sudah
+     mengikuti GeoJSON (ring tertutup, urutan [lng,lat]) dan ikut diperbarui
+     setiap vertex diedit lewat markPolygonStale(). */
+
+  /* .prj WGS84 geographic, sama seperti export tool Gambar & Ukur. Luas tetap
+     benar walau ditulis dalam satuan meter karena sudah dihitung di atas
+     projeksi UTM saat polygon dibuat (item.areaHa). */
+  const WGS84_PRJ = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]';
+
+  /* Nama field DBF maksimal 10 karakter, jadi semua nama di geofarmProperties()
+     dijaga pendek. Nilai non-angka tidak boleh masuk ke kolom numerik --
+     shpwrite akan menuliskannya apa adanya dan QGIS akan salah baca kolom. */
+  function shpText(value, maxLength) {
+    if (value === null || value === undefined) return '';
+    const text = String(value).replace(/\s+/g, ' ').trim();
+    return maxLength ? text.slice(0, maxLength) : text;
+  }
+
+  function shpNumber(value, digits) {
+    if (!Number.isFinite(value)) return '';
+    const factor = Math.pow(10, digits === undefined ? 4 : digits);
+    return Math.round(value * factor) / factor;
+  }
+
+  /** Geometri GeoJSON dari rings.
+      rings[0] adalah outer ring dan rings[1..] adalah hole, persis urutan yang
+      diminta GeoJSON Polygon. Jadi semuanya ikut SATU Polygon -- bukan
+      MultiPolygon. Membungkusnya jadi MultiPolygon akan membuat hole terisi
+      dan, saat ditulis ke SHP, shpwrite menyatukan fitur yang berbeda. */
+  function geofarmGeometry(item) {
+    const rings = (item.rings || []).filter(function (ring) {
+      return ring && ring.length >= 4;
+    });
+    if (!rings.length) return null;
+    return { type: 'Polygon', coordinates: rings };
+  }
+
+  /**
+   * Atribut satu polygon. Skema dibuat tetap: indeks yang belum dihitung tetap
+   * ditulis sebagai kolom kosong, bukan dihilangkan, supaya tabel hasil ekspor
+   * punya kolom yang sama persis untuk semua polygon.
+   */
+  function geofarmProperties(item) {
+    const cloud = item.cloud || item.spectralMeta || null;
+    const ndvi = item.ndvi;
+    const terrain = item.terrain;
+    const props = {
+      gf_id: item.id,
+      nama: shpText(item.name || ('Polygon ' + item.index), 60),
+      sumber: item.source === 'upload' ? 'unggah' : 'gambar',
+      luas_ha: shpNumber(item.areaHa, 2),
+      titik: shpNumber(item.pointCount, 0),
+      status: item.stale ? 'perlu rean' : (item.analyzed ? 'selesai' : 'belum'),
+      tgl_citra: shpText(cloud && cloud.imageDate, 20),
+      awan_pct: shpNumber(cloud && cloud.cloudPercent, 2),
+      produk: shpText(cloud && cloud.productName, 70),
+      piksel: shpNumber(ndvi && ndvi.count, 0),
+      cakup_pct: shpNumber(ndvi && ndvi.coverage, 1)
+    };
+    props.ndvi = ndvi ? shpNumber(ndvi.mean) : '';
+    props.ndvi_min = ndvi ? shpNumber(ndvi.min) : '';
+    props.ndvi_max = ndvi ? shpNumber(ndvi.max) : '';
+    for (let i = 0; i < ALL_INDEXES.length; i++) {
+      const spec = ALL_INDEXES[i];
+      const stats = item[spec.key];
+      props[spec.key] = stats ? shpNumber(stats.mean) : '';
+    }
+    props.lst_c = item.lst ? shpNumber(item.lst.mean, 2) : '';
+    props.elev_min = terrain ? shpNumber(terrain.elevMin, 1) : '';
+    props.elev_maks = terrain ? shpNumber(terrain.elevMax, 1) : '';
+    props.elev_avg = terrain ? shpNumber(terrain.elevAvg, 1) : '';
+    props.miring = terrain ? shpNumber(terrain.slopeAvg, 2) : '';
+    props.curam_pct = terrain ? shpNumber(terrain.steepPct, 1) : '';
+    return props;
+  }
+
+  function geofarmFeature(item) {
+    const geometry = geofarmGeometry(item);
+    if (!geometry) return null;
+    return { type: 'Feature', geometry: geometry, properties: geofarmProperties(item) };
+  }
+
+  function downloadExportBlobLocal(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportStamp() {
+    const d = new Date();
+    const pad = function (n) { return String(n).padStart(2, '0'); };
+    return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '-' + pad(d.getHours()) + pad(d.getMinutes());
+  }
+
+  /**
+   * Ekspor polygon GeoFarm sebagai satu ZIP berisi .shp + .shx + .dbf + .prj.
+   * Hanya SHP: GeoJSON bisa diambil kapan saja dari API peta, sementara SHP
+   * tidak bisa dan tetap perlu atribut analisisnya. Mengembalikan
+   * { ok, message } dan tidak melempar, supaya tombol bisa menampilkan
+   * pesannya sendiri.
+   */
+  window.exportGeoFarmSHP = function () {
+    const features = [];
+    for (let i = 0; i < state.items.length; i++) {
+      const feature = geofarmFeature(state.items[i]);
+      if (feature) features.push(feature);
+    }
+    if (!features.length) {
+      return Promise.resolve({ ok: false, message: 'Tidak ada polygon yang bisa diekspor.' });
+    }
+
+    const writer = (typeof window.shpwrite !== 'undefined') ? window.shpwrite
+      : (typeof shpwrite !== 'undefined' ? shpwrite : null);
+    if (!writer || typeof writer.zip !== 'function') {
+      return Promise.resolve({ ok: false, message: 'Modul pembuat SHP belum siap. Muat ulang halaman lalu coba kembali.' });
+    }
+
+    const collection = { type: 'FeatureCollection', features: features };
+    return writer.zip(collection, {
+      folder: 'geofarm',
+      filename: 'geofarm_polygon',
+      outputType: 'blob',
+      types: { polygon: 'polygons' },
+      prj: WGS84_PRJ
+    }).then(function (zipData) {
+      const blob = zipData instanceof Blob ? zipData : new Blob([zipData], { type: 'application/zip' });
+      downloadExportBlobLocal(blob, 'geofarm-polygon-' + exportStamp() + '-shp.zip');
+      return { ok: true, message: features.length + ' polygon diekspor sebagai SHP ZIP.' };
+    }).catch(function (error) {
+      return { ok: false, message: 'Gagal membuat SHP: ' + (error && error.message ? error.message : String(error)) };
+    });
+  };
+
   /* ── API publik ── */
 
   /* Penanda bahwa gambar sedang berjalan dari GeoFarm.
@@ -2961,23 +3659,6 @@
       ndviTrend: null,
       ndviTrendError: null,
       ndviTrendBusy: false,
-      // Indeks spektral (lihat SPECTRAL_INDEXES). Tiap indeks punya state
-      // tren sendiri karena diambil dari pasangan band yang berbeda.
-      ndmi: null,
-      ndmiError: null,
-      ndmiTrend: null,
-      ndmiTrendBusy: false,
-      ndmiTrendError: null,
-      ndre: null,
-      ndreError: null,
-      ndreTrend: null,
-      ndreTrendBusy: false,
-      ndreTrendError: null,
-      ndwi: null,
-      ndwiError: null,
-      ndwiTrend: null,
-      ndwiTrendBusy: false,
-      ndwiTrendError: null,
       spectralMeta: null,
       spectralMetaError: null,
       // Suhu permukaan tanah (Landsat, dimuat manual)
@@ -2989,6 +3670,21 @@
       cloud: null,
       cloudError: null
     };
+
+    /* Tiap indeks spektral -- yang otomatis maupun yang dimuat lewat tombol --
+       punya nilai, pesan error, status sibuk, dan tren sendiri, karena tiap
+       indeks memakai band dan cache yang berbeda. Diberikan lewat ALL_INDEXES
+       supaya indeks baru otomatis ikut tanpa harus ditambah satu per satu. */
+    for (let i = 0; i < ALL_INDEXES.length; i++) {
+      const spec = ALL_INDEXES[i];
+      item[spec.key] = null;
+      item[spec.key + 'Error'] = null;
+      item[spec.key + 'Busy'] = false;
+      item[spec.trendKey] = null;
+      item[spec.trendKey + 'Error'] = null;
+      item[spec.trendKey + 'Busy'] = false;
+    }
+
     state.items.push(item);
     render();
     openPanel(true);
@@ -3061,6 +3757,7 @@
     // yang berada di luar #polygonAnalysisList.
     const panel = panelEl();
     if (panel) panel.addEventListener('click', onPanelClick);
+    bindExportMenu();
   }
 
   // Panel ada di HTML statis; bind langsung bila sudah ter-parse agar tidak

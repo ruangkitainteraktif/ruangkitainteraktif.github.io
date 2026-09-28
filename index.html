@@ -711,14 +711,34 @@
           <span class="pa-count" id="polygonAnalysisCount">0 polygon</span>
         </span>
         <div class="pa-actions">
+          <!-- Kontrol ekspor. Disembunyikan polygon-analysis.js sampai semua
+               analisis selesai; tidak ada footer yang memakan ruang sheet. -->
+          <div class="pa-export" id="geofarmExport" hidden>
+            <div class="pa-menu" id="geofarmExportMenu" role="menu" hidden>
+              <button class="pa-menu-item" type="button" role="menuitem" data-pa-action="export-pdf-all">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="15" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/></svg>
+                <span class="pa-menu-label">Laporan PDF<small>Semua hasil analisis + watermark</small></span>
+              </button>
+              <button class="pa-menu-item" type="button" role="menuitem" data-pa-action="export-shp-all">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v13H3z"/><path d="M3 7l3-4h12l3 4"/><path d="M8 11h8"/><path d="M8 15h5"/></svg>
+                <span class="pa-menu-label">Shapefile (SHP)<small>Polygon + atribut analisis</small></span>
+              </button>
+            </div>
+            <button class="pa-minimize pa-export-btn" type="button" id="geofarmExportToggle" data-pa-action="export-menu" title="Export hasil analisis" aria-label="Export hasil analisis" aria-haspopup="menu" aria-expanded="false">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5z"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
+          </div>
           <button class="pa-minimize" type="button" data-pa-action="minimize" aria-label="Minimalkan">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="21"/></svg>
           </button>
           <button class="pa-close" type="button" data-pa-action="close" aria-label="Tutup">&#xd7;</button>
         </div>
       </div>
+
       <div id="polygonAnalysisList" class="pa-list"></div>
     </div>
+
+
 
     <!-- Chip buka-kembali panel GeoFarm; hanya muncul setelah panel ditutup
          sementara masih ada hasil analisis. -->
@@ -2474,6 +2494,9 @@
     <script src="assets/js/alat-draw-measure.js"></script>
 <script src="assets/js/geofarm-draw.js"></script>
 <script src="assets/js/geofarm-upload.js"></script>
+<!-- geofarm-report.js hanya Menyediakan window.setGeoFarmReportIndexSpecs(),
+     jadi harus dimuat sebelum polygon-analysis.js memanggilnya. -->
+<script src="assets/js/geofarm-report.js"></script>
 <script src="assets/js/polygon-analysis.js"></script>
 
   <script src="assets/js/app-boot.js"></script>

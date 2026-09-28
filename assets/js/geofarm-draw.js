@@ -52,6 +52,9 @@
    * .draw-actions-wrap tetap tersembunyi. Akibatnya toolbar tertinggal di peta
    * tanpa tombol export maupun tombol clear/sembunyikan.
    *
+   * Pemanggilan setDrawHideExportActions(false) di bawah mengembalikan tombol
+   * export toolbar, yang disembunyikan lagi saat activate() di bawah.
+   *
    * Dipakai juga ketika pengguna membatalkan gambar secara eksplisit.
    * Versi lama salah: menghapus class itu lalu memanggil revealDrawChrome()
    * yang langsung menambahkannya kembali.
@@ -153,7 +156,11 @@
     }
 
     try {
-      // Sembunyikan tombol Export SHP/GeoJSON khusus sesi gambar GeoFarm.
+      /* Tombol Export SHP/GeoJSON disembunyikan di sesi GeoFarm. Ekspor
+         GeoFarm punya tempat sendiri: bar di bagian bawah sheet panel,
+         yang membawa atribut analisis (lihat exportGeoFarmShapes di
+         polygon-analysis.js). Tombol di toolbar hanya mengekspor gambar &
+         pengukuran biasa, jadi disembunyikan agar tidak membingungkan. */
       if (typeof window.setDrawHideExportActions === 'function') {
         window.setDrawHideExportActions(true);
       }
