@@ -1617,6 +1617,11 @@ L.control.scale({
         if (typeof clearNdviAnalysis === 'function') clearNdviAnalysis();
         if (typeof clearLandcoverAnalysis === 'function') clearLandcoverAnalysis();
         if (typeof clearDemOverlay === 'function') clearDemOverlay();
+        // 5c. Bersihkan layer SLS dan LBS/LSD. Keduanya terikat pada satu desa,
+        // jadi harus ikut hilang bersama batas desanya -- kalau tidak, polygon
+        // desa sebelumnya masih tertinggal di peta.
+        if (typeof GeoTaniSls !== 'undefined' && typeof GeoTaniSls.clear === 'function') GeoTaniSls.clear();
+        if (typeof GeoTaniLbsLsd !== 'undefined' && typeof GeoTaniLbsLsd.clear === 'function') GeoTaniLbsLsd.clear();
 
         // 5d. Bersihkan file yang dimuat lewat Alat Analisis, termasuk GPX/KML
         // serta marker, jejak, dan kartu Animasi Track.

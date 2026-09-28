@@ -2594,6 +2594,149 @@ window.printGeotaniPdf = async function() {
       }
     }
 
+    /* Seksi LBS & LSD (BIG). Data dibaca dari window._geotaniLbsLsdData karena
+       lastGeotaniPopupData di scope fungsi ini tidak bisa disentuh dari modul
+       lain. Luas yang dicetak adalah luas hasil irisan dengan batas desa, bukan
+       penjumlahan seluruh poligon di dalam bounding box -- yang kedua bisa
+       beberapa kali lebih besar. */
+    const lbslsd = (typeof window !== 'undefined') ? window._geotaniLbsLsdData : null;
+    if (lbslsd && (lbslsd.lbsIrisanHa > 0 || lbslsd.lsdIrisanHa > 0)) {
+      py += 4;
+      pdf.setFontSize(7);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(55, 65, 81);
+      pdf.text('LAHAN BAKU SAWAH & SAWAH DILINDUNGI (BIG 1:50.000)', panelX + 4, py);
+      py += 4;
+
+      const fmtLbsLsd = function (ha) {
+        if (ha === null || ha === undefined) return 'tidak tersedia';
+        return ha.toLocaleString('id-ID', { maximumFractionDigits: 3 }) + ' ha';
+      };
+      const lbsLsdLines = [
+        ['Lahan Baku Sawah', fmtLbsLsd(lbslsd.lbsIrisanHa)],
+        ['Sawah Dilindungi', fmtLbsLsd(lbslsd.lsdIrisanHa)],
+        ['Luas desa', fmtLbsLsd(lbslsd.luasDesaHa)]
+      ];
+      if (lbslsd.layers && lbslsd.layers.lbs) {
+        lbsLsdLines.push(['Poligon LBS', String(lbslsd.layers.lbs.items.length) +
+          ' (' + lbslsd.layers.lbs.utuh + ' utuh, ' + lbslsd.layers.lbs.terpotong + ' terpotong)']);
+      }
+      if (lbslsd.layers && lbslsd.layers.lsd && lbslsd.layers.lsd.items.length) {
+        lbsLsdLines.push(['Poligon LSD', String(lbslsd.layers.lsd.items.length)]);
+      }
+      for (const [lbsLsdLabel, value] of lbsLsdLines) {
+        if (py > blockTop - 2) break;
+        pdf.setFontSize(5.5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(100, 116, 139);
+        pdf.text(lbsLsdLabel, panelX + 4, py);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(55, 65, 81);
+        pdf.text(value, panelX + 38, py);
+        py += 3.5;
+      }
+
+      /* Catatan kualitas data. LBS digambar manual oleh BIG, jadi penjumlahan
+         luas bisa melebihi luas desa (tumpang tindih) atau, sebaliknya, LSD bisa
+         lebih luas dari LBS karena LBS BIG punya lubang cakupan. Kedua hal itu
+         wajib ikut tercetak -- angka tanpa catatan ini akan dipakai utuh. */
+      if (lbslsd.tumpangTindih && py <= blockTop - 2) {
+        pdf.setFontSize(4.5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(180, 120, 0);
+        pdf.text('Catatan: jumlah luas LBS melebihi luas desa (poligon tumpang tindih).', panelX + 4, py);
+        py += 3;
+      }
+      if (lbslsd.subsetTidakBerlaku && py <= blockTop - 2) {
+        pdf.setFontSize(4.5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(180, 120, 0);
+        pdf.text('Catatan: luas LSD lebih besar dari LBS. Cakupan LBS BIG ada lubang di', panelX + 4, py);
+        py += 3;
+        if (py <= blockTop - 2) {
+          pdf.text('desa ini sehingga LBS tidak dapat diperlakukan sebagai perluasan penuh LSD.', panelX + 4, py);
+          py += 3;
+        }
+      }
+      if (lbslsd.terpotongQuery && py <= blockTop - 2) {
+        pdf.setFontSize(4.5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(180, 120, 0);
+        pdf.text('Catatan: server BIG membatasi jumlah poligon per permintaan, sebagian poligon mungkin tidak termuat.', panelX + 4, py);
+        py += 3;
+      }
+    } else if (typeof window !== 'undefined' && window.GeoTaniLbsLsd) {
+      py += 4;
+      pdf.setFontSize(5.5);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(150, 150, 150);
+      pdf.text('Data LBS/LSD tidak dimuat untuk desa ini.', panelX + 4, py);
+    }
+
+    /* Seksi SLS. Data dibaca dari window._geotaniSlsData karena lastGeotaniPopupData
+       di scope fungsi ini tidak bisa disentuh dari modul lain. Kalau belum
+       dimuat, PDF tetap dicetak tapi diberi catatan -- diam-diam tanpa SLS
+       akan membuat PDF terlihat lengkap padahal tidak. */
+    const sls = (typeof window !== 'undefined') ? window._geotaniSlsData : null;
+    if (sls && sls.items && sls.items.length) {
+      py += 4;
+      pdf.setFontSize(7);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(55, 65, 81);
+      pdf.text('SLS DESA (' + sls.items.length + ' SATUAN LINGKUNGAN SETEMPAT)', panelX + 4, py);
+      py += 4;
+
+      const slsLines = [
+        ['Jumlah SLS', String(sls.items.length)],
+        ['Kode desa (BPS)', String(sls.iddesa || '-')],
+        ['Total luas (dihitung)', sls.totalLuasHa > 0
+          ? sls.totalLuasHa.toLocaleString('id-ID', { maximumFractionDigits: 3 }) + ' ha'
+          : 'tidak tersedia']
+      ];
+      for (const [slsLabel, value] of slsLines) {
+        if (py > blockTop - 2) break;
+        pdf.setFontSize(5.5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(100, 116, 139);
+        pdf.text(slsLabel, panelX + 4, py);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(55, 65, 81);
+        pdf.text(value, panelX + 38, py);
+        py += 3.5;
+      }
+
+      // Daftar SLS dibatasi: panel kanan tidak punya tinggi tak terbatas.
+      const slsMaxRows = Math.max(0, Math.min(sls.items.length, 6));
+      for (let i = 0; i < slsMaxRows && py <= blockTop - 2; i++) {
+        const it = sls.items[i];
+        pdf.setFontSize(5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(100, 116, 139);
+        pdf.text(String(i + 1) + '.', panelX + 4, py);
+        pdf.setTextColor(55, 65, 81);
+        pdf.text(it.nmsls || '-', panelX + 10, py);
+        if (it.luasHa !== null && it.luasHa !== undefined) {
+          pdf.setTextColor(22, 163, 74);
+          pdf.text(it.luasHa.toLocaleString('id-ID', { maximumFractionDigits: 3 }) + ' ha',
+            panelX + panelW - 12, py, { align: 'right' });
+        }
+        py += 3;
+      }
+      if (sls.items.length > slsMaxRows) {
+        pdf.setFontSize(4.5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(150, 150, 150);
+        pdf.text('+' + (sls.items.length - slsMaxRows) + ' SLS lain tidak dicetak', panelX + 4, py);
+        py += 3;
+      }
+    } else if (typeof window !== 'undefined' && window.GeoTaniSls) {
+      py += 4;
+      pdf.setFontSize(5.5);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(150, 150, 150);
+      pdf.text('Data SLS tidak dimuat untuk desa ini.', panelX + 4, py);
+    }
+
     // --- Arah Utara & Skala (kolom kanan, gaya modern) ---
     const sLatMin = (effLatMin != null) ? effLatMin : latMin;
     const sLatMax = (effLatMax != null) ? effLatMax : latMax;
@@ -2657,11 +2800,49 @@ window.printGeotaniPdf = async function() {
     pdf.setFontSize(6);
     pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(120, 120, 120);
-    pdf.text('Sumber data: BMKG · BIG SatuPeta · Sentinel-2 · Dibuat oleh RuangKita Pro', margin + 2, bottomY - 4);
-    pdf.text('Cetak: ' + dateFormatted, pageW - margin - 2, bottomY - 4, { align: 'right' });
-    pdf.setFontSize(5);
-    pdf.setTextColor(160, 160, 160);
-    pdf.text('Koordinat: WGS84 / EPSG:4326 · Grid graticule untuk referensi ArcGIS / QGIS', margin + 2, bottomY);
+      /* Sumber data. Kalau SLS dipakai, keterangan BPS ikut tampil karena
+         Ketentuan Penggunaan BPS (pasal 13.2) mewajibkan kutipan yang memuat
+         judul konten, tanggal akses, penulis, dan tautan langsung. Ketentuan
+         Ketentuan BIG mewajibkan hal serupa: Badan Informasi Geospasial
+         disebut pada setiap laporan yang memakai datanya. */
+      const sumberDasar = 'Sumber data: BMKG · BIG SatuPeta · Sentinel-2';
+      const adaBig = !!(lbslsd && (lbslsd.lbsIrisanHa > 0 || lbslsd.lsdIrisanHa > 0) && window.GeoTaniLbsLsd);
+      pdf.text(sumberDasar + (sls && sls.items && sls.items.length ? ' · BPS SLS 2025-1' : '') +
+        (adaBig ? ' · BIG LBS/LSD' : '') + ' · Dibuat oleh RuangKita Pro', margin + 2, bottomY - 4);
+      pdf.text('Cetak: ' + dateFormatted, pageW - margin - 2, bottomY - 4, { align: 'right' });
+      pdf.setFontSize(5);
+      pdf.setTextColor(160, 160, 160);
+      pdf.text('Koordinat: WGS84 / EPSG:4326 · Grid graticule untuk referensi ArcGIS / QGIS', margin + 2, bottomY);
+      const barisKredit = [];
+      if (sls && sls.items && sls.items.length && window.GeoTaniSls) {
+        barisKredit.push(window.GeoTaniSls.creditText());
+      }
+      if (adaBig) barisKredit.push(window.GeoTaniLbsLsd.creditText());
+      if (barisKredit.length) {
+        /* Kutipan dipecah baris supaya tidak menabrak kolom "Cetak". Dua kredit
+           bisa hadir bersamaan (BPS + BIG), jadi ukuran font diturunkan bertahap
+           sampai semua baris muat. Versi sebelumnya memotong dengan
+           Math.min(2, ...), yang bisa membuang ekor kutipan -- termasuk URL -- di
+           tengah jalan. Memotong kutipan begitu saja melanggar pasal 13.2
+           Ketentuan Penggunaan BPS dan ketentuan atribusi BIG. */
+        const lebar = pageW - margin * 2 - 46;
+        const semua = barisKredit.join(' | ');
+        const creditY = bottomY - bottomStripH + 3.5;
+        const maksBaris = 3;
+        let creditSize = 4.5;
+        let creditLines = pdf.splitTextToSize(semua, lebar);
+        while (creditLines.length > maksBaris && creditSize > 3.2) {
+          creditSize -= 0.3;
+          pdf.setFontSize(creditSize);
+          creditLines = pdf.splitTextToSize(semua, lebar);
+        }
+        pdf.setFontSize(creditSize);
+        pdf.setTextColor(150, 150, 150);
+        for (let ci = 0; ci < creditLines.length; ci++) {
+          pdf.text(creditLines[ci], margin + 2, creditY + ci * 4);
+        }
+      }
+
 
     pdf.save(fileName);
   } catch (error) {

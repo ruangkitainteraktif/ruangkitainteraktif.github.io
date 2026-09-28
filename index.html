@@ -1185,6 +1185,41 @@
           <div id="geotoolsTabGeoTani" class="geotools-main-tab-panel">
             <h4 style="font-size:15px; margin-bottom:4px;">GeoTani Analysis</h4>
             <p class="geotools-desc" style="margin-bottom:20px;">Petakan, Analisis, dan Optimalkan</p>
+            <!-- LBS & LSD: workflow mandiri di bagian teratas GeoTani. Diletakkan
+                 di sini (tempat grid kartu analisis) supaya jadi konten pertama
+                 yang terlihat. Grid .geotani-analysis-cards sendiri sedang
+                 display:none di app.css, jadi kartu ini sengaja tidak ikut
+                 mekanisme openGeotaniAnalysisTab. -->
+            <section class="geotani-lbslsd" id="geotani-lbslsd-card" aria-labelledby="geotani-lbslsd-title">
+              <div class="geotani-lbslsd-head">
+                <span class="geotani-card-icon" aria-hidden="true">&#127807;</span>
+                <span>
+                  <b id="geotani-lbslsd-title">LBS &amp; LSD</b>
+                  <small>Lahan Baku &amp; Sawah Dilindungi &mdash; BIG 1:50.000</small>
+                </span>
+              </div>
+              <div class="geotani-lbslsd-body">
+                <p class="geotani-sls-desc">
+                  Menampilkan <b>Lahan Baku Sawah</b> dan <b>Lahan Sawah Dilindungi</b> di dalam desa
+                  yang dipilih. Luas dihitung dari irisan dengan batas desa, bukan dari penjumlahan
+                  seluruh poligon.
+                </p>
+                <div class="geotani-sls-search">
+                  <label class="geotani-form-label" for="geotaniLbsLsdVillageSearch">Cari nama desa</label>
+                  <input type="text" id="geotaniLbsLsdVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
+                  <div id="geotaniLbsLsdVillageResults" class="geotani-sls-results" hidden></div>
+                  <div id="geotaniLbsLsdVillageSelected" class="geotani-sls-picked" hidden></div>
+                </div>
+                  <button id="geotani-lbslsd-load" class="geotani-btn-print" type="button">Tampilkan LBS &amp; LSD</button>
+                  <button id="geotani-lbslsd-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon LBS &amp; LSD" aria-label="Reset polygon LBS &amp; LSD">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    Reset Polygon
+                  </button>
+                <div id="geotani-lbslsd-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                <div id="geotani-lbslsd-output"></div>
+              </div>
+            </section>
+
             <div class="geotani-analysis-cards" role="tablist" aria-label="Menu analisis Geotani">
               <button id="geotani-lbs-tab" class="geotani-analysis-card" type="button" role="tab" aria-selected="false" aria-controls="geotani-lbs-panel" onclick="openGeotaniAnalysisTab('lbs')">
                 <span class="geotani-card-icon">🌾</span>
@@ -1424,7 +1459,41 @@
               </section>
             </div>
             <div id="geotani-satupeta-panel" class="geotani-analysis-panel active" role="tabpanel" aria-labelledby="geotani-satupeta-tab">
-              <section class="geotani-kta-card">
+              <!-- Kartu SLS: batas Satuan Lingkungan Setempat di dalam desa.
+                   Punya pencarian desa sendiri karena kode desa di panel lain
+                   (mis. satupeta) disimpan di state modul lokal, bukan global,
+                   jadi tidak bisa dibaca dari sini. Sumber daftar desa
+                   (window.KODE_WILAYAH_DATA) sudah termuat di halaman ini. -->
+              <section class="geotani-kta-card geotani-sls-card" id="geotani-sls-card" aria-labelledby="geotani-sls-title">
+                <h5 id="geotani-sls-title">SLS Desa <span class="geotani-sls-badge">BPS</span></h5>
+                <div>
+                  <p class="geotani-sls-desc">
+                    Menampilkan batas <b>Satuan Lingkungan Setempat</b> (RT/RW/dusun) di dalam desa
+                    yang dipilih, sebagai acuan kerja lapangan.
+                  </p>
+                  <div class="geotani-sls-search">
+                    <label class="geotani-form-label" for="geotaniSlsVillageSearch">Cari nama desa</label>
+                    <input type="text" id="geotaniSlsVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
+                    <div id="geotaniSlsVillageResults" class="geotani-sls-results" hidden></div>
+                    <div id="geotaniSlsVillageSelected" class="geotani-sls-picked" hidden></div>
+                  </div>
+                  <button id="geotani-sls-load" class="geotani-btn-print" type="button">Tampilkan SLS Desa</button>
+                  <button id="geotani-sls-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon SLS" aria-label="Reset polygon SLS">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    Reset Polygon
+                  </button>
+                  <div id="geotani-sls-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                  <div id="geotani-sls-output"></div>
+                </div>
+              </section>
+
+              <!-- Kartu Geospasial Indonesia: pemilih layer BIG/SatuPeta.
+                   Ditaruh paling bawah supaya alur bacaGeoTani mulai dari
+                 workflow desa (LBS & LSD, SLS) lalu berakhir di pemetaan
+                 umum, dan supaya kartu ini punya header seperti kartu lain
+                 di panel ini. -->
+              <section class="geotani-kta-card" id="geotani-geospasial-card" aria-labelledby="geotani-geospasial-title">
+                <h5 id="geotani-geospasial-title">Geospasial Indonesia</h5>
                 <div style="display:grid;gap:10px;margin-top:8px;">
                   <div>
                     <label class="geotani-form-label">Cari layer</label>
@@ -1469,10 +1538,15 @@
                   <div id="satupetaInfo" style="display:none;font-size:11px;color:#475569;padding:6px 0;"></div>
                   <div id="satupetaFeatureTable" style="display:none;"></div>
                   <button id="satupetaToggleBtn" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:none;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Tampilkan Data</button>
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">
-                    <button id="btnClearSatupeta" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Hapus Layer</button>
-                    <button id="btnDetailSatupeta" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Detail</button>
-                  </div>
+                  <!-- Tombol reset. ID "btnClearSatupeta" sengaja dipertahankan:
+                       sidebar.js memasang listener di situ. Nama tombol disamakan
+                       dengan kartu LBS & LSD dan SLS ("Reset Polygon") supaya
+                       ketiga workflow GeoTani punya kontrol yang sama. -->
+                  <button id="btnClearSatupeta" class="geotani-btn-reset" type="button" style="display:none;" title="Reset polygon dan pilihan wilayah" aria-label="Reset polygon dan pilihan wilayah">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    Reset Polygon
+                  </button>
+                  <button id="btnDetailSatupeta" style="margin-top:4px;display:none;width:100%;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Detail</button>
                 </div>
               </section>
             </div>
@@ -2532,6 +2606,12 @@
 
   <script src="assets/js/map-insight-cards.js"></script>
   <script src="assets/js/geotani-search.js"></script>
+  <!-- SLS GeoTani: setelah geodesic-area (untuk luas) dan geoid-wilayah
+       (kartu PDF membaca window._geotaniSlsData). -->
+  <script src="assets/js/geotani-sls.js"></script>
+  <!-- LBS & LSD (BIG SatuPeta): butuh geodesic-area untuk luas, dan
+       geoid-wilayah untuk seksi PDF. -->
+  <script src="assets/js/geotani-lbs-lsd.js"></script>
   <script src="assets/js/sawah-dilindungi.js"></script>
   <script src="assets/js/fasilitas-umum.js"></script>
   <script src="assets/js/unified-search.js"></script>

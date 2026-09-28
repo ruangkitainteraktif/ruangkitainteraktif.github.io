@@ -378,19 +378,15 @@
     /* Satupeta */
     var btnClearSatupeta = document.getElementById('btnClearSatupeta');
     if (btnClearSatupeta) btnClearSatupeta.addEventListener('click', function () { if (typeof SatupetaDownloader !== 'undefined') SatupetaDownloader.clearSelection(); hideBtn('btnClearSatupeta'); hideBtn('btnDetailSatupeta'); });
-    var origFetchDisplay = window.SatupetaDownloader && SatupetaDownloader.run;
-    if (typeof SatupetaDownloader !== 'undefined') {
-      var origRun = SatupetaDownloader.run;
-      SatupetaDownloader.run = function (kode) {
-        if (typeof origRun === 'function') origRun.call(SatupetaDownloader, kode);
-        setTimeout(function () {
-          var info = document.getElementById('satupetaInfo');
-          if (info && info.style.display !== 'none' && info.innerHTML.trim()) {
-            showBtn('btnClearSatupeta'); showBtn('btnDetailSatupeta');
-          }
-        }, 1500);
-      };
-    }
+    /* Tombol Tutup Layer & Detail dimulai dari display:none di markup, jadi hanya
+       boleh tampil setelah blok info benar-benar terisi. Sinyalnya datang dari
+       satupeta-downloader (event 'satupeta:datadisplay'). hooking
+       SatupetaDownloader.run seperti sebelumnya tidak pernah terpanggil, karena
+       tombol "Tampilkan Data" memakai jalur fetchAndDisplay(). */
+    document.addEventListener('satupeta:datadisplay', function () {
+      showBtn('btnClearSatupeta');
+      showBtn('btnDetailSatupeta');
+    });
     var btnDetailSatupeta = document.getElementById('btnDetailSatupeta');
     if (btnDetailSatupeta) btnDetailSatupeta.addEventListener('click', function () {
       var info = document.getElementById('satupetaInfo');

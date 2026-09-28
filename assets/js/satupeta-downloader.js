@@ -1491,12 +1491,26 @@
     }
   }
 
+  /* Sinyal "blok info sudah terisi" -- sukses maupun error. Tombol Tutup Layer
+     dan Detail disembunyikan lewat style.display di markup, jadi harus ada
+     sinyal eksplisit untuk menampilkannya. Dulu sidebar.js mencoba hooking
+     SatupetaDownloader.run, padahal jalur data yang dipakai tombol "Tampilkan
+     Data" adalah fetchAndDisplay() -> runFetchAndDisplay(), bukan run(). Akibatnya
+     showBtn() tidak pernah terpanggil dan kedua tombol tidak pernah muncul.
+     Sekarang pemicunya ada di modul yang benar-benar mengisi blok info. */
+  function emitDisplayReady() {
+    try {
+      document.dispatchEvent(new CustomEvent('satupeta:datadisplay'));
+    } catch (e) { /* CustomEvent tidak tersedia: tombol tetap bisa ditutup manual. */ }
+  }
+
   function setBoundaryErrorInfo(msg) {
     var info = document.getElementById('satupetaInfo');
     if (info) {
       info.style.display = 'block';
       info.innerHTML = esc(msg);
     }
+    emitDisplayReady();
   }
 
   function showToggleButton() {
@@ -1534,6 +1548,13 @@
     var info = document.getElementById('satupetaInfo');
     if (info) info.style.display = 'none';
     clearFeatureTable();
+    /* Tombol Tutup Layer & Detail harus ikut hilang: tanpa ini, mengganti Level
+       lewat onLevelChange() akan membuat keduanya tetap terlihat walau blok
+       info sudah dikosongkan. */
+    ['btnClearSatupeta', 'btnDetailSatupeta'].forEach(function (id) {
+      var b = document.getElementById(id);
+      if (b) b.style.display = 'none';
+    });
   }
 
   function clearFeatureTable() {
@@ -1863,21 +1884,21 @@
               ? 'Jumlah: <strong>' + clipped.length + ' titik</strong>'
               : 'Luas: <strong>' + areaTotal.toFixed(2) + ' ha</strong>');
 
-        var detailHtml = '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">'
-          + '<div>'
+        /* Blok info ini tidak lagi memuat tombol x di kanan. Aksi tutup layer
+           disediakan satu tombol saja, di bawah "Tampilkan Data"
+           (#btnClearSatupeta), supaya tidak ada dua tombol untuk aksi yang sama
+           dan judul wilayah tidak tergeser oleh tombol. */
+        var detailHtml = '<div>'
           + '<div style="font-weight:700;font-size:12px;">' + esc(labelName) + (labelSub ? ', ' + esc(labelSub) : '') + '</div>'
           + '<div style="font-size:10px;color:#64748b;margin-top:2px;">'
           + 'API: <strong>' + totalFetched + '</strong> feature &middot; Di dalam wilayah: <strong>' + clipped.length + '</strong> ' + geomWord + ' &middot; ' + unitHtml
           + (skipped > 0 ? ' &middot; Skip: ' + skipped : '')
-          + '</div>'
-          + '</div>'
-          + '<button class="satupeta-close-btn" onclick="SatupetaDownloader.clearSelection()" title="Tutup layer" aria-label="Tutup layer">'
-          + '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
-          + '</button></div>'
+          + '</div></div>'
           + '<div style="display:flex;flex-wrap:wrap;gap:2px 10px;margin-top:6px;padding-top:6px;border-top:1px solid #f0f0f0;">' + typeHtml + '</div>';
 
         if (info) info.innerHTML = detailHtml;
         renderFeatureTable();
+        emitDisplayReady();
 
         var layer = L.geoJSON(turf.featureCollection(clipped), {
           style: function (f) {
