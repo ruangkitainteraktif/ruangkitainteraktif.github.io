@@ -1020,6 +1020,33 @@
     .leaflet-control-attribution { display: none !important; }
     .leaflet-control-scale { display: none !important; }
 
+    /* ── Pita bawah tengah: zoom control & chip mode minimal ──
+       ZOOM CONTROL
+       Posisinya TIDAK diatur di CSS ini, tapi lewat style inline dari
+       map-core.js (cari "Zoom Control di bawah tengah"): position fixed,
+       bottom 16px, left 50%, translateX(-50%), z-index 999. Karena itu
+       pitanya tidak kelihatan di berkas stylesheet manapun: tinggi tombol
+       44px, jadi pita yang dipakainya adalah 16px sampai 60px dari bawah
+       layar. Nonaktifkan zoom bawaan Leaflet (zoomControl: false) dan
+       kontrol kustom ini yang menggantikannya.
+
+       CHIP MODE MINIMAL
+       Sembilan chip sheet/panel yang sedang minimal (hotspot, geopangan,
+       AI, GeoTools, Atribut, Gambar & Ukur, GeoFarm, Legenda, dan chip
+       buka-kembali GeoFarm) semuanya dipin ke bawah tengah. Semuanya
+       memakai bottom 68px dengan z-index 100, yaitu 8px di atas pita
+       zoom dan 101 di bawah z-index zoom.
+
+       Dua aturan yang wajib dijaga kalau ada chip mode minimal baru:
+         1. bottom >= 68px. Angka 60px adalah batas atas pita zoom; di
+            bawah itu tombol +/− akan tertutup.
+         2. z-index < 999. Aturan dasar sheet memakai 1100, jadi mode
+            minimal wajib menurunkannya sendiri, kalau tidak chip akan
+            menutupi zoom dan tombolnya tidak bisa diklik.
+
+       Mobile tidak perlu aturan tambahan: zoom control disembunyikan di
+       bawah 768px, dan chip mode minimal memakai override 72px sendiri. */
+
     /* Zoom Control */
     .zoom-control-wrap {
       display: flex;
@@ -2699,9 +2726,10 @@
     }
     .ais-clear-chat:hover { color: #dc2626; }
 
-    /* Minimized state */
+    /* Minimized state. Angka 68px & z-index: lihat catatan "Pita bawah
+       tengah" di blok .zoom-control-wrap. */
     #ai-sheet.ais-sheet-minimized {
-      top: auto; right: auto; bottom: 12px; left: 50%;
+      top: auto; right: auto; bottom: 68px; left: 50%;
       width: min(220px, calc(100vw - 48px));
       height: 36px;
       border-radius: 18px;
@@ -6410,14 +6438,17 @@
       -webkit-overflow-scrolling: touch;
     }
     @media (min-width: 769px) {
+      /* Angka 68px & z-index: lihat catatan "Pita bawah tengah" di blok
+         .zoom-control-wrap. */
       #hotspot-sheet.sheet-minimized {
         top: auto;
         right: auto;
-        bottom: 12px;
+        bottom: 68px;
         left: 50%;
         width: min(330px, calc(100vw - 24px));
         height: 52px;
         transform: translateX(-50%);
+        z-index: 100;
       }
       #hotspot-sheet.sheet-minimized .hs-sheet-body { display: none; }
     }
@@ -6496,7 +6527,9 @@
     #geopangan-sheet .gp-sheet-close { font-size: 16px; }
     #geopangan-sheet .gp-sheet-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 12px 16px; -webkit-overflow-scrolling: touch; }
     @media (min-width: 769px) {
-      #geopangan-sheet.sheet-minimized { top: auto; right: auto; bottom: 12px; left: 50%; width: min(330px, calc(100vw - 24px)); height: 52px; transform: translateX(-50%); }
+      /* Angka 68px & z-index: lihat catatan "Pita bawah tengah" di blok
+         .zoom-control-wrap. */
+      #geopangan-sheet.sheet-minimized { top: auto; right: auto; bottom: 68px; left: 50%; width: min(330px, calc(100vw - 24px)); height: 52px; transform: translateX(-50%); z-index: 100; }
       #geopangan-sheet.sheet-minimized .gp-sheet-body { display: none; }
     }
 
@@ -6537,8 +6570,10 @@
       cursor: pointer; transition: background .15s;
     }
     #geotools-sheet .gs-sheet-minimize:hover { background: var(--border-color); }
+    /* Angka 68px: lihat catatan "Pita bawah tengah" di blok
+       .zoom-control-wrap. */
     #geotools-sheet.gs-sheet-minimized {
-      top: auto; right: auto; bottom: 12px; left: 50%;
+      top: auto; right: auto; bottom: 68px; left: 50%;
       width: min(220px, calc(100vw - 48px));
       height: 36px;
       border-radius: 18px;
@@ -6799,8 +6834,10 @@
       }
       .measure-hud-reading strong { font-size: 16px; }
     }
+    /* Angka 68px: lihat catatan "Pita bawah tengah" di blok
+       .zoom-control-wrap. */
     .dm-sidebar.dm-sidebar-minimized {
-      top: auto; right: auto; bottom: 50px; left: 50%;
+      top: auto; right: auto; bottom: 68px; left: 50%;
       width: min(220px, calc(100vw - 48px));
       height: 36px;
       border-radius: 18px;
@@ -6845,11 +6882,14 @@
     .pa-panel.pa-open { transform: translateX(0); visibility: visible; }
     /* Mode minimal: panel jadi chip 36px di bawah tengah. Butuh aturan ini
        sendiri karena .lg-sidebar-minimized tidak ikut terselector .pa-min. */
+    /* Angka 68px: lihat catatan "Pita bawah tengah" di blok
+       .zoom-control-wrap. */
     .pa-panel.pa-min {
-      top: auto; right: auto; bottom: 80px; left: 50%;
+      top: auto; right: auto; bottom: 68px; left: 50%;
       width: min(220px, calc(100vw - 48px));
       height: 36px;
       border-radius: 18px;
+      z-index: 100;
     }
     .pa-panel.pa-min .pa-head {
       min-height: 36px; box-sizing: border-box;
@@ -6861,9 +6901,11 @@
     .pa-panel.pa-min .pa-export { display: none; }
     .pa-panel.pa-min .pa-title { cursor: pointer; font-size: 11px; }
     /* Chip buka-kembali, muncul di slot yang sama dengan mode minimal.
-       Pakai variabel tema (bukan putih hardcoded) agar aman di dark mode. */
+       Pakai variabel tema (bukan putih hardcoded) agar aman di dark mode.
+       Angka 68px disamakan dengan .pa-panel.pa-min; lihat catatan
+       "Pita bawah tengah" di blok .zoom-control-wrap. */
     .pa-reopen-chip {
-      position: fixed; bottom: 80px; left: 50%;
+      position: fixed; bottom: 68px; left: 50%;
       transform: translateX(-50%);
       z-index: 100; margin: 0;
       display: flex; align-items: center; gap: 7px;
@@ -6913,9 +6955,11 @@
     .lg-sidebar-body .unified-legend-section .ramp-row,
     .lg-sidebar-body .unified-legend-section .swatch-list,
     .lg-sidebar-body .legend-item { width: 100%; box-sizing: border-box; }
+    /* Angka 68px disamakan dengan chip GeoFarm dan Draw & Ukur; lihat
+       catatan "Pita bawah tengah" di blok .zoom-control-wrap. */
     .lg-sidebar.dm-sidebar-minimized,
     .lg-sidebar.lg-sidebar-minimized {
-      top: auto; right: auto; bottom: 80px; left: 50%;
+      top: auto; right: auto; bottom: 68px; left: 50%;
       width: min(220px, calc(100vw - 48px));
       height: 36px;
       border-radius: 18px;
@@ -7015,8 +7059,10 @@
     #attr-table-sheet .at-sheet-body::-webkit-scrollbar { width: 5px; }
     #attr-table-sheet .at-sheet-body::-webkit-scrollbar-track { background: transparent; }
     #attr-table-sheet .at-sheet-body::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+    /* Angka 68px: lihat catatan "Pita bawah tengah" di blok
+       .zoom-control-wrap. */
     #attr-table-sheet.attr-table-sheet-minimized {
-      top: auto; right: auto; bottom: 12px; left: 50%;
+      top: auto; right: auto; bottom: 68px; left: 50%;
       width: min(220px, calc(100vw - 48px)); height: 36px;
       border-radius: 18px; transform: translateX(-50%); visibility: visible;
       z-index: 100;
@@ -11775,6 +11821,305 @@
 [data-theme="dark"] .geofarm-upload-status.is-error { background: #450a0a; border-color: #991b1b; color: #fca5a5; }
 [data-theme="dark"] .geofarm-upload-status.is-ok { background: #052e16; border-color: #15803d; color: #bbf7d0; }
 
+/* ── GeoFarm: Kalkulator Benih & Pupuk ──
+   Satu kartu, dua tab (Benih / Pupuk), satu field luas bersama. Bentuk
+   header sengaja meniru kartu .geotani-lbslsd supaya dua workflow terlihat
+   sekeluarga, tapi input dan warnanya TIDAK memakai .geotani-form-input:
+   kelas itu warnanya dikunci ke putih/teks gelap tanpa override dark,
+   sedangkan kartu ini punya state is-warn/is-ok sendiri seperti
+   .geofarm-upload-status di atas.
+
+   Kelas .geofarm-benih-* yang tersisa (total, rows, luas-info, warn)
+   sengaja dipertahankan namanya: yang dipakai geofarm-kalkulator.js untuk
+   hasil hitungan Benih, yang warnanya sudah sama dengan kartu ini. */
+.geofarm-kalk {
+  margin-top: 14px;
+  padding: 12px 13px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-card);
+}
+.geofarm-kalk-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -12px -13px 12px;
+  padding: 11px 13px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+.geofarm-kalk-icon { font-size: 15px; line-height: 1; flex-shrink: 0; }
+.geofarm-kalk-head b {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.geofarm-kalk-head small {
+  display: block;
+  font-size: 9.5px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+.geofarm-kalk-label {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+/* Baris luas: input tumbuh, satuan dan tombol lebar tetap. flex-wrap
+   supaya label turun ke baris sendiri, bukan menyempitkan baris. */
+.geofarm-kalk-luas {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.geofarm-kalk-luas .geofarm-kalk-label { flex: 0 0 100%; }
+.geofarm-kalk-luas .geofarm-kalk-input { flex: 1 1 auto; min-width: 0; }
+.geofarm-kalk-luas .geofarm-kalk-select { flex: 0 0 54px; }
+.geofarm-kalk-input, .geofarm-kalk-select {
+  width: 100%;
+  padding: 7px 9px;
+  font-size: 11px;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  outline: none;
+  box-sizing: border-box;
+}
+.geofarm-kalk-input:focus-visible, .geofarm-kalk-select:focus-visible,
+.geofarm-kalk-cell:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(8, 145, 178, .15);
+}
+.geofarm-kalk-ghost {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--accent);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.geofarm-kalk-ghost:hover { background: var(--bg-card-hover); border-color: var(--accent); }
+.geofarm-kalk-ghost:active { transform: scale(.99); }
+.geofarm-kalk-ghost:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* Tab bar. Hanya garis bawah, bukan tombol penuh, supaya tetap ringan di
+   sidebar sempit dan jelas terbaca sebagai sub-view dari field luas di atas. */
+.geofarm-kalk-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 11px 0 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.geofarm-kalk-tab {
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.geofarm-kalk-tab:hover { color: var(--text-primary); }
+.geofarm-kalk-tab.active { color: var(--accent-green); border-bottom-color: var(--accent-green); }
+.geofarm-kalk-tab:focus-visible { outline: 2px solid var(--accent-green); outline-offset: -2px; }
+.geofarm-kalk-panel { padding-top: 10px; }
+.geofarm-kalk-panel[hidden] { display: none; }
+
+/* Grid 2 kolom. minmax(0,1fr), bukan 1fr, supaya kolom boleh lebih
+   sempit dari isinya dan tidak mendorong grid melebar di sidebar sempit.
+   Anak ke-5 (Cadangan) otomatis duduk sendiri di baris ketiga kolom
+   pertama; tidak perlu justify-content karena kolomnya tetap 1fr. */
+.geofarm-kalk-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 6px;
+}
+.geofarm-kalk-grid > div { min-width: 0; }
+.geofarm-kalk-preset-row { margin-bottom: 8px; }
+.geofarm-kalk-acuan {
+  margin: 0 0 8px;
+  font-size: 9.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.geofarm-kalk-acuan:empty { display: none; }
+
+/* Tabel Pupuk. Dosis dan HET adalah input, kebutuhan dan biaya output,
+   jadi kolom input diberi garis tipis dan kolom output tidak, supaya
+   mata langsung tahu mana yang bisa diedit. */
+.geofarm-kalk-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+}
+.geofarm-kalk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10.5px;
+}
+.geofarm-kalk-table thead th {
+  padding: 6px 5px;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: right;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+.geofarm-kalk-table thead th:first-child { text-align: left; }
+.geofarm-kalk-table tbody th,
+.geofarm-kalk-table tbody td {
+  padding: 4px 5px;
+  border-bottom: 1px dashed var(--border-color);
+  vertical-align: middle;
+}
+.geofarm-kalk-table tbody tr:last-child th,
+.geofarm-kalk-table tbody tr:last-child td { border-bottom: none; }
+.geofarm-kalk-nama { display: block; font-size: 10.5px; font-weight: 600; color: var(--text-primary); }
+.geofarm-kalk-table tbody th small { display: block; font-size: 8.5px; font-weight: 400; color: var(--text-muted); }
+.geofarm-kalk-cell {
+  width: 100%;
+  min-width: 52px;
+  padding: 4px 5px;
+  font-size: 10.5px;
+  font-family: inherit;
+  text-align: right;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  outline: none;
+  box-sizing: border-box;
+}
+.geofarm-kalk-cell-out { text-align: right; color: var(--text-secondary); white-space: nowrap; }
+.geofarm-kalk-cell-out .is-kosong { color: var(--text-muted); font-size: 9.5px; }
+.geofarm-kalk-total-wrap { margin-top: 9px; }
+.geofarm-kalk-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 9px 11px;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  background: #f0fdf4;
+}
+.geofarm-kalk-total > span { font-size: 10px; font-weight: 600; color: #166534; }
+.geofarm-kalk-total > b { font-size: 16px; font-weight: 700; color: #15803d; white-space: nowrap; }
+.geofarm-kalk-total > b small { font-size: 9px; font-weight: 600; }
+.geofarm-kalk-total.is-money { border-color: #93c5fd; background: #eff6ff; }
+.geofarm-kalk-total.is-money > span { color: #1e40af; }
+.geofarm-kalk-total.is-money > b { color: #1d4ed8; }
+
+.geofarm-kalk-status { margin-top: 8px; font-size: 10.5px; line-height: 1.5; color: var(--text-muted); }
+.geofarm-kalk-status.is-warn { color: #92400e; }
+.geofarm-kalk-status.is-ok { color: #166534; }
+.geofarm-benih-output { margin-top: 8px; }
+.geofarm-benih-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 11px;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  background: #f0fdf4;
+}
+.geofarm-benih-total > span { font-size: 10px; font-weight: 600; color: #166534; }
+.geofarm-benih-total > b { font-size: 16px; font-weight: 700; color: #15803d; white-space: nowrap; }
+.geofarm-benih-total > b small { font-size: 9px; font-weight: 600; }
+.geofarm-benih-rows { margin: 8px 0 0; }
+.geofarm-benih-rows > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--border-color);
+}
+.geofarm-benih-rows > div:last-child { border-bottom: none; }
+.geofarm-benih-rows dt { font-size: 10px; color: var(--text-muted); }
+.geofarm-benih-rows dd { margin: 0; font-size: 10.5px; font-weight: 600; color: var(--text-secondary); }
+.geofarm-benih-luas-info {
+  margin-top: 7px;
+  font-size: 9.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.geofarm-benih-warn {
+  margin-top: 7px;
+  padding: 5px 7px;
+  border: 1px solid #fbbf24;
+  border-radius: 5px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 10px;
+  line-height: 1.45;
+}
+.geofarm-kalk-hint {
+  margin-top: 7px;
+  padding: 6px 8px;
+  border: 1px dashed var(--border-color);
+  border-radius: 5px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.geofarm-kalk-note {
+  margin: 9px 0 0;
+  padding-top: 7px;
+  border-top: 1px dashed var(--border-color);
+  font-size: 9.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.geofarm-kalk-note b { color: var(--text-secondary); }
+/* Kredit acuan: dosis/ha dan HET berasal dari peraturan resmi, jadi
+   sumbernya wajib disebut supaya angkanya bisa ditelusuri. */
+.geofarm-kalk-credit {
+  margin: 6px 0 0;
+  font-size: 9px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.geofarm-kalk-credit b { color: var(--text-secondary); }
+.geofarm-kalk-credit a { color: var(--accent-green); }
+[data-theme="dark"] .geofarm-kalk-status.is-warn { color: #fde68a; }
+[data-theme="dark"] .geofarm-kalk-status.is-ok { color: #bbf7d0; }
+[data-theme="dark"] .geofarm-kalk-tab.active { color: #4ade80; }
+[data-theme="dark"] .geofarm-kalk-total,
+[data-theme="dark"] .geofarm-benih-total { border-color: #15803d; background: #052e16; }
+[data-theme="dark"] .geofarm-kalk-total > span { color: #bbf7d0; }
+[data-theme="dark"] .geofarm-kalk-total > b,
+[data-theme="dark"] .geofarm-benih-total > b { color: #4ade80; }
+[data-theme="dark"] .geofarm-kalk-total > span,
+[data-theme="dark"] .geofarm-benih-total > span { color: #bbf7d0; }
+[data-theme="dark"] .geofarm-kalk-total.is-money { border-color: #1d4ed8; background: #172554; }
+[data-theme="dark"] .geofarm-kalk-total.is-money > span { color: #bfdbfe; }
+[data-theme="dark"] .geofarm-kalk-total.is-money > b { color: #93c5fd; }
+[data-theme="dark"] .geofarm-benih-warn { border-color: #a16207; background: #451a03; color: #fcd34d; }
+[data-theme="dark"] .geofarm-kalk-credit a { color: #4ade80; }
+
 /* Kartu polygon hasil unggah yang belum dianalisis. */
 .pa-card-source {
   flex: 0 0 auto;
@@ -11820,8 +12165,8 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* Durante la sesión de dibujo de GeoFarm solo se revela el control de dibujo,
-   no los botones de exportación SHP/GeoJSON. */
+/* Selama sesi menggambar GeoFarm, hanya kontrol gambar yang dimunculkan;
+   tombol ekspor SHP/GeoJSON disembunyikan supaya tidak salah klik. */
 body.geofarm-draw-active .leaflet-draw {
   display: block !important;
 }

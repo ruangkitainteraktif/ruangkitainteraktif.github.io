@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=18">
+  <link rel="stylesheet" href="assets/css/app.css?v=20">
 
 </head>
 
@@ -2399,6 +2399,114 @@
               </div>
             </details>
             <p class="geofarm-upload-status" id="geofarmUploadStatus" hidden></p>
+
+            <!-- Kalkulator Benih & Pupuk. Satu field luas dipakai kedua tab,
+                 jadi luas cukup diketik atau diambil dari poligon satu kali
+                 untuk mendapat hitungan benih DAN pupuk sekaligus.
+                 Baris tabel Pupuk sengaja tidak ditulis di sini:
+                 geofarm-kalkulator.js membangunnya dari array PUPUK supaya
+                 tidak ada dua sumber kebenaran. -->
+            <section class="geofarm-kalk" id="geofarm-kalkulator-card" aria-labelledby="geofarm-kalk-title">
+              <div class="geofarm-kalk-head">
+                <span class="geofarm-kalk-icon" aria-hidden="true">&#127807;</span>
+                <span>
+                  <b id="geofarm-kalk-title">Kalkulator Benih &amp; Pupuk</b>
+                  <small>Kebutuhan benih dan pupuk dari luas lahan yang sama</small>
+                </span>
+              </div>
+
+              <div class="geofarm-kalk-luas">
+                <label class="geofarm-kalk-label" for="geofarmKalkLuas">Luas lahan</label>
+                <input type="number" id="geofarmKalkLuas" class="geofarm-kalk-input" min="0" step="any" inputmode="decimal" placeholder="10000" />
+                <select id="geofarmKalkSatuan" class="geofarm-kalk-select" aria-label="Satuan luas lahan">
+                  <option value="m2" selected>m&sup2;</option>
+                  <option value="ha">ha</option>
+                </select>
+                <button id="geofarmKalkAmbil" class="geofarm-kalk-ghost" type="button" title="Isi luas dari poligon GeoFarm terakhir">Ambil dari poligon</button>
+              </div>
+              <div id="geofarmKalkLuasStatus" class="geofarm-kalk-status" role="status" aria-live="polite"></div>
+
+              <div class="geofarm-kalk-tabs" role="tablist" aria-label="Jenis kalkulator">
+                <button id="geofarmKalkTabBenih" class="geofarm-kalk-tab active" type="button" role="tab"
+                        aria-selected="true" aria-controls="geofarmKalkPanelBenih">Benih</button>
+                <button id="geofarmKalkTabPupuk" class="geofarm-kalk-tab" type="button" role="tab"
+                        aria-selected="false" aria-controls="geofarmKalkPanelPupuk">Pupuk</button>
+              </div>
+
+              <!-- TAB: BENIH -->
+              <div id="geofarmKalkPanelBenih" class="geofarm-kalk-panel" role="tabpanel" aria-labelledby="geofarmKalkTabBenih">
+                <div class="geofarm-kalk-grid">
+                  <div>
+                    <label class="geofarm-kalk-label" for="geofarmBenihJarakBaris">Jarak baris (cm)</label>
+                    <input type="number" id="geofarmBenihJarakBaris" class="geofarm-kalk-input" min="0" step="any" inputmode="decimal" value="25" />
+                  </div>
+                  <div>
+                    <label class="geofarm-kalk-label" for="geofarmBenihJarakTanam">Jarak tanam (cm)</label>
+                    <input type="number" id="geofarmBenihJarakTanam" class="geofarm-kalk-input" min="0" step="any" inputmode="decimal" value="25" />
+                  </div>
+                  <div>
+                    <label class="geofarm-kalk-label" for="geofarmBenihPerLubang">Benih/lubang</label>
+                    <input type="number" id="geofarmBenihPerLubang" class="geofarm-kalk-input" min="0" step="any" inputmode="numeric" value="1" />
+                  </div>
+                  <div>
+                    <label class="geofarm-kalk-label" for="geofarmBenihDaya">Daya tumbuh (%)</label>
+                    <input type="number" id="geofarmBenihDaya" class="geofarm-kalk-input" min="0" max="100" step="any" inputmode="numeric" value="85" />
+                  </div>
+                  <div>
+                    <label class="geofarm-kalk-label" for="geofarmBenihCadangan">Cadangan (%)</label>
+                    <input type="number" id="geofarmBenihCadangan" class="geofarm-kalk-input" min="0" step="any" inputmode="numeric" value="10" />
+                  </div>
+                </div>
+                <div id="geofarmBenihStatus" class="geofarm-kalk-status" role="status" aria-live="polite"></div>
+                <div id="geofarmBenihOutput" class="geofarm-benih-output"></div>
+                <p class="geofarm-kalk-note">
+                  Padi sawah umum: 25&times;25 cm atau 30&times;20 cm. Daya tumbuh (daya kecambah)
+                  tercantum di kemasan benih; cadangan menutupi benih gagal tumbuh dan hilang saat tanam.
+                </p>
+              </div>
+
+              <!-- TAB: PUPUK
+                   Baris tabel sengaja TIDAK ditulis di sini:
+                   geofarm-kalkulator.js membangunnya dari array PUPUK supaya
+                   tidak ada dua sumber kebenaran. Bagian kepala tabel tetap
+                   di markup supaya kolomnya terbaca tanpa JS. -->
+              <div id="geofarmKalkPanelPupuk" class="geofarm-kalk-panel" role="tabpanel" aria-labelledby="geofarmKalkTabPupuk" hidden>
+                <div class="geofarm-kalk-preset-row">
+                  <label class="geofarm-kalk-label" for="geofarmPupukPreset">Preset tanaman</label>
+                  <select id="geofarmPupukPreset" class="geofarm-kalk-select"></select>
+                </div>
+                <p id="geofarmPupukPresetInfo" class="geofarm-kalk-acuan"></p>
+                <div class="geofarm-kalk-table-wrap">
+                  <table class="geofarm-kalk-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Pupuk</th>
+                        <th scope="col">Dosis<br><small>kg/ha</small></th>
+                        <th scope="col">Kebutuhan<br><small>kg</small></th>
+                        <th scope="col">HET<br><small>Rp/kg</small></th>
+                        <th scope="col">Biaya</th>
+                      </tr>
+                    </thead>
+                    <tbody id="geofarmPupukBody"></tbody>
+                  </table>
+                </div>
+                <div id="geofarmPupukStatus" class="geofarm-kalk-status" role="status" aria-live="polite"></div>
+                <div id="geofarmPupukTotal" class="geofarm-kalk-total-wrap"></div>
+                <p class="geofarm-kalk-note">
+                  Dosis adalah kebutuhan <b>satu musim penuh</b>, bukan takaran sekali tebar; dosis di atas
+                  150&nbsp;kg/ha umumnya dibagi beberapa aplikasi. Sesuaikan dengan rekomendasi
+                  BPP/dinas setempat &mdash; angka di bawah memakai acuan nasional, bukan dosis spesifik
+                  kecamatan.
+                </p>
+                <p class="geofarm-kalk-credit">
+                  <b>Acuan:</b> Permen No. 13 Tahun 2022 (dosis N, P, dan K untuk padi, jagung, dan
+                  kedelai pada lahan sawah) &middot; Suwandi 2011 / BALITSA (dosis horti)
+                  &middot; HET pupuk subsidi Kepmentan No. 1117/KPTS./SR.310/M/10/2025. SP-36, KCl, dan
+                  NPK 15-10-12 tidak masuk program subsidi, jadi HET-nya diisi manual.
+                  <a href="https://peraturan.go.id/id/permentan-no-13-tahun-2022" target="_blank" rel="noopener noreferrer">Lihat peraturan</a>
+                </p>
+              </div>
+            </section>
           </div>
              </div>
 
@@ -2568,6 +2676,10 @@
     <script src="assets/js/alat-draw-measure.js"></script>
 <script src="assets/js/geofarm-draw.js"></script>
 <script src="assets/js/geofarm-upload.js"></script>
+<!-- Kalkulator Benih & Pupuk GeoFarm: butuh geodesic-area.js (luas poligon)
+     dan alat-draw-measure.js (window.getDrawnLayers), keduanya sudah dimuat
+     di atas. -->
+<script src="assets/js/geofarm-kalkulator.js"></script>
 <!-- geofarm-report.js hanya Menyediakan window.setGeoFarmReportIndexSpecs(),
      jadi harus dimuat sebelum polygon-analysis.js memanggilnya. -->
 <script src="assets/js/geofarm-report.js"></script>

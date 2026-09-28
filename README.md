@@ -131,9 +131,10 @@
 - Export hasil gambar ke **GeoJSON**
 - Import dan visualisasi file **GeoJSON**
 - Import dan visualisasi **Shapefile** (.shp + .dbf + .shx)
+- **Kalkulator Benih & Pupuk** (GeoFarm): kebutuhan benih dan kebutuhan pupuk (kg, karung, estimasi biaya) dari luas yang sama — luas bisa diambil otomatis dari poligon. Dosis preset mengacu Permen 13/2022, HET pada Kepmentan 1117/2025
 - Cetak PDF dari analisis geotani
 
-*Drawing tools, distance/area measurement, GeoJSON/SHP import, PDF export.*
+*Drawing tools, distance/area measurement, GeoJSON/SHP import, seed and fertilizer calculator, PDF export.*
 
 ### 🔍 Pencarian Terpadu / Unified Search
 

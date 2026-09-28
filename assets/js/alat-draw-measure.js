@@ -99,6 +99,21 @@ window.addToDrawLayerGroup = function (layer) {
   return true;
 };
 
+/* Pembaca feature group gambar, untuk tools di luar Gambar & Ukur yang
+   butuh tahu polygon mana yang ada: GeoFarm Kalkulator Benih memakai ini
+   untuk mengisi luas dari poligon terakhir. Dipakai karena
+   addToDrawLayerGroup() di atas satu-satunya jalan resmi masuk ke
+   drawLayerGroup, dan di situ polygon hasil unggah SHP/GeoJSON ikut
+   masuk juga — kalau GeoFarm hanya mendengarkan L.Draw.Event.CREATED,
+   polygon unggahan akan terlewat.
+
+   Yang dikembalikan group aslinya, bukan salinan, supaya perubahan
+   sesudahnya (gambar baru, hapus, edit simpul) tetap terlihat tanpa
+   perlu memasang event listener tambahan. */
+window.getDrawnLayers = function () {
+  return drawLayerGroup.getLayers();
+};
+
 (function observeDrawSidebar() {
   const sidebar = document.getElementById('drawSidebar');
   if (!sidebar || typeof MutationObserver === 'undefined') return;
