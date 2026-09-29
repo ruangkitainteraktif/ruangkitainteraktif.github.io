@@ -3606,8 +3606,10 @@ L.control.scale({
         if (typeof hasAttrSupport === 'function' && hasAttrSupport(id)) {
           if (typeof isWmsAttrLayer === 'function' && isWmsAttrLayer(id)) {
             openWmsAttrTable(id);
-          } else {
-            openAttrTable(id);
+          } else if (typeof openAttrTableForLayer === 'function') {
+            /* openAttrTableForLayer, bukan openAttrTable: yang latter cuma
+               membuka sheet kosong tanpa memuat data layer. */
+            openAttrTableForLayer(id);
           }
         }
       });

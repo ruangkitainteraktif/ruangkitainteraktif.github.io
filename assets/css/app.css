@@ -6969,6 +6969,13 @@
       padding: 12px 16px 16px; -webkit-overflow-scrolling: touch;
       scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent;
     }
+    /* Scroll horizontal dimatikan khusus di daftar hasil analisis GeoFarm.
+       .pa-list di rule di atas hanya menulis overflow-y, dan menurut
+       spesifikasi CSS sumbu yang tidak disebut ikut berubah jadi auto --
+       jadi konten yang lebih lebar dari panel (baris soil 6 kolom, teks
+       panjang tanpa titik) memunculkan scrollbar mendatar. Dipisah dari
+       .lg-sidebar-body supaya legend sidebar tidak ikut berubah. */
+    .pa-list { overflow-x: hidden; }
     .lg-sidebar-body .unified-legend-section { margin-bottom: 8px; width: 100%; }
     .lg-sidebar-body .unified-legend-section .swatch-row,
     .lg-sidebar-body .unified-legend-section .ramp-row,
@@ -12094,6 +12101,9 @@
   gap: 2px;
   max-height: 190px;
   overflow-y: auto;
+  /* Nama satelit di .pa-scene-sat memakai white-space: nowrap, jadi tanpa ini
+     sumbu horizontal ikut auto dan daftar bisa digeser mendatar. */
+  overflow-x: hidden;
   margin: 6px 0;
 }
 .pa-scene {
@@ -12188,7 +12198,11 @@
   text-transform: uppercase;
   color: var(--text-secondary);
 }
-.pa-air-select-wrap { position: relative; display: block; }
+/* Jarak atas 6px: label TANAMAN hanya menyisakan 3px ke bawah (lihat
+   .pa-air-label), jadi select lama menempel terlalu dekat pada labelnya.
+   Margin ditaruh di wrap, bukan di select, supaya caret ikut terdorong dan
+   tetap menempel di tengah tinggi select. */
+.pa-air-select-wrap { position: relative; display: block; margin-top: 6px; }
 .pa-air-select {
   width: 100%;
   min-width: 0;
@@ -13071,6 +13085,9 @@
 #geotoolsTabGeoFarm .pa-list {
   max-height: 58vh;
   overflow-y: auto;
+  /* Sama seperti .pa-list di panel: overflow-x harus ditulis eksplisit,
+     kalau tidak sumbu horizontal ikut auto. */
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
 }
 

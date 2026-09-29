@@ -877,7 +877,13 @@
       return '<div class="at-layer-subtitle">' + escAttr(teks) + '</div>';
     }
 
-  function openAttrTable(toggleId) {
+  /* Membuka sheet tabel untuk satu layer tertentu.
+     Namanya sengaja TIDAK `openAttrTable`: fungsi itu sudah dipakai wrapper
+     lain di bawah (lihat catatan deklarasi ganda). Dulu nama ini sama, dan
+     deklarasi kedua menimpa yang ini karena hoisting -- sehingga pemanggil
+     yang mengirim ID layer diam-diam kehilangan argumennya, sheet terbuka
+     tapi loadFeatures() tidak pernah jalan dan isinya kosong. */
+  function openAttrTableForLayer(toggleId) {
     var sheet = document.getElementById('attr-table-sheet');
     if (!sheet) return;
     var config = ATTR_LAYER_REGISTRY[toggleId];
@@ -918,7 +924,9 @@
 
     loadFeatures();
   }
-  window.openAttrTable = openAttrTable;
+  /* Dipakai map-core.js dari tombol tabel di katalog layer, jadi harus
+     dippasang ke window -- fungsi ini hidup di dalam IIFE. */
+  window.openAttrTableForLayer = openAttrTableForLayer;
 
   /* ── Open WMS GetFeatureInfo mode ── */
   function openWmsAttrTable(toggleId) {
@@ -1685,7 +1693,7 @@
             _pickerLayerId = id;
           }
           if (isWmsAttrLayer(id)) openWmsAttrTable(id);
-          else openAttrTable(id);
+          else openAttrTableForLayer(id);
         });
       });
 
