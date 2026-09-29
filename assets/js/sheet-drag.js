@@ -138,6 +138,59 @@
   function keTengah(cfg) {
     var e = elDari(cfg);
     if (e && e.style) e.style.removeProperty('--sheet-h');
+    cerminTinggiKeMap(e);
+  }
+
+  /* Tinggi sheet ikut dicermin ke elemen peta sebagai --map-h.
+     Dua hal membuat ini perlu:
+     1. @property --sheet-h punya inherits: false, jadi nilainya tidak
+        menurun ke anak. #map adalah SAUDARA sheet, bukan anaknya, jadi
+        dia hanya akan dapat initial-value 50dvh -- nilai yang diset di
+        elemen sheet tidak akan pernah terbaca.
+     2. Karena itu nilainya ditulis ulang ke #map dengan nama sendiri,
+        supaya CSS bisa menghitung tinggi layar yang tidak tertutup sheet.
+
+     Dicermin hanya di titik yang diam (keTengah dan terapkanStop), bukan
+     di onMove: saat jari masih bergerak, tinggi peta ikut bergerak tetapi
+     map.invalidateSize() belum dipanggil, jadi tile akan meleset di
+     tengah gerakan. Lebih baik petanya menyusul setelah sheet berhenti. */
+  function cerminTinggiKeMap(eSheet) {
+    var m = document.getElementById('map');
+    if (!m) return;
+    var h = eSheet ? eSheet.style.getPropertyValue('--sheet-h') : '';
+    if (h) m.style.setProperty('--map-h', h);
+    else m.style.removeProperty('--map-h');
+  }
+
+  /* Kedalaman chrome di atas peta: tepi bawah unified search atau quick
+     layer bar, mana yang lebih rendah. Ini yang membuat polygon harus
+     duduk di tengah PITA bebas -- antara chrome itu dan tepi atas sheet,
+     bukan di tengah kotak peta.
+
+     Digunakan untuk menambah tinggi peta sebesar C px. Titik tengah peta
+     ada di (C + H - S) / 2, sama dengan titik tengah pita bebas; sisa C px
+     di bawah kotak peta memang tertutup sheet, dan itu memang bipartisan:
+     sheetnya yang opaque. Peta sengaja TIDAK digeser turun memakai
+     margin-top, karena chrome-nya beranchor ke tepi atas peta -- kalau peta
+     digeser, unified search ikut turun dan tidak lagi menempel di atas.
+
+     Diukur dari DOM, bukan angka tetap, jadi kalau tinggi kotak search
+     atau jumlah tombol quick layer berubah, semuanya ikut menyesuaikan. */
+  function ukurChromeAtas() {
+    var m = document.getElementById('map');
+    if (!m) return;
+    var dasar = m.getBoundingClientRect().top;
+    var bawah = 0;
+    var sels = ['.unified-search', '.quick-layer-bar'];
+    for (var i = 0; i < sels.length; i++) {
+      var el = document.querySelector(sels[i]);
+      if (!el) continue;
+      var r = el.getBoundingClientRect();
+      if (r.height <= 0) continue;
+      var d = r.bottom - dasar;
+      if (d > bawah) bawah = d;
+    }
+    m.style.setProperty('--map-chrome', Math.round(bawah) + 'px');
   }
 
   function buka(id, opsi) {
@@ -169,6 +222,7 @@
     }
     labelkan(cfg);
     if (cfg.onOpen) { try { cfg.onOpen(); } catch (err) { lapis(id, 'onOpen', err); } }
+    sinkronkanPeta();
   }
 
   function close(id) {
@@ -185,6 +239,7 @@
     geser = null;
     labelkan(cfg);
     if (cfg.onClose) { try { cfg.onClose(); } catch (err) { lapis(id, 'onClose', err); } }
+    sinkronkanPeta();
   }
 
   function minimize(id, opsi) {
@@ -201,6 +256,7 @@
     setBody(cfg, cfg.bodyMin, true);
     labelkan(cfg);
     if (cfg.onMinimize) { try { cfg.onMinimize(true); } catch (err) { lapis(id, 'onMinimize', err); } }
+    sinkronkanPeta();
   }
 
   function restore(id) {
@@ -211,6 +267,39 @@
     setBody(cfg, cfg.bodyMin, false);
     labelkan(cfg);
     if (cfg.onMinimize) { try { cfg.onMinimize(false); } catch (err) { lapis(id, 'onMinimize', err); } }
+    sinkronkanPeta();
+  }
+
+  /* ── Ringkasan state untuk CSS ──
+     Tiap sheet punya body class sendiri, jadi CSS tidak bisa menanyakan
+     "ada sheet yang terbuka?" tanpa memeriksa delapan nama kelas berbeda.
+     Ringkasan ini menyediakan satu kelas body saja: .sheet-terbuka.
+
+     Sheet yang sudah jadi chip TIDAK dihitung. Chip cuma 36px di bawah
+     tengah, jadi peta sudah terlihat penuh -- menghitungnya sebagai aktif
+     akan membuat peta menyusut tanpa alasan. */
+  function adaYangTerbuka() {
+    for (var i = 0; i < URUT.length; i++) {
+      if (isOpen(URUT[i]) && !isMinimized(URUT[i])) return true;
+    }
+    return false;
+  }
+
+  /* Dipanggil setiap kali state sheet berubah. Selain menyalakan kelas
+     body, menjadwalkan map.invalidateSize() supaya tile dihitung ulang
+     setelah transisi tinggi #map selesai (CSS .3s, jadi 340ms memberi
+     sedikit jeda). invalidateSize hanya bermakna di mobile: di desktop
+     tinggi #map tidak ikut berubah, jadi pemanggilannya di lewati. */
+  var _timerSinkron = 0;
+  function sinkronkanPeta() {
+    document.body.classList.toggle('sheet-terbuka', adaYangTerbuka());
+    ukurChromeAtas();
+    if (!mobile()) return;
+    clearTimeout(_timerSinkron);
+    _timerSinkron = setTimeout(function () {
+      var m = window.map;
+      if (m && typeof m.invalidateSize === 'function') m.invalidateSize();
+    }, 340);
   }
 
   function toggle(id) {
@@ -380,6 +469,11 @@
     if (isMinimized(cfg.id)) restore(cfg.id);
     e.style.removeProperty('--sheet-h');
     if (stop === STOP_PENUH) e.style.setProperty('--sheet-h', 'calc(100dvh - ' + PLIH_DI_ATAS + 'px)');
+    cerminTinggiKeMap(e);
+    /* Sheet bisa berhenti di stop penuh tanpa lewat minimize() maupun
+       restore(), jadi invalidateSize dipanggil di sini juga. Keduanya
+       idempoten: timer sebelumnya dibatalkan lalu dijadwalkan ulang. */
+    sinkronkanPeta();
   }
 
   function blokadeClick(e) {
@@ -502,6 +596,9 @@
   window.addEventListener('resize', function () {
     if (geser) return;                      /* biarkan drag berjalan */
     URUT.forEach(function (id) { delete cacheTengah[id]; });
+    /* Chrome atas bisa berubah tinggi saat device dirotasi (quick layer
+       bar membungkus atau tidak), jadi angka --map-chrome diukur ulang. */
+    ukurChromeAtas();
   });
 
   window.SheetDrag = {
@@ -516,6 +613,8 @@
     minimizeTerbuka: minimizeTerbuka,
     isOpen: isOpen,
     isMinimized: isMinimized,
+    adaYangTerbuka: adaYangTerbuka,
+    sinkronkanPeta: sinkronkanPeta,
     isMobile: mobile,
     _daftar: DAFTAR
   };

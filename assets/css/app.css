@@ -7585,6 +7585,50 @@
       }
 
       /* ── Legend: push up for floating bottom nav ── */
+      /* ── Tinggi & posisi peta di mobile ──
+         Tanpa sheet yang mengembang, peta tetap 100% seperti biasa -- tidak
+         ada perubahan sama sekali dari keadaan sebelumnya.
+
+         Saat ada sheet yang mengembang (body.sheet-terbuka, dipasang
+         sheet-drag.js), tinggi peta = tinggi layar dikurangi tinggi sheet,
+         DITAMBAH kedalaman chrome atas (--map-chrome).
+
+         Penambahan itu yang membuat polygon duduk di tengah PITA bebas --
+         antara unified search dan tepi atas sheet -- bukan di tengah kotak
+         peta. Sisa --map-chrome px di bawah kotak peta memang tertutup
+         sheet, dan itu memang bipartisan: sheet-nya opaque, dan digeser
+         ke bawah hanya untuk membuat titik tengah peta jatuh di pita bebas.
+
+         Tinggi sheet masuk lewat --map-h, bukan --sheet-h: @property
+         --sheet-h declares inherits: false, jadi #map sebagai saudara sheet
+         tidak akan pernah membaca nilainya. sheet-drag.js mencerminkannya
+         ke elemen peta setiap kali sheet berhenti bergerak. --map-chrome
+         juga diukur dari DOM, jadi perubahan tinggi kotak search atau
+         jumlah tombol quick layer ikut adjusting.
+
+         position: relative itu WAJIB, bukan kosmetik. Leaflet.css tidak
+         memberi position ke .leaflet-container, dan #map pun tidak
+         memilikinya, jadi tanpa ini .leaflet-pane, .leaflet-top, dan
+         .leaflet-bottom tetap beranchor ke #app-container (position:
+         relative) yang 100dvh, sementara kotaknya sudah dipangkas -- tile
+         dan kontrol akan bergeser jauh dari area yang terlihat. */
+      #map {
+        position: relative;
+        height: 100%;
+        align-self: center;
+        transition: height .3s ease;
+      }
+      body.sheet-terbuka #map {
+        height: calc(100dvh - var(--map-h, 50dvh) + var(--map-chrome, 0px));
+        align-self: flex-start;
+      }
+      /* Kontrol Leaflet di kiri-bawah ikut terangkat sebesar --map-chrome,
+         karena tepi bawah kotak peta kini berada sejauh itu di belakang
+         sheet. Tanpa ini kontrolnya tertutup sheet. */
+      body.sheet-terbuka .leaflet-bottom.leaflet-left {
+        bottom: calc(80px + var(--map-chrome, 0px)) !important;
+      }
+
       .leaflet-bottom.leaflet-left { bottom: 80px !important; }
 
       /* ── Bottom nav: hide when sheet/sidebar open ── */
