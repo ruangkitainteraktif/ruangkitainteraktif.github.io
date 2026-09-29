@@ -3144,8 +3144,6 @@
       escapeHtml(label) + '</span>';
     if (mandiri) {
       html += '<span class="pa-cloud-date">citra ' + escapeHtml(item.scene.date) + '</span>';
-    } else {
-      html += '<span class="pa-cloud-caveat">estimasi katalog, bukan citra yang dipakai</span>';
     }
     return html + '</div>';
   }
@@ -3686,20 +3684,42 @@
         '</div>' +
       '</div>';
 
+    /* Dua arah untuk analysis yang sudah selesai: jalankan ulang, atau
+       kosongkan. Tombol "Analisis" di analyzeBlock hanya muncul selama
+       item belum dianalisis, jadi tanpa dua tombol ini tidak ada jalan
+       kembali setelah adegan yang salah dipilih atau vertex diedit --
+       satu-satunya jalan adalah menggambar ulang petak.
+
+       Diletakkan di kartu, bukan di section NDVI, karena yang diulang
+       adalah seluruh rantai analisis (NDVI, indeks spektral, topografi),
+       bukan hanya satu section. */
+    const reanalyzeBlock = item.analyzed ?
+      '<div class="pa-btn-row pa-btn-row-reanalyze">' +
+        '<button class="pa-btn pa-btn-ghost" type="button" data-pa-action="reanalyze" data-pa-id="' + item.id + '"' +
+          (item.analyzeBusy ? ' disabled' : '') + '>' +
+          (item.analyzeBusy ? 'Menganalisis ulang…' : 'Analisis ulang') + '</button>' +
+        '<button class="pa-btn pa-btn-ghost" type="button" data-pa-action="reset-analysis" data-pa-id="' + item.id + '"' +
+          (item.analyzeBusy ? ' disabled' : '') + '>' +
+          'Reset analisis</button>' +
+      '</div>' : '';
+
     const cardOpen = '<div class="pa-card' + (item.stale ? ' pa-card-stale' : '') + '" data-pa-id="' + item.id + '">';
     const cardInfo = '<div class="pa-area">' + fmt(item.areaHa, 2) + ' ha · ' + (item.pointCount || 0) + ' titik sample</div>' +
       // Daftar langkah di kartu sengaja dihapus: setiap analisis sudah punya
       // tombolnya sendiri di section terkait, dan tombol Export di kepala panel
       // baru muncul setelah semuanya selesai. Block pengingat hanya
       // menduplikasi info yang sudah ada di tempat yang lebih wajar.
-      modePickerHtml(item) + analyzeBlock + manualBlockHtml(item) + stale + busy;
+      modePickerHtml(item) + analyzeBlock + reanalyzeBlock + manualBlockHtml(item) + stale + busy;
 
-  /* ---- Kebutuhan air hanya butuh geometri polygon, bukan citra satelit,
-     jadi section ini sengaja TIDAK ikut di balik gerbang item.analyzed.
-     Kalau ikut, section baru muncul setelah Analisis (NDVI + DEM) selesai
-     -- padahal user yang baru selesai menggambar petak justru butuh ini
-     lebih dulu, dan tidak harus menunggu analisis yang berat. */
-    if (!item.analyzed) return cardOpen + head + cardInfo + airSectionHtml(item) + '</div>';
+  /* ---- Kebutuhan air hanya ada di dalam hasil analisis.
+     Dulu section ini ikut ditambahkan di jalur return lebih awal, jadi
+     muncul sendirian sebelum Analisis ditekan -- alasannya waktu itu ia
+     hanya butuh geometri polygon, tidak perlu menunggu citra. Sekarang ia
+     berdiri di antara hasil citra (tepat di bawah LST) dan diperlakukan
+     sebagai bagian dari hasil analisis: menampilkan hitungan kebutuhan air
+     di luar hasil analisis membuatnya tidak jelas -- bukan hasil analisis,
+     tapi bukan pula bagian dari petak yang belum dianalisis. */
+    if (!item.analyzed) return cardOpen + head + cardInfo + '</div>';
 
     return cardOpen + head + cardInfo +
       '<div class="pa-section' + (isSectionCollapsed(item, 'ndvi') ? ' is-collapsed' : '') + '">' +
@@ -3742,6 +3762,12 @@
         lstBlockHtml(item) +
         '</div>' +
       '</div>' +
+      /* Kebutuhan air tepat di bawah LST: keduanya soal kondisi permukaan
+         lahan yang terukur (suhu dan air), jadi berdekatan. Tidak
+         diletakkan paling akhir karena topografi dan kelembapan tanah punya
+         sifat berbeda -- keduanya data tanah, bukan hasil pengukuran
+         permukaan. */
+      airSectionHtml(item) +
       '<div class="pa-section' + (isSectionCollapsed(item, 'terrain') ? ' is-collapsed' : '') + '">' +
         sectionHeadHtml(item, 'terrain', 'Topografi', terrainEyeBtnHtml(item)) +
         '<div class="pa-section-body">' +
@@ -3772,7 +3798,6 @@
         soilYearlyBlockHtml(item) +
         '</div>' +
       '</div>' +
-      airSectionHtml(item) +
       '</div>';
   }
 
@@ -3822,11 +3847,13 @@
         opt('mandiri', 'Mandiri',
           'Pilih citra, awan, dan index sendiri', ICON_MANUAL, !auto) +
       '</div>' +
-      '<p class="pa-mode-note">' + (auto
-        ? 'Otomatis memakai jalur lama. Tanggal citra tidak bisa dipilih, dan badge awan '
-          + 'hanya estimasi katalog.'
-        : 'Mandiri memakai citra yang Anda pilih. Tanggal ikut ditampilkan di setiap '
-          + 'hasil, dan badge awan berasal dari citra yang sama.') + '</p>' +
+      /* Catatan hanya untuk mode Mandiri. Mode Otomatis tidak diberi catatan
+         sama sekali: penjelasannya soal "jalur lama" dan "badge awan hanya
+         estimasi" sudah dihapus karena tidak membantu user memilih, dan
+         mode itu memang pilihan paling sederhana. */
+      (auto ? ''
+        : '<p class="pa-mode-note">Mandiri memakai citra yang Anda pilih. Tanggal ikut '
+          + 'ditampilkan di setiap hasil, dan badge awan berasal dari citra yang sama.</p>') +
       '</div>';
   }
 
@@ -4185,6 +4212,84 @@
    * Dipakai oleh tombol × di kartu dan oleh event draw:deleted dari modul
    * gambar, supaya penghapusan lewat peta tidak meninggalkan kartu yatim.
    */
+  /**
+   * Mengembalikan satu item ke kondisi "belum dianalisis": overlay di peta
+   * dilepas, lalu semua nilai hasil analisis dikosongkan. Dipakai tombol
+   * "Reset analisis" supaya petak bisa dianalisis ulang dengan adegan atau
+   * parameter yang berbeda tanpa harus menggambar ulang polygon.
+   *
+   * Yang SENGAJA tidak dikosongkan: geometri (rings, bounds, areaHa,
+   * pointCount) dan pilihan pengguna (airTanamanId, mode, picked, scene,
+   * sceneMonths, pixelCap, sclMask). Reset membersihkan hasil hitungan,
+   * bukan membuang pekerjaan yang tidak perlu diulang.
+   */
+  function resetItemAnalysis(item) {
+    if (!item || item.analyzeBusy) return false;
+
+    // Overlay di peta harus dilepas lebih dulu, kalau tidak petanya masih
+    // berwarna-warni padahal kartunya sudah kosong.
+    removeItemOverlay(item);
+    if (state.footprint && state.footprintOwner === item.id && mapReady()) map.removeLayer(state.footprint);
+    if (state.terrainOwner === item.id && typeof window.clearDemOverlay === 'function') window.clearDemOverlay();
+    if (state.footprintOwner === item.id) state.footprintOwner = null;
+    if (state.terrainOwner === item.id) state.terrainOwner = null;
+
+    item.analyzed = false;
+    item.stale = false;
+    item.busy = null;
+    item.runBusy = false;
+    item.pointCount = 0;
+
+    item.ndvi = null;
+    item.ndviError = null;
+    item.ndviTrend = null;
+    item.ndviTrendError = null;
+    item.ndviTrendBusy = false;
+    item.spectralMeta = null;
+    item.spectralMetaError = null;
+    item.lst = null;
+    item.lstError = null;
+    item.lstBusy = false;
+    item.terrain = null;
+    item.terrainError = null;
+    item.cloud = null;
+    item.cloudError = null;
+    item.air = null;
+    item.airError = null;
+    item.airBusy = false;
+    item.soil = null;
+    item.soilError = null;
+    item.soilBusy = false;
+    item.soilWeekly = null;
+    item.soilWeeklyError = null;
+    item.soilWeeklyBusy = false;
+    item.soilYearly = null;
+    item.soilYearlyError = null;
+    item.soilYearlyBusy = false;
+    item.manualResult = null;
+    item.manualError = null;
+
+    // Setiap indeks spektral punya nilai, error, status sibuk, dan tren
+    // sendiri, jadi dikosongkan lewat ALL_INDEXES supaya indeks baru
+    // otomatis ikut tanpa harus ditambah satu per satu di sini.
+    for (let i = 0; i < ALL_INDEXES.length; i++) {
+      const spec = ALL_INDEXES[i];
+      item[spec.key] = null;
+      item[spec.key + 'Error'] = null;
+      item[spec.key + 'Busy'] = false;
+      item[spec.trendKey] = null;
+      item[spec.trendKey + 'Error'] = null;
+      item[spec.trendKey + 'Busy'] = false;
+    }
+
+    // Section kembali ke keadaan tertutup seperti kartu baru, supaya hasil
+    // yang baru tidak langsung memenuhi layar dengan section yang terbuka.
+    item.collapsed = { ndvi: false, terrain: true, soil: true, spectral: true, lst: true, air: true };
+
+    render();
+    return true;
+  }
+
   function removeItemById(id) {
     const item = itemById(id);
     if (!item) return false;
@@ -4299,6 +4404,19 @@
 
     if (action === 'analyze') {
       if (typeof window.analyzeGeoFarmItem === 'function') window.analyzeGeoFarmItem(item.id);
+      return;
+    }
+
+    if (action === 'reanalyze') {
+      // Jalur yang sama persis dengan tombol Analisis pertama kali. analyzeItem
+      // sudah mengosongkan error di awal dan menimpa setiap nilai, jadi aman
+      // dijalankan ulang tanpa perlu state bersih lebih dulu.
+      if (typeof window.analyzeGeoFarmItem === 'function') window.analyzeGeoFarmItem(item.id);
+      return;
+    }
+
+    if (action === 'reset-analysis') {
+      resetItemAnalysis(item);
       return;
     }
 

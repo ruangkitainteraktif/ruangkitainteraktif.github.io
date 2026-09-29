@@ -286,6 +286,10 @@
       background: #f8fafc; transition: border-color .15s;
     }
     .lc-search:focus { border-color: #2563eb; background: #fff; }
+    /* Varian di bawah banner donasi. Margin atasnya nol supaya tidak ada
+       celah aneh antara banner dan kotak, margin bawahnya lebih longgar
+       supaya tidak menempel grup Layer Dipin di bawahnya. */
+    .lc-search-top { margin: 0 8px 10px; }
     .lc-active-group { border-left: 3px solid #2563eb; margin: 0 8px 8px; border-radius: 0 8px 8px 0; background: rgba(37,99,235,.03); }
     .lc-active-header { display: flex; align-items: center; justify-content: space-between; }
     .lc-active-header .lc-cat-header { flex: 1; }
@@ -11820,14 +11824,25 @@
   padding: 0;
 }
 
+/* Status langkah analisis GeoFarm (unduhan raster, pemuatan scene, dan
+   seterusnya). Dipakai satu elemen saja, jadi gayanya tidak berisiko
+   menabrak komponen lain.
+
+   Teksnya dipusatkan dan diberi ruang di atas serta bawah supaya tidak
+   menempel ke baris "Analisis" di atasnya maupun ke section pertama di
+   bawahnya. Tadi margin bawahnya cuma 8px dan tidak ada margin atas sama
+   sekali, jadi barisnya duduk rapat ke tombol. */
 .pa-status {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   font-size: 10.5px;
   color: var(--text-secondary);
-  margin-bottom: 8px;
-}
+  margin: 12px 0;
+  padding: 8px 12px;
+  text-align: center;
+  }
 .pa-spin {
   width: 11px;
   height: 11px;
@@ -11951,8 +11966,15 @@
 .pa-stat span { display: block; font-size: 9px; color: var(--text-secondary); margin-bottom: 1px; }
 .pa-stat b { font-size: 11.5px; color: var(--text-primary); }
 
-.pa-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.pa-btn-row .pa-btn { margin-top: 7px; }
+   .pa-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+   .pa-btn-row .pa-btn { margin-top: 7px; }
+   /* Baris "Analisis ulang" / "Reset analisis". Baris ini jadi tempat
+      kembali setelah analisis selesai, jadi diberi jarak lebih longgar dari
+      baris tombol di dalam section supaya tidak terlihat sebagai bagian dari
+      section terakhir. Reset sengaja tidak diberi warna merah: ia menghapus
+      hasil hitungan yang bisa diulang, bukan mencabut polygon seperti tombol
+      × di kepala kartu. */
+   .pa-btn-row-reanalyze { margin: 4px 0 2px; }
 /* Baris tombol yang hanya berisi satu tombol (mis. "Hitung" indeks lanjutan)
    dibuat selebar panel supaya luas sentuhnya enak untuk jari. */
 .pa-btn-row-single { grid-template-columns: 1fr; }
@@ -12207,14 +12229,15 @@
 }
 .pa-stat.is-primary b { color: var(--accent); }
 
-.pa-cloud-date,
-.pa-cloud-caveat {
+/* Baris tanggal citra di bawah badge awan. Kelas .pa-cloud-caveat yang
+   pernah berpasangan dengan .pa-cloud-date sudah dihapus bersamanya dengan
+   teks "estimasi katalog" di polygon-analysis.js. */
+.pa-cloud-date {
   flex: 1 0 100%;
   font-size: 8px;
   color: var(--text-secondary);
   line-height: 1.35;
 }
-.pa-cloud-caveat { color: #b26a00; }
 
 /* Kebutuhan air tanaman (ETc) */
   /* Section air memakai template .pa-section yang sama persis dengan section

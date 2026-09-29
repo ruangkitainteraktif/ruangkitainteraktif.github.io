@@ -3173,6 +3173,12 @@ L.control.scale({
       '</div>' +
     '</div>';
 
+    /* Kotak cari tepat di bawah banner donasi, sebelum grup Layer Dipin.
+       Sebelumnya ia diletakkan di antara grup "Layer Aktif" dan daftar
+       kategori, sehingga tidak terlihat tanpa menggulir -- padahal itu cara
+       paling cepat menjangkau layer yang namanya sulit diingat. */
+    html += '<input type="text" class="lc-search lc-search-top" placeholder="Cari layer..." />';
+
       var pinIconOutline = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2z"/></svg>';
       var pinIconFilled = '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2z"/></svg>';
 
@@ -3250,8 +3256,11 @@ L.control.scale({
         });
       });
 
+    /* Grup "Layer Aktif" sengaja TIDAK diberi open: semua kategori tertutup
+       kecuali Layer Dipin, dan grup ini ikut tertutup supaya aturannya
+       seragam. Yang aktif tetap kelihatan lewat badge jumlah di header. */
     if (activeLayers.length > 0) {
-      html += '<div class="lc-category lc-active-group open">';
+      html += '<div class="lc-category lc-active-group">';
       html += '<div class="lc-active-header">';
       html += '<button class="lc-cat-header lc-active-header-btn" type="button">';
       html += '<svg class="lc-cat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
@@ -3270,7 +3279,6 @@ L.control.scale({
       html += '</div></div>';
     }
 
-    html += '<input type="text" class="lc-search" placeholder="Cari layer..." />';
     LAYER_CATALOG_DATA.forEach(function(cat, ci) {
       var allLayers = cat.layers || [];
       if (cat.subcats) {
@@ -3285,7 +3293,14 @@ L.control.scale({
         }
         return isOn;
       }).length;
-      html += '<div class="lc-category' + (cat.type === 'basemap' ? ' open' : '') + '" data-ci="' + ci + '">';
+      /* Tidak ada kategori yang terbuka secara default -- termasuk Basemap,
+         yang sebelumnya selalu terbuka. Katalog ini punya sebelas kategori dan
+         sebagian berisi puluhan layer, jadi membukanya sekaligus membuat
+         daftar panjang yang menutupi peta. Layer Dipin tetap terbuka karena
+         isinya pendek dan itu isi yang paling sering dipakai.
+         Ketetapan ini tidak merusak pencarian: handler kotak cari tetap
+         membuka kategori yang punya hasil cocok. */
+      html += '<div class="lc-category" data-ci="' + ci + '">';
       html += '<button class="lc-cat-header" type="button">';
       html += '<svg class="lc-cat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
       html += '<span class="lc-cat-title">' + cat.cat + '</span>';
