@@ -78,7 +78,7 @@
     'toggleDiTmsLayer': 'Data Daerah Irigasi tidak tersedia.',
     'toggleSaluranIrTmsLayer': 'Data Saluran Irigasi tidak tersedia.',
     'toggleRtrwTmsLayer': 'Data RTRW tidak tersedia.',
-    'toggleBpsTutupanLahan': 'Data Tutupan Lahan tidak tersedia.',
+    'toggleBpsTutupanLahan': 'Data Tutupan Lahan BPS sedang tidak tersedia — GeoServer BPS tidak merespons. Gangguan di sisi BPS, bukan di perangkat Anda. Coba lagi nanti.',
     'toggleErosiLayer': 'Data Peta Rawan Erosi tidak tersedia.',
     'toggleSawahDilindungi': 'Data LSD 50K tidak tersedia.',
     'toggleSawahNasional50k': 'Data LBS 50K tidak tersedia.',
@@ -188,7 +188,11 @@
   function hideOne() {}
 
   function getLayerName(cb) {
-    var id = cb.id || '';
+    /* Checkbox katalog layer diberi id berawalan "lc_" (lihat map-core.js),
+       sedangkan kuncinya di ERROR_MESSAGES adalah id layer aslinya. Jadi
+       dataset.layerId harus dibaca lebih dulu, kalau tidak tiap layer
+       katalog jatuh ke pesan generik padahal pesan spesifiknya sudah ada. */
+    var id = (cb.dataset && cb.dataset.layerId) || cb.id || '';
     if (ERROR_MESSAGES[id]) return ERROR_MESSAGES[id];
     if (id.indexOf('toggleFu') === 0) return 'Data BIG tidak tersedia.';
     var label = cb.closest('.lc-item, .geotools-main-tab-panel, .geoid-check');
@@ -209,9 +213,18 @@
   document.addEventListener('change', function (e) {
     var cb = e.target;
     if (!cb || cb.type !== 'checkbox' || !cb.checked) return;
-    if (cb.closest && cb.closest('.lc-item')) return;
-    var isLayer = /^(toggle|geoidToggle)/.test(cb.id) ||
-      (cb.closest && (cb.closest('.cctv-layer-toggle') || cb.closest('.geoid-check')));
+    /* Checkbox di dalam .lc-item -- yaitu seluruh layer di katalog Layer --
+       TIDAK lagi dilewati. Sebelumnya dilewati karena katalog punya
+       checkbox sendiri yang dirender runtime, sehingga saat ini layer
+       katalog yang gagal diam-diam: tidak ada spinner, tidak ada toast.
+       Itu yang membuat "Peta Tutupan Lahan 100m (KSA BPS)" hilang begitu
+       saja ketika GeoServer BPS tidak merespons.
+
+       Radio basemap di katalog aman: baris di atas sudah menyaring
+       cb.type !== 'checkbox'. */
+    var layerId = (cb.dataset && cb.dataset.layerId) || cb.id || '';
+    var isLayer = /^(toggle|geoidToggle)/.test(layerId) ||
+      (cb.closest && (cb.closest('.lc-item') || cb.closest('.cctv-layer-toggle') || cb.closest('.geoid-check')));
     if (isLayer) {
       show();
       var cbId = cb.id || ('cb_' + Math.random());

@@ -478,7 +478,11 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
     const detailCount = level === 1 ? batasCount : childCount;
 
     geoidBoundaryLayer = L.featureGroup(layers).addTo(_m);
-    geoidBoundaryRawData = { path: firstGeom, nama, kode };
+    /* label ikut disimpan: tanyaRuangWilayah() memakainya untuk menyusun
+       teks pertanyaan ("Desa/Kelurahan Sukamaju (31.71.03.1001)"). Tanpa
+       ini fungsi itu harus menduplikasi peta levelNames yang sudah ada di
+       showGeoidBoundary, dan cepat rusak kalau level baru ditambahkan. */
+    geoidBoundaryRawData = { path: firstGeom, nama, kode, label };
     const data = { nama };
     const rings = firstGeom;
     const fmtNum = (n) => n.toLocaleString('id-ID', { maximumFractionDigits: 2 });
@@ -704,9 +708,15 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
               </div>` : ''}
              </div>
              <div style="padding:8px 14px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8;text-align:center;">Sumber: BIG RBI (Rupa Bumi Indonesia) Edisi Juni 2026</div>
-             <div style="padding:10px 14px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;gap:8px;justify-content:center;">
+             <!-- flex-wrap wajib: ketiga tombol totalnya ±336px sedangkan popup
+                  lebar maksimal 320px, jadi tanpa wrap baris ini meluber.
+                  Ungu #6366f1 diambil dari gradien brand sheet Tanya Ruang
+                  (#a855f7 -> #6366f1) supaya tombolnya terbaca sebagai satu
+                  kelompok dengan AI, bukan aksi biasa yang lain. -->
+             <div style="padding:10px 14px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
                 <button type="button" onclick="showDukcapilDetail('${escapeGeoidHtml(kode)}')" style="border:0;background:#2563eb;color:#fff;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;">Data Penduduk</button>
                 <button type="button" onclick="downloadBoundaryGeoJSON('${escapeGeoidHtml(kode)}')" style="border:0;background:#059669;color:#fff;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;">Download GeoJSON</button>
+                <button type="button" onclick="tanyaRuangWilayah('${escapeGeoidHtml(kode)}')" style="border:0;background:#6366f1;color:#fff;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;">Tanya Ruang</button>
               </div>
              </div>
            </div>
@@ -977,6 +987,47 @@ async function downloadBoundaryGeoJSON(kode) {
   }
 }
 window.downloadBoundaryGeoJSON = downloadBoundaryGeoJSON;
+
+/* Pemanggil sheet Tanya Ruang dari popup Batas Wilayah.
+   Dulu sheet ini dibuka otomatis oleh unified-search.js begitu batas selesai
+   digambar, sehingga panel AI menutupi peta persis saat user masih ingin
+   melihat wilayah yang ia cari. Sekarang sheet itu hanya terbuka lewat tombol
+   di popup ini.
+
+   Pertanyaannya tetap langsung terkirim supaya tidak terasa kosong: begitu
+   sheet dibuka, AI sudah menjawab tentang wilayah tersebut. Kode wilayah
+   cukup untuk AI menyelesaikan hierarki sendiri (searchRegionByName() di
+   ai-analysis.js mengenali pola \d{2}(\.\d{2}){0,2}(\.\d{4})?), jadi nama
+   induk tidak perlu ikut dikirim -- yang penting nama wilayahnya terbaca
+   untuk user. */
+function tanyaRuangWilayah(kode) {
+  if (typeof window.openAiSheet !== 'function' || typeof window._aiSendQuick !== 'function') {
+    console.warn('[GeoID] Tanya Ruang belum siap; tombol diabaikan.');
+    return false;
+  }
+
+  /* Pakai data batas terakhir hanya kalau kodenya sama dengan yang dipanggil
+     tombol. Kalau beda, kirim kodenya saja: itu sudah cukup bagi AI untuk
+     mencari nama wilayahnya sendiri. */
+  const data = geoidBoundaryRawData;
+  let teks = kode;
+  if (data && data.kode === kode && data.nama) {
+    teks = (data.label || 'Wilayah') + ' ' + data.nama;
+    if (data.kode) teks += ' (' + data.kode + ')';
+  }
+
+  window.openAiSheet();
+  /* Jeda 400ms: sama seperti implementasi lama. Hook onOpen sheet masih
+     merender pesan sambutan dalam waktu itu, dan mengirim pesan sebelum
+     selesai akan menimpa render-an itu. */
+  setTimeout(function () {
+    try { window._aiSendQuick(-1, teks); } catch (e) {
+      console.warn('[GeoID] Gagal mengirim pertanyaan ke Tanya Ruang:', e);
+    }
+  }, 400);
+  return true;
+}
+window.tanyaRuangWilayah = tanyaRuangWilayah;
 
 function injectDownloadBtn(marker) {
   try {

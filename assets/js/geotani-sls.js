@@ -16,11 +16,20 @@
  *    ~2420 di layer desa. Menampilkannya akan salah sampai dua orde besaran.
  *    Semua luas dihitung dari geometri lewat window.geoArea (geodesik).
  *
- * Server WFS tidak mengirim header CORS, jadi browser tidak bisa mengambil
- * data ini langsung. Semua request lewat kta-cors-proxy. Worker itu memakai
- * cacheTtl: 0, jadi tiap permintaan benar-benar tembus ke BPS -- karena itu
- * ada cache sisi klien dan pemanggilan hanya terjadi atas permintaan pengguna.
- */
+   * Server WFS tidak mengirim header CORS, jadi browser tidak bisa mengambil
+   * data ini langsung. Semua request lewat kta-cors-proxy. Worker itu memakai
+   * cacheTtl: 0, jadi tiap permintaan benar-benar tembus ke BPS -- karena itu
+   * ada cache sisi klien dan pemanggilan hanya terjadi atas permintaan pengguna.
+   *
+   * PENTING (verified 2026-09-29): GeoServer BPS sedang tidak mempublikasikan
+   * layer apa pun. GetCapabilities WFS 2.0.0 mengembalikan FeatureTypeList
+   * kosong, WMS hanya punya satu layer dummy bernama "WMS" dengan extent
+   * minx=0/maxx=-1, dan setiap namespace (wilkerstat, bps, wilayah, geospasial,
+   * statistik) dijawab "Unknown namespace". Jadi LAYER_DESA dan LAYER_SLS di
+   * bawah akan menjatuhkan HTTP 400 sampai BPS memublikasikan workspace itu
+   * lagi. Ini kondisi di luar kendali aplikasi; pesan error sudah dibuat
+   * jujur soal itu, bukan menyalahkan perangkat pengguna.
+   */
 (function () {
   'use strict';
 
@@ -71,12 +80,55 @@ var generasi = 0;
     return OWS + '?' + q;
   }
 
+  /* Bacalah teks exception OWS dari body XML GeoServer. Tanpa ini, error
+     BPS hanya muncul sebagai "HTTP 400" yang tidak menjelaskan apa pun --
+     padahal penyebabnya (namespace hilang, layer dihapus, parameter salah)
+     selalu tertulis jelas di dalam body. */
+  function bacaOwsException(txt) {
+    if (!txt) return '';
+    var m = txt.match(/<ows:ExceptionText>([^<]*)<\/ows:ExceptionText>/);
+    if (m) return m[1].trim();
+    m = txt.match(/<ServiceException[^>]*>([^<]*)<\/ServiceException>/);
+    return m ? m[1].trim() : '';
+  }
+
+  /* GeoServer BPS membalas 400 dengan "Unknown namespace" ketika workspace
+     tempat layer SLS berada sudah tidak dipublikasikan. Itu hal yang terjadi
+     di luar kendali aplikasi, jadi pesannya harus menyuruh pengguna
+     menunggu BPS, bukan menyalahkan perangkatnya. */
+  function pesanBpsGagal(status, txt) {
+    var ows = bacaOwsException(txt);
+    if (/unknown namespace/i.test(ows)) {
+      return 'Layanan data spasial BPS sedang tidak tersedia: '
+        + 'wilayah kerja statistik (SLS) belum dipublikasikan. '
+        + 'Ini gangguan di sisi BPS, bukan di perangkat Anda. Coba lagi nanti.';
+    }
+    if (ows) return 'BPS menolak permintaan (' + status + '): ' + ows;
+    return 'Permintaan ke BPS gagal (HTTP ' + status + ').';
+  }
+
   async function fetchJson(url) {
     var ctrl = new AbortController();
     var timer = setTimeout(function () { ctrl.abort(); }, REQUEST_TIMEOUT_MS);
     try {
       var res = await fetch(url, { signal: ctrl.signal });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      /* 429 dari proxy berarti kuota harian BPS habis, bukan kegagalan
+         jaringan. Error-nya dibuat dengan resetAt terisi supaya lapisan UI
+         bisa menampilkan hitung mundur, bukan kalimat "gagal" yang menyesatkan. */
+      if (res.status === 429) {
+        var resetSec = Number(res.headers.get('X-RateLimit-Reset'));
+        var err = new Error('Kuota harian BPS habis untuk alamat IP ini.');
+        err.kuotaHabis = true;
+        err.resetAt = Number.isFinite(resetSec) && resetSec > 0 ? resetSec * 1000 : null;
+        throw err;
+      }
+      if (!res.ok) {
+        /* Body-nya XML, jadi res.json() akan melempar. Ambil teksnya apa
+           adanya -- jangan sampai hilang bersama error parsing. */
+        var body = '';
+        try { body = await res.text(); } catch (e) { body = ''; }
+        throw new Error(pesanBpsGagal(res.status, body));
+      }
       return await res.json();
     } catch (e) {
       if (e && e.name === 'AbortError') throw new Error('Permintaan ke BPS timeout.');
@@ -427,11 +479,14 @@ var generasi = 0;
   /* Tombol "Reset Polygon". clear() hanya mengosongkan state, layer peta, dan
      window._geotaniSlsData; daftar hasil dan input pencarian harus ikut
      dikosongkan supaya layar tidak terlihat masih memuat data. */
-  function reset() {
-    generasi += 1;
-    clear();
-    inFlight.clear();
-    setSelectedKode(null, null);
+     function reset() {
+       generasi += 1;
+       clear();
+       inFlight.clear();
+       // Timer hitung mundur ikut dihentikan: panel sudah dikosongkan,
+       // jadi tidak ada yang perlu diperbarui tiap detik lagi.
+       berhentiHitungMundur();
+       setSelectedKode(null, null);
     var input = document.getElementById('geotaniSlsVillageSearch');
     var results = document.getElementById('geotaniSlsVillageResults');
     var out = document.getElementById('geotani-sls-output');
@@ -488,6 +543,57 @@ var generasi = 0;
   }
 
   function getState() { return state; }
+
+  /* ── kuota harian BPS ──
+     Satu analisis butuh dua request BPS, jadi kuota 2 per 24 jam. Saat
+     habis, error 429 membawa resetAt (epoch ms) dari header Worker.
+
+     Hitung mundur diperbarui tiap detik supaya pengguna tidak perlu
+     menghitung sendiri kapan harus mencoba lagi. Timer dihentikan saat
+     kuota pulih atau saat panel di-reset, supaya tidak ada interval yang
+     menggantung di latar belakang. */
+  var hitungMundurTimer = 0;
+
+  function formatSisa(ms) {
+    var total = Math.max(0, Math.floor(ms / 1000));
+    var jam = Math.floor(total / 3600);
+    var menit = Math.floor((total % 3600) / 60);
+    var detik = total % 60;
+    if (jam >= 1) return jam + ' jam ' + menit + ' menit';
+    if (menit >= 1) return menit + ' menit ' + detik + ' detik';
+    return detik + ' detik';
+  }
+
+  function berhentiHitungMundur() {
+    if (hitungMundurTimer) { clearInterval(hitungMundurTimer); hitungMundurTimer = 0; }
+  }
+
+  function tampilkanKuotaHabis(status, err) {
+    berhentiHitungMundur();
+    if (!status) return;
+    var resetAt = err && err.resetAt;
+    if (!Number.isFinite(resetAt)) {
+      /* Worker tidak mengirim resetAt. Jangan tampilkan angka yang
+         menebak, cukup diberi tahu bahwa kuota habis. */
+      status.className = 'geotani-sls-status is-quota';
+      status.textContent = 'Kuota harian BPS habis untuk alamat IP ini. '
+        + 'Coba lagi nanti.';
+      return;
+    }    var tulis = function () {
+      var sisa = resetAt - Date.now();
+      if (sisa <= 0) {
+        berhentiHitungMundur();
+        status.className = 'geotani-sls-status';
+        status.textContent = 'Kuota BPS sudah tersedia. Tekan "Tampilkan SLS" lagi.';
+        return;
+      }
+      status.className = 'geotani-sls-status is-quota';
+      status.textContent = 'Kuota harian BPS habis untuk alamat IP ini. '
+        + 'Bisa diakses lagi dalam ' + formatSisa(sisa) + '.';
+    };
+    tulis();
+    hitungMundurTimer = setInterval(tulis, 1000);
+  }
 
   /* ── pembungkus UI ──
      Tombol "Tampilkan SLS" bersifat opt-in. Tidak ada request yang dikirim
@@ -556,6 +662,7 @@ var generasi = 0;
       }
       btn.disabled = true;
       out.innerHTML = '';
+      berhentiHitungMundur();
       if (status) status.textContent = 'Mengambil data SLS dari BPS...';
       try {
         var st = await load(kode, meta.lat, meta.lng);
@@ -565,7 +672,14 @@ var generasi = 0;
         out.innerHTML = listHtml();
         if (status) status.textContent = '';
       } catch (e) {
-        if (status) status.textContent = e && e.message ? e.message : 'Gagal mengambil data SLS.';
+        /* Kuota habis punya tampilan sendiri: pesan error biasa akan
+         membuat pengguna mengira BPS yang salah, padahal jatah miliknya
+         sendiri yang habis. */
+        if (e && e.kuotaHabis) {
+          tampilkanKuotaHabis(status, e);
+        } else if (status) {
+          status.textContent = e && e.message ? e.message : 'Gagal mengambil data SLS.';
+        }
       } finally {
         btn.disabled = false;
       }

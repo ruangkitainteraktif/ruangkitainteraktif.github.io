@@ -4,5 +4,17 @@
   "main": "src/index.js",
   "compatibility_date": "2026-09-01",
   "workers_dev": true,
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+
+  // Menyimpan penghitung kuota request ke BPS, satu kunci per alamat IP.
+  // Dipakai assets/js/geotani-sls.js untuk membatasi 1 analisis polygon
+  // per 24 jam. Tanpa binding ini, RATE_LIMIT_BPS di src/index.js otomatis
+  // dinonaktifkan dan semua request lolos tanpa batas -- jadi Worker TIDAK
+  // akan gagal_total, hanya pembatasan yang tidak berlaku.
+  //
+  // id di bawah wajib diganti dengan milik Anda:
+  //   npx wrangler kv namespace create RATE_KV
+  "kv_namespaces": [
+    { "binding": "RATE_KV", "id": "GANTI_DENGAN_ID_NAMESPACE_ANDA" }
+  ]
 }

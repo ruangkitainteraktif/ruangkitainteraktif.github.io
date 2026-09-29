@@ -10,6 +10,10 @@
  *  - No private/loopback hosts
  *  - Origin allowlist (site + localhost)
  *  - Host allowlist ( government / known public APIs used by the site )
+ *
+ * Rate limit (BPS only):
+ *  - See RATE_LIMIT_BPS. Menahan beban ke BPS dari modul SLS, yang satu
+ *    analisisnya menarik dua berurutan (lookup desa lalu ambil SLS).
  */
 
 const ALLOWED_ORIGINS = new Set([
@@ -120,7 +124,11 @@ function corsHeaders(origin) {
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Accept, Origin, X-Requested-With",
     "Access-Control-Max-Age": "86400",
-    "Access-Control-Expose-Headers": "Content-Length, Content-Type"
+    // X-RateLimit-* WAJIB ada di sini. Tanpa diexpose, browser tidak
+    // boleh membacanya dari JavaScript, jadi klien tidak akan pernah tahu
+    // kapan kuotanya pulih.
+    "Access-Control-Expose-Headers":
+      "Content-Length, Content-Type, X-Proxy-Status, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, Retry-After"
   };
 }
 
@@ -132,6 +140,114 @@ function jsonError(status, message, origin) {
       ...corsHeaders(origin)
     }
   });
+}
+
+/* ══ Batas kuota BPS ══
+   Hanya berlaku untuk host BPS. Semua host lain di allowlist -- arcgis,
+   big.go.id, BMKG, dan sisanya -- tidak tersentuh. */
+const RATE_LIMIT_BPS = {
+  // 2 request, bukan 1: satu analisis SLS di geotani-sls.js memanggil
+  // findDesaId() lalu loadSlsOfDesa(), berurutan karena yang kedua memakai
+  // iddesa dari yang pertama. Dengan kuota 1, analisis tidak pernah selesai.
+  max: 2,
+  windowMs: 24 * 60 * 60 * 1000, // jendela bergulir 24 jam
+  // Berapa lama respons 429 disimpan di cache edge, supaya klien tidak
+  // membanjiri Worker dengan probing yang sama.
+  blockedCacheTtl: 60
+};
+
+// Hanya bps.go.id beserta seluruh subdomainnya. Dipakai juga untuk
+// Kellogin, bukan ALLOWED_HOST_SUFFIXES, supaya ".go.id" yang ada di sana
+// tidak ikut membawa seluruhnamespace pemerintah ke dalam pembatasan.
+function isBpsHost(hostname) {
+  const h = (hostname || "").toLowerCase();
+  return h === "bps.go.id" || h.endsWith(".bps.go.id");
+}
+
+// CF-Connecting-IP diisi Cloudflare di edge. Saat wrangler dev lokal
+// header ini tidak ada, jadi jatuh ke "anon" -- kuota lokal ikut terhitung
+// dan mudah diuji, cuma tidak mewakili perilaku produksi.
+function clientIp(request) {
+  return request.headers.get("CF-Connecting-IP") || "anon";
+}
+
+// Kuotanya disimpan sebagai { n, resetAt }. resetAt hanya di-set sekali,
+// saat request pertama yang benar-benar berhasil, sehingga jendela 24 jam
+// bergulir dari akses pertama dan tidak bergeser setiap kali ada request.
+async function bacaKuota(env, ip) {
+  const kv = env && env.RATE_KV;
+  if (!kv) return null;
+  const key = "bps:" + ip;
+  const now = Date.now();
+  let rec = null;
+  try {
+    rec = await kv.get(key, "json");
+  } catch {
+    return null; // KV bermasalah: lebih baik melayani daripada menolak
+  }
+  if (!rec || typeof rec.resetAt !== "number" || typeof rec.n !== "number") {
+    return { key: key, n: 0, resetAt: now + RATE_LIMIT_BPS.windowMs, baru: true };
+  }
+  if (now >= rec.resetAt) {
+    // Jendela lama sudah lewat: mulai yang baru.
+    return { key: key, n: 0, resetAt: now + RATE_LIMIT_BPS.windowMs, baru: true };
+  }
+  return { key: key, n: rec.n, resetAt: rec.resetAt, baru: false };
+}
+
+async function tulisKuota(env, k) {
+  const kv = env && env.RATE_KV;
+  if (!kv) return;
+  try {
+    await kv.put(k.key, JSON.stringify({ n: k.n, resetAt: k.resetAt }), {
+      expirationTtl: Math.ceil(RATE_LIMIT_BPS.windowMs / 1000) + 3600
+    });
+  } catch {
+    // Gagal menulis tidak boleh menggagalkan request; paling bawah
+    // pengguna melihat kuota sedikit lebih longgar, bukan error.
+  }
+}
+
+function headerKuota(k) {
+  const sisa = Math.max(0, RATE_LIMIT_BPS.max - k.n);
+  return {
+    "X-RateLimit-Limit": String(RATE_LIMIT_BPS.max),
+    "X-RateLimit-Remaining": String(sisa),
+    "X-RateLimit-Reset": String(Math.ceil(k.resetAt / 1000))
+  };
+}
+
+function respons429(origin, k) {
+  const jam = new Date(k.resetAt);
+  const teks = jam.toLocaleString("id-ID", {
+    timeZone: "Asia/Jakarta",
+    dateStyle: "medium",
+    timeStyle: "short"
+  });
+  return new Response(
+    JSON.stringify({
+      error: "Kuota data SLS BPS harian sudah habis.",
+      detail:
+        "Setiap alamat IP hanya boleh " +
+        RATE_LIMIT_BPS.max +
+        " request ke BPS per 24 jam, cukup untuk satu analisis polygon. " +
+        "Kuota berikutnya tersedia pukul " +
+        teks +
+        " WIB.",
+      resetAt: k.resetAt,
+      limit: RATE_LIMIT_BPS.max
+    }),
+    {
+      status: 429,
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "no-store",
+        "Retry-After": String(Math.max(1, Math.ceil((k.resetAt - Date.now()) / 1000))),
+        ...headerKuota(k),
+        ...corsHeaders(origin)
+      }
+    }
+  );
 }
 
 export default {
@@ -178,6 +294,22 @@ export default {
       return jsonError(405, "Method not allowed", origin);
     }
 
+    /* ── gerbang kuota BPS ──
+       Diperiksa sebelum meneruskan ke upstream supaya request yang sudah
+       pasti ditolak tidak membebani BPS. Penghitungannya sendiri baru
+       dinaikkan SESUDAH upstream membalas sukses (lihat bawah), supaya
+       request yang gagal atau timeout tidak memotong kuota pengguna. */
+    const dikuota = isBpsHost(target.hostname);
+    let ip = null;
+    let k = null;
+    if (dikuota) {
+      ip = clientIp(request);
+      k = await bacaKuota(env, ip);
+      if (k && k.n >= RATE_LIMIT_BPS.max) {
+        return respons429(origin, k);
+      }
+    }
+
     const fwdHeaders = {
       "User-Agent": "Mozilla/5.0 (compatible; kta-cors-proxy/1.0)",
       "Accept": request.headers.get("Accept") || "*/*"
@@ -204,6 +336,17 @@ export default {
       const ct = upstream.headers.get("Content-Type");
       if (ct) outHeaders.set("Content-Type", ct);
       outHeaders.set("X-Proxy-Status", String(upstream.status));
+
+      // Penghitungan naik hanya setelah upstream benar-benar berhasil.
+      // Kalau BPS sedang lambat atau errornya di sisi mereka, pengguna
+      // masih punya kuota penuh untuk mencoba lagi.
+      if (dikuota && k && upstream.ok) {
+        k.n += 1;
+        await tulisKuota(env, k);
+        for (const [name, value] of Object.entries(headerKuota(k))) {
+          outHeaders.set(name, value);
+        }
+      }
 
       return new Response(upstream.body, {
         status: upstream.status,

@@ -7681,8 +7681,24 @@
 .geotani-sls-status {
   margin-top: 7px; font-size: 10.5px; line-height: 1.5; color: var(--text-muted);
 }
-.geotani-sls-status:not(:empty) { color: #b45309; }
-.geotani-sls-summary {
+    .geotani-sls-status:not(:empty) { color: #b45309; }
+    /*        Status kuota habis. Berbeda dari .geotani-sls-warn yang memperingatkan
+       data tidak lengkap, ini berarti server menolak: perlu kotak dengan
+       warna sendiri supaya tidak tertukar dengan "sebagian data mungkin
+       tidak tampil". Warna merah dipakai karena aksi berikutnya adalah
+       menunggu sampai jam berikutnya, bukan memperbaiki sesuatu. */
+    .geotani-sls-status.is-quota {
+      margin-top: 7px; padding: 7px 9px;
+      border: 1px solid #fca5a5; border-left: 3px solid #dc2626;
+      border-radius: 5px;
+      background: #fef2f2; color: #991b1b;
+      font-size: 10.5px; line-height: 1.5;
+    }
+    [data-theme="dark"] .geotani-sls-status.is-quota {
+      border-color: #7f1d1d; border-left-color: #ef4444;
+      background: #2a0b0b; color: #fecaca;
+    }
+    .geotani-sls-summary {
   display: flex; flex-wrap: wrap; gap: 4px 10px;
   margin-top: 8px; font-size: 10.5px; color: var(--text-secondary);
 }

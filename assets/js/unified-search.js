@@ -218,8 +218,9 @@
     const wilayahTypes = ['provinsi', 'kabkot', 'kecamatan', 'desa'];
     if (wilayahTypes.includes(item.type)) {
       if (typeof window.resetAllLayers === 'function') { try { window.resetAllLayers(); } catch (e) {} }
+      let layer = null;
       try {
-        await showGeoidBoundary(item.kode);
+        layer = await showGeoidBoundary(item.kode);
       } catch (e) {
         console.warn('[UnifiedSearch] showGeoidBoundary failed:', e);
       }
@@ -230,32 +231,22 @@
         setAdmText('adm-desa', item.type === 'desa' ? item.name : '-');
       }
 
-      if (typeof window.openAiSheet === 'function') {
-        window.openAiSheet();
-        setTimeout(function () {
-          if (typeof window._aiSendQuick === 'function') {
-            var levelPrefix = '';
-            if (item.type === 'provinsi') levelPrefix = 'Provinsi ';
-            else if (item.type === 'kabkot') levelPrefix = '';
-            else if (item.type === 'kecamatan') levelPrefix = 'Kecamatan ';
-            else if (item.type === 'desa') levelPrefix = 'Desa ';
-            var ctx = [];
-            if (item.type === 'desa') {
-              if (item.kecamatan) ctx.push(item.kecamatan);
-              if (item.kabkot) ctx.push(item.kabkot);
-              if (item.provinsi) ctx.push(item.provinsi);
-            } else if (item.type === 'kecamatan') {
-              if (item.kabkot) ctx.push(item.kabkot);
-              if (item.provinsi) ctx.push(item.provinsi);
-            } else if (item.type === 'kabkot') {
-              if (item.provinsi) ctx.push(item.provinsi);
-            }
-            var aiText = levelPrefix + item.name;
-            if (ctx.length) aiText += ', ' + ctx.join(', ');
-            if (item.kode) aiText += ' (' + item.kode + ')';
-            window._aiSendQuick(-1, aiText);
-          }
-        }, 400);
+      /* Sheet Tanya Ruang TIDAK lagi dibuka otomatis di sini. Dulu
+         openAiSheet() + _aiSendQuick() dipanggil begitu batas selesai
+         digambar, sehingga panel AI menutupi peta persis saat user masih
+         ingin melihat wilayah yang ia cari.
+         Sekarang pemanggilnya tombol "Tanya Ruang" di dalam popup batas
+         wilayah, jadi AI hanya terbuka bila memang diminta.
+
+         Popup-nya sendiri dibuka di sini supaya tombolnya langsung terlihat
+         tanpa harus klik poligon dulu. Tanpa delay: Leaflet memindahkan
+         popup mengikuti peta selama flyToBounds, jadi tidak perlu menunggu
+         animasi selesai. showGeoidBoundary() mengembalikan undefined pada
+         jalur fallback (batas BIG tidak tersedia), dan itu sudah dijaga. */
+      if (layer && typeof layer.openPopup === 'function') {
+        try { layer.openPopup(); } catch (e) {
+          console.warn('[UnifiedSearch] Gagal membuka popup batas:', e);
+        }
       }
     }
   }
