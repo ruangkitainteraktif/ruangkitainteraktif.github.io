@@ -150,12 +150,24 @@
    * Ring pertama batas luar, ring berikutnya lubang (hole).
    */
   function toLeafletRings(geometry) {
-    const rings = (geometry && geometry.coordinates) || [];
-    return rings
-      .filter(function (ring) { return Array.isArray(ring) && ring.length >= 3; })
-      .map(function (ring) {
-        return ring.map(function (c) { return [c[1], c[0]]; });
-      });
+    // coordinates bisa apa saja kalau file rusak atau bukan GeoJSON asli
+    // (misalnya string atau objek). Tanpa penjaga ini, .filter di bawah
+    // melempar TypeError dan satu berkas buruk menggagalkan seluruh impor
+    // tanpa pesan yang menjelaskan penyebabnya.
+    const rings = (geometry && Array.isArray(geometry.coordinates)) ? geometry.coordinates : [];
+    const hasil = [];
+    rings.forEach(function (ring) {
+      if (!Array.isArray(ring) || ring.length < 3) return;
+      const latLngs = [];
+      for (let i = 0; i < ring.length; i++) {
+        const c = ring[i];
+        // GeoJSON: [lng, lat] -> Leaflet: [lat, lng]
+        if (!Array.isArray(c) || !Number.isFinite(c[0]) || !Number.isFinite(c[1])) return;
+        latLngs.push([c[1], c[0]]);
+      }
+      if (latLngs.length >= 3) hasil.push(latLngs);
+    });
+    return hasil;
   }
 
   /**
@@ -235,6 +247,9 @@
     let added = 0;
     let totalHa = 0;
     const failures = [];
+    /* Layer yang benar-benar terppasang, dipakai untuk menyorot peta ke
+       petak yang baru dimuat setelah semua selesai. */
+    const mounted = [];
     for (let i = 0; i < pending.length; i += BATCH_SIZE) {
       const slice = pending.slice(i, i + BATCH_SIZE);
       for (let j = 0; j < slice.length; j++) {
@@ -259,8 +274,20 @@
         }
         if (!shown) {
           layer.addTo(m);
-          setTimeout(function () { if (m.invalidateSize) m.invalidateSize(); }, 0);
         }
+  /* Cek hasilnya, jangan berasumsi. addToDrawLayerGroup() mengembalikan
+  true setelah menambahkan ke group, tapi group itu hanya terlihat kalau
+  memang sudah terpasang di peta. Kalau ternyata tidak, layer ditambahkan
+  langsung supaya petak benar-benar tampil. Pemeriksaan hanya dilakukan bila
+  peta menyediakan hasLayer; tanpa itu andalkan hasil addToDrawLayerGroup(). */
+  if (typeof m.hasLayer === 'function') {
+  if (m.hasLayer(layer) !== true && typeof layer.addTo === 'function') {
+  layer.addTo(m);
+  }
+  } else if (!shown && typeof layer.addTo === 'function') {
+  layer.addTo(m);
+  }
+        mounted.push(layer);
         added++;
         totalHa += Number.isFinite(areaHa) ? areaHa : 0;
       }
@@ -279,8 +306,8 @@
     }
 
     // Samakan dengan alur "Buat Polygon": sheet ditutup, sidebar dikecilkan,
-    // basemap pindah ke citra satelit.
-    prepareMapForResults(m);
+    // basemap pindah ke citra satelit dan peta menyorot ke petak yang dimuat.
+    prepareMapForResults(m, mounted);
 
     const parts = [added + ' poligon dimuat · total ' + totalHa.toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' ha'];
     if (skipped.length) parts.push(skipped.length + ' geometri dilewati (' + summarize(skipped) + ')');
@@ -294,14 +321,25 @@
     return Object.keys(counts).map(function (k) { return k + '×' + counts[k]; }).join(', ');
   }
 
-  function prepareMapForResults(m) {
-    var sheet = document.getElementById('geotools-sheet');
-    /* Sheet yang diminimalkan tetap menyisakan gs-sheet-open, jadi kedua
-       kelas dicek; kalau tidak, GeoTools yang cuma jadi chip ikut ditutup
-       dan kontennya terlempar balik ke #tab-geotools. */
-    if (sheet && sheet.classList.contains('gs-sheet-open') && !sheet.classList.contains('gs-sheet-minimized') && typeof window.closeGeotoolsSheet === 'function') {
-      window.closeGeotoolsSheet();
-    }
+  /**
+   * Peta diperlebar, pindah basemap, lalu SOROT ke petak yang baru dimuat.
+   *
+   * Sheet GeoTools SENGAJA TIDAK ditutup atau diminimalkan. Dulu fungsi ini
+   * memanggil closeGeotoolsSheet() supaya peta dapat ruang penuh, tapi
+   * begitu unggahan selesai, GeoTools yang baru saja dipilih pengguna ikut
+   * hilang dari layar -- dan di situ tombol "Buka Analisis" berada. Untuk
+   * memindahkan tampilan ke petak, menutup pial tidak diperlukan; cukup
+   * menyisakan ruang lewat padding (lihat sheetPaddingPx di bawah).
+   *
+   * Fungsi ini juga sebelumnya tidak pernah menggerakkan peta sama sekali --
+   * tidak ada flyToBounds/fitBounds di seluruh file. Akibatnya polygon yang
+   * diunggah benar-benar ada di peta, tapi kalau petaknya jauh dari tampilan
+   * sedang pengguna tidak pernah melihatnya dan mengira unggahan gagal.
+   *
+   * `layers` boleh kosong: kalau tidak ada yang bisa dihitung, tidak ada yang
+   * digerakkan dan pesan status yang menjelaskan sudah cukup.
+   */
+  function prepareMapForResults(m, layers) {
     var sidebar = document.getElementById('sidebar-left');
     if (sidebar && !sidebar.classList.contains('collapsed') && typeof window.toggleSidebar === 'function') {
       window.toggleSidebar();
@@ -309,7 +347,77 @@
     if (typeof window.setBaseMap === 'function') {
       try { window.setBaseMap('google-satellite-kh'); } catch (e) { /* abaikan */ }
     }
-    setTimeout(function () { if (m && m.invalidateSize) m.invalidateSize(); }, 320);
+
+    /* Peta diperlebar dulu: sidebar yang baru ditutup masih men-placeholder
+       ruang, jadi invalidateSize ditunda. Gerakkan layar dilakukan setelah
+       itu supaya tidak ada kedipan. */
+    setTimeout(function () {
+      if (!m) return;
+      if (m.invalidateSize) m.invalidateSize();
+      if (!layers || !layers.length) return;
+      var bounds = null;
+      for (var i = 0; i < layers.length; i++) {
+        var b = layers[i] && layers[i].getBounds ? layers[i].getBounds() : null;
+        if (!b || typeof b.isValid !== 'function' || !b.isValid()) continue;
+        if (!bounds) { bounds = b; continue; }
+        if (typeof bounds.extend === 'function') bounds.extend(b);
+        else if (typeof L !== 'undefined' && L.latLngBounds) {
+          bounds = L.latLngBounds(bounds.getSouth && bounds.getSouth() ? bounds.getSouthWest() : [0, 0], [0, 0]);
+        }
+      }
+      if (!bounds) return;
+      /* maxZoom 17 supaya petak yang sangat kecil tetap terlihat; pad 0.08
+         memberi sedikit konteks di sekeliling tepi. */
+      var opsi = { padding: sheetPaddingPx(), maxZoom: 17, duration: 0.8 };
+      if (typeof m.flyToBounds === 'function') m.flyToBounds(bounds.pad ? bounds.pad(0.08) : bounds, opsi);
+      else if (typeof m.fitBounds === 'function') m.fitBounds(bounds.pad ? bounds.pad(0.08) : bounds, opsi);
+    }, 320);
+  }
+
+  /**
+   * Padding untuk flyToBounds, dalam bentuk [atas, kanan, bawah, kiri].
+   *
+   * Sheet GeoTools tidak ditutup lagi (lihat prepareMapForResults), jadi
+   * petak harus digeser ke bagian peta yang masih terlihat. Sheet-nya
+   * position: fixed di sisi kanan dengan lebar sampai 380 px; diukur langsung
+   * dari DOM, bukan angka tetap, supaya tetap benar kalau lebar sheet
+   * berubah atau di layar sempit dia berubah menjadi bottom sheet.
+   *
+   * Kalau sheet tidak terlihat (sudah diminimalkan menjadi chip, atau sudah
+   * ditutup), padding dikembalikan seperti biasa supaya petak tetap memakai
+   * seluruh layar.
+   */
+  function sheetPaddingPx() {
+    var base = 24;
+    var sheet = document.getElementById('geotools-sheet');
+    if (!sheet || !sheet.classList) return [base, base, base, base];
+    if (!sheet.classList.contains('gs-sheet-open')) return [base, base, base, base];
+    // Sheet yang sudah jadi chip hanya menyisakan baris judul tipis.
+    if (sheet.classList.contains('gs-sheet-minimized')) return [base, base, base, base];
+
+    var r = null;
+    try { r = sheet.getBoundingClientRect(); } catch (e) { r = null; }
+    if (!r || !r.width || !r.height) return [base, base, base, base];
+
+    var vw = window.innerWidth || 0;
+    var vh = window.innerHeight || 0;
+    if (!vw || !vh) return [base, base, base, base];
+
+    var top = base, right = base, bottom = base, left = base;
+    // Bottom sheet (mobile): lebarnya hampir penuh layar dan tingginya besar,
+    // jadi menutupi bagian bawah. Dicek DULUAN sebelum sisi kiri/kanan --
+    // kalau tidak, sheet mobile yang juga menggantung di kanan ikut dihitung
+    // sebagai padding kanan dan petak tergeser ke atas.
+    if (r.width > vw * 0.8 && r.height > vh * 0.35) {
+      return [top, right, base + Math.round(r.height), left];
+    }
+    // Berdampingan di kiri: sheet menutupi sisi kiri peta.
+    if (r.left <= vw * 0.5) {
+      left = base + Math.round(r.width) + 12;
+    } else {
+      right = base + Math.round(r.width) + 12;
+    }
+    return [top, right, bottom, left];
   }
 
   window.startGeofarmPolygonUpload = function () {

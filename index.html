@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=26">
+  <link rel="stylesheet" href="assets/css/app.css?v=34">
 
 </head>
 
@@ -638,7 +638,7 @@
       <div class="at-sheet-head">
         <div class="at-sheet-title" onclick="if(document.getElementById('attr-table-sheet').classList.contains('attr-table-sheet-minimized')) restoreAttrTableSheet()">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
-          <span id="atSheetTitleText">Tabel Atribut</span>
+          <span id="atSheetTitleText">Tabel</span>
         </div>
         <div class="at-sheet-actions">
           <button id="atSheetBackBtn" class="at-sheet-back" type="button" style="display:none" aria-label="Semua Tabel" onclick="openAttrTablePicker()">‹</button>
@@ -2496,45 +2496,154 @@
 
                 <div id="geotoolsTabGeoFarm" class="geotools-main-tab-panel active">
 
-            <button id="geofarmDrawPolygonBtn" class="geofarm-draw-btn" type="button" onclick="startGeofarmPolygonDraw()">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l-8 5v10l8 5 8-5V7z"/><path d="M12 22V12"/><path d="M4 7l8 5 8-5"/></svg>
-              Buat Polygon
-            </button>
-            <button id="geofarmUploadBtn" class="geofarm-upload-btn" type="button" onclick="startGeofarmPolygonUpload()">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Unggah Polygon
-            </button>
-            <!-- Pemanggil sheet analisis GeoFarm. Sheet itu tidak lagi muncul
-                 otomatis begitu polygon dibuat, jadi tombol inilah satu-satunya
-                 jalan membukanya dari tab ini. Diletakkan di sini, bukan
-                 melayang di peta, supaya tidak menutupi peta dan tidak
-                 bertabrakan dengan baris chip sheet lain di sisi bawah.
-                 disembunyikan sampai ada polygon. -->
-            <button id="geofarmOpenAnalysisBtn" class="geofarm-open-analysis-btn" type="button" hidden
-                    title="Buka sheet analisis GeoFarm"
-                    aria-label="Buka sheet analisis GeoFarm"
-                    onclick="if(window.reopenGeoFarmPanel) window.reopenGeoFarmPanel();">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-              <span class="geofarm-open-analysis-label">Buka Analisis</span>
-              <span class="geofarm-open-analysis-count" id="geofarmOpenCount">0 polygon</span>
-              <span class="geofarm-open-analysis-pending" id="geofarmOpenPending" hidden>0 belum dianalisis</span>
-            </button>
-            <input type="file" id="geofarmUploadInput" class="geofarm-upload-input"
-                   accept=".shp,.dbf,.shx,.prj,.zip,.geojson,.json" multiple
-                   onchange="handleGeofarmUploadFiles(event)">
-            <details class="geofarm-shp-note">
-              <summary class="geofarm-shp-note-summary">Memakai berkas SHP (.shp)?</summary>
-              <div class="geofarm-shp-note-body">
-                <p>Berkas SHP <b>bukan satu berkas</b>. Pilih beberapa berkas sekaligus, atau kumpulkan menjadi ZIP.</p>
-                <ul>
-                  <li><b>Wajib:</b> <code>.shp</code> (geometri), <code>.dbf</code> (atribut), <code>.shx</code> (indeks)</li>
-                  <li><b>Sangat disarankan:</b> <code>.prj</code> - berisi proyeksi. Tanpa itu, koordinat bisa salah baca dan luas menjadi tidak akurat untuk petak yang memakai proyeksi UTM (WGS 84 / UTM zona 49S untuk wilayah Indonesia)</li>
-                </ul>
-                <p><b>Cara termudah:</b> letakkan <code>.shp</code>, <code>.dbf</code>, <code>.shx</code>, dan <code>.prj</code> dalam satu folder, lalu <b>zip folder tersebut</b> (nama berkas di dalam ZIP harus sama persis, tanpa ekstensi tambahan).</p>
-                <p>Kalau data Anda berformat GeoJSON, cukup pilih satu berkas <code>.geojson</code> - tidak perlu berkas lain.</p>
+            <!-- ============ KARTU: GeoFarm Analisis ============
+                 Dulu tombol "Buat Polygon" dan "Unggah Polygon" berdiri
+                 sendiri tanpa judul, sehingga sheet GeoTools terlihat seperti
+                 daftar tombol lepas. Sekarang keduanya dan tombol Buka
+                 Analisis dikelompokkan dalam satu kartu bernama, jadi sheet
+                 langsung terbaca: ini modul analisis lahan.
+
+                 panduan (bagian bawah kartu) memakai <details> supaya tidak
+                 memakan ruang sheet, tapi tetap bisa dibuka kapan saja. -->
+            <section class="geofarm-card" aria-labelledby="geofarmCardTitle">
+              <div class="geofarm-card-head">
+                <span class="geofarm-card-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+                    <path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3z"/><path d="M9 4v13M15 7v13"/>
+                  </svg>
+                </span>
+                <span class="geofarm-card-headtext">
+                  <b id="geofarmCardTitle">GeoFarm Analisis</b>
+                  <small>Gambar atau unggah petak, lalu lihat kondisi lahan dan kebutuhan airnya</small>
+                </span>
               </div>
-            </details>
-            <p class="geofarm-upload-status" id="geofarmUploadStatus" hidden></p>
+
+              <div class="geofarm-card-actions">
+                <button id="geofarmDrawPolygonBtn" class="geofarm-draw-btn" type="button" onclick="startGeofarmPolygonDraw()">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2l-8 5v10l8 5 8-5V7z"/><path d="M12 22V12"/><path d="M4 7l8 5 8-5"/></svg>
+                  <span class="geofarm-btn-label">Buat Polygon</span>
+                  <span class="geofarm-btn-sub">klik titik di peta</span>
+                </button>
+                <button id="geofarmUploadBtn" class="geofarm-upload-btn" type="button" onclick="startGeofarmPolygonUpload()">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 0 01-2 2H5a2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <span class="geofarm-btn-label">Unggah Polygon</span>
+                  <span class="geofarm-btn-sub">dari berkas SHP/GeoJSON</span>
+                </button>
+              </div>
+
+              <!-- Status unggah: tepat di atas tombol Buka Analisis (lihat catatan
+                   di bawah kartu soal alasannya), bukan di bawah catatan SHP. -->
+              <p class="geofarm-upload-status" id="geofarmUploadStatus" role="status"
+                 aria-live="polite" hidden></p>
+
+              <!-- Pemanggil sheet analisis GeoFarm. Sheet itu tidak lagi muncul
+                   otomatis begitu polygon dibuat, jadi tombol inilah satu-satunya
+                   jalan membukanya dari tab ini. disembunyikan sampai ada polygon. -->
+              <button id="geofarmOpenAnalysisBtn" class="geofarm-open-analysis-btn" type="button" hidden
+                      title="Buka sheet analisis GeoFarm"
+                      aria-label="Buka sheet analisis GeoFarm"
+                      onclick="if(window.reopenGeoFarmPanel) window.reopenGeoFarmPanel();">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 0 01-2 2H5a2 0 01-2-2V5a2 0 012-2h11"/></svg>
+                <span class="geofarm-open-analysis-label">Buka Analisis</span>
+                <span class="geofarm-open-analysis-count" id="geofarmOpenCount">0 polygon</span>
+                <span class="geofarm-open-analysis-pending" id="geofarmOpenPending" hidden>0 belum dianalisis</span>
+              </button>
+
+              <input type="file" id="geofarmUploadInput" class="geofarm-upload-input"
+                     accept=".shp,.dbf,.shx,.prj,.zip,.geojson,.json" multiple
+                     onchange="handleGeofarmUploadFiles(event)">
+              <details class="geofarm-shp-note">
+                <summary class="geofarm-shp-note-summary">Memakai berkas SHP (.shp)?</summary>
+                <div class="geofarm-shp-note-body">
+                  <p>Berkas SHP <b>bukan satu berkas</b>. Pilih beberapa berkas sekaligus, atau kumpulkan menjadi ZIP.</p>
+                  <ul>
+                    <li><b>Wajib:</b> <code>.shp</code> (geometri), <code>.dbf</code> (atribut), <code>.shx</code> (indeks)</li>
+                    <li><b>Sangat disarankan:</b> <code>.prj</code> - berisi proyeksi. Tanpa itu, koordinat bisa salah baca dan luas menjadi tidak akurat untuk petak yang memakai proyeksi UTM (WGS 84 / UTM zona 49S untuk wilayah Indonesia)</li>
+                  </ul>
+                  <p><b>Cara termudah:</b> letakkan <code>.shp</code>, <code>.dbf</code>, <code>.shx</code>, dan <code>.prj</code> dalam satu folder, lalu <b>zip folder tersebut</b> (nama berkas di dalam ZIP harus sama persis, tanpa ekstensi tambahan).</p>
+                  <p>Kalau data Anda berformat GeoJSON, cukup pilih satu berkas <code>.geojson</code> - tidak perlu berkas lain.</p>
+                </div>
+              </details>
+
+                  <!-- ============ PANDUAN SINGKAT ============
+                       Ditulis untuk pembaca non-pertanian: istilah teknik
+                       (NDVI, Kc, ETc) disebut pertama kali lalu dijelaskan apa
+                       artinya, dan tiap langkah menyebut apa yang terjadi
+                       setelahnya. Jumlah langkah dijaga pendek supaya tidak
+                       terasa seperti dokumen teknis. -->
+              <details class="geofarm-guide">
+                <summary class="geofarm-guide-summary">
+                  <span class="geofarm-guide-summary-txt">
+                    <span class="geofarm-guide-title">Panduan singkat</span>
+                    <span class="geofarm-guide-sub">kalau belum pernah analisis petak</span>
+                  </span>
+                </summary>
+                <div class="geofarm-guide-body">
+
+                  <ol class="geofarm-guide-steps">
+                    <li>
+                      <b>Tandai petak Anda</b>
+                      <p>Tekan <b>Buat Polygon</b>, lalu klik titik-titik sudut petak di peta. Tekan sekali lagi di titik pertama untuk menutup. Makin banyak titik, makin tepinya tepat mengikuti bentuk lahan.</p>
+                      <p class="gf-note">Sudah punya data bentuk lahan dari peta atau drone? Lewati ini, pakai <b>Unggah Polygon</b> dengan berkas .shp atau .geojson.</p>
+                    </li>
+                    <li>
+                      <b>Tekan Buka Analisis</b>
+                      <p>Luas petak dihitung otomatis dari titik-titik itu, memakai rumus yang tepat untuk lokasi di Indonesia, bukan sekadar perkiraan kotak.</p>
+                    </li>
+                    <li>
+                      <b>Pilih mode analisis</b>
+                      <p>Ada dua pilihan di setiap petak:</p>
+                      <ul>
+                        <li><b>Otomatis</b> &mdash; sekali klik, langsung dapat semua ukuran standar dengan citra terbaru. Pilih ini kalau Anda ingin cepat melihat gambaran kondisi lahan.</li>
+                        <li><b>Mandiri</b> &mdash; Anda menentukan citra tanggal berapa dan ukuran mana yang dihitung. Pilih ini kalau perlu membandingkan petak pada tanggal yang sama, atau menyusun laporan untuk periode tertentu.</li>
+                      </ul>
+                    </li>
+                    <li>
+                      <b>Baca hasilnya</b>
+                      <p>Tiap ukuran punya arti sendiri. Ringkasnya:</p>
+                      <dl class="geofarm-guide-defs">
+                        <dt>NDVI</dt>
+                        <dd>Seberapa hijau dan subur tumbuhan di petak itu. Makin tinggi, makin banyak tumbuhan yang tumbuh baik. Ini ukuran paling umum untuk menilai kesuburan dari citra.</dd>
+                        <dt>NDMI</dt>
+                        <dd>Seberapa lembap daunnya. Makin tinggi, makin banyak air yang ada di tumbuhan. Berguna untuk melihat apakah lahan cukup basah.</dd>
+                        <dt>NDWI</dt>
+                        <dd>Seberapa banyak air yang terlihat di permukaan lahan, misalnya petak yang disiram atau tergenang.</dd>
+                        <dt>NDRE</dt>
+                        <dd>Mirip NDVI, tapi lebih peka untuk membedakan tanaman yang sudah rapat dedaulnya.</dd>
+                        <dt>LST</dt>
+                        <dd>Suhu permukaan lahan. Berguna untuk melihat petak yang terasa lebih panas dari sekitarnya, misalnya yang lebih kering.</dd>
+                        <dt>Kelembapan Tanah</dt>
+                      <dd>Menunjukkan seberapa basah tanah di beberapa kedalaman. Bukan ukuran langsung, jadi lebih baik dibaca sebagai gambaran umum.</dd>
+                      </dl>
+                    </li>
+                    <li>
+                      <b>Kebutuhan air (opsional)</b>
+                      <p>Section <b>Kebutuhan Air Tanaman</b> menghitung berapa banyak air yang dibutuhkan tanaman untuk tumbuh normal dalam satu musim, dari luas petak yang sudah Anda gambar. Pilih jenis tanamannya, lalu tekan hitung.</p>
+                      <p class="gf-note">Angka ini adalah kebutuhan air tanaman, <b>bukan</b> jumlah air yang harus Anda siram. Curah hujan dan daya tampung tanah belum ikut dihitung, jadi angkanya belum bisa dipakai langsung sebagai takaran penyiraman.</p>
+                    </li>
+                  </ol>
+
+                  <div class="geofarm-guide-care">
+                    <b>Angka yang perlu dibaca hati-hati</b>
+                    <p>Semua hasil berasal dari citra satelit, jadi ada dua hal yang perlu diingat:</p>
+                    <ul>
+                        <li><b>Awan menutupi citra.</b> Kalau tutupan awan tinggi, angka bisa terlalu rendah. Di Mode Otomatis, tutupan awan yang tampil hanya perkiraan. Kalau hasilnya tidak masuk akal, pilih Mode Mandiri dan cari citra dengan awan paling sedikit.</li>
+                      <li><b>Ukuran bukan satu angka mutlak.</b> Semua nilai dihitung di dalam petak yang Anda gambar, jadi hasilnya sangat bergantung pada seberapa tepat Anda menandai batasnya.</li>
+                    </ul>
+                  </div>
+
+                  <p class="geofarm-guide-foot">Sumber citra: Sentinel-2 (ESA), setiap 5 hari. Data cuaca dan ET0: Open-Meteo. Data kemiringan lahan: DEMNAS, courtesy BMKG.</p>
+                </div>
+              </details>
+            </section>
+
+            <!-- Kenapa status unggah (#geofarmUploadStatus) diletakkan tepat di
+                 atas tombol Buka Analisis, bukan di bawah catatan SHP:
+                 pesan "1 poligon dimuat · total 0,21 ha" adalah hasil dari aksi
+                 yang baru saja dilakukan pengguna, jadi harus muncul dekat
+                 tombol yang terkait. Kalau ditaruh paling bawah, pesan
+                 sampai terlewat di balik blok <details> catatan SHP dan
+                 pengguna mengira unggahan diam-diam gagal. -->
 
             <!-- Kalkulator Benih & Pupuk. Satu field luas dipakai kedua tab,
                  jadi luas cukup diketik atau diambil dari poligon satu kali
@@ -2897,6 +3006,7 @@
   <script src="assets/js/geopangan.js"></script>
   <script src="assets/js/sp2kp-geopangan.js"></script>
   <script src="assets/js/sppg-district.js"></script>
+  <script src="assets/js/water-need.js?v=1"></script>
   <script src="assets/js/ai-analysis.js"></script>
 
 

@@ -7037,6 +7037,83 @@
       box-sizing: border-box; outline: none; transition: border-color .15s;
     }
     .at-picker-search:focus { border-color: #2563eb; }
+    /* Panel detail fitur, muncul ketika baris tabel diklik. Disisipkan sebelum
+       tabel supaya tidak tertutup navigasi halaman di bawah. */
+    .at-detail {
+      margin: 0 0 10px;
+      border: 1px solid #2563eb;
+      border-radius: 8px;
+      background: rgba(37, 99, 235, .06);
+      overflow: hidden;
+    }
+    .at-detail-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 8px 6px 10px;
+      background: #2563eb;
+      color: #fff;
+    }
+    .at-detail-title {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+    .at-detail-close {
+      font: inherit;
+      font-size: 15px;
+      line-height: 1;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 0;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+    }
+    .at-detail-close:hover { background: rgba(255, 255, 255, .22); }
+    .at-detail-close:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+    .at-detail-row {
+      display: grid;
+      grid-template-columns: minmax(90px, 40%) 1fr;
+      gap: 8px;
+      padding: 4px 10px;
+      font-size: 10.5px;
+      line-height: 1.45;
+      border-bottom: 1px solid rgba(37, 99, 235, .12);
+    }
+    .at-detail-row:last-child { border-bottom: 0; }
+    .at-detail-key {
+      color: var(--text-secondary);
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .at-detail-val {
+      color: var(--text-primary);
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+    .at-detail-row:nth-child(even) { background: rgba(37, 99, 235, .04); }
+    /* Subjudul nama layer di dalam sheet atribut. Judul sheet sekarang seragam
+       "Tabel" untuk semua layer, jadi nama layer dipindah ke sini -- kalau
+       tidak, pengguna tidak tahu sedang melihat tabel layer yang mana. */
+    .at-layer-subtitle {
+      padding: 0 12px 7px;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      opacity: .82;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .at-layer-subtitle:empty { display: none; }
     .at-picker-toolbar { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
     .at-picker-filters { display: flex; gap: 6px; flex-wrap: wrap; }
     .at-picker-select {
@@ -11885,6 +11962,355 @@
 .pa-soil-row-detail { grid-template-columns: 40px repeat(6, 1fr); font-size: 9px; }
 .pa-soil-band { font-weight: 700; color: var(--text-primary); }
 .pa-soil-stat { color: var(--text-secondary); }
+
+/* Dua mode analisis: Otomatis (jalur lama) dan Mandiri (pilihan pengguna) */
+/* Pemilih mode analisis.
+   Mengikuti ArcGIS (Calcite): kartu opsi sejajar dengan ikon, keadaan aktif
+   terisi penuh -- bukan sekadar garis bawah seperti segmented control biasa.
+   Dipakai dua kartu (bukan tombol) karena mode menentukan sumber citra dan
+   cara hitung, jadi bedanya harus terbaca sekilas, bukan setelah diklik. */
+  .pa-mode {
+    margin: 6px 0 8px;
+    padding: 8px;
+    background: var(--bg-card-hover);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+  }
+.pa-mode-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.pa-mode-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+.pa-mode-sub {
+  font-size: 9px;
+  color: var(--text-secondary);
+}
+.pa-mode-opts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.pa-mode-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font: inherit;
+  text-align: left;
+  padding: 6px 7px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.pa-mode-opt:hover { border-color: var(--accent); }
+.pa-mode-opt:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pa-mode-ico {
+  flex: none;
+  margin-top: 1px;
+  /* Ikon dibuat kabur saat tidak aktif supaya kartu aktif yang menonjol. */
+  opacity: 0.55;
+}
+.pa-mode-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.pa-mode-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+.pa-mode-desc {
+  font-size: 8px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+.pa-mode-opt.is-on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.pa-mode-opt.is-on .pa-mode-title { color: #fff; }
+.pa-mode-opt.is-on .pa-mode-desc { color: rgba(255, 255, 255, 0.85); }
+.pa-mode-opt.is-on .pa-mode-ico { opacity: 1; }
+.pa-mode-note {
+  margin: 6px 0 0;
+  font-size: 9px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.pa-manual { margin-top: 8px; }
+.pa-manual-step { margin-bottom: 10px; }
+.pa-subhead {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+.pa-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+.pa-num {
+  width: 52px;
+  font: inherit;
+  font-size: 10px;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+.pa-check {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin: 6px 0 2px;
+  cursor: pointer;
+}
+.pa-scene-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 190px;
+  overflow-y: auto;
+  margin: 6px 0;
+}
+.pa-scene {
+  display: grid;
+  grid-template-columns: 74px 52px 1fr;
+  gap: 6px;
+  align-items: center;
+  font: inherit;
+  font-size: 10px;
+  text-align: left;
+  padding: 4px 6px;
+  background: var(--bg-card-hover);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.pa-scene:hover { border-color: var(--border-color); }
+.pa-scene.is-active {
+  border-color: var(--accent);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.pa-scene-date { font-variant-numeric: tabular-nums; }
+.pa-scene-cloud { font-variant-numeric: tabular-nums; color: #2e7d32; }
+.pa-scene-cloud.is-high { color: #c62828; font-weight: 700; }
+.pa-scene-sat { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pa-scene-picked { font-size: 10px; }
+.pa-manual-head { font-size: 10px; color: var(--text-secondary); margin-bottom: 3px; }
+.pa-manual-result { font-size: 10px; }
+
+.pa-idx-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  gap: 3px;
+  margin: 4px 0;
+}
+.pa-idx {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 6px;
+  background: var(--bg-card-hover);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.pa-idx.is-on { border-color: var(--accent); background: var(--bg-card); }
+.pa-idx-name { font-size: 11px; font-weight: 600; color: var(--text-primary); }
+.pa-idx-formula {
+  font-size: 8px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pa-stat.is-primary b { color: var(--accent); }
+
+.pa-cloud-date,
+.pa-cloud-caveat {
+  flex: 1 0 100%;
+  font-size: 8px;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+.pa-cloud-caveat { color: #b26a00; }
+
+/* Kebutuhan air tanaman (ETc) */
+  /* Section air memakai template .pa-section yang sama persis dengan section
+     lain (NDVI, Indeks Spektral, LST, Topografi): garis pemisah di atas,
+     judul uppercase kecil, tanpa kotak dan tanpa garis aksen di kiri.
+     Dulu section ini punya latar, border penuh, dan bar aksen di kiri, jadi
+     terbaca sebagai kartu tersendiri yang tidak cocok dengan section di
+     bawahnya. Kelas .pa-section-air tetap ada karena JS memakainya untuk
+     state ciut dan untuk menaruh section ini sebelum NDVI.
+
+     Catatan di dalam section ini juga memakai .pa-note apa adanya, tanpa
+     override ukuran huruf atau margin, supaya sama persis dengan catatan di
+     section lain. */
+
+  /* Field tanaman: label di atas, select penuh di bawah. Label-inline lama
+     membuat select terpotong karena nama tanaman panjang ("Kelapa Sawit").
+     Ini pola komponen form ArcGIS. */
+.pa-air-field { margin: 0 0 8px; }
+.pa-air-label {
+  display: block;
+  margin: 0 0 3px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.pa-air-select-wrap { position: relative; display: block; }
+.pa-air-select {
+  width: 100%;
+  min-width: 0;
+  font: inherit;
+  font-size: 11.5px;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 6px 24px 6px 8px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.pa-air-select:hover { border-color: var(--accent); }
+.pa-air-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(8, 145, 178, .22);
+}
+.pa-air-caret {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-secondary);
+}
+
+/* Tombol Hitung: satu-satunya aksi utama di section ini, jadi solid accent
+   dengan ikon -- bukan ghost seperti tombol section lain. Geometrinya
+   (margin, padding, radius, ukuran huruf) disamakan dengan .pa-btn supaya
+   tidak terlihat seperti komponen dari template yang berbeda. */
+.pa-air-calc {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 7px;
+  padding: 5px 8px;
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.pa-air-calc:hover:not([disabled]) {
+  background: #0e7490;
+  border-color: #0e7490;
+}
+.pa-air-calc:active:not([disabled]) { background: #155e75; }
+.pa-air-calc:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pa-air-calc[disabled] {
+  background: var(--bg-card-hover);
+  border-color: var(--border-color);
+  color: var(--text-muted);
+  cursor: progress;
+}
+.pa-air-calc-ico { flex-shrink: 0; }
+.pa-air-calc-ico.is-spin { animation: pa-air-spin 0.9s linear infinite; }
+@keyframes pa-air-spin { to { transform: rotate(360deg); } }
+.pa-air-hero {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 0 8px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 6px;
+}
+.pa-air-hero-val {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.pa-air-hero-val sup { font-size: 11px; font-weight: 600; }
+.pa-air-hero-lab {
+  font-size: 9px;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+.pa-air-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  background: var(--bg-card-hover);
+  border-radius: 6px;
+  padding: 4px 6px;
+  margin-bottom: 3px;
+}
+.pa-air-row > span:last-child { color: var(--text-primary); font-weight: 600; }
+.pa-air-month > span:first-child { width: 26px; flex: none; }
+.pa-air-month > span:last-child { width: 40px; flex: none; text-align: right; }
+.pa-air-bar-wrap {
+  flex: 1;
+  min-width: 0;
+  height: 6px;
+  background: var(--bg-card);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.pa-air-bar {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+}
+.pa-air-src {
+  margin-top: 4px;
+  font-size: 9px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
 .pa-soil-stat b { color: var(--text-primary); font-weight: 600; }
 
 .pa-cbar { margin-top: 6px; margin-bottom: 10px; }
@@ -12058,12 +12484,16 @@
 
 /* Keterangan khusus berkas SHP. Dipakai <details> supaya tidak memakan
    ruang di GeoTools yang sudah sempit, tapi tetap tersedia saat dibutuhkan. */
-.geofarm-shp-note {
-  margin: 0 0 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--bg-primary);
-}
+  .geofarm-shp-note {
+    /* Jarak atas 10px: tanpa ini blok ini menempel ke tombol "Buka Analisis"
+       di atasnya dan terbaca sebagai bagian dari tombol itu, bukan blok
+       tersendiri. Ritme 10px sama dengan .geofarm-guide di bawahnya; karena
+       keduanya bersaudara, marginnya bertumpuk jadi tetap 10px -- bukan 20px. */
+    margin: 10px 0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-primary);
+  }
 .geofarm-shp-note-summary {
   padding: 8px 10px;
   font-size: 11px;
@@ -12102,16 +12532,20 @@
   font-size: 10px;
   color: var(--text-primary);
 }
-.geofarm-upload-status {
-  margin: 0 0 4px;
-  padding: 8px 10px;
-  font-size: 11px;
-  line-height: 1.45;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-}
+  /* Jarak atasnya sengaja 8px: blok status sekarang duduk tepat di bawah
+     baris tombol Buat/Unggah dan tepat di atas tombol Buka Analisis. Tanpa
+     jarak atas, pesan menempel pada baris tombol di atasnya dan terbaca
+     sebagai bagian dari tombol itu, bukan sebagai hasil aksi. */
+  .geofarm-upload-status {
+    margin: 8px 0 6px;
+    padding: 8px 10px;
+    font-size: 11px;
+    line-height: 1.45;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+  }
 .geofarm-upload-status.is-busy { color: var(--text-primary); }
 .geofarm-upload-status.is-warn {
   border-color: #f59e0b;
@@ -12143,6 +12577,170 @@
    Kelas .geofarm-benih-* yang tersisa (total, rows, luas-info, warn)
    sengaja dipertahankan namanya: yang dipakai geofarm-kalkulator.js untuk
    hasil hitungan Benih, yang warnanya sudah sama dengan kartu ini. */
+/* ============ KARTU GEOFARM ANALISIS ============
+   Dulu "Buat Polygon" dan "Unggah Polygon" berdiri sebagai tombol lepas di
+   atas tab, sehingga sheet GeoTools terbaca sebagai daftar tombol tanpa
+   konteks. Sekarang keduanya, tombol Buka Analisis, dan panduan dikelompokkan
+   dalam satu kartu bernama. Header memakai pola yang sama persis dengan
+   .geofarm-kalk-head supaya dua modul ini terlihat satu keluarga. */
+.geofarm-card {
+  padding: 12px 13px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-card);
+}
+.geofarm-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -12px -13px 12px;
+  padding: 11px 13px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+.geofarm-card-icon {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.geofarm-card-headtext b {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.geofarm-card-headtext small {
+  display: block;
+  font-size: 9.5px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* Dua tombol aksi utama berjajar. Lebarnya dibagi sama supaya keduanya
+   punya target sentuh yang sama besar, bukan ikut panjang teks. */
+.geofarm-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+/* Override di dalam kartu. Tanpa ini, aturan lama di atas (align-items:
+   center, justify-content: center, margin-bottom, dan label 13px) tetap
+   berlaku karena selector-nya lebih spesifik (#id .class) -- hasilnya tombol
+   tetap terpusat horizontal dan dua baris teksnya tidak rapi. */
+#geotoolsTabGeoFarm .geofarm-card-actions > .geofarm-draw-btn,
+#geotoolsTabGeoFarm .geofarm-card-actions > .geofarm-upload-btn {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 1px;
+  padding: 8px 9px;
+  margin-bottom: 0;
+  text-align: left;
+}
+.geofarm-btn-label { font-size: 11.5px; font-weight: 600; }
+.geofarm-btn-sub {
+  font-size: 8.5px;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, .82);
+  font-weight: 400;
+}
+.geofarm-card-actions > button svg { flex-shrink: 0; margin-bottom: 2px; }
+
+/* Buka Analisis tetap melebar penuh: dia satu-satunya jalan ke sheet
+   analisis, jadi tidak boleh terasa sebagai opsi ketiga yang setara. */
+.geofarm-card .geofarm-open-analysis-btn {
+  width: 100%;
+  margin-top: 6px;
+  justify-content: center;
+}
+
+/* ============ PANDUAN SINGKAT ============ */
+.geofarm-guide {
+  margin-top: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+}
+.geofarm-guide-summary {
+  display: flex;
+  align-items: center;
+  padding: 7px 9px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 10.5px;
+  color: var(--text-primary);
+}
+.geofarm-guide-summary::-webkit-details-marker { display: none; }
+.geofarm-guide-summary::before {
+  content: '\25B8\00a0';
+  display: inline-block;
+  transition: transform .15s;
+  color: var(--text-muted);
+}
+.geofarm-guide[open] > .geofarm-guide-summary::before { transform: rotate(90deg); }
+.geofarm-guide-summary:hover { background: var(--bg-card-hover); }
+.geofarm-guide-summary-txt { display: flex; flex-direction: column; gap: 1px; }
+.geofarm-guide-title { font-weight: 600; line-height: 1.25; }
+.geofarm-guide-sub { font-size: 8.5px; line-height: 1.3; color: var(--text-muted); }
+/* display:none saat tertutup. Tanpa ini isi panduan tetap terlihat walau
+   details-nya belum dibuka -- <details> menyembunyikan lewat atribut, tapi
+   elemen di dalamnya tetap punya tinggi sampai ada aturan eksplisit. Pola ini
+   sama dengan .pa-section.is-collapsed .pa-section-body di atas. */
+.geofarm-guide:not([open]) > .geofarm-guide-body { display: none; }
+.geofarm-guide-body {
+  padding: 2px 10px 10px 20px;
+  font-size: 9.5px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+.geofarm-guide-steps { margin: 0; padding-left: 14px; }
+.geofarm-guide-steps > li { margin-bottom: 8px; }
+.geofarm-guide-steps > li::marker { color: var(--text-muted); font-weight: 700; }
+.geofarm-guide-steps b { color: var(--text-primary); }
+.geofarm-guide-steps p { margin: 2px 0 0; }
+.geofarm-guide-steps ul { margin: 3px 0 0; padding-left: 13px; }
+.geofarm-guide-steps ul li { margin-bottom: 3px; }
+.geofarm-guide-steps ul b { color: var(--text-primary); }
+/* Catatan pengingkar untuk hal yang sering disalahpahami. */
+.gf-note {
+  padding: 4px 6px;
+  border-left: 2px solid var(--accent);
+  border-radius: 0 4px 4px 0;
+  background: var(--bg-card-hover);
+  font-size: 9px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+/* Glosarium: istilah lalu artinya, supaya pembaca non-pertanian tidak
+   perlu mencari arti NDVI di tempat lain. */
+.geofarm-guide-defs { margin: 3px 0 0; }
+.geofarm-guide-defs dt {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 4px;
+}
+.geofarm-guide-defs dd { margin: 0 0 0 8px; }
+.geofarm-guide-care {
+  margin-top: 9px;
+  padding: 7px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-card);
+}
+.geofarm-guide-care > b { color: var(--text-primary); font-size: 9.5px; }
+.geofarm-guide-care p { margin: 2px 0 0; }
+.geofarm-guide-care ul { margin: 3px 0 0; padding-left: 13px; }
+.geofarm-guide-care li { margin-bottom: 3px; }
+.geofarm-guide-foot {
+  margin: 8px 0 0;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-color);
+  font-size: 8.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
 .geofarm-kalk {
   margin-top: 14px;
   padding: 12px 13px;

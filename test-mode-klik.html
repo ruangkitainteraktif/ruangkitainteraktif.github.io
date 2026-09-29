@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>tes-klik-mode</title>
+<style>
+body { font: 12px monospace; padding: 8px; }
+#out { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div id="polygonAnalysisSidebar" class="pa-panel">
+  <div class="pa-head"><span id="polygonAnalysisTitle">GeoFarm</span><span id="polygonAnalysisCount"></span></div>
+  <div id="polygonAnalysisList" class="pa-list"></div>
+</div>
+<div id="geofarmOpenAnalysisBtn" hidden></div>
+<div id="geofarmOpenCount"></div>
+<div id="geofarmOpenPending" hidden></div>
+<div id="geofarmExportMenu" hidden></div>
+<div id="geofarmExportToggle"></div>
+<div id="polygonAnalysisNotice" hidden></div>
+
+<!-- app.css ikut dimuat supaya getComputedStyle mengukur tampilan sebenarnya,
+     bukan gaya bawaan browser. -->
+<link rel="stylesheet" href="assets/css/app.css">
+
+<div id="out">MENUNGGU</div>
+
+<script>
+window.__errors = [];
+window.addEventListener('error', function (e) {
+  window.__errors.push('ERROR: ' + (e.error ? (e.error.stack || e.error.message) : e.message));
+  document.getElementById('out').textContent = 'GAGAL: ' + window.__errors.join('\n');
+});
+var map = null;
+var L = { imageOverlay: function(){ return { addTo: function(){} }; },
+          latLngBounds: function(){ return {}; } };
+</script>
+
+<script src="assets/js/polygon-analysis.js"></script>
+
+<script>
+(function () {
+  var lines = [];
+  var pass = 0, fail = 0;
+  function say(s) { lines.push(s); }
+  function ok(name, cond, extra) {
+    if (cond) { pass++; lines.push('  ok   ' + name); }
+    else { fail++; lines.push('  FAIL ' + name + (extra ? '  -> ' + extra : '')); }
+  }
+  function klik(el) {
+    var err = null;
+    var h = function (e) { if (!err) err = (e.error && (e.error.stack || e.error.message)) || e.message; };
+    window.addEventListener('error', h);
+    try { el.click(); } catch (e) { err = 'THROW: ' + (e.stack || e.message); }
+    window.removeEventListener('error', h);
+    return err;
+  }
+
+  if (window.__errors.length) {
+    document.getElementById('out').textContent = 'GAGAL MUAT:\n' + window.__errors.join('\n');
+    return;
+  }
+  say('modul termuat, tanpa error');
+
+  var panel = document.getElementById('polygonAnalysisSidebar');
+  var rings = [[[107.60,-6.90],[107.62,-6.90],[107.62,-6.92],[107.60,-6.92],[107.60,-6.90]]];
+  var layerPalsu = {
+    getLatLngs: function () {
+      return [rings[0].map(function (p) { return { lng: p[0], lat: p[1] }; })];
+    },
+    remove: function () {}, addTo: function () { return this; }
+  };
+  var item = window.registerUploadedPolygon(layerPalsu, 2.5, 'Petak Uji');
+  ok('polygon terdaftar', !!item, item ? '' : 'null');
+  if (!item) { document.getElementById('out').textContent = lines.join('\n'); return; }
+
+  say('');
+  say('1. Klik tombol "Mandiri"');
+  // Penting: setItemMode() memanggil render() yang membangun ulang seluruh
+  // isi daftar, jadi elemen tombol lama jadi lepas dari DOM. Setiap klik
+  // harus mencari ulang tombolnya, persis seperti yang terjadi pada user.
+  function tombolMode(nilai) {
+    var found = null;
+    panel.querySelectorAll('[data-pa-action="set-mode"]').forEach(function (b) {
+      if (b.getAttribute('data-pa-value') === nilai) found = b;
+    });
+    return found;
+  }
+  var t = tombolMode('mandiri');
+  ok('tombol Mandiri ada', !!t);
+  var err = klik(t);
+  ok('klik tidak melempar error', !err, err ? String(err).slice(0, 300) : '');
+  ok('item.mode jadi "mandiri"', item.mode === 'mandiri', 'mode=' + item.mode);
+  var aktif = [];
+  panel.querySelectorAll('.pa-mode-opt.is-on').forEach(function (b) {
+    aktif.push(b.getAttribute('data-pa-value'));
+  });
+  ok('kartu Mandiri yang aktif', aktif.join(',') === 'mandiri', 'aktif: ' + (aktif.join(',') || 'tidak ada'));
+
+  say('');
+  say('1b. Tampilan kartu mode (gaya ArcGIS)');
+  var opt = panel.querySelectorAll('.pa-mode-opt');
+  ok('dua kartu opsi', opt.length === 2, opt.length + ' kartu');
+  varRECT = opt[0].getBoundingClientRect();
+  var rectM = opt[1].getBoundingClientRect();
+  say('  kartu 1: ' + Math.round(varRECT.width) + 'x' + Math.round(varRECT.height));
+  say('  kartu 2: ' + Math.round(rectM.width) + 'x' + Math.round(rectM.height));
+  ok('kedua kartu sama tinggi', Math.abs(varRECT.height - rectM.height) <= 1,
+    varRECT.height + ' vs ' + rectM.height);
+  ok('kedua kartu sejajar (baris atas sama)', Math.abs(varRECT.top - rectM.top) <= 1,
+    varRECT.top + ' vs ' + rectM.top);
+  ok('kartu cukup luas untuk diklik (lebar > 90px)', varRECT.width > 90, Math.round(varRECT.width) + 'px');
+  ok('kartu cukup tinggi untuk diklik (> 30px)', varRECT.height > 30, Math.round(varRECT.height) + 'px');
+  var on = opt[1];
+  var cs = getComputedStyle(on);
+  ok('kartu aktif punya latar terisi penuh', cs.backgroundColor !== 'rgba(0, 0, 0, 0)',
+    cs.backgroundColor);
+  say('  warna aktif: ' + cs.backgroundColor + '  teks: ' + cs.color);
+  var off = opt[0];
+  var cso = getComputedStyle(off);
+  ok('kartu non-aktif transparan (beda dari aktif)', cso.backgroundColor !== cs.backgroundColor,
+    cso.backgroundColor + ' vs ' + cs.backgroundColor);
+  ok('ikon tampil di kedua kartu', panel.querySelectorAll('.pa-mode-ico').length === 2,
+    panel.querySelectorAll('.pa-mode-ico').length + ' ikon');
+  var icoRects = panel.querySelectorAll('.pa-mode-ico');
+  ok('ikon punya ukuran nyata (tidak 0px)',
+    icoRects[0].getBoundingClientRect().width >= 12,
+    Math.round(icoRects[0].getBoundingClientRect().width) + 'px');
+  ok('setiap kartu punya judul', panel.querySelectorAll('.pa-mode-title').length === 2);
+  ok('setiap kartu punya deskripsi', panel.querySelectorAll('.pa-mode-desc').length === 2);
+  ok('micro-label ada', !!panel.querySelector('.pa-mode-label'));
+  ok('catatan mode ada', !!panel.querySelector('.pa-mode-note'));
+  say('  micro-label: "' + (panel.querySelector('.pa-mode-label') || {}).textContent + '"');
+  say('  catatan: "' + ((panel.querySelector('.pa-mode-note') || {}).textContent || '').slice(0, 90) + '..."');
+
+  say('');
+  say('2. Hanya SATU tombol analisis per mode');
+  var btnAnalisis = panel.querySelectorAll('[data-pa-action="analyze"]');
+  var btnJalankan = panel.querySelectorAll('[data-pa-action="run-manual"]');
+  ok('mode mandiri: tombol Analisis otomatis TIDAK ada', btnAnalisis.length === 0,
+    btnAnalisis.length + ' tombol Analisis');
+  ok('mode mandiri: hanya tombol Hitung index terpilih', btnJalankan.length === 1,
+    btnJalankan.length + ' tombol jalankan');
+  say('  (di mode mandiri: ' + btnAnalisis.length + ' analisis + ' + btnJalankan.length + ' jalankan)');
+
+  say('');
+  say('2b. Section kebutuhan air terpisah dan tertutup');
+  var airSec = panel.querySelector('.pa-section-air');
+  ok('section air ada', !!airSec);
+  ok('section air punya kelas terpisah', !!airSec && airSec.className.indexOf('pa-section') === 0);
+  ok('section air TERUTUP secara default', !!airSec && airSec.classList.contains('is-collapsed'));
+  var airBody = airSec ? airSec.querySelector('.pa-section-body') : null;
+  if (airBody) {
+    var airRect = airBody.getBoundingClientRect();
+    ok('isi section tertutup tidak terlihat (tinggi 0)', airRect.height <= 1,
+      Math.round(airRect.height) + 'px');
+  }
+  ok('section air punya tombol ciut sendiri',
+    !!airSec && !!airSec.querySelector('[data-pa-section="air"]'));
+  ok('catatan pemisah ada di dalam section air',
+    !!airSec && /Terpisah dari analisis citra/.test(airSec.textContent || ''));
+
+  say('');
+  say('2c. Buka section air, tombol Analisis tetap tidak muncul');
+  var airToggle = airSec && airSec.querySelector('[data-pa-action="toggle-section"]');
+  if (airToggle) {
+    var eAir = klik(airToggle);
+    ok('klik ciut section air tidak error', !eAir, eAir ? String(eAir).slice(0, 160) : '');
+    var airSec2 = panel.querySelector('.pa-section-air');
+    ok('section air sekarang terbuka', airSec2 && !airSec2.classList.contains('is-collapsed'));
+    var body2 = airSec2.querySelector('.pa-section-body').getBoundingClientRect();
+    ok('isi section air terlihat setelah dibuka', body2.height > 10, Math.round(body2.height) + 'px');
+    ok('masih tidak ada tombol Analisis otomatis',
+      panel.querySelectorAll('[data-pa-action="analyze"]').length === 0);
+    // tutup lagi supaya langkah berikutnya bersih
+    klik(panel.querySelector('[data-pa-section="air"]').closest('[data-pa-action="toggle-section"]')
+      || airSec2.querySelector('[data-pa-action="toggle-section"]'));
+  }
+
+  say('');
+  say('2d. Kembali ke Otomatis: tombol Analisis muncul, wizard hilang');
+  var eAuto = klik(tombolMode('auto'));
+  ok('klik Otomatis tidak error', !eAuto, eAuto ? String(eAuto).slice(0, 160) : '');
+  var btnAuto = panel.querySelectorAll('[data-pa-action="analyze"]');
+  ok('mode otomatis: tombol Analisis muncul', btnAuto.length === 1, btnAuto.length + ' tombol');
+  ok('mode otomatis: wizard hilang', !panel.querySelector('.pa-manual'));
+  ok('mode otomatis: tidak ada tombol Hitung index terpilih',
+    panel.querySelectorAll('[data-pa-action="run-manual"]').length === 0);
+  ok('section air tetap ada di mode otomatis', !!panel.querySelector('.pa-section-air'));
+
+  say('');
+  say('3. Wizard tiga langkah');
+  klik(tombolMode('mandiri'));
+  ok('wizard muncul', !!panel.querySelector('.pa-manual'));
+  ok('langkah 1: tombol Cari citra', !!panel.querySelector('[data-pa-action="scenes"]'));
+  ok('langkah 2: 8 checkbox index', panel.querySelectorAll('[data-pa-index]').length === 8,
+    panel.querySelectorAll('[data-pa-index]').length + ' checkbox');
+  var cen = [];
+  panel.querySelectorAll('[data-pa-index]').forEach(function (c) {
+    if (c.checked) cen.push(c.getAttribute('data-pa-index'));
+  });
+  ok('NDVI, NDMI, NDWI tercentang', cen.join(',') === 'ndvi,ndmi,ndwi', 'tercentang: ' + cen.join(','));
+  ok('langkah 3: tombol jalankan ada', !!panel.querySelector('[data-pa-action="run-manual"]'));
+  ok('tombol jalankan nonaktif sebelum pilih citra',
+    panel.querySelector('[data-pa-action="run-manual"]').disabled === true);
+  ok('ambang awan ada', !!panel.querySelector('[data-pa-cloud-limit]'));
+  ok('periode ada', !!panel.querySelector('[data-pa-months]'));
+  ok('jendela piksel ada', !!panel.querySelector('[data-pa-pixel-cap]'));
+  ok('toggle SCL ada dan MATI secara default', (function () {
+    var s = panel.querySelector('[data-pa-scl]'); return !!s && !s.checked;
+  })());
+
+  say('');
+  say('3. Bolak-balik mode');
+  var e2 = klik(tombolMode('auto'));
+  ok('klik Otomatis tidak error', !e2, e2 ? String(e2).slice(0, 200) : '');
+  ok('mode kembali jadi auto', item.mode === 'auto', 'mode=' + item.mode);
+  var e3 = klik(tombolMode('mandiri'));
+  ok('klik Mandiri lagi tidak error', !e3, e3 ? String(e3).slice(0, 200) : '');
+  ok('mode jadi mandiri lagi', item.mode === 'mandiri', 'mode=' + item.mode);
+  ok('wizard muncul lagi', !!panel.querySelector('.pa-manual'));
+
+  say('');
+  say('4. Centang NDRE lewat klik (klik pada checkbox itu toggle)');
+  var cb = panel.querySelector('[data-pa-index="ndre"]');
+  ok('checkbox NDRE ada', !!cb);
+  if (cb) {
+    ok('NDRE awalnya tidak tercentang', cb.checked === false);
+    var e4 = klik(cb);
+    ok('klik checkbox tidak error', !e4, e4 ? String(e4).slice(0, 200) : '');
+    ok('NDRE jadi tercentang', cb.checked === true, 'checked=' + cb.checked);
+    ok('picked memuat 4 index', item.picked.length === 4, item.picked.join(','));
+    ok('urutan picked tetap baku', item.picked.join(',') === 'ndvi,ndmi,ndre,ndwi', item.picked.join(','));
+  }
+
+  say('');
+  say('5. Badge awan menandai mode');
+  var badge = panel.querySelector('.pa-cloud-caveat');
+  ok('di mode mandiri TIDAK ada catatan estimasi', !badge);
+
+  say('');
+  say((fail === 0 ? 'SEMUA LULUS' : 'ADA YANG GAGAL') + ': ' + pass + ' lulus, ' + fail + ' gagal');
+  if (window.__errors.length) lines.push('ERROR GLOBAL: ' + window.__errors.join(' | '));
+  document.getElementById('out').textContent = lines.join('\n');
+})();
+</script>
+/* ---------------------------------------------------------------------
+   Dijalankan sebagai:  node test-mode-klik.cjs
+   Membuka harness di Chrome headless dan membaca hasilnya.
+   Kalau Chrome tidak ada, tes dilewati dengan baik (exit 0).
+   --------------------------------------------------------------------- */
+</body>
+</html>

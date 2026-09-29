@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>tes-kartu-geofarm</title>
+<link rel="stylesheet" href="assets/css/app.css">
+<style>
+  /* Tab GeoTools disalin persis dari index.html supaya aturan
+     #geotoolsTabGeoFarm ... ikut aktif dan yang diukur memang tampilan nyata. */
+  body { margin: 0; padding: 8px; background: var(--bg-primary); }
+  #out { white-space: pre-wrap; font: 11px monospace; color: #000; padding: 8px;
+         background: #fff; border: 2px solid #000; }
+</style>
+</head>
+<body>
+
+<div class="geotools-main-tab-panel active" id="geotoolsTabGeoFarm">
+
+  <section class="geofarm-card" aria-labelledby="geofarmCardTitle">
+    <div class="geofarm-card-head">
+      <span class="geofarm-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3z"/><path d="M9 4v13M15 7v13"/>
+        </svg>
+      </span>
+      <span class="geofarm-card-headtext">
+        <b id="geofarmCardTitle">GeoFarm Analisis</b>
+        <small>Gambar atau unggah petak, lalu lihat kondisi lahan dan kebutuhan airnya</small>
+      </span>
+    </div>
+
+            <div class="geofarm-card-actions">
+                <button id="geofarmDrawPolygonBtn" class="geofarm-draw-btn" type="button" onclick="startGeofarmPolygonDraw()">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2l-8 5v10l8 5 8-5V7z"/><path d="M12 22V12"/><path d="M4 7l8 5 8-5"/></svg>
+                  <span class="geofarm-btn-label">Buat Polygon</span>
+                  <span class="geofarm-btn-sub">klik titik di peta</span>
+                </button>
+                <button id="geofarmUploadBtn" class="geofarm-upload-btn" type="button" onclick="startGeofarmPolygonUpload()">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 0 01-2 2H5a2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <span class="geofarm-btn-label">Unggah Polygon</span>
+                  <span class="geofarm-btn-sub">dari berkas SHP/GeoJSON</span>
+                </button>
+              </div>
+
+              <p class="geofarm-upload-status is-ok" id="geofarmUploadStatus" role="status" aria-live="polite">1 poligon dimuat · total 0,21 ha · tekan Analisis pada tiap kartu untuk menghitung</p>
+
+    <button id="geofarmOpenAnalysisBtn" class="geofarm-open-analysis-btn" type="button" hidden>
+      Buka Analisis
+    </button>
+
+    <details class="geofarm-shp-note">
+      <summary class="geofarm-shp-note-summary">Memakai berkas SHP (.shp)?</summary>
+      <div class="geofarm-shp-note-body">
+        <p>Berkas SHP <b>bukan satu berkas</b>.</p>
+      </div>
+    </details>
+
+    <details class="geofarm-guide">
+      <summary class="geofarm-guide-summary">
+        <span class="geofarm-guide-summary-txt">
+          <span class="geofarm-guide-title">Panduan singkat</span>
+          <span class="geofarm-guide-sub">kalau belum pernah analisis petak</span>
+        </span>
+      </summary>
+      <div class="geofarm-guide-body">
+        <ol class="geofarm-guide-steps">
+          <li><b>Tandai petak Anda</b><p>Tekan Buat Polygon.</p>
+            <p class="gf-note">Sudah punya data? Pakai Unggah Polygon.</p></li>
+          <li><b>Tekan Buka Analisis</b><p>Luas dihitung otomatis.</p></li>
+          <li><b>Pilih mode analisis</b>
+            <ul><li><b>Otomatis</b> &mdash; sekali klik, cepat.</li>
+                <li><b>Mandiri</b> &mdash; Anda pilih citra tanggal berapa.</li></ul></li>
+          <li><b>Baca hasilnya</b>
+            <dl class="geofarm-guide-defs">
+              <dt>NDVI</dt><dd>Seberapa hijau dan subur tumbuhan. Makin tinggi makin subur.</dd>
+              <dt>NDMI</dt><dd>Seberapa lembap daunnya.</dd>
+              <dt>NDWI</dt><dd>Seberapa banyak air di permukaan lahan.</dd>
+              <dt>LST</dt><dd>Suhu permukaan lahan.</dd>
+            </dl></li>
+          <li><b>Kebutuhan air (opsional)</b><p>Hitung dari luas petak.</p>
+            <p class="gf-note">Ini kebutuhan air tanaman, bukan takaran penyiraman.</p></li>
+        </ol>
+        <div class="geofarm-guide-care">
+          <b>Angka yang perlu dibaca hati-hati</b>
+          <ul><li><b>Awan menutupi citra.</b> Tutupan awan di Mode Otomatis hanya perkiraan.</li></ul>
+        </div>
+        <p class="geofarm-guide-foot">Sumber citra: Sentinel-2 (ESA). Cuaca: Open-Meteo.</p>
+      </div>
+    </details>
+  </section>
+
+</div>
+
+<div id="out">MENUNGGU</div>
+
+<script>
+function startGeofarmPolygonDraw() {}
+function startGeofarmPolygonUpload() {}
+</script>
+
+<script>
+(function () {
+  var lines = [];
+  var pass = 0, fail = 0;
+  function say(s) { lines.push(s); }
+  function ok(name, cond, extra) {
+    if (cond) { pass++; lines.push('  ok   ' + name); }
+    else { fail++; lines.push('  FAIL ' + name + (extra ? '  -> ' + extra : '')); }
+  }
+
+  // Tanpa try/catch, satu exception di tengah membuat seluruh harness berhenti
+  // dan #out tetap berisi "MENUNGGU". Runner lalu melaporkan "semua hijau"
+  // padahal tidak ada asersi yang jalan sama sekali.
+  try {
+  var card = document.querySelector('.geofarm-card');
+  ok('kartu ada', !!card);
+  if (!card) { document.getElementById('out').textContent = lines.join('\n'); return; }
+
+  say('');
+  say('1. Header kartu');
+  var head = card.querySelector('.geofarm-card-head');
+  ok('header ada', !!head);
+  var hr = head.getBoundingClientRect();
+  say('  tinggi header: ' + Math.round(hr.height) + 'px');
+  ok('header punya tinggi (pola .geofarm-kalk-head)', hr.height > 20, Math.round(hr.height) + 'px');
+  var icon = card.querySelector('.geofarm-card-icon');
+  ok('ikon header tampil', !!icon && icon.getBoundingClientRect().width >= 12,
+    icon ? Math.round(icon.getBoundingClientRect().width) + 'px' : 'tidak ada');
+  var title = document.getElementById('geofarmCardTitle');
+  ok('judul "GeoFarm Analisis"', title && title.textContent.trim() === 'GeoFarm Analisis',
+    title ? title.textContent : 'tidak ada');
+  say('  judul: "' + (title ? title.textContent : '') + '"');
+
+  say('');
+  say('2. Dua tombol aksi (tidak lagi menumpuk)');
+  var draw = document.getElementById('geofarmDrawPolygonBtn');
+  var upl = document.getElementById('geofarmUploadBtn');
+  var rd = draw.getBoundingClientRect();
+  var ru = upl.getBoundingClientRect();
+  say('  Buat Polygon : ' + Math.round(rd.width) + 'x' + Math.round(rd.height) + '  atas=' + Math.round(rd.top));
+  say('  Unggah       : ' + Math.round(ru.width) + 'x' + Math.round(ru.height) + '  atas=' + Math.round(ru.top));
+  ok('kedua tombol sejajar', Math.abs(rd.top - ru.top) <= 2, rd.top + ' vs ' + ru.top);
+  ok('kedua tombol sama tinggi', Math.abs(rd.height - ru.height) <= 2,
+    Math.round(rd.height) + ' vs ' + Math.round(ru.height));
+  ok('kedua tombol lebarnya sama', Math.abs(rd.width - ru.width) <= 2,
+    Math.round(rd.width) + ' vs ' + Math.round(ru.width));
+  ok('tidak menumpuk vertikal (lebar > 100px)', rd.width > 100, Math.round(rd.width) + 'px');
+  ok('tinggi cukup untuk dua baris teks', rd.height > 46, Math.round(rd.height) + 'px');
+  // Aturan lama (align-items:center) akan memusatkan teks horizontal.
+  var lab = draw.querySelector('.geofarm-btn-label');
+  var cs = getComputedStyle(draw);
+  ok('teks rata kiri, bukan CENTER (override aturan lama)',
+    cs.textAlign === 'left', cs.textAlign);
+  ok('align-items flex-start (override justify-content:center)',
+    cs.alignItems === 'flex-start', cs.alignItems);
+  ok('flex-direction column', cs.flexDirection === 'column', cs.flexDirection);
+  say('  justify-content: ' + cs.justifyContent + '  align-items: ' + cs.alignItems);
+  var sub = draw.querySelector('.geofarm-btn-sub');
+  ok('ada label dan sublabel', !!lab && !!sub);
+  if (lab && sub) {
+    say('  label: "' + lab.textContent + '"  sub: "' + sub.textContent + '"');
+    ok('sublabel lebih kecil dari label',
+      parseFloat(getComputedStyle(sub).fontSize) < parseFloat(getComputedStyle(lab).fontSize),
+      getComputedStyle(sub).fontSize + ' vs ' + getComputedStyle(lab).fontSize);
+  }
+
+  say('');
+  say('3. Tombol Buka Analisis melebar PENUH (dua kolom digabung)');
+  var open = document.getElementById('geofarmOpenAnalysisBtn');
+  open.hidden = false;  // di index.html disembunyikan sampai ada polygon
+  var ro = open.getBoundingClientRect();
+  var rw = draw.getBoundingClientRect();
+  say('  Buka Analisis: ' + Math.round(ro.width) + 'px   tombol aksi: ' + Math.round(rw.width) + 'px');
+  // Yang diuji: lebar Buka Analisis = lebar baris tombol aksi, bukan sebesar
+  // satu tombol (sehingga terlihat seperti separuh kartu).
+  var actions = document.querySelector('.geofarm-card-actions').getBoundingClientRect();
+  ok('Buka Analisis selebar baris tombol aksi (bukan setengah)',
+    Math.abs(ro.width - actions.width) <= 2, Math.round(ro.width) + ' vs ' + Math.round(actions.width));
+  ok('Buka Analisis jauh lebih lebar dari satu tombol',
+    ro.width > rw.width * 1.8, Math.round(ro.width) + ' vs ' + Math.round(rw.width));
+  ok('Buka Analisis ada di bawah tombol aksi', ro.top > rd.bottom, Math.round(ro.top) + ' vs ' + Math.round(rd.bottom));
+
+  say('');
+  say('4. Panduan: tertutup default, terbuka saat diklik');
+  var guide = card.querySelector('.geofarm-guide');
+  ok('panduan ada', !!guide);
+  var gb = guide.querySelector('.geofarm-guide-body').getBoundingClientRect();
+  ok('tertutup default (isi 0px)', gb.height <= 1, Math.round(gb.height) + 'px');
+  var sum = guide.querySelector('.geofarm-guide-summary');
+  var rs = sum.getBoundingClientRect();
+  say('  tinggi summary: ' + Math.round(rs.height) + 'px');
+  ok('summary bisa diklik (tinggi > 24px)', rs.height > 24, Math.round(rs.height) + 'px');
+  var cursor = getComputedStyle(sum).cursor;
+  ok('cursor pointer di summary', cursor === 'pointer', cursor);
+  guide.querySelector('.geofarm-guide-summary').click();
+  var gb2 = guide.querySelector('.geofarm-guide-body').getBoundingClientRect();
+  say('  isi setelah dibuka: ' + Math.round(gb2.height) + 'px');
+  ok('isi terlihat setelah dibuka', gb2.height > 100, Math.round(gb2.height) + 'px');
+  ok('summary menunjukkan keadaan terbuka', guide.open === true);
+
+  say('');
+  say('5. Jarak atas pada blok status unggah');
+  var status = document.getElementById('geofarmUploadStatus');
+  ok('blok status ada', !!status);
+  if (status) {
+    var rs2 = status.getBoundingClientRect();
+    var rActions = document.querySelector('.geofarm-card-actions').getBoundingClientRect();
+    var rBuka = document.getElementById('geofarmOpenAnalysisBtn').getBoundingClientRect();
+    var jarakAtas = rs2.top - rActions.bottom;
+    var jarakBawah = rBuka.top - rs2.bottom;
+    say('  jarak atas dari baris tombol: ' + Math.round(jarakAtas) + 'px');
+    say('  jarak bawah ke tombol buka  : ' + Math.round(jarakBawah) + 'px');
+    ok('jarak atas ada (tidak menempel ke tombol di atasnya)', jarakAtas >= 4,
+      Math.round(jarakAtas) + 'px');
+    ok('jarak atas cukup terasa (>= 6px)', jarakAtas >= 6, Math.round(jarakAtas) + 'px');
+    ok('jarak bawah ke tombol Buka Analisis ada', jarakBawah >= 2,
+      Math.round(jarakBawah) + 'px');
+    ok('status tidak menimpa baris tombol (tidak overlap)',
+      rs2.top >= rActions.bottom - 1, Math.round(jarakAtas) + 'px');
+    // Jarak atas harus lebih besar dari padding atas blok itu sendiri,
+    // kalau tidak margin-top-nya memang tidak bekerja.
+    var cs2 = getComputedStyle(status);
+    say('  margin: ' + cs2.marginTop + ' / ' + cs2.marginBottom);
+    ok('margin-top dipakai (bukan 0)', parseFloat(cs2.marginTop) > 0, cs2.marginTop);
+  }
+
+  say('');
+  say('5b. Jarak atas pada blok "Memakai berkas SHP (.shp)?"');
+  var shp = card.querySelector('.geofarm-shp-note');
+  ok('blok catatan SHP ada', !!shp);
+  if (shp) {
+    // Tombol Buka Analisis sudah di-unhide di atas, jadi jarak ke elemen
+    // sebelumnya bisa diukur sebagai jarak visual sungguhan, bukan cuma
+    // nilai margin-top yang kebetulan nonzero.
+    var rShp = shp.getBoundingClientRect();
+    var rBuka2 = document.getElementById('geofarmOpenAnalysisBtn').getBoundingClientRect();
+    var rPrev = rBuka2.height > 0 ? rBuka2 : status.getBoundingClientRect();
+    var jarakShp = rShp.top - rPrev.bottom;
+    var csShp = getComputedStyle(shp);
+    say('  margin: ' + csShp.marginTop + ' / ' + csShp.marginBottom);
+    say('  jarak visual dari blok di atasnya: ' + Math.round(jarakShp) + 'px');
+    ok('blok SHP punya margin-top', parseFloat(csShp.marginTop) >= 8, csShp.marginTop);
+    ok('jarak atas terasa dari blok sebelumnya (>= 8px)', jarakShp >= 8,
+      Math.round(jarakShp) + 'px');
+    ok('blok SHP tidak menempel ke tombol di atasnya', rShp.top >= rPrev.bottom - 1,
+      Math.round(jarakShp) + 'px');
+    // Ritme harus sama dengan .geofarm-guide di bawahnya, dan karena
+    // keduanya bersaudara margin-nya bertumpuk: total tetap ~10px, bukan 20px.
+    var rGuide = guide.getBoundingClientRect();
+    var jarakBawahShp = rGuide.top - rShp.bottom;
+    say('  jarak ke panduan di bawahnya: ' + Math.round(jarakBawahShp) + 'px');
+    ok('jarak ke panduan tetap wajar (tidak 20px hasil penumpukan)',
+      jarakBawahShp >= 8 && jarakBawahShp <= 12, Math.round(jarakBawahShp) + 'px');
+    ok('ritme jarak SHP sama dengan panduan',
+      csShp.marginTop === getComputedStyle(guide).marginTop,
+      csShp.marginTop + ' vs ' + getComputedStyle(guide).marginTop);
+  }
+  if (status) {
+    ok('margin-top terpisah dari padding atas',
+      parseFloat(cs2.marginTop) > 0 && parseFloat(cs2.paddingTop) > 0,
+      'margin ' + cs2.marginTop + ' padding ' + cs2.paddingTop);
+    ok('teks status terbaca penuh', status.textContent.indexOf('1 poligon dimuat') === 0,
+      JSON.stringify(status.textContent.slice(0, 40)));
+    ok('teks status tidak terpotong (2 baris atau kurang)',
+      status.getBoundingClientRect().height < 60, Math.round(rs2.height) + 'px');
+  }
+
+  say('');
+  say('6. Legibilitas isi panduan');
+  var dts = guide.querySelectorAll('.geofarm-guide-defs dt');
+  var dds = guide.querySelectorAll('.geofarm-guide-defs dd');
+  ok('glosarium punya 4 istilah', dts.length === 4, dts.length + ' istilah');
+  ok('setiap istilah punya penjelasan', dts.length === dds.length, dts.length + ' vs ' + dds.length);
+  var fs = parseFloat(getComputedStyle(guide.querySelector('.geofarm-guide-body')).fontSize);
+  say('  font isi: ' + fs + 'px');
+  ok('tidak terlalu kecil untuk dibaca (>= 9px)', fs >= 9, fs + 'px');
+  var lineH = getComputedStyle(guide.querySelector('.geofarm-guide-body')).lineHeight;
+  say('  line-height: ' + lineH);
+  var note = guide.querySelector('.gf-note');
+  ok('catatan pengingkar ada', !!note);
+  if (note) {
+    var nc = getComputedStyle(note);
+    ok('catatan punya garis aksen di kiri', parseFloat(nc.borderLeftWidth) >= 2, nc.borderLeftWidth);
+  }
+
+    say('');
+    say((fail === 0 ? 'SEMUA LULUS' : 'ADA YANG GAGAL') + ': ' + pass + ' lulus, ' + fail + ' gagal');
+    document.getElementById('out').textContent = lines.join('\n');
+  } catch (e) {
+    lines.push('');
+    lines.push('ERROR HARNESS: ' + e.message);
+    lines.push('  ' + (e.stack || '').split('\n').slice(0, 4).join('\n  '));
+    fail++;
+    document.getElementById('out').textContent = lines.join('\n');
+  }
+})();
+</script>
+</body>
+</html>

@@ -960,6 +960,99 @@
    * landsat-c2-l2. Keduanya punya properti eo:cloud_cover sehingga penyaringan
    * awan di query dan pengurutannya tetap berlaku.
    */
+  /**
+   * Daftar adegan yang tersedia untuk satu polygon, dipilah per tanggal.
+   *
+   * Beda dari stacBestScene di atas: yang ini mengembalikan SEMUA kandidat,
+   * bukan hanya satu terbaik, karena mode mandiri meminta user yang memilih
+   * adegan. Ambang awan menjadi opsi query, dan sengaja tidak ada penyaringan
+   * diam-diam -- user harus bisa melihat adegan berawan supaya tahu
+   * keputusan apa yang dia ambil.
+   *
+   * opts: { cloudLimit, months, limit }
+   *   cloudLimit  batas atas tutupan awan persen; null = tanpa batas
+   *   months      berapa bulan ke belakang dari hari ini
+   *   limit       batas jumlah adegan yang dikembalikan
+    */
+  async function stacListScenes(bounds, opts) {
+    const o = opts || {};
+    const now = new Date();
+    const to = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
+    const months = o.months && o.months > 0 ? o.months : 6;
+    const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - months + 1, 1));
+    const limit = o.limit && o.limit > 0 ? o.limit : 60;
+
+    const body = {
+      collections: [PC_COLLECTION],
+      bbox: [bounds.west, bounds.south, bounds.east, bounds.north],
+      datetime: from.toISOString().slice(0, 10) + 'T00:00:00Z/' +
+        to.toISOString().slice(0, 10) + 'T23:59:59Z',
+      limit: limit
+    };
+    if (Number.isFinite(o.cloudLimit)) {
+      body.query = { 'eo:cloud_cover': { lt: o.cloudLimit } };
+    }
+
+    const response = await fetch(PC_SEARCH_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!response.ok) throw new Error('Pencarian adegan gagal (HTTP ' + response.status + ')');
+    const data = await response.json();
+    const features = (data && data.features) || [];
+
+    // Tanggal bisa kembar: satu hari bisa punya beberapa tile atau pengudan.
+    // Adegan dengan tanggal sama digabung agar tabel tidak berduplikat.
+    const perTanggal = new Map();
+    features.forEach(function (f) {
+      const props = f.properties || {};
+      const tanggal = String(props.datetime || '').slice(0, 10);
+      if (!tanggal) return;
+      const cloud = props['eo:cloud_cover'];
+      const entry = perTanggal.get(tanggal);
+      if (entry) {
+        // Simpan yang paling bersih sebagai denominator representatif.
+        if (Number.isFinite(cloud) && (!Number.isFinite(entry.cloud) || cloud < entry.cloud)) {
+          entry.cloud = cloud;
+          entry.feature = f;
+        }
+        entry.count += 1;
+        return;
+      }
+      perTanggal.set(tanggal, {
+        date: tanggal,
+        datetime: props.datetime,
+        cloud: cloud,
+        platform: props.platform,
+        feature: f,
+        count: 1
+      });
+    });
+
+    const list = Array.from(perTanggal.values());
+    // Terbaru dulu: untuk Multiply, yang paling dekat dengan sekarang biasanya
+    // yang dicari. Awan jadi tiebreak kedua.
+    list.sort(function (a, b) {
+      if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+      return (a.cloud == null ? 999 : a.cloud) - (b.cloud == null ? 999 : b.cloud);
+    });
+    return list.map(function (entry) {
+      const props = entry.feature.properties || {};
+      return {
+        id: entry.feature.id,
+        date: entry.date,
+        datetime: props.datetime,
+        cloud: entry.cloud,
+        platform: props.platform,
+        orbit: props['sat:relative_orbit'] || null,
+        assets: entry.feature.assets,
+        scenes: entry.count,
+        cloudy: Number.isFinite(entry.cloud) && entry.cloud > TREND_CLOUD_HIGH
+      };
+    });
+  }
+
   async function stacBestScene(bounds, period, collection) {
     const collectionId = collection || PC_COLLECTION;
     const search = async function (cloudLimit) {
@@ -1004,8 +1097,16 @@
     return data.href || href;
   }
 
-  /** Jendela piksel COG yang menutupi bbox polygon, dibatasi maksimal TREND_SAMPLE_PX. */
-  function cogWindow(bounds, image) {
+  /**
+   * Jendela piksel COG yang menutupi bbox polygon.
+   *
+   * `maxPx` sengaja opsional dengan default TREND_SAMPLE_PX: jalur tren hanya
+   * butuh sampel kecil untuk median, sementara mode mandiri memakai jendela
+   * jauh lebih besar supaya statistik zonalnya benar-benar mewakili petak.
+   * Default-nya tidak diubah supaya angka tren tetap sama seperti sebelumnya.
+   */
+  function cogWindow(bounds, image, maxPx) {
+    const cap = Number.isFinite(maxPx) && maxPx > 0 ? Math.round(maxPx) : TREND_SAMPLE_PX;
     const bb = image.getBoundingBox();
     const res = image.getResolution();
     let x0 = Math.floor((bounds.west - bb[0]) / res[0]);
@@ -1017,8 +1118,8 @@
     y0 = Math.max(0, y0);
     x1 = Math.min(image.getWidth(), Math.max(x0 + 2, x1));
     y1 = Math.min(image.getHeight(), Math.max(y0 + 2, y1));
-    if (x1 - x0 > TREND_SAMPLE_PX) x1 = x0 + TREND_SAMPLE_PX;
-    if (y1 - y0 > TREND_SAMPLE_PX) y1 = y0 + TREND_SAMPLE_PX;
+    if (x1 - x0 > cap) x1 = x0 + cap;
+    if (y1 - y0 > cap) y1 = y0 + cap;
     // Jendela harus tetap di dalam citra. Tanpa guard ini, bbox yang salah
     // proyeksi menghasilkan tinggi/lebar negatif dan geotiff.js hanya
     // melempar error cryptic.
@@ -1067,6 +1168,86 @@
     };
     return {
       values: rasters[0],
+      mask: rasterizeMask(projectRings(rings), { width: width, height: height, geo: geo })
+    };
+  }
+
+  /**
+   * Baca beberapa band sekaligus dan TURUNKAN semuanya ke satu grid piksel
+   * yang sama.
+   *
+   * Kenapa ini perlu ada: band Sentinel-2 tidak seragam. B02/B03/B04/B08
+   * beresolusi 10 m, sedangkan B05/B06/B11/B12 20 m. Jendela piksel dihitung
+   * per citra, jadi B11 (20 m) dan B08 (10 m) untuk area yang sama
+   * menghasilkan array dengan panjang berbeda. applyIndexFormula() memakai
+   * Math.min() atas panjang array, yang berarti piksel 10 m akan
+   * disejajarkan ke piksel 20 m yang areanya berbeda -- hasil salah, tanpa
+   * error. Yang kena: NDMI, NBR, dan NDRE.
+   *
+   * Solusinya: hitung jendela dari band pertama sebagai acuan ukuran keluaran,
+   * lalu paksa setiap band berikutnya dibaca pada ukuran yang sama lewat opsi
+   * width/height geotiff.js. Resampling memakai 'nearest': kelas indeks di
+   * banding tidak boleh mengarang nilai di antara piksel asli, dan reflektansi
+   * 20 m tidak boleh diinterpolasi seolah-olah presisi 10 m.
+   *
+   * Konsekuensi yang ditampilkan ke user: untuk index bercampur resolusi,
+   * hasil dihitung pada grid 10 m dengan band 20 m di-downsample, sehingga
+   * presisi sebenarnya mengikuti band terhalus yang di-downsample.
+   */
+  async function readCogBandsAligned(hrefs, bounds, rings, maxPx) {
+    if (!Array.isArray(hrefs) || !hrefs.length) throw new Error('Tidak ada band yang diminta.');
+    const projected = projectBounds(bounds);
+    const openImage = async function (href) {
+      const tiff = await window.GeoTIFF.fromUrl(href);
+      return tiff.getImage();
+    };
+
+    const images = [];
+    for (let i = 0; i < hrefs.length; i++) images.push(await openImage(hrefs[i]));
+
+    // Band pertama jadi acuan ukuran keluaran.
+    const baseImage = images[0];
+    const baseWin = cogWindow(projected, baseImage, maxPx);
+    const width = baseWin[2] - baseWin[0];
+    const height = baseWin[3] - baseWin[1];
+    if (width < 2 || height < 2) throw new Error('Jendela piksel terlalu kecil untuk dianalisis.');
+
+    const rasters = [];
+    for (let i = 0; i < images.length; i++) {
+      const image = images[i];
+      // Jendela dihitung ulang per citra: band 20 m punya indeks piksel
+      // berbeda untuk area geografis yang sama.
+      const win = i === 0 ? baseWin : cogWindow(projected, image, maxPx);
+      const sameSize = (win[2] - win[0]) === width && (win[3] - win[1]) === height;
+      const data = await image.readRasters(sameSize
+        ? { window: win }
+        : { window: win, width: width, height: height, resampleMethod: 'nearest' });
+      if (!data || !data.length) throw new Error('COG tidak menghasilkan piksel.');
+      rasters.push(data[0]);
+    }
+
+    // Validasi: kalau ada band yang tetap beda panjang, jangan diamkan.
+    for (let i = 0; i < rasters.length; i++) {
+      if (rasters[i].length !== width * height) {
+        throw new Error('Band ' + (i + 1) + ' menghasilkan ' + rasters[i].length +
+          ' piksel, seharusnya ' + (width * height) + '. Band beresolusi berbeda ' +
+          'tidak bisa disamakan.');
+      }
+    }
+
+    const bb = baseImage.getBoundingBox();
+    const res = baseImage.getResolution();
+    const geo = {
+      minX: bb[0] + baseWin[0] * res[0],
+      maxX: bb[0] + baseWin[2] * res[0],
+      maxY: bb[3] - baseWin[1] * res[1],
+      minY: bb[3] - baseWin[3] * res[1]
+    };
+    return {
+      rasters: rasters,
+      width: width,
+      height: height,
+      geo: geo,
       mask: rasterizeMask(projectRings(rings), { width: width, height: height, geo: geo })
     };
   }
@@ -1132,6 +1313,246 @@
     nbr: { bands: '12,8', compute: ndRatio },
     ndvi705: { bands: '5,6', compute: ndRatio }
   };
+
+  /**
+   * Spec gabungan untuk mode mandiri: satu objek per index yang memuat
+   * sekaligus bagian tampilan (dari ALL_INDEXES) dan bagian hitung
+   * (dari TREND_SPECS).
+   *
+   * Kenapa butuh digabung:
+   *   - ALL_INDEXES punya `table` (kelas warna untuk histogram), `label`,
+   *     dan `hint`, tapi tidak punya `bands`/`compute` untuk index yang
+   *     sebelumnya dihitung server lewat rasterFunction ArcGIS.
+   *   - TREND_SPECS punya `bands`/`compute`/`scale`/`range`, tapi tidak punya
+   *     `table` sama sekali.
+   *
+   * Tanpa penggabungan ini, statistik mode mandiri tidak punya bagian
+   * rumusnya, dan indexBlockHtml() akan gagal karena selalu membaca spec.table.
+   *
+   * PENTING soal urutan band: TREND_SPECS memakai nomor band ESA asli
+   * ('12' = B12) dengan urutan (minus, plus) untuk ndRatio. spec.bands di
+   * jalur ArcGIS memakai urutan ArcGIS, di mana pos '12' berarti B11. Untuk
+   * nomor <= 8 keduanya kebetulan sama, jadi selisihnya mudah terlewat --
+   * karena itu COMPUTE_SPECS hanya boleh dibangun dari TREND_SPECS.
+   */
+  const COMPUTE_SPECS = (function () {
+    const map = {};
+    ALL_INDEXES.forEach(function (spec) {
+      const trend = TREND_SPECS[spec.key];
+      if (!trend) return;
+      map[spec.key] = {
+        key: spec.key,
+        label: spec.label,
+        hint: spec.hint,
+        formula: spec.formula,
+        table: spec.table,
+        bands: trend.bands,
+        compute: trend.compute,
+        scale: trend.scale,
+        range: trend.range
+      };
+    });
+    /* NDVI tidak termasuk ALL_INDEXES: dulu hanya dihitung server lewat
+       NDVI_RULE, jadi tidak pernah punya spec di daftar itu. Tapi TREND_SPECS
+       sudah punya band dan rumusnya, dan mode mandiri wajib bisa menghitung
+       NDVI -- itu justru pilihan bawaan. Jadi sisipkan di sini, bukan
+        mengubah ALL_INDEXES, karena itu ikut mengubah jalur lama. */
+    if (TREND_SPECS.ndvi) {
+      map.ndvi = {
+        key: 'ndvi',
+        label: 'NDVI',
+        hint: 'Seberapa hijau dan subur tumbuhan. Makin tinggi, makin banyak tumbuhan yang tumbuh baik.',
+        formula: 'NDVI = (B08 \u2212 B04) / (B08 + B04)',
+        table: NDVI_BANDS,
+        bands: TREND_SPECS.ndvi.bands,
+        compute: TREND_SPECS.ndvi.compute,
+        scale: TREND_SPECS.ndvi.scale,
+        range: TREND_SPECS.ndvi.range
+      };
+    }
+    return map;
+  })();
+
+  /** Urutan tampilan index yang bisa dipilih, NDVI selalu di depan. */
+  const PICK_ORDER = ['ndvi', 'ndmi', 'ndre', 'ndwi', 'evi', 'msavi', 'nbr', 'ndvi705'];
+  const PICKABLE_KEYS = PICK_ORDER.filter(function (key) { return !!COMPUTE_SPECS[key]; });
+
+  /** Cache piksel COG per (adegan, band, jendela) supaya ganti pilihan index
+   *  tidak mengunduh ulang band yang sama. Dibatasi supaya tidak menahan
+   *  RAM tanpa batas saat user berpindah polygon banyak. */
+  const BAND_CACHE = new Map();
+  const BAND_CACHE_MAX = 48;
+
+  function bandCacheKey(sceneId, band, px) {
+    return sceneId + '|' + band + '|' + px;
+  }
+
+  /**
+   * Masker kelas SCL: 1 = piksel boleh dipakai, 0 = dibuang.
+   *
+   * Kelas SCL Sentinel-2 (kode pelihan ESA):
+   *   0 no data, 1 saturated, 2 dark, 3 bayangan awan, 4 vegetasi,
+   *   5 bukan vegetasi, 6 air, 7 unclassified, 8 awan sedang,
+   *   9 awan tinggi, 10 cirrus tipis, 11 salju.
+   *
+   * Yang dibuang: 0, 1, 2, 3, 8, 9, 10, 11. Yang dipertahankan: 4, 5, 6, 7
+   * (vegetasi, tanah, air, tak terklasifikasi) karena semuanya sah untuk
+   * dihitungNDVI. Kelas yang tidak dikenal juga dibuang -- lebih aman
+   * menyisakan sedikit piksel daripada menghitung dengan data tak dikenal.
+   */
+  const SCL_PAKAI = { 4: 1, 5: 1, 6: 1, 7: 1 };
+
+  function sclClearMask(scl) {
+    if (!scl || !scl.length) return null;
+    const out = new Uint8Array(scl.length);
+    for (let i = 0; i < scl.length; i++) {
+      out[i] = SCL_PAKAI[scl[i]] ? 1 : 0;
+    }
+    return out;
+  }
+
+  /** Irisi dua mask: 1 hanya kalau keduanya 1. Panjang harus sama. */
+  function gabungMask(a, b) {
+    const n = Math.min(a.length, b.length);
+    const out = new Uint8Array(n);
+    for (let i = 0; i < n; i++) out[i] = (a[i] && b[i]) ? 1 : 0;
+    return out;
+  }
+
+  /**
+   * Hitung statistik yang tahan awan untuk satu indeks pada satu adegan.
+   *
+   * Kenapa median: tanpa SCL, piksel awan tidak bisa dibedakan dari tani
+   * karena nilainya sah secara matematis -- awan menghasilkan NDVI sekitar
+   * 0 sampai 0,2, masih di dalam rentang [-1, 1], jadi filter rentang di
+   * computeStats() tidak akan menolaknya. Akibatnya rerata terseret ke
+   * bawah. Median tidak terlalu tergeser oleh sebagian kecil piksel
+   * ekstrem, dan teknik yang sama sudah dipakai trendStatsFromPixels() untuk
+   * menjaga garis tren agar tidak bergeser gara-gara awan.
+   *
+   * Piksel di luar polygon diganti NaN supaya tidak ikut terhitung; fungsi
+   * yang dipakai sudah melewati nilai tak hingga.
+   */
+  function robustStatsInMask(values, mask, range) {
+    const total = Math.min(values.length, mask.length);
+    const masked = new Float64Array(total);
+    for (let i = 0; i < total; i++) {
+      masked[i] = mask[i] ? values[i] : NaN;
+    }
+    return trendStatsFromPixels(masked, range);
+  }
+
+  /**
+   * Mode mandiri: hitung index yang dipilih user dari satu adegan tertentu.
+   *
+   * Berbeda dari computeIndexFor() yang memakai ArcGIS exportImage: di sini
+   * tanggal benar-benar dihormati karena adegan datang dari pencarian STAC
+   * beserta asset-nya, dan band dibaca langsung dari COG. Hasil ditulis ke
+   * field yang sama (item[key]) supaya seluruh lapisan tampilan yang sudah
+   * ada tidak perlu diubah.
+   *
+   * Satu index gagal tidak menghentikan index lain; pesan errornya disimpan
+   * per index, sama seperti runSpectral() yang sudah ada.
+   */
+  async function runIndexOnScene(item, keys, onStatus) {
+    const scene = item.scene;
+    if (!scene || !scene.assets) {
+      throw new Error('Pilih adegan citra terlebih dahulu.');
+    }
+    const daftar = (keys && keys.length) ? keys : PICKABLE_KEYS;
+    const done = [];
+    const gagal = [];
+
+    for (let i = 0; i < daftar.length; i++) {
+      const key = daftar[i];
+      const spec = COMPUTE_SPECS[key];
+      if (!spec) continue;
+      if (onStatus) onStatus('Menghitung ' + spec.label + ' dari citra ' + scene.date + '...');
+      try {
+        const bandNames = String(spec.bands).split(',').map(function (b) {
+          return trendAssetName(b.trim());
+        });
+        const hrefs = [];
+        for (let b = 0; b < bandNames.length; b++) {
+          const asset = scene.assets[bandNames[b]];
+          if (!asset || !asset.href) {
+            throw new Error('Adegan ' + scene.date + ' tidak menyediakan band ' + bandNames[b] + '.');
+          }
+          const keyCache = bandCacheKey(scene.id || scene.date, bandNames[b], item.pixelCap);
+          let href = BAND_CACHE.get(keyCache);
+          if (!href) {
+            href = await signCogUrl(asset.href);
+            if (BAND_CACHE.size >= BAND_CACHE_MAX) {
+              BAND_CACHE.delete(BAND_CACHE.keys().next().value);
+            }
+            BAND_CACHE.set(keyCache, href);
+          }
+          hrefs.push(href);
+        }
+
+        /* SCL (Scene Classification) dibaca DULUAN kalau masking diaktifkan,
+           karena SCL beresolusi 20 m sementara band 10 m. Dengan SCL jadi
+           band pertama, readCogBandsAligned() akan memakai grid SCL sebagai
+           acuan dan menurunkan semua band ke 20 m -- itu memang konsekuensi
+           yang sudah dinyatakan di UI, dan satu-satunya cara kedua band
+           resolutions bisa dibandingkan pixel per pixel. */
+        let useScl = false;
+        if (item.sclMask) {
+          const assetScl = scene.assets.SCL;
+          if (!assetScl || !assetScl.href) {
+            throw new Error('Adegan ini tidak menyediakan band SCL untuk masking awan.');
+          }
+          hrefs.unshift(await signCogUrl(assetScl.href));
+          useScl = true;
+        }
+
+        const read = await readCogBandsAligned(hrefs, item.bounds, item.rings, item.pixelCap);
+        let mask = read.mask;
+        if (useScl) {
+          const clear = sclClearMask(read.rasters[0]);
+          if (!clear) {
+            throw new Error('Band SCL tidak terbaca, masking awan tidak bisa dipakai.');
+          }
+          mask = gabungMask(read.mask, clear);
+        }
+
+        const values = applyIndexFormula(useScl ? read.rasters.slice(1) : read.rasters, spec);
+        const stats = computeStats(values, mask, spec.table, spec.range);
+        if (!stats.count) {
+          throw new Error('Tidak ada piksel ' + spec.label +
+            ' valid di dalam polygon' + (useScl ? ' setelah awan dibuang.' : '.'));
+        }
+        const robust = robustStatsInMask(values, mask, spec.range);
+        stats.median = robust ? robust.median : NaN;
+        stats.p10 = robust ? robust.p10 : NaN;
+        stats.p90 = robust ? robust.p90 : NaN;
+        stats.resolution = read.width + 'x' + read.height + (useScl ? ' (SCL 20 m)' : '');
+        stats.sceneDate = scene.date;
+        stats.sceneCloud = scene.cloud;
+
+        item[key] = stats;
+        item[key + 'Error'] = null;
+        done.push(key);
+
+        // NDVI juga digambar di peta, seperti pada jalur otomatis.
+        if (key === 'ndvi') {
+          try {
+            const canvas = renderNdviCanvas(values, read.mask, read.width, read.height);
+            showOverlay(canvas.toDataURL('image/png'), { geo: read.geo }, item);
+          } catch (error) {
+            console.warn('[GeoFarm] Gagal menggambar layer NDVI:', error);
+          }
+        }
+      } catch (error) {
+        item[key] = null;
+        item[key + 'Error'] = error && error.message
+          ? error.message
+          : 'Gagal menghitung ' + spec.label + '.';
+        gagal.push(key);
+      }
+    }
+    return { done: done, gagal: gagal };
+  }
 
   async function loadTrendPoint(item, period, spec) {
     const scene = await stacBestScene(item.bounds, period);
@@ -1836,6 +2257,310 @@
       '<div class="pa-block">' + rows.join('') + '</div></details>';
   }
 
+  /* ---- Kebutuhan air tanaman: ETc = ET0 x Kc -------------------------
+     Cakupan versi 1 hanya ETc. Curah hujan efektif, kapasitas air tanah,
+     dan efisiensi irigasi TIDAK dihitung -- batas itu disebut terbuka di
+     UI supaya angkanya tidak dibaca sebagai jadwal irigasi. */
+  function airTanamanOptions(terpilih) {
+    const daftar = (window.WaterNeed && window.WaterNeed.daftarTanaman) ? window.WaterNeed.daftarTanaman() : [];
+    return daftar.map(function (t) {
+      return '<option value="' + escapeHtml(t.id) + '"' +
+        (t.id === terpilih ? ' selected' : '') + '>' + escapeHtml(t.nama) + '</option>';
+    }).join('');
+  }
+
+  function airBlockHtml(item) {
+    if (item.airError) {
+      return '<div class="pa-block pa-block-error">' + escapeHtml(item.airError) + '</div>';
+    }
+    if (!item.air) return '';
+
+    const W = window.WaterNeed;
+    const t = item.air.tanaman;
+    const etc = item.air.etc;
+    const luas = item.areaHa;
+    // 1 mm air pada 1 ha = 10 m3.
+    const m3 = etc.etcTotal * luas * 10;
+    const m3Hari = m3 / etc.totalHari;
+    const et0 = item.air.rerataEt0Harian;
+
+    let html = '';
+    html += '<div class="pa-block">';
+    html += '<div class="pa-air-hero">';
+    html += '<div class="pa-air-hero-val">' + fmt(m3, 0) + ' m<sup>3</sup></div>';
+    html += '<div class="pa-air-hero-lab">kebutuhan ' + escapeHtml(t.nama) +
+      ' untuk satu musim<br>' + fmt(etc.etcTotal, 0) + ' mm &times; ' + fmt(luas, 2) + ' ha</div>';
+    html += '</div>';
+    html += '<div class="pa-air-row"><span>ET0 saat ini</span><span>' + fmt(et0, 2) + ' mm/hari</span></div>';
+    html += '<div class="pa-air-row"><span>Durasi musim</span><span>' + etc.totalHari + ' hari</span></div>';
+    html += '<div class="pa-air-row"><span>Rata-rata harian</span><span>' + fmt(m3Hari, 1) + ' m<sup>3</sup>/hari</span></div>';
+    html += W._tabelTahapHtml(etc);
+    html += '</div>';
+
+    html += '<details class="pa-details">';
+    html += '<summary class="pa-summary">Pola ET0 bulanan (5 tahun)</summary>';
+    html += '<div class="pa-block">';
+    item.air.bulanan.perBulan.forEach(function (v, i) {
+      const maks = Math.max.apply(null, item.air.bulanan.perBulan.concat([0.1]));
+      const lebar = Math.max(2, Math.round((v / maks) * 100));
+      html += '<div class="pa-air-row pa-air-month">';
+      html += '<span>' + W.BULAN[i] + '</span>';
+      html += '<span class="pa-air-bar-wrap"><span class="pa-air-bar" style="width:' + lebar + '%"></span></span>';
+      html += '<span>' + fmt(v, 2) + '</span>';
+      html += '</div>';
+    });
+    html += '<div class="pa-air-src">' + escapeHtml(item.air.bulanan.sumber) +
+      ' &middot; ' + escapeHtml(item.air.harian.sumber) + '</div>';
+    html += '</div></details>';
+
+    if (item.air.bulanan.perkiraan) {
+      html += '<div class="pa-block pa-block-muted">Kuota Open-Meteo habis, jadi ET0 memakai rerata kasar. ' +
+        'Angka ini hanya untuk melihat besaran, bukan untuk keputusan irigasi.</div>';
+    }
+
+    if (t.catatan) {
+      html += '<div class="pa-block pa-block-muted">' + escapeHtml(t.catatan) + '</div>';
+    }
+
+    html += '<div class="pa-block pa-block-muted"><b>Batas modul ini.</b> Angka di atas adalah ' +
+      'kebutuhan air tanaman (ETc), yaitu air yang keluar lewat transpirasi dan evaporasi. ' +
+      'Belum dikurangi hujan, dan belum memperhitungkan air yang tertahan di tanah. ' +
+      'Karena itu angka ini <b>bukan</b> volume air yang harus disiram.</div>';
+
+    html += '<div class="pa-block pa-block-muted">Estimasi satu musim memakai ET0 rata-rata ' +
+      (window.WaterNeed.FORECAST_DAYS || 16) + ' hari ke depan, dengan asumsi cuaca sekarang ' +
+      'berlanjut sampai musim selesai. Kalau musimnya sedang berjalan, hasilnya yang paling ' +
+      'mendekati; untuk musim yang masih jauh, pakai pola ET0 bulanan di atas sebagai gantinya.</div>';
+
+    return html;
+  }
+
+  /* Ikon inline memakai currentColor supaya warnanya ikut ke putih saat
+     tombol sedang aktif, dan tidak menambah request HTTP. */
+  const ICON_CALC =
+    '<svg class="pa-air-calc-ico" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">' +
+    '<rect x="3.2" y="1.4" width="9.6" height="13.2" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/>' +
+    '<path d="M5.6 1.9h4.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>' +
+    '<path d="M5.4 8.4h5.2M5.4 11h3.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>' +
+    '</svg>';
+
+  const ICON_SPIN =
+    '<svg class="pa-air-calc-ico is-spin" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">' +
+    '<circle cx="8" cy="8" r="5.4" fill="none" stroke="currentColor" stroke-width="1.6" ' +
+    'stroke-linecap="round" stroke-dasharray="20 14"/></svg>';
+
+  const ICON_CHEVRON =
+    '<svg class="pa-air-caret" viewBox="0 0 12 12" width="11" height="11" aria-hidden="true" focusable="false">' +
+    '<path d="M3 4.8 6 7.8l3-3" fill="none" stroke="currentColor" stroke-width="1.5" ' +
+    'stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  function airSectionHtml(item) {
+    // Section ini memakai template .pa-section yang sama dengan section lain.
+    // Sifat hitungannya memang berbeda (cukup luas polygon, tanpa citra
+    // satelit), tapi itu disampaikan lewat isi dan catatan di dalamnya, bukan
+    // lewat tampilan kotak sendiri -- supaya tidak terlihat seperti kartu
+    // dari template yang berbeda. Kelas pa-section-air tetap dipakai untuk
+    // state ciut dan urutan section.
+    return '<div class="pa-section pa-section-air' +
+      (isSectionCollapsed(item, 'air') ? ' is-collapsed' : '') + '">' +
+      sectionHeadHtml(item, 'air', 'Kebutuhan Air Tanaman') +
+      '<div class="pa-section-body">' +
+      /* Catatan memakai .pa-note, kelas yang sama dengan catatan di section
+         NDVI, Indeks Spektral, dan Topografi. */
+      '<div class="pa-note">Terpisah dari analisis citra. Butuh luas petak ' +
+      'dan titik tengahnya saja, tidak memakai citra satelit.</div>' +
+      /* Baris tanaman: label di atas, select penuh di bawahnya. Pola ini
+         mengikuti komponen form ArcGIS -- bukan label-inline yang sempit,
+         karena select berisi nama tanaman yang panjang ("Kelapa Sawit"). */
+      '<div class="pa-air-field">' +
+      '<label class="pa-air-label" for="pa-air-crop-' + item.id + '">Tanaman</label>' +
+      '<div class="pa-air-select-wrap">' +
+      '<select id="pa-air-crop-' + item.id + '" class="pa-air-select" data-pa-air-crop data-pa-id="' + item.id + '">' +
+      airTanamanOptions(item.airTanamanId) +
+      '</select>' +
+      ICON_CHEVRON +
+      '</div>' +
+      '</div>' +
+      /* Tombol-primary gaya ArcGIS: ikon, label pendek, state terlihat.
+         Teksnya "Hitung" saja -- isi panel sudah menjelaskan apa yang dihitung,
+         jadi "Hitung kebutuhan air" itu redundant. */
+      '<button class="pa-air-calc" type="button" data-pa-action="air" data-pa-id="' + item.id + '"' +
+      (item.airBusy ? ' disabled' : '') + '>' +
+      (item.airBusy ? ICON_SPIN + '<span>Menghitung…</span>'
+        : ICON_CALC + '<span>Hitung</span>') +
+      '</button>' +
+      (item.airBusy ? '<div class="pa-block pa-block-muted"><span class="pa-spin"></span>' +
+      escapeHtml(item.busy || 'Mengambil ET0 dari Open-Meteo…') + '</div>' : '') +
+      airBlockHtml(item) +
+      '</div>' +
+      '</div>';
+  }
+
+  /* ---- Aksi kebutuhan air --------------------------------------------- */
+
+  /* Centroid true polygon (shoelace), bukan titik tengah bounding box.
+     Petak sawah sering tidak beraturan, jadi titik tengah bbox bisa jatuh
+     di luar petak dan memberi ET0 lokasi yang salah. Batas shapely:
+     rings = [ [lon, lat], ... ] dalam derajat. */
+  function centroidOf(rings) {
+    const outer = rings && rings[0];
+    if (!outer || outer.length < 3) return null;
+    let a = 0, cx = 0, cy = 0;
+    for (let i = 0; i < outer.length; i++) {
+      const p = outer[i];
+      const q = outer[(i + 1) % outer.length];
+      const cross = p[0] * q[1] - q[0] * p[1];
+      a += cross;
+      cx += (p[0] + q[0]) * cross;
+      cy += (p[1] + q[1]) * cross;
+    }
+    a *= 0.5;
+    if (Math.abs(a) < 1e-12) {
+      // Polygon runtuh (luas ~0) atau/self-intersecting: jatuh ke bbox center.
+      const b = boundsOf(rings);
+      return { lat: (b.south + b.north) / 2, lng: (b.west + b.east) / 2 };
+    }
+    return { lng: cx / (6 * a), lat: cy / (6 * a) };
+  }
+
+  function runAirNeed(item) {
+    if (item.airBusy) return;
+    if (!window.WaterNeed) {
+      item.airError = 'Modul kebutuhan air belum termuat (water-need.js).';
+      render();
+      return;
+    }
+    const c = centroidOf(item.rings);
+    if (!c || !Number.isFinite(c.lat) || !Number.isFinite(c.lng)) {
+      item.airError = 'Centroid polygon tidak bisa dihitung. Gambar ulang petaknya.';
+      render();
+      return;
+    }
+
+    item.airBusy = true;
+    item.airError = null;
+    item.busy = 'Mengambil ET0 dari Open-Meteo…';
+    render();
+
+    return window.WaterNeed.ongkosHitung(c.lat, c.lng, item.airTanamanId)
+      .then(function (hasil) {
+        item.air = hasil;
+        item.airLat = c.lat;
+        item.airLng = c.lng;
+      })
+      .catch(function (error) {
+        item.air = null;
+        item.airError = error && error.message
+          ? error.message
+          : 'Gagal mengambil ET0 dari Open-Meteo.';
+      })
+      .then(function () {
+        item.airBusy = false;
+        item.busy = null;
+        render();
+      });
+  }
+
+  /* Select tanaman tidak memicu render penuh supaya select tidak kehilangan
+     fokus saat pengguna masih menekankeyboard. Hasil dihitung ulang hanya
+     bila pengguna menekan tombol, supaya tidak boros kuota Open-Meteo. */
+  function onPanelChange(event) {
+    const target = event.target;
+    if (!target || !target.closest) return;
+
+    const select = target.closest('[data-pa-air-crop]');
+    if (select) {
+      const id = Number(select.getAttribute('data-pa-id'));
+      const item = state.items.filter(function (x) { return x.id === id; })[0];
+      if (!item) return;
+      item.airTanamanId = select.value;
+      // Kalau sudah ada hasil, tandai stale supaya tombol hitung ulang menyala.
+      if (item.air) {
+        item.air = null;
+        item.airError = null;
+        render();
+      }
+      return;
+    }
+
+    /* --- Kontrol mode mandiri ---
+       Semuanya dikumpulkan di sini supaya hanya ada satu listener change.
+       Nilai angka tidak memicu render penuh: kolom isinya diketik pengguna
+       dan render ulang akan memindahkan fokus di tengah pengetikan. */
+    const idx = target.closest('[data-pa-index]');
+    if (idx) {
+      const item = itemFromEl(idx);
+      if (!item) return;
+      const key = idx.getAttribute('data-pa-index');
+      if (!COMPUTE_SPECS[key]) return;
+      const picked = (item.picked || []).slice();
+      const at = picked.indexOf(key);
+      if (idx.checked && at === -1) picked.push(key);
+      if (!idx.checked && at !== -1) picked.splice(at, 1);
+      // Kembalikan ke urutan tetap supaya tampilan tidak bergantung urutan klik.
+      item.picked = PICK_ORDER.filter(function (k) { return picked.indexOf(k) !== -1; });
+      // Hanya label yang berubah; render penuh tidak perlu, tapi status tombol
+      // "Hitung index terpilih" bergantung pada jumlah pilihan.
+      const row = idx.closest('.pa-idx');
+      if (row) row.classList.toggle('is-on', idx.checked);
+      syncManualButton(item);
+      return;
+    }
+
+    const angka = function (attr, min, max) {
+      const el = target.closest('[' + attr + ']');
+      if (!el) return null;
+      const v = Number(el.value);
+      if (!Number.isFinite(v)) return null;
+      return Math.min(max, Math.max(min, Math.round(v)));
+    };
+
+    const cloud = angka('data-pa-cloud-limit', 0, 100);
+    if (cloud !== null) {
+      const item = itemFromEl(target);
+      if (item) item.sceneCloudLimit = cloud;
+      return;
+    }
+    const months = angka('data-pa-months', 1, 36);
+    if (months !== null) {
+      const item = itemFromEl(target);
+      if (item) item.sceneMonths = months;
+      return;
+    }
+    const cap = angka('data-pa-pixel-cap', 32, 1024);
+    if (cap !== null) {
+      const item = itemFromEl(target);
+      if (item) item.pixelCap = cap;
+      return;
+    }
+
+    const scl = target.closest('[data-pa-scl]');
+    if (scl) {
+      const item = itemFromEl(scl);
+      if (!item) return;
+      item.sclMask = !!scl.checked;
+      // Resolusi memengaruhi hasil, jadi tandai angka lama sebagai tidak lagi
+      // berlaku: user perlu tahu piksel mana yang menghasilkan angka itu.
+      if (item.analyzed) item.stale = true;
+      render();
+    }
+  }
+
+  function itemFromEl(el) {
+    const id = Number(el.getAttribute('data-pa-id'));
+    if (!Number.isFinite(id)) return null;
+    return state.items.filter(function (x) { return x.id === id; })[0] || null;
+  }
+
+  /** Nyalakan/matikan tombol "Hitung index terpilih" sesuai jumlah pilihan. */
+  function syncManualButton(item) {
+    const btn = panelEl() && panelEl().querySelector(
+      '[data-pa-action="run-manual"][data-pa-id="' + item.id + '"]');
+    if (!btn) return;
+    btn.disabled = item.runBusy || !item.scene || !(item.picked && item.picked.length);
+  }
+
+
   function soilYearlyBlockHtml(item) {
     if (item.soilYearlyError) {
       return '<div class="pa-block pa-block-error">' + escapeHtml(item.soilYearlyError) + '</div>';
@@ -2377,19 +3102,54 @@
     stopGeofarmDrawTool();
   }
 
+  /**
+   * Badge tutupan awan.
+   *
+   * Dua sumber, dan ini disengaja:
+   *  - Mode mandiri: angka diambil dari `item.scene`, yaitu citra yang benar
+   *    benar dipakai untuk menghitung piksel. Badge dan angka pasti cocok.
+   *  - Mode otomatis: angka diambil dari katalog ArcGIS yang terpisah dari
+   *    citra yang dihitung server, jadi KECIL kemungkinan besar berbeda
+   *    tanggal. Perilaku lama tidak diubah, tapi hasilnya diberi catatan
+   *    supaya tidak dibaca sebagai kepastian.
+   *
+   * Ambang kelas (10 / 30) meniru ndviCloudQuality() di ndvi-analysis.js.
+   * Fungsi itu tidak diekspor ke window, jadi ditiru di sini; kalau ambangnya
+   * diubah di sana, ubah juga di sini.
+   */
+  function cloudQuality(percent) {
+    if (!Number.isFinite(percent)) {
+      return { short: 'Tidak tersedia', color: '#78909c' };
+    }
+    if (percent <= 10) return { short: 'Baik', color: '#2e7d32' };
+    if (percent <= 30) return { short: 'Cukup', color: '#b26a00' };
+    return { short: 'Terbatas', color: '#c62828' };
+  }
+
   function cloudBadgeHtml(item) {
-    const quality = item.cloud && item.cloud.quality;
-    const percent = item.cloud ? item.cloud.cloudPercent : NaN;
+    const mandiri = item.mode === 'mandiri' && item.scene;
+    const percent = mandiri
+      ? item.scene.cloud
+      : (item.cloud ? item.cloud.cloudPercent : NaN);
+    const quality = mandiri ? cloudQuality(percent) : (item.cloud && item.cloud.quality);
     const label = quality ? quality.short : 'Tidak tersedia';
     const color = quality ? quality.color : '#78909c';
-    const value = Number.isFinite(percent) ? fmt(percent, 1) + '%' : '—';
-    return '<div class="pa-cloud">' +
-      '<span class="pa-cloud-dot" style="background:' + color + '"></span>' +
-      '<span class="pa-cloud-label">Tutupan awan</span>' +
-      '<span class="pa-cloud-value" style="color:' + color + '">' + value + '</span>' +
-      '<span class="pa-cloud-badge" style="color:' + color + ';border-color:' + color + '">' + escapeHtml(label) + '</span>' +
-      '</div>';
+    const value = Number.isFinite(percent) ? fmt(percent, 1) + '%' : '-';
+
+    let html = '<div class="pa-cloud">';
+    html += '<span class="pa-cloud-dot" style="background:' + color + '"></span>';
+    html += '<span class="pa-cloud-label">Tutupan awan</span>';
+    html += '<span class="pa-cloud-value" style="color:' + color + '">' + value + '</span>';
+    html += '<span class="pa-cloud-badge" style="color:' + color + ';border-color:' + color + '">' +
+      escapeHtml(label) + '</span>';
+    if (mandiri) {
+      html += '<span class="pa-cloud-date">citra ' + escapeHtml(item.scene.date) + '</span>';
+    } else {
+      html += '<span class="pa-cloud-caveat">estimasi katalog, bukan citra yang dipakai</span>';
+    }
+    return html + '</div>';
   }
+
 
   function ndviBlockHtml(item) {
     if (item.ndviError) {
@@ -2415,16 +3175,35 @@
       ? '<div class="pa-warn">Cakupan piksel valid ' + s.coverage.toFixed(0) + '% — sebagian area tidak memiliki data.</div>'
       : '';
 
+    /* Mode mandiri: tampilkan median sebagai angka utama dan tanggal citra.
+       Median dipakai karena tanpa SCL piksel awan tidak bisa dibedakan dari
+       tani -- nilainya sah secara matematis, jadi rerata bisa terseret ke
+       bawah. Rata-rata tetap ditampilkan sebagai pembanding. */
+    const manual = Number.isFinite(s.median);
+    const statUtama = manual
+      ? '<div class="pa-stat is-primary"><span>Median</span><b>' + fmt(s.median, 3) + '</b></div>'
+      : '';
+    const asal = manual && s.sceneDate
+      ? 'Citra ' + escapeHtml(s.sceneDate) +
+        (Number.isFinite(s.sceneCloud) ? ' · awan ' + fmt(s.sceneCloud, 1) + '%' : '') +
+        (s.resolution ? ' · ' + escapeHtml(s.resolution) : '')
+      : 'Raster ' + escapeHtml(item.rasterSize || '-') + ' · 10 m/piksel';
+
     return '<div class="pa-block">' +
       '<div class="pa-stats">' +
+        statUtama +
         '<div class="pa-stat"><span>Rata-rata</span><b>' + fmt(s.mean, 3) + '</b></div>' +
         '<div class="pa-stat"><span>Min</span><b>' + fmt(s.min, 3) + '</b></div>' +
         '<div class="pa-stat"><span>Maks</span><b>' + fmt(s.max, 3) + '</b></div>' +
         '<div class="pa-stat"><span>Piksel</span><b>' + s.count.toLocaleString('id-ID') + '</b></div>' +
       '</div>' +
       coverageNote +
+      (manual
+        ? '<div class="pa-note">Median dipakai sebagai angka utama: lebih tahan awan. ' +
+          'Nilai p10\u2013p90 ' + fmt(s.p10, 3) + ' \u2013 ' + fmt(s.p90, 3) + '.</div>'
+        : '') +
       '<div class="pa-dist">' + rows + '</div>' +
-      '<div class="pa-meta">Raster ' + escapeHtml(item.rasterSize || '-') + ' · 10 m/piksel</div>' +
+      '<div class="pa-meta">' + asal + '</div>' +
       '</div>';
   }
 
@@ -2875,7 +3654,12 @@
     // Polygon hasil unggah belum dianalisis. Section hasil disembunyikan
     // sampai analisis benar-benar dijalankan, supaya kartu tidak menampilkan
     // colorbar dan tombol tren yang belum ada artinya.
-    const analyzeBlock = item.analyzed ? '' :
+    //
+    // Di mode mandiri blok ini TIDAK ditampilkan. Wizard-nya sudah punya
+    // tombol "Hitung index terpilih", jadi dua tombol analisis berdampingan
+    // di satu kartu membuat pengguna tidak tahu mana yang dipakai -- dan
+    // yang salah akan menjalankan jalur otomatis tanpa sengaja.
+    const analyzeBlock = (item.analyzed || item.mode === 'mandiri') ? '' :
       '<div class="pa-pending">' +
         (item.analyzeBusy ? '' :
           '<div class="pa-pending-text">Belum dianalisis. Luas sudah dihitung; tekan Analisis untuk menghitung NDVI, indeks spektral, dan topografi.</div>') +
@@ -2908,9 +3692,14 @@
       // tombolnya sendiri di section terkait, dan tombol Export di kepala panel
       // baru muncul setelah semuanya selesai. Block pengingat hanya
       // menduplikasi info yang sudah ada di tempat yang lebih wajar.
-      analyzeBlock + stale + busy;
+      modePickerHtml(item) + analyzeBlock + manualBlockHtml(item) + stale + busy;
 
-    if (!item.analyzed) return cardOpen + head + cardInfo + '</div>';
+  /* ---- Kebutuhan air hanya butuh geometri polygon, bukan citra satelit,
+     jadi section ini sengaja TIDAK ikut di balik gerbang item.analyzed.
+     Kalau ikut, section baru muncul setelah Analisis (NDVI + DEM) selesai
+     -- padahal user yang baru selesai menggambar petak justru butuh ini
+     lebih dulu, dan tidak harus menunggu analisis yang berat. */
+    if (!item.analyzed) return cardOpen + head + cardInfo + airSectionHtml(item) + '</div>';
 
     return cardOpen + head + cardInfo +
       '<div class="pa-section' + (isSectionCollapsed(item, 'ndvi') ? ' is-collapsed' : '') + '">' +
@@ -2983,8 +3772,288 @@
         soilYearlyBlockHtml(item) +
         '</div>' +
       '</div>' +
+      airSectionHtml(item) +
       '</div>';
   }
+
+
+  /* Fungsi mode mandiri: dulunya tersesat di dalam cardHtml, jadi tidak
+     terlihat oleh onPanelClick dan melempar ReferenceError saat tombol
+     diklik. Dipindahkan ke scope modul. */
+  /* ---- UI dua mode analisis -------------------------------------------
+     Bentuknya mengikuti ArcGIS (design system Calcite): dua kartu opsi
+     sejajar, keadaan aktif terisi penuh bukan sekadar garis bawah, ikon 16px,
+     dan micro-label kapital. Tujuannya supaya pilihan ini terbaca sebagai
+     keputusan penting -- bukan sekadar tombol kecil di antara bagian lain. */
+
+  /* Ikon digambar inline supaya tidak menambah request HTTP dan warnanya
+     otomatis mengikuti currentColor, termasuk pada keadaan aktif. */
+  const ICON_AUTO =
+    '<svg class="pa-mode-ico" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">' +
+    '<path d="M8.9 1 3.1 8.5h3.4L5.9 15l5.9-7.7H8.2z" fill="currentColor"/></svg>';
+
+  const ICON_MANUAL =
+    '<svg class="pa-mode-ico" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">' +
+    '<path d="M1.5 4.4h4.1M8.4 4.4h6.1M1.5 11.6h2.9M7.2 11.6h7.3" stroke="currentColor" ' +
+    'stroke-width="1.3" stroke-linecap="round" fill="none"/>' +
+    '<rect x="6.6" y="2.7" width="2" height="3.4" rx="0.6" fill="currentColor"/>' +
+    '<rect x="5.1" y="9.9" width="2" height="3.4" rx="0.6" fill="currentColor"/></svg>';
+
+  function modePickerHtml(item) {
+    const auto = item.mode !== 'mandiri';
+    const opt = function (value, title, desc, ikon, aktif) {
+      return '<button class="pa-mode-opt' + (aktif ? ' is-on' : '') + '" type="button" ' +
+        'data-pa-action="set-mode" data-pa-value="' + value + '" ' +
+        'data-pa-id="' + item.id + '" aria-pressed="' + (aktif ? 'true' : 'false') + '">' +
+        ikon +
+        '<span class="pa-mode-txt">' +
+          '<span class="pa-mode-title">' + title + '</span>' +
+          '<span class="pa-mode-desc">' + desc + '</span>' +
+        '</span>' +
+        '</button>';
+    };
+    return '<div class="pa-mode">' +
+      '<div class="pa-mode-head">' +
+        '<span class="pa-mode-label">Mode analisis</span>' +
+        '<span class="pa-mode-sub">pilih cara citra diambil</span>' +
+      '</div>' +
+      '<div class="pa-mode-opts" role="group" aria-label="Mode analisis">' +
+        opt('auto', 'Otomatis', 'Citra terbaru, NDVI + 3 index', ICON_AUTO, auto) +
+        opt('mandiri', 'Mandiri',
+          'Pilih citra, awan, dan index sendiri', ICON_MANUAL, !auto) +
+      '</div>' +
+      '<p class="pa-mode-note">' + (auto
+        ? 'Otomatis memakai jalur lama. Tanggal citra tidak bisa dipilih, dan badge awan '
+          + 'hanya estimasi katalog.'
+        : 'Mandiri memakai citra yang Anda pilih. Tanggal ikut ditampilkan di setiap '
+          + 'hasil, dan badge awan berasal dari citra yang sama.') + '</p>' +
+      '</div>';
+  }
+
+  function sceneListHtml(item) {
+  if (item.sceneListBusy) {
+    return '<div class="pa-block pa-block-muted"><span class="pa-spin"></span>Mencari citra Sentinel-2 untuk area ini…</div>';
+  }
+  if (item.sceneListError) {
+    return '<div class="pa-block pa-block-error">' + escapeHtml(item.sceneListError) + '</div>';
+  }
+  if (!item.sceneList || !item.sceneList.length) return '';
+  
+  const baris = item.sceneList.map(function (s) {
+    const dipilih = item.scene && item.scene.date === s.date;
+    const cloud = Number.isFinite(s.cloud)
+      ? '<span class="pa-scene-cloud' + (s.cloud > TREND_CLOUD_HIGH ? ' is-high' : '') + '">' +
+        fmt(s.cloud, 1) + '%</span>'
+      : '<span class="pa-scene-cloud">-</span>';
+    return '<button class="pa-scene' + (dipilih ? ' is-active' : '') + '" type="button" ' +
+      'data-pa-action="pick-scene" data-pa-date="' + escapeHtml(s.date) + '" data-pa-id="' + item.id + '">' +
+      '<span class="pa-scene-date">' + escapeHtml(s.date) + '</span>' +
+      cloud +
+      '<span class="pa-scene-sat">' + escapeHtml(s.platform || '-') + '</span>' +
+      '</button>';
+  }).join('');
+  
+  return '<div class="pa-scene-list">' + baris + '</div>';
+    }
+  
+    function manualBlockHtml(item) {
+  if (item.mode !== 'mandiri') return '';
+  const picked = item.picked || [];
+  const cekIndex = PICKABLE_KEYS.map(function (key) {
+    const spec = COMPUTE_SPECS[key];
+    const on = picked.indexOf(key) !== -1;
+    return '<label class="pa-idx' + (on ? ' is-on' : '') + '">' +
+      '<input type="checkbox" data-pa-index="' + key + '" data-pa-id="' + item.id + '"' +
+      (on ? ' checked' : '') + '>' +
+      '<span class="pa-idx-name">' + escapeHtml(spec.label) + '</span>' +
+      '<span class="pa-idx-formula">' + escapeHtml(spec.formula || '') + '</span>' +
+      '</label>';
+  }).join('');
+  
+  const sceneDipilih = item.scene
+    ? '<div class="pa-block pa-scene-picked">Dipakai: <b>' + escapeHtml(item.scene.date) + '</b>' +
+      (Number.isFinite(item.scene.cloud) ? ' · awan ' + fmt(item.scene.cloud, 1) + '%' : '') +
+      (item.scene.platform ? ' · ' + escapeHtml(item.scene.platform) : '') + '</div>'
+    : '<div class="pa-block pa-block-muted">Belum ada citra dipilih.</div>';
+  
+  return '<div class="pa-pending pa-manual">' +
+    '<div class="pa-manual-step">' +
+      '<div class="pa-subhead">1. Pilih citra</div>' +
+      '<div class="pa-note">Nomor tutupan awan berasal dari metadata citra. Makin kecil, makin sedikit awan.</div>' +
+      '<div class="pa-btn-row">' +
+        '<button class="pa-btn pa-btn-ghost" type="button" data-pa-action="scenes" data-pa-id="' + item.id + '"' +
+        (item.sceneListBusy ? ' disabled' : '') + '>' +
+        (item.sceneListBusy ? 'Mencari…' : (item.sceneList ? 'Cari ulang' : 'Cari citra')) + '</button>' +
+        '<label class="pa-inline">Batas awan ' +
+          '<input class="pa-num" type="number" min="0" max="100" step="5" value="' +
+          (Number.isFinite(item.sceneCloudLimit) ? item.sceneCloudLimit : 20) + '" ' +
+          'data-pa-cloud-limit data-pa-id="' + item.id + '">%</label>' +
+        '<label class="pa-inline">Periode ' +
+          '<input class="pa-num" type="number" min="1" max="36" step="1" value="' +
+          (Number.isFinite(item.sceneMonths) ? item.sceneMonths : 6) + '" ' +
+          'data-pa-months data-pa-id="' + item.id + '">bln</label>' +
+      '</div>' +
+      sceneListHtml(item) +
+      sceneDipilih +
+    '</div>' +
+    '<div class="pa-manual-step">' +
+      '<div class="pa-subhead">2. Pilih index</div>' +
+      '<div class="pa-idx-grid">' + cekIndex + '</div>' +
+    '</div>' +
+    '<div class="pa-manual-step">' +
+      '<div class="pa-subhead">3. Jalankan</div>' +
+      '<div class="pa-btn-row">' +
+        '<button class="pa-btn pa-btn-primary" type="button" data-pa-action="run-manual" data-pa-id="' + item.id + '"' +
+        (item.runBusy || !item.scene ? ' disabled' : '') + '>' +
+        (item.runBusy ? 'Menghitung…' : 'Hitung index terpilih') + '</button>' +
+      '</div>' +
+      '<label class="pa-check"><input type="checkbox" data-pa-scl' +
+        (item.sclMask ? ' checked' : '') + ' data-pa-id="' + item.id + '">' +
+        'Masking awan per-piksel (SCL)</label>' +
+      '<div class="pa-note">SCL beresolusi 20 m, sedangkan band 10 m. Mengaktifkannya menurunkan ' +
+        'resolusi hasil ke 20 m. Nonaktif, median dipakai sebagai angka utama agar awan tidak ' +
+        'menggeser rerata.</div>' +
+      '<label class="pa-inline">Jendela piksel ' +
+        '<input class="pa-num" type="number" min="32" max="1024" step="32" value="' +
+        (Number.isFinite(item.pixelCap) ? item.pixelCap : 640) + '" data-pa-pixel-cap data-pa-id="' + item.id + '">px</label>' +
+      (item.runBusy ? '<div class="pa-block pa-block-muted"><span class="pa-spin"></span>' +
+        escapeHtml(item.busy || 'Menghitung…') + '</div>' : '') +
+      (item.manualError ? '<div class="pa-block pa-block-error">' + escapeHtml(item.manualError) + '</div>' : '') +
+      manualResultHtml(item) +
+    '</div>' +
+  '</div>';
+    }
+  
+    function manualResultHtml(item) {
+  if (!item.manualResult) return '';
+  const r = item.manualResult;
+  const scene = item.scene;
+  let html = '<div class="pa-block pa-manual-result">';
+  html += '<div class="pa-manual-head">';
+  html += 'Dari citra <b>' + escapeHtml(scene ? scene.date : '-') + '</b>';
+  if (scene && Number.isFinite(scene.cloud)) {
+    html += ' · awan ' + fmt(scene.cloud, 1) + '%';
+  }
+  html += '</div>';
+  if (r.done && r.done.length) {
+    html += '<div class="pa-note">Terhitung: ' +
+      r.done.map(function (k) { return escapeHtml(COMPUTE_SPECS[k].label); }).join(', ') + '</div>';
+  }
+  if (r.gagal && r.gagal.length) {
+    html += '<div class="pa-block pa-block-error">Gagal: ' +
+      r.gagal.map(function (k) { return escapeHtml(COMPUTE_SPECS[k].label); }).join(', ') + '</div>';
+  }
+  if (r.semuaGagal) {
+    html += '<div class="pa-note">Tidak ada index yang berhasil dihitung. Lekak pesan error di ' +
+      'section tiap index untuk melihat alasannya.</div>';
+  }
+  return html + '</div>';
+    }
+  
+    /* ---- Aksi mode mandiri ------------------------------------------------ */
+  
+    /**
+     * Ganti mode analisis satu polygon.
+     *
+     * Hasil mode sebelumnya tidak dihapus: berpindah ke mode lain lalu kembali
+     * akan mendapat hasil lama kembali utuh, dan angka yang sudah dibaca user
+     * tidak berubah diam-diam. Yang dibersihkan hanya penanda error, supaya
+     * pesan kegagalan lama tidak ikut tampil sebagai kegagalan pada mode lain.
+     */
+    function setItemMode(item, value) {
+  const next = value === 'mandiri' ? 'mandiri' : 'auto';
+  if (item.mode === next) return;
+  item.mode = next;
+  item.manualError = null;
+  if (next === 'mandiri') {
+    item.manualResult = null;
+  }
+  // Kalau sudah pernah dianalisis di mode lain, analyzed tetap true supaya
+  // section hasil ikut tampil; kalau belum, kartu tetap menampilkan wizard.
+    render();
+  }
+
+  function runSceneList(item) {
+  if (item.sceneListBusy) return;
+  item.sceneListBusy = true;
+  item.sceneListError = null;
+  item.busy = 'Mencari citra Sentinel-2…';
+  render();
+  return stacListScenes(item.bounds, {
+    cloudLimit: item.sceneCloudLimit,
+    months: item.sceneMonths
+  }).then(function (list) {
+    item.sceneList = list;
+    // Adegan terbersih langsung dipilih supaya user tidak wajib klik dua kali
+    // untuk melihat sesuatu yang jalan.
+    if (list && list.length && !item.scene) {
+      item.scene = list.reduce(function (best, s) {
+        if (!best) return s;
+        const a = Number.isFinite(best.cloud) ? best.cloud : 999;
+        const b = Number.isFinite(s.cloud) ? s.cloud : 999;
+        return b < a ? s : best;
+      }, null);
+    }
+  }).catch(function (error) {
+    item.sceneList = null;
+    item.sceneListError = error && error.message
+      ? error.message
+      : 'Gagal mencari citra untuk area ini.';
+  }).then(function () {
+    item.sceneListBusy = false;
+    item.busy = null;
+    render();
+  });
+    }
+  
+    function pickScene(item, date) {
+  if (!item.sceneList) return;
+  const found = item.sceneList.filter(function (s) { return s.date === date; })[0];
+  if (!found) return;
+  item.scene = found;
+  item.manualResult = null;
+  item.manualError = null;
+  render();
+    }
+  
+    function runManual(item) {
+  if (item.runBusy) return;
+  if (!item.scene) {
+    item.manualError = 'Pilih citra dulu pada langkah 1.';
+    render();
+    return;
+  }
+  const keys = (item.picked || []).filter(function (k) { return !!COMPUTE_SPECS[k]; });
+  if (!keys.length) {
+    item.manualError = 'Centang minimal satu index pada langkah 2.';
+    render();
+    return;
+  }
+  
+  item.runBusy = true;
+  item.manualError = null;
+  item.manualResult = null;
+  item.busy = 'Menghitung ' + keys.length + ' index dari citra ' + item.scene.date + '…';
+  render();
+  
+  return runIndexOnScene(item, keys, function (text) {
+    item.busy = text;
+    render();
+  }).then(function (hasil) {
+    item.manualResult = hasil;
+    item.manualError = hasil.done.length ? null
+      : 'Tidak ada index yang berhasil dihitung dari citra ini.';
+  }).catch(function (error) {
+    item.manualError = error && error.message ? error.message : 'Gagal menjalankan analisis.';
+  }).then(function () {
+    item.runBusy = false;
+    item.busy = null;
+    // Mode mandiri juga memunculkan section hasil, jadi tandai sudah
+    // dianalisis supaya render membuka NDVI dan indeks spektral.
+    item.analyzed = true;
+    render();
+  });
+    }
 
   function render() {
     const list = listEl();
@@ -3337,6 +4406,31 @@
           item.soilYearlyError = error && error.message ? error.message : 'Gagal memuat data kelembapan tanah tahunan.';
           render();
         });
+      return;
+    }
+
+    if (action === 'air') {
+      runAirNeed(item);
+      return;
+    }
+
+    if (action === 'set-mode') {
+      setItemMode(item, button.getAttribute('data-pa-value'));
+      return;
+    }
+
+    if (action === 'scenes') {
+      runSceneList(item);
+      return;
+    }
+
+    if (action === 'pick-scene') {
+      pickScene(item, button.getAttribute('data-pa-date'));
+      return;
+    }
+
+    if (action === 'run-manual') {
+      runManual(item);
       return;
     }
 
@@ -3706,7 +4800,11 @@
       busy: null,
       overlay: null,
       overlayVisible: false,
-      collapsed: { ndvi: false, terrain: true, soil: true, spectral: true, lst: true },
+      // air default TERUTUP dan dipisah secara visual: kebutuhan air adalah
+      // hitungan terpisah dari citra satelit, bukan bagian dari rantai
+      // NDVI/topografi. Kalau ikut terbuka, kartu jadi padat dan tombolnya
+      // terlihat tumpang tindih dengan tombol analisis citra.
+      collapsed: { ndvi: false, terrain: true, soil: true, spectral: true, lst: true, air: true },
       ndvi: null,
       ndviError: null,
       ndviTrend: null,
@@ -3721,7 +4819,31 @@
       terrain: null,
       terrainError: null,
       cloud: null,
-      cloudError: null
+      cloudError: null,
+      // Kebutuhan air tanaman (ETc = ET0 x Kc), dimuat manual
+      air: null,
+      airError: null,
+      airBusy: false,
+      airTanamanId: 'padi',
+      /* Dua mode analisis. 'auto' memakai jalur lama apa adanya (ArcGIS
+         exportImage, adegan terbaru, tiga index beruntun) dan jadi default
+         supaya tidak ada yang berubah bagi pengguna yang sudah biasa.
+         'mandiri' memakai STAC/COG: user pilih adegan dan index sendiri. */
+      mode: 'auto',
+      picked: ['ndvi', 'ndmi', 'ndwi'],
+      scene: null,
+      sceneList: null,
+      sceneListError: null,
+      sceneListBusy: false,
+      sceneCloudLimit: 20,
+      sceneMonths: 6,
+      pixelCap: 640,
+      /* SCL beresolusi 20 m sementara band 10 m. Aktifkan hanya kalau memang
+         mau masking awan per-piksel dan willing turun ke 20 m. */
+      sclMask: false,
+      runBusy: false,
+      manualResult: null,
+      manualError: null
     };
 
     /* Tiap indeks spektral -- yang otomatis maupun yang dimuat lewat tombol --
@@ -3823,6 +4945,8 @@
     // yang berada di luar #polygonAnalysisList.
     const panel = panelEl();
     if (panel) panel.addEventListener('click', onPanelClick);
+    // Select tanaman memakai event change, bukan click, jadi dibinden terpisah.
+    if (panel) panel.addEventListener('change', onPanelChange);
     bindExportMenu();
   }
 

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>tes-kebutuhan-air</title>
+<link rel="stylesheet" href="assets/css/app.css">
+<style>
+  #polygonAnalysisSidebar .pa-section-body { display: block; }
+  body { margin:0; padding:10px; background: var(--bg-primary); }
+  #out { white-space:pre-wrap; font:11px monospace; background:#fff; border:2px solid #000; padding:8px; color:#000; }
+</style>
+</head>
+<body>
+
+<!-- Dua section asli dari polygon-analysis.js. Masing-masing dibungkus
+     sendiri supaya keduanya sama-sama:first-of-type: template .pa-section
+     menghapus border/padding atas pada section pertama, jadi kalau pembanding
+     tidak dibungkus, yang dibandingkan bukan versi yang setara dan selisih
+     margin-top akan salah dibaca sebagai override. -->
+<div id="polygonAnalysisSidebar" class="pa-panel">
+  <div class="pa-slot"><div class="pa-section pa-section-air"><div class="pa-section-head"><span class="pa-section-title">Kebutuhan Air Tanaman</span><span class="pa-section-tools"><button class="pa-collapse-btn" type="button" data-pa-action="toggle-section" data-pa-id="1" data-pa-section="air" title="Ciutkan section" aria-label="Ciutkan section" aria-expanded="true"><svg class="pa-collapse-ico" viewBox="0 0 12 12" width="11" height="11" aria-hidden="true" focusable="false"><path d="M3 4.8 6 7.8l3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span></div><div class="pa-section-body"><div class="pa-note">Terpisah dari analisis citra. Butuh luas petak dan titik tengahnya saja, tidak memakai citra satelit.</div><div class="pa-air-field"><label class="pa-air-label" for="pa-air-crop-1">Tanaman</label><div class="pa-air-select-wrap"><select id="pa-air-crop-1" class="pa-air-select" data-pa-air-crop data-pa-id="1"><option value="padi">Padi</option><option value="sawit">Kelapa Sawit</option></select><svg class="pa-air-caret" viewBox="0 0 12 12" width="11" height="11" aria-hidden="true" focusable="false"><path d="M3 4.8 6 7.8l3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div><button class="pa-air-calc" type="button" data-pa-action="air" data-pa-id="1"><svg class="pa-air-calc-ico" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><rect x="3.2" y="1.4" width="9.6" height="13.2" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M5.6 1.9h4.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M5.4 8.4h5.2M5.4 11h3.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg><span>Hitung</span></button></div></div></div>
+  <div class="pa-slot"><div class="pa-section"><div class="pa-section-head"><span class="pa-section-title">NDVI</span><span class="pa-section-tools"><button class="pa-collapse-btn" type="button" data-pa-action="toggle-section" data-pa-id="undefined" data-pa-section="ndvi" title="Ciutkan section" aria-label="Ciutkan section" aria-expanded="true"><svg class="pa-collapse-ico" viewBox="0 0 12 12" width="11" height="11" aria-hidden="true" focusable="false"><path d="M3 4.8 6 7.8l3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></span></div><div class="pa-section-body"><div class="pa-note">Median dipakai sebagai angka utama.</div></div></div></div>
+</div>
+
+<div id="out">MENUNGGU</div>
+
+<script>
+(function () {
+  var lines = [], pass = 0, fail = 0;
+  function say(s) { lines.push(s); }
+  function ok(n, c, e) {
+    if (c) { pass++; lines.push('  ok   ' + n); }
+    else { fail++; lines.push('  FAIL ' + n + (e !== undefined ? '  -> ' + e : '')); }
+  }
+  function px(v) { return Math.round(parseFloat(v) * 100) / 100; }
+  function kotak(el) {
+    var c = getComputedStyle(el);
+    return {
+      bg: c.backgroundColor,
+      border: c.borderTopWidth + ' ' + c.borderTopColor,
+      radius: c.borderTopLeftRadius,
+      left: c.borderLeftWidth,
+      top: c.borderTopWidth,
+      marginTop: c.marginTop,
+      padTop: c.paddingTop
+    };
+  }
+
+  try {
+    var air = document.querySelector('.pa-section-air');
+    var ndvi = document.querySelectorAll('.pa-slot')[1].querySelector('.pa-section');
+    var note = air.querySelector('.pa-note');
+    var label = air.querySelector('.pa-air-label');
+    var sel = air.querySelector('.pa-air-select');
+    var caret = air.querySelector('.pa-air-caret');
+    var btn = air.querySelector('.pa-air-calc');
+    var ico = air.querySelector('.pa-air-calc-ico');
+    var body = air.querySelector('.pa-section-body');
+    var refNote = ndvi.querySelector('.pa-note');
+    var refBody = ndvi.querySelector('.pa-section-body');
+
+    say('0. Sectionndibangkitkan dari fungsi asli');
+    ok('section air ada', !!air);
+    ok('section pembanding (NDVI) ada', !!ndvi);
+    ok('section air memakai kelas pa-section yang sama', air.className.indexOf('pa-section') === 0, air.className);
+    ok('kelas pa-air-note lama sudah tidak dipakai',
+      air.innerHTML.indexOf('pa-air-note') === -1, 'masih ada di markup');
+
+    say('');
+    say('1. KOTAK SECTION: sama persis dengan section lain');
+    var ka = kotak(air), kn = kotak(ndvi);
+    say('  air : bg=' + ka.bg + ' border=' + ka.border + ' r=' + ka.radius);
+    say('  ndvi: bg=' + kn.bg + ' border=' + kn.border + ' r=' + kn.radius);
+    ok('latar sama', ka.bg === kn.bg, ka.bg + ' vs ' + kn.bg);
+    ok('border sama', ka.border === kn.border, ka.border + ' vs ' + kn.border);
+    ok('radius sama', ka.radius === kn.radius, ka.radius + ' vs ' + kn.radius);
+    ok('TIDAK ada garis aksen di kiri', parseFloat(ka.left) === 0, ka.left);
+    ok('TIDAK ada latar khusus', ka.bg === kn.bg, ka.bg);
+    ok('jarak atas sama seperti section lain', px(ka.marginTop) === px(kn.marginTop), ka.marginTop + ' vs ' + kn.marginTop);
+    ok('padding atas sama seperti section lain', px(ka.padTop) === px(kn.padTop), ka.padTop + ' vs ' + kn.padTop);
+
+    say('');
+    say('2. CATATAN: kelas template .pa-note, tanpa kotak sendiri');
+    ok('catatan ada', !!note);
+    ok('catatan teksnya utuh', note.textContent.indexOf('Terpisah dari analisis citra') === 0);
+    var cn = kotak(note), cr = kotak(refNote);
+    say('  air : bg=' + cn.bg + ' borderL=' + cn.left + ' font=' + getComputedStyle(note).fontSize);
+    say('  ndvi: bg=' + cr.bg + ' borderL=' + cr.left + ' font=' + getComputedStyle(refNote).fontSize);
+    ok('catatan pakai .pa-note (kelas yang sama dengan section lain)',
+      note.className === refNote.className, note.className + ' vs ' + refNote.className);
+    ok('ukuran huruf catatan sama dengan catatan section lain',
+      getComputedStyle(note).fontSize === getComputedStyle(refNote).fontSize,
+      getComputedStyle(note).fontSize + ' vs ' + getComputedStyle(refNote).fontSize);
+    ok('catatan TIDAK punya garis aksen di kiri', parseFloat(cn.left) === 0, cn.left);
+    ok('catatan sejajar kiri dengan body section',
+      Math.abs(note.getBoundingClientRect().left - body.getBoundingClientRect().left) < 1,
+      Math.round(note.getBoundingClientRect().left) + ' vs ' + Math.round(body.getBoundingClientRect().left));
+
+    say('');
+    say('3. LABEL Tanaman: sejajar dengan isi section');
+    ok('label ada', !!label);
+    ok('label tidak diindent', parseFloat(getComputedStyle(label).marginLeft) === 0,
+      getComputedStyle(label).marginLeft);
+    ok('label mulai di kolom yang sama dengan isi body',
+      Math.abs(label.getBoundingClientRect().left - body.getBoundingClientRect().left) < 1,
+      Math.round(label.getBoundingClientRect().left) + ' vs ' + Math.round(body.getBoundingClientRect().left));
+    ok('label kapital (gaya ArcGIS)', getComputedStyle(label).textTransform === 'uppercase',
+      getComputedStyle(label).textTransform);
+    ok('label punya letter-spacing', parseFloat(getComputedStyle(label).letterSpacing) > 0,
+      getComputedStyle(label).letterSpacing);
+
+    say('');
+    say('4. SELECT tanaman: penuh, tidak terpotong');
+    var rSel = sel.getBoundingClientRect();
+    say('  ' + Math.round(rSel.width) + 'x' + Math.round(rSel.height) + 'px  font=' + getComputedStyle(sel).fontSize);
+    ok('select mengisi lebar body',
+      Math.abs(rSel.width - body.getBoundingClientRect().width) < 3,
+      Math.round(rSel.width) + ' vs ' + Math.round(body.getBoundingClientRect().width));
+    ok('select cukup tinggi untuk disentuh (> 28px)', rSel.height > 28, Math.round(rSel.height) + 'px');
+    ok('caret tidak menutupi teks select', getComputedStyle(sel).paddingRight !== '0px',
+      getComputedStyle(sel).paddingRight);
+    ok('caret ada dan tidak capturing klik', caret && getComputedStyle(caret).pointerEvents === 'none');
+
+    say('');
+    say('5. TOMBOL Hitung: geometri mengikuti .pa-btn');
+    var rBtn = btn.getBoundingClientRect();
+    var cb = getComputedStyle(btn);
+    say('  ' + Math.round(rBtn.width) + 'x' + Math.round(rBtn.height) + 'px  r=' + cb.borderRadius
+      + '  font=' + cb.fontSize + '  pad=' + cb.padding);
+    ok('tombol filled', !!btn);
+    ok('tombol teksnya "Hitung"', /Hitung/.test(btn.textContent));
+    ok('tombol punya ikon', !!ico);
+    ok('tombol solid accent (aksen utama, bukan ghost)',
+      cb.backgroundColor === getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()
+      || cb.backgroundColor === 'rgb(8, 145, 178)', cb.backgroundColor);
+    ok('radius tombol sama dengan .pa-btn (7px)', parseFloat(cb.borderRadius) === 7, cb.borderRadius);
+    ok('radius tombol sama dengan tombol section lain',
+      cb.borderRadius === getComputedStyle(document.querySelector('.pa-btn, .pa-air-calc')).borderRadius,
+      cb.borderRadius);
+    ok('ukuran huruf tombol sama dengan .pa-btn (10.5px)', cb.fontSize === '10.5px', cb.fontSize);
+    ok('jarak atas tombol sama dengan .pa-btn (7px)', parseFloat(cb.marginTop) === 7, cb.marginTop);
+    ok('tombol bisa disentuh (>= 24px)', rBtn.height >= 24, Math.round(rBtn.height) + 'px');
+  } catch (e) {
+    lines.push('ERROR HARNESS: ' + e.message);
+    lines.push('  ' + (e.stack || '').split('\n').slice(0, 4).join('\n  '));
+  }
+  lines.push('');
+  lines.push((fail === 0 ? 'SEMUA LULUS' : 'ADA YANG GAGAL') + ': ' + pass + ' lulus, ' + fail + ' gagal');
+  document.getElementById('out').textContent = lines.join('\n');
+})();
+</script>
+</body></html>

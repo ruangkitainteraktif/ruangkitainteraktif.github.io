@@ -858,6 +858,25 @@
   }
 
   /* ── Open Attribute Table ── */
+
+  /* Judul sheet selalu "Tabel". Panel ini dipakai bersama untuk semua tabel
+     atribut (vector, WMS, raster, GeoJSON, cluster, foto udara), sehingga
+     judul per-lapisan hanya membuat judul yang berbeda-beda. Nama layer yang
+     dulunya jadi judul tidak dibuang: dipindah ke subjudul di dalam body
+     (atLayerSubtitle) supaya user tetap tahu sedang melihat tabel apa. */
+  function setAttrSheetTitle() {
+    var el = document.getElementById('atSheetTitleText');
+    if (el) el.textContent = 'Tabel';
+  }
+
+    function atLayerSubtitle(name) {
+      var teks = name == null ? '' : String(name).trim();
+      if (!teks) return '';
+      // Nama layer berasal dari katalog dan bisa berisi HTML, jadi harus
+      // di-escape sebelum disisipkan.
+      return '<div class="at-layer-subtitle">' + escAttr(teks) + '</div>';
+    }
+
   function openAttrTable(toggleId) {
     var sheet = document.getElementById('attr-table-sheet');
     if (!sheet) return;
@@ -886,7 +905,7 @@
     _currentPage = 1;
     _searchQuery = '';
 
-    document.getElementById('atSheetTitleText').textContent = config.name;
+    setAttrSheetTitle();
     var backBtn = document.getElementById('atSheetBackBtn');
     if (backBtn) backBtn.style.display = '';
     sheet.classList.add('attr-table-sheet-open');
@@ -911,7 +930,7 @@
     var sheet = document.getElementById('attr-table-sheet');
     if (!sheet) return;
 
-    document.getElementById('atSheetTitleText').textContent = config.name;
+    setAttrSheetTitle();
     var backBtn = document.getElementById('atSheetBackBtn');
     if (backBtn) backBtn.style.display = '';
     sheet.classList.add('attr-table-sheet-open');
@@ -923,7 +942,7 @@
     document.body.classList.remove('attr-table-sheet-minimized');
 
     var content = document.getElementById('at-sheet-content');
-    content.innerHTML =
+    content.innerHTML = atLayerSubtitle(config.name) +
       '<div class="at-wms-hint">' +
         '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' +
         '<span>Klik di peta untuk melihat atribut layer ini.</span>' +
@@ -1189,6 +1208,11 @@
 
     var html = '';
 
+    // Nama layer sebagai subjudul. Sebelumnya ini jadi judul sheet; sekarang
+    // judul sheet seragam "Tabel" dan nama layer pindah ke sini, supaya tidak
+    // ada informasi yang hilang saat panel ini dipakai bersama semua layer.
+    html += atLayerSubtitle(_currentLayer && _currentLayer.config ? _currentLayer.config.name : '');
+
     html += '<div class="at-controls">';
     html += '<input type="text" class="at-search" id="atSearchInput" placeholder="Cari fitur..." value="' + escAttr(_searchQuery) + '" />';
     html += '<div class="at-info">' + all.length + ' fitur';
@@ -1244,6 +1268,19 @@
 
     content.querySelectorAll('.at-row').forEach(function (row) {
       row.addEventListener('click', function () {
+        // Detail fitur selalu dibuka, walau baris ini tidak punya koordinat.
+        // Sebelumnya handler hanya bergerak ke peta, jadi klik pada tabel tanpa
+        // geometri terlihat seperti tidak terjadi apa-apa.
+        var idx = parseInt(row.dataset.idx, 10);
+        if (!isFinite(idx)) return;
+        // Baris lain yang aktif dilepas lebih dulu, jadi hanya satu baris
+        // yang pernah ditandai menyala.
+        content.querySelectorAll('.at-row-active').forEach(function (r) {
+          r.classList.remove('at-row-active');
+        });
+        var tampil = openFeatureDetailByIndex(idx);
+        if (!tampil) return;
+        row.classList.add('at-row-active');
         var lat = parseFloat(row.dataset.lat);
         var lng = parseFloat(row.dataset.lng);
         if (isFinite(lat) && isFinite(lng)) {
@@ -1264,6 +1301,94 @@
         }
       });
     });
+  }
+
+  /* ── Detail fitur (diklik dari baris tabel) ───────────────────────────
+     Setiap baris sudah membawa data-idx sejak awal, tapi nilainya tidak pernah
+     dipakai: klik baris hanya menggerakkan peta dan menandai baris. Karena itu
+     atribut lengkap fitur tidak pernah terlihat. Indeks itu sekarang dipakai
+     untuk membuka panel detail di dalam sheet.
+
+     Detail sengaja tidak disimpan sebagai state. Kalau indeks disimpan lalu
+     dipakai ulang setelah pengguna mengetik di pencarian, indeks itu menunjuk
+     fitur yang berbeda sehingga detail menampilkan atribut yang salah. Jadi
+     panel hidup sebentar saja: begitu sheet digambar ulang (cari, pindah
+     halaman, ganti layer) panel ikut hilang karena .at-sheet-content
+     ditulis ulang dari awal. */
+
+  function labelAttrValue(val) {
+    if (val == null || val === '') return '-';
+    if (typeof val === 'object') {
+      try { return JSON.stringify(val); } catch (e) { return String(val); }
+    }
+    return String(val);
+  }
+
+  function featureDetailHtml(feature) {
+    if (!feature) return '';
+    // Hasil GetFeatureInfo dibungkus { attributes: {...} }. Kalau tidak
+    // diratakan, panel detail hanya menampilkan satu baris berisi JSON --
+    // tidak berguna untuk dibaca pengguna.
+    var src = feature;
+    if (feature.attributes && typeof feature.attributes === 'object' && !feature.properties) {
+      src = feature.attributes;
+    } else if (feature.properties && typeof feature.properties === 'object' && Object.keys(feature).length === 1) {
+      src = feature.properties;
+    }
+    var rows = '';
+    Object.keys(src).forEach(function (k) {
+      // Kunci internal (diawali garis bawah) bukan bagian dari atribut.
+      if (!k || k.charAt(0) === '_') return;
+      rows += '<div class="at-detail-row">'
+        + '<span class="at-detail-key" title="' + escAttr(k) + '">' + escAttr(k) + '</span>'
+        + '<span class="at-detail-val">' + escAttr(labelAttrValue(src[k])) + '</span>'
+        + '</div>';
+    });
+    if (!rows) {
+      rows = '<div class="at-empty">Fitur ini tidak punya kolom atribut.</div>';
+    }
+    return '<div class="at-detail" id="atFeatureDetail">'
+      + '<div class="at-detail-head">'
+        + '<span class="at-detail-title">Detail fitur</span>'
+        + '<button class="at-detail-close" type="button" aria-label="Tutup detail fitur"'
+        + ' onclick="closeAttrFeatureDetail()">&times;</button>'
+      + '</div>'
+      + rows
+      + '</div>';
+  }
+
+  function closeAttrFeatureDetail() {
+    var el = document.getElementById('atFeatureDetail');
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+    var content = document.getElementById('at-sheet-content');
+    if (content) {
+      content.querySelectorAll('.at-row-active').forEach(function (r) {
+        r.classList.remove('at-row-active');
+      });
+    }
+  }
+  window.closeAttrFeatureDetail = closeAttrFeatureDetail;
+
+  function openFeatureDetailByIndex(idx) {
+    if (idx == null || !isFinite(idx)) return null;
+    var all = getFilteredFeatures(_currentFeatures);
+    var feature = all[idx];
+    if (!feature) return null;
+    var content = document.getElementById('at-sheet-content');
+    if (!content) return null;
+    var lama = document.getElementById('atFeatureDetail');
+    if (lama && lama.parentNode) lama.parentNode.removeChild(lama);
+
+    var holder = document.createElement('div');
+    holder.innerHTML = featureDetailHtml(feature);
+    var detail = holder.firstElementChild;
+    if (!detail) return null;
+    var tabel = content.querySelector('.at-table-wrap');
+    // Disisipkan tepat sebelum tabel supaya tidak tersembunyi di bawah
+    // navigasi halaman, dan tetap terlihat tanpa harus menggulir ke bawah.
+    if (tabel && tabel.parentNode) tabel.parentNode.insertBefore(detail, tabel);
+    else content.insertBefore(detail, content.firstChild);
+    return feature;
   }
 
   /* ── Highlight marker on map ── */
@@ -1377,7 +1502,6 @@
   function renderWmsResults(features) {
     var content = document.getElementById('at-sheet-content');
     if (!content) return;
-
     var allProps = {};
     features.forEach(function (f) {
       var attrs = f.attributes || f.properties || {};
@@ -1392,15 +1516,36 @@
     html += '<thead><tr>';
     props.forEach(function (p) { html += '<th>' + escAttr(p) + '</th>'; });
     html += '</tr></thead><tbody>';
-    features.forEach(function (f) {
+    features.forEach(function (f, i) {
       var attrs = f.attributes || f.properties || {};
-      html += '<tr>';
+      // Baris WMS juga diberi kelas .at-row dan data-idx supaya handler klik
+      // yang sama berlaku. Sebelumnya baris ini tanpa handler sama sekali,
+      // jadi klik di tabel hasil GetFeatureInfo tidak melakukan apa pun.
+      html += '<tr class="at-row" data-idx="' + i + '">';
       props.forEach(function (p) { html += '<td title="' + escAttr(attrs[p]) + '">' + escAttr(attrs[p]) + '</td>'; });
       html += '</tr>';
     });
     html += '</tbody></table></div>';
 
     content.innerHTML = html;
+
+    // Handler klik untuk tabel hasil WMS. openFeatureDetailByIndex() membaca
+    // dari _currentFeatures; di sini sumber datanya `features`, jadi
+    // _currentFeatures disetel dulu agar keduanya membaca daftar yang sama.
+    // GetFeatureInfo tidak mengembalikan geometri per fitur, jadi tidak ada
+    // flyTo -- cukup panel detailnya.
+    _currentFeatures = features;
+    content.querySelectorAll('.at-row').forEach(function (row) {
+      row.addEventListener('click', function () {
+        var idx = parseInt(row.dataset.idx, 10);
+        if (!isFinite(idx)) return;
+        content.querySelectorAll('.at-row-active').forEach(function (r) {
+          r.classList.remove('at-row-active');
+        });
+        if (!openFeatureDetailByIndex(idx)) return;
+        row.classList.add('at-row-active');
+      });
+    });
   }
 
   /* ── Unified Attribute Table Picker ── */
@@ -1449,9 +1594,11 @@
     _currentFeatures = [];
     _searchQuery = '';
 
-    document.getElementById('atSheetTitleText').textContent = 'Semua Tabel Atribut';
-    var backBtn = document.getElementById('atSheetBackBtn');
-    if (backBtn) backBtn.style.display = 'none';
+  // Judul sheet tetap sama supaya konsisten dengan tampilan satu tabel.
+  setAttrSheetTitle();
+  var backBtn = document.getElementById('atSheetBackBtn');
+  // Sedang menampilkan daftar, jadi tombol "kembali ke daftar" disembunyikan.
+  if (backBtn) backBtn.style.display = 'none';
 
     sheet.classList.add('attr-table-sheet-open');
     sheet.classList.remove('attr-table-sheet-minimized');
@@ -1478,6 +1625,8 @@
     cats.sort(function (a, b) { return a.localeCompare(b, 'id'); });
     types.sort(function (a, b) { return a.localeCompare(b, 'id'); });
 
+    // Tanpa subjudul: daftar ini bukan satu layer, jadi nama layer tidak
+    // berlaku. Jumlah tabel sudah tampil sendiri di baris info di bawah.
     var html = '<div class="at-picker-toolbar">' +
       '<input type="text" class="at-picker-search" id="atPickerSearch" placeholder="Cari layer…" autocomplete="off">' +
       '<div class="at-picker-filters">' +
