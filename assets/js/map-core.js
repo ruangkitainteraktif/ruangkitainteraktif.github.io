@@ -906,15 +906,12 @@ L.control.scale({
         wrap.classList.toggle('map-fab-open');
         var ctrlContainer = wrap.closest('.leaflet-bottom.leaflet-right');
         if (ctrlContainer) ctrlContainer.classList.toggle('map-fab-active');
-        if (document.body.classList.contains('geotools-sheet-open') && !document.getElementById('geotools-sheet').classList.contains('gs-sheet-minimized')) {
-          minimizeGeotoolsSheet();
-        }
-        if (document.body.classList.contains('geopangan-sheet-open') && !document.body.classList.contains('geopangan-sheet-minimized')) {
-          toggleGeopanganMinimize();
-        }
-        if (document.body.classList.contains('hotspot-sheet-open') && !document.body.classList.contains('hotspot-sheet-minimized')) {
-          toggleHotspotMinimize();
-        }
+        /* Membuka FAB mengecilkan sheet yang sedang mengembang, bukan
+           menutupnya, supaya hasil kerja user tidak hilang. Tiga blok if
+           yang sebelumnya menduplikasi cek yang sama sekarang satu
+           panggilan. SheetDrag.minimize() bukan toggle, jadi sheet yang
+           sudah jadi chip tidak akan terbalik terbuka. */
+        if (window.SheetDrag) window.SheetDrag.minimizeTerbuka();
       });
       wrap.appendChild(items);
       wrap.appendChild(btn);
@@ -1135,52 +1132,35 @@ L.control.scale({
   });
   new ZoomControl().addTo(map);
 
-  // Draw & Measure Sidebar
-  var _drawSidebarMinimized = false;
+  /* ── Draw & Measure Sidebar ──
+     State buka/tutup/minimal dimiliki assets/js/sheet-drag.js supaya
+     gestur geser tinggi dan aturan sembunyikan navigasi bawah memakai
+     sumber kebenaran yang sama. Yang tersisa di sini hanya nama fungsi
+     lamakan: index.html masih punya 11 pemanggilan onclick inline ke
+     closeDrawSidebar, jadi namanya tidak boleh hilang. */
+  window.SheetDrag && window.SheetDrag.register('dm', {
+    el: 'drawSidebar',
+    openClass: 'dm-sidebar-open',
+    minClass: 'dm-sidebar-minimized',
+    bodyOpen: 'dm-sidebar-open',
+    bodyMin: 'dm-sidebar-minimized',
+    handle: '.sheet-drag-handle',
+    header: '.dm-sidebar-head',
+    minButton: '.dm-sidebar-minimize',
+    labelMin: 'Minimalkan',
+    labelOpen: 'Perluas Gambar & Ukur'
+  });
 
-  function openDrawSidebar() {
-    var sb = document.getElementById('drawSidebar');
-    if (!sb) return;
-    _drawSidebarMinimized = false;
-    sb.classList.remove('dm-sidebar-minimized');
-    sb.classList.add('dm-sidebar-open');
-    document.body.classList.add('dm-sidebar-open');
-  }
+  function openDrawSidebar() { if (window.SheetDrag) window.SheetDrag.buka('dm'); }
+  function closeDrawSidebar() { if (window.SheetDrag) window.SheetDrag.close('dm'); }
+  // toggleMinimize, bukan minimize: fungsi inilah yang terikat ke tombol
+  // minimize. Kalau minimize() (idempoten) yang dipakai, sekali sheet jadi
+  // chip tombolnya mati dan tidak ada jalan expand dari sana.
+  function minimizeDrawSidebar() { if (window.SheetDrag) window.SheetDrag.toggleMinimize('dm'); }
+  function restoreDrawSidebar() { if (window.SheetDrag) window.SheetDrag.restore('dm'); }
   window.openDrawSidebar = openDrawSidebar;
-
-  function closeDrawSidebar() {
-    var sb = document.getElementById('drawSidebar');
-    if (!sb) return;
-    sb.classList.remove('dm-sidebar-open', 'dm-sidebar-minimized');
-    _drawSidebarMinimized = false;
-    document.body.classList.remove('dm-sidebar-open', 'dm-sidebar-minimized');
-  }
   window.closeDrawSidebar = closeDrawSidebar;
-
-  function minimizeDrawSidebar() {
-    var sb = document.getElementById('drawSidebar');
-    if (!sb) return;
-    _drawSidebarMinimized = !_drawSidebarMinimized;
-    sb.classList.toggle('dm-sidebar-minimized', _drawSidebarMinimized);
-    document.body.classList.toggle('dm-sidebar-minimized', _drawSidebarMinimized);
-    if (!_drawSidebarMinimized) {
-      sb.classList.add('dm-sidebar-open');
-      document.body.classList.add('dm-sidebar-open');
-    } else {
-      document.body.classList.remove('dm-sidebar-open');
-    }
-  }
   window.minimizeDrawSidebar = minimizeDrawSidebar;
-
-  function restoreDrawSidebar() {
-    var sb = document.getElementById('drawSidebar');
-    if (!sb) return;
-    _drawSidebarMinimized = false;
-    sb.classList.remove('dm-sidebar-minimized');
-    sb.classList.add('dm-sidebar-open');
-    document.body.classList.remove('dm-sidebar-minimized');
-    document.body.classList.add('dm-sidebar-open');
-  }
   window.restoreDrawSidebar = restoreDrawSidebar;
 
   const DrawFABControl = L.Control.extend({
@@ -1214,70 +1194,42 @@ L.control.scale({
     }
   })();
 
-  // Legend Sidebar
-  var _legendSidebarMinimized = false;
-
-  function openLegendSidebar() {
-    var sb = document.getElementById('legendSidebar');
-    var body = document.getElementById('legendSidebarBody');
-    if (!sb || !body) return;
-    _legendSidebarMinimized = false;
-    sb.classList.remove('lg-sidebar-minimized');
-    sb.classList.add('lg-sidebar-open');
-    document.body.classList.add('lg-sidebar-open');
-    // Move legend content from unified legend to sidebar
-    var legendBody = document.querySelector('.legend-body');
-    if (legendBody && legendBody.children.length > 0) {
-      while (legendBody.firstChild) {
-        body.appendChild(legendBody.firstChild);
-      }
-    }
-  }
-  window.openLegendSidebar = openLegendSidebar;
-
-  function closeLegendSidebar() {
-    var sb = document.getElementById('legendSidebar');
-    var body = document.getElementById('legendSidebarBody');
-    if (!sb) return;
-    sb.classList.remove('lg-sidebar-open', 'lg-sidebar-minimized');
-    _legendSidebarMinimized = false;
-    document.body.classList.remove('lg-sidebar-open', 'lg-sidebar-minimized');
-    // Move legend content back to unified legend
-    if (body) {
+  /* ── Legend Sidebar ──
+     Estado sheet milik sheet-drag.js; di sini hanya perpindahan konten
+     legenda antara sidebar dan legenda terpadu. */
+  window.SheetDrag && window.SheetDrag.register('lg', {
+    el: 'legendSidebar',
+    openClass: 'lg-sidebar-open',
+    minClass: 'lg-sidebar-minimized',
+    bodyOpen: 'lg-sidebar-open',
+    bodyMin: 'lg-sidebar-minimized',
+    handle: '.sheet-drag-handle',
+    header: '.lg-sidebar-head',
+    minButton: '.lg-sidebar-minimize',
+    labelMin: 'Minimalkan',
+    labelOpen: 'Perluas Legenda',
+    onOpen: function () {
+      var body = document.getElementById('legendSidebarBody');
       var legendBody = document.querySelector('.legend-body');
-      if (legendBody) {
-        while (body.firstChild) {
-          legendBody.appendChild(body.firstChild);
-        }
+      if (body && legendBody && legendBody.children.length > 0) {
+        while (legendBody.firstChild) body.appendChild(legendBody.firstChild);
       }
+    },
+    onClose: function () {
+      var body = document.getElementById('legendSidebarBody');
+      if (!body) return;
+      var legendBody = document.querySelector('.legend-body');
+      if (legendBody) while (body.firstChild) legendBody.appendChild(body.firstChild);
     }
-  }
+  });
+
+  function openLegendSidebar() { if (window.SheetDrag) window.SheetDrag.buka('lg'); }
+  function closeLegendSidebar() { if (window.SheetDrag) window.SheetDrag.close('lg'); }
+  function minimizeLegendSidebar() { if (window.SheetDrag) window.SheetDrag.toggleMinimize('lg'); }
+  function restoreLegendSidebar() { if (window.SheetDrag) window.SheetDrag.restore('lg'); }
+  window.openLegendSidebar = openLegendSidebar;
   window.closeLegendSidebar = closeLegendSidebar;
-
-  function minimizeLegendSidebar() {
-    var sb = document.getElementById('legendSidebar');
-    if (!sb) return;
-    _legendSidebarMinimized = !_legendSidebarMinimized;
-    sb.classList.toggle('lg-sidebar-minimized', _legendSidebarMinimized);
-    document.body.classList.toggle('lg-sidebar-minimized', _legendSidebarMinimized);
-    if (!_legendSidebarMinimized) {
-      sb.classList.add('lg-sidebar-open');
-      document.body.classList.add('lg-sidebar-open');
-    } else {
-      document.body.classList.remove('lg-sidebar-open');
-    }
-  }
   window.minimizeLegendSidebar = minimizeLegendSidebar;
-
-  function restoreLegendSidebar() {
-    var sb = document.getElementById('legendSidebar');
-    if (!sb) return;
-    _legendSidebarMinimized = false;
-    sb.classList.remove('lg-sidebar-minimized');
-    sb.classList.add('lg-sidebar-open');
-    document.body.classList.remove('lg-sidebar-minimized');
-    document.body.classList.add('lg-sidebar-open');
-  }
   window.restoreLegendSidebar = restoreLegendSidebar;
 
   // Legend sidebar title click to restore when minimized
@@ -2331,7 +2283,9 @@ L.control.scale({
         if (!btn) return;
         if (c.type === 'sheet') {
           var sheet = document.getElementById('hotspot-sheet');
-          btn.classList.toggle('active', !!(sheet && sheet.classList.contains('sheet-open')));
+          /* Sheet yang diminimalkan tetap menyisakan sheet-open, jadi kedua
+             kelas dicek supaya tombol toolbar tidak menyala untuk chip. */
+          btn.classList.toggle('active', !!(sheet && sheet.classList.contains('sheet-open') && !sheet.classList.contains('sheet-minimized')));
         } else if (c.type === 'checkbox') {
           var cb = document.getElementById(c.target);
           btn.classList.toggle('active', !!(cb && cb.checked));
@@ -2522,61 +2476,52 @@ L.control.scale({
      GeoTools Bottom Sheet (FAB)
      ═══════════════════════════════════════ */
 
-  var _geotoolsSheetOpen = false;
-
-  function openGeotoolsSheet() {
-    var sheet = document.getElementById('geotools-sheet');
-    var body = document.getElementById('geotoolsSheetBody');
-    var tabContent = document.getElementById('tab-geotools');
-    if (!sheet || !body || !tabContent) return;
-    if (!sheet.dataset.moved) {
+  /* ── GeoTools sheet ──
+     Repo ini tidak punya build, jadi isi tab dipindah secara fisik
+     dari #tab-geotools ke dalam sheet saat pertama dibuka dan dikembalikan
+     saat ditutup. Sheet GeoFarm ikut terbawa karena #geotoolsTabGeoFarm
+     juga anak dari #tab-geotools; panelnya sendiri position fixed, jadi
+     tetap tampil di atas meski berkedalaman DOM-nya di dalam sheet. */
+  window.SheetDrag && window.SheetDrag.register('geotools', {
+    el: 'geotools-sheet',
+    openClass: 'gs-sheet-open',
+    minClass: 'gs-sheet-minimized',
+    bodyOpen: 'geotools-sheet-open',
+    bodyMin: 'geotools-sheet-minimized',
+    handle: '.gs-sheet-handle',
+    header: '.gs-sheet-head',
+    minButton: '.gs-sheet-minimize',
+    labelMin: 'Minimalkan',
+    labelOpen: 'Perluas GeoTools',
+    onOpen: function () {
+      var body = document.getElementById('geotoolsSheetBody');
+      var tabContent = document.getElementById('tab-geotools');
+      var sheet = document.getElementById('geotools-sheet');
+      if (!body || !tabContent || !sheet || sheet.dataset.moved) return;
       while (tabContent.firstChild) body.appendChild(tabContent.firstChild);
       sheet.dataset.moved = '1';
-    }
-    sheet.classList.add('gs-sheet-open');
-    document.body.classList.add('geotools-sheet-open');
-    _geotoolsSheetOpen = true;
-  }
-
-  function closeGeotoolsSheet() {
-    var sheet = document.getElementById('geotools-sheet');
-    var body = document.getElementById('geotoolsSheetBody');
-    var tabContent = document.getElementById('tab-geotools');
-    if (!sheet || !body || !tabContent) return;
-    sheet.classList.remove('gs-sheet-open', 'gs-sheet-minimized');
-    document.body.classList.remove('geotools-sheet-open');
-    _geotoolsSheetOpen = false;
-    if (typeof window.clearGeopanganLayers === 'function') {
-      try { window.clearGeopanganLayers(); } catch (e) {}
-    }
-    if (sheet.dataset.moved) {
+    },
+    onClose: function () {
+      var body = document.getElementById('geotoolsSheetBody');
+      var tabContent = document.getElementById('tab-geotools');
+      var sheet = document.getElementById('geotools-sheet');
+      if (!body || !tabContent || !sheet) return;
+      if (typeof window.clearGeopanganLayers === 'function') {
+        try { window.clearGeopanganLayers(); } catch (e) { /* lapis lain tetap jalan */ }
+      }
+      if (!sheet.dataset.moved) return;
       while (body.firstChild) tabContent.appendChild(body.firstChild);
       delete sheet.dataset.moved;
     }
-  }
+  });
+
+  function openGeotoolsSheet() { if (window.SheetDrag) window.SheetDrag.buka('geotools'); }
+  function closeGeotoolsSheet() { if (window.SheetDrag) window.SheetDrag.close('geotools'); }
+  function minimizeGeotoolsSheet() { if (window.SheetDrag) window.SheetDrag.toggleMinimize('geotools'); }
+  function restoreGeotoolsSheet() { if (window.SheetDrag) window.SheetDrag.restore('geotools'); }
+  window.openGeotoolsSheet = openGeotoolsSheet;
   window.closeGeotoolsSheet = closeGeotoolsSheet;
-
-  var _geotoolsMinimized = false;
-
-  function minimizeGeotoolsSheet() {
-    var sheet = document.getElementById('geotools-sheet');
-    if (!sheet) return;
-    _geotoolsMinimized = !_geotoolsMinimized;
-    sheet.classList.toggle('gs-sheet-minimized', _geotoolsMinimized);
-    sheet.classList.toggle('gs-sheet-open', !_geotoolsMinimized);
-    document.body.classList.toggle('geotools-sheet-minimized', _geotoolsMinimized);
-  }
   window.minimizeGeotoolsSheet = minimizeGeotoolsSheet;
-
-  function restoreGeotoolsSheet() {
-    var sheet = document.getElementById('geotools-sheet');
-    if (!sheet) return;
-    _geotoolsMinimized = false;
-    sheet.classList.remove('gs-sheet-minimized');
-    sheet.classList.add('gs-sheet-open');
-    document.body.classList.add('geotools-sheet-open');
-    document.body.classList.remove('geotools-sheet-minimized');
-  }
   window.restoreGeotoolsSheet = restoreGeotoolsSheet;
 
   /* ── Export TIF FAB (viewport GeoTIFF) ── */
@@ -3706,8 +3651,12 @@ L.control.scale({
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
         if (_layerCatalogOpen) closeLayerCatalog();
-        if (_geotoolsMinimized) { minimizeGeotoolsSheet(); }
-        else if (_geotoolsSheetOpen) closeGeotoolsSheet();
+        /* Escape.yml::first dari minimal_chipik lalu restore, baru tutup.
+           Dulu urutan ini bergantung pada dua variabel lokal yang sekarang
+           sudah tidak ada; state-nya dibaca dari sheet-drag. */
+        if (!window.SheetDrag) return;
+        if (window.SheetDrag.isMinimized('geotools')) window.SheetDrag.restore('geotools');
+        else if (window.SheetDrag.isOpen('geotools')) closeGeotoolsSheet();
       }
     });
 

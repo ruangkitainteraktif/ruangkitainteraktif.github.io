@@ -67,7 +67,11 @@ function addDrawActionsControl() {
 
 function isDrawSidebarOpen() {
   const sidebar = document.getElementById('drawSidebar');
-  return !!sidebar && sidebar.classList.contains('dm-sidebar-open');
+  /* Sheet yang diminimalkan tetap menyisakan dm-sidebar-open, jadi kedua
+     kelas dicek supaya sidebar yang cuma jadi chip tidak ikut dihitung
+     sedang terbuka. */
+  return !!sidebar && sidebar.classList.contains('dm-sidebar-open') &&
+    !sidebar.classList.contains('dm-sidebar-minimized');
 }
 
 function syncDrawChrome() {

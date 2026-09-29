@@ -196,7 +196,7 @@
   }
 
   const state = {
-    seq: 0, items: [], minimized: false, closed: false,
+    seq: 0, items: [], minimized: false,
     notice: null, noticeKind: 'info', noticeTimer: 0,
     completing: false,
     footprint: null, footprintOwner: null,
@@ -218,7 +218,7 @@
 
   /* ── Kontrol export di kepala panel ──
      Sengaja TIDAK memakai footer: footer yang selalu tampil memakan tinggi
-     sheet虽然 cuma beberapa mm, tapi ikut mengurangi ruang daftar polygon.
+     sheet, hanya beberapa mm, tapi ikut mengurangi ruang daftar polygon.
      Kontrol ini baru muncul setelah semua analisis selesai. */
 
   function exportRootEl() {
@@ -2183,22 +2183,40 @@
     button.title = label;
   }
 
-  // Chip kecil di tengah bawah peta: satu-satunya cara membuka kembali panel
-  // setelah user menekan tombol Tutup. Hanya tampil bila ada polygon.
+  // Tombol "Buka Analisis" di tab GeoTools. Sheet analisis tidak lagi muncul
+  // sendiri begitu polygon dibuat, jadi tombol inilah yang memanggilnya.
+  //
+  // Letaknya di dalam tab GeoTools, bukan melayang di peta: sebagai elemen
+  // dalam sheet, posisinya ikut mengalir dan tidak pernah menutupi peta.
+  // Karena tidak lagi condemning di luar panel, kondisinya juga bisa lebih
+  // sederhana -- cukup "ada polygon", tanpa perlu tahu panel sedang
+  // terbuka atau jadi chip.
   function syncReopenChip() {
-    const chip = document.getElementById('geofarmReopenChip');
-    if (!chip) return;
-    const count = document.getElementById('geofarmReopenCount');
+    const btn = document.getElementById('geofarmOpenAnalysisBtn');
+    if (!btn) return;
+    const belum = state.items.filter((item) => !item.analyzed).length;
+    const count = document.getElementById('geofarmOpenCount');
     if (count) count.textContent = state.items.length + ' polygon';
-    chip.hidden = !(state.closed && state.items.length > 0);
+    const pending = document.getElementById('geofarmOpenPending');
+    if (pending) {
+      pending.hidden = belum === 0;
+      if (belum) pending.textContent = belum + ' belum dianalisis';
+    }
+    btn.hidden = state.items.length === 0;
   }
 
   function setMinimized(next) {
+    if (window.SheetDrag) {
+      if (next) window.SheetDrag.minimize('geofarm');
+      else window.SheetDrag.restore('geofarm');
+      syncTitle();
+      syncActions();
+      syncReopenChip();
+      return;
+    }
     const panel = panelEl();
     if (!panel) return;
     state.minimized = next === true;
-    // Membuka atau minimize selalu membatalkan status "tertutup".
-    state.closed = false;
     panel.classList.toggle('pa-min', state.minimized);
     panel.classList.add('pa-open');
     document.body.classList.toggle('pa-panel-open', !state.minimized);
@@ -2258,6 +2276,24 @@
     }
   }
 
+  /* ── Pendaftaran sheet GeoFarm ──
+     Panel GeoFarm punya tiga keadaan, bukan dua: terbuka, minimal (chip),
+     dan tertutup (tombol Tutup, lalu muncul chip buka-kembali sendiri).
+     State ketiga itu tetap milik modul ini; sheet-drag.js hanya memegang
+     dua yang pertama, jadi onClose tidak boleh ikut mengubahnya. */
+  window.SheetDrag && window.SheetDrag.register('geofarm', {
+    el: 'polygonAnalysisSidebar',
+    openClass: 'pa-open',
+    minClass: 'pa-min',
+    bodyOpen: 'pa-panel-open',
+    bodyMin: 'pa-panel-minimized',
+    handle: '.sheet-drag-handle',
+    header: '.pa-head',
+    minButton: '.pa-min-toggle',
+    labelMin: 'Minimalkan',
+    labelOpen: 'Perbesar'
+  });
+
   function openPanel(expand) {
     var dd = document.querySelector('.geotools-dropdown');
     if (dd) {
@@ -2277,10 +2313,13 @@
   // jalur ini sama-sama merupakan penutupan panel.
   function closePanel() {
     state.minimized = false;
-    state.closed = false;
-    var panel = panelEl();
-    if (panel) panel.classList.remove('pa-open', 'pa-min');
-    document.body.classList.remove('pa-panel-open', 'pa-panel-minimized');
+    if (window.SheetDrag) {
+      window.SheetDrag.close('geofarm');
+    } else {
+      var panel = panelEl();
+      if (panel) panel.classList.remove('pa-open', 'pa-min');
+      document.body.classList.remove('pa-panel-open', 'pa-panel-minimized');
+    }
     syncTitle();
     syncActions();
     syncReopenChip();
@@ -2320,10 +2359,13 @@
   function dismissPanel() {
     if (!state.items.length) { closePanel(); return; }
     state.minimized = false;
-    state.closed = true;
-    var panel = panelEl();
-    if (panel) panel.classList.remove('pa-open', 'pa-min');
-    document.body.classList.remove('pa-panel-open', 'pa-panel-minimized');
+    if (window.SheetDrag) {
+      window.SheetDrag.close('geofarm');
+    } else {
+      var panel = panelEl();
+      if (panel) panel.classList.remove('pa-open', 'pa-min');
+      document.body.classList.remove('pa-panel-open', 'pa-panel-minimized');
+    }
     syncTitle();
     syncActions();
     syncReopenChip();
@@ -2946,6 +2988,10 @@
 
   function render() {
     const list = listEl();
+    // Tombol pemanggil disinkronkan lebih dulu supaya ikut benar saat
+    // polygon ditambah, dihapus, atau selesai dianalisis -- semuanya
+    // melewati render().
+    syncReopenChip();
     if (!list) return;
     const hasItems = state.items.length > 0;
     // Kontrol export di kepala panel hanya muncul setelah semua polygon
@@ -3625,10 +3671,17 @@
 
   /**
    * Satu item GeoFarm, dipakai bersama oleh polygon hasil gambar maupun polygon
-   * hasil unggah file. opts: { name, source, autoAnalyze }.
-   * autoAnalyze:false dipakai alur unggah -- polygon masuk daftar dengan luas
-   * saja, dan pengguna menekan tombol Analisis bila mau menghitungnya. Itu
-   * penting karena satu polygon sudah memakan ~5 permintaan jaringan.
+   * hasil unggah file. opts: { name, source }.
+   *
+   * TIDAK ada auto-analisis, dari alur mana pun. Polygon masuk daftar dengan
+   * luas saja, lalu pengguna menekan tombol Analisis di kartunya untuk
+   * menghitung NDVI, indeks spektral, dan topografi. Ini penting karena satu
+   * polygon sudah memakan ~5 permintaan jaringan dan menghasilkan overlay
+   * berwarna di peta; menjalankannya diam-diam akan mengubah peta di belakang
+   * layar tanpa user meminta apa pun.
+   *
+   * Sheet analisisnya juga tidak dibuka di sini. Pemanggilnya tombol
+   * "Buka Analisis" di tab GeoTools (#geofarmOpenAnalysisBtn).
    */
   function addPolygonItem(layer, areaHa, opts) {
     if (!layer || !layer.getLatLngs) return null;
@@ -3686,9 +3739,14 @@
     }
 
     state.items.push(item);
+    /* Sheet analisis sengaja TIDAK dibuka di sini. Dulu openPanel(true)
+       dipanggil otomatis begitu polygon selesai digambar, jadi panel menutupi
+       peta persis saat user masih ingin melihat hasil gambarnya. Sekarang
+       panel hanya terbuka lewat tombol "Buka Analisis" di tab GeoTools
+       (#geofarmOpenAnalysisBtn), atau lewat judul chip ketika panel dalam
+       mode minimal. render() sudah menyinkronkan tombol itu, jadi cukup
+       dipanggil di sini. */
     render();
-    openPanel(true);
-    if (options.autoAnalyze !== false) analyzeItem(item);
     return item;
   }
 
@@ -3696,7 +3754,7 @@
     // Hanya polygon dari sesi GeoFarm yang dianalisis. Gambar & Ukur, serta
     // tool gambar lain, tetap berfungsi tanpa memicu analisis ini.
     if (!geofarmDrawSession) return null;
-    return addPolygonItem(layer, areaHa, { source: 'draw', autoAnalyze: true });
+    return addPolygonItem(layer, areaHa, { source: 'draw' });
   };
 
   /**
@@ -3705,7 +3763,7 @@
    * analisisnya dijalankan manual lewat tombol di panel.
    */
   window.registerUploadedPolygon = function (layer, areaHa, name) {
-    return addPolygonItem(layer, areaHa, { name: name || null, source: 'upload', autoAnalyze: false });
+    return addPolygonItem(layer, areaHa, { name: name || null, source: 'upload' });
   };
 
   /** Menjalankan analisis (NDVI, indeks spektral, topografi) untuk satu item. */
@@ -3735,10 +3793,18 @@
     return true;
   };
 
-  /** Dipanggil chip buka-kembali di peta, dan saat sub-tab GeoFarm dibuka. */
+  /**
+   * Pemanggil utama panel analisis: tombol mengambang di peta, dan judul
+   * chip ketika panel sedang diminimalkan.
+   *
+   * Dipakai openPanel() dan bukan setMinimized(false) supaya efek sampingnya
+   * ikut terjadi: tab GeoTools disorot, basemap dikembalikan ke satelit
+   * supaya citra tetap terbaca, dan sidebar/sheet lain ditutup supaya panel
+   * ini tidak berbagi ruang dengan yang lain.
+   */
   window.reopenGeoFarmPanel = function () {
     if (!state.items.length) return false;
-    setMinimized(false);
+    openPanel(true);
     return true;
   };
 

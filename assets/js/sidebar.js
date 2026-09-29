@@ -24,15 +24,10 @@
   }
 
   function minimizeAllSheets() {
-    if (typeof minimizeGeotoolsSheet === 'function') minimizeGeotoolsSheet();
-    if (typeof minimizeAttrTableSheet === 'function') minimizeAttrTableSheet();
-    if (typeof minimizeAiSheet === 'function') minimizeAiSheet();
-    if (typeof minimizeDrawSidebar === 'function') minimizeDrawSidebar();
-    if (typeof minimizeLegendSidebar === 'function') minimizeLegendSidebar();
-    var hs = document.getElementById('hotspot-sheet');
-    if (hs && hs.classList.contains('sheet-open')) { if (typeof toggleHotspotSheet === 'function') toggleHotspotSheet(); }
-    var gp = document.getElementById('geopangan-sheet');
-    if (gp && gp.classList.contains('sheet-open')) { if (typeof toggleGeopanganSheet === 'function') toggleGeopanganSheet(); }
+    /* Delapan sheet mendaftarkan diri ke sheet-drag.js, jadi satu
+       panggilan saja yang perlu. Hotspot dan GeoPangan ditutup penuh
+       dari dalam modul itu karena keduanya membawa overlay peta. */
+    if (window.SheetDrag) window.SheetDrag.minimizeAll();
     var sidebar = document.getElementById('sidebar-left');
     if (sidebar && !sidebar.classList.contains('collapsed')) toggleSidebar();
   }
@@ -211,10 +206,6 @@
     if (target) target.classList.add('active');
     if (tabId === 'geotoolsTabDemnas' && window.DemnasDownload && typeof window.DemnasDownload.load === 'function') {
       window.DemnasDownload.load().catch(function () {});
-    }
-    if (tabId === 'geotoolsTabGeoFarm') {
-      // Panel hasil GeoFarm bisa ditutup user; buka lagi dari sini.
-      if (typeof window.reopenGeoFarmPanel === 'function') window.reopenGeoFarmPanel();
     }
     if (tabId === 'geotoolsTabGeoPulse') {
       var gempaPanel = document.getElementById('gempa-subtab-gempa');

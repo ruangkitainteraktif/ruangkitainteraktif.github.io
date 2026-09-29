@@ -1020,7 +1020,19 @@
     .leaflet-control-attribution { display: none !important; }
     .leaflet-control-scale { display: none !important; }
 
-    /* ── Pita bawah tengah: zoom control & chip mode minimal ──
+    /* ── Bottom sheet mobile: gestur geser tinggi ──
+       Register --sheet-h supaya nilainya bisa diinterpolasi. Tanpa
+       @property, custom property ini berubah secara diskret sehingga
+       `transition: height` tidak akan menganimasikan lonjakan dari
+       tinggi drag ke tinggi stop. Browser lama yang tidak mendukung
+       @property tetap berfungsi, hanya lompatannya yang tidak halus. */
+    @property --sheet-h {
+      syntax: '<length>';
+      inherits: false;
+      initial-value: 50dvh;
+    }
+
+    /* Pita bawah tengah: zoom control & chip mode minimal ──
        ZOOM CONTROL
        Posisinya TIDAK diatur di CSS ini, tapi lewat style inline dari
        map-core.js (cari "Zoom Control di bawah tengah"): position fixed,
@@ -2746,7 +2758,8 @@
     #ai-sheet.ais-sheet-minimized .ais-sheet-body { display: none; }
     #ai-sheet.ais-sheet-minimized .ais-sheet-head {
       min-height: 36px; box-sizing: border-box;
-      padding: 6px 14px; border-bottom: 0;
+      /* 4px, bukan 6px: tombol 28px harus muat di chip 36px. */
+      padding: 4px 14px; border-bottom: 0;
     }
     #ai-sheet.ais-sheet-minimized .ais-sheet-title {
       cursor: pointer; font-size: 11px;
@@ -4199,9 +4212,10 @@
       body.geopangan-sheet-open:not(.geopangan-sheet-minimized) .petadasar-export-block,
       body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .petadasar-export-block,
       body.dm-sidebar-open:not(.dm-sidebar-minimized) .petadasar-export-block,
-      body.lg-sidebar-open .petadasar-export-block,
+      body.lg-sidebar-open:not(.lg-sidebar-minimized) .petadasar-export-block,
       body.pa-panel-open:not(.pa-panel-minimized) .petadasar-export-block,
-      body.attr-table-sheet-open:not(.attr-table-sheet-minimized) .petadasar-export-block {
+      body.attr-table-sheet-open:not(.attr-table-sheet-minimized) .petadasar-export-block,
+      body.ai-sheet-open:not(.ai-sheet-minimized) .petadasar-export-block {
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.25s ease;
@@ -4361,7 +4375,7 @@
       #hotspot-sheet {
         position: fixed;
         bottom: 0; left: 0; right: 0;
-        height: 50vh; height: 50dvh;
+        height: var(--sheet-h, 50vh); height: var(--sheet-h, 50dvh);
         width: 100%;
         border-radius: 16px 16px 0 0;
         z-index: 1100;
@@ -4463,12 +4477,13 @@
       }
       .alat-grid-2 { grid-template-columns: 1fr; }
 
-      /* AI Sheet — Mobile */
+      /* AI Sheet — Mobile. --sheet-h diisi sheet-drag.js saat digeser;
+         kosong berarti aturan 50dvh yang berlaku. */
       #ai-sheet {
         position: fixed;
         top: auto; right: 0; bottom: 0; left: 0;
         width: 100%;
-        height: 50vh; height: 50dvh;
+        height: var(--sheet-h, 50vh); height: var(--sheet-h, 50dvh);
         border-radius: 16px 16px 0 0;
         transform: translateY(100%);
         box-shadow: 0 -4px 20px rgba(0,0,0,.15);
@@ -6460,8 +6475,8 @@
         bottom: 0;
         left: 0;
         width: 100%;
-        height: 50vh;
-        height: 50dvh;
+        height: var(--sheet-h, 50vh);
+        height: var(--sheet-h, 50dvh);
         border-radius: 16px 16px 0 0;
         transform: translateY(100%);
         box-shadow: 0 -4px 20px rgba(0,0,0,.15);
@@ -6491,7 +6506,8 @@
       #hotspot-sheet.sheet-minimized .hs-sheet-head {
         min-height: 36px;
         box-sizing: border-box;
-        padding: 6px 12px;
+        /* 4px, bukan 6px: tombol 28px harus muat di chip 36px. */
+        padding: 4px 12px;
         border-bottom: 0;
       }
     }
@@ -6583,10 +6599,11 @@
     }
     #geotools-sheet.gs-sheet-minimized .gs-sheet-handle,
     #geotools-sheet.gs-sheet-minimized .gs-sheet-body { display: none; }
-    #geotools-sheet.gs-sheet-minimized .gs-sheet-head {
-      min-height: 36px; box-sizing: border-box;
-      padding: 6px 14px; border-bottom: 0;
-    }
+      #geotools-sheet.gs-sheet-minimized .gs-sheet-head {
+        min-height: 36px; box-sizing: border-box;
+        /* 4px, bukan 6px: tombol 28px harus muat di chip 36px. */
+        padding: 4px 14px; border-bottom: 0;
+      }
     #geotools-sheet.gs-sheet-minimized .gs-sheet-title { cursor: pointer; font-size: 11px; }
     #geotools-sheet .gs-sheet-body {
       flex: 1 1 auto; min-height: 0; overflow-y: auto;
@@ -6846,9 +6863,10 @@
       z-index: 100;
     }
     .dm-sidebar.dm-sidebar-minimized .dm-sidebar-body { display: none; }
+    /* Padding 4px supaya tombol 28px + 4 + 4 pas di chip 36px. */
     .dm-sidebar.dm-sidebar-minimized .dm-sidebar-head {
       min-height: 36px; box-sizing: border-box;
-      padding: 6px 14px; border-bottom: 0;
+      padding: 4px 14px; border-bottom: 0;
     }
     .dm-sidebar.dm-sidebar-minimized .dm-sidebar-title { cursor: pointer; font-size: 11px; }
 
@@ -6880,6 +6898,24 @@
       color: var(--text-primary);
     }
     .pa-panel.pa-open { transform: translateX(0); visibility: visible; }
+
+    /* ── Handle geser pada mode chip ──
+       Handle cuma berguna saat sheet sedang mengembang. Di mode chip yang
+       tingginya cuma 36px, handle .sheet-drag-handle memakan 17px
+       (padding 8+5 dan batang 4px) -- hampir separuh tinggi chip. Kepala
+       sheet juga punya min-height 36px, jadi 17 + 36 = 53px di dalam wadah
+       36px: kepala terdorong ke bawah sampai judul dan tombolnya terpotong
+       di tepi chip.
+
+       Lima sheet yang punya handle sendiri sudah menyembunyikannya di mode
+       minimal. Tiga sheet yang memakai .sheet-drag-handle bersama perlu
+       aturan yang sama, jadi diletakkan di sini secara global supaya
+       berlaku di desktop maupun mobile. Child combinator dipakai supaya
+       hanya handle milik sheet itu yang ikut hilang. */
+    .dm-sidebar-minimized > .sheet-drag-handle,
+    .lg-sidebar-minimized > .sheet-drag-handle,
+    .pa-panel.pa-min > .sheet-drag-handle { display: none; }
+
     /* Mode minimal: panel jadi chip 36px di bawah tengah. Butuh aturan ini
        sendiri karena .lg-sidebar-minimized tidak ikut terselector .pa-min. */
     /* Angka 68px: lihat catatan "Pita bawah tengah" di blok
@@ -6891,35 +6927,18 @@
       border-radius: 18px;
       z-index: 100;
     }
+    /* Padding vertikal 4px, bukan 6px: tombol di kepala 28px, jadi 4 + 28
+       + 4 = 36px dan pas mengisi chip. Dengan 6px isinya cuma 24px sehingga
+       tombol terpotong 2px di atas dan bawah. */
     .pa-panel.pa-min .pa-head {
       min-height: 36px; box-sizing: border-box;
-      padding: 6px 14px; border-bottom: 0;
+      padding: 4px 14px; border-bottom: 0;
     }
     .pa-panel.pa-min .pa-list { display: none; }
     /* Kontrol export di kepala juga disembunyikan: panel minimal hanya 36px,
        dan tombolnya tidak ada artinya tanpa daftar polygon. */
     .pa-panel.pa-min .pa-export { display: none; }
     .pa-panel.pa-min .pa-title { cursor: pointer; font-size: 11px; }
-    /* Chip buka-kembali, muncul di slot yang sama dengan mode minimal.
-       Pakai variabel tema (bukan putih hardcoded) agar aman di dark mode.
-       Angka 68px disamakan dengan .pa-panel.pa-min; lihat catatan
-       "Pita bawah tengah" di blok .zoom-control-wrap. */
-    .pa-reopen-chip {
-      position: fixed; bottom: 68px; left: 50%;
-      transform: translateX(-50%);
-      z-index: 100; margin: 0;
-      display: flex; align-items: center; gap: 7px;
-      min-height: 36px; padding: 6px 14px;
-      border: 1px solid var(--border-color);
-      border-radius: 18px;
-      background: var(--bg-primary);
-      box-shadow: 0 4px 14px rgba(15, 23, 42, .12);
-      color: var(--text-primary);
-      font-size: 12px; font-weight: 600;
-      cursor: pointer;
-    }
-    .pa-reopen-chip:hover { background: var(--bg-tertiary); }
-    .pa-reopen-chip[hidden] { display: none; }
     .lg-sidebar-head, .pa-head {
       display: flex; align-items: center; justify-content: space-between;
       padding: 14px 16px 10px; border-bottom: 1px solid var(--border-color); flex-shrink: 0;
@@ -6968,9 +6987,10 @@
       z-index: 100;
     }
     .lg-sidebar.lg-sidebar-minimized .lg-sidebar-body { display: none; }
+    /* Padding 4px supaya tombol 28px + 4 + 4 pas di chip 36px. */
     .lg-sidebar.lg-sidebar-minimized .lg-sidebar-head {
       min-height: 36px; box-sizing: border-box;
-      padding: 6px 14px; border-bottom: 0;
+      padding: 4px 14px; border-bottom: 0;
     }
     .lg-sidebar.lg-sidebar-minimized .lg-sidebar-title { cursor: pointer; font-size: 11px; }
     [data-theme="dark"] .lg-sidebar { background: var(--bg-primary); color: var(--text-primary); }
@@ -7069,9 +7089,11 @@
     }
     #attr-table-sheet.attr-table-sheet-minimized .at-sheet-handle,
     #attr-table-sheet.attr-table-sheet-minimized .at-sheet-body { display: none; }
-    #attr-table-sheet.attr-table-sheet-minimized .at-sheet-head {
-      min-height: 36px; box-sizing: border-box; padding: 6px 14px; border-bottom: 0;
-    }
+      #attr-table-sheet.attr-table-sheet-minimized .at-sheet-head {
+        min-height: 36px; box-sizing: border-box;
+        /* 4px, bukan 6px: tombol 28px harus muat di chip 36px. */
+        padding: 4px 14px; border-bottom: 0;
+      }
     #attr-table-sheet.attr-table-sheet-minimized .at-sheet-title { cursor: pointer; font-size: 11px; }
 
     /* ── Attr Table Inner Styles ── */
@@ -7141,8 +7163,8 @@
         left: 0;
         z-index: 1100;
         width: 100%;
-        height: 50vh;
-        height: 50dvh;
+        height: var(--sheet-h, 50vh);
+        height: var(--sheet-h, 50dvh);
         flex-direction: column;
         overflow: hidden;
         visibility: hidden;
@@ -7215,21 +7237,63 @@
       }
       #geopangan-sheet.sheet-minimized .gp-sheet-handle,
       #geopangan-sheet.sheet-minimized .gp-sheet-body { display: none; }
-      #geopangan-sheet.sheet-minimized .gp-sheet-head {
-        min-height: 36px;
-        box-sizing: border-box;
-        padding: 10px 16px;
-        border-bottom: 0;
-      }
+        #geopangan-sheet.sheet-minimized .gp-sheet-head {
+          min-height: 36px;
+          box-sizing: border-box;
+          /* 4px, bukan 10px: tombol tutup 28px harus muat di chip 36px.
+             Dengan 10px isinya jadi 48px dan tombolnya terpotong. */
+          padding: 4px 12px;
+          border-bottom: 0;
+        }
 
 
       /* ── Sembunyikan Zoom Control di Mobile ── */
       .zoom-control-wrap { display: none !important; }
 
+      /* Gestur sheet: geser tinggi ala Google Maps. Didukung
+         assets/js/sheet-drag.js. Kelas .sheet-draggable dipasang modul
+         itu hanya pada sheet yang sedang terbuka, jadi aturan ini tidak
+         mengganggu sheet yang belum dipakai. */
+      .sheet-draggable {
+        transition: transform .3s ease-in-out, visibility .3s,
+                    height .22s cubic-bezier(.2, 0, 0, 1);
+      }
+      /* Selama jari bergerak transisi harus mati. Kalau tidak, height
+         mengejar nilai baru di setiap frame dan sheet terasa lengket. */
+      .sheet-draggable.is-dragging,
+      .sheet-draggable.is-dragging * { transition: none !important; }
+      /* touch-action: none itu WAJIB, bukan kosmetik. Tanpa itu browser
+         memakai gestur builtin-nya untuk menggulir halaman, pointermove
+         dihentikan browser, dan sheet-nya tidak bergerak sama sekali. */
+      .sheet-drag-zone {
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+        cursor: grab;
+      }
+      .sheet-drag-zone:active { cursor: grabbing; }
+      .sheet-drag-zone:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+      /* Handle seragam untuk sheet yang sebelumnya tidak punya handle
+         sendiri (Gambar & Ukur, Legenda, GeoFarm). Lima sheet lain
+         sudah punya visual sendiri dan tidak ikut aturan ini. */
+      .sheet-drag-handle {
+        flex: 0 0 auto;
+        padding: 8px 0 5px;
+        display: flex;
+        justify-content: center;
+      }
+      .sheet-drag-handle::after {
+        content: '';
+        width: 36px;
+        height: 4px;
+        border-radius: 2px;
+        background: #c4d5e3;
+      }
+
       /* ── GeoTools Bottom Sheet (Mobile) ── */
       #geotools-sheet {
         top: auto; right: 0; bottom: 0; left: 0;
-        width: 100%; height: 50vh; height: 50dvh;
+        width: 100%; height: var(--sheet-h, 50vh); height: var(--sheet-h, 50dvh);
         border-radius: 18px 18px 0 0;
         transform: translateY(100%);
       }
@@ -7263,7 +7327,7 @@
       /* ── Draw & Measure Sidebar (Mobile) ── */
       .dm-sidebar {
         top: auto; right: 0; bottom: 0; left: 0;
-        width: 100%; height: 50vh; height: 50dvh;
+        width: 100%; height: var(--sheet-h, 50vh); height: var(--sheet-h, 50dvh);
         border-radius: 18px 18px 0 0;
         transform: translateY(100%);
       }
@@ -7283,7 +7347,7 @@
       /* ── Legend Sidebar (Mobile) ── */
       .lg-sidebar, .pa-panel {
         top: auto; right: 0; bottom: 0; left: 0;
-        width: 100%; height: 50vh; height: 50dvh;
+        width: 100%; height: var(--sheet-h, 50vh); height: var(--sheet-h, 50dvh);
         border-radius: 18px 18px 0 0;
         transform: translateY(100%);
       }
@@ -7314,10 +7378,6 @@
         -webkit-backdrop-filter: blur(12px);
         visibility: visible;
         z-index: 100;
-      }
-      .pa-reopen-chip {
-        bottom: 72px;
-        max-width: calc(100vw - 32px);
       }
 
 
@@ -7448,9 +7508,12 @@
       body.geopangan-sheet-open:not(.geopangan-sheet-minimized) .map-fab-wrap,
       body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .map-fab-wrap,
       body.dm-sidebar-open:not(.dm-sidebar-minimized) .map-fab-wrap,
-      body.lg-sidebar-open .map-fab-wrap,
+      body.lg-sidebar-open:not(.lg-sidebar-minimized) .map-fab-wrap,
       body.pa-panel-open:not(.pa-panel-minimized) .map-fab-wrap,
-      body.attr-table-sheet-open:not(.attr-table-sheet-minimized) .map-fab-wrap {
+      body.attr-table-sheet-open:not(.attr-table-sheet-minimized) .map-fab-wrap,
+      /* #ai-sheet tidak pernah memasang body class sebelumnya, jadi bar
+         input chat-nya berada persis di atas navigasi bawah. */
+      body.ai-sheet-open:not(.ai-sheet-minimized) .map-fab-wrap {
         transform: translateX(-50%) translateY(calc(100% + 24px)) !important;
         opacity: 0;
         pointer-events: none;
@@ -7460,7 +7523,7 @@
       /* ── Attribute Table Sheet (Mobile: bottom 50vh) ── */
       #attr-table-sheet {
         top: auto; right: 0; bottom: 0; left: 0;
-        width: 100%; height: 50vh; height: 50dvh;
+        width: 100%; height: var(--sheet-h, 50vh); height: var(--sheet-h, 50dvh);
         border-radius: 16px 16px 0 0;
         transform: translateY(100%);
       }
@@ -9187,6 +9250,10 @@
       .welcome-modal-footer { flex-direction: column; gap: 8px; padding: 14px 16px; }
       .welcome-btn { width: 100%; }
 
+
+
+
+
       .panel-header {
         padding: 12px 15px;
         background: #0078d4;
@@ -9198,6 +9265,180 @@
         border-top-right-radius: 15px;
       }
     }
+
+/* ══ Pernyataan dan Penafian (disclaimer) ══
+       Muncul setelah modal welcome. Berbeda dari welcome, modal ini tidak
+       punya tombol tutup: satu-satunya jalan keluar adalah tombol terima,
+       dan tombol itu terkunci sampai kotak persetujuan dicentang. Jadi
+       tidak ada jalan menutup penafian tanpa menyatakan diterima.
+       hidden dipakai (bukan display:none di CSS) supaya elemen benar-benar
+       dikeluarkan dari accessibility tree sebelum sempat tampil. */
+    .disclaimer-modal {
+      position: fixed; inset: 0; z-index: 4100;
+      display: none; align-items: center; justify-content: center;
+      padding: 18px;
+      background: rgba(15, 23, 42, .45);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .disclaimer-modal[hidden] { display: none; }
+    .disclaimer-modal.open { display: flex; animation: disclaimer-fade-in .3s ease; }
+    @keyframes disclaimer-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+    .disclaimer-modal-dialog {
+      display: flex; flex-direction: column;
+      width: min(640px, 100%);
+      max-height: min(88vh, 760px);
+      max-height: min(88dvh, 760px);
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      background: var(--bg-primary);
+      box-shadow: 0 12px 48px rgba(0, 0, 0, .2);
+      animation: disclaimer-slide-up .34s cubic-bezier(.22, 1, .36, 1);
+      color: var(--text-primary);
+    }
+    @keyframes disclaimer-slide-up {
+      from { transform: translateY(18px) scale(.98); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .disclaimer-modal-header {
+      flex: 0 0 auto;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 24px 24px 18px;
+      background: linear-gradient(180deg, #fef3c7 0%, var(--bg-secondary) 70%, var(--bg-primary) 100%);
+      text-align: center;
+      border-bottom: 1px solid var(--border-color);
+    }
+    [data-theme="dark"] .disclaimer-modal-header {
+      background: linear-gradient(180deg, #422006 0%, var(--bg-secondary) 70%, var(--bg-primary) 100%);
+    }
+    .disclaimer-modal-icon {
+      display: grid; place-items: center;
+      width: 48px; height: 48px; margin-bottom: 12px;
+      border-radius: 50%;
+      background: #fef3c7; color: #b45309;
+    }
+    [data-theme="dark"] .disclaimer-modal-icon { background: #78350f; color: #fcd34d; }
+    .disclaimer-modal-title {
+      margin: 0 0 6px;
+      font-size: 19px; font-weight: 700; letter-spacing: -.01em;
+    }
+    .disclaimer-modal-subtitle {
+      margin: 0; max-width: 46ch;
+      font-size: 12.5px; line-height: 1.55; color: var(--text-secondary);
+    }
+    .disclaimer-brand { font-weight: 700; color: var(--accent); }
+
+    .disclaimer-modal-body {
+      flex: 1 1 auto; min-height: 0; overflow-y: auto;
+      padding: 18px 22px;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: var(--scrollbar-thumb) transparent;
+    }
+    .disclaimer-modal-body::-webkit-scrollbar { width: 6px; }
+    .disclaimer-modal-body::-webkit-scrollbar-thumb { border-radius: 999px; background: var(--scrollbar-thumb); }
+
+    .disclaimer-list { margin: 0; padding: 0; list-style: none; counter-reset: none; }
+    .disclaimer-list > li {
+      display: flex; gap: 11px;
+      padding: 12px 0;
+      border-bottom: 1px dashed var(--border-color);
+      font-size: 12.5px; line-height: 1.62; color: var(--text-secondary);
+    }
+    .disclaimer-list > li:last-child { border-bottom: 0; }
+    .disclaimer-list b { color: var(--text-primary); }
+    .disclaimer-num {
+      flex: 0 0 auto;
+      display: grid; place-items: center;
+      width: 21px; height: 21px; margin-top: 1px;
+      border-radius: 50%;
+      background: #b45309; color: #fff;
+      font-size: 11px; font-weight: 700;
+    }
+    [data-theme="dark"] .disclaimer-num { background: #d97706; }
+    .disclaimer-sub { margin: 7px 0 0; padding-left: 16px; }
+    .disclaimer-sub li { margin-bottom: 3px; }
+
+    .disclaimer-modal-footer {
+      flex: 0 0 auto;
+      display: flex; flex-direction: column; gap: 10px;
+      padding: 14px 22px 16px;
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+    }
+    /* Checkbox asli disembunyikan supaya yang tampil adalah kotak kustom,
+       tapi input aslinya tetap ada: tetap bisa difokus dengan keyboard dan
+       tetap dibaca screen reader. */
+    .disclaimer-consent {
+      display: flex; align-items: flex-start; gap: 10px;
+      cursor: pointer; user-select: none;
+    }
+    .disclaimer-consent input {
+      position: absolute; width: 1px; height: 1px;
+      margin: -1px; padding: 0; border: 0;
+      clip: rect(0 0 0 0); clip-path: inset(50%); overflow: hidden; white-space: nowrap;
+    }
+    .disclaimer-consent-box {
+      flex: 0 0 auto;
+      display: grid; place-items: center;
+      width: 19px; height: 19px; margin-top: 1px;
+      border: 1.5px solid var(--border-color); border-radius: 5px;
+      background: var(--bg-card); color: transparent;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .disclaimer-consent input:checked + .disclaimer-consent-box {
+      background: #b45309; border-color: #b45309; color: #fff;
+    }
+    .disclaimer-consent input:focus-visible + .disclaimer-consent-box {
+      outline: 2px solid var(--accent); outline-offset: 2px;
+    }
+    .disclaimer-consent-text { font-size: 12px; line-height: 1.55; color: var(--text-secondary); }
+    .disclaimer-consent-text b { color: var(--text-primary); }
+
+    .disclaimer-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 11px 20px;
+      font-size: 13px; font-weight: 600; font-family: inherit;
+      border: none; border-radius: 10px; cursor: pointer;
+    }
+    .disclaimer-btn-primary { background: linear-gradient(135deg, #b45309, #92400e); color: #fff; }
+    .disclaimer-btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #92400e, #78350f); }
+    /* Status terkunci harus terbaca, bukan sekadar terlihat abu-abu. */
+    .disclaimer-btn-primary:disabled {
+      background: var(--bg-card-hover);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .disclaimer-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    /* Menyorot peta saat penafian terbuka. Penguncian gulirnya dilakukan di
+       JS (overflow body + padding untuk scrollbar); aturan ini supaya tidak
+       ada elemen lain yang ikut bergeser dan memberi kesan bisa diklik. */
+    body.disclaimer-modal-active { cursor: default; }
+    body.disclaimer-modal-active .disclaimer-modal { cursor: auto; }
+    .disclaimer-note {
+      margin: 0;
+      font-size: 10.5px; line-height: 1.5;
+      text-align: center; color: var(--text-muted);
+    }
+
+    @media (max-width: 600px) {
+      .disclaimer-modal { padding: 10px; }
+      .disclaimer-modal-dialog { max-height: min(94dvh, 760px); border-radius: 16px; }
+      .disclaimer-modal-header { padding: 20px 16px 14px; }
+      .disclaimer-modal-title { font-size: 17px; }
+      .disclaimer-modal-body { padding: 14px 16px; }
+      .disclaimer-modal-footer { padding: 12px 16px 14px; }
+      .disclaimer-btn { width: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .disclaimer-modal.open,
+      .disclaimer-modal-dialog { animation: none; }
+    }
+
 
     .hotspot-legend {
       background: rgba(255,255,255,0.95);
@@ -11744,6 +11985,60 @@
   transform: translateY(-1px);
 }
 .geofarm-upload-input { display: none; }
+
+/* ── GeoFarm: tombol pemanggil sheet analisis ──
+   Sheet analisis tidak muncul otomatis begitu polygon dibuat, jadi tombol
+   inilah satu-satunya jalan membukanya. Tombolnya hidup di dalam tab ini,
+   bukan melayang di atas peta, supaya tidak menutupi peta dan tidak
+   bertabrakan dengan baris chip sheet lain di sisi bawah.
+
+   Warnanya hijau, berbeda dari dua tombol di atasnya: biru untuk "Buat
+   Polygon", amber untuk "Unggah Polygon". Tiga warna itu menandai kelompok
+   aksi yang berbeda, jadi urutannya terbaca sebagai langkah. */
+#geotoolsTabGeoFarm .geofarm-open-analysis-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  border: 1.5px solid #16a34a;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, .25);
+  transition: background .2s, box-shadow .2s, transform .2s;
+}
+#geotoolsTabGeoFarm .geofarm-open-analysis-btn:hover {
+  background: linear-gradient(135deg, #15803d, #166534);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, .35);
+  transform: translateY(-1px);
+}
+#geotoolsTabGeoFarm .geofarm-open-analysis-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+#geotoolsTabGeoFarm .geofarm-open-analysis-btn[hidden] { display: none; }
+.geofarm-open-analysis-label { white-space: nowrap; }
+/* Kedua badge mengikuti gaya .pa-count yang sudah ada, tapi kontrasnya
+   dibalik karena latar tombol sudah hijau. */
+.geofarm-open-analysis-btn .geofarm-open-analysis-count,
+.geofarm-open-analysis-btn .geofarm-open-analysis-pending {
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .22);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.geofarm-open-analysis-pending[hidden] { display: none; }
 
 /* Keterangan khusus berkas SHP. Dipakai <details> supaya tidak memakan
    ruang di GeoTools yang sudah sempit, tapi tetap tersedia saat dibutuhkan. */

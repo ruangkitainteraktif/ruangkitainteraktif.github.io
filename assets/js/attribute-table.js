@@ -1562,63 +1562,61 @@
   }
   window.openAttrTablePicker = openAttrTablePicker;
 
-  /* ── Sheet Controls ── */
-  function closeAttrTableSheet() {
-    _loadToken++;
-    var sheet = document.getElementById('attr-table-sheet');
-    if (sheet) {
-      sheet.classList.remove('attr-table-sheet-open', 'attr-table-sheet-minimized');
+  /* ── Sheet Controls ──
+     State buka/minimal pindah ke assets/js/sheet-drag.js. Hook onClose
+     tetap memegang pembersihan khusus Atribut Tabel: menaikkan token
+     permintaan supaya hasil query yang sedang berjalan dibatalkan,
+     melepas klik WMS, melepas lapisan pemilih, dan menghapus marker
+     sorotan. */
+  window.SheetDrag && window.SheetDrag.register('attr', {
+    el: 'attr-table-sheet',
+    openClass: 'attr-table-sheet-open',
+    minClass: 'attr-table-sheet-minimized',
+    bodyOpen: 'attr-table-sheet-open',
+    bodyMin: 'attr-table-sheet-minimized',
+    handle: '.at-sheet-handle',
+    header: '.at-sheet-head',
+    minButton: '.at-sheet-minimize',
+    labelMin: 'Minimalkan',
+    labelOpen: 'Perluas Atribut Tabel',
+    /* Dua variabel lokal ini masih dibaca refreshAttrTable() dan beberapa
+       jalur buka di berkas ini. Schreiber disinkronkan di sini supaya
+       tidak jadi sumber kebenaran kedua yang bisa melenceng. */
+    onOpen: function () { _attrTableOpen = true; _attrTableMinimized = false; },
+    onMinimize: function (min) { _attrTableMinimized = min === true; },
+    onClose: function () {
+      _attrTableOpen = false;
+      _attrTableMinimized = false;
+      _loadToken++;
+      disableWmsClick();
+      releasePickerLayer();
+      _currentLayer = null;
+      _currentFeatures = [];
+      _searchQuery = '';
+      var backBtn = document.getElementById('atSheetBackBtn');
+      if (backBtn) backBtn.style.display = 'none';
+      if (_highlightMarker) { map.removeLayer(_highlightMarker); _highlightMarker = null; }
     }
-    document.body.classList.remove('attr-table-sheet-open', 'attr-table-sheet-minimized');
-    _attrTableOpen = false;
-    _attrTableMinimized = false;
-    disableWmsClick();
-    releasePickerLayer();
-    _currentLayer = null;
-    _currentFeatures = [];
-    _searchQuery = '';
-    var backBtn = document.getElementById('atSheetBackBtn');
-    if (backBtn) backBtn.style.display = 'none';
-    if (_highlightMarker) { map.removeLayer(_highlightMarker); _highlightMarker = null; }
-  }
-  window.closeAttrTableSheet = closeAttrTableSheet;
+  });
 
-  function minimizeAttrTableSheet() {
-    var sheet = document.getElementById('attr-table-sheet');
-    if (!sheet) return;
-    _attrTableMinimized = !_attrTableMinimized;
-    sheet.classList.toggle('attr-table-sheet-minimized', _attrTableMinimized);
-    document.body.classList.toggle('attr-table-sheet-minimized', _attrTableMinimized);
-  }
-  window.minimizeAttrTableSheet = minimizeAttrTableSheet;
-
-  function restoreAttrTableSheet() {
-    var sheet = document.getElementById('attr-table-sheet');
-    if (!sheet) return;
-    _attrTableMinimized = false;
-    sheet.classList.remove('attr-table-sheet-minimized');
-    sheet.classList.add('attr-table-sheet-open');
-    document.body.classList.add('attr-table-sheet-open');
-    document.body.classList.remove('attr-table-sheet-minimized');
-  }
-  window.restoreAttrTableSheet = restoreAttrTableSheet;
-
+  function openAttrTable() { if (window.SheetDrag) window.SheetDrag.buka('attr'); }
+  function closeAttrTableSheet() { if (window.SheetDrag) window.SheetDrag.close('attr'); }
+  function minimizeAttrTableSheet() { if (window.SheetDrag) window.SheetDrag.toggleMinimize('attr'); }
+  function restoreAttrTableSheet() { if (window.SheetDrag) window.SheetDrag.restore('attr'); }
   function toggleAttrTableSheet() {
-    var sheet = document.getElementById('attr-table-sheet');
-    if (!sheet) return;
-    if (_attrTableMinimized) {
-      minimizeAttrTableSheet();
-      return;
-    }
-    if (_attrTableOpen) closeAttrTableSheet();
-    else if (_currentLayer) {
-      sheet.classList.add('attr-table-sheet-open');
-      _attrTableOpen = true;
-      document.body.classList.add('attr-table-sheet-open');
-    } else {
-      openAttrTablePicker();
-    }
+    if (!window.SheetDrag) return;
+    /* Tiga cabang seperti versi lama: dari chip dipulihkan dulu, dari
+       sheet yang terbuka ditutup, dan kalau belum ada layer yang
+       dipilih maka yang dibuka adalah pemilih layer. */
+    if (window.SheetDrag.isMinimized('attr')) window.SheetDrag.restore('attr');
+    else if (window.SheetDrag.isOpen('attr')) window.SheetDrag.close('attr');
+    else if (_currentLayer) window.SheetDrag.buka('attr');
+    else openAttrTablePicker();
   }
+  window.openAttrTable = openAttrTable;
+  window.closeAttrTableSheet = closeAttrTableSheet;
+  window.minimizeAttrTableSheet = minimizeAttrTableSheet;
+  window.restoreAttrTableSheet = restoreAttrTableSheet;
   window.toggleAttrTableSheet = toggleAttrTableSheet;
 
   /* ── Check if layer has attr support ── */

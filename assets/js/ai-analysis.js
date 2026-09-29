@@ -5,8 +5,7 @@
 (function () {
   'use strict';
 
-  var sheetOpen = false;
-  var sheetMinimized = false;
+  /* Status sheet dibaca dari sheet-drag.js, bukan variabel lokal. */
   var chatHistory = [];
   var CHAT_HISTORY_KEY = 'ruangkita-ai-chat';
   var MAX_CHAT = 50;
@@ -2765,44 +2764,49 @@
   window._aiHandleKeydown = function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); window._aiSendMessage(); } };
 
   /* === Sheet Controls === */
-  function openAiSheet() {
-    var sheet = $('ai-sheet');
-    if (!sheet) return;
-    sheet.classList.add('ais-sheet-open');
-    sheetOpen = true;
-    sheetMinimized = false;
-    if (!chatHistory.length) {
-      showWelcomeMessage();
+  /* Sheet ini selama ini tidak pernah memasang body class, jadi navigasi
+     bawah tidak pernah disingkirkan saat chat terbuka. Bar input chat
+     berada di dasar sheet dan berakhir persis di atas navigasi itu.
+     sheet-drag.js memasang body.ai-sheet-open sekarang, dan app.css
+     sudah punya penjaganya. */
+  window.SheetDrag && window.SheetDrag.register('ai', {
+    el: 'ai-sheet',
+    openClass: 'ais-sheet-open',
+    minClass: 'ais-sheet-minimized',
+    bodyOpen: 'ai-sheet-open',
+    bodyMin: 'ai-sheet-minimized',
+    handle: '.ais-sheet-handle',
+    header: '.ais-sheet-head',
+    minButton: '.ais-sheet-minimize',
+    labelMin: 'Minimalkan',
+    labelOpen: 'Perluas asisten AI',
+    onOpen: function () {
+      if (!chatHistory.length) showWelcomeMessage();
+      var input = $('ais-chat-input');
+      /* Fokus hanya di desktop. Di mobile keyboard akan menutupi
+         sheet yang baru dibuka, jadi dilewati. */
+      if (input && window.innerWidth > 768) {
+        setTimeout(function () { input.focus(); }, 300);
+      }
+    },
+    onClose: function () {
+      if (_typingTimer) { clearInterval(_typingTimer); _typingTimer = null; }
+      if (typeof window.resetAllLayers === 'function') {
+        try { window.resetAllLayers(); } catch (e) { /* reset layer gagal bukan alasan sheet gagal menutup */ }
+      }
     }
-    var input = $('ais-chat-input');
-    if (input && window.innerWidth > 768) { setTimeout(function () { input.focus(); }, 300); }
-  }
+  });
 
-  function closeAiSheet() {
-    var sheet = $('ai-sheet');
-    if (!sheet) return;
-    if (_typingTimer) { clearInterval(_typingTimer); _typingTimer = null; }
-    sheetOpen = false;
-    sheetMinimized = false;
-    sheet.classList.remove('ais-sheet-open', 'ais-sheet-minimized');
-    if (typeof window.resetAllLayers === 'function') {
-      try { window.resetAllLayers(); } catch (e) {}
-    }
-  }
-
-  function minimizeAiSheet() {
-    var sheet = $('ai-sheet');
-    if (!sheet) return;
-    sheetMinimized = !sheetMinimized;
-    sheet.classList.toggle('ais-sheet-minimized', sheetMinimized);
-    sheet.classList.toggle('ais-sheet-open', !sheetMinimized);
-  }
-
-  function toggleAiSheet() { if (sheetOpen) closeAiSheet(); else openAiSheet(); }
+  function openAiSheet() { if (window.SheetDrag) window.SheetDrag.buka('ai'); }
+  function closeAiSheet() { if (window.SheetDrag) window.SheetDrag.close('ai'); }
+  function minimizeAiSheet() { if (window.SheetDrag) window.SheetDrag.toggleMinimize('ai'); }
+  function restoreAiSheet() { if (window.SheetDrag) window.SheetDrag.restore('ai'); }
+  function toggleAiSheet() { if (window.SheetDrag) window.SheetDrag.toggle('ai'); }
 
   window.openAiSheet = openAiSheet;
   window.closeAiSheet = closeAiSheet;
   window.minimizeAiSheet = minimizeAiSheet;
+  window.restoreAiSheet = restoreAiSheet;
   window.toggleAiSheet = toggleAiSheet;
 
   /* === Init === */

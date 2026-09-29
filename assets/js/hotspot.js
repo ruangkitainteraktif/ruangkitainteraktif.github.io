@@ -897,50 +897,35 @@
 (function () {
   'use strict';
 
-  var sheetOpen = false;
-  var sheetMinimized = false;
-
-  function toggleHotspotSheet() {
-    var sheet = document.getElementById('hotspot-sheet');
-    if (!sheet) return;
-
-    sheetOpen = !sheetOpen;
-
-    if (sheetOpen) {
-      sheet.classList.add('sheet-open');
-      document.body.classList.add('hotspot-sheet-open');
-      document.body.classList.remove('hotspot-sheet-minimized');
+  /* ── Hotspot sheet ──
+     State buka/tutup/minimal pindah ke assets/js/sheet-drag.js supaya
+     gestur geser tinggi ikut berlaku. Yang tersisa di sini hanya
+     lapisan hotspot di peta dan pengicidean isi sheet. */
+  window.SheetDrag && window.SheetDrag.register('hotspot', {
+    el: 'hotspot-sheet',
+    openClass: 'sheet-open',
+    minClass: 'sheet-minimized',
+    bodyOpen: 'hotspot-sheet-open',
+    bodyMin: 'hotspot-sheet-minimized',
+    handle: '.hs-sheet-handle',
+    header: '.hs-sheet-head',
+    minButton: '.hs-sheet-minimize',
+    labelMin: 'Minimalkan panel Hotspot',
+    labelOpen: 'Perluas panel Hotspot',
+    /* Hotspot menutup diri penuh saat semua sheet diminimalkan: layer
+       titiknya harus ikut hilang, tidak boleh menggantung sebagai chip. */
+    tutupSaatMinimizeSemua: true,
+    onOpen: function () {
       if (typeof showHotspotLayer === 'function') showHotspotLayer();
       renderSheetContent();
-    } else {
-      sheet.classList.remove('sheet-open');
-      sheet.classList.remove('sheet-minimized');
-      sheetMinimized = false;
-      document.body.classList.remove('hotspot-sheet-open', 'hotspot-sheet-minimized');
-      var minimizeButton = sheet.querySelector('.hs-sheet-minimize');
-      if (minimizeButton) {
-        minimizeButton.setAttribute('aria-label', 'Minimalkan panel Hotspot');
-        minimizeButton.title = 'Minimalkan panel Hotspot';
-      }
+    },
+    onClose: function () {
       if (typeof hideHotspotLayer === 'function') hideHotspotLayer();
     }
-  }
+  });
 
-  function toggleHotspotMinimize() {
-    var sheet = document.getElementById('hotspot-sheet');
-    if (!sheet || !sheetOpen) return;
-
-    sheetMinimized = !sheetMinimized;
-    sheet.classList.toggle('sheet-minimized', sheetMinimized);
-    document.body.classList.toggle('hotspot-sheet-minimized', sheetMinimized);
-
-    var button = sheet.querySelector('.hs-sheet-minimize');
-    if (button) {
-      var label = sheetMinimized ? 'Perluas panel Hotspot' : 'Minimalkan panel Hotspot';
-      button.setAttribute('aria-label', label);
-      button.title = label;
-    }
-  }
+  function toggleHotspotSheet() { if (window.SheetDrag) window.SheetDrag.toggle('hotspot'); }
+  function toggleHotspotMinimize() { if (window.SheetDrag) window.SheetDrag.toggleMinimize('hotspot'); }
 
   window.toggleHotspotSheet = toggleHotspotSheet;
   window.toggleHotspotMinimize = toggleHotspotMinimize;

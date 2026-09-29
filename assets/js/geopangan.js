@@ -84,10 +84,11 @@
 
   /* ── Mobile table sheet ──
      The existing result/table nodes are moved (not recreated), preserving all
-     table event listeners for search, sorting, pagination, and CSV export. */
-  var gpSheetOpen = false;
-  var gpSheetMinimized = false;
+     table event listeners for search, sorting, pagination, and CSV export.
 
+     Status buka/minimal tidak lagi disimpan di sini; sheet-drag.js yang
+     memilikinya, sehingga gestur geser tinggi dan minimizeAll() membaca
+     sumber yang sama. */
   function moveGeopanganContent(toSheet) {
     var result = $('geopanganResult');
     var table = $('geopanganTable');
@@ -99,43 +100,33 @@
     if (sppgTable) destination.appendChild(sppgTable);
   }
 
-  function openGeopanganSheet() {
-    var sheet = $('geopangan-sheet');
-    if (!sheet) return;
-    moveGeopanganContent(true);
-    gpSheetOpen = true;
-    gpSheetMinimized = false;
-    sheet.classList.add('sheet-open');
-    sheet.classList.remove('sheet-minimized');
-    document.body.classList.add('geopangan-sheet-open');
-    document.body.classList.remove('geopangan-sheet-minimized');
-  }
-
-  function toggleGeopanganSheet() {
-    var sheet = $('geopangan-sheet');
-    if (!sheet || !gpSheetOpen) return;
-    // Closing the results panel ends the GeoPangan session and removes every
-    // related overlay from the map (price choropleth, legend, markets, SPPG).
-    if (typeof window.clearGeopanganLayers === 'function') window.clearGeopanganLayers();
-    gpSheetOpen = false;
-    gpSheetMinimized = false;
-    sheet.classList.remove('sheet-open', 'sheet-minimized');
-    document.body.classList.remove('geopangan-sheet-open', 'geopangan-sheet-minimized');
-  }
-
-  function toggleGeopanganMinimize() {
-    var sheet = $('geopangan-sheet');
-    if (!sheet || !gpSheetOpen) return;
-    gpSheetMinimized = !gpSheetMinimized;
-    sheet.classList.toggle('sheet-minimized', gpSheetMinimized);
-    document.body.classList.toggle('geopangan-sheet-minimized', gpSheetMinimized);
-    var button = sheet.querySelector('.gp-sheet-minimize');
-    if (button) {
-      var label = gpSheetMinimized ? 'Perluas panel Harga Pangan' : 'Minimalkan panel Harga Pangan';
-      button.setAttribute('aria-label', label);
-      button.title = label;
+  /* ── GeoPangan sheet ──
+     State sheet pindah ke assets/js/sheet-drag.js. Menutup sheet juga
+     mengakhiri sesi GeoPangan dan membuang semua overlay terkaitnya
+     (peta harga, legenda, pasar, SPPG), jadi itu ikut jadi hook onClose. */
+  window.SheetDrag && window.SheetDrag.register('geopangan', {
+    el: 'geopangan-sheet',
+    openClass: 'sheet-open',
+    minClass: 'sheet-minimized',
+    bodyOpen: 'geopangan-sheet-open',
+    bodyMin: 'geopangan-sheet-minimized',
+    handle: '.gp-sheet-handle',
+    header: '.gp-sheet-head',
+    minButton: '.gp-sheet-minimize',
+    labelMin: 'Minimalkan panel Harga pangan',
+    labelOpen: 'Perluas panel Harga pangan',
+    /* Overlay GeoPangan harus hilang bersama sheet-nya, bukan menggantung
+       sebagai chip. */
+    tutupSaatMinimizeSemua: true,
+    onOpen: function () { moveGeopanganContent(true); },
+    onClose: function () {
+      if (typeof window.clearGeopanganLayers === 'function') window.clearGeopanganLayers();
     }
-  }
+  });
+
+  function openGeopanganSheet() { if (window.SheetDrag) window.SheetDrag.buka('geopangan'); }
+  function toggleGeopanganSheet() { if (window.SheetDrag) window.SheetDrag.close('geopangan'); }
+  function toggleGeopanganMinimize() { if (window.SheetDrag) window.SheetDrag.toggleMinimize('geopangan'); }
 
   window.openGeopanganSheet = openGeopanganSheet;
   window.toggleGeopanganSheet = toggleGeopanganSheet;

@@ -296,7 +296,10 @@
 
   function prepareMapForResults(m) {
     var sheet = document.getElementById('geotools-sheet');
-    if (sheet && sheet.classList.contains('gs-sheet-open') && typeof window.closeGeotoolsSheet === 'function') {
+    /* Sheet yang diminimalkan tetap menyisakan gs-sheet-open, jadi kedua
+       kelas dicek; kalau tidak, GeoTools yang cuma jadi chip ikut ditutup
+       dan kontennya terlempar balik ke #tab-geotools. */
+    if (sheet && sheet.classList.contains('gs-sheet-open') && !sheet.classList.contains('gs-sheet-minimized') && typeof window.closeGeotoolsSheet === 'function') {
       window.closeGeotoolsSheet();
     }
     var sidebar = document.getElementById('sidebar-left');

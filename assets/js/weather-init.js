@@ -12,6 +12,12 @@
   function closeWelcomeModal() {
     const modal = document.getElementById('welcomeFeatureModal');
     if (modal) modal.classList.remove('open');
+    // Penafian menyusul setelah welcome ditutup. Fungsinya memeriksa
+    // sendiri apakah sudah pernah diterima, jadi panggilan ini aman
+    // dipanggil berkali-kali maupun saat penafian sudah pernah-show.
+    if (typeof window.tampilkanDisclaimerJikaBelum === 'function') {
+      window.tampilkanDisclaimerJikaBelum();
+    }
   }
   window.closeWelcomeModal = closeWelcomeModal;
 
@@ -25,6 +31,12 @@
           const welcomeModal = document.getElementById('welcomeFeatureModal');
           if (welcomeModal) welcomeModal.classList.add('open');
         }, 600);
+      } else {
+        // Welcome sudah pernah tampil di sesi ini, jadi penafian yang
+        // menggantikannya sebagai gerbang pertama.
+        if (typeof window.tampilkanDisclaimerJikaBelum === 'function') {
+          setTimeout(() => { window.tampilkanDisclaimerJikaBelum(); }, 500);
+        }
       }
     }, 350);
   });

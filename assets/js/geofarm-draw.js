@@ -37,6 +37,38 @@
     }
   }
 
+  /**
+   * Mengembalikan GeoTools ke tab GeoFarm setelah sesi gambar selesai.
+   *
+   * Sheet analisis tidak muncul otomatis setelah polygon dibuat, jadi
+   * tombol "Buka Analisis" di tab ini adalah satu-satunya jalan membukanya.
+   * Tanpa langkah ini user selesai menggambar lalu dibiarkan menatap peta
+   * kosong tanpa petunjuk ke mana harus pergi.
+   *
+   * Dua hal yang harus dilakukan, dan urutannya penting:
+   * 1. Buka #geotools-sheet. Hook onOpen-nya memindahkan isi #tab-geotools
+   *    ke dalam sheet, jadi sheet harus benar-benar terbuka lebih dulu.
+   * 2. Set dropdown ke tab GeoFarm. Hook onOpen tidak menyentuh tab utama,
+   *    dan openTab() sengaja tidak dipakai di sini: isinya sudah pindah ke
+   *    sheet, jadi membuka sidebar kiri hanya menampilkan tab kosong.
+   */
+  function returnToGeoFarmTab() {
+    try {
+      if (typeof window.openGeotoolsSheet === 'function') {
+        window.openGeotoolsSheet();
+      }
+      var dd = document.querySelector('.geotools-dropdown');
+      if (dd && dd.value !== TAB_ID) {
+        dd.value = TAB_ID;
+        dd.dispatchEvent(new Event('change'));
+      }
+      var m = getMap();
+      if (m) setTimeout(function () { m.invalidateSize(); }, 300);
+    } catch (e) {
+      console.warn('[GeoFarm] Gagal kembali ke tab GeoFarm:', e);
+    }
+  }
+
   function revealDrawChrome() {
     document.body.classList.remove('draw-chrome-hidden');
     document.body.classList.add('geofarm-draw-active');
@@ -114,14 +146,14 @@
   // Dipakai close (bukan minimize) sesuai permintaan: sheet benar-benar hilang
   // dari peta. Isinya dikembalikan ke #tab-geotools, dan bisa dibuka lagi lewat
   // tombol GeoTools di FAB.
-  // minimizeGeotoolsSheet() sengaja tidak dipakai karena merupakan toggle:
-  // dipanggil tanpa penjaga akan membuka sheet yang sedang diminimalkan.
+  // Sheet yang diminimalkan tetap menyisakan gs-sheet-open (keputusan
+  // konvensi di sheet-drag.js), jadi kedua kelas harus dicek. Kalau hanya
+  // gs-sheet-open yang dicek, sheet yang sudah jadi chip ikut ditutup dan
+  // kontennya dipindah balik ke #tab-geotools.
   function hideGeoToolsSidebar() {
     var sidebar = document.getElementById('sidebar-left');
     var sheet = document.getElementById('geotools-sheet');
-    // Sheet yang diminimalkan sudah kehilangan gs-sheet-open, jadi cukup dicek
-    // satu class ini.
-    if (sheet && sheet.classList.contains('gs-sheet-open')) {
+    if (sheet && sheet.classList.contains('gs-sheet-open') && !sheet.classList.contains('gs-sheet-minimized')) {
       if (typeof window.closeGeotoolsSheet === 'function') window.closeGeotoolsSheet();
     }
     if (sidebar && !sidebar.classList.contains('collapsed')) {
@@ -200,6 +232,9 @@
       clearPendingStop();
       endGeofarmDrawSession();
       markButtonBusy(false);
+      // Kembalikan sheet GeoTools ke tab GeoFarm. Sheet analisis tidak
+      // dibuka otomatis; tombol "Buka Analisis" di tab itu yang memanggilnya.
+      returnToGeoFarmTab();
     };
     pendingStop = stop;
 
@@ -224,6 +259,9 @@
       });
     }
     markButtonBusy(false);
-    if (m) setTimeout(function () { m.invalidateSize(); }, 300);
+    // Dibatalkan bukan berarti selesai menggambar, tapi user tetap
+    // dikembalikan ke tab GeoFarm supaya tidak tertinggal di peta tanpa
+    // ada yang terbuka. invalidateSize ikut dikerjakan di sana.
+    returnToGeoFarmTab();
   };
 })();
