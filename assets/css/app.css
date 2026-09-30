@@ -8116,6 +8116,39 @@
   .geolokasi-tabel th { width: 96px; }
 }
 
+/* Luas LBS/LSD dan LP2B di GeoOSS. Dipisah dari .geooss-khusus karena
+   ini hasil pengukuran luas, bukan daftar syarat. */
+.geooss-sawah {
+  margin-top: 10px; padding: 8px 10px; font-size: 11px;
+  color: var(--text-secondary); background: var(--bg-card-hover);
+  border-left: 3px solid var(--accent); border-radius: 4px;
+}
+/* Data sawah tidak terbaca: bukan error, dan tidak perlu warna peringatan. */
+.geooss-sawah--kosong { border-left-color: var(--text-muted); }
+.geooss-sawah > b { display: block; margin-bottom: 4px; color: var(--text-primary); }
+.geooss-sawah-tabel { width: 100%; border-collapse: collapse; }
+.geooss-sawah-tabel td {
+  padding: 3px 0; font-size: 11px; vertical-align: top;
+  border-top: 1px solid var(--border-color);
+}
+.geooss-sawah-tabel tr:first-child td { border-top: 0; }
+.geooss-sawah-tabel th {
+  padding: 3px 8px 3px 0; text-align: left; font-size: 10px; font-weight: 600;
+  color: var(--text-muted); white-space: nowrap;
+}
+.geooss-sawah-tabel td { font-variant-numeric: tabular-nums; }
+/* Sumber, satuan, dan peringatan cakupan. */
+.geooss-sawah-kecil {
+  margin-top: 5px; font-size: 10px; line-height: 1.5; color: var(--text-muted);
+}
+/* Peringatan cakupan peta 1:50.000. Oranye, karena itu informasi yang
+   perlu dibaca -- bukan sekadar catatan. */
+.geooss-sawah-catatan {
+  margin-top: 4px; padding: 4px 6px; font-size: 10px; line-height: 1.5;
+  color: var(--text-secondary); background: var(--bg-card);
+  border-left: 2px solid #d97706; border-radius: 3px;
+}
+
 /* Ketentuan khusus: daftar yang harus dipenuhi sebelum activities bisa
    dianggap bebas masalah. Dipisah dari .geooss-warn karena warn dipakai
    untuk kesalahan dan kelengkapan data, sedangkan ini daftar syarat. */

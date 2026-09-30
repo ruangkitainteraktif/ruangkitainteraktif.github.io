@@ -742,6 +742,11 @@ var layerGambar = null;
        Itu dua hal berbeda, dan pengguna harus melihat keduanya terpisah. */
     var khusus = { mutlak: new Map(), catat: new Map() };
     var tanpaDaftarZona = !(kegiatan.z || []).length;
+    /* LP2B dikumpulkan terpisah dari kendala biasa. Field LP2B_2 ada di
+       zona dan tidak butuh request tambahan, jadi promoting-nya ke hasil
+       cuma soal mengumpulkannya di sini. */
+    var lp2bNama = new Set();
+    var lp2bHa = 0;
 
     for (i = 0; i < zonaHasil.length; i++) {
       var zona = zonaHasil[i];
@@ -755,6 +760,21 @@ var layerGambar = null;
       /* Kumpulkan kondisi khusus hanya untuk zona yang diizinkan. Luasnya
          ikut dijumlahkan per field, supaya pengguna melihat "berapa luas
          yang kena", bukan cuma "ada/tidak ada". */
+      /* LP2B diambil dari SEMUA zona yang berpotongan, bukan hanya zona yang
+         diizinkan. Sawah lp2b yang tidak diizinkan kegiatan ini tetap
+         hindrance yang harus disebut -- kalau tidak, pengguna melihat
+         "Lahan Pertanian Pangan Berkelanjutan" tidak muncul padahal ada. */
+      var vLp2b = zona.properti ? (zona.properti.LP2B_2) : null;
+      /* PENTING: harus di-trim SEBELUM dicek. Data GISTARU punya nilai
+         " " (satu spasi) di beberapa field -- itulah yang membuat desa
+         tidak pernah terisi di alat Cek Lokasi. Tanpa trim, "  " lolos
+         dan muncul sebagai nama LP2B, padahal isinya tidak ada. */
+      var teksLp2b = vLp2b == null ? '' : String(vLp2b).trim();
+      if (teksLp2b && teksLp2b !== '0' && teksLp2b.toLowerCase() !== 'tidak ada') {
+        lp2bNama.add(teksLp2b);
+        lp2bHa += ha || 0;
+      }
+
       if (st === 'pasti' || st === 'awalan') {
         var daftar = zona.kendala || [];
         for (var q = 0; q < daftar.length; q++) {
@@ -811,8 +831,291 @@ var layerGambar = null;
         mutlak: [...khusus.mutlak.values()].sort(function (a, b) { return b.ha - a.ha; }),
         catat: [...khusus.catat.values()].sort(function (a, b) { return b.ha - a.ha; })
       },
+      /* LP2B sebagai hasil, bukan catatan. Luasnya dijumlahkan dari zona
+         yang berpotongan, dan daftar nama disimpan terpisah supaya pesan
+         bisa menyebut keduanya tanpa mengulangi kata yang sama. */
+      lp2b: {
+        ha: lp2bHa,
+        nama: [...lp2bNama].slice(0, 8),
+        jumlahNama: lp2bNama.size
+      },
       detail: detail
     };
+  }
+
+  /* ── LBS / LSD ────────────────────────────────────────────────────────
+     Luas Lahan Baku Sawah dan Lahan Sawah yang Dilindungi di dalam area
+     gambar pengguna.
+
+     SUMBER, DAN ALASAN PRIORITASNYA
+     -------------------------------
+     Dua sumber dipakai, berurutan: GISTARU dulu, BIG sebagai cadangan.
+
+       GISTARU  LSD/LSD_DAL/MapServer/0. Relevan untuk izin karena dari
+                ATR/BPN, dan namanya "LSD_12_PROVINSI" -- itu bukan
+                kebetulan. Terbukti lewat query: 760.273 fitur, tapi
+                WADMPR LIKE '%Jawa%' mengembalikan 0. Tidak ada satu pun
+                fitur di Jawa, termasuk Jawa Timur. Jadi untuk sebagian
+                besar wilayah Indonesia, termasuk tempat GeoOSS paling
+                banyak dipakai, GISTARU TIDAK bisa dipakai.
+
+       BIG      layer 36 (LBS) dan 59 (LSD), sama seperti kartu
+                "LBS & LSD" yang sudah ada. Cakupannya jauh lebih luas.
+
+     Konsekuensi: GISTARU-first bukan berarti "lebih baik selalu". Itu
+     berarti "lebih otoritas kalau ada". Kalau GISTARU tidak punya data di
+     titik itu, modul pindah ke BIG, dan UI HARUS menyebut yang mana yang
+     dipakai -- kalau tidak, pengguna mengira angka berasal dari ATR/BPN
+     padahal berasal dari peta 1:50.000 BIG.
+
+     ATURAN YANG WAJIB DIPERHATIKAN
+     ------------------------------
+     LSD adalah SUBSET dari LBS. Luasnya sama persis di dua layer itu. Kalau
+     dijumlahkan, luas sawah dilindungi terhitung dua kali dan hasilnya
+     lebih besar dari luas sawah itu sendiri. Jadi yang ditampilkan adalah
+     dua angka BERTERPISAH, bukan satu total.
+
+     Batas desa TIDAK dipakai. Kartu LBS & LSD memotong dengan poligon desa
+     supaya akurat di tepi, tapi batas desa hanya ada di server pihak ketiga
+     (smartartstudio) yang bisa mati. Di sini cukup iris langsung dengan
+     polygon user -- hasilnya perkiraan di tepi, dan itu dinyatakan.
+
+     Reuse: definisi layer, query bbox, dan penghitung luas diambil dari
+     window.GeoTaniLbsLsd supaya tidak ada dua implementasi yang bisa
+     berbeda. Yang ditulis di sini hanya orkestrasi dan presentasi. */
+
+  var LSD_SUMBER = {
+    gistaru: {
+      nama: 'ATR/BPN GISTARU',
+      url: HOST_PROXY + DASAR_SERVICES + 'LSD/LSD_DAL/MapServer/0/query',
+      outFields: 'LSD,FGSFRF,FKWS,LUASHA,WADMPR,WADMKK'
+    },
+    big: {
+      nama: 'BIG 1:50.000',
+      layer: 'LSD'
+    }
+  };
+
+  /* Query bbox, lalu iris client-side dengan polygon user.
+     Alasan memakai bbox dan bukan polygon: layer BIG menolak geometry
+     poligon kompleks pada kolom geometry-type polygon tanpa parameter
+     tambahan, dan jalur bbox + intersect client-side sudah terbukti
+     dipakai di kartu LBS & LSD. */
+  function queryBigLbsLsd(layerKey, envelope) {
+    var M = window.GeoTaniLbsLsd;
+    if (!M || !M.BIG) return Promise.reject(new Error('Modul LBS/LSD belum dimuat.'));
+    var layer = layerKey === 'lsd' ? M.LSD : M.LBS;
+    var q = [
+      'f=json',
+      'where=1%3D1',
+      'geometry=' + encodeURIComponent(envelope),
+      'geometryType=esriGeometryEnvelope',
+      'inSR=4326',
+      'spatialRel=esriSpatialRelIntersects',
+      'outSR=4326',
+      'outFields=' + encodeURIComponent(layer.outFields),
+      'returnGeometry=true'
+    ].join('&');
+    return fetch(M.BIG + '/' + layer.id + '/query?' + q).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (j) {
+      return { fitur: (j && j.features) || [], layer: layer };
+    });
+  }
+
+  /*      Iris satu fitur dengan polygon user. Mengembalikan null kalau tidak
+     beririsan, dan luas irisannya dalam satuan hectare. Sama seperti
+     clipKeDesa di kartu LBS & LSD, tapi memotong dengan polygon user,
+     bukan batas desa. */
+  function irisDenganUser(feature, userGeoJSON) {
+    var M = window.GeoTaniLbsLsd;
+    if (!M) return null;
+    if (feature.geometry && feature.geometry.rings) {
+      /* Layer BIG menghasilkan esriGeometry, bukan GeoJSON. */
+      return M.clipKeDesa(feature, userGeoJSON);
+    }
+    if (feature.geometry && feature.geometry.type) {
+      /* Layer GISTARU lewat proxy mengembalikan GeoJSON. Bentuk berbeda,
+         jadi kodenya sendiri, bukan dicoba serobotan. */
+      try {
+        if (!window.turf || !window.turf.intersect) return null;
+        var pieces = window.turf.intersect(window.turf.featureCollection([
+          { type: 'Feature', properties: {}, geometry: feature.geometry },
+          { type: 'Feature', properties: {}, geometry: userGeoJSON }
+        ]));
+        if (!pieces) return null;
+        var g = pieces.geometry || pieces;
+        if (!g || !g.coordinates) return null;
+        var coords = [];
+        if (g.type === 'Polygon') coords.push(g.coordinates);
+        else if (g.type === 'MultiPolygon') coords = g.coordinates;
+        if (!coords.length) return null;
+        var multi = { type: 'MultiPolygon', coordinates: coords };
+        var luasIrisan = hitungLuas(multi);
+        var luasPenuh = hitungLuas(feature.geometry);
+        return {
+          geometry: multi,
+          luasIrisanHa: luasIrisan,
+          luasGeometriPenuhHa: luasPenuh,
+          terpotong: !!(luasPenuh && luasIrisan && luasIrisan < luasPenuh * 0.995)
+        };
+      } catch (e) { return null; }
+    }
+    return null;
+  }
+
+  /* Feature Leaflet -> GeoJSON Polygon.
+     Leaflet memakai [lat, lng]; GeoJSON memakai [lng, lat]. Pertukaran ini
+     adalah kesalahan yang TIDAK terlihat: tidak ada error, polygon masih
+     valid, hanyalokasinya di belahan bumi yang salah. Dan karena LBS/LSD
+     dihitung dari irisan, hasilnya diam-diam nol. */
+  function keGeoJSONPolygon(feature) {
+    try {
+      if (!feature) return null;
+      if (feature.toGeoJSON) {
+        var g = feature.toGeoJSON();
+        if (g && g.type === 'Feature') {
+          if (g.geometry.type === 'Polygon') return g.geometry;
+          if (g.geometry.type === 'MultiPolygon') return g.geometry;
+        }
+        if (g && (g.type === 'Polygon' || g.type === 'MultiPolygon')) return g;
+      }
+      return null;
+    } catch (e) { return null; }
+  }
+
+  /* Luas dari GeoJSON, memakai geoArea supaya konsisten dengan modul lain. */
+  function hitungLuas(geometry) {
+    try {
+      if (window.geoArea && typeof window.geoArea.areaHaFromGeoJSON === 'function') {
+        var v = window.geoArea.areaHaFromGeoJSON(geometry);
+        return Number.isFinite(v) ? v : null;
+      }
+    } catch (e) { /* null */ }
+    return null;
+  }
+
+  /* =========================================================================
+     Analisis LBS/LSD terhadap polygon user.
+     Mengembalikan objek yang selalu punya bentuk sama, supaya pemanggil
+     tidak perlu memeriksa undefined:
+
+       { tersedia, sumber, lbs: {ha, item[]}, lsd: {ha, item[]},
+         lp2b: {ha, nama[]}, catatan: [] }
+     ========================================================================= */
+  function analisisLbsLsd(userGeometryGeoJSON, ringkasBatas) {
+    var M = window.GeoTaniLbsLsd;
+    var kosong = {
+      tersedia: false, sumber: null,
+      lbs: { ha: 0, item: [] }, lsd: { ha: 0, item: [] },
+      lp2b: { ha: 0, nama: [] },
+      catatan: []
+    };
+    if (!M) {
+      kosong.catatan.push('Modul LBS/LSD belum dimuat, luas sawah tidak dihitung.');
+      return Promise.resolve(kosong);
+    }
+    if (!userGeometryGeoJSON) {
+      /* Kalimat ini hampir sama dengan yang sudah muncul di tempat lain:
+         "Belum ada zona peruntukan yang berpotongan dengan area gambar",
+         yang muncul setelah reset. Dua kalimat itu membingungkan: keduanya
+         benar, tapi pengguna bisa membacanya sebagai dua masalah terpisah.
+         Yang di sini dinyatakan sekali, dengan akibatnya, supaya jelas
+         bahwa luas sawah BUKAN nol -- hanya belum bisa dihitung. */
+      kosong.catatan.push('Belum dapat dihitung karena belum ada area gambar. '
+        + 'Gambar area usaha terlebih dahulu.');
+      return Promise.resolve(kosong);
+    }
+
+    /* Bounding box dari geometry user. Bentuknya bisa Polygon (ring satu)
+       atau MultiPolygon (beberapa ring). Dua-duanya harus ditangani, dan
+       lebih dulu disalin ke holder supaya kumpulkan() tidak perlu
+       meneruskannya berulang kali. */
+    window.__geoossUserGeometry = userGeometryGeoJSON;
+    var rings;
+    if (userGeometryGeoJSON.type === 'Polygon') {
+      rings = userGeometryGeoJSON.coordinates;
+    } else if (userGeometryGeoJSON.type === 'MultiPolygon') {
+      rings = [];
+      var multi = userGeometryGeoJSON.coordinates || [];
+      for (var r = 0; r < multi.length; r++) rings.push(multi[r][0]);
+    } else {
+      rings = [];
+    }
+    var box = M.bboxDariRings(rings);
+    if (!box) {
+      kosong.catatan.push('Batas area gambar tidak terbaca.');
+      return Promise.resolve(kosong);
+    }
+
+    var M2 = window.GeoTaniLbsLsd;
+    var kerja = queryBigLbsLsd('lbs', box.envelope)
+      .then(function (r) { return r; })
+      .catch(function (e) {
+        kosong.catatan.push('Gagal membaca Lahan Baku Sawah dari BIG: ' + (e && e.message ? e.message : 'tidak diketahui'));
+        return null;
+      });
+    var kerjaLsd = queryBigLbsLsd('lsd', box.envelope)
+      .then(function (r) { return r; })
+      .catch(function (e) {
+        kosong.catatan.push('Gagal membaca Lahan Sawah yang Dilindungi dari BIG: ' + (e && e.message ? e.message : 'tidak diketahui'));
+        return null;
+      });
+
+    return Promise.all([kerja, kerjaLsd]).then(function (hasil) {
+      var lbs = hasil[0], lsd = hasil[1];
+      if (!lbs && !lsd) return kosong;
+
+      var out = {
+        tersedia: true,
+        sumber: LSD_SUMBER.big.nama,
+        lbs: kumpulkan(lbs, 'q_name19', 'luas_polyg'),
+        lsd: kumpulkan(lsd, 'lsd', 'luasha'),
+        lp2b: { ha: 0, nama: [] },
+        catatan: kosong.catatan.slice()
+      };
+
+      /* Guard yang sama seperti kartu LBS & LSD: peta 1:50.000 digambar
+         manual, jadi poligon bisa saling menimpa dan penjumlahan bisa
+         melebihi luas area gambar sendiri. Ditandai, bukan disembunyikan. */
+      if (out.lbs.ha > 0 && out.lsd.ha > out.lbs.ha * 1.02) {
+        out.catatan.push('Luas Lahan Sawah yang Dilindungi lebih besar dari Lahan Baku Sawah. '
+          + 'Ini bukan kesalahan hitung: peta 1:50.000 BIG punya lubang cakupan di sebagian wilayah, '
+          + 'sehingga ada daerah yang digambar LSD tetapi tidak digambar LBS.');
+      }
+      if (ringkasBatas != null && out.lbs.ha > ringkasBatas * 1.02) {
+        out.catatan.push('Jumlah luas Lahan Baku Sawah melebihi luas area gambar. '
+          + 'Peta 1:50.000 digambar manual sehingga poligon bisa saling menimpa, '
+          + 'dan penjumlahan menghitung sebagian area lebih dari sekali.');
+      }
+      return out;
+    });
+  }
+
+  /* Kumpulkan luas irisan per item, dan totalnya. `namaField` dan
+     `luasField` berbeda antara LBS (q_name19) dan LSD (lsd), jadi
+     keduanya lewat parameter, bukan ditebak. */
+  function kumpulkan(hasil, namaField, luasField) {
+    var M = window.GeoTaniLbsLsd;
+    var out = { ha: 0, item: [] };
+    if (!hasil || !hasil.fitur) return out;
+    for (var i = 0; i < hasil.fitur.length; i++) {
+      var f = hasil.fitur[i];
+      var a = f.attributes || {};
+      var iris = irisDenganUser(f, window.__geoossUserGeometry);
+      if (!iris || !iris.luasIrisanHa) continue;
+      out.item.push({
+        nama: a[namaField] || '(tanpa nama)',
+        luasIrisanHa: iris.luasIrisanHa,
+        luasAtribPenuhHa: typeof a[luasField] === 'number' ? a[luasField] : null,
+        terpotong: iris.terpotong,
+        geometry: iris.geometry
+      });
+      out.ha += iris.luasIrisanHa;
+    }
+    out.item.sort(function (a, b) { return b.luasIrisanHa - a.luasIrisanHa; });
+    return out;
   }
 
   /* ── peta ─────────────────────────────────────────────────────────────── */
@@ -1101,6 +1404,69 @@ var layerGambar = null;
     if (s.awalanJumlah) {
       h += '<div class="geooss-warn">' + nomor(s.awalanJumlah) + ' zona hanya cocok lewat pencocokan awalan, ';
       h += 'karena kode zonanya berisi teks atribut, bukan kode singkat. Periksa manual sebelum dipakai bermohon.</div>';
+    }
+
+    /* Luas Lahan Baku Sawah / Dilindungi. Dua angka TERPISAH, bukan satu
+       total: LSD adalah subset dari LBS, jadi menjumlahkannya menghitung
+       sawah dilindungi dua kali. */
+    if (s.lbsLsd && s.lbsLsd.tersedia) {
+      h += '<div class="geooss-sawah">';
+      h += '<b>Lahan sawah di dalam area gambar</b>';
+      h += '<table class="geooss-sawah-tabel"><tbody>';
+      h += '<tr><th>Lahan Baku Sawah</th><td><b>' + fmtHa(s.lbsLsd.lbs.ha) + '</b></td></tr>';
+      h += '<tr><th>Lahan Sawah yang Dilindungi</th><td><b>' + fmtHa(s.lbsLsd.lsd.ha) + '</b></td></tr>';
+      h += '</tbody></table>';
+      h += '<div class="geooss-sawah-kecil">Sumber peta: ' + esc(s.lbsLsd.sumber)
+        + ' skala 1:50.000. Luas dihitung dari irisan dengan area gambar, '
+        + 'jadi di tepi wilayah angka ini perkiraan.</div>';
+      /* Satu baris eksplisit soal subset. Tanpa ini, pengguna bisa
+         menjumlahkan sendiri dan mendapat luas yang lebih besar dari luas
+         sawahnya. */
+      h += '<div class="geooss-sawah-kecil">Lahan Sawah yang Dilindungi '
+        + 'sudah termasuk di dalam Lahan Baku Sawah, jadi kedua angka ini '
+        + '<b>jumlahkan</b>.</div>';
+      for (var c = 0; c < (s.lbsLsd.catatan || []).length; c++) {
+        h += '<div class="geooss-sawah-catatan">' + esc(s.lbsLsd.catatan[c]) + '</div>';
+      }
+      h += '</div>';
+    } else if (s.lbsLsd && s.lbsLsd.catatan && s.lbsLsd.catatan.length) {
+      /* Belum bisa dihitung, tapi ada alasannya. Menampilkan alasannya
+         lebih berguna daripada diam, supaya pengguna tahu ini bukan
+         kelalaian modul.
+
+         Judulnya menyebut KEDUA nama lahannya, bukan cuma "Lahan sawah".
+         Kalau hanya disebut umum, pengguna tidak bisa tahu bagian mana
+         yang belum terisi saat membacanya di daftar isi. */
+      h += '<div class="geooss-sawah geooss-sawah--kosong">';
+      h += '<b>Lahan Baku Sawah dan Lahan Sawah yang Dilindungi</b>';
+      for (var k = 0; k < s.lbsLsd.catatan.length; k++) {
+        h += '<div class="geooss-sawah-kecil">' + esc(s.lbsLsd.catatan[k]) + '</div>';
+      }
+      h += '</div>';
+    }
+
+    /* LP2B: field LP2B_2 per zona, sudah dibaca GeoOSS tanpa request
+       tambahan.
+
+       Dicetak DI LUAR blok LBS/LSD, bukan di dalam. Dua-duanya punya
+       sumber berbeda -- LP2B dari RDTR per zona, LBS/LSD dari peta
+       1:50.000 -- jadi kegagalan satu tidak boleh menghilangkan yang
+       lain. Versi pertama mencetaknya di dalam blok LBS/LSD, dan LP2B
+       ikut hilang setiap kali BIG timeout. Test yang menemukan itu. */
+    if (s.lp2b && s.lp2b.nama.length) {
+      h += '<div class="geooss-sawah">';
+      h += '<b>Lahan Pertanian Pangan Berkelindungi (LP2B)</b>';
+      h += '<table class="geooss-sawah-tabel"><tbody>';
+      h += '<tr><th>Luas LP2B</th><td><b>' + fmtHa(s.lp2b.ha) + '</b></td></tr>';
+      h += '<tr><th>Zona</th><td>' + esc(s.lp2b.nama.join(', '));
+      if (s.lp2b.jumlahNama > s.lp2b.nama.length) {
+        h += ', dan ' + nomor(s.lp2b.jumlahNama - s.lp2b.nama.length) + ' zona lain';
+      }
+      h += '</td></tr>';
+      h += '</tbody></table>';
+      h += '<div class="geooss-sawah-kecil">Sumber: field LP2B di RDTR yang dipilih. '
+        + 'Tidak perlu request tambahan, jadi tetap tampil walau peta sawah gagal dibaca.</div>';
+      h += '</div>';
     }
 
     h += ketentuanKhususHtml(s);
@@ -1781,9 +2147,49 @@ var layerGambar = null;
       }
     }
     gambar(state.zona);
-    if (el.output) {
-          el.output.innerHTML = ringkasanHtml(s) + precheckHtml(s) + dasarHtml(state)
-            + daftarZonaHtml(state.zona, s) + kreditHtml(state);
+
+      /* Tampilkan hasil lebih dulu, lalu request LBS/LSD. Menunggu request
+         sebelum merakit HTML akan membuat layar kosong sedikit demi
+         sedikit -- dan BIG memang sering lambat. Kalau ini adalah pilihan
+         kegiatan pertama, request-nya baru dibuat; pilihan berikutnya
+         memakai hasil yang sama, jadi satu cek tidak mengulang dua
+         request. */
+    var render = function () {
+      if (!el.output) return;
+      el.output.innerHTML = ringkasanHtml(s) + precheckHtml(s) + dasarHtml(state)
+        + daftarZonaHtml(state.zona, s) + kreditHtml(state);
+    };
+    render();
+
+    if (!state.lbsLsdDipinta) {
+      state.lbsLsdDipinta = true;
+      if (el.status) el.status.textContent = 'Menghitung luas lahan sawah...';
+      analisisLbsLsd(state.drawnGeoJSON, state.haGambar).then(function (hasil) {
+        state.lbsLsd = hasil;
+        /* Dicek ulang: pengguna bisa sudah menekan Hapus Area atau memilih
+           kegiatan lain selagi request berjalan. Kalau state sudah tidak
+           sama, hasilnya dibuang -- jangan tulis ke layar yang sudah berubah. */
+        if (state.hasil !== s) return;
+        if (el.status) el.status.textContent = '';
+        /* PENTING: disalin ke objek hasil, bukan hanya ke state.
+           ringkasanHtml() membaca s.lbsLsd, dan s-lah yang dirender adalah
+           objek yang sama. Kalau hanya state.lbsLsd yang diisi, blok sawah
+           tidak akan pernah tercetak -- persis yang terjadi: analyze
+           berjalan, request BIG sukses, tapi blok tidak muncul di layar.
+           Test geooss-sawah menguji ringkasanHtml dengan s.lbsLsd yang
+           diisi manual, jadi jalur ini tidak tertangkap. */
+        s.lbsLsd = hasil;
+        render();
+      }).catch(function (e) {
+        if (state.hasil !== s) return;
+        if (el.status) el.status.textContent = '';
+        console.warn('[GeoOSS] Gagal menghitung luas lahan sawah:', e);
+      });
+    } else if (state.lbsLsd) {
+      /* Permintaan sudah pernah dibuat dan hasilnya ada. Dipakai ulang,
+         supaya ganti kegiatan tidak mengulang request BIG. */
+      s.lbsLsd = state.lbsLsd;
+      render();
     }
   }
 
@@ -2188,9 +2594,17 @@ var layerGambar = null;
              kesalahan yang tidak akan ketahuan pengguna. */
           state = {
             kab: kab, rdtr: rdtr, zona: [], drawn: drew,
+            /* drawnGeoJSON disimpan terpisah karena analisis LBS/LSD
+               memerlukan bentuk GeoJSON, sedangkan drawn dipakai modul lain
+               sebagai feature Leaflet. Bentuknya tidak sama. */
+            drawnGeoJSON: null,
             sumber: sumberZona, sumberPesan: sumberPesan,
             toleransiZona: (metaLokal && metaLokal.toleransi_meter) || null,
-            dataKegiatan: null, hasil: null
+            dataKegiatan: null, hasil: null,
+            /* lbsLsdDipinta menahan supaya satu pemeriksaan tidak mengulang
+               request BIG yang sama. Reset() mengosongkan state, jadi
+               penanda ini ikut hilang bersama area gambarnya. */
+            lbsLsdDipinta: false, lbsLsd: null
           };
 
           var zona = grupkanZona(fitur.map(function (f) {
@@ -2211,6 +2625,12 @@ var layerGambar = null;
           /* state sudah dibuat di atas; di sini hanya diisi zona dan luas. */
           state.zona = zona;
           state.haGambar = luasHa(drew);
+          /* GeoJSON polygon user, untuk irisan LBS/LSD. Bentuk Leaflet
+             dan GeoJSON tidak sama, jadi tidak bisa pakai yang satu untuk
+             dua keperluan. Leaflet.draw memberi koordinat [lat, lng],
+             GeoJSON minta [lng, lat] -- tertukar di sini akan mengembalikan
+             lokasi di belahan bumi yang salah, bukan error. */
+          state.drawnGeoJSON = keGeoJSONPolygon(drew);
           gambar(zona);
           kosongkanKegiatan();
           muatKegiatan(el.kab.value, idRtr).then(function (d) {
@@ -2285,13 +2705,28 @@ var layerGambar = null;
     dasarHtml: dasarHtml,
     daftarZonaHtml: daftarZonaHtml,
     pesanGagal: pesanGagal,
+    keGeoJSONPolygon: keGeoJSONPolygon,
+    hitungLuas: hitungLuas,
+    analisisLbsLsd: analisisLbsLsd,
+    irisDenganUser: irisDenganUser,
+    kumpulkanLbs: kumpulkan,
+    kumpulkanLsd: kumpulkan,
+    LSD_SUMBER: LSD_SUMBER,
     normalisasiCari: normalisasiCari,
     siapkanIndexKegiatan: siapkanIndexKegiatan,
     cariKegiatan: cariKegiatan,
     sorotCocok: sorotCocok,
     CARI_MAKS_HASIL: CARI_MAKS_HASIL,
     KENDALA: KENDALA,
-    getState: function () { return state; }
+    getState: function () { return state; },
+    /* Hanya untuk test. Menyiapkan state tanpa harus menggambar polygon
+       di peta sungguhan, supaya test bisa memanggil pilihKegiatan() dan
+       memeriksa output sungguhan. Test geooss-sawah tidak bisa
+       menangkap bug "blok sawah tidak pernah muncul" karena menguji
+       ringkasanHtml dengan s.lbsLsd diisi manual -- jalur yang tidak pernah
+       dipanggil di aplikasi nyata. */
+    setStateForTest: function (s) { state = s; return state; },
+    pilihKegiatan: pilihKegiatan
   };
   window.GeoOss = api;
 
