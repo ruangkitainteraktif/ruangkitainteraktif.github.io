@@ -1361,7 +1361,38 @@ var layerGambar = null;
       + 'pada RDTR yang dipilih.'
   };
 
-  function ringkasanHtml(s) {
+  /* Satu kartu analisis yang bisa dilipat.
+
+     Dipakai <details>/<summary> bawaan browser, bukan div + JavaScript.
+     Alasannya tiga: keadaan terlipat sudah menjadi perilaku bawaan tanpa
+     satu baris kode pun, tetap berfungsi kalau JavaScript gagal dimuat,
+     dan tombol Enter/Space sudah ditangani browser untuk pembaca layar --
+     tombol yang dibuat sendiri harus meniru ketiganya satu per satu.
+
+     TIDAK memakai atribut `open`, jadi semua kartu mulai terlipat. Isinya
+     tetap ada di DOM dan tetap terbaca mesin pencari maupun pembaca layar
+     yang menampilkan seluruh halaman.
+
+     Kartu kosong tidak pernah dibuat: `isi` yang kosong menghasilkan string
+     kosong, supaya tidak ada kartu berjudul tanpa isi -- judulnya sendiri
+     sudah akan menyesatkan. */
+  function kartu(judul, sub, isi) {
+    if (!isi) return '';
+    return '<details class="geooss-kartu">'
+      + '<summary class="geooss-kartu-kepala">'
+      + '<span class="geooss-kartu-teks">'
+      + '<b class="geooss-kartu-judul">' + esc(judul) + '</b>'
+      + (sub ? '<small class="geooss-kartu-sub">' + esc(sub) + '</small>' : '')
+      + '</span>'
+      + '<span class="geooss-kartu-panah" aria-hidden="true"></span>'
+      + '</summary>'
+      + '<div class="geooss-kartu-isi">' + isi + '</div>'
+      + '</details>';
+  }
+
+  /* Kartu 1: verdict dan hitungan zona. Dipisah dari sawah dan LP2B
+     supaya tiap analisis punya tempatnya sendiri. */
+  function penilaianHtml(s) {
     if (!s) return '';
     /* "bersyarat" memakai kelas warn, bukan ok. Activities-nya memang
        mengizinkan, tapi ada yang harus dipenuhi, jadi warna hijau akan
@@ -1402,15 +1433,19 @@ var layerGambar = null;
     h += '.</div>';
 
     if (s.awalanJumlah) {
-      h += '<div class="geooss-warn">' + nomor(s.awalanJumlah) + ' zona hanya cocok lewat pencocokan awalan, ';
-      h += 'karena kode zonanya berisi teks atribut, bukan kode singkat. Periksa manual sebelum dipakai bermohon.</div>';
+      h += '<div class="geooss-warn">' + nomor(s.awalanJumlah) + ' zona hanya cocok lewat pencocokan awalan, '
+        + 'karena kode zonanya berisi teks atribut, bukan kode singkat. Periksa manual sebelum dipakai bermohon.</div>';
     }
+    return h;
+  }
 
-    /* Luas Lahan Baku Sawah / Dilindungi. Dua angka TERPISAH, bukan satu
-       total: LSD adalah subset dari LBS, jadi menjumlahkannya menghitung
-       sawah dilindungi dua kali. */
+  /* Kartu 2: Lahan Baku Sawah dan Lahan Sawah yang Dilindungi.
+     Dua angka TERPISAH, bukan satu total: LSD adalah subset dari LBS, jadi
+     menjumlahkannya menghitung sawah dilindungi dua kali. */
+  function sawahHtml(s) {
+    if (!s) return '';
     if (s.lbsLsd && s.lbsLsd.tersedia) {
-      h += '<div class="geooss-sawah">';
+      var h = '<div class="geooss-sawah">';
       h += '<b>Lahan sawah di dalam area gambar</b>';
       h += '<table class="geooss-sawah-tabel"><tbody>';
       h += '<tr><th>Lahan Baku Sawah</th><td><b>' + fmtHa(s.lbsLsd.lbs.ha) + '</b></td></tr>';
@@ -1429,7 +1464,9 @@ var layerGambar = null;
         h += '<div class="geooss-sawah-catatan">' + esc(s.lbsLsd.catatan[c]) + '</div>';
       }
       h += '</div>';
-    } else if (s.lbsLsd && s.lbsLsd.catatan && s.lbsLsd.catatan.length) {
+      return h;
+    }
+    if (s.lbsLsd && s.lbsLsd.catatan && s.lbsLsd.catatan.length) {
       /* Belum bisa dihitung, tapi ada alasannya. Menampilkan alasannya
          lebih berguna daripada diam, supaya pengguna tahu ini bukan
          kelalaian modul.
@@ -1437,40 +1474,52 @@ var layerGambar = null;
          Judulnya menyebut KEDUA nama lahannya, bukan cuma "Lahan sawah".
          Kalau hanya disebut umum, pengguna tidak bisa tahu bagian mana
          yang belum terisi saat membacanya di daftar isi. */
-      h += '<div class="geooss-sawah geooss-sawah--kosong">';
-      h += '<b>Lahan Baku Sawah dan Lahan Sawah yang Dilindungi</b>';
-      for (var k = 0; k < s.lbsLsd.catatan.length; k++) {
-        h += '<div class="geooss-sawah-kecil">' + esc(s.lbsLsd.catatan[k]) + '</div>';
+      var k = '<div class="geooss-sawah geooss-sawah--kosong">';
+      k += '<b>Lahan Baku Sawah dan Lahan Sawah yang Dilindungi</b>';
+      for (var z = 0; z < s.lbsLsd.catatan.length; z++) {
+        k += '<div class="geooss-sawah-kecil">' + esc(s.lbsLsd.catatan[z]) + '</div>';
       }
-      h += '</div>';
+      k += '</div>';
+      return k;
     }
+    return '';
+  }
 
-    /* LP2B: field LP2B_2 per zona, sudah dibaca GeoOSS tanpa request
-       tambahan.
+  /* Kartu 3: LP2B, dari field LP2B_2 per zona. Dibaca tanpa request
+     tambahan, jadi tetap tampil walau peta sawah gagal dibaca.
 
-       Dicetak DI LUAR blok LBS/LSD, bukan di dalam. Dua-duanya punya
-       sumber berbeda -- LP2B dari RDTR per zona, LBS/LSD dari peta
-       1:50.000 -- jadi kegagalan satu tidak boleh menghilangkan yang
-       lain. Versi pertama mencetaknya di dalam blok LBS/LSD, dan LP2B
-       ikut hilang setiap kali BIG timeout. Test yang menemukan itu. */
-    if (s.lp2b && s.lp2b.nama.length) {
-      h += '<div class="geooss-sawah">';
-      h += '<b>Lahan Pertanian Pangan Berkelindungi (LP2B)</b>';
-      h += '<table class="geooss-sawah-tabel"><tbody>';
-      h += '<tr><th>Luas LP2B</th><td><b>' + fmtHa(s.lp2b.ha) + '</b></td></tr>';
-      h += '<tr><th>Zona</th><td>' + esc(s.lp2b.nama.join(', '));
-      if (s.lp2b.jumlahNama > s.lp2b.nama.length) {
-        h += ', dan ' + nomor(s.lp2b.jumlahNama - s.lp2b.nama.length) + ' zona lain';
-      }
-      h += '</td></tr>';
-      h += '</tbody></table>';
-      h += '<div class="geooss-sawah-kecil">Sumber: field LP2B di RDTR yang dipilih. '
-        + 'Tidak perlu request tambahan, jadi tetap tampil walau peta sawah gagal dibaca.</div>';
-      h += '</div>';
+     Dipisah dari sawah karena dua-duanya punya sumber berbeda: LP2B dari
+     RDTR per zona, LBS/LSD dari peta 1:50.000. Kalau digabung, kegagalan
+     satu akan menghilangkan yang lain -- dan itu yang terjadi di versi
+     pertama, LP2B ikut hilang setiap kali BIG timeout. Test yang
+     menemukan itu. */
+  function lp2bHtml(s) {
+    if (!s || !s.lp2b || !s.lp2b.nama.length) return '';
+    var h = '<div class="geooss-sawah">';
+    h += '<b>Lahan Pertanian Pangan Berkelindungi (LP2B)</b>';
+    h += '<table class="geooss-sawah-tabel"><tbody>';
+    h += '<tr><th>Luas LP2B</th><td><b>' + fmtHa(s.lp2b.ha) + '</b></td></tr>';
+    h += '<tr><th>Zona</th><td>' + esc(s.lp2b.nama.join(', '));
+    if (s.lp2b.jumlahNama > s.lp2b.nama.length) {
+      h += ', dan ' + nomor(s.lp2b.jumlahNama - s.lp2b.nama.length) + ' zona lain';
     }
-
-    h += ketentuanKhususHtml(s);
+    h += '</td></tr>';
+    h += '</tbody></table>';
+    h += '<div class="geooss-sawah-kecil">Sumber: field LP2B di RDTR yang dipilih. '
+      + 'Tidak perlu request tambahan, jadi tetap tampil walau peta sawah gagal dibaca.</div>';
+    h += '</div>';
     return h;
+  }
+
+  /* Empat kartu pertama. Nama fungsi lama (ringkasanHtml) dipakai lagi
+     supaya pemanggil dan test yang sudah ada tidak perlu diubah; isinya
+     kini berupa kartu, bukan blok datar. */
+  function ringkasanHtml(s) {
+    if (!s) return '';
+    return kartu('Hasil Penilaian', 'Zona peruntukan vs kegiatan terpilih', penilaianHtml(s))
+      + kartu('Lahan Sawah', 'Lahan Baku Sawah dan Lahan Sawah yang Dilindungi', sawahHtml(s))
+      + kartu('LP2B', 'Lahan Pertanian Pangan Berkelindungi', lp2bHtml(s))
+      + kartu('Ketentuan Khusus', 'Harus dipenuhi dan perlu diperiksa', ketentuanKhususHtml(s));
   }
 
   /* ── OUTPUT: Pre-check KKPR ──────────────────────────────────────────
@@ -1744,6 +1793,35 @@ var layerGambar = null;
     h += '<br><span class="geooss-detail">Sumber data: ATR/BPN GISTARU.</span>';
 
     h += '</div>';
+    return h;
+  }
+
+  /* Rakit seluruh hasil GeoOSS menjadi kartu-kartu yang bisa dilipat.
+
+     Satu kartu per analisis, sesuai yang diminta: penilaian zona, lahan
+     sawah, LP2B, ketentuan khusus, pre-check KKPR, dasar peraturan, dan
+     daftar zona. Semuanya mulai terlipat.
+
+     Urutannya bukan hiasan. Orang membacanya berurutan, jadi yang
+     menentukan (apakah zona mengizinkan) harus muncul paling atas, lalu
+     konteks, lalu pelengkap, lalu yang paling detail.
+
+     Kredit TIDAK dijadikan kartu. Ia-atribusi sumber, bukan hasil, dan
+     tidak boleh bisa dilipat -- kalau terlipat, sumber data jadi hal
+     pertama yang hilang saat layar penuh. */
+  function hasilHtml(s) {
+    if (!s) return '';
+    var st = state || {};
+    var zona = st.zona || [];
+
+    var h = ringkasanHtml(s);
+
+    h += kartu('Pre-check KKPR', 'Ringkasan untuk pengajuan resmi', precheckHtml(s));
+    h += kartu('Dasar Peraturan', 'Wilayah, RDTR, dan landasan hukum', dasarHtml(st));
+    h += kartu('Daftar Zona', nomor(zona.length) + ' zona berpotongan dengan area gambar',
+      daftarZonaHtml(zona, s));
+
+    h += kreditHtml(st);
     return h;
   }
 
@@ -2156,8 +2234,7 @@ var layerGambar = null;
          request. */
     var render = function () {
       if (!el.output) return;
-      el.output.innerHTML = ringkasanHtml(s) + precheckHtml(s) + dasarHtml(state)
-        + daftarZonaHtml(state.zona, s) + kreditHtml(state);
+      el.output.innerHTML = hasilHtml(s);
     };
     render();
 
@@ -2700,6 +2777,7 @@ var layerGambar = null;
     fieldYangAda: fieldYangAda,
     skemaLayer: skemaLayer,
     ringkasanHtml: ringkasanHtml,
+  hasilHtml: hasilHtml,
     precheckHtml: precheckHtml,
     kreditHtml: kreditHtml,
     dasarHtml: dasarHtml,

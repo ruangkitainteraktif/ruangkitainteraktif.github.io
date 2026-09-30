@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=52">
+  <link rel="stylesheet" href="assets/css/app.css?v=61">
 
 </head>
 
@@ -781,6 +781,37 @@
             <span class="dm-sidebar-option-label">Lokasi Saya</span>
           </div>
         </div>
+
+        <!-- Cek Lokasi: koordinat -> nama wilayah (kecamatan ke bawah).
+             Sheet TIDAK ditutup saat tombol ditekan, karena hasilnya harus
+             langsung terbaca. Di desktop sidebar 380px di kanan, jadi peta
+             masih bisa diklik; di mobile sheet 50vh, peta masih terlihat
+             di atasnya.
+
+             ID-nya dmCekLokasi, bukan alat-tab-lokasi: awalan "alat-tab-"
+             sudah tidak benar karena ini bukan subtab GeoData lagi. -->
+        <div class="dm-sidebar-section-title">Cek Lokasi</div>
+        <div id="dmCekLokasi" class="dm-cek-lokasi">
+          <p class="dm-cek-lokasi-desc">
+            Ketik koordinat untuk melihat kecamatan, kabupaten, dan provinsinya.
+          </p>
+          <label class="dm-cek-lokasi-label" for="geolokasiInput">Koordinat (latitude, longitude)</label>
+          <input type="text" id="geolokasiInput" class="dm-cek-lokasi-input"
+                 placeholder="-7.470000, 112.650000"
+                 inputmode="decimal" autocomplete="off" />
+          <div class="geolokasi-tombol">
+            <button id="geolokasiCek" class="dm-cek-lokasi-btn" type="button">Cek Lokasi</button>
+            <button id="geolokasiPin" class="dm-cek-lokasi-btn dm-cek-lokasi-btn--orange" type="button"
+                    title="Pasang pin di peta, lalu klik titik yang ingin dicek">Pasang Pin</button>
+          </div>
+          <div id="geolokasiStatus" class="dm-cek-lokasi-status" role="status" aria-live="polite"></div>
+          <div id="geolokasiHasil"></div>
+          <!-- Tombol Salin sengaja disembunyikan sampai ada hasil. Menampilkan
+               tombol yang belum bisa dipakai lebih buruk daripada tidak
+               menampilkannya. -->
+          <button id="geolokasiSalin" class="dm-cek-lokasi-btn dm-cek-lokasi-btn--green"
+                  type="button" style="display:none;margin-top:8px;">Salin Koordinat</button>
+        </div>
       </div>
      </div>
 
@@ -1018,14 +1049,10 @@
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
               <span>Timeline</span>
             </button>
-            <!-- Cek Lokasi: dari koordinat ke nama wilayah. Sheet "Gambar &
-                 Ukur" memindahkan isi tab GeoTools ke dalam dirinya sendiri
-                 (map-core.js), jadi alat ini harus berupa subtab, bukan modul
-                 baru di dropdown -- supaya urutan dropdown tidak berubah. -->
-            <button class="geoid-subtab-btn" data-subtab="alat-tab-lokasi" onclick="openGeoidSubtab(this)">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              <span>Lokasi</span>
-            </button>
+            <!-- Cek Lokasi TIDAK lagi di sini. Alat ini pindah ke sheet
+                 "Gambar & Ukur" (drawSidebar) sebagai section "Cek Lokasi",
+                 karena tugasnyaplicant koordinat ke wilayah -- satu keluarga
+                 dengan alat ukur, bukan dengan alat impor berkas. -->
           </div>
 
           <!-- SHP Panel -->
@@ -1121,30 +1148,6 @@
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               Muat & Animasi
             </button>
-          </div>
-
-          <!-- Lokasi Panel: cek wilayah dari koordinat -->
-          <div id="alat-tab-lokasi" class="geoid-subtab-panel">
-            <p class="geotools-desc" style="margin-bottom:10px;">
-              Ketik koordinat untuk melihat desa, kecamatan, kabupaten, dan provinsinya.
-              Sumber: batas wilayah ATR/BPN GISTARU.
-            </p>
-            <label class="geotani-form-label" for="geolokasiInput">Koordinat (latitude, longitude)</label>
-            <input type="text" id="geolokasiInput" class="geotani-form-input-search"
-                   placeholder="-7.470000, 112.650000"
-                   inputmode="decimal" autocomplete="off" />
-            <div class="geolokasi-tombol">
-              <button id="geolokasiCek" class="geotools-btn" type="button">Cek Lokasi</button>
-              <button id="geolokasiPin" class="geotools-btn geotools-btn--orange" type="button"
-                      title="Pasang pin di peta, lalu klik titik yang ingin dicek">Pasang Pin</button>
-            </div>
-            <div id="geolokasiStatus" class="geotani-sls-status" role="status" aria-live="polite"></div>
-            <div id="geolokasiHasil"></div>
-            <!-- Tombol Salin sengaja disembunyikan sampai ada hasil. Menampilkan
-                 tombol yang belum bisa dipakai lebih buruk daripada tidak
-                 menampilkannya. -->
-            <button id="geolokasiSalin" class="geotools-btn geotools-btn--green"
-                    type="button" style="display:none;margin-top:8px;">Salin Koordinat</button>
           </div>
 
           <!-- KMZ Panel -->
@@ -1349,14 +1352,21 @@
                  yang terlihat. Grid .geotani-analysis-cards sendiri sedang
                  display:none di app.css, jadi kartu ini sengaja tidak ikut
                  mekanisme openGeotaniAnalysisTab. -->
-            <section class="geotani-lbslsd" id="geotani-lbslsd-card" aria-labelledby="geotani-lbslsd-title">
-              <div class="geotani-lbslsd-head">
-                <span class="geotani-card-icon" aria-hidden="true">&#127807;</span>
+            <!-- September 2026: kartu GeoTani diubah jadi <details> yang mulai
+                 terlipat, sama seperti GeoOSS, KKPR, dan GeoFarm.
+
+                 Lima tab analisis yang sudah lama mati (LBS/NDVI/LULC/DEM/KTA)
+                 TIDAK ikut diubah: grid pemicunya display:none, jadi tidak ada
+                 yang bisa membukanya. Mengubah struktur kartu yang tidak terlihat
+                 hanya menambah risiko tanpa manfaat yang bisa dilihat. -->
+            <details class="geotani-lbslsd" id="geotani-lbslsd-card" aria-labelledby="geotani-lbslsd-title">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#127807;</span>
                 <span>
                   <b id="geotani-lbslsd-title">LBS &amp; LSD</b>
                   <small>Lahan Baku &amp; Sawah Dilindungi &mdash; BIG 1:50.000</small>
                 </span>
-              </div>
+              </summary>
               <div class="geotani-lbslsd-body">
                 <p class="geotani-sls-desc">
                   Menampilkan <b>Lahan Baku Sawah</b> dan <b>Lahan Sawah Dilindungi</b> di dalam desa
@@ -1377,7 +1387,7 @@
                 <div id="geotani-lbslsd-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
                 <div id="geotani-lbslsd-output"></div>
               </div>
-            </section>
+            </details>
 
             <div class="geotani-analysis-cards" role="tablist" aria-label="Menu analisis Geotani">
               <button id="geotani-lbs-tab" class="geotani-analysis-card" type="button" role="tab" aria-selected="false" aria-controls="geotani-lbs-panel" onclick="openGeotaniAnalysisTab('lbs')">
@@ -1623,8 +1633,14 @@
                    (mis. satupeta) disimpan di state modul lokal, bukan global,
                    jadi tidak bisa dibaca dari sini. Sumber daftar desa
                    (window.KODE_WILAYAH_DATA) sudah termuat di halaman ini. -->
-              <section class="geotani-kta-card geotani-sls-card" id="geotani-sls-card" aria-labelledby="geotani-sls-title">
-                <h5 id="geotani-sls-title">SLS Desa <span class="geotani-sls-badge">BPS</span></h5>
+              <details class="geotani-kta-card geotani-sls-card" id="geotani-sls-card" aria-labelledby="geotani-sls-title">
+                <summary class="gt-card-head">
+                  <span class="gt-card-icon" aria-hidden="true">&#129517;</span>
+                  <span>
+                    <b id="geotani-sls-title">SLS Desa <span class="geotani-sls-badge">BPS</span></b>
+                    <small>Satuan Lingkungan Setempat RT/RW/dusun &mdash; BPS</small>
+                  </span>
+                </summary>
                 <div>
                   <p class="geotani-sls-desc">
                     Menampilkan batas <b>Satuan Lingkungan Setempat</b> (RT/RW/dusun) di dalam desa
@@ -1644,16 +1660,28 @@
                   <div id="geotani-sls-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
                   <div id="geotani-sls-output"></div>
                 </div>
-              </section>
+              </details>
 
               <!-- Kartu Geospasial Indonesia: pemilih layer BIG/SatuPeta.
                    Ditaruh paling bawah supaya alur bacaGeoTani mulai dari
                  workflow desa (LBS & LSD, SLS) lalu berakhir di pemetaan
                  umum, dan supaya kartu ini punya header seperti kartu lain
                  di panel ini. -->
-              <section class="geotani-kta-card" id="geotani-geospasial-card" aria-labelledby="geotani-geospasial-title">
-                <h5 id="geotani-geospasial-title">Geospasial Indonesia</h5>
-                <div style="display:grid;gap:10px;margin-top:8px;">
+              <details class="geotani-kta-card" id="geotani-geospasial-card" aria-labelledby="geotani-geospasial-title">
+                <summary class="gt-card-head">
+                  <span class="gt-card-icon" aria-hidden="true">&#128506;</span>
+                  <span>
+                    <b id="geotani-geospasial-title">Geospasial Indonesia</b>
+                    <small>Pemilih layer BIG, SatuPeta, dan sumber resmi lain</small>
+                  </span>
+                </summary>
+                <!-- margin-top inline DIHAPUS: nilai inline menang atas
+                     stylesheet, jadi ia akan mengalahkan margin 12px
+                     dari #geotani-satupeta-panel > .geotani-kta-card > div
+                     dan jarak atas kartu ini jadi beda dari kartu SLS
+                     di atasnya. Jarak kartu sekarang diurus sepenuhnya
+                     oleh CSS. -->
+                <div style="display:grid;gap:10px;">
                   <div>
                     <label class="geotani-form-label">Cari layer</label>
                     <select id="satupetaInputLayer" class="geotani-form-select">
@@ -1707,7 +1735,7 @@
                   </button>
                   <button id="btnDetailSatupeta" style="margin-top:4px;display:none;width:100%;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Detail</button>
                 </div>
-              </section>
+              </details>
             </div>
             <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
           </div>
@@ -1732,6 +1760,11 @@
                  GeoTani. Alurnya berurutan dan bukan free-form:
                  pilih wilayah, pilih RDTR, gambar area, pilih kegiatan.
 
+                 Dibuat <details>, bukan <section>, supaya bisa dilipat
+                 memakai perilaku bawaan browser -- tanpa satu baris
+                 JavaScript pun, dan tetap jalan kalau JavaScript gagal
+                 dimuat.
+
                  Sifat modul ini tidak boleh berubah tanpa alasan yang jelas:
                  GeoOSS BUKAN OSS. Ia tidak menerbitkan keputusan, tidak
                  menerbitkan izin, dan tidak menggantikan OSS / ATR-BPN /
@@ -1742,15 +1775,19 @@
                  Data wilayah dan daftar kegiatan dibaca dari berkas statis di
                  assets/data/geooss/, bukan langsung dari API, karena endpoint
                  navigasi GISTARU tidak mengirim header CORS. Geometri zonanya
-                 tetap diambil langsung dari ArcGIS lewat tres/proxy.ashx. -->
-            <section class="geotani-geooss" id="geotani-geooss-card" aria-labelledby="geotani-geooss-title">
-              <div class="geotani-lbslsd-head">
-                <span class="geotani-card-icon" aria-hidden="true">&#9878;</span>
+                 tetap diambil langsung dari ArcGIS lewat tres/proxy.ashx.
+
+                 TIDAK memakai atribut `open`: kartu ini mulai terlipat.
+                 Hasil analisis juga ada di dalam badan kartu ini, jadi kartu
+                 harus dibuka untuk melihat dan memakai GeoOSS. -->
+            <details class="geotani-geooss" id="geotani-geooss-card" aria-labelledby="geotani-geooss-title">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#9878;</span>
                 <span>
                   <b id="geotani-geooss-title">GeoOSS &mdash; Pre-OSS Spatial Checker</b>
                   <small>Pemeriksaan awal zona peruntukan &mdash; ATR/BPN GISTARU</small>
                 </span>
-              </div>
+              </summary>
               <div class="geotani-lbslsd-body">
                 <p class="geotani-sls-desc">
                   Lihat zona peruntukan sebuah area terhadap kegiatan tertentu <b>sebelum</b>
@@ -1798,7 +1835,7 @@
                   <div id="geooss-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
                   <div id="geooss-output"></div>
               </div>
-            </section>
+            </details>
 
             <!-- KKPR (Kartu Kepemilikan Plekitas) via pencarian NIB — ATR/BPN
                  GISTARU. Sekarang menjadi bagian modul GeoOSS, dengan
@@ -1814,15 +1851,17 @@
                  Panjang NIB diperiksa di geotani-kkpr.js sebelum request, jadi
                  input ini sengaja tanpa maxlength. Nomor yang diketik orang dari
                  dokumen kertas sering memuat spasi atau tanda hubung, dan lebih
-                 baik dibersihkan sendiri oleh modul daripada ditolak browser. -->
-            <section class="geotani-kkpr" id="geotani-kkpr-card" aria-labelledby="geotani-kkpr-title">
-              <div class="geotani-lbslsd-head">
-                <span class="geotani-card-icon" aria-hidden="true">&#128220;</span>
+                 baik dibersihkan sendiri oleh modul daripada ditolak browser.
+
+                 Seperti GeoOSS, kartu ini <details> yang mulai terlipat. -->
+            <details class="geotani-kkpr" id="geotani-kkpr-card" aria-labelledby="geotani-kkpr-title">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#128220;</span>
                 <span>
                   <b id="geotani-kkpr-title">KKPR &mdash; Cari NIB</b>
                   <small>Kartu Kepemilikan Plekitas &mdash; ATR/BPN GISTARU</small>
                 </span>
-              </div>
+              </summary>
               <div class="geotani-lbslsd-body">
                 <p class="geotani-sls-desc">
                   Menampilkan bidang tanah dari <b>Kartu Kepemilikan Plekitas</b> untuk satu
@@ -1841,7 +1880,7 @@
                 <div id="geotani-kkpr-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
                 <div id="geotani-kkpr-output"></div>
               </div>
-            </section>
+            </details>
 </div>
 
           <div id="geotoolsTabGeoPangan" class="geotools-main-tab-panel">
@@ -2673,19 +2712,22 @@
                  langsung terbaca: ini modul analisis lahan.
 
                  panduan (bagian bawah kartu) memakai <details> supaya tidak
-                 memakan ruang sheet, tapi tetap bisa dibuka kapan saja. -->
-            <section class="geofarm-card" aria-labelledby="geofarmCardTitle">
-              <div class="geofarm-card-head">
-                <span class="geofarm-card-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
-                    <path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3z"/><path d="M9 4v13M15 7v13"/>
-                  </svg>
-                </span>
-                <span class="geofarm-card-headtext">
+                 memakan ruang sheet, tapi tetap bisa dibuka kapan saja.
+
+                 September 2026: kartu ini sendiri diubah jadi <details> yang
+                 mulai terlipat, sama seperti kartu GeoOSS dan KKPR. Pembungkus
+                 baru (geofarm-card-body)omena perlu: supaya isi kartu punya
+                 padding sendiri, bukan bergantung pada padding kartu yang
+                 sekaligus dipakai untuk menyedot tepi kepala ke atas. -->
+            <details class="geofarm-card" aria-labelledby="geofarmCardTitle">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#127793;</span>
+                <span>
                   <b id="geofarmCardTitle">GeoFarm Analisis</b>
                   <small>Gambar atau unggah petak, lalu lihat kondisi lahan dan kebutuhan airnya</small>
                 </span>
-              </div>
+              </summary>
+              <div class="geofarm-card-body">
 
               <div class="geofarm-card-actions">
                 <button id="geofarmDrawPolygonBtn" class="geofarm-draw-btn" type="button" onclick="startGeofarmPolygonDraw()">
@@ -2804,7 +2846,8 @@
                   <p class="geofarm-guide-foot">Sumber citra: Sentinel-2 (ESA), setiap 5 hari. Data cuaca dan ET0: Open-Meteo. Data kemiringan lahan: DEMNAS, courtesy BMKG.</p>
                 </div>
               </details>
-            </section>
+              </div>
+            </details>
 
             <!-- Kenapa status unggah (#geofarmUploadStatus) diletakkan tepat di
                  atas tombol Buka Analisis, bukan di bawah catatan SHP:
@@ -2819,15 +2862,21 @@
                  untuk mendapat hitungan benih DAN pupuk sekaligus.
                  Baris tabel Pupuk sengaja tidak ditulis di sini:
                  geofarm-kalkulator.js membangunnya dari array PUPUK supaya
-                 tidak ada dua sumber kebenaran. -->
-            <section class="geofarm-kalk" id="geofarm-kalkulator-card" aria-labelledby="geofarm-kalk-title">
-              <div class="geofarm-kalk-head">
-                <span class="geofarm-kalk-icon" aria-hidden="true">&#127807;</span>
+                 tidak ada dua sumber kebenaran.
+
+                 September 2026: diubah jadi <details> yang mulai terlipat,
+                 sama seperti kartu GeoFarm Analisis di atasnya. Elemen di
+                 dalamnya dicari per ID oleh geofarm-kalkulator.js, jadi
+                 pembungkus geofarm-kalk-body tidak menggentarkan apa pun. -->
+            <details class="geofarm-kalk" id="geofarm-kalkulator-card" aria-labelledby="geofarm-kalk-title">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#127807;</span>
                 <span>
                   <b id="geofarm-kalk-title">Kalkulator Benih &amp; Pupuk</b>
                   <small>Kebutuhan benih dan pupuk dari luas lahan yang sama</small>
                 </span>
-              </div>
+              </summary>
+              <div class="geofarm-kalk-body">
 
               <div class="geofarm-kalk-luas">
                 <label class="geofarm-kalk-label" for="geofarmKalkLuas">Luas lahan</label>
@@ -2920,7 +2969,8 @@
                   <a href="https://peraturan.go.id/id/permentan-no-13-tahun-2022" target="_blank" rel="noopener noreferrer">Lihat peraturan</a>
                 </p>
               </div>
-            </section>
+              </div>
+            </details>
           </div>
              </div>
 

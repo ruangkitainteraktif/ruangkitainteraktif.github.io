@@ -3279,6 +3279,29 @@
     #satupetaFeatureTable .at-table-wrap { width: 100%; max-width: 100%; min-width: 0; margin: 0; overflow-x: auto !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch; }
     #satupetaFeatureTable .at-table { width: max-content; min-width: 100%; }
     .geotani-kta-card { margin: 0; padding: 13px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-card); }
+
+    /* Dua kartu yang benar-benar terlihat di panel ini (SLS dan
+       Geospasial) disamakan bentuknya dengan kartu LBS & LSD: kartu
+       tanpa padding, pita kepala menyatu ke tepi, dan jarak 13px datang
+       dari padding kepala -- bukan dari padding kartu yang menumpuk.
+       Sebelum ini:
+         LBS & LSD  -> padding kartu 0   + kepala 13px = ikon mulai 13px
+         SLS/Geo   -> padding kartu 13px + kepala 13px = ikon mulai 26px
+
+       Jadi jaraknya berbeda 13px dan pita kepalanya tidak sampai ke tepi,
+       padahal keduanya memakai kelas kepala yang sama.
+
+       Aturan ini di-scope ke #geotani-satupeta-panel. Kartu kta di lima
+       tab analisis yang sudah lama mati (LBS/NDVI/LULC/DEM/KTA) tidak
+       ikut berubah: panelnya display:none, dan mengubahnya berarti
+       mengubah hal yang tidak terlihat. */
+    #geotani-satupeta-panel > .geotani-kta-card {
+      padding: 0;
+      overflow: hidden;
+    }
+    #geotani-satupeta-panel > .geotani-kta-card > div {
+      margin: 12px 13px;
+    }
     .geotani-kta-card h5 { display: flex; align-items: center; gap: 6px; margin: 0 0 5px; color: var(--text-primary); font-size: 13px; text-transform: none; letter-spacing: normal; }
     .geotani-kta-card h5::before { content: '◈'; color: var(--accent-green); font-size: 15px; }
     .geotani-kta-card > div { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-input); }
@@ -3327,6 +3350,18 @@
     .geotani-btn-reset:active { transform: scale(.99); }
     .geotani-btn-reset:focus-visible { outline: 2px solid var(--accent-green); outline-offset: 1px; }
     [data-theme="dark"] .geotani-btn-reset { color: var(--text-secondary); background: var(--bg-input); }
+    /* State disabled. Tombol Hapus Layer Polygon di GeoNusa dimatikan saat
+       tidak ada polygon di peta, supaya tidak ada tombol aktif yang
+       diam-diam tidak melakukan apa pun. */
+    .geotani-btn-reset:disabled,
+    .geotani-btn-reset[disabled] {
+      opacity: .45; cursor: not-allowed;
+      background: transparent; color: var(--text-muted);
+    }
+    .geotani-btn-reset:disabled:hover,
+    .geotani-btn-reset[disabled]:active { transform: none; }
+    .geoid-indicator-reset { margin-top: 10px; }
+
     .geotani-form-label {
       font-size: 10px; color: #54708d; font-weight: 600;
       display: block; margin-bottom: 3px;
@@ -7887,8 +7922,11 @@
    untuk kepala dan badan kartunya, supaya dua workflow mandiri di bagian
    atas tab ini terlihat sama dan tidak perlu aturan yang terduplikasi.
    Yang ditambahkan hanya jarak antar kartu dan gaya untuk kondisi data
-   yang tidak konsisten. */
-.geotani-kkpr { margin-bottom: 14px; }
+   yang tidak konsisten.
+
+   Bingkai kartu KKPR (border, radius, latar) TIDAK ditulis di sini.
+   Aturannya ada di blok .geotani-geooss/.geotani-kkpr yang menyatukan
+   kedua kartu, supaya tidak ada dua tempat yang bisa tidak sinkron. */
 
 /* Peringatan data: satu NIB dengan beberapa geometri, atau geometri
    berukuran tidak wajar. Warnanya sengaja tidak merahsolid -- merah
@@ -7946,8 +7984,36 @@
 /* GeoTani - GeoOSS (Pre-OSS Spatial Checker).
    Nama kelas memakai prefix .geooss- supaya tidak bentrok dengan .geotani-kkpr-
    yang punya gaya serupa. Kartu meniru .geotani-lbslsd seperti kartu GeoTani
-   yang lain; yang khas hanya isi: tabel zona, verdict, dan daftar kendala. */
-.geotani-geooss { margin-bottom: 14px; }
+   yang lain; yang khas hanya isi: tabel zona, verdict, dan daftar kendala.
+
+   BINGKAI KARTU
+   -------------
+   Dua kartu ini memakai .geotani-lbslsd-head dan .geotani-lbslsd-body, tapi
+   TIDAK memakai kelas .geotani-lbslsd -- dan bingkai itulah yang memberi
+   border, radius, warna latar, serta overflow. Akibatnya keduanya pernah
+   tampil sebagai kepala berwarna yang menggantung di atas teks, tanpa
+   kotak: terlihat seperti hasil modul yang ditempelkan, bukan kartu.
+
+   Aturan di bawah memberikan bingkai itu secara langsung, bukan dengan
+   menumpangkan kelas .geotani-lbslsd ke dalam .geotani-geooss/.geotani-kkpr,
+   supaya nama kelas di markup tetap berarti apa adanya modul itu. */
+.geotani-geooss,
+.geotani-kkpr {
+  margin-bottom: 14px; padding: 0; overflow: hidden;
+  border: 1px solid var(--border-color); border-radius: 8px;
+  background: var(--bg-card);
+}
+
+/* Penanda bawaan, chevron, hover, dan fokus kartu GeoOSS dan KKPR
+   sekarang ditangani oleh .gt-card-head di blok "Kepala kartu GeoTools".
+   Aturan lama di sini dihapus, bukan dibiarkan jadi alias, supaya tidak
+   ada dua sumber untuk hal yang sama.
+
+   Yang TETAP khas modul ini cuma satu: isi kartu pertama tidak boleh
+   punya margin-top sendiri, karena badannya ber-padding. */
+.geotani-geooss > .geotani-lbslsd-body > :first-child,
+.geotani-kkpr > .geotani-lbslsd-body > :first-child { margin-top: 0; }
+
 
 /* Verdict: satu blok besar yang langsung terbaca. Warna memakai variabel tema
    supaya ikut dark mode, bukan hex tetap. */
@@ -8083,9 +8149,49 @@
   .geooss-precheck-tabel th { width: 96px; }
 }
 
-/* Alat Cek Lokasi: dari koordinat ke nama wilayah. Gaya memakai kelas yang
-   sudah ada (geotani-sls-status, geotools-btn) supaya tidak membuat sistem
-   gaya baru; yang ditambahkan hanya tata letak hasil. */
+/* Alat Cek Lokasi: dari koordinat ke nama wilayah. Berada di sheet
+   "Gambar & Ukur" (drawSidebar), bukan lagi di GeoData.
+   Kelas .geolokasi-* dipakai modul untuk MENULIS hasil, jadi kelas itu
+   tetap global di bawah. Yang di-scope ke .dm-cek-lokasi hanya kerangka
+   form-nya, karena harus serasi dengan .dm-sidebar-option yang warnanya
+   mengikuti var(--bg-secondary) / var(--border-color). */
+.dm-cek-lokasi { margin-bottom: 4px; }
+.dm-cek-lokasi-desc {
+  margin: 0 0 10px; font-size: 11px; line-height: 1.5;
+  color: var(--text-secondary);
+}
+.dm-cek-lokasi-label {
+  display: block; margin-bottom: 4px;
+  font-size: 10px; font-weight: 600; color: var(--text-secondary);
+}
+/* Padding kiri 10px, bukan 28px seperti .geotani-form-input-search. Nilai 28px
+   itu ruang untuk ikon search, dan input ini tidak punya ikon -- sisa ruang
+   kosong itu bikin teks tampak tidak rata dengan label di atasnya. */
+.dm-cek-lokasi-input {
+  width: 100%; box-sizing: border-box;
+  padding: 7px 10px; font-size: 12px; font-variant-numeric: tabular-nums;
+  border: 1px solid var(--border-color); border-radius: 8px;
+  background: var(--bg-secondary); color: var(--text-primary); outline: none;
+}
+.dm-cek-lokasi-input::placeholder { color: var(--text-muted); }
+.dm-cek-lokasi-input:focus { border-color: var(--accent); }
+.dm-cek-lokasi-btn {
+  flex: 1 1 0; min-width: 0; height: 34px; padding: 0 10px;
+  font-size: 11px; font-weight: 700; border: none; border-radius: 8px;
+  cursor: pointer; transition: all .2s ease;
+  color: #fff; background: var(--accent);
+}
+.dm-cek-lokasi-btn:hover { filter: brightness(1.08); }
+.dm-cek-lokasi-btn:active { transform: translateY(1px); }
+.dm-cek-lokasi-btn--orange { background: #ea580c; }
+.dm-cek-lokasi-btn--green { background: #16a34a; }
+.dm-cek-lokasi-status:not(:empty) {
+  margin-top: 8px; padding: 6px 8px; font-size: 11px; line-height: 1.5;
+  color: var(--text-secondary); background: var(--bg-card-hover);
+  border-left: 3px solid var(--accent); border-radius: 4px;
+}
+[data-theme="dark"] .dm-cek-lokasi-btn { color: #06202a; }
+
 .geolokasi-tombol { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .geolokasi-hasil { margin-top: 8px; }
 .geolokasi-koordinat {
@@ -8102,6 +8208,11 @@
   width: 116px; padding-right: 8px; font-size: 10px; font-weight: 600;
   color: var(--text-muted);
 }
+/* Di dalam sidebar 380px, kolom label 116px menyisakan terlalu sedikit
+   ruang untuk nilai -- "Jawa Timur" mulai turun ke baris berikutnya.
+   namespaced ini, jadi tabel lain yang memakai kelas yang sama tidak
+   ikut berubah. */
+.dm-cek-lokasi .geolokasi-tabel th { width: 92px; }
 /* Nilai yang memang tidak ada di sumber data. Warnanya sengaja redup,
    bukan merah: ini keterbatasan sumber, bukan kesalahan. */
 .geolokasi-takada { color: var(--text-muted); font-style: italic; }
@@ -8222,6 +8333,64 @@
   background: var(--bg-tertiary); color: var(--text-secondary);
 }
 
+/* ── Kartu hasil GeoOSS ───────────────────────────────────────────────────
+   Satu kartu per analisis, memakai <details>/<summary> supaya bisa dilipat
+   tanpa satu baris JavaScript pun. Tampilannya meniru .geotani-lbslsd --
+   kartu GeoTools lain -- supaya panel ini tidak terlihat seperti hasil
+   modul yang ditempelkan. */
+.geooss-kartu {
+  margin: 0 0 10px; padding: 0; overflow: hidden;
+  border: 1px solid var(--border-color); border-radius: 8px;
+  background: var(--bg-card);
+}
+.geooss-kartu-kepala {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 13px;
+  background: var(--bg-card-active);
+  cursor: pointer; list-style: none;
+  /* Panah dibuat sendiri, jadi penanda bawaan <summary> harus dimatikan
+     supaya tidak ada dua tanda panah bertumpuk: satu dari ::marker dan
+     satu dari elemen yang kita gambar sendiri. */
+  -webkit-tap-highlight-color: transparent;
+}
+.geooss-kartu-kepala::-webkit-details-marker { display: none; }
+.geooss-kartu-kepala::marker { content: ''; }
+.geooss-kartu-kepala:hover { background: var(--bg-card-hover); }
+.geooss-kartu-kepala:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: -2px;
+}
+.geooss-kartu-teks { display: block; flex: 1 1 auto; min-width: 0; }
+.geooss-kartu-judul {
+  display: block; font-size: 13px; font-weight: 700;
+  color: var(--text-primary); line-height: 1.3;
+}
+.geooss-kartu-sub {
+  display: block; margin-top: 1px; font-size: 9.5px; font-weight: 500;
+  color: var(--text-muted); line-height: 1.35;
+}
+/* Panah chevron. Diputar 180 derajat saat kartu dibuka, jadi arahnya
+   selalu menunjukkan aksi berikutnya, bukan sekadar keadaan. */
+.geooss-kartu-panah {
+  flex: 0 0 auto; width: 8px; height: 8px;
+  border-right: 1.6px solid var(--text-muted);
+  border-bottom: 1.6px solid var(--text-muted);
+  transform: rotate(45deg);
+  transition: transform .18s ease;
+}
+.geooss-kartu[open] > .geooss-kartu-kepala { border-bottom: 1px solid var(--border-color); }
+.geooss-kartu[open] > .geooss-kartu-kepala .geooss-kartu-panah {
+  transform: rotate(-135deg); margin-top: -4px;
+}
+.geooss-kartu-isi { padding: 12px 13px; }
+/* Blok di dalam kartu sudah punya margin-top sendiri. Tanpa ini, isi
+   pertama berjarak 8px dari tepi dalam PLUS padding 12px, jadi terlihat
+   tidak rata dengan tepi kartu. */
+.geooss-kartu-isi > :first-child { margin-top: 0; }
+@media (max-width: 420px) {
+  .geooss-kartu-judul { font-size: 12.5px; }
+  .geooss-kartu-isi { padding: 10px 11px; }
+}
+
 .geotani-sls-popup-row b { color: #166534; }
 
 /* GeoTani - LBS & LSD (BIG SatuPeta), workflow mandiri di bagian teratas.
@@ -8232,20 +8401,75 @@
   border: 1px solid var(--border-color); border-radius: 8px;
   background: var(--bg-card);
 }
-.geotani-lbslsd-head {
+/* ── Kepala kartu GeoTools ───────────────────────────────────────────────
+   SATU template untuk semua panel, diambil dari kartu LBS & LSD GeoTani:
+   ikon 20px, judul 13px tebal, subjudul 9,5px redup, pita
+   var(--bg-card-active).
+
+   Kenapa satu kelas, bukan satu kelas per modul. Sebelumnya tiap modul
+   punya kelas kepalanya sendiri dengan angka yang berbeda-beda dalam satu
+   panel yang sama: ikon 20px (GeoTani), SVG 18px berwarna aksen
+   (GeoFarm Analisis), dan 15px (Kalkulator). Warna pitanya juga berbeda:
+   --bg-card-active di GeoTani/GeoOSS, --bg-secondary di GeoFarm. Efeknya
+   kartu di panel yang sama terlihat berasal dari situs berbeda.
+
+   Kelas-kelas lama (geotani-lbslsd-head, geotani-kta-summary,
+   geofarm-card-head, geofarm-kalk-head) tidak lagi dipakai di markup dan
+   aturannya dihapus, bukan dibiarkan jadi alias. Tidak ada satu pun
+   referensi ke kelas itu dari JavaScript, dan alias yang tak terpakai
+   hanya menambah tempat yang harus ikut dirawat saat temanya berubah. */
+.gt-card-head {
   display: flex; align-items: center; gap: 10px;
   padding: 11px 13px;
   background: var(--bg-card-active);
   border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  list-style: none;
 }
-.geotani-lbslsd-head .geotani-card-icon { font-size: 20px; line-height: 1; }
-.geotani-lbslsd-head b { display: block; font-size: 13px; color: var(--text-primary); }
-.geotani-lbslsd-head small {
-  display: block; font-size: 9.5px; font-weight: 500;
-  color: var(--text-muted); margin-top: 1px;
+.gt-card-head::-webkit-details-marker { display: none; }
+.gt-card-head::marker { content: ''; }
+.gt-card-head:hover { background: var(--bg-card-hover); }
+.gt-card-head:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: -2px;
 }
+.gt-card-icon {
+  flex: 0 0 auto;
+  font-size: 20px; line-height: 1;
+}
+.gt-card-head b {
+  display: block; font-size: 13px; font-weight: 700;
+  color: var(--text-primary);
+}
+.gt-card-head small {
+  display: block; margin-top: 1px;
+  font-size: 9.5px; font-weight: 500;
+  color: var(--text-muted);
+}
+/* Chevron. Arahnya selalu menunjukkan aksi berikutnya: ke kanan saat
+   terlipat, ke bawah saat terbuka. */
+.gt-card-head::after {
+  content: ''; flex: 0 0 auto; margin-left: auto;
+  width: 8px; height: 8px;
+  border-right: 1.6px solid var(--text-muted);
+  border-bottom: 1.6px solid var(--text-muted);
+  transform: rotate(45deg);
+  transition: transform .18s ease;
+}
+/* Selector memakai details[open] > .gt-card-head, bukan .gt-card-head[open]:
+   yang membawa atribut open adalah <details>, bukan <summary>. */
+details[open] > .gt-card-head::after {
+  transform: rotate(-135deg); margin-top: -4px;
+}
+
 .geotani-lbslsd-body { padding: 12px 13px; }
 .geotani-lbslsd .geotani-btn-print { width: 100%; justify-content: center; }
+
+/* Kartu GeoTani: isi disembunyikan eksplisit saat terlipat, mengikuti pola
+   yang sudah dipakai .geofarm-guide di modul GeoFarm. Kepala dan chevron
+   sudah ditangani oleh .gt-card-head di atas. */
+.geotani-lbslsd:not([open]) > .geotani-lbslsd-body,
+.geotani-kta-card:not([open]) > :not(.gt-card-head) { display: none; }
+
 .geotani-lbslsd-summary {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 9px;
 }
@@ -9446,6 +9670,29 @@
     [data-theme="dark"] .draw-actions-btn:focus-visible { outline-color: #22d3ee; }
     body.draw-chrome-hidden .draw-actions-wrap,
     body.draw-chrome-hidden .leaflet-draw { display: none; }
+
+    /* Draw chrome (Export GeoJSON / Export SHP / Hapus Semua) disembunyikan
+       di MOBILE selama sheet Gambar & Ukur mengembang.
+
+       Kenapa perlu: syncDrawChrome() di alat-draw-measure.js sengaja
+       melepas body.draw-chrome-hidden begitu sheet dibuka -- itu memang
+       niatnya, agar chrome gambar ikut tampil bersama sheetnya. Masalahnya
+       di mobile: sheet memakan ~50dvh, dan tepi bawah kotak peta berada
+       --map-chrome di belakang sheet, sehingga kontrol kiri-bawah ikut
+       terangkat sebesar `80px + var(--map-chrome)` (lihat aturan
+       body.sheet-terbuka .leaflet-bottom.leaflet-left). Kalau peta hanya
+       setinggi pita bebas, kotak ini terdorong ke atas sampai menabrak
+       unified search yang menempel di top:14px.
+
+       Di desktop TIDAK disembunyikan: peta masih utuh, dan kotaknya muat
+       rapi di kiri-bawah tanpa menabrak apa pun. */
+
+    @media (max-width: 768px) {
+      body.dm-sidebar-open:not(.dm-sidebar-minimized) .leaflet-draw,
+      body.dm-sidebar-open:not(.dm-sidebar-minimized) .draw-actions-wrap {
+        display: none !important;
+      }
+    }
     .leaflet-control-scale-line {
       border-color: var(--text-secondary);
       border-width: 1px 0 0 0;
@@ -12995,9 +13242,9 @@
 [data-theme="dark"] .geofarm-upload-status.is-ok { background: #052e16; border-color: #15803d; color: #bbf7d0; }
 
 /* ── GeoFarm: Kalkulator Benih & Pupuk ──
-   Satu kartu, dua tab (Benih / Pupuk), satu field luas bersama. Bentuk
-   header sengaja meniru kartu .geotani-lbslsd supaya dua workflow terlihat
-   sekeluarga, tapi input dan warnanya TIDAK memakai .geotani-form-input:
+   Satu kartu, dua tab (Benih / Pupuk), satu field luas bersama. Kepala
+   kartu ini memakai .gt-card-head yang sama dengan kartu LBS & LSD, tapi
+   input dan warnanya TIDAK memakai .geotani-form-input:
    kelas itu warnanya dikunci ke putih/teks gelap tanpa override dark,
    sedangkan kartu ini punya state is-warn/is-ok sendiri seperti
    .geofarm-upload-status di atas.
@@ -13009,40 +13256,34 @@
    Dulu "Buat Polygon" dan "Unggah Polygon" berdiri sebagai tombol lepas di
    atas tab, sehingga sheet GeoTools terbaca sebagai daftar tombol tanpa
    konteks. Sekarang keduanya, tombol Buka Analisis, dan panduan dikelompokkan
-   dalam satu kartu bernama. Header memakai pola yang sama persis dengan
-   .geofarm-kalk-head supaya dua modul ini terlihat satu keluarga. */
+   dalam satu kartu bernama. Kepala kartu ini memakai .gt-card-head yang
+   sama dengan kartu LBS & LSD, jadi seluruh GeoTools punya satu template. */
+/* GeoFarm Analisis.
+   September 2026: kartu ini <details> yang mulai terlipat. Padding kartu
+   pindah ke .geofarm-card-body, dan margin negatif di kepala dihapus --
+   margin itu ada untuk menyedot tepi kepala ke atas kartu yang BER-PADDING.
+   Sekarang kartu tanpa padding, jadi margin negatif justru akan mendorong
+   kepala ke luar kotak. */
 .geofarm-card {
-  padding: 12px 13px;
+  padding: 0;
+  overflow: hidden;
   border: 1px solid var(--border-color);
   border-radius: 10px;
   background: var(--bg-card);
 }
-.geofarm-card-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: -12px -13px 12px;
-  padding: 11px 13px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
-}
-.geofarm-card-icon {
-  display: flex;
-  flex-shrink: 0;
-  color: var(--accent);
-}
-.geofarm-card-headtext b {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-.geofarm-card-headtext small {
-  display: block;
-  font-size: 9.5px;
-  line-height: 1.4;
-  color: var(--text-muted);
-}
+.geofarm-card:not([open]) > .geofarm-card-body { display: none; }
+.geofarm-card-body { padding: 12px 13px; }
+/* Kepala, ikon, judul, subjudul, dan chevron kartu ini semua ditangani
+   oleh .gt-card-head / .gt-card-icon di blok "Kepala kartu GeoTools".
+   Aturan lama .geofarm-card-head, .geofarm-card-icon, dan
+   .geofarm-card-headtext * dihapus: nilainya berbeda dari template
+   (ikon SVG 18px berwarna aksen, judul 600, pita --bg-secondary), dan
+   itulah penyebab kartu ini terlihat berbeda dari kartu LBS & LSD
+   meskipun satu panel. */
+
+/* Chevron, hover, dan fokus untuk kartu GeoFarm ditangani oleh
+   .gt-card-head. Aturan lama di sini dihapus agar tidak ada dua sumber
+   untuk hal yang sama. */
 
 /* Dua tombol aksi utama berjajar. Lebarnya dibagi sama supaya keduanya
    punya target sentuh yang sama besar, bukan ikut panjang teks. */
@@ -13171,33 +13412,16 @@
 
 .geofarm-kalk {
   margin-top: 14px;
-  padding: 12px 13px;
+  padding: 0;
+  overflow: hidden;
   border: 1px solid var(--border-color);
   border-radius: 10px;
   background: var(--bg-card);
 }
-.geofarm-kalk-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: -12px -13px 12px;
-  padding: 11px 13px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
-}
-.geofarm-kalk-icon { font-size: 15px; line-height: 1; flex-shrink: 0; }
-.geofarm-kalk-head b {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-.geofarm-kalk-head small {
-  display: block;
-  font-size: 9.5px;
-  line-height: 1.4;
-  color: var(--text-muted);
-}
+.geofarm-kalk:not([open]) > .geofarm-kalk-body { display: none; }
+.geofarm-kalk-body { padding: 12px 13px; }
+/* Kepala dan ikon ditangani oleh .gt-card-head / .gt-card-icon. Ikonnya
+   tadinya 15px, sekarang ikut 20px seperti kartu LBS & LSD. */
 .geofarm-kalk-label {
   display: block;
   margin-bottom: 3px;

@@ -168,7 +168,32 @@
     activeChoroplethLegend = true;
   }
 
+  /* Laporkan perubahan status ke luar lewat event window.
+     Tombol "Hapus Layer" di panel GeoNusa perlu tahu apakah ada polygon
+     yang sedang tampil, supaya bisa dinonaktifkan kalau tidak ada. Tanpa
+     pengumuman ini, panel harus menebak dengan memeriksa peta sendiri --
+     dan peta tidak bisa dibaca dari sini tanpa membocorkan detail internal
+     modul ini ke pemanggil mana pun.
+
+   DIBungkus try/catch karena CustomEvent tidak ada di lingkungan uji
+   lama; kegagalan mengirim event tidak boleh menggagalkan pencetakan
+   layer itu sendiri. */
+  function umumkanStatusChoropleth() {
+    try {
+      if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
+      if (typeof CustomEvent !== 'function') return;
+      window.dispatchEvent(new CustomEvent('choropleth:changed', {
+        detail: { aktif: !!activeChoroplethLayer }
+      }));
+    } catch (e) { /* tidak fatal */ }
+  }
+
+  function isChoroplethActive() {
+    return !!activeChoroplethLayer;
+  }
+
   function removeChoropleth() {
+    const ada = !!activeChoroplethLayer || !!activeChoroplethLegend;
     if (activeChoroplethLayer) {
       map.removeLayer(activeChoroplethLayer);
       activeChoroplethLayer = null;
@@ -178,6 +203,10 @@
       activeChoroplethLegend = null;
     }
     activeIndicatorMeta = null;
+    /* Dikirim walau tidak ada yang dihapus. Reset Layers global memanggil
+       fungsi ini setiap kali tombol ditekan, dan tombol di panel perlu
+       dinonaktifkan kembali walau statusnya memang tidak berubah. */
+    if (ada) umumkanStatusChoropleth();
   }
 
   async function showChoropleth(indicatorId, customData) {
@@ -305,6 +334,9 @@
     if (bounds) {
       map.fitBounds(bounds, { padding: [30, 30], maxZoom: 8 });
     }
+    /* Diumumkan setelah layer benar-benar terpasang dan legenda dibuat,
+       supaya tombol Hapus Layer di panel ikut aktif. */
+    umumkanStatusChoropleth();
   }
 
   function hideChoropleth() {
@@ -313,4 +345,5 @@
 
   window.showChoropleth = showChoropleth;
   window.hideChoropleth = hideChoropleth;
+  window.isChoroplethActive = isChoroplethActive;
 })();

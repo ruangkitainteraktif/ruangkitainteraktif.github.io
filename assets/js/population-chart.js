@@ -596,11 +596,49 @@
         <div id="indicator-table-container">
           <div style="font-size:11px;font-weight:700;color:#1e293b;margin-bottom:6px;" id="indicator-table-title">Peringkat Provinsi (Jumlah Penduduk)</div>
           <div id="ranking-table"></div>
-        </div>`;
+        </div>
+
+        <!-- Hapus layer choropleth. Satu-satunya jalan membatalkannya dari
+             panel ini: hideChoropleth() sebelumnya hanya dipanggil Reset
+             Layers global, jadi polygon yang sudah tampil tidak bisa
+             dilepas tanpa mereset seluruh peta. -->
+        <button type="button" id="geoidIndicatorReset"
+                class="geotani-btn-reset geoid-indicator-reset"
+                disabled
+                title="Hapus layer polygon indikator dari peta"
+                aria-label="Hapus layer polygon indikator dari peta">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          Hapus Layer Polygon
+        </button>`;
     }
 
     statsCard.innerHTML = buildStatsHTML();
     indicatorCard.innerHTML = buildIndicatorHTML();
+
+    /* ── Tombol Hapus Layer Polygon ─────────────────────────────────────
+       Berstatus sesuai layer yang benar-benar ada di peta, lewat event
+       'choropleth:changed' dari choropleth.js.
+
+       Status awal TIDAK dibaca lewat isChoroplethActive(). Panel ini
+       dibangun ulang setiap render, dan bisa saja masih aktif dari
+       pemakaian sebelumnya -- jadi kalau keadaan nyata diabaikan demi
+       apa yang terlihat, tombolnya salah sampai event berikutnya
+       datang. Keadaan nyata yang jadi acuan; event hanya pemicunya. */
+    const resetBtn = document.getElementById('geoidIndicatorReset');
+    if (resetBtn) {
+      const terapkan = (aktif) => { resetBtn.disabled = !aktif; };
+      terapkan(typeof window.isChoroplethActive === 'function' ? window.isChoroplethActive() : false);
+      resetBtn.addEventListener('click', function () {
+        if (typeof window.hideChoropleth === 'function') window.hideChoropleth();
+        terapkan(false);
+      });
+      if (typeof window.addEventListener === 'function') {
+        window.addEventListener('choropleth:changed', function (e) {
+          const d = e && e.detail;
+          terapkan(d ? !!d.aktif : (typeof window.isChoroplethActive === 'function' && window.isChoroplethActive()));
+        });
+      }
+    }
 
     renderIndicatorDropdown(document.getElementById('indicator-dropdown'), async function (e) {
       const val = e.target.value;

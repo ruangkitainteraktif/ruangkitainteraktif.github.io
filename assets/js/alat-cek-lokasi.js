@@ -8,16 +8,34 @@
   var DASAR = 'https://gistaru.atrbpn.go.id/arcgis/rest/services/';
   var LAYER = DASAR + 'BATAS_ADMINISTRASI/Admin_Kecamatan/MapServer/0/query';
 
-  /* GISTARU tidak punya batas desa. Hanya batas kecamatan ke bawah. Field
-     wadmkd di layer ini bernilai satu spasi, bukan kosong, jadi nilai itu
-     harus dibuang. Kalau tidak, UI menampilkan "Desa:  " dan terlihat
-     seperti bug. */
+  /* Desa/kelurahan TIDAK bisa dibaca dari GISTARU: field wadmkd di sana
+     bernilai satu spasi, bukan kosong. Untuk desa dipakai BIG RBI
+     BATAS_DESAKEL_AR, endpoint yang sama dengan yang dipakai
+     geoid-wilayah.js untuk drill-down desa (84.503 desa, field WADMKD).
+
+     Sengaja TIDAK lewat tres/proxy.ashx: proxy itu milik GISTARU dan
+     hanya berlaku untuk host GISTARU. Host BIG ini mengirim CORS dan
+     repo ini mengambilnya langsung di belasan tempat lain. */
+  var BIG_DESA = 'https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH'
+    + '/BATAS_DESAKEL_AR/MapServer/0/query';
+  /* Batas waktu wajib. Diuji September 2026: host ini menyelesaikan TLS
+     lalu tidak pernah membalas (4 percobaan, timeout 25-45 detik).
+     Tanpa batas waktu, satu klik "Cek Lokasi" menggantung lama. */
+  var BIG_TIMEOUT_MS = 8000;
+
+  /* Tiga tingkat pertama dari GISTARU. Desa TIDAK termasuk di sini: field
+     wadmkd di layer itu bernilai satu spasi, bukan kosong, jadi nilainya
+     harus dibuang -- kalau tidak, UI menampilkan "Desa:  " dan terlihat
+     seperti bug. Desa diambil terpisah dari BIG, lihat cariDesa().
+
+     Field desa sengaja TIDAK didefinisikan di sini, supaya tidak ada jalan
+     yang membacanya lagi tanpa sengaja. */
   var PETA_WILAYAH = {
-    desa: { f: 'wadmkd', l: 'Desa / kelurahan' },
     kecamatan: { f: 'wadmkc', l: 'Kecamatan' },
     kabupaten: { f: 'wadmkk', l: 'Kabupaten / kota' },
     provinsi: { f: 'wadmpr', l: 'Provinsi' }
   };
+  var LABEL_DESA = 'Desa / kelurahan';
 
   /* Nilai yang dianggap tidak ada: null, undefined, kosong, atau cuma
      whitespace. Data GISTARU punya " " (satu spasi) di beberapa field,
@@ -34,13 +52,16 @@
 
   /* Susun objek wilayah dari atribut mentah. Mengembalikan null kalau
      tidak ada satu pun tingkat yang terisi -- itu lebih berguna daripada
-     objek berisi empat null, karena pemanggil bisa membedakan "tidak ada
-     data" dari "data ada tapi satu-duanya kosong". */
+     objek berisi tiga null, karena pemanggil bisa membedakan "tidak ada
+     data" dari "data ada tapi satu-duanya kosong".
+
+     Hanya tiga tingkat, semua dari GISTARU. Desa ditambahkan terpisah
+     oleh cek() dari BIG, karena GISTARU tidak memfasenya. */
   function normalisasiWilayah(p) {
     p = p || {};
     var out = {};
     var ada = 0;
-    var kunci = ['desa', 'kecamatan', 'kabupaten', 'provinsi'];
+    var kunci = ['kecamatan', 'kabupaten', 'provinsi'];
     for (var i = 0; i < kunci.length; i++) {
       var k = kunci[i];
       var v = bersih(p[PETA_WILAYAH[k].f]);
@@ -231,6 +252,125 @@
     return Number(lat).toFixed(4) + '|' + Number(lng).toFixed(4);
   }
   var cache = new Map();
+  /* Cache terpisah dari cache GISTARU. Kalau keduanya berbagi satu Map,
+     satu kunci bisa tertimpa hasil dari sumber yang salah, dan baris Desa
+     bisa menampilkan nama kecamatan. */
+  var cacheDesa = new Map();
+
+  /* NAMOBJ hanya dipakai sebagai cadangan kalau WADMKD kosong. Karena
+     NAMOBJ itu nama objek GENERIK, isinya belum tentu nama desa --
+     bisa berupa nama lahan atau objek lain kalau layer yang terpakai
+     ternyata bukan layer desa. Karena itu nilai yang terlalu pendek
+     ditolak: nama desa Indonesia terpendek pun beberapa huruf, dan
+     karakter tunggal hampir pasti bukan desa. */
+  function namaDesa(v) {
+    if (v == null) return null;
+    var s = String(v).trim();
+    if (s.length < 3) return null;
+    return s;
+  }
+
+  /* ── desa / kelurahan (BIG RBI) ───────────────────────────────────────
+     Keempat kondisi hasil dibedakan, karena empat hal berbeda terjadi di
+     belakang layar dan empat jawaban berbeda yang jujur:
+
+       ada    - titik ini di dalam satu batas desa
+       tidak  - host hidup, layer dibaca, tapi titik ini tidak di dalam
+                batas desa mana pun (misalnya di laut atau batas luar negeri)
+       gagal  - host tidak menjawab / menolak / mengembalikan error
+       belum  - modul tidak di-hosting di lingkungan yang bisa memanggil BIG
+
+     "tidak" dan "gagal" WAJIB dibedakan. Kalau host mati lalu UI menulis
+     "tidak ada batas desa di titik ini", pengguna menyimpulkan lokasi itu
+     memang tidak berada di desa -- padahal batas desanya ada, hanya tidak
+     sempat dibaca.
+
+     Bentuk hasil dibuat inline di tiap cabang, bukan lewat konstanta
+     bersama: tiap cabang butuh field berbeda (pesan hanya ada di 'gagal'),
+     dan konstanta bersama yang bisa berubah tanpa disalin justru rawan
+     dipakai ulang tanpa disalin. */
+  function cariDesa(lat, lng) {
+    var key = cacheKey(lat, lng);
+    if (cacheDesa.has(key)) return Promise.resolve(cacheDesa.get(key));
+
+    var geo = JSON.stringify({ x: lng, y: lat, spatialReference: { wkid: 4326 } });
+    var q = 'geometry=' + encodeURIComponent(geo)
+      + '&geometryType=esriGeometryPoint&inSR=4326'
+      + '&spatialRel=esriSpatialRelIntersects'
+      + '&outFields=NAMOBJ%2CWADMKD'
+      + '&returnGeometry=false'
+      /* resultRecordCount=2: cukup untuk melihat kasus titik yang jatuh
+         tepat di batas dua desa, tanpa menarik semua fitur yang cocok. */
+      + '&resultRecordCount=2&f=json';
+
+    /* Timeout wajib. Diuji September 2026: geoservices.big.go.id
+       menyelesaikan TLS lalu tidak pernah membalas (4 percobaan, timeout
+       25-45 detik). Tanpa batas waktu, satu klik "Cek Lokasi" menggantung
+       tanpa memberi tahu apa pun -- dan yang menggantung adalah baris
+       paling bawah, bukan seluruh tabel. */
+    var ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, BIG_TIMEOUT_MS) : null;
+
+    var opts = { method: 'POST', body: q };
+    if (ctrl) opts.signal = ctrl.signal;
+
+    var berhentiTimer = function () { if (timer) clearTimeout(timer); };
+
+    return fetch(BIG_DESA, opts).then(function (r) {
+      berhentiTimer();
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      /* Dibaca sebagai teks dulu, bukan r.json(). Server BIG kadang
+         membalas halaman HTML -- halaman pemeliharaan atau blokir WAF --
+         dengan status 200. r.json() di situ melempar SyntaxError yang
+         teksnya bocor ke layar sebagai "Unexpected token '<'", dan itu
+         tidak berguna bagi siapa pun. Bentuk respons diperiksa di sini
+         supaya pesannya menyebut penyebab yang bisa ditindaklanjuti, bukan
+         potongan isi halaman. */
+      /* Fallback ke r.json() kalau r.text tidak ada -- beberapa polyfill
+         fetch lama tidak menyediakannya, dan memanggil yang tidak ada akan
+         melempar "r.text is not a function" yang kemudian dilaporkan
+         sebagai "tidak dapat menghubungi server BIG". Itu salah: server
+         sudah menjawab, hanya objek responsnya tidak lengkap. */
+      if (typeof r.text !== 'function') return r.json();
+      return r.text().then(function (teks) {
+        var awal = String(teks == null ? '' : teks).replace(/^\s+/, '').slice(0, 1);
+        if (awal !== '{' && awal !== '[') {
+          throw new Error('Server BIG membalas halaman web, bukan data wilayah');
+        }
+        try {
+          return JSON.parse(teks);
+        } catch (e) {
+          throw new Error('Respons server tidak dapat dibaca');
+        }
+      });
+    }).then(function (j) {
+      if (j && j.error) throw new Error(j.error.message || 'BIG menolak permintaan');
+      var fitur = (j && j.features) || [];
+      /* Reply 200 dengan features kosong berarti host hidup dan layer dibaca,
+         tapi titik ini tidak di dalam batas desa mana pun. Itu BERBEDA dari
+         host mati, dan tidak boleh ditampilkan dengan pesan yang sama. */
+      if (!fitur.length) return { status: 'tidak', nama: null, jumlah: 0 };
+
+      /* WADMKD dibaca lebih dulu: itu field yang menandai desa, sedangkan
+         NAMOBJ adalah nama objek generik. Urutan ini penting kalau layer
+         yang terpakai ternyata bukan layer desa. */
+      var a = fitur[0].attributes || {};
+      var nama = bersih(a.WADMKD) || namaDesa(bersih(a.NAMOBJ));
+      /* Fitur yang ada tapi tanpa nama yang masuk akal diperlakukan sama
+         dengan tidak ada: menampilkan baris kosong lebih membingungkan. */
+      if (!nama) return { status: 'tidak', nama: null, jumlah: fitur.length };
+      return { status: 'ada', nama: nama, jumlah: fitur.length, multi: fitur.length > 1 };
+    }).catch(function (e) {
+      berhentiTimer();
+      var pesan = e && e.name === 'AbortError'
+        ? 'Server BIG tidak merespons'
+        : ((e && e.message) || 'Tidak dapat menghubungi server BIG');
+      return { status: 'gagal', nama: null, pesan: pesan, jumlah: 0 };
+    }).then(function (hasil) {
+      cacheDesa.set(key, hasil);
+      return hasil;
+    });
+  }
 
   /* Satu request per titik. Errornya dibedakan dari "tidak ada wilayah",
      karena keduanya tampil berbeda dan artinya berbeda: satu soal jaringan,
@@ -339,7 +479,42 @@
     if (el.out) el.out.innerHTML = html;
   }
 
-  /* Hasil wilayah. `s` adalah hasil cariWilayah(). */
+  /* Baris Desa. Empat kondisi, empat kalimat berbeda.
+
+     Yang paling penting: status 'gagal' (server BIG tidak merespons) dan
+     'tidak' (titik ini memang di luar batas desa) TIDAK boleh memakai
+     kalimat yang sama. "Tidak ada batas desa" saat server-nya mati
+     menyuruh pengguna menyimpulkan sesuatu yang belum diketahui.
+
+     Sumbernya disebut karena tiga baris di atasnya dari ATR/BPN GISTARU
+     dan baris ini dari BIG. Tanpa catatan, pengguna mengira satu sumber.
+
+     Untuk status 'gagal' TIDAK ada baris penjelasan tambahan. Versi
+     pertama menuliskannya, dan yang tampil di layar adalah kalimat teknik
+     mentah dari parser -- "Unexpected token '<'" beserta potongan awal
+     halaman HTML. Itu membingungkan, tidak bisa ditindaklanjuti, dan
+     membuat UI terlihat rusak. Row ini sudah menyatakan "belum dapat
+     diperiksa (BIG)", dan itu sudah cukup. */
+  function desaHtml(d) {
+    if (!d) {
+      /* null = BIG belum menjawab. Menunggu, bukan menyatakan tidak ada. */
+      return '<span class="geolokasi-kecil">memeriksa batas desa di BIG...</span>';
+    }
+    if (d.status === 'ada') {
+      return '<b>' + esc(d.nama) + '</b> <span class="geolokasi-kecil">(BIG)</span>';
+    }
+    if (d.status === 'tidak') {
+      return '<span class="geolokasi-takada">tidak ada batas desa di titik ini (BIG)</span>';
+    }
+    if (d.status === 'belum') {
+      return '<span class="geolokasi-takada">belum dapat diperiksa (BIG)</span>';
+    }
+    /* gagal */
+    return '<span class="geolokasi-takada">belum dapat diperiksa (BIG)</span>';
+  }
+
+  /* Hasil wilayah. `s` adalah hasil cariWilayah() dengan tambahan `s.desa`
+     dari cariDesa() -- boleh null kalau BIG belum menjawab. */
   function hasilHtml(s, lat, lng) {
     var h = '<div class="geolokasi-hasil">';
     h += '<div class="geolokasi-koordinat"><b>' + esc(teksKoordinat(lat, lng)) + '</b></div>';
@@ -348,11 +523,7 @@
     h += '<tr><th>' + esc(PETA_WILAYAH.provinsi.l) + '</th><td>' + esc(s.wilayah.provinsi) + '</td></tr>';
     h += '<tr><th>' + esc(PETA_WILAYAH.kabupaten.l) + '</th><td>' + esc(s.wilayah.kabupaten) + '</td></tr>';
     h += '<tr><th>' + esc(PETA_WILAYAH.kecamatan.l) + '</th><td>' + esc(s.wilayah.kecamatan) + '</td></tr>';
-
-    /* Desa selalu kosong di sumber ini. Ketiadaan itu harus dijelaskan,
-       bukan disembunyikan dengan tanda hubung tanpa alasan. */
-    h += '<tr><th>' + esc(PETA_WILAYAH.desa.l) + '</th><td>'
-      + '<span class="geolokasi-takada">tidak tersedia di sumber data</span></td></tr>';
+    h += '<tr><th>' + esc(LABEL_DESA) + '</th><td>' + desaHtml(s.desa) + '</td></tr>';
     h += '</tbody></table>';
 
     var dms = sudutDMS(lat, lng);
@@ -363,11 +534,23 @@
         + 'Titik ini tepat pada batas wilayah, dan lebih dari satu kecamatan cocok. '
         + 'Yang ditampilkan adalah yang pertama.</div>';
     }
+    if (s.desa && s.desa.multi) {
+      h += '<div class="geolokasi-kecil geolokasi-kecil--wajar">'
+        + 'Titik ini tepat pada batas desa, dan lebih dari satu desa cocok. '
+        + 'Yang ditampilkan adalah yang pertama.</div>';
+    }
     return h + '</div>';
   }
 
+  /* Naik setiap kali cek() dipanggil. Hasil BIG yang telat datang tidak
+     boleh menimpa hasil koordinat yang sudah diganti pengguna -- kalau
+     tidak, satu respons BIG yang lambat bisa menimpa hasil yang lebih baru
+     dan menampilkan nama desa dari lokasi yang salah. */
+  var cekToken = 0;
+
   function cek() {
     if (!el.out) return;
+    var token = ++cekToken;
     var masuk = parseKoordinat(el.input ? el.input.value : '');
     if (!masuk.ok) {
       tampilkanPesan('<div class="geolokasi-galat">' + esc(masuk.alasan)
@@ -385,6 +568,7 @@
     if (el.btn) el.btn.disabled = true;
 
     cariWilayah(masuk.lat, masuk.lng).then(function (s) {
+      if (token !== cekToken) return;
       if (el.btn) el.btn.disabled = false;
       if (s.jaringan) {
         tampilkanPesan('<div class="geolokasi-galat">Tidak dapat membaca wilayah dari server ATR/BPN. '
@@ -401,14 +585,29 @@
       }
       if (!s.wilayah) {
         tampilkanPesan('<div class="geolokasi-galat">Batas wilayah ditemukan, '
-          + 'tetapi tidak memuat nama desa, kecamatan, kabupaten, atau provinsi.</div>');
+          + 'tetapi tidak memuat nama kecamatan, kabupaten, atau provinsi.</div>');
         if (el.status) el.status.textContent = '';
         return;
       }
       if (el.status) el.status.textContent = '';
+
+      /* Dua tahap, bukan satu. Tiga baris pertama sudah diketahui saat ini;
+         menunggu BIG membuat layar kosong selama 8 detik setiap kali BIG
+         lambat, padahal hampir semua yang dibutuhkan pengguna sudah ada.
+         s.desa masih null, jadi baris Desa akan tampil "memeriksa dulu". */
       tampilkanPesan(hasilHtml(s, masuk.lat, masuk.lng));
       /* Tombol Salin baru muncul setelah ada koordinat yang benar. */
       if (el.salin) el.salin.style.display = '';
+
+      if (el.status) el.status.textContent = 'Memeriksa batas desa di BIG...';
+      return cariDesa(masuk.lat, masuk.lng).then(function (d) {
+        /* Dicek ulang: pengguna bisa sudah mengetik koordinat lain, atau
+           menekan reset, selama BIG menjawab. */
+        if (token !== cekToken) return;
+        s.desa = d;
+        if (el.status) el.status.textContent = '';
+        if (el.out) tampilkanPesan(hasilHtml(s, masuk.lat, masuk.lng));
+      });
     });
   }
 
@@ -459,7 +658,11 @@
   }
 
   function init(root) {
-    var host = root || document.getElementById('alat-tab-lokasi');
+    /* Host-nya #dmCekLokasi, di dalam sheet "Gambar & Ukur" (drawSidebar).
+       Sebelumnya #alat-tab-lokasi, sebuah subtab GeoData. Boot() mencoba
+       ulang tiap 300 ms sampai host ketemu, jadi urutan pemuatan script
+       tidak penting. */
+    var host = root || document.getElementById('dmCekLokasi');
     if (!host) return null;
     el = {
       host: host,
@@ -502,6 +705,11 @@
     parseKoordinat: parseKoordinat,
     normalisasiWilayah: normalisasiWilayah,
     cariWilayah: cariWilayah,
+    /* Ekspor dua fungsi ini supaya bisa diuji tanpa DOM, dan supaya
+       modul lain (mis. map-click.js) bisa memakai batas desa tanpa
+       memanggil request-nya dua kali -- cacheDesa yang menahan. */
+    cariDesa: cariDesa,
+    hasilHtml: hasilHtml,
     teksKoordinat: teksKoordinat,
     sudutDMS: sudutDMS,
     bersihkanNilai: bersih,
