@@ -169,20 +169,47 @@
     }[char]));
   }
 
+  /* Wilayah dari titik yang diklik.
+     Sumbernya GISTARU, layer BATAS_ADMINISTRASI/Admin_Kecamatan, satu query
+     per titik. Logika parsing dan normalisasi ada di alat-cek-lokasi.js
+     supaya tidak ada dua implementasi yang bisa berbeda.
+
+     CATATAN SOAL DESA: layer ini hanya punya batas kecamatan ke bawah.
+     Field wadmkd berisi satu spasi, bukan kosong, jadi selalu dinormalkan
+     jadi null. Desa karena itu TIDAK bisa diisi dari GISTARU, dan panel
+     menampilkan "-" untuk desa dengan penjelasan di popup, bukan angka
+     karangan. Lihat .opencode/plans/geolokasi-cek-lokasi.md.
+
+     adm4Code sengaja tetap kosong. Semua pemanggilnya memakainya untuk
+     loadDukcapilPopulation, loadLuasWilayahPopup, loadCuacaPopup, dan
+     showGeoidBoundary, yang semuanya butuh kode wilayah BIG. Mengisi kode
+     yang keliru akan menarik data penduduk dan luas wilayah dari daerah
+     yang salah -- lebih buruk daripada tidak menampilkan apa pun. */
   async function fetchReverseGeocodeWithPopup(lng, lat, marker) {
     try {
-      const matched = null;
+      let wilayah = null;
+      const G = window.GeoLokasi;
+      if (G && typeof G.cariWilayah === 'function') {
+        const hasil = await G.cariWilayah(lat, lng);
+        if (hasil && !hasil.jaringan) wilayah = hasil.wilayah;
+      }
+
       const adm4Code = '';
       const desa = '-';
-      const kecamatan = '-';
-      const kabkota = '-';
-      const provinsi = '-';
+      const kecamatan = (wilayah && wilayah.kecamatan) || '-';
+      const kabkota = (wilayah && wilayah.kabupaten) || '-';
+      const provinsi = (wilayah && wilayah.provinsi) || '-';
 
-      // Update detail panel
-      document.getElementById('adm-provinsi').innerText = provinsi;
-      document.getElementById('adm-kabkota').innerText = kabkota;
-      document.getElementById('adm-kecamatan').innerText = kecamatan;
-      document.getElementById('adm-desa').innerText = desa;
+      // Update detail panel. Elemennya bisa tidak ada kalau tab geoid
+      // belum pernah dibuka, jadi diperiksa satu per satu.
+      const setTeks = (id, nilai) => {
+        const n = document.getElementById(id);
+        if (n) n.innerText = nilai;
+      };
+      setTeks('adm-provinsi', provinsi);
+      setTeks('adm-kabkota', kabkota);
+      setTeks('adm-kecamatan', kecamatan);
+      setTeks('adm-desa', desa);
 
       // Bangun popup konsisten dengan showGeoidFlyup()
       const title = `${lng.toFixed(5)}, ${lat.toFixed(5)}`;
@@ -219,8 +246,10 @@
         if (typeof loadCuacaPopup === 'function') await loadCuacaPopup(marker, adm4Code, lat, lng);
       }
 
-      // Tampilkan batas wilayah dari BIG
-      if (adm4Code) showGeoidBoundary(adm4Code, 15);
+      // Tampilkan batas wilayah dari BIG. Butuh adm4Code yang tidak kita
+      // punya, jadi dalam praktiknya tidak jalan. Kode BIG untuk batas
+      // desa atau kelurahan tidak tersedia di GISTARU.
+      if (adm4Code && typeof showGeoidBoundary === 'function') showGeoidBoundary(adm4Code, 15);
     } catch (err) {
       console.error("Reverse Geocode Error:", err);
       if (marker.getPopup()) {

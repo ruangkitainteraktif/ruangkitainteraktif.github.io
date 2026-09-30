@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=43">
+  <link rel="stylesheet" href="assets/css/app.css?v=51">
 
 </head>
 
@@ -972,15 +972,21 @@
         <!-- TAB: GEOTOOLS -->
         <div id="tab-geotools" class="tab-content">
           <select class="geotools-dropdown" onchange="openGeotoolsMainTab(this)">
-                  <option value="geotoolsTabMuatData">GeoData</option>
-                  <option value="geotoolsTabDemnas">GeoRaster</option>
-                  <option value="geotoolsTabGeonusa">GeoNusa</option>
-                  <option value="geotoolsTabGeoportal">GeoPortal</option>
-                  <option value="geotoolsTabGeoTani">GeoTani</option>
-                  <option value="geotoolsTabGeoPulse">GeoPulse</option>
-                  <option value="geotoolsTabGeoFarm" selected>GeoFarm</option>
-
+            <!-- Urutan ini disengaja: GeoData dan GeoPortal di depan karena
+                 dipakai paling sering, lalu GeoOSS dan GeoFarm yang bekerja
+                 di atas peta yang sedang dikerjakan, lalu modul analisis.
+                 Urutan di sini TIDAK harus sama dengan urutan <div> panel di
+                 bawah: openGeotoolsMainTab() mencari panel lewat id, bukan
+                 lewat urutan. Jangan dicocokkan keduanya. -->
+            <option value="geotoolsTabMuatData">GeoData</option>
+            <option value="geotoolsTabGeoportal">GeoPortal</option>
+            <option value="geotoolsTabGeoOss">GeoOSS</option>
+            <option value="geotoolsTabGeoFarm" selected>GeoFarm</option>
+            <option value="geotoolsTabGeoTani">GeoTani</option>
             <option value="geotoolsTabGeoPangan">GeoPangan</option>
+            <option value="geotoolsTabDemnas">GeoRaster</option>
+            <option value="geotoolsTabGeoPulse">GeoPulse</option>
+            <option value="geotoolsTabGeonusa">GeoNusa</option>
             <option value="geotoolsTabGeoWatch">GeoWatch</option>
           </select>
 
@@ -1011,6 +1017,14 @@
             <button class="geoid-subtab-btn" data-subtab="alat-tab-timeline" onclick="openGeoidSubtab(this)">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
               <span>Timeline</span>
+            </button>
+            <!-- Cek Lokasi: dari koordinat ke nama wilayah. Sheet "Gambar &
+                 Ukur" memindahkan isi tab GeoTools ke dalam dirinya sendiri
+                 (map-core.js), jadi alat ini harus berupa subtab, bukan modul
+                 baru di dropdown -- supaya urutan dropdown tidak berubah. -->
+            <button class="geoid-subtab-btn" data-subtab="alat-tab-lokasi" onclick="openGeoidSubtab(this)">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span>Lokasi</span>
             </button>
           </div>
 
@@ -1107,6 +1121,30 @@
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               Muat & Animasi
             </button>
+          </div>
+
+          <!-- Lokasi Panel: cek wilayah dari koordinat -->
+          <div id="alat-tab-lokasi" class="geoid-subtab-panel">
+            <p class="geotools-desc" style="margin-bottom:10px;">
+              Ketik koordinat untuk melihat desa, kecamatan, kabupaten, dan provinsinya.
+              Sumber: batas wilayah ATR/BPN GISTARU.
+            </p>
+            <label class="geotani-form-label" for="geolokasiInput">Koordinat (latitude, longitude)</label>
+            <input type="text" id="geolokasiInput" class="geotani-form-input-search"
+                   placeholder="-7.470000, 112.650000"
+                   inputmode="decimal" autocomplete="off" />
+            <div class="geolokasi-tombol">
+              <button id="geolokasiCek" class="geotools-btn" type="button">Cek Lokasi</button>
+              <button id="geolokasiPin" class="geotools-btn geotools-btn--orange" type="button"
+                      title="Pasang pin di peta, lalu klik titik yang ingin dicek">Pasang Pin</button>
+            </div>
+            <div id="geolokasiStatus" class="geotani-sls-status" role="status" aria-live="polite"></div>
+            <div id="geolokasiHasil"></div>
+            <!-- Tombol Salin sengaja disembunyikan sampai ada hasil. Menampilkan
+                 tombol yang belum bisa dipakai lebih buruk daripada tidak
+                 menampilkannya. -->
+            <button id="geolokasiSalin" class="geotools-btn geotools-btn--green"
+                    type="button" style="display:none;margin-top:8px;">Salin Koordinat</button>
           </div>
 
           <!-- KMZ Panel -->
@@ -1675,6 +1713,137 @@
           </div>
 
           <!-- Panel: GeoPangan -->
+          <!-- Modul GeoOSS. Dua kartu ini sebelumnya berada di panel GeoTani, lalu
+               dipisah ke sini karena keduanya menjawab pertanyaan yang berbeda dari
+               GeoTani: GeoOSS menanyakan "apakah zona ini boleh dipakai sebelum
+               mengajukan izin", sementara GeoTani mengolah data yang sudah diunggah
+               pengguna. Panel GeoTani tidak lagi memuat kedua kartu. -->
+          <div id="geotoolsTabGeoOss" class="geotools-main-tab-panel">
+            <h4 style="font-size:15px; margin-bottom:4px;">GeoOSS</h4>
+            <p class="geotools-desc" style="margin-bottom:20px;">Cek zona peruntukan dan status KKPR sebelum mengajukan izin</p>
+  <!-- Catatan untuk pengelola: setiap kali CSS GeoOSS ditambah, naikkan
+       app.css?v di tag link di bawah. Tanpa itu, pengunjung yang sudah
+       pernah membuka situs akan memakai stylesheet lama dari cache dan
+       daftar saran tampil tanpa gaya. -->
+
+          
+            <!-- GeoOSS — pemeriksaan awal zona peruntukan sebelum pengajuan resmi.
+                 Berdiri sendiri sebagai modul GeoTools tersendiri, bukan bagian
+                 GeoTani. Alurnya berurutan dan bukan free-form:
+                 pilih wilayah, pilih RDTR, gambar area, pilih kegiatan.
+
+                 Sifat modul ini tidak boleh berubah tanpa alasan yang jelas:
+                 GeoOSS BUKAN OSS. Ia tidak menerbitkan keputusan, tidak
+                 menerbitkan izin, dan tidak menggantikan OSS / ATR-BPN /
+                 Pemerintah Daerah. Yang ditampilkan hanyalah zona peruntukan
+                 yang sudah dipublikasikan pemerintah daerah, beserta dasar
+                 peraturan (Perda) yang mendasarinya.
+
+                 Data wilayah dan daftar kegiatan dibaca dari berkas statis di
+                 assets/data/geooss/, bukan langsung dari API, karena endpoint
+                 navigasi GISTARU tidak mengirim header CORS. Geometri zonanya
+                 tetap diambil langsung dari ArcGIS lewat tres/proxy.ashx. -->
+            <section class="geotani-geooss" id="geotani-geooss-card" aria-labelledby="geotani-geooss-title">
+              <div class="geotani-lbslsd-head">
+                <span class="geotani-card-icon" aria-hidden="true">&#9878;</span>
+                <span>
+                  <b id="geotani-geooss-title">GeoOSS &mdash; Pre-OSS Spatial Checker</b>
+                  <small>Pemeriksaan awal zona peruntukan &mdash; ATR/BPN GISTARU</small>
+                </span>
+              </div>
+              <div class="geotani-lbslsd-body">
+                <p class="geotani-sls-desc">
+                  Lihat zona peruntukan sebuah area terhadap kegiatan tertentu <b>sebelum</b>
+                  mengajukan proses resmi. Hasilnya hanya screening zona, bukan keputusan izin.
+                </p>
+                <div class="geotani-sls-search">
+                  <label class="geotani-form-label" for="geooss-prov">1. Provinsi</label>
+                  <select id="geooss-prov" class="geotani-form-input-search"></select>
+                  <label class="geotani-form-label" for="geooss-kab" style="margin-top:6px;">2. Kabupaten/Kota</label>
+                  <select id="geooss-kab" class="geotani-form-input-search">
+                    <option value="">Pilih provinsi dulu</option>
+                  </select>
+                  <label class="geotani-form-label" for="geooss-rdtr" style="margin-top:6px;">3. RDTR</label>
+                  <select id="geooss-rdtr" class="geotani-form-input-search">
+                    <option value="">Pilih kabupaten/kota dulu</option>
+                  </select>
+                </div>
+                  <button id="geooss-gambar" class="geotani-btn-print" type="button">Gambar area di peta</button>
+                  <button id="geooss-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Hapus area dan hasil GeoOSS" aria-label="Hapus area dan hasil GeoOSS">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    Hapus Area
+                  </button>
+                  <div id="geooss-langkah2" hidden>
+                    <div class="geotani-sls-search" style="margin-top:8px;">
+                      <label class="geotani-form-label" for="geooss-kegiatan-cari">4. Kegiatan yang mau dinilai</label>
+                      <!-- Bukan <select>. Satu RDTR bisa punya 1.855 kegiatan
+                           (terbanyak di data Jawa Barat), jadi daftar dropdown
+                           native tidak bisa dipakai: untuk mencapai
+                           "Perdagangan" dari huruf A, orang harus menggulir
+                           melewati ratusan baris. Diganti input + daftar
+                           saran, dengan tombol panah dan Enter untuk memilih. -->
+                      <input type="text" id="geooss-kegiatan-cari" class="geotani-form-input-search"
+                             placeholder="Ketik sebagian nama kegiatan..."
+                             autocomplete="off" disabled role="combobox"
+                             aria-expanded="false" aria-autocomplete="list"
+                             aria-controls="geooss-kegiatan-saran" />
+                      <!-- Id kegiatan terpilih disimpan di sini, bukan dibaca dari
+                           teks input. Menjalankan screening dari teks akan
+                           salah begitu pengguna mengedit ulang isiannya. -->
+                      <input type="hidden" id="geooss-kegiatan" />
+                      <div id="geooss-kegiatan-saran" class="geotani-sls-results" role="listbox" aria-label="Saran kegiatan" hidden></div>
+                      <div id="geooss-kegiatan-terpilih" class="geotani-sls-picked" hidden></div>
+                    </div>
+                  </div>
+                  <div id="geooss-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                  <div id="geooss-output"></div>
+              </div>
+            </section>
+
+            <!-- KKPR (Kartu Kepemilikan Plekitas) via pencarian NIB — ATR/BPN
+                 GISTARU. Sekarang menjadi bagian modul GeoOSS, dengan
+                 alur yang sama seperti GeoOSS: satu kolom pencarian, tombol
+                 muat, tombol reset, baris status, lalu hasil.
+
+                 Sengaja TIDAK memakai pemilih desa seperti LBS & LSD: layer
+                 KKPR_OSS_ALL tidak punya field desa maupun kabupaten. Field
+                 kd_izin yang terlihat menarik justru konstan di seluruh
+                 241.435 baris, jadi tidak bisa dipakai memfilter. Karena itu
+                 satu-satunya cara menjangkau datanya adalah NIB persis.
+
+                 Panjang NIB diperiksa di geotani-kkpr.js sebelum request, jadi
+                 input ini sengaja tanpa maxlength. Nomor yang diketik orang dari
+                 dokumen kertas sering memuat spasi atau tanda hubung, dan lebih
+                 baik dibersihkan sendiri oleh modul daripada ditolak browser. -->
+            <section class="geotani-kkpr" id="geotani-kkpr-card" aria-labelledby="geotani-kkpr-title">
+              <div class="geotani-lbslsd-head">
+                <span class="geotani-card-icon" aria-hidden="true">&#128220;</span>
+                <span>
+                  <b id="geotani-kkpr-title">KKPR &mdash; Cari NIB</b>
+                  <small>Kartu Kepemilikan Plekitas &mdash; ATR/BPN GISTARU</small>
+                </span>
+              </div>
+              <div class="geotani-lbslsd-body">
+                <p class="geotani-sls-desc">
+                  Menampilkan bidang tanah dari <b>Kartu Kepemilikan Plekitas</b> untuk satu
+                  NIB. Satu NIB bisa punya beberapa izin, jadi hasilnya tetap berupa
+                  daftar izin di bawah bidangnya.
+                </p>
+                <div class="geotani-sls-search">
+                  <label class="geotani-form-label" for="geotaniKkprSearch">Nomor Induk Bidang (NIB)</label>
+                  <input type="text" id="geotaniKkprSearch" placeholder="Masukkan NIB 13 digit" inputmode="numeric" autocomplete="off" class="geotani-form-input-search" />
+                </div>
+                <button id="geotani-kkpr-load" class="geotani-btn-print" type="button">Tampilkan NIB</button>
+                <button id="geotani-kkpr-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon KKPR" aria-label="Reset polygon KKPR">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                  Reset Polygon
+                </button>
+                <div id="geotani-kkpr-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                <div id="geotani-kkpr-output"></div>
+              </div>
+            </section>
+</div>
+
           <div id="geotoolsTabGeoPangan" class="geotools-main-tab-panel">
             <div class="geopangan-source-tabs" role="tablist" aria-label="Sumber GeoPangan">
               <button type="button" class="geopangan-source-tab active" data-geopangan-source="pihps" role="tab" aria-selected="true" aria-controls="geopangan-pihps-panel">PIHPS / BI</button>
@@ -2922,8 +3091,12 @@
     <script src="assets/js/detail-subtab.js"></script>
      <script src="assets/js/alat-layers.js"></script>
      <script src="assets/js/arcgis-source-manager.js"></script>
-    <script src="assets/js/alat-draw-measure.js"></script>
-<script src="assets/js/geofarm-draw.js"></script>
+  <script src="assets/js/alat-draw-measure.js"></script>
+  <!-- Cek Lokasi: butuh window.startDraw dari alat-draw-measure.js untuk
+       memasang pin. init() juga memasang listener draw:created, sehingga
+       setiap pin baru langsung mengisi panel hasil. -->
+  <script src="assets/js/alat-cek-lokasi.js"></script>
+  <script src="assets/js/geofarm-draw.js"></script>
 <script src="assets/js/geofarm-upload.js"></script>
 <!-- Kalkulator Benih & Pupuk GeoFarm: butuh geodesic-area.js (luas poligon)
      dan alat-draw-measure.js (window.getDrawnLayers), keduanya sudah dimuat
@@ -2976,6 +3149,15 @@
   <!-- LBS & LSD (BIG SatuPeta): butuh geodesic-area untuk luas, dan
        geoid-wilayah untuk seksi PDF. -->
   <script src="assets/js/geotani-lbs-lsd.js"></script>
+  <!-- KKPR / NIB (ATR/BPN GISTARU): hanya butuh Leaflet dan peta, jadi
+       tidak bergantung geodesic-area maupun geoid-wilayah. -->
+  <script src="assets/js/geotani-kkpr.js"></script>
+<!-- GeoOSS. Data wilayah dan daftar kegiatan dibaca dari assets/data/geooss/
+     (dibangun oleh scripts/build-geooss-snapshot.mjs); geometri zona diambil
+     runtime dari ArcGIS lewat tres/proxy.ashx. Modul ini tidak memanggil API
+     navigasi GISTARU secara langsung karena endpoint itu tidak mengirim
+     header CORS. -->
+<script src="assets/js/geotani-geooss.js"></script>
   <script src="assets/js/sawah-dilindungi.js"></script>
   <script src="assets/js/fasilitas-umum.js"></script>
   <script src="assets/js/unified-search.js"></script>

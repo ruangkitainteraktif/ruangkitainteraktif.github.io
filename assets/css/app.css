@@ -4037,9 +4037,17 @@
       opacity: 1;
       stroke: #fff;
     }
+    /* Jumlah subtab GeoData sekarang 7, bukan 6. Dengan repeat(3, 1fr)
+       baris ketiga hanya berisi satu tombol, dan dengan min-height 72px
+       itu terlihat seperti baris yang gagal terisi -- mudah terlewat,
+       padahal isinya alat yang berguna.
+
+      (auto-fit + minmax) membuat jumlah kolom ikut jumlah tombol: 7 tombol
+       jadi 4+3 di layar lebar, 3+3+1 di layar sempit, tanpa aturan
+       khusus per jumlah. Jumlah tombol sebelumnya juga tetap aman. */
     .geotools-upload-tabs {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
       gap: 8px;
       padding: 0;
       border: 0;
@@ -7875,6 +7883,312 @@
   display: flex; justify-content: space-between; gap: 10px;
   font-size: 11px; line-height: 1.6; color: #475569;
 }
+/* GeoTani - KKPR / NIB (ATR/BPN GISTARU). Sengaja memakai .geotani-lbslsd
+   untuk kepala dan badan kartunya, supaya dua workflow mandiri di bagian
+   atas tab ini terlihat sama dan tidak perlu aturan yang terduplikasi.
+   Yang ditambahkan hanya jarak antar kartu dan gaya untuk kondisi data
+   yang tidak konsisten. */
+.geotani-kkpr { margin-bottom: 14px; }
+
+/* Peringatan data: satu NIB dengan beberapa geometri, atau geometri
+   berukuran tidak wajar. Warnanya sengaja tidak merahsolid -- merah
+   dipakai untuk tombol hapus, sedangkan di sini yang_flagged adalah
+   keterbatasan data ATR/BPN, bukan kesalahan pengguna. */
+.geotani-kkpr-warn {
+  margin: 8px 0; padding: 8px 10px;
+  border: 1px solid rgba(180, 120, 0, .35);
+  border-left: 3px solid #b26a00;
+  border-radius: 5px; background: rgba(180, 120, 0, .07);
+  font-size: 10.5px; line-height: 1.5; color: var(--text-primary);
+}
+.geotani-kkpr-grup {
+  margin-top: 10px; border: 1px solid var(--border-color);
+  border-radius: 6px; overflow: hidden;
+}
+.geotani-kkpr-grup.is-ganjil { border-color: rgba(220, 38, 38, .45); }
+.geotani-kkpr-grup-head {
+  padding: 6px 10px; background: var(--bg-card-hover);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 10.5px; font-weight: 600; color: var(--text-primary);
+}
+.geotani-kkpr-grup.is-ganjil .geotani-kkpr-grup-head { color: #b91c1c; }
+
+/* Tabel izin. Daftar ini sama sekali berbeda bentuk dari kartu LBS & LSD
+   dan SLS, yang memakai daftar baris, bukan tabel -- jadi kelasnya milik
+   sendiri dan tidak dipinjam dari sana. */
+.geotani-kkpr-table-wrap { overflow-x: auto; }
+.geotani-kkpr-table {
+  width: 100%; border-collapse: collapse; font-size: 10.5px;
+}
+.geotani-kkpr-table th {
+  padding: 5px 8px; text-align: left; font-size: 9px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .04em;
+  color: var(--text-tertiary); background: var(--bg-card-hover);
+  border-bottom: 1px solid var(--border-color); white-space: nowrap;
+}
+.geotani-kkpr-table td {
+  padding: 5px 8px; border-bottom: 1px solid var(--border-secondary);
+  color: var(--text-primary); white-space: nowrap;
+}
+.geotani-kkpr-table tr:last-child td { border-bottom: 0; }
+
+/* Kolom KBLI dan nama usaha. Kode ditonjolkan, sedangkan "tidak ditemukan"
+   sengaja dibuat redup miring: itu keadaan data yang sah, bukan kegagalan
+   program, jadi tidak boleh terlihat seperti error. Nama usaha boleh
+   membungkus karena judul KBLI bisa sangat panjang, sedangkan kolom lain
+   tetap nowrap supaya tabel tetap rapat. */
+.geotani-kkpr-kode {
+  font-variant-numeric: tabular-nums; font-weight: 600; color: var(--accent);
+}
+.geotani-kkpr-kosong { color: var(--text-tertiary); font-style: italic; }
+.geotani-kkpr-table td:nth-child(3) { white-space: normal; min-width: 180px; }
+
+/* GeoTani - GeoOSS (Pre-OSS Spatial Checker).
+   Nama kelas memakai prefix .geooss- supaya tidak bentrok dengan .geotani-kkpr-
+   yang punya gaya serupa. Kartu meniru .geotani-lbslsd seperti kartu GeoTani
+   yang lain; yang khas hanya isi: tabel zona, verdict, dan daftar kendala. */
+.geotani-geooss { margin-bottom: 14px; }
+
+/* Verdict: satu blok besar yang langsung terbaca. Warna memakai variabel tema
+   supaya ikut dark mode, bukan hex tetap. */
+.geooss-verdict {
+  margin-top: 8px; padding: 8px 10px; border-radius: 6px;
+  font-size: 12px; border-left: 3px solid var(--accent);
+  background: var(--bg-card-hover); color: var(--text-primary);
+}
+.geooss-verdict.is-ok  { border-left-color: #16a34a; }
+.geooss-verdict.is-warn { border-left-color: #d97706; }
+.geooss-verdict.is-bad { border-left-color: #dc2626; }
+
+/* Peringatan data: "belum di-build", zone tanpa kode, dan lain-lain. Sengaja
+   styled seperti catatan, bukan seperti error merah, karena ini keadaan data
+   yang sah -- bukan kegagalan program. */
+.geooss-warn {
+  margin-top: 8px; padding: 7px 9px; border-radius: 5px; font-size: 11px;
+  line-height: 1.45; color: var(--text-secondary);
+  background: var(--bg-card-hover);
+  border: 1px dashed var(--border-color);
+}
+.geooss-warn code {
+  font-size: 10.5px; background: var(--bg-tertiary);
+  padding: 1px 4px; border-radius: 3px; color: var(--text-primary);
+}
+
+/* Baris detail teknis: untuk pengelola situs, bukan pengguna akhir. Sengaja
+   paling redup dan terkecil di dalam pesan supaya tidak mengambil alih
+   perhatian dari penjelasan yang lebih penting. */
+.geooss-detail {
+  display: block; font-size: 10px; color: var(--text-muted);
+  font-style: italic; word-break: break-all;
+}
+
+/* Pencarian kegiatan: input + daftar saran.
+   .geotani-sls-results dipakai ulang supaya gaya dan posisi (absolute di
+   bawah input, max-height 200px) sama persis dengan pencarian desa LBS & LSD
+   dan pencarian kabupaten satupeta. Yang ditambahkan hanya state keyboard dan
+   highlight kata yang cocok. */
+.geooss-cari-saran {
+  border-top: 0; border-radius: 0 0 4px 4px;
+}
+.geooss-cari-saran .geotani-sls-result {
+  display: flex; gap: 6px; align-items: baseline; line-height: 1.35;
+}
+/* Dipakai untuk navigasi keyboard, bukan hanya hover, supaya pengguna tahu
+   pilihan mana yang akan diambil saat menekan Enter. */
+.geooss-cari-saran .geotani-sls-result.aktif {
+  background: var(--bg-card-hover);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.geooss-cari-saran .geooss-cari-nama { flex: 1 1 auto; }
+.geooss-cari-saran .geooss-cari-kode {
+  flex: 0 0 auto; font-size: 9.5px; color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+/* Potongan yang cocok dengan yang diketik. Sengaja hanya ditebalkan, tanpa
+   warna baru, supaya tidak memperkenalkan palet baru ke tema gelap. */
+.geooss-cari-saran mark {
+  background: rgba(250, 204, 21, .3); color: inherit;
+  border-radius: 2px; padding: 0 1px; font-weight: 700;
+}
+.geooss-cari-saran .geotani-sls-result[data-kosong] {
+  color: var(--text-muted); font-style: italic; cursor: default;
+}
+.geooss-cari-saran .geotani-sls-result[data-kosong]:hover { background: none; }
+.geooss-cari-judul {
+  padding: 5px 10px; font-size: 9.5px; color: var(--text-muted);
+  background: var(--bg-card-hover); border-bottom: 1px solid var(--border-color);
+  position: sticky; top: 0;
+}
+/* Input dinonaktifkan sebelum daftar kegiatan siap, supaya tidak ada
+  godaan mengetik sebelum ada yang bisa dicocokkan. */
+.geooss-cari-cari:disabled { opacity: .6; cursor: not-allowed; }
+[data-theme="dark"] .geooss-cari-saran mark { background: rgba(250, 204, 21, .25); }
+
+/* Output "Pre-check KKPR": ringkasan akhir yang dibaca orang awam.
+   Letakkan di atas ringkasan verdict supaya jawaban "boleh atau tidak"
+   muncul lebih dulu, dan daftar rincian ada di bawahnya. */
+.geooss-precheck {
+  margin-top: 12px; padding: 10px 11px; font-size: 11px;
+  color: var(--text-secondary); background: var(--bg-card);
+  border: 1px solid var(--border-color); border-radius: 6px;
+}
+.geooss-precheck-judul { margin-bottom: 8px; }
+.geooss-precheck-judul b { display: block; font-size: 12.5px; color: var(--text-primary); }
+.geooss-precheck-judul span {
+  display: block; margin-top: 2px; font-size: 10.5px; line-height: 1.5;
+  color: var(--text-muted);
+}
+.geooss-precheck-tabel { width: 100%; border-collapse: collapse; }
+.geooss-precheck-tabel th, .geooss-precheck-tabel td {
+  padding: 5px 0; text-align: left; vertical-align: top;
+  border-top: 1px solid var(--border-color);
+}
+.geooss-precheck-tabel tr:first-child th,
+.geooss-precheck-tabel tr:first-child td { border-top: 0; }
+.geooss-precheck-tabel th {
+  width: 116px; padding-right: 10px; font-size: 10px; font-weight: 600;
+  color: var(--text-muted); text-transform: uppercase; letter-spacing: .02em;
+}
+/* Pada layar sempit label dan nilai tetap satu kolom, tapi lebarkan label
+   supaya tidak memotong kata. */
+.geooss-precheck-kecil {
+  display: block; margin-top: 2px; font-size: 10px; line-height: 1.45;
+  color: var(--text-muted);
+}
+.geooss-precheck-kode {
+  font-variant-numeric: tabular-nums; font-size: 10.5px; line-height: 1.5;
+  word-break: break-word;
+}
+.geooss-precheck-syarat {
+  margin-top: 8px; padding: 7px 9px; font-size: 10.5px; line-height: 1.55;
+  background: var(--bg-card-hover); border-radius: 4px;
+}
+.geooss-precheck-oss {
+  display: block; margin-top: 9px; padding: 9px 11px;
+  font-size: 12px; font-weight: 600; text-decoration: none;
+  color: var(--accent); background: var(--bg-card-hover);
+  border: 1px solid var(--accent); border-radius: 5px;
+  transition: background .2s ease;
+}
+.geooss-precheck-oss:hover { background: var(--bg-card-active); }
+.geooss-precheck-oss span {
+  display: block; margin-top: 2px; font-size: 10px; font-weight: 400;
+  color: var(--text-muted);
+}
+.geooss-precheck-simmerah {
+  margin-top: 8px; padding-top: 8px; font-size: 9.5px; line-height: 1.55;
+  color: var(--text-muted); border-top: 1px solid var(--border-color);
+}
+@media (max-width: 420px) {
+  .geooss-precheck-tabel th { width: 96px; }
+}
+
+/* Alat Cek Lokasi: dari koordinat ke nama wilayah. Gaya memakai kelas yang
+   sudah ada (geotani-sls-status, geotools-btn) supaya tidak membuat sistem
+   gaya baru; yang ditambahkan hanya tata letak hasil. */
+.geolokasi-tombol { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.geolokasi-hasil { margin-top: 8px; }
+.geolokasi-koordinat {
+  padding: 6px 8px; font-size: 12px; font-variant-numeric: tabular-nums;
+  background: var(--bg-card-hover); border-radius: 4px; word-break: break-all;
+}
+.geolokasi-tabel { width: 100%; margin-top: 6px; border-collapse: collapse; }
+.geolokasi-tabel th, .geolokasi-tabel td {
+  padding: 4px 0; text-align: left; vertical-align: top; font-size: 11px;
+  border-top: 1px solid var(--border-color);
+}
+.geolokasi-tabel tr:first-child th, .geolokasi-tabel tr:first-child td { border-top: 0; }
+.geolokasi-tabel th {
+  width: 116px; padding-right: 8px; font-size: 10px; font-weight: 600;
+  color: var(--text-muted);
+}
+/* Nilai yang memang tidak ada di sumber data. Warnanya sengaja redup,
+   bukan merah: ini keterbatasan sumber, bukan kesalahan. */
+.geolokasi-takada { color: var(--text-muted); font-style: italic; }
+.geolokasi-kecil { margin-top: 6px; font-size: 10px; line-height: 1.5; color: var(--text-muted); }
+.geolokasi-kecil--wajar { color: var(--text-secondary); }
+.geolokasi-galat {
+  margin-top: 8px; padding: 7px 9px; font-size: 11px; line-height: 1.5;
+  color: var(--text-secondary); background: var(--bg-card-hover);
+  border-left: 3px solid var(--accent); border-radius: 4px;
+}
+@media (max-width: 420px) {
+  .geolokasi-tabel th { width: 96px; }
+}
+
+/* Ketentuan khusus: daftar yang harus dipenuhi sebelum activities bisa
+   dianggap bebas masalah. Dipisah dari .geooss-warn karena warn dipakai
+   untuk kesalahan dan kelengkapan data, sedangkan ini daftar syarat. */
+.geooss-khusus {
+  margin-top: 10px; padding: 8px 10px; font-size: 11px;
+  color: var(--text-secondary); background: var(--bg-card-hover);
+  border-left: 3px solid #d97706; border-radius: 4px;
+}
+.geooss-khusus--ringan { border-left-color: var(--accent); }
+/* Blok intensitas: sengaja tidak diberi warna peringatan. Yang di dalamnya
+   bukan pelanggaran, melainkan informasi bahwa datanya tidak ada. */
+.geooss-khusus--kosong { border-left-color: var(--text-muted); }
+.geooss-khusus > b { display: block; margin-bottom: 3px; color: var(--text-primary); }
+.geooss-khusus-ket {
+  display: block; margin-bottom: 6px; font-size: 10.5px;
+  line-height: 1.5; color: var(--text-muted);
+}
+.geooss-khusus-tabel { width: 100%; border-collapse: collapse; }
+.geooss-khusus-tabel td {
+  padding: 3px 6px 3px 0; font-size: 10.5px; vertical-align: top;
+  border-top: 1px solid var(--border-color);
+}
+.geooss-khusus-tabel tr:first-child td { border-top: 0; }
+.geooss-khusus-ha {
+  width: 84px; text-align: right; font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.geooss-khusus-zona {
+  width: 72px; text-align: right; font-size: 10px; color: var(--text-muted);
+  white-space: nowrap;
+}
+[data-theme="dark"] .geooss-khusus { border-left-color: #f59e0b; }
+
+.geooss-dasar {
+  display: grid; gap: 2px; margin-top: 8px; padding: 7px 9px;
+  font-size: 11px; color: var(--text-secondary);
+  background: var(--bg-card-hover); border-radius: 5px;
+}
+.geooss-dasar b { color: var(--text-primary); }
+
+.geooss-kode {
+  font-variant-numeric: tabular-nums; font-weight: 600; color: var(--accent);
+}
+
+/* Tabel zona. Lebar, jadi dibungkus scroll horizontal. Kolom status diberi
+   warna teks, bukan latar, supaya tabel tetap terbaca di dark mode. */
+.geooss-zona-wrap { margin-top: 8px; overflow-x: auto; }
+.geooss-zona { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+.geooss-zona th {
+  padding: 5px 8px; text-align: left; font-size: 9px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .04em; white-space: nowrap;
+  color: var(--text-tertiary); background: var(--bg-card-hover);
+  border-bottom: 1px solid var(--border-color);
+}
+.geooss-zona td {
+  padding: 5px 8px; border-bottom: 1px solid var(--border-secondary);
+  color: var(--text-primary); white-space: nowrap; vertical-align: top;
+}
+.geooss-zona tr:last-child td { border-bottom: 0; }
+.geooss-zona td:nth-child(1) { white-space: normal; min-width: 120px; }
+.geooss-zona td:nth-child(6) { white-space: normal; min-width: 150px; }
+.geooss-st-pasti  { color: #16a34a; font-weight: 600; }
+.geooss-st-awalan { color: #d97706; font-weight: 600; }
+.geooss-st-tidak  { color: #dc2626; font-weight: 600; }
+.geooss-st-netral { color: var(--text-tertiary); }
+.geooss-kosong { color: var(--text-tertiary); font-style: italic; }
+
+.geooss-kendala {
+  display: inline-block; margin: 0 3px 3px 0; padding: 1px 5px;
+  font-size: 9.5px; border-radius: 3px; white-space: normal;
+  background: var(--bg-tertiary); color: var(--text-secondary);
+}
+
 .geotani-sls-popup-row b { color: #166534; }
 
 /* GeoTani - LBS & LSD (BIG SatuPeta), workflow mandiri di bagian teratas.
