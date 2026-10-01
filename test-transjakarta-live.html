@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>tes-transjakarta-live</title>
+<link rel="stylesheet" href="assets/css/app.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  body { margin: 0; padding: 8px; background: #eef2f7; font-family: system-ui, sans-serif; }
+  #peta { width: 700px; height: 420px; border: 1px solid #cbd5e1; }
+  #out { white-space: pre-wrap; font: 11px monospace; color: #000; padding: 8px;
+         background: #fff; border: 2px solid #000; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<div id="peta"></div>
+
+<div id="transjakarta-sheet" aria-label="Daftar Jalur TransJakarta">
+  <div class="tj-sheet-handle"></div>
+  <div class="tj-sheet-head">
+    <div class="tj-sheet-title">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ff4d6d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="14" rx="3"/><path d="M3 11h18"/><circle cx="7.5" cy="14.5" r="1.2"/><circle cx="16.5" cy="14.5" r="1.2"/><path d="M7 17v2M17 17v2"/></svg>
+      <span>Jalur TransJakarta<span class="tj-sheet-sub">12 koridor &middot; JakartaSatu</span></span>
+    </div>
+    <div class="tj-sheet-actions">
+      <button id="transjakarta-sheet-minimize" class="tj-sheet-minimize" type="button" aria-label="Minimalkan">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>
+      </button>
+      <button id="transjakarta-sheet-close" class="tj-sheet-close" type="button" aria-label="Tutup">&times;</button>
+    </div>
+  </div>
+  <div id="transjakarta-sheet-content" class="tj-sheet-body"></div>
+</div>
+
+<div id="out"></div>
+
+<script>
+/* Peta Leaflet sungguhan. Modul memakai `map` global, jadi variabel
+   global inilah yang dipanggilnya. */
+/* preferCanvas: WAJIB sama dengan map-core.js. Dengan renderer SVG,
+   setiap layer memakai <svg> sendiri dan pane hampir tak berpengaruh,
+   sehingga bug pane pada canvas tidak akan pernah terlihat di sini. */
+var map = L.map('peta', { preferCanvas: true }).setView([-6.2, 106.85], 11);
+window.map = map;
+
+window.addUnifiedLegend = function () {};
+window.removeUnifiedLegend = function () {};
+window.createLegendWithToggle = function (el) { return el; };
+window.SheetDrag = {
+  register: function () {}, buka: function () {}, close: function () {},
+  minimize: function () {}, isMobile: function () { return false; }
+};
+</script>
+
+<script src="assets/js/transjakarta-layer.js"></script>
+
+<script>
+/* Harness ini menguji DATA ASLI dari JakartaSatu, karena bug esriJSON
+   yang pernah membuat polygon tidak muncul TIDAK bisa ketahuan oleh
+   harness offline: fixture-nya sendiri sudah berbentuk GeoJSON.
+
+   Urutan pemeriksaan penting dan sengaja berurutan:
+     1. fly otomatis saat toggle pertama  (belum ada layer = mudah diperiksa)
+     2. isi layer                     (setelah layer menyala)
+     3. rekap koridor
+     4. fly dari klik baris
+     5. isi sheet
+
+   Semua tahap berupa fungsi yang dipanggil berantai, bukan
+   setTimeout bersarang, supaya urutannya jelas terbaca. */
+(function () {
+  var lines = [], lulus = 0, gagal = 0;
+
+  function say(t) { lines.push(t); }
+  function ok(nama, benar, info) {
+    if (benar) { lulus++; say('  ok   ' + nama); }
+    else { gagal++; say('  GAGAL ' + nama + (info != null ? ' -> ' + info : '')); }
+  }
+  function selesai() {
+    say('');
+    say((gagal === 0 ? 'SEMUA LULUS' : 'ADA KEGAGALAN') + ': ' + lulus + ' lulus, ' + gagal + ' gagal');
+    document.getElementById('out').textContent = lines.join('\n');
+  }
+  function tunggu(ms, fn) { setTimeout(fn, ms); }
+
+  /* PENTING: fitBounds Leaflet beranimasi secara default, dan animasi
+     tidak pernah selesai di Chrome headless -- virtual time tidak
+     menjalankan requestAnimationFrame seperti yang dijanjikan browser
+     sungguhan. Tanpa animate:false, test melaporkan "peta tidak
+     bergerak" padahal di browser nyata gerakannya tepat.
+     Wrapper ini ada DI MODUL TES, bukan di kode produksi, supaya fly
+     ke jaringan tetap beranimasi untuk pengguna. */
+  var panggilFit = [];
+  var fitAsli = map.fitBounds.bind(map);
+  map.fitBounds = function (b, o) {
+    panggilFit.push(b && b.isValid ? b.isValid() : 'no-bounds');
+    return fitAsli(b, Object.assign({ animate: false }, o || {}));
+  };
+
+  var TJ = window.__transjakarta;
+
+  /* ── tahap 1: fly otomatis saat toggle pertama ── */
+  function tahap1() {
+    say('== data live dari JakartaSatu ==');
+    var st = TJ.state;
+    ok('data termuat', st.dimuat, 'dimuat=' + st.dimuat + ' gagal=' + st.gagal);
+    ok('tidak gagal', !st.gagal, 'gagal=' + st.gagal);
+    ok('rekap 12 koridor ada', st.ringkas.length === 12, st.ringkas.length);
+
+    say('== fly otomatis saat layer pertama dinyalakan ==');
+    /* Peta sengaja dijauhkan dulu. Kalau layer tidak memicu fly,
+       viewport akan tetap di sini dan itu terlihat jelas. */
+    map.setView([-2.5, 110.0], 7, { animate: false });
+    say('  posisi sebelum toggle: ' + pos());
+    ok('peta dijauhkan dari Jakarta lebih dulu', Math.abs(map.getCenter().lat + 2.5) < 0.01, map.getCenter().lat);
+    ok('belum pernah terbang', TJ.sudahTerbang() === false, TJ.sudahTerbang());
+
+    panggilFit.length = 0;
+    window.toggleTransjakartaJalur(true);
+
+    tunggu(2500, function () {
+      say('  fitBounds dipanggil: ' + panggilFit.length + ' -> ' + panggilFit.join(', '));
+      say('  posisi sesudah toggle: ' + pos());
+
+      ok('toggle memicu fly', panggilFit.length > 0, panggilFit.length);
+      ok('bounds yang dipakai valid', panggilFit.length > 0 && panggilFit[0] === true, String(panggilFit[0]));
+      ok('peta pindah dari posisi jauh', map.getCenter().lng < 108, map.getCenter().lng);
+      ok('tiba di sekitar Jakarta', diJakarta(map.getCenter().lat, map.getCenter().lng), pos());
+      ok('cukup jauh untuk melihat jaringan', map.getCenter().lng > 106.5 && map.getCenter().lng < 107.1, map.getCenter().lng);
+      ok('penanda sudah-terbang aktif', TJ.sudahTerbang() === true, TJ.sudahTerbang());
+
+      /* Toggle kedua: peta dikembalikan jauh dulu. Kalau modul terbang
+         lagi, orang yang sedang menata peta kehilangan posisinya. */
+      map.setView([-2.5, 110.0], 7, { animate: false });
+      panggilFit.length = 0;
+      window.toggleTransjakartaJalur(false);
+      window.toggleTransjakartaJalur(true);
+
+      tunggu(1500, function () {
+        ok('toggle kedua tidak terbang lagi', panggilFit.length === 0, panggilFit.length);
+        say('  posisi setelah toggle kedua: ' + pos());
+        say('  (tetap jauh karena sengaja tidak diterbangkan lagi)');
+        tahap2();
+      });
+    });
+  }
+
+  /* ── tahap 2: isi layer ── */
+  function tahap2() {
+    var layer = window.transjakartaLayerObj;
+    say('== layer di peta ==');
+    ok('layer jalur ada', !!layer);
+    ok('layer ditambahkan ke map', !!layer && map.hasLayer(layer));
+    if (!layer) { tahap3(); return; }
+
+    var n = 0, tanpaCoord = 0, types = {};
+    layer.eachLayer(function (l) {
+      n++;
+      var g = l.feature && l.feature.geometry;
+      if (!g || !Array.isArray(g.coordinates)) tanpaCoord++;
+      if (g) types[g.type] = (types[g.type] || 0) + 1;
+    });
+    say('  fitur di layer: ' + n);
+    say('  tipe geometri: ' + JSON.stringify(types));
+
+    /* Yang paling menentukan: tanpa "coordinates", L.geoJSON tidak
+       menggambar apa pun dan tidak melempar error. */
+    ok('ada fitur di layer', n > 0, n);
+    ok('semua fitur punya coordinates', tanpaCoord === 0, tanpaCoord + ' tanpa coordinates');
+
+    /* 23 LineString + 1 MultiLineString. Itu data asli: satu koridor
+       disimpan server sebagai dua path. Modul menangani keduanya. */
+    ok('semua fitur bertipe garis',
+       (types.LineString || 0) + (types.MultiLineString || 0) === n, JSON.stringify(types));
+    ok('hanya LineString dan MultiLineString',
+       Object.keys(types).every(function (t) { return t === 'LineString' || t === 'MultiLineString'; }),
+       JSON.stringify(types));
+
+    var sample = null;
+    layer.eachLayer(function (l) { if (!sample) sample = l; });
+    if (sample) {
+      var f = sample.feature;
+      var p = f.properties || {};
+      ok('sample punya properties KORIDOR', p.KORIDOR != null, JSON.stringify(p));
+      ok('sample punya SHAPE.LEN', p['SHAPE.LEN'] > 0, p['SHAPE.LEN']);
+      ok('koordinat pertama di sekitar Jakarta',
+         diJakarta(f.geometry.coordinates[0][1], f.geometry.coordinates[0][0]),
+         JSON.stringify(f.geometry.coordinates[0]));
+      ok('warna terpasang dari KORIDOR',
+         typeof sample.options.color === 'string' && /^#[0-9a-f]{6}$/i.test(sample.options.color),
+         sample.options.color);
+      ok('warna cocok dengan warna koridor',
+         sample.options.color === TJ.warnaKoridor(p.KORIDOR),
+         sample.options.color + ' vs ' + TJ.warnaKoridor(p.KORIDOR));
+    }
+    tahap3();
+  }
+
+  /* ── tahap 3: rekap koridor ── */
+  function tahap3() {
+    say('== rekap koridor dari data asli ==');
+    var r = TJ.state.ringkas;
+    var terisi = r.filter(function (x) { return x.panjangM > 0; });
+
+    ok('12 koridor', r.length === 12, r.length);
+    say('  koridor terisi: ' + terisi.length);
+    ok('semua 12 koridor punya data', terisi.length === 12, terisi.length);
+    ok('total km masuk akal', TJ.state.totalKm > 200 && TJ.state.totalKm < 600, TJ.state.totalKm);
+    say('  total: ' + TJ.state.totalKm.toFixed(1) + ' km');
+    ok('halte termuat', TJ.state.halte > 200, TJ.state.halte);
+    say('  halte: ' + TJ.state.halte);
+    r.slice(0, 4).forEach(function (x) {
+      say('    koridor ' + x.kode + ': ' + (x.panjangM / 1000).toFixed(1) + ' km, ' + x.ruas.length + ' ruas');
+    });
+
+    /* Panjang tiap koridor harus selalu positif. Kalau ada koridor
+       padahal data masuk, ada bug di penjumlahan SHAPE.LEN. */
+    ok('tidak ada koridor berpanjang 0', terisi.length === 12, terisi.length);
+    tahap4();
+  }
+
+  /* ── tahap 4: fly dari klik baris koridor ── */
+  function tahap4() {
+    say('== fly dari klik baris koridor ==');
+    var sebelum = { lat: map.getCenter().lat, lng: map.getCenter().lng, zoom: map.getZoom() };
+    say('  sebelum: ' + pos());
+
+    panggilFit.length = 0;
+    var baris = document.querySelectorAll('.tj-row')[4];
+    ok('baris koridor 5 ada', !!baris, baris && baris.dataset.koridor);
+    if (baris) baris.click();
+
+    tunggu(1500, function () {
+      say('  sesudah: ' + pos());
+      ok('klik baris memanggil fitBounds', panggilFit.length > 0, panggilFit.length);
+      ok('bounds yang dipakai valid', panggilFit.length > 0 && panggilFit[0] === true, String(panggilFit[0]));
+      ok('peta bergerak',
+         Math.abs(map.getCenter().lat - sebelum.lat) > 0.0005
+         || Math.abs(map.getCenter().lng - sebelum.lng) > 0.0005
+         || map.getZoom() !== sebelum.zoom,
+         pos());
+      ok('peta di sekitar Jakarta', diJakarta(map.getCenter().lat, map.getCenter().lng), pos());
+      /* Klik baris harus MASUK ke satu koridor, bukan tetap di tampilan
+         jaringan. Kalau zoom tidak naik, fly-nya tidak membedakan
+         koridor dari jaringan. */
+      ok('zoom masuk ke satu koridor', map.getZoom() > sebelum.zoom, map.getZoom() + ' vs ' + sebelum.zoom);
+      tahap5();
+    });
+  }
+
+  /* ── tahap 5: isi sheet ── */
+  function tahap5() {
+    say('== sheet ==');
+    var body = document.getElementById('transjakarta-sheet-content');
+    ok('sheet punya 12 baris', body.querySelectorAll('.tj-row').length === 12, body.querySelectorAll('.tj-row').length);
+
+    /* Warna harus dibandingkan lewat normalisasi: style.background
+       membalas "rgb(255, 77, 109)", warnaKoridor() mengembalikan
+       "#ff4d6d". Keduanya warna yang sama. */
+    function keRgb(hex) {
+      var t = document.createElement('span');
+      t.style.color = hex;
+      document.body.appendChild(t);
+      var v = getComputedStyle(t).color;
+      t.remove();
+      return v;
+    }
+    var beda = [];
+    Array.prototype.forEach.call(body.querySelectorAll('.tj-chip'), function (c, i) {
+      if (keRgb(c.style.background) !== keRgb(TJ.warnaKoridor(String(i + 1)))) beda.push(i + 1);
+    });
+    ok('chip 1..12 urut sesuai koridor', beda.length === 0, 'tidak cocok: ' + beda.join(','));
+
+    say('== pemisah ruas ==');
+    var small = body.querySelector('.tj-td-nama small');
+    say('  isi ruas: ' + small.textContent);
+    ok('entitas &middot; tidak tampil mentah', small.textContent.indexOf('&middot;') < 0, small.textContent);
+    ok('innerHTML tidak punya &middot;', body.innerHTML.indexOf('&middot;') < 0);
+    ok('pemisah benar-benar titik tengah', small.textContent.indexOf('·') > -1, small.textContent);
+    ok('dua ruas dipisah satu titik', small.textContent.split('·').length === 2, small.textContent);
+
+    say('  statistik: ' + body.querySelector('.tj-stat').textContent.replace(/\s+/g, ' ').trim());
+
+    /* Kontrol layer kini tinggal di sheet; katalog hanya menyimpan
+       satu sakelar utama. */
+    say('== kontrol di dalam sheet ==');
+    ok('tombol Jalur ada di sheet', !!body.querySelector('.tj-switch[data-tj-layer="jalur"]'));
+    ok('kartu halte ada di sheet', !!body.querySelector('.tj-cardHalte'));
+    ok('kartu halte adalah button', body.querySelector('.tj-cardHalte').tagName === 'BUTTON',
+       body.querySelector('.tj-cardHalte').tagName);
+    ok('checkbox individual tidak ada di DOM',
+       !document.getElementById('toggleTransjakartaJalur') && !document.getElementById('toggleTransjakartaHalte'));
+
+    /* Pane halte harus benar-benar berada di atas pane jalur di DOM.
+       Inilah yang tidak bisa diuji offline: urutan gambar hanya nyata
+       kalau Leaflet sunggulan yang mengubah DOM. */
+    say('== pane halte di atas jalur ==');
+    var pj = map.getPane('transjakartaPane');
+    var ph = map.getPane('transjakartaHaltePane');
+    ok('pane jalur ada', !!pj);
+    ok('pane halte ada', !!ph);
+    ok('pane jalur z-index 430', pj && pj.style.zIndex === '430', pj && pj.style.zIndex);
+    ok('pane halte z-index 431', ph && ph.style.zIndex === '431', ph && ph.style.zIndex);
+    ok('pane halte di atas pane jalur', pj && ph && parseInt(ph.style.zIndex, 10) > parseInt(pj.style.zIndex, 10),
+      (ph && ph.style.zIndex) + ' vs ' + (pj && pj.style.zIndex));
+    /* Pane Leaflet berada DI DALAM container peta, bukan anak langsung
+       dari body. Jadi urutan harus dibandingkan di container yang sama,
+       dan lewat compareDocumentPosition supaya tidak bergantung pada
+       index. */
+    if (ph && pj) {
+      ok('kedua pane ada di container peta yang sama', ph.parentNode === pj.parentNode,
+        (ph.parentNode && ph.parentNode.className) + ' vs ' + (pj.parentNode && pj.parentNode.className));
+      var posisiHalte = ph.compareDocumentPosition(pj);
+      ok('pane halte ada sebelum pane jalur di DOM',
+         !!(posisiHalte & Node.DOCUMENT_POSITION_PRECEDING), 'position=' + posisiHalte);
+      say('  container pane: ' + (pj.parentNode && pj.parentNode.className));
+    }
+
+    /* Klik kartu halte harus benar-benar menambahkan layer halte ke
+       peta, bukan hanya mengubah label di sheet. */
+    say('== klik kartu halte menambah layer ==');
+    window.toggleTransjakarta(false);
+    var kartu = document.querySelector('.tj-cardHalte');
+    ok('kartu tersedia setelah layer dimatikan', !!kartu);
+    kartu.click();
+
+    tunggu(2000, function () {
+      var hl = window.transjakartaHalteLayerObj;
+      ok('layer halte terciatu', !!hl);
+      ok('layer halte ada di peta', !!hl && map.hasLayer(hl));
+      var nHalte = 0;
+      if (hl) hl.eachLayer(function () { nHalte++; });
+      say('  titik halte di layer: ' + nHalte);
+      /* INI yang membuat bug ketahuan: pointToLayer membangun marker
+         dengan options sendiri, dan Leaflet tidak mewariskan pane dari
+         L.geoJSON ke marker itu. Tanpa pane, tiap halte jatuh ke
+         overlayPane (400) dan tertutup garis koridor (430). */
+      var paneSalah = [];
+      if (hl) hl.eachLayer(function (m) {
+        if (m.options.pane !== 'transjakartaHaltePane') paneSalah.push(m.options.pane || '(kosong)');
+      });
+      say('  pane tiap titik: ' + JSON.stringify((function () {
+        var c = {};
+        if (hl) hl.eachLayer(function (m) { var k = m.options.pane || '(kosong)'; c[k] = (c[k] || 0) + 1; });
+        return c;
+      })()));
+      ok('semua 231 titik memakai pane halte', paneSalah.length === 0, paneSalah.length + ' titik salah: ' + paneSalah.slice(0, 3).join(','));
+
+      /* Dengan preferCanvas, renderer dibuat per pane. Kalau pane
+         salah, canvasnya juga salah tempat. */
+      ok('ada canvas di pane halte', !!document.querySelector('.leaflet-transjakartaHalte-pane canvas'));
+      ok('ada canvas di pane jalur', !!document.querySelector('.leaflet-transjakarta-pane canvas'));
+
+      /* Urutan canvas di DOM harus pantul urutan pane: canvas halte
+         harus berada DI SESUDAH canvas jalur, supaya benar-benar di atas. */
+      var cHalte = document.querySelector('.leaflet-transjakartaHalte-pane canvas');
+      var cJalur = document.querySelector('.leaflet-transjakarta-pane canvas');
+      if (cHalte && cJalur) {
+        ok('canvas halte berada sesudah canvas jalur di DOM',
+          !!(cHalte.compareDocumentPosition(cJalur) & Node.DOCUMENT_POSITION_PRECEDING),
+          'position=' + cHalte.compareDocumentPosition(cJalur));
+      }
+
+      var mHalte = null;
+      if (hl) hl.eachLayer(function (m) { if (!mHalte) mHalte = m; });
+      if (mHalte) {
+        ok('titik punya radius yang terlihat', mHalte.options.radius >= 4, mHalte.options.radius);
+        ok('titik punya warna isi', /^#[0-9a-f]{6}$/i.test(mHalte.options.fillColor), mHalte.options.fillColor);
+        ok('titik punya garis tepi', mHalte.options.weight > 0, mHalte.options.weight);
+        ok('koordinat titik masuk Jakarta',
+          Math.abs(mHalte.getLatLng().lat + 6.2) < 0.4 && Math.abs(mHalte.getLatLng().lng - 106.85) < 0.4,
+          JSON.stringify(mHalte.getLatLng()));
+      }
+      ok('semua 231 halte masuk layer', nHalte === TJ.state.halte, nHalte + ' vs ' + TJ.state.halte);
+      ok('jalur tetap mati setelah klik kartu halte', window.isTransjakartaJalurActive() === false,
+         window.isTransjakartaJalurActive());
+      ok('kartu ter-render ulang nyala',
+         document.querySelector('.tj-cardHalte').getAttribute('aria-pressed') === 'true',
+         document.querySelector('.tj-cardHalte').getAttribute('aria-pressed'));
+
+      /* Klik lagi harus melepaskannya. */
+      document.querySelector('.tj-cardHalte').click();
+      setTimeout(function () {
+        ok('klik kedua melepas layer halte', !map.hasLayer(hl), 'masih di peta');
+        ok('tidak ada layer yang menggantung', !map.hasLayer(hl));
+        selesai();
+      }, 800);
+    });
+  }
+
+  function pos() {
+    var c = map.getCenter();
+    return c.lat.toFixed(4) + ',' + c.lng.toFixed(4) + ' z' + map.getZoom();
+  }
+  function diJakarta(lat, lng) {
+    return Math.abs(lat + 6.2) < 0.4 && Math.abs(lng - 106.85) < 0.4;
+  }
+
+  TJ.muatData().then(tahap1);
+})();
+</script>
+</body>
+</html>

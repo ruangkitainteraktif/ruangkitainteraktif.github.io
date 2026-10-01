@@ -6227,6 +6227,11 @@
       color: #fff;
       overflow: hidden;
     }
+/* Tampon fallback: header popup tanpa background eksplisit akan
+   menjadi putih di atas putih karena .agol-popup-header hanya
+   mengatur color:#fff. Warna_MODULE ini dipakai modul yang punya
+   warna sendiri (TransJakarta memakai warna koridor). */
+    .agol-popup-header.agol-modul { background: linear-gradient(135deg, #1e293b, #334155); }
     .agol-popup-header::after {
       content: '';
       position: absolute;
@@ -6264,6 +6269,18 @@
       z-index: 1;
       text-shadow: 0 1px 3px rgba(0,0,0,.12);
     }
+/* Titik warna di dalam judul popup. .agol-popup-badge-dot dirancang
+       untuk flex di dalam .agol-popup-badge; di dalam .agol-popup-title
+       elemennya inline, jadi butuh display eksplisit sendiri. */
+    .agol-popup-title .agol-popup-badge-dot {
+      display: inline-block;
+      margin-right: 7px;
+      vertical-align: middle;
+      width: 9px;
+      height: 9px;
+    }
+    /* Tanpa ini .agol-popup-badge-dot mewarisi display dari div judul
+       dan jadi blok penuh, sehingga menyingkirkan nama koridor. */
     .agol-popup-subtitle {
       font-size: 11px;
       font-weight: 500;
@@ -6596,6 +6613,133 @@
       #geopangan-sheet.sheet-minimized .gp-sheet-body { display: none; }
     }
 
+/* ── TransJakarta Sheet (Desktop: panel kanan) ──
+       Struktur dan perilaku sengaja mengikuti #geopangan-sheet persis:
+       panel sisi kanan di desktop, bottom sheet di mobile, chip saat
+       diminimize. Sheet ini bukan pola baru, dan tidak boleh punya
+       perilaku berbeda dari yang sudah dipakai. */
+    #transjakarta-sheet {
+      display: flex;
+      position: fixed;
+      top: 120px;
+      right: 12px;
+      bottom: 12px;
+      left: auto;
+      z-index: 1100;
+      width: min(390px, calc(100vw - 106px));
+      height: auto;
+      flex-direction: column;
+      overflow: hidden;
+      visibility: hidden;
+      border-radius: 16px;
+      background: var(--bg-primary);
+      box-shadow: var(--shadow-sheet);
+      transform: translateX(calc(100% + 24px));
+      transition: transform .3s ease-in-out, visibility .3s;
+      color: var(--text-primary);
+    }
+    #transjakarta-sheet.sheet-open { transform: translateX(0); visibility: visible; }
+    body.transjakarta-sheet-open:not(.transjakarta-sheet-minimized) .leaflet-bottom.leaflet-right { right: calc(min(390px, calc(100vw - 106px)) + 28px); }
+    #transjakarta-sheet .tj-sheet-handle { display: none; }
+    #transjakarta-sheet .tj-sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; border-bottom: 1px solid var(--border-color); }
+    #transjakarta-sheet .tj-sheet-title, #transjakarta-sheet .tj-sheet-actions { display: flex; align-items: center; }
+    #transjakarta-sheet .tj-sheet-title { gap: 7px; color: var(--text-primary); font-size: 13px; font-weight: 700; }
+    #transjakarta-sheet .tj-sheet-sub { display: block; font-size: 10px; font-weight: 500; color: var(--text-tertiary); }
+    #transjakarta-sheet .tj-sheet-actions { gap: 6px; }
+    #transjakarta-sheet .tj-sheet-minimize, #transjakarta-sheet .tj-sheet-close { display: grid; width: 28px; height: 28px; place-items: center; border: 0; border-radius: 50%; background: var(--bg-tertiary); color: var(--text-tertiary); cursor: pointer; }
+    #transjakarta-sheet .tj-sheet-close { font-size: 16px; }
+    #transjakarta-sheet .tj-sheet-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 12px 16px; -webkit-overflow-scrolling: touch; }
+    @media (min-width: 769px) {
+      #transjakarta-sheet.sheet-minimized { top: auto; right: auto; bottom: 68px; left: 50%; width: min(300px, calc(100vw - 24px)); height: 52px; transform: translateX(-50%); z-index: 100; }
+      #transjakarta-sheet.sheet-minimized .tj-sheet-body { display: none; }
+    }
+
+/* Kontrol Jalur di sheet, dan kartu halte yang jadi tombol. */
+    #transjakarta-sheet .tj-ctrl { padding: 12px 0 2px; }
+    #transjakarta-sheet .tj-switch {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 9px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font: inherit;
+      font-size: 12px;
+      text-align: left;
+      cursor: pointer;
+      transition: background .12s ease, border-color .12s ease;
+    }
+    #transjakarta-sheet .tj-switch:hover { background: var(--bg-card-hover); }
+    #transjakarta-sheet .tj-switch:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+    #transjakarta-sheet .tj-switch.is-on { border-color: var(--accent); background: var(--bg-card-hover); }
+    #transjakarta-sheet .tj-switch-dot {
+      width: 26px;
+      height: 15px;
+      flex-shrink: 0;
+      border-radius: 999px;
+      background: var(--bg-tertiary);
+      box-shadow: inset 0 0 0 1px var(--border-color);
+      position: relative;
+      transition: background .15s ease;
+    }
+    #transjakarta-sheet .tj-switch-dot::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      transition: transform .15s ease, background .15s ease;
+    }
+    #transjakarta-sheet .tj-switch.is-on .tj-switch-dot { background: var(--accent); box-shadow: none; }
+    #transjakarta-sheet .tj-switch.is-on .tj-switch-dot::after { transform: translateX(11px); background: #fff; }
+    #transjakarta-sheet .tj-switch-label { flex: 1 1 auto; font-weight: 600; }
+    #transjakarta-sheet .tj-switch-count { font-size: 10px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+
+    /* Kartu halte. Statistiknya tetap angka, tapi element-nya button
+       supaya bisa difokus dan punya aria-pressed. Bentuknya sengaja
+       sama dengan tj-stat-item supaya tidak terlihat seperti kotak
+       baru yang tidak Serializeran. */
+    #transjakarta-sheet button.tj-stat-item {
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+      transition: background .12s ease, border-color .12s ease;
+    }
+    #transjakarta-sheet button.tj-stat-item:hover { background: var(--bg-card-hover); }
+    #transjakarta-sheet button.tj-stat-item:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+    #transjakarta-sheet button.tj-stat-item.is-on { border-color: var(--accent); background: var(--bg-card-hover); }
+    #transjakarta-sheet button.tj-stat-item.is-on b { color: var(--accent); }
+    /* Isi sheet: tiga angka ringkas, lalu tabel koridor. */
+    #transjakarta-sheet .tj-stat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 12px 0 10px; }
+    #transjakarta-sheet .tj-stat-item { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 8px 4px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); }
+    #transjakarta-sheet .tj-stat-item b { font-size: 17px; font-weight: 800; letter-spacing: -.02em; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    #transjakarta-sheet .tj-stat-item span { font-size: 9px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-tertiary); }
+    #transjakarta-sheet .tj-table-wrap { overflow: visible; }
+    #transjakarta-sheet .tj-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; }
+    #transjakarta-sheet .tj-table thead th { position: sticky; top: 0; z-index: 2; padding: 6px 6px; text-align: left; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-tertiary); background: var(--bg-primary); border-bottom: 1px solid var(--border-color); }
+    #transjakarta-sheet .tj-th-chip { width: 16px; }
+    #transjakarta-sheet .tj-th-km { text-align: right; white-space: nowrap; }
+    #transjakarta-sheet .tj-row { cursor: pointer; transition: background .12s ease; }
+    #transjakarta-sheet .tj-row:hover { background: var(--bg-card-hover); }
+    #transjakarta-sheet .tj-row:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+    #transjakarta-sheet .tj-row td { padding: 7px 6px; border-bottom: 1px solid var(--border-secondary); vertical-align: middle; }
+    #transjakarta-sheet .tj-td-chip { width: 16px; }
+    #transjakarta-sheet .tj-chip { display: block; width: 11px; height: 11px; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18); }
+    #transjakarta-sheet .tj-td-nama b { display: block; font-weight: 650; color: var(--text-primary); }
+    #transjakarta-sheet .tj-td-nama small { display: block; margin-top: 1px; font-size: 9.5px; line-height: 1.35; color: var(--text-tertiary); }
+    #transjakarta-sheet .tj-td-km { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+    #transjakarta-sheet .tj-sumber { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--border-color); font-size: 9.5px; line-height: 1.5; color: var(--text-tertiary); }
+    #transjakarta-sheet .tj-kosong { display: flex; flex-direction: column; gap: 5px; padding: 26px 12px; text-align: center; }
+    #transjakarta-sheet .tj-kosong b { font-size: 13px; color: var(--text-primary); }
+    #transjakarta-sheet .tj-kosong span { font-size: 11px; line-height: 1.55; color: var(--text-tertiary); }
+    [data-theme="dark"] #transjakarta-sheet { background: var(--bg-secondary); }
+    [data-theme="dark"] #transjakarta-sheet .tj-sheet-head { border-bottom-color: var(--border-color); }
     /* ── GeoTools Bottom Sheet (Desktop) ── */
     #geotools-sheet {
       position: fixed; top: 120px; right: 12px; bottom: 12px;
@@ -7389,6 +7533,110 @@
         transition: transform .3s ease-in-out, visibility .3s,
                     height .22s cubic-bezier(.2, 0, 0, 1);
       }
+
+/* ── TransJakarta (mobile: bottom sheet) ── */
+      #transjakarta-sheet {
+        top: auto;
+        display: flex;
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1100;
+        width: 100%;
+        height: var(--sheet-h, 52vh);
+        height: var(--sheet-h, 52dvh);
+        flex-direction: column;
+        overflow: hidden;
+        visibility: hidden;
+        border-radius: 18px 18px 0 0;
+        background: #fff;
+        box-shadow: 0 -6px 24px rgba(15, 23, 42, .18);
+        transform: translateY(100%);
+        transition: transform .3s ease-in-out, visibility .3s;
+      }
+      #transjakarta-sheet.sheet-open { transform: translateY(0); visibility: visible; }
+      #transjakarta-sheet .tj-sheet-handle {
+        display: flex;
+        width: 36px;
+        height: 4px;
+        margin: 8px auto 6px;
+        flex-shrink: 0;
+        border-radius: 999px;
+        background: #cbd5e1;
+      }
+      #transjakarta-sheet .tj-sheet-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px 10px;
+        border-bottom: 1px solid #e8eef3;
+      }
+      #transjakarta-sheet .tj-sheet-title,
+      #transjakarta-sheet .tj-sheet-actions {
+        display: flex;
+        align-items: center;
+      }
+      #transjakarta-sheet .tj-sheet-title { gap: 6px; color: #1e293b; font-size: 13px; font-weight: 700; }
+      #transjakarta-sheet .tj-sheet-actions { gap: 6px; }
+      #transjakarta-sheet .tj-sheet-minimize,
+      #transjakarta-sheet .tj-sheet-close {
+        display: grid;
+        width: 28px;
+        height: 28px;
+        place-items: center;
+        border: 0;
+        border-radius: 50%;
+        background: #f1f5f9;
+        color: #64748b;
+        cursor: pointer;
+      }
+      #transjakarta-sheet .tj-sheet-close { font-size: 16px; }
+      #transjakarta-sheet .tj-sheet-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+        padding: 0 12px 16px;
+        -webkit-overflow-scrolling: touch;
+      }
+      #transjakarta-sheet.sheet-minimized {
+        top: 100px;
+        right: auto;
+        bottom: auto;
+        left: 50%;
+        width: min(250px, calc(100vw - 48px));
+        height: 36px;
+        visibility: visible;
+        border: 1px solid rgba(255, 255, 255, .72);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, .92);
+        box-shadow: 0 4px 14px rgba(15, 23, 42, .12);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        transform: translateX(-50%);
+        z-index: 100;
+      }
+      #transjakarta-sheet.sheet-minimized .tj-sheet-handle,
+      #transjakarta-sheet.sheet-minimized .tj-sheet-body { display: none; }
+      #transjakarta-sheet.sheet-minimized .tj-sheet-head {
+        min-height: 36px;
+        box-sizing: border-box;
+        padding: 4px 12px;
+        border-bottom: 0;
+      }
+      #transjakarta-sheet .tj-switch { background: #f8fafc; border-color: #e2e8f0; }
+      #transjakarta-sheet .tj-switch.is-on { background: #ecfeff; border-color: #22d3ee; }
+      #transjakarta-sheet .tj-switch-dot { background: #e2e8f0; box-shadow: inset 0 0 0 1px #cbd5e1; }
+      #transjakarta-sheet .tj-switch.is-on .tj-switch-dot { background: #22d3ee; }
+      #transjakarta-sheet button.tj-stat-item { background: #f8fafc; border-color: #e2e8f0; }
+      #transjakarta-sheet button.tj-stat-item.is-on { background: #ecfeff; border-color: #22d3ee; }
+      #transjakarta-sheet button.tj-stat-item.is-on b { color: #0e7490; }
+      #transjakarta-sheet .tj-stat-item { background: #f8fafc; border-color: #e2e8f0; }
+      #transjakarta-sheet .tj-stat-item b { color: #1e293b; }
+      #transjakarta-sheet .tj-table thead th { background: #fff; border-bottom-color: #e8eef3; color: #94a3b8; }
+      #transjakarta-sheet .tj-td-nama b { color: #1e293b; }
+      #transjakarta-sheet .tj-sumber { border-top-color: #e8eef3; color: #94a3b8; }
+      #transjakarta-sheet .tj-row td { border-bottom-color: #f1f5f9; }
       /* Selama jari bergerak transisi harus mati. Kalau tidak, height
          mengejar nilai baru di setiap frame dan sheet terasa lengket. */
       .sheet-draggable.is-dragging,

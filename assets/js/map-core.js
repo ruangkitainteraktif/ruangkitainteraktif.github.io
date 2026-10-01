@@ -1427,6 +1427,7 @@ L.control.scale({
         if (typeof window.clearArcGISRestLayers === 'function') window.clearArcGISRestLayers();
         // 1. Matikan layer jalan & angin (checkbox-driven)
         const toggles = [
+          'toggleTransjakarta',
           'toggleTollRoad', 'toggleNonTollRoad', 'toggleNationalRoad',
           'toggleWindAnim', 'toggleWindRgb', 'toggleRhRgb', 'toggleTp24Rgb',
           'togglePm25Rgb', 'toggleHthRgb',
@@ -1473,6 +1474,7 @@ L.control.scale({
           }
         });
 
+        if (typeof window.toggleTransjakarta === 'function') window.toggleTransjakarta(false);
         if (typeof toggleTollRoadLayer === 'function') toggleTollRoadLayer(false);
         if (typeof toggleNonTollRoadLayer === 'function') toggleNonTollRoadLayer(false);
          if (typeof toggleNationalRoadLayer === 'function') toggleNationalRoadLayer(false);
@@ -2696,6 +2698,21 @@ L.control.scale({
       ]
     },
     {
+      /* Transportasi. Dua toggle, bukan subcat, karena isinya
+         memang cuma segelintar. Kalau nanti KAI/KTJ/LRT masuk
+         kategori yang sama, bungkus kedua baris ini jadi subcats
+         tanpa mengubah bagian lain. */
+      /* Satu entri, bukan dua. Kontrol Jalur dan Halte pindah ke
+       * dalam sheet TransJakarta, karena di sana keduanya berdiri di
+       * atas tabel koridor yang sama dan statusnya bisa dibaca
+       * sekaligus. Di katalog, dua checkbox terpisah hanya menambah
+       * tempat mencari tanpa menambah informasi. */
+      cat: 'Transportasi',
+      layers: [
+        { id: 'toggleTransjakarta', label: 'TransJakarta — Jalur & Halte' }
+      ]
+    },
+    {
       cat: 'Ketahanan Pangan',
       subcats: [
         { subcat: 'Badan Pangan', layers: [
@@ -3455,6 +3472,7 @@ L.control.scale({
           (id === 'toggleSppgSebaranLayer' && typeof window.toggleSppgSebaranLayer === 'function') ||
           (id === 'toggleSppgLayer' && typeof window.toggleSppg === 'function') ||
           (id === 'toggleSppgDistrictLayer' && typeof window.toggleSppgDistrictLayer === 'function') ||
+          (id === 'toggleTransjakarta' && typeof window.toggleTransjakarta === 'function') ||
           (id === 'toggleTollRoad' && typeof window.toggleTollRoadLayer === 'function') ||
           (id === 'toggleNationalRoad' && typeof window.toggleNationalRoadLayer === 'function') ||
           (id === 'toggleNonTollRoad' && typeof window.toggleNonTollRoadLayer === 'function') ||
@@ -3529,6 +3547,9 @@ L.control.scale({
         }
         if (id.indexOf('kategori-opt-') === 0 && typeof window.toggleKategoriWilayahOpt === 'function') {
           window.toggleKategoriWilayahOpt(id, cb.checked);
+        }
+        if (id === 'toggleTransjakarta' && typeof window.toggleTransjakarta === 'function') {
+          window.toggleTransjakarta(cb.checked);
         }
         if (id === 'toggleTollRoad' && typeof window.toggleTollRoadLayer === 'function') {
           window.toggleTollRoadLayer(cb.checked);

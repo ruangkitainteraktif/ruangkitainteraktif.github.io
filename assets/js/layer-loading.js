@@ -166,6 +166,7 @@
     'toggleSpei12m': 'Data SPEI 12 Bulan tidak tersedia.',
     'toggleGeologiBNPB': 'Data Peta Geologi (BNPB) tidak tersedia.',
     'toggleSekolahLayer': 'Data Sekolah Indonesia (BNPB) tidak tersedia.',
+    'toggleTransjakarta': 'Data Jalur TransJakarta tidak tersedia.',
     'toggleHillshade': 'Data Hillshade tidak tersedia.',
     'toggleBatnas': 'Data Batnas (Batimetri) tidak tersedia.',
     'toggleProvinceBoundary': 'Data Batas Provinsi (PBF) tidak tersedia.',

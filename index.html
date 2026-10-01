@@ -614,6 +614,24 @@
       <div id="geopangan-sheet-content" class="gp-sheet-body"></div>
     </div>
 
+    <!-- TRANSJAKARTA BOTTOM SHEET (mobile: daftar 12 koridor) -->
+    <div id="transjakarta-sheet" aria-label="Daftar Jalur TransJakarta">
+      <div class="tj-sheet-handle"></div>
+      <div class="tj-sheet-head">
+        <div class="tj-sheet-title">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ff4d6d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="14" rx="3"/><path d="M3 11h18"/><circle cx="7.5" cy="14.5" r="1.2"/><circle cx="16.5" cy="14.5" r="1.2"/><path d="M7 17v2M17 17v2"/></svg>
+          <span>Jalur TransJakarta<span class="tj-sheet-sub">12 koridor &middot; JakartaSatu</span></span>
+        </div>
+        <div class="tj-sheet-actions">
+          <button id="transjakarta-sheet-minimize" class="tj-sheet-minimize" type="button" aria-label="Minimalkan panel Jalur TransJakarta" title="Minimalkan panel">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>
+          </button>
+          <button id="transjakarta-sheet-close" class="tj-sheet-close" type="button" aria-label="Tutup panel Jalur TransJakarta" title="Tutup">&times;</button>
+        </div>
+      </div>
+      <div id="transjakarta-sheet-content" class="tj-sheet-body"></div>
+    </div>
+
     <!-- GEOTOOLS BOTTOM SHEET -->
     <div id="geotools-sheet">
       <div class="gs-sheet-handle"></div>
@@ -2853,7 +2871,7 @@
                 <span class="gt-card-icon" aria-hidden="true">&#127793;</span>
                 <span>
                   <b id="geofarmCardTitle">GeoFarm Analisis</b>
-                  <small>Gambar/unggah petak, lalu lihat kondisi lahan dan kebutuhan airnya</small>
+                  <small>Gambar petak lalu cek kondisi lahan & kebutuhan air.</small>
                 </span>
               </summary>
               <div class="geofarm-card-body">
@@ -3371,6 +3389,7 @@
   <script src="assets/js/krb-gunung-api.js"></script>
   <script src="assets/js/krb-titik.js"></script>
   <script src="assets/js/peta-geologi.js"></script>
+  <script src="assets/js/transjakarta-layer.js"></script>
   <script src="assets/js/geostruktur.js"></script>
   <script src="assets/js/patahan-aktif.js"></script>
   <script src="assets/js/likuifaksi.js"></script>

@@ -595,6 +595,25 @@
       toggleId: 'toggleRktnBaliNtLayer',
       props: ['namaobj', 'remark']
     },
+    /* TransJakarta.
+
+       Kuncinya toggleTransjakarta, satu-satunya id yang ada di Layer
+       Catalog. Dua id lama (toggleTransjakartaJalur dan
+       toggleTransjakartaHalte) dihapus bersama checkbox-nya di
+       katalog, jadi entri dengan kunci itu tidak akan pernah
+       dipanggil -- hanya jadi kode mati.
+
+       Sheet modul sudah menampilkan rekap 12 koridor. Tabel di
+       sini sengaja dibiarkan apa adanya: 24 baris = 12 koridor x 2
+       arah, lengkap dengan SHAPE.LEN per arah, supaya angka
+       panjangnya bisa ditelusuri. */
+    toggleTransjakarta: {
+      name: 'Jalur TransJakarta (JakartaSatu)',
+      type: 'arcgis',
+      url: 'https://jakartasatu.jakarta.go.id/server/rest/services/JakartaSatu/Transjakarta/MapServer/1/query',
+      outFields: ['KORIDOR', 'JURUSAN', 'SHAPE.LEN'],
+      props: ['KORIDOR', 'JURUSAN', 'SHAPE.LEN']
+    },
     toggleJalurEvakuasi: {
       name: 'Jalur Evakuasi (BNPB)',
       type: 'arcgis',

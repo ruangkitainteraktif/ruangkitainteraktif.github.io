@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>tes-transjakarta</title>
+<script>setTimeout(function(){ if (window.__err && window.__err.length) document.title = "ERR: " + window.__err.join(" | "); }, 50);</script>
+<link rel="stylesheet" href="assets/css/app.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  body { margin: 0; padding: 8px; background: #eef2f7; font-family: system-ui, sans-serif; }
+  #peta { width: 640px; height: 320px; border: 1px solid #cbd5e1; }
+  #out { white-space: pre-wrap; font: 11px monospace; color: #000; padding: 8px;
+         background: #fff; border: 2px solid #000; margin-top: 8px; }
+  /* Sheet diukur dalam kondisi mobile supaya @media max-width:768px ikut
+     aktif. Tanpa ini yang terukur justru aturan desktop, dan test jadi
+     tidak menguji apa pun soal bottom sheet. */
+  .pj-mobile #transjakarta-sheet { position: fixed; }
+</style>
+</head>
+<body>
+
+<div id="peta"></div>
+
+<!-- Markup sheet disalin persis dari index.html. -->
+<div id="transjakarta-sheet" aria-label="Daftar Jalur TransJakarta">
+  <div class="tj-sheet-handle"></div>
+  <div class="tj-sheet-head">
+    <div class="tj-sheet-title">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ff4d6d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="14" rx="3"/><path d="M3 11h18"/><circle cx="7.5" cy="14.5" r="1.2"/><circle cx="16.5" cy="14.5" r="1.2"/><path d="M7 17v2M17 17v2"/></svg>
+      <span>Jalur TransJakarta<span class="tj-sheet-sub">12 koridor &middot; JakartaSatu</span></span>
+    </div>
+    <div class="tj-sheet-actions">
+      <button id="transjakarta-sheet-minimize" class="tj-sheet-minimize" type="button" aria-label="Minimalkan panel Jalur TransJakarta" title="Minimalkan panel">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>
+      </button>
+      <button id="transjakarta-sheet-close" class="tj-sheet-close" type="button" aria-label="Tutup panel Jalur TransJakarta" title="Tutup">&times;</button>
+    </div>
+  </div>
+  <div id="transjakarta-sheet-content" class="tj-sheet-body"></div>
+</div>
+
+<div id="out"></div>
+
+<script>
+/* ── Stub peta ──
+   Modul aslinya memakai `map` global dan helper legend milik map-core.
+   Yang diuji di harness ini adalah logika murni modul transjakarta --
+   pemetaan warna koridor, rekap panjang, baris tabel -- bukan Leaflet
+   sungguhan. Jadi peta cukup objek sederhana dengan antarmuka yang dipakai
+   modul: getPane, createPane, hasLayer, addLayer, removeLayer, fitBounds,
+   on. */
+var panes = {};
+var added = [];
+var map = {
+  getPane: function (n) { return panes[n] || null; },
+  createPane: function (n) { panes[n] = { style: {} }; return panes[n]; },
+  hasLayer: function (l) { return added.indexOf(l) > -1; },
+  addLayer: function (l) { if (added.indexOf(l) < 0) added.push(l); return this; },
+  removeLayer: function (l) { var i = added.indexOf(l); if (i > -1) added.splice(i, 1); return this; },
+  fitBounds: function () { map.fitDipanggil++; return this; },
+  getCenter: function () { return map.posisi || { lat: -6.2, lng: 106.85 }; },
+  getZoom: function () { return map.zoom || 11; },
+  on: function () { return this; },
+  fitDipanggil: 0
+};
+
+window.map = map;
+
+/* Stub legend milik map-core. */
+var legendTerpasang = null;
+window.addUnifiedLegend = function (id, el) { legendTerpasang = { id: id, el: el }; };
+window.removeUnifiedLegend = function (id) { if (legendTerpasang && legendTerpasang.id === id) legendTerpasang = null; };
+window.createLegendWithToggle = function (el) { return el; };
+
+/* Stub SheetDrag: mencatat panggilan supaya test bisa membuktikan
+   sheet benar-benar dibuka saat layer dinyalakan. */
+var sheetLog = [];
+window.SheetDrag = {
+  _daftar: {},
+  register: function (id, opts) { this._daftar[id] = opts; },
+  buka: function (id) { sheetLog.push('buka:' + id); var el = document.getElementById(id); if (el) el.classList.add('sheet-open'); },
+  close: function (id) { sheetLog.push('close:' + id); var el = document.getElementById(id); if (el) el.classList.remove('sheet-open'); },
+  minimize: function (id) { sheetLog.push('minimize:' + id); },
+  isMobile: function () { return false; },
+  isOpen: function () { return false; },
+  adaYangTerbuka: function () { return false; },
+  minimizeAll: function () {},
+  minimizeTerbuka: function () {},
+  sinkronkanPeta: function () {},
+  toggleMinimize: function (id) { sheetLog.push('toggleMinimize:' + id); }
+};
+
+/* L tidak dipakai modul selain L.geoJSON / L.DomUtil / L.DomEvent, dan
+   semua dipanggil hanya setelah toggle. Karena L sungguhan tidak ada,
+   hook dibungkus supaya error tercatat, bukan membatalkan harness. */
+var lError = null;
+window.L = window.L || {};
+window.L.geoJSON = function () {
+  var o = {
+    _data: null,
+    addData: function (d) { o._data = d; return this; },
+    clearLayers: function () { o._data = null; return this; },
+    addTo: function (m) { return o; },
+    getBounds: function () { return { getCenter: function () { return { lat: -6.2, lng: 106.85 }; } }; },
+    eachLayer: function () {}
+  };
+  return o;
+};
+window.L.DomUtil = { create: function (tag, cls) { return document.createElement(tag); } };
+window.L.DomEvent = { disableClickPropagation: function () {} };
+
+var garis = [];
+</script>
+
+<script src="assets/js/transjakarta-layer.js"></script>
+
+<script>
+window.__err = [];
+window.addEventListener("error", function (e) {
+  window.__err.push((e.message || "?") + " @" + e.lineno + ":" + e.colno);
+});
+</script>
+<script>
+/* Semua pemeriksaan dijalankan setelah DOMContentLoaded, karena
+   modul memasang listener klik sheet di event itu. Menjalankan
+   harness sebelum DOMContentLoaded berarti klik di sheet tidak punya
+   listener -- test gagal bukan karena modul salah. */
+window.addEventListener("DOMContentLoaded", function () {
+(function () {
+  var lines = [];
+  var lulus = 0, gagal = 0;
+
+  function say(t) { lines.push(t); }
+  function ok(nama, benar, info) {
+    if (benar) { lulus++; say('  ok   ' + nama); }
+    else { gagal++; say('  GAGAL ' + nama + (info != null ? ' -> ' + info : '')); }
+  }
+
+  var TJ = window.__transjakarta;
+
+  say('== konstanta & endpoint ==');
+  ok('modul mengekspor API', !!TJ);
+  ok('ID halte = 0 (layer point)', TJ.ID_HALTE === 0, TJ.ID_HALTE);
+  ok('ID jalur = 1 (layer polyline)', TJ.ID_JALUR === 1, TJ.ID_JALUR);
+  ok('basis URL JakartaSatu', TJ.DASAR === 'https://jakartasatu.jakarta.go.id/server/rest/services/JakartaSatu/Transjakarta/MapServer/', TJ.DASAR);
+
+  say('== warna koridor ==');
+  var KODE = TJ.KODE_URUT;
+  ok('12 koridor terdaftar', KODE.length === 12, KODE.length);
+  ok('kunci koridor urut 1..12', KODE.join(',') === '1,2,3,4,5,6,7,8,9,10,11,12', KODE.join(','));
+
+  var warna = KODE.map(function (k) { return TJ.warnaKoridor(k); });
+  var unik = {};
+  warna.forEach(function (w) { unik[w] = (unik[w] || 0) + 1; });
+  ok('setiap koridor punya warna', warna.every(function (w) { return !!w && w !== '#94a3b8'; }), JSON.stringify(unik));
+  var dup = Object.keys(unik).filter(function (w) { return unik[w] > 1; });
+  ok('tidak ada warna duplikat', dup.length === 0, dup.join(','));
+  ok('warna berformat hex', warna.every(function (w) { return /^#[0-9a-f]{6}$/i.test(w); }), warna.join(' '));
+
+  /* KORIDOR di server adalah string dan beberapa baris halte punya spasi
+     di sekitarnya. Kalau kunci tidak dibersihkan, koridor itu jatuh ke
+     warna abu-abu tanpa alasan yang kelihatan. */
+  say('== kebersihan kunci koridor ==');
+  ok('kunci " 12 " jadi "12"', TJ.kunciKoridor(' 12 ') === '12', TJ.kunciKoridor(' 12 '));
+  ok('kunci "7" jadi "7"', TJ.kunciKoridor('7') === '7');
+  ok('kunci null jadi string kosong', TJ.kunciKoridor(null) === '');
+  ok('koridor " 10 " dapat warna', TJ.warnaKoridor(' 10 ') === TJ.warnaKoridor('10'), TJ.warnaKoridor(' 10 '));
+  ok('koridor tak dikenal dapat abu-abu', TJ.warnaKoridor('99') === '#94a3b8', TJ.warnaKoridor('99'));
+  ok('halo ada untuk tiap koridor', KODE.every(function (k) { return /^rgba/.test(TJ.KORIDOR[k].halo); }));
+
+  say('== URL query ==');
+  var u = TJ.urlQuery(1, ['outFields=KORIDOR']);
+  ok('minta outSR=4326', u.indexOf('outSR=4326') > -1, u);
+  ok('pakai geometryPrecision', u.indexOf('geometryPrecision=5') > -1, u);
+  ok('returnGeometry=true', u.indexOf('returnGeometry=true') > -1, u);
+  ok('layer 1 masuk URL', u.indexOf('/1/query') > -1, u);
+  var u0 = TJ.urlQuery(0, []);
+  ok('layer 0 masuk URL', u0.indexOf('/0/query') > -1, u0);
+  ok('pakai f=json', u.indexOf('f=json') > -1, u);
+
+  say('== konversi esriJSON ke GeoJSON ==');
+  /* Ini yang pernah salah dan causedpolygon tidak muncul. /query ArcGIS
+     mengembalikan esriJSON (paths / x-y), BUKAN GeoJSON. Leaflet hanya
+     mencari "coordinates", jadi objek mentah diabaikan diam-diam. */
+  var poly = TJ.esriGeometryKeGeoJson({ paths: [[[106.8, -6.1], [106.9, -6.2], [106.95, -6.25]]] });
+  ok('polyline 1 path jadi LineString', poly && poly.type === 'LineString', poly && poly.type);
+  ok('polyline punya coordinates', poly && Array.isArray(poly.coordinates));
+  ok('polyline 3 titik', poly && poly.coordinates.length === 3, poly && poly.coordinates.length);
+  ok('titik pertama = [106.8,-6.1]', poly && poly.coordinates[0][0] === 106.8 && poly.coordinates[0][1] === -6.1, JSON.stringify(poly && poly.coordinates[0]));
+
+  var multi = TJ.esriGeometryKeGeoJson({ paths: [[[106.8, -6.1]], [[106.9, -6.2]]] });
+  ok('polyline 2 path jadi MultiLineString', multi && multi.type === 'MultiLineString', multi && multi.type);
+  ok('multiline ada 2 jalur', multi && multi.coordinates.length === 2, multi && multi.coordinates.length);
+
+  var pt = TJ.esriGeometryKeGeoJson({ x: 106.81366, y: -6.13771 });
+  ok('point jadi Point', pt && pt.type === 'Point', pt && pt.type);
+  ok('point punya coordinates', pt && Array.isArray(pt.coordinates));
+  ok('point = [106.81366,-6.13771]', pt && pt.coordinates[0] === 106.81366 && pt.coordinates[1] === -6.13771, JSON.stringify(pt && pt.coordinates));
+
+  var ring = TJ.esriGeometryKeGeoJson({ rings: [[[0, 0], [0, 1], [1, 1], [0, 0]]] });
+  ok('satu ring jadi Polygon', ring && ring.type === 'Polygon', ring && ring.type);
+  var multiRing = TJ.esriGeometryKeGeoJson({
+    rings: [[[0, 0], [0, 1], [1, 1], [0, 0]], [[5, 5], [5, 6], [6, 6], [5, 5]]]
+  });
+  ok('dua ring jadi MultiPolygon', multiRing && multiRing.type === 'MultiPolygon', multiRing && multiRing.type);
+
+  ok('geometri GeoJSON diteruskan tanpa diubah',
+     (function () {
+       var g = { type: 'LineString', coordinates: [[1, 2], [3, 4]] };
+       return TJ.esriGeometryKeGeoJson(g) === g;
+     })());
+  ok('null aman', TJ.esriGeometryKeGeoJson(null) === null);
+  ok('geometri asing jadi null', TJ.esriGeometryKeGeoJson({ foo: 1 }) === null);
+
+  say('== konversi features ke GeoJSON ==');
+  var mentah = {
+    features: [
+      { geometry: { paths: [[[106.8, -6.1], [106.9, -6.2]]] },
+        attributes: { KORIDOR: '1', JURUSAN: 'A - B', 'SHAPE.LEN': 13410.9 } },
+      { geometry: { paths: [[[106.9, -6.2], [106.8, -6.1]]] },
+        attributes: { KORIDOR: '1', JURUSAN: 'B - A', 'SHAPE.LEN': 13573.1 } },
+      { geometry: { foo: 'tidak dikenal' }, attributes: { KORIDOR: '2' } }
+    ]
+  };
+  var gj = TJ.featuresKeGeoJson(mentah);
+  ok('tipe FeatureCollection', gj.type === 'FeatureCollection', gj.type);
+  ok('fitur tak terkonversi dibuang', gj.features.length === 2, gj.features.length);
+  ok('setiap fitur punya coordinates',
+     gj.features.every(function (f) { return f.geometry && Array.isArray(f.geometry.coordinates); }));
+  ok('geometri jadi LineString', gj.features[0].geometry.type === 'LineString', gj.features[0].geometry.type);
+  ok('atribut jadi properties', gj.features[0].properties.KORIDOR === '1', JSON.stringify(gj.features[0].properties));
+
+  say('== rekap per koridor ==');
+  /* 24 fitur = 12 koridor x 2 arah. Rekap harus menggabungkan dua arah
+     jadi satu baris per koridor, bukan 24 baris. */
+  var rekap = TJ.rekapKoridor(gj);
+  ok('rekap selalu 12 baris', rekap.length === 12, rekap.length);
+  ok('koridor 1 dijumlahkan dari 2 arah',
+     Math.abs(rekap[0].panjangM - (13410.9 + 13573.1)) < 0.01, rekap[0].panjangM);
+  ok('koridor 2 kosong karena tidak ada datanya', rekap[1].panjangM === 0, rekap[1].panjangM);
+  ok('dua ruas koridor 1 digabung', rekap[0].ruas.length === 2, rekap[0].ruas.length);
+  ok('urutan koridor tetap numerik', rekap.map(function (r) { return r.kode; }).join(',') === '1,2,3,4,5,6,7,8,9,10,11,12');
+  ok('warna ikut ke rekap', rekap[0].warna === TJ.warnaKoridor('1'));
+
+  /* Koridor di luar 1-12 harus dicatat, bukan dihitung diam-diam. */
+  var asing = TJ.rekapKoridor(TJ.featuresKeGeoJson({
+    features: [{ geometry: null, attributes: { KORIDOR: '13', JURUSAN: 'X', 'SHAPE.LEN': 500 } }]
+  }));
+  ok('koridor asing tidak masuk rekap', asing.length === 12 && asing.every(function (r) { return r.panjangM === 0; }));
+
+  say('== z-index pane ==');
+  ok('pane di atas terrain (batnas=100)', TJ.Z_PANE > 100, TJ.Z_PANE);
+  ok('pane di bawah label (2000)', TJ.Z_PANE < 2000, TJ.Z_PANE);
+  TJ.siapkanPane();
+  ok('pane tercipta', !!map.getPane('transjakartaPane'));
+  ok('z-index pane sesuai', map.getPane('transjakartaPane').style.zIndex === String(TJ.Z_PANE), map.getPane('transjakartaPane').style.zIndex);
+
+  say('== toggle & sheet ==');
+  ok('toggle utama terpasang di window', typeof window.toggleTransjakarta === 'function');
+  ok('toggle jalur terpasang di window', typeof window.toggleTransjakartaJalur === 'function');
+  ok('toggle halte terpasang di window', typeof window.toggleTransjakartaHalte === 'function');
+  ok('setter internal terpasang', typeof TJ.setJalur === 'function' && typeof TJ.setHalte === 'function');
+  ok('belum pernah terbang sebelum layer dinyalakan', TJ.sudahTerbang() === false, TJ.sudahTerbang());
+
+  /* Checkbox individual harus hilang dari Layer Catalog. Keduanya
+     sekarang hidup di dalam sheet. */
+  ok('katalog tidak punya toggle jalur terpisah',
+    !document.getElementById('toggleTransjakartaJalur'), 'masih ada');
+  ok('katalog tidak punya toggle halte terpisah',
+    !document.getElementById('toggleTransjakartaHalte'), 'masih ada');
+
+  sheetLog.length = 0;
+  window.toggleTransjakarta(true);
+  ok('sheet tercatat dipanggil saat sakelar utama dinyalakan', sheetLog.indexOf('buka:transjakarta') > -1, sheetLog.join(' '));
+  ok('layer jalur aktif', window.isTransjakartaJalurActive() === true);
+  ok('peta ditandai sudah terbang', TJ.sudahTerbang() === true, TJ.sudahTerbang());
+
+  sheetLog.length = 0;
+  window.toggleTransjakarta(false);
+  ok('sheet ditutup saat sakelar utama dimatikan', sheetLog.indexOf('close:transjakarta') > -1, sheetLog.join(' '));
+  ok('layer jalur tidak aktif lagi', window.isTransjakartaJalurActive() === false);
+  ok('layer halte ikut mati', window.isTransjakartaHalteActive() === false);
+
+  /* Toggle kedua tidak boleh terbang lagi: kalau iya, orang yang
+     sedang menata peta kehilangan posisi kerjanya tiap kali layer
+     dimatikan sebentar. */
+  var callAwal = map.fitDipanggil;
+  window.toggleTransjakarta(true);
+  ok('toggle kedua tidak terbang lagi', map.fitDipanggil === callAwal, map.fitDipanggil + ' vs ' + callAwal);
+  window.toggleTransjakarta(false);
+
+  say('== pane halte di atas jalur ==');
+  ok('z-index pane jalur = 430', TJ.Z_PANE === 430, TJ.Z_PANE);
+  ok('z-index pane halte di atas jalur', TJ.Z_PANE_HALTE > TJ.Z_PANE, TJ.Z_PANE_HALTE + ' vs ' + TJ.Z_PANE);
+  ok('pane halte tetap di bawah label (2000)', TJ.Z_PANE_HALTE < 2000, TJ.Z_PANE_HALTE);
+  TJ.siapkanPane();
+  ok('pane halte tercipta', !!map.getPane('transjakartaHaltePane'));
+  ok('z-index pane halte sesuai',
+    map.getPane('transjakartaHaltePane').style.zIndex === String(TJ.Z_PANE_HALTE),
+    map.getPane('transjakartaHaltePane').style.zIndex);
+
+say('== isi sheet ==');
+  /* Data live tidak dipakai di sini supaya harness offline tetap bisa
+     memeriksa bentuk tabelnya. State dipaksa jadi "sudah dimuat" supaya
+     jalur renderSheet() yang menguji chip, baris, angka, dan kontrol
+     bisa dijalankan tanpa jaringan. */
+  TJ.state.gagal = false;
+  TJ.state.dimuat = true;
+  TJ.state.ringkas = rekap.map(function (r, i) {
+    var c = Object.assign({}, r);
+    c.panjangM = i === 0 ? 26984 : 0;
+    if (i === 0) c.ruas = ['KOTA - BLOK M', 'BLOK M - KOTA'];
+    return c;
+  });
+  TJ.state.totalKm = 26.98;
+  TJ.state.halte = 231;
+  TJ.renderSheet();
+
+  var body = document.getElementById('transjakarta-sheet-content');
+  ok('sheet terisi', body.innerHTML.length > 200, body.innerHTML.length);
+  ok('12 baris koridor', body.querySelectorAll('.tj-row').length === 12, body.querySelectorAll('.tj-row').length);
+  ok('tiga kotak statistik', body.querySelectorAll('.tj-stat-item').length === 3, body.querySelectorAll('.tj-stat-item').length);
+
+  /* Kontrol pindah ke dalam sheet: tombol Jalur + kartu Halte. */
+  say('== kontrol di dalam sheet ==');
+  var sw = body.querySelector('.tj-switch[data-tj-layer="jalur"]');
+  ok('tombol Jalur ada di sheet', !!sw);
+  ok('tombol Jalur adalah button', sw && sw.tagName === 'BUTTON', sw && sw.tagName);
+  ok('tombol Jalur punya aria-pressed', sw && sw.getAttribute('aria-pressed') === 'false', sw && sw.getAttribute('aria-pressed'));
+  ok('tombol Jalur punya label', sw && sw.querySelector('.tj-switch-label').textContent.length > 0);
+  ok('tombol Jalur punya jumlah koridor', sw && /koridor/.test(sw.querySelector('.tj-switch-count').textContent), sw && sw.querySelector('.tj-switch-count').textContent);
+
+  var halte = body.querySelector('.tj-cardHalte');
+  ok('kartu halte ada', !!halte);
+  ok('kartu halte adalah button', halte && halte.tagName === 'BUTTON', halte && halte.tagName);
+  ok('kartu halte punya aria-pressed', halte && halte.getAttribute('aria-pressed') === 'false', halte && halte.getAttribute('aria-pressed'));
+  ok('kartu halte punya label aksesibel', halte && /halte/i.test(halte.getAttribute('aria-label') || ''), halte && halte.getAttribute('aria-label'));
+  ok('kartu halte bukan div', halte && halte.tagName !== 'DIV');
+
+  /* Klik kartu halte harus menyalakan layer halte, dan tidak boleh
+     ikut memicu zoom ke koridor. */
+  say('== klik kartu halte ==');
+  var posSebelum = { lat: map.getCenter().lat, lng: map.getCenter().lng };
+  halte.click();
+  ok('klik kartu menyalakan halte', window.isTransjakartaHalteActive() === true, window.isTransjakartaHalteActive());
+
+  /* Halte SENGAJA independen dari jalur: menyalakan halte tidak
+     menyalakan koridor, dan sebaliknya. Alasannya halte berguna
+     berdiri sendiri -- orang yang mau tahu posisi halte terdekat
+     tidak perlu garis koridor yang memenuhi layar. Mengikat
+     keduanya hanyaGly777 memaksa pengguna mematikan satu hal untuk
+     mematikan hal yang lain. */
+  ok('halte tidak ikut menyalakan jalur', window.isTransjakartaJalurActive() === false, window.isTransjakartaJalurActive());
+  ok('klik kartu tidak memicu zoom', map.getCenter().lat === posSebelum.lat && map.getCenter().lng === posSebelum.lng,
+    map.getCenter().lat + ',' + map.getCenter().lng);
+
+  var halte2 = document.querySelector('.tj-cardHalte');
+  ok('kartu ter-render ulang dengan status nyala', halte2 && halte2.getAttribute('aria-pressed') === 'true', halte2 && halte2.getAttribute('aria-pressed'));
+  ok('kartu punya kelas is-on', halte2 && halte2.classList.contains('is-on'), halte2 && halte2.className);
+
+  halte2.click();
+  ok('klik kedua mematikan halte', window.isTransjakartaHalteActive() === false, window.isTransjakartaHalteActive());
+
+  /* Tombol Jalur di sheet harus menyalakan dan mematikan jalur. */
+  say('== klik tombol Jalur ==');
+  var sw2 = document.querySelector('.tj-switch[data-tj-layer="jalur"]');
+  ok('tombol Jalur ada setelah render ulang', !!sw2);
+  if (sw2) {
+    sw2.click();
+    ok('klik tombol menyalakan jalur', window.isTransjakartaJalurActive() === true, window.isTransjakartaJalurActive());
+    var sw3 = document.querySelector('.tj-switch[data-tj-layer="jalur"]');
+    ok('tombol ter-render ulang dengan status nyala', sw3 && sw3.getAttribute('aria-pressed') === 'true', sw3 && sw3.getAttribute('aria-pressed'));
+    sw3.click();
+    ok('klik kedua mematikan jalur', window.isTransjakartaJalurActive() === false, window.isTransjakartaJalurActive());
+  }
+
+  /* Setelah semua dimatikan, sheet harus merender ulang lagi supaya
+     status tombolnya tidak berbohong. */
+  TJ.renderSheet();
+  ok('jumlah koridor terisi = 1 (hanya koridor 1 punya data)', /<b>1<\/b>/.test(body.innerHTML), body.innerHTML.slice(0, 400));
+  ok('jumlah halte tampil', body.innerHTML.indexOf('231') > -1);
+  ok('header tabel ada', !!body.querySelector('thead th'));
+  ok('baris punya data-koridor', body.querySelector('.tj-row').dataset.koridor === '1', body.querySelector('.tj-row').dataset.koridor);
+
+  /* getComputedStyle/.style membalas warna dalam bentuk rgb(), bukan hex
+     yang ditulis di style. Jadi perbandingan harus lewat normalisasi,
+     kalau tidak test ini gagal walau warnanya benar. */
+  function samaWarna(a, b) {
+    function keRgb(hex) {
+      var t = document.createElement('span');
+      t.style.color = hex;
+      document.body.appendChild(t);
+      var v = getComputedStyle(t).color;
+      t.remove();
+      return v;
+    }
+    return keRgb(a) === keRgb(b);
+  }
+
+  var chip = body.querySelector('.tj-chip');
+  ok('chip warna memakai warna koridor', chip && samaWarna(chip.style.background, TJ.warnaKoridor('1')), chip && chip.style.background + ' vs ' + TJ.warnaKoridor('1'));
+  ok('nilai panjang dalam km', body.innerHTML.indexOf('27') > -1 || body.innerHTML.indexOf('26,9') > -1, body.innerHTML.slice(body.innerHTML.indexOf('tj-td-km'), body.innerHTML.indexOf('tj-td-km') + 160));
+
+  /* Pemisah ruas pernah tampil sebagai teks literal "&middot;" karena
+     baris itu dirangkai dengan entitas HTML lalu di-escape. */
+  say('== pemisah ruas ==');
+  var selBaris = body.querySelector('.tj-td-nama small');
+  say('  isi ruas: ' + selBaris.textContent);
+  ok('entitas &middot; tidak tampil mentah', selBaris.textContent.indexOf('&middot;') < 0, selBaris.textContent);
+  ok('innerHTML tidak punya &middot;', body.innerHTML.indexOf('&middot;') < 0);
+  ok('pemisah benar-benar titik tengah', selBaris.textContent.indexOf('·') > -1, selBaris.textContent);
+  ok('dua ruas terpisah titik tengah', selBaris.textContent.split('·').length === 2, selBaris.textContent);
+  ok('sumber data disebut', body.innerHTML.indexOf('JakartaSatu') > -1);
+  ok('baris bisa fokus keyboard', body.querySelector('.tj-row').tabIndex === 0, body.querySelector('.tj-row').tabIndex);
+
+  say('== tampilan sheet ==');
+  body.parentElement.classList.add('sheet-open');
+  var cs = getComputedStyle(body.parentElement);
+  say('  posisi sheet: ' + cs.position);
+  say('  z-index sheet: ' + cs.zIndex);
+  say('  lebar sheet: ' + cs.width);
+
+  /* Di bawah 768px sheet harus jadi bottom sheet: full width, menempel
+     ke bawah, dan slide dari bawah. Ini inti permintaan "sheet khusus
+     yang muncul dari bawah pada mode mobile". */
+  var mobile = window.matchMedia('(max-width: 768px)').matches;
+  if (mobile) {
+    ok('mobile: sheet fixed', cs.position === 'fixed', cs.position);
+    ok('mobile: menempel kiri dan kanan penuh', cs.left === '0px' && cs.right === '0px', cs.left + '/' + cs.right);
+    ok('mobile: menempel bawah', cs.bottom === '0px', cs.bottom);
+    say('  tinggi sheet: ' + cs.height);
+    var th = body.querySelector('.tj-table thead th');
+    ok('mobile: header tabel sticky', getComputedStyle(th).position === 'sticky', getComputedStyle(th).position);
+  } else {
+    say('  (bukan viewport mobile, aturan mobile tidak diukur)');
+  }
+
+  var chipStyle = getComputedStyle(chip);
+  ok('chip punya ukuran visibly', parseFloat(chipStyle.width) >= 8, chipStyle.width);
+  ok('baris punya cursor pointer', getComputedStyle(body.querySelector('.tj-row')).cursor === 'pointer');
+
+  say('== popup ==');
+  var pj = TJ.popupJalur({ KORIDOR: '3', JURUSAN: 'KALIDERES - PASAR BARU', 'SHAPE.LEN': 15176.3 });
+  ok('popup jalur menyebut nama koridor', pj.indexOf('Koridor 3') > -1);
+  ok('popup jalur menyebut ruas', pj.indexOf('KALIDERES') > -1);
+  ok('popup jalur punya panjang km', /15,2 km/.test(pj), pj.slice(pj.indexOf('Panjang'), pj.indexOf('Panjang') + 120));
+  ok('popup jalur menyebut sumber', pj.indexOf('JakartaSatu') > -1);
+
+  var ph = TJ.popupHalte({ NAMA: 'Halte Uji', JENIS: 'D shelter', KORIDOR: '5', KECAMATAN: 'Menteng', KELURAHAN: 'Cikini', ALAMAT: 'Jl. Uji' });
+  ok('popup halte menyebut nama', ph.indexOf('Halte Uji') > -1);
+  ok('popup halte menyebut koridor', ph.indexOf('Koridor 5') > -1);
+  ok('popup halte menyebut wilayah', ph.indexOf('Cikini') > -1);
+  ok('popup halte punya sumber', ph.indexOf('JakartaSatu') > -1);
+
+  say('== header popup: harus elemen sungguhan ==');
+  /* Bug yang sebenarnya: gayaHeader() mengembalikan fragmen
+     ' class="..." style="..."' tanpa <div pembuka maupun > penutup.
+     Header tidak pernah menjadi elemen -- atributnya tercetak sebagai
+     teks di dalam .agol-popup, dan badge/judul menempel ke container
+     tanpa latar. Di layar itu tampil sebagai kotak aneh berisi barisan
+     atribut HTML. Test lama hanya memeriksa string, jadi lolos. */
+
+  /* Popup dipasang ke dokumen, bukan hanya dibuat di memori.
+     getComputedStyle dan getBoundingClientRect mengembalikan nilai
+     kosong pada elemen yang lepas dari DOM, jadi popup yang tidak
+     dipasang akan selalu lolos pemeriksaan tata letak. */
+  var wadah = document.createElement('div');
+  wadah.style.position = 'absolute';
+  wadah.style.left = '0';
+  wadah.style.top = '0';
+  wadah.style.zIndex = '9999';
+  document.body.appendChild(wadah);
+  wadah.innerHTML = pj;
+  var popup = wadah.firstElementChild;
+  ok('popup menjadi elemen', !!popup && popup.className === 'agol-popup', popup && popup.className);
+  var header = popup && popup.querySelector('.agol-popup-header');
+  ok('headerpopup ADALAH elemen', !!header, header && header.tagName);
+  ok('header langsung anak .agol-popup', header && header.parentElement === popup, header && header.parentElement && header.parentElement.className);
+  ok('header punya background', header && /linear-gradient/.test(getComputedStyle(header).backgroundImage), header && getComputedStyle(header).backgroundImage);
+  ok('header punya tinggi', header && header.getBoundingClientRect().height > 20, header && header.getBoundingClientRect().height);
+
+  /* Tidak boleh ada teks atribut yang bocor ke layar. */
+  var teksPopup = popup.textContent;
+  ok('tidak ada "class=" yang bocor', teksPopup.indexOf('class=') < 0, JSON.stringify(teksPopup.slice(0, 160)));
+  ok('tidak ada "style=" yang bocor', teksPopup.indexOf('style=') < 0, JSON.stringify(teksPopup.slice(0, 160)));
+  ok('tidak ada "<div" yang bocor', teksPopup.indexOf('<div') < 0);
+  ok('tidak ada badge teks yang bertumpuk', popup.querySelectorAll('.agol-popup-badge').length === 0, popup.querySelectorAll('.agol-popup-badge').length);
+
+  say('== isi header ==');
+  /* Permintaan: header hanya nama koridor. */
+  var judul = header.querySelector('.agol-popup-title');
+  ok('ada judul di header', !!judul);
+  say('  judul: ' + (judul ? judul.textContent.trim() : '-'));
+  ok('judul persis nama koridor', judul && judul.textContent.trim() === 'Koridor 3', judul && judul.textContent.trim());
+  ok('judul tidak memuat badge "Jalur TransJakarta"', judul && judul.textContent.indexOf('Jalur TransJakarta') < 0);
+  ok('judul tidak punya subtitle', !header.querySelector('.agol-popup-subtitle'), header.querySelector('.agol-popup-subtitle'));
+  ok('judul punya titik warna', !!header.querySelector('.agol-popup-badge-dot'));
+  var dot = header.querySelector('.agol-popup-badge-dot');
+  ok('titik warna di dalam judul tidak menyingkirkan teks',
+    dot && dot.getBoundingClientRect().width >= 6 && judul.getBoundingClientRect().width > dot.getBoundingClientRect().width * 3,
+    dot && dot.getBoundingClientRect().width + ' vs judul ' + judul.getBoundingClientRect().width);
+
+  /* Badan popup punya informasi yang tidak ada di header. */
+  ok('popup jalan punya dua baris data', popup.querySelectorAll('.agol-popup-field').length === 2, popup.querySelectorAll('.agol-popup-field').length);
+  ok('popup jalan menyebut ruas', popup.textContent.indexOf('KALIDERES') > -1);
+  ok('popup jalan menyebut panjang', /15,2 km/.test(popup.textContent), popup.textContent.slice(0, 200));
+  ok('popup jalan menyebut sumber', popup.textContent.indexOf('JakartaSatu') > -1);
+
+  /* Popup halte: header harus nama halte, bukan "Halte TransJakarta". */
+  var wadahH = document.createElement('div');
+  wadahH.style.position = 'absolute';
+  wadahH.style.left = '0';
+  wadahH.style.top = '0';
+  wadahH.style.zIndex = '9999';
+  document.body.appendChild(wadahH);
+  wadahH.innerHTML = ph;
+  var popupH = wadahH.firstElementChild;
+  var headerH = popupH.querySelector('.agol-popup-header');
+  ok('header halte juga elemen sungguhan', !!headerH && headerH.parentElement === popupH);
+  ok('header halte punya background', /linear-gradient/.test(getComputedStyle(headerH).backgroundImage));
+  var judulH = headerH.querySelector('.agol-popup-title');
+  ok('judul halte persis nama halte', judulH && judulH.textContent.trim() === 'Halte Uji', judulH && judulH.textContent.trim());
+  ok('judul halte tidak memuat "Halte TransJakarta"', judulH && judulH.textContent.indexOf('Halte TransJakarta') < 0);
+  ok('popup halte punya jenis di badan', popupH.textContent.indexOf('D shelter') > -1);
+  ok('popup halte punya wilayah di badan', popupH.textContent.indexOf('Cikini') > -1);
+  ok('popup halte menyebut koridor di badan', popupH.textContent.indexOf('Koridor 5') > -1);
+
+  /* Gaya header tetap turunan warna koridor, bukan warna tetap. */
+  var gayaA = TJ.headerPopup(TJ.warnaKoridor('3'), 'x');
+  var gayaB = TJ.headerPopup(TJ.warnaKoridor('9'), 'x');
+  ok('gaya header berbeda antar koridor', gayaA !== gayaB);
+  ok('gaya header memuat dua warna', (gayaA.match(/#[0-9a-f]{6}/gi) || []).length === 2, gayaA);
+
+  /* Bereskan elemen ukur supaya tidak menutupi sheet yang di bawah. */
+  [wadah, wadahH].forEach(function (w) { w.remove(); });
+
+  say('== kontras header ==');
+  function keRgb2(v) {
+    var t = document.createElement('span');
+    t.style.color = v;
+    document.body.appendChild(t);
+    var r = getComputedStyle(t).color;
+    t.remove();
+    return r;
+  }
+  function luminansi(rgb) {
+    var m = rgb.match(/\d+/g).map(Number);
+    return (0.299 * m[0] + 0.587 * m[1] + 0.114 * m[2]) / 255;
+  }
+  /* Nama variabel harus pakai spasi setelah var. Tanpa itu,
+     "var_gagal" diparse browser sebagai SATU identifier -- bukan
+     deklarasi var -- dan hasilnya ReferenceError. */
+  var kurangGelap = [];
+  TJ.KODE_URUT.forEach(function (k) {
+    var l = luminansi(keRgb2(TJ.gelapkan(TJ.warnaKoridor(k), 0.62)));
+    /* Teks putih (luminance 1.0) di atas latar gelap: butuh selisih
+       yang cukup supaya judul koridor tetap terbaca. */
+    if (1.0 - l < 0.45) kurangGelap.push(k + ' (' + l.toFixed(2) + ')');
+  });
+  ok('semua header cukup gelap untuk teks putih', kurangGelap.length === 0, kurangGelap.join(' '));
+  var minL = 1;
+  TJ.KODE_URUT.forEach(function (k) {
+    var l = luminansi(keRgb2(TJ.gelapkan(TJ.warnaKoridor(k), 0.62)));
+    if (l < minL) minL = l;
+  });
+  say('  luminance header paling terang: ' + minL.toFixed(3));
+  ok('header paling terang tetap gelap', 1.0 - minL >= 0.45, minL.toFixed(3));
+
+say('== escaping ==');
+  var xss = TJ.popupJalur({ KORIDOR: '<img src=x onerror=alert(1)>', JURUSAN: '"><script>bad()<\/script>', 'SHAPE.LEN': 1 });
+  ok('nama koridor di-escape', xss.indexOf('<script>') < 0 && xss.indexOf('<img') < 0, xss.slice(0, 200));
+
+  say('');
+  say((gagal === 0 ? 'SEMUA LULUS' : 'ADA KEGAGALAN') + ': ' + lulus + ' lulus, ' + gagal + ' gagal');
+
+  document.getElementById('out').textContent = lines.join('\n');
+})();
+
+});
+</script>
+
+</body>
+</html>
