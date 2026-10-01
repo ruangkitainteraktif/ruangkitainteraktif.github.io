@@ -485,7 +485,7 @@ var layerGambar = null;
         var pesan = (j.error && j.error.message) || '';
         if (!pesan && (j.error.code === 400 || j.error.code === 404)) {
           pesan = 'ArcGIS menolak query (kode ' + j.error.code + ' tanpa pesan). '
-            + 'Penyebab yang mungkin: layer sedang dibebani, atau geometri area di luar cakupan layer.';
+            + 'Penyebab yang mungkin: layanan sedang dibebani, atau area di luar cakupan.';
         }
         var e = new Error(pesan);
         e.arcgis = j.error.code;
@@ -1859,17 +1859,21 @@ var layerGambar = null;
     else sel.value = '';
   }
 
-  /* Pesan untuk PENGGUNA, bukan untuk pengembang. Dua aturan yang dipegang di
+  /* Pesan untuk PENGGUNA, bukan untuk pengembang. Tiga aturan yang dipegang di
      sini:
        1. Tidak ada istilah teknis. Tidak ada "snapshot", "repo", "berkas JSON",
-          atau perintah terminal di bagian yang dibaca orang awam.
+          nama folder, atau perintah terminal di bagian yang dibaca orang awam.
        2. Selalu sebut apa yang TIDAK bisa dilakukan, lalu apa yang harus
           dilakukan. "Data belum ada" tanpa penjelasan akan disalahartikan
           sebagai "wilayah ini tidak boleh dibangun".
+       3. Jangan sebut asal data di level berkas. Kata "penyimpanan data" atau
+          "sumber data RuangKita" sudah cukup, sedangkan nama folder atau
+          nama berkas hanya menyesatkan orang awam.
 
-     Detail teknis tetap ada, tapi di baris paling bawah dan diberi label,
-     supaya tidak menutupi pesan utamanya. */
-  function pesanBelumDiBuild(rel) {
+     Parameternya tetap diterima supaya pemanggil tidak perlu berubah, tapi
+     sengaja tidak dicetak. Rinciannya pindah ke konsol browser, yang dibaca
+     pengelola, bukan pengunjung. */
+  function pesanBelumDiBuild(/* namaBerkas */) {
     return '<div class="geooss-warn">'
       + '<b>Data kegiatan untuk wilayah ini belum tersedia di RuangKita.</b><br>'
       + 'Wilayah ini sudah punya peta zona, tetapi daftar kegiatan yang diizinkan di '
@@ -1879,8 +1883,6 @@ var layerGambar = null;
       + 'wilayah ini tidak punya rencana tata ruang. Hanya berarti RuangKita belum punya '
       + 'daftar kegiatannya. Silakan laporkan wilayah ini ke pengelola RuangKita agar '
       + 'datanya ditambahkan.'
-      + (rel ? '<br><br><span class="geooss-detail">Detail teknis: berkas '
-        + esc(rel) + ' belum ada di repositori.</span>' : '')
       + '</div>';
   }
 
@@ -1890,14 +1892,19 @@ var layerGambar = null;
        melaporkannya sebagai "masalah ATR/BPN" akan mengarahkan orang
       komplain ke pihak yang salah. */
     if (err && err.kode === 'belum-di-build') {
+      /* err.rel sengaja tidak ditampilkan. Pesannya sudah menjelaskan
+         situasinya dalam bahasa pengguna; nama berkas hanya berguna kalau
+         ada yang membaca konsol browser, dan itu tugasan pengelola. */
+      if (err.rel && window.console && console.warn) {
+        console.warn('[GeoOSS] data kegiatan belum tersedia untuk: ' + err.rel);
+      }
       return pesanBelumDiBuild(err.rel || '');
     }
     if (err && err.kode === 'dibuka-sebagai-berkas') {
-      return '<div class="geooss-warn"><b>Halaman ini sedang dibuka langsung dari berkas komputer.</b><br>'
-        + 'Browser tidak mengizinkan pembacaan berkas lokal seperti itu, jadi GeoOSS tidak '
-        + 'bisa memuat data wilayah.<br>'
-        + 'Pengelola situs: jalankan lewat server lokal, misalnya <code>npx serve .</code>, '
-        + 'lalu buka <code>http://localhost:3000</code>. Ini bukan masalah ATR/BPN.</div>';
+      return '<div class="geooss-warn"><b>Data wilayah tidak bisa dimuat dari halaman ini.</b><br>'
+        + 'GeoOSS hanya bisa membaca datanya kalau halaman dibuka lewat alamat web, '
+        + 'bukan dari berkas di komputer. Coba buka RuangKita lewat browser seperti '
+        + 'biasanya. Ini bukan masalah ATR/BPN.</div>';
     }
     if (err && err.sumber === 'lokal') {
       var ket = err.jaringan
@@ -1939,7 +1946,14 @@ var layerGambar = null;
       return '<div class="geooss-warn"><b>Permintaan terlalu lama dijawab.</b><br>'
         + 'Server ATR/BPN sedang lambat. Silakan coba lagi sebentar.</div>';
     }
-    return '<div class="geooss-warn">Gagal memuat data (' + esc(m) + ').</div>';
+    /* err.message sengaja tidak ikut dicetak. Pesan internal modul ini bisa
+      memuat nama berkas dan alamat layanan, dan itu tidak berguna untuk
+      pengunjung. Rinciannya tetap ada di konsol browser untuk pengelola. */
+    if (window.console && console.warn) console.warn('[GeoOSS] gagal memuat:', m, err);
+    return '<div class="geooss-warn"><b>Data belum berhasil dimuat.</b><br>'
+      + 'Terjadi kesalahan yang tidak dikenali. Coba muat ulang halaman. '
+      + 'Jika tetap gagal, buka konsol browser (F12) dan kirimkan pesan berlabel '
+      + '[GeoOSS] kepada pengelola situs.</div>';
   }
 
   /* ── pencarian kegiatan ───────────────────────────────────────────────
@@ -2424,10 +2438,9 @@ var layerGambar = null;
         if (el.kab) el.kab.innerHTML = '<option value="">-</option>';
         if (el.status) el.status.textContent = 'Daftar kabupaten/kota tidak tersedia.';
         if (el.output) {
-          el.output.innerHTML = '<div class="geooss-warn">Daftar kabupaten/kota dibaca dari '
-            + '<code>KODE_WILAYAH_DATA</code> yang dimuat oleh <code>assets/data/kode_wilayah.js</code>. '
-            + 'Berkas itu tidak termuat, jadi GeoOSS tidak bisa menampilkan daftar wilayah. '
-            + 'Muat ulang halaman; jika tetap kosong, periksa tag script-nya di index.html.</div>';
+          el.output.innerHTML = '<div class="geooss-warn">Daftar wilayah tidak bisa dimuat, '
+            + 'jadi GeoOSS belum bisa menampilkan pilihan kabupaten/kota. '
+            + 'Muat ulang halaman; jika tetap kosong, laporkan ke pengelola RuangKita.</div>';
         }
       });
     });
@@ -2602,6 +2615,14 @@ var layerGambar = null;
             var skema = await skemaLayer(rdtr);
             var adaKolom = skema.fields.indexOf(rdtr.kolom_unik) !== -1;
             if (!adaKolom) {
+              /* Nama kolom dan daftar field tidak lagi ditampilkan ke pengguna:
+                 itu level teknis yang tidak bisa ditindaklanjuti. Rinciannya
+                 tetap masuk konsol browser untuk pengelola. */
+              if (window.console && console.warn) {
+                console.warn('[GeoOSS] kolom "' + rdtr.kolom_unik
+                  + '" tidak ada di schema layer. Tersedia: '
+                  + skema.fields.join(', '));
+              }
               if (el.output) {
                 el.output.innerHTML = '<div class="geooss-warn">'
                   + '<b>Peta zona wilayah ini tidak bisa dibaca.</b><br>'
@@ -2609,11 +2630,7 @@ var layerGambar = null;
                   + 'yang dibutuhkan GeoOSS, sehingga zona di dalamnya tidak bisa dicocokkan '
                   + 'dengan daftar kegiatan. Ini kekurangan data di sisi ATR/BPN, bukan '
                   + 'kesalahan pilihan Anda, dan tidak bisa diperbaiki dari sini.<br>'
-                  + 'Silakan cek langsung ke petugas tata ruang daerah terkait.'
-                  + '<br><br><span class="geooss-detail">Detail teknis: kolom yang diharapkan '
-                  + '<code>' + esc(rdtr.kolom_unik) + '</code> tidak ada di schema layer. '
-                  + 'Kolom yang tersedia: <code>' + esc(skema.fields.join(', ')) + '</code>.'
-                  + '</span></div>';
+                  + 'Silakan cek langsung ke petugas tata ruang daerah terkait.</div>';
               }
               if (el.status) el.status.textContent = 'Data zona wilayah ini belum lengkap di ATR/BPN.';
               return;

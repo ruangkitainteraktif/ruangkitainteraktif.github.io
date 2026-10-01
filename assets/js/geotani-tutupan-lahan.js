@@ -751,7 +751,11 @@
 
   /* ── kredit ──
      Ketentuan penggunaan data KLHK mewajibkan menyebut lembaga pemberi
-     data dan tautan ke sumber aslinya, sama seperti BIG dan ATR/BPN. */
+     data dan tautan ke sumber aslinya, sama seperti BIG dan ATR/BPN.
+
+     Tautannya ditulis sebagai teks biasa, bukan sebagai <a> dengan label
+     "Tautan langsung": URL yang tampil utuh bisa langsung disalin, dan
+     itu yang diminta oleh ketentuan kutipan. */
   var credit = {
     lembaga: 'Kementerian Lingkungan Hidup dan Kehutanan (KLHK), melalui BNPB',
     judul: 'Peta Tutupan Lahan 2020 dan 2024, layanan PL_KLHK_2020 dan PL_KLHK_2024',
@@ -767,7 +771,7 @@
     return '<div class="geotani-lbslsd-credit">' +
       '<b>Sumber data:</b> ' + escapeHtml(credit.judul) + ' &mdash; ' + escapeHtml(credit.lembaga) + '. ' +
       'Diakses pada ' + creditTanggalAkses() + '. ' +
-      '<a href="' + escapeHtml(credit.tautan) + '" target="_blank" rel="noopener noreferrer">Tautan langsung</a>' +
+      escapeHtml(credit.tautan) +
       '</div>';
   }
 

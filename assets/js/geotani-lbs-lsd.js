@@ -376,7 +376,11 @@ var generasi = 0;
 
   /* ── kredit ──
      Ketentuan BIG mewajibkan menyebut Badan Informasi Geospasial pada setiap
-     laporan yang memakai datanya, beserta tautan ke sumber aslinya. */
+     laporan yang memakai datanya, beserta tautan ke sumber aslinya.
+
+     Tautannya ditulis sebagai teks biasa, bukan sebagai <a> dengan label
+     "Tautan langsung". URL yang tampil utuh bisa langsung disalin, dan itu
+     yang diminta oleh ketentuan kutipan; label tombol tidak. */
   var credit = {
     lembaga: 'Badan Informasi Geospasial',
     judul: 'Peta Lahan Baku Sawah Nasional dan Peta Lahan Sawah yang Dilindungi (skala minimal 1:50.000)',
@@ -394,7 +398,7 @@ var generasi = 0;
     return '<div class="geotani-lbslsd-credit">' +
       '<b>Sumber data:</b> ' + escapeHtml(credit.judul) + ' &mdash; ' + escapeHtml(credit.lembaga) + '. ' +
       'Diakses pada ' + creditTanggalAkses() + '. ' +
-      '<a href="' + credit.tautan + '" target="_blank" rel="noopener noreferrer">Tautan langsung</a>' +
+      escapeHtml(credit.tautan) +
       '</div>';
   }
 

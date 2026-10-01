@@ -375,7 +375,11 @@ var generasi = 0;
 
   /* ── kutipan BPS ──
      Ketentuan Penggunaan BPS (pasal 13.2) mewajibkan kutipan yang memuat judul
-     konten, tanggal akses, penulis, dan tautan langsung ke konten asli. */
+     konten, tanggal akses, penulis, dan tautan langsung ke konten asli.
+
+     Tautannya ditulis sebagai teks biasa, bukan sebagai <a> dengan label
+     "Tautan langsung". URL yang tampil utuh bisa langsung disalin, dan itu
+     yang diminta pasal itu; label tombol tidak. */
   function creditTanggalAkses() {
     var now = new Date();
     return now.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -393,7 +397,7 @@ var generasi = 0;
     return '<div class="geotani-sls-credit">' +
       '<b>Sumber data:</b> ' + credit.judul + ' &mdash; ' + credit.penulis + '. ' +
       'Diakses pada ' + creditTanggalAkses() + '. ' +
-      '<a href="' + credit.tautan + '" target="_blank" rel="noopener noreferrer">Tautan langsung</a>' +
+      credit.tautan +
       '</div>';
   }
 

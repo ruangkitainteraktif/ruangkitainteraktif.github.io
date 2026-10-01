@@ -616,6 +616,30 @@ window.GeoTaniLbsLsd = {
       /^https:\/\/gis\.bnpb\.go\.id/.test(M.credit.tautan), M.credit.tautan);
     ok('creditText memuat tanggal akses', /Diakses pada/.test(M.creditText()));
     ok('creditHtml memakai label Sumber data', /Sumber data:/.test(M.creditHtml()));
+    /* Tautan ditulis sebagai teks biasa, bukan <a> dengan label
+       "Tautan langsung". Label seperti itu membuat pembaca harus mencari
+       tahu di mana tautannya, sedangkan URL yang tampil utuh bisa disalin
+       -- dan ketentuan kutipan justru menuntut tautan yang bisa dipakai. */
+    ok('kredit HTML tidak lagi memakai label "Tautan langsung"',
+      M.creditHtml().indexOf('Tautan langsung') < 0);
+    ok('kredit HTML tidak lagi membungkus tautan dalam <a>',
+      !/<a\s/i.test(M.creditHtml()), M.creditHtml().slice(0, 120));
+    ok('URL tetap tampil utuh di kredit HTML (bukan disembunyikan)',
+      M.creditHtml().indexOf('gis.bnpb.go.id') > 0);
+    /* URL panjang tanpa pemenggalan akan meluber keluar kartu, jadi
+       pemenggalan kata itu wajib. */
+    ok('kredit punya pemenggalan kata untuk URL panjang', (function () {
+      var probe = document.createElement('div');
+      probe.className = 'geotani-lbslsd-credit';
+      probe.style.cssText = 'width:120px';
+      probe.textContent = 'https://gis.bnpb.go.id/server/rest/services/thematic/PL_KLHK_2024/MapServer';
+      document.body.appendChild(probe);
+      var ada = getComputedStyle(probe).overflowWrap === 'anywhere' ||
+        getComputedStyle(probe).wordBreak === 'break-word' ||
+        getComputedStyle(probe).overflowWrap === 'break-word';
+      document.body.removeChild(probe);
+      return ada;
+    })(), 'URL BNPB lebih panjang dari lebar panel');
 
     say('');
     say('18. Query nyata ke BNPB');

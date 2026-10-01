@@ -1408,16 +1408,17 @@
                  sendiri, dan menjumlahkan angka antar kartu tidak pernah
                  bermakna. Berdampingan di bagian teratas GeoTani supaya
                  workflow desa -- pilih desa, lihat apa yang ada di dalamnya --
-                 terbaca lebih dulu sebelum pemetaan umum di bawahnya.
-                 Terlipat lewat markup saja, tanpa collapse() seperti
-                 kartu LSD 12 Provinsi: kartu ini tidak dipaksa menutup
-                 diri, jadi tidak butuh penjaga toggle. -->
-            <!-- WAJIB tanpa atribut `open`. Bukan cuma gaya: init(),
-                 selesai memuat, Reset Polygon, dan pindah tab GeoTani
-                 semuanya menutup kartu ini lagi, dan penjaga di
-                 geotani-lsd12prov.js membatalkan open dari kode mana
-                 pun. Kartu ini hanya boleh terbuka karena pengguna yang
-                 menekan judulnya. -->
+                 terbaca lebih dulu sebelum pemetaan umum di bawahnya. -->
+
+            <!-- WAJIB tanpa atribut `open`: itu membuat kartu ini MULAI
+                 terlipat, dan tidak lebih dari itu. Tidak ada kode yang
+                 menutupnya lagi setelah itu -- bukan setelah selesai memuat,
+                 bukan di Reset Polygon, bukan saat pindah tab GeoTani. Tombol
+                 "Tampilkan" ada di dalam kartu, jadi menutupnya begitu selesai
+                 memuat akan menyembunyikan hasilnya tepat di tempat pengguna
+                 memintanya, dan memaksanya menekan judul lagi hanya untuk
+                 membaca angka yang sudah selesai dihitung. Status terbuka atau
+                 tertutupnya kartu sepenuhnya milik pengguna. -->
             <details class="geotani-lbslsd" id="geotani-lsd12-card" aria-labelledby="geotani-lsd12-title">
               <summary class="gt-card-head">
                 <span class="gt-card-icon" aria-hidden="true">&#127807;</span>
@@ -1997,10 +1998,11 @@
                   <div id="geotani-kkpr-nama-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
                   <div id="geotani-kkpr-nama-output"></div>
                   <div class="geotani-sls-desc" style="margin-top:8px;font-size:10px;opacity:.75;">
-                    Mode ini membaca service <b>kkpr_spr_all</b> (18.603 bidang), satu-satunya layer
-                    di folder KKPR yang punya nama pemohon. Layer ini tidak punya field NIB, jadi kolom
-                    NIB diambil dari <b>KKPR_OSS_ALL</b> lewat IDPLOK &mdash; dan itu hanya cocok pada
-                    sebagian baris, bukan semuanya.
+                    Mode ini mencari nama usaha pada data luas-area yang dipublikasikan
+                    ATR/BPN, satu-satunya sumber di sini yang mencantumkan nama pemohon.
+                    Data itu tidak memuat NIB secara langsung, jadi kolom NIB diambil dari
+                    data izin ATR/BPN &mdash; dan pencocokannya hanya berhasil pada sebagian
+                    baris, bukan semuanya.
                   </div>
                 </div>
               </div>

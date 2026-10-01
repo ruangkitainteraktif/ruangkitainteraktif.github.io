@@ -7897,19 +7897,23 @@
 .geotani-sls-name { flex: 1 1 auto; min-width: 0; color: var(--text-primary); }
 .geotani-sls-luas { flex: 0 0 auto; color: var(--accent-green); font-weight: 600; }
 /* Kredit BPS: pasal 13.2 Ketentuan Penggunaan mewajibkan kutipan yang memuat
-   judul konten, tanggal akses, penulis, dan tautan langsung. Teksnya sengaja
-   kecil tapi tidak disembunyikan. */
+   judul konten, tanggal akses, penulis, dan tautan ke konten asli. Teksnya
+   sengaja kecil tapi tidak disembunyikan.
+
+   Tautannya ditulis sebagai teks biasa, jadi dibutuhkan pemenggalan kata:
+   URL-nya panjang (gistaru.atrbpn.go.id/arcgis/rest/services/LSD/LSD_DAL/
+   MapServer sudah 60+ karakter) sementara panel GeoTools hanya sekitar
+   300 px. Tanpa itu URL meluber keluar dari kartu. */
 .geotani-sls-credit {
   margin-top: 7px; padding-top: 6px;
   border-top: 1px dashed var(--border-color);
   font-size: 9px; line-height: 1.5; color: var(--text-muted);
+  overflow-wrap: anywhere; word-break: break-word;
 }
-.geotani-sls-credit a { color: var(--accent-green); }
 [data-theme="dark"] .geotani-sls-warn {
   border-color: #a16207; background: #451a03; color: #fcd34d;
 }
 [data-theme="dark"] .geotani-sls-picked { color: #86efac; background: #052e16; }
-[data-theme="dark"] .geotani-sls-credit a { color: #4ade80; }
 .geotani-sls-popup-title {
   font-size: 12px; font-weight: 700; color: #166534;
   padding-bottom: 5px; margin-bottom: 5px; border-bottom: 1px solid #dcfce7;
@@ -8547,18 +8551,23 @@ details[open] > .gt-card-head::after {
    untuk pembaca layar. */
 .geotani-kkpr-panel[hidden] { display: none; }
 
-/* Kredit BIG: ketentuan BIG mewajibkan menyebut Badan Informasi Geospasial
-   pada setiap laporan yang memakai datanya. */
+/* Kredit BIG, ATR/BPN, dan KLHK: ketentuan masing-masing mewajibkan menyebut
+   lembaga pemberi data dan tautan ke sumber aslinya.
+
+   Tautannya teks biasa, bukan <a>, jadi butuh pemenggalan kata: URL KLHK
+   (gis.bnpb.go.id/server/rest/services/thematic/PL_KLHK_2024/MapServer) dan
+   URL GISTARU sama-sama panjang, sementara panel GeoTools hanya sekitar
+   300 px. overflow-wrap mencegah URL meluber tanpa merusaknya sebagai teks
+   yang masih bisa disalin utuh. */
 .geotani-lbslsd-credit {
   margin-top: 8px; padding-top: 6px;
   border-top: 1px dashed var(--border-color);
   font-size: 9px; line-height: 1.5; color: var(--text-muted);
+  overflow-wrap: anywhere; word-break: break-word;
 }
-.geotani-lbslsd-credit a { color: var(--accent-green); }
 [data-theme="dark"] .geotani-lbslsd-warn {
   border-color: #a16207; background: #451a03; color: #fcd34d;
 }
-[data-theme="dark"] .geotani-lbslsd-credit a { color: #4ade80; }
 
 /* Kartu "LSD 12 Provinsi" memakai kelas yang sama persis dengan kartu
    LBS & LSD di atas. Keduanya harus terlihat sama, dan menyalin aturan

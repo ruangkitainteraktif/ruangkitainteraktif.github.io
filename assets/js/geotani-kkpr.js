@@ -1057,10 +1057,10 @@
     if (g.investasi != null) tambah('Investasi', formatRupiah(g.investasi));
     if (g.pnbp != null) tambah('PNBP', formatRupiah(g.pnbp));
     /* NIB hanya muncul kalau join ke OSS_ALL kena. */
-    tambah('NIB (dari KKPR_OSS_ALL)', g.nib);
+    tambah('NIB (dari data izin ATR/BPN)', g.nib);
     return '<div class="geotani-sls-popup">' +
       '<div class="geotani-sls-popup-title">' + esc(g.nama) + '</div>' +
-      '<div class="geotani-sls-popup-row"><span>Sumber</span><b>ATR/BPN kkpr_spr_all</b></div>' +
+      '<div class="geotani-sls-popup-row"><span>Sumber</span><b>ATR/BPN</b></div>' +
       baris +
       (g.ganjil && g.geometry
         ? '<div class="geotani-sls-popup-row"><span>Catatan</span><b>geometri tidak wajar (terlalu besar untuk satu bidang)</b></div>'
@@ -1095,7 +1095,7 @@
     }
 
     html += '<div class="geotani-sls-desc">';
-    html += 'ATR/BPN <b>kkpr_spr_all</b> menemukan <b>' + nomor(g.length) + ' bidang</b>';
+    html += 'Data ATR/BPN menemukan <b>' + nomor(g.length) + ' bidang</b>';
     if (s.nama) html += ' untuk nama mengandung &ldquo;' + esc(s.nama) + '&rdquo;';
     if (s.provinsi) html += ' di <b>' + esc(s.provinsi) + '</b>';
     html += '.</div>';
@@ -1124,9 +1124,9 @@
     if (g.length - tanpaNib > 0) {
       html += '<div class="geotani-sls-desc" style="font-size:10px;opacity:.75;">' +
         nomor(g.length - tanpaNib) + ' dari ' + nomor(g.length) +
-        ' bidang punya NIB yang ditemukan di KKPR_OSS_ALL lewat IDPLOK. ' +
-        'Layer ini tidak punya field NIB, jadi sisanya memang tidak bisa dicocokkan &mdash; ' +
-        'bukan berarti NIB-nya tidak ada.</div>';
+        ' bidang punya NIB yang berhasil dicocokkan ke data izin ATR/BPN. ' +
+        'Data luas-area ini tidak memuat NIB secara langsung, jadi sisanya memang '
+        + 'tidak bisa dicocokkan &mdash; bukan berarti NIB-nya tidak ada.</div>';
     }
 
     html += '<div class="geotani-sls-desc" style="margin-top:8px;">Total luas terbaca: <b>' +
@@ -1159,19 +1159,18 @@
         ? esc(gr.nib)
         : (gr.nibTidakDicek
           ? '<span class="geotani-kkpr-kosong" title="di luar 12 baris pertama yang dicek NIB-nya">tidak dicek</span>'
-          : '<span class="geotani-kkpr-kosong" title="IDPLOK tidak ditemukan di KKPR_OSS_ALL">tidak ketemu</span>')) + '</td>';
+          : '<span class="geotani-kkpr-kosong" title="nomor ini tidak ditemukan di data izin ATR/BPN">tidak ketemu</span>')) + '</td>';
       html += '</tr>';
     }
     html += '</tbody></table></div>';
 
     html += '<div class="geotani-sls-desc" style="margin-top:10px;font-size:10px;opacity:.75;">' +
-      'ATR/BPN GISTARU, service kkpr_spr_all. Nama pemohon dan nomen KBLI dibaca ' +
-      'apa adanya dari server ATR/BPN &mdash; bukan terjemahan codebook lokal.<br>'
+      'Sumber data: ATR/BPN. Nama pemohon dan nomen KBLI dibaca apa adanya dari ' +
+      'server ATR/BPN &mdash; bukan diterjemahkan oleh RuangKita.<br>'
       + 'Kolom luas sudah dikonversi ke m2: server menulis satuan campuran (843 baris m2, ' +
       '146 baris Ha pada sampel 1.000 baris) dan menuliskannya sebagai teks. Baris yang ' +
       'formatnya tidak terbaca ditampilkan mentah dan tidak ikut dijumlahkan.<br>'
-      + 'Kolom NIB berasal dari KKPR_OSS_ALL yang dicocokkan lewat ' +
-      'IDPLOK = id_proyek_lokasi, dan hanya cocok pada sebagian baris.</div>';
+      + 'Kolom NIB dicocokkan dari data izin ATR/BPN, dan hanya cocok pada sebagian baris.</div>';
     return html;
   }
 
@@ -1258,10 +1257,10 @@
     var catatan = [];
     if (hasil.nHanyaBerusaha) {
       catatan.push(nomor(hasil.nHanyaBerusaha) +
-        ' izin hanya ada di KKPR_BERUSAHA dan belum masuk KKPR_OSS_ALL');
+        ' izin ditemukan pada sumber kedua, tetapi belum tercatat pada sumber utama');
     }
-    if (hasil.gagalOss) catatan.push('layer KKPR_OSS_ALL gagal dimuat, hasil bisa tidak lengkap');
-    if (hasil.gagalBerusaha) catatan.push('layer KKPR_BERUSAHA gagal dimuat, nama usaha mungkin tidak tampil');
+    if (hasil.gagalOss) catatan.push('sebagian data izin gagal dimuat, hasil bisa tidak lengkap');
+    if (hasil.gagalBerusaha) catatan.push('sebagian nama usaha gagal dimuat, ada yang mungkin tidak tampil');
     if (catatan.length) {
       bagian.push('<div class="geotani-kkpr-warn">' + esc(catatan.join('. ') + '.') + '</div>');
     }
@@ -1327,12 +1326,11 @@
       }
       html += '</tbody></table></div></div>';
     }
-    html += '<div class="geotani-sls-desc" style="margin-top:10px;font-size:10px;opacity:.75;">' +
-      'ATR/BPN. NIB dan nomor izin adalah data permohonan yang served langsung ' +
-      'dari server ATR/BPN, bukan hasil interpretasi.<br>'
-      + 'Nama usaha diterjemahkan dari kode KBLI memakai codebook KBLI 2020 ' +
-      '(dataset ronnieaban/kbli2020, Apache-2.0, turunan klasifikasi BPS). ' +
-      'Kode yang tidak ada di codebook ditampilkan apa adanya, tanpa ditebak.</div>';
+html += '<div class="geotani-sls-desc" style="margin-top:10px;font-size:10px;opacity:.75;">' +
+      'Sumber data: ATR/BPN. NIB dan nomor izin adalah data permohonan yang dibaca ' +
+      'apa adanya dari server ATR/BPN, bukan hasil interpretasi RuangKita.<br>'
+      + 'Nama usaha diterjemahkan dari kode KBLI memakai klasifikasi KBLI 2020 ' +
+      'dari BPS. Kode yang tidak ditemukan ditampilkan apa adanya, tanpa ditebak.</div>';
     return html;
   }
 
@@ -1342,15 +1340,17 @@
       return 'Permintaan ke ATR/BPN melewati batas waktu. Server sedang lambat atau tidak terjangkau.';
     }
     if (/HTTP 499/.test(msg) || /Token/i.test(msg)) {
-      return 'ATR/BPN menolak permintaan (Token Required). Semua akses harus lewat tres/proxy.ashx.';
+      return 'ATR/BPN menolak permintaan ini. Data KKPR tidak dapat ditampilkan '
+        + 'sampai layanannya kembali normal.';
     }
     if (/Failed to execute query|Unable to complete/i.test(msg)) {
       return 'ATR/BPN menolak query. NIB mungkin tidak ada, atau layanannya sedang bermasalah.';
     }
     if (/CORS|NetworkError|Failed to fetch|Load failed/i.test(msg)) {
-      return 'Tidak bisa menghubungi ATR/BPN dari browser. Kemungkinan besar CORS: layanan ini '
-        + 'tidak mengirim header yang mengizinkan permintaan lintas origin. Data tidak dapat '
-        + 'ditampilkan sampai itu diperbaiki di sisi ATR/BPN.';
+      return 'Tidak bisa menghubungi ATR/BPN dari browser. Ini biasanya karena koneksi '
+        + 'terputus, atau permintaan diblokir oleh ekstensi browser. Data tidak dapat '
+        + 'ditampilkan sampai itu diperbaiki. Coba muat ulang halaman, atau matikan '
+        + 'ekstensi yang memblokir permintaan ke layanan peta.';
     }
     return 'Gagal memuat data KKPR dari ATR/BPN (' + esc(msg) + ').';
   }
@@ -1419,7 +1419,7 @@
           out.innerHTML = '';
           if (status) {
             status.textContent = 'NIB ' + nib
-              + ' tidak ditemukan di KKPR_OSS_ALL maupun KKPR_BERUSAHA ATR/BPN.';
+              + ' tidak ditemukan di data izin maupun data luas-area ATR/BPN.';
           }
           return;
         }
@@ -1544,7 +1544,7 @@
         if (!hasil.grup.length) {
           out.innerHTML = '';
           if (status) {
-            status.textContent = 'Tidak ada bidang di kkpr_spr_all yang cocok dengan filter itu. '
+            status.textContent = 'Tidak ada bidang di data ATR/BPN yang cocok dengan filter itu. '
               + 'Coba nama yang lebih pendek atau tanpa provinsi.';
           }
           return;

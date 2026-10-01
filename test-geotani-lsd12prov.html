@@ -290,20 +290,55 @@ window.GeoTaniLbsLsd = {
     say('');
     say('11. Kredit');
     ok('credit menyebut lembaga', /ATR\/BPN/.test(M.credit.lembaga), M.credit.lembaga);
-    ok('credit punya tautan resmi', /^https:\/\/gistaru\.atrbpn\.go\.id/.test(M.credit.tautan));
+    /* Nama internal layanan (LSD_12_PROVINSI) sengaja tidak muncul di
+       kredit. Itu nama teknis di ArcGIS, bukan nama yang pengguna baca
+       sebagai sumber data; menampilkan keduanya membuat kalimatnya
+       berulang tanpa menambah informasi. Keterangan tekniknya tetap ada
+       di tautan dan di komentar modul. */
+    ok('judul kredit tidak menyebut nama internal layanan',
+      M.credit.judul.indexOf('LSD_12_PROVINSI') < 0, M.credit.judul);
+    ok('judul kredit menyebut nama peta yang dibaca pengguna',
+      /Peta Lahan Sawah yang Dilindungi/.test(M.credit.judul), M.credit.judul);
+    ok('kredit HTML tidak menyebut nama internal layanan',
+      M.creditHtml().indexOf('LSD_12_PROVINSI') < 0);
+    ok('kredit teks tidak menyebut nama internal layanan',
+      M.creditText().indexOf('LSD_12_PROVINSI') < 0);
+    ok('kredit punya tautan resmi', /^https:\/\/gistaru\.atrbpn\.go\.id/.test(M.credit.tautan));
+    /* Tautan tetap harus sampai ke service aslinya, karena di situlah
+       nama teknisnya masih bisa dicari. */
+    ok('tautan kredit mengarah ke MapServer LSD',
+      /LSD\/LSD_DAL\/MapServer/.test(M.credit.tautan), M.credit.tautan);
     ok('creditText memuat tanggal akses', /Diakses pada/.test(M.creditText()));
     ok('creditHtml memakai label Sumber data', /Sumber data:/.test(M.creditHtml()));
+    /* Tautan ditulis sebagai teks biasa, bukan <a> dengan label
+       "Tautan langsung": label itu membuat pembaca harus mencari tahu di
+       mana tautannya, sedangkan URL utuh bisa langsung disalin. */
+    ok('kredit HTML tidak lagi memakai label "Tautan langsung"',
+      M.creditHtml().indexOf('Tautan langsung') < 0);
+    ok('kredit HTML tidak lagi membungkus tautan dalam <a>',
+      !/<a\s/i.test(M.creditHtml()), M.creditHtml().slice(0, 140));
+    ok('URL tetap tampil utuh di kredit HTML',
+      M.creditHtml().indexOf('gistaru.atrbpn.go.id') > 0);
+    ok('URL panjang tidak meluber keluar kartu', (function () {
+      var probe = document.createElement('div');
+      probe.className = 'geotani-lbslsd-credit';
+      probe.style.cssText = 'width:120px';
+      probe.textContent = 'https://gistaru.atrbpn.go.id/arcgis/rest/services/LSD/LSD_DAL/MapServer';
+      document.body.appendChild(probe);
+      var ada = getComputedStyle(probe).overflowWrap === 'anywhere' ||
+        getComputedStyle(probe).wordBreak === 'break-word' ||
+        getComputedStyle(probe).overflowWrap === 'break-word';
+      document.body.removeChild(probe);
+      return ada;
+    })(), 'URL GISTARU lebih panjang dari lebar panel');
 
     say('');
     say('12. Tampilan nyata kartu');
     var card = document.getElementById('geotani-lsd12-card');
     ok('kartu ada di DOM', !!card);
     if (card) {
-      /* Kartu terlipat, jadi pengukuran dibuka dulu. Penjaga modul dimatikan
-         sementara lewat penandanya supaya pemanggilan open dari harness ini
-         tidak dibatalkan -- sama seperti yang terjadi kalau summary diklik.
-         Perilaku penjaga sendiri diuji terpisah di bagian 14. */
-      card.__geotaniLsd12Watch = false;
+      /* Kartu terlipat, jadi pengukuran dibuka dulu. Tidak ada penjaga yang
+         membatalkannya -- modul memang tidak menyentuh status kartu. */
       card.open = true;
       ok('kartu memakai kelas .geotani-lbslsd yang sama dengan kartu BIG',
         card.classList.contains('geotani-lbslsd'));
@@ -321,11 +356,9 @@ window.GeoTaniLbsLsd = {
       var fs = parseFloat(getComputedStyle(desc).fontSize);
       ok('font deskripsi >= 9px', fs >= 9, fs + 'px');
 
-      /* Dikembalikan ke terlipat dan penjaga dipasang lagi, supaya bagian 14
-         mengukur kondisi yang sama dengan halaman. */
+      /* Dikembalikan ke terlipat supaya bagian 14 mengukur kondisi yang sama
+         dengan keadaan awal di halaman. */
       card.open = false;
-      card.__geotaniLsd12Watch = false;
-      M.init(card);
       ok('pengukuran tidak meninggalkan kartu terbuka', card.open === false);
     }
 
@@ -342,51 +375,78 @@ window.GeoTaniLbsLsd = {
     ok('clear tidak melempar', true);
 
     say('');
-    say('14. Kartu selalu terlipat');
-    /* Ini syarat yang diminta, jadi diuji di markup yang sama dengan
-       index.html: tanpa atribut open. Tiga sumber pembuka diuji satu
-       per satu -- init, kode, dan reset -- dan yang diizinkan
-       hanyalah klik pengguna, satu-satunya pembuka yang sah. */
+    say('14. Kartu mulai terlipat, lalu dibiarkan');
+    /* Syaratnya satu: kartu MULAI terlipat karena markup, dan setelah itu
+       tidak ada yang menutup atau membukanya tanpa disengaja.
+
+       Yang diuji di sini justru hal yang sebelumnya ada dan sekarang
+       harus hilang: init boleh menutup kartu, Reset Polygon boleh menutup
+       kartu, dan modul boleh membatalkan open dari kode mana pun. Semuanya
+       membuat hasil yang baru selesai dihitung hilang tepat di tempat
+       pengguna memintanya -- tombol "Tampilkan" ada di dalam kartu, jadi
+       menutupnya begitu selesai memuat memaksa pengguna menekan judulnya
+       lagi hanya untuk membaca angka. */
     var kartu = document.getElementById('geotani-lsd12-card');
-    ok('markup kartu tidak punya atribut open',
-      !kartu.hasAttribute('open'), kartu.hasAttribute('open') ? 'open ada' : 'tanpa open');
-    /* toggle adalah peristiwa yang dijadwalkan browser, jadi tidak sinkron:
-       menugaskan open = true masih terlihat terbuka di baris yang sama,
-       dan baru tertutup setelah antrean tugas berjalan. Semua pemeriksaan
-       di sini menunggu satu giliran tugas karena itu. */
     var tick = function () { return new Promise(function (r) { setTimeout(r, 0); }); };
 
-    kartu.setAttribute('open', '');
-    M.init(kartu);
-    await tick();
-    ok('init menutup kartu walau markup terbuka', kartu.open === false);
+    ok('markup kartu tidak punya atribut open',
+      !kartu.hasAttribute('open'), kartu.hasAttribute('open') ? 'open ada' : 'tanpa open');
+    ok('modul tidak mengekspor collapse()', typeof M.collapse !== 'function');
+    ok('tidak ada penjaga toggle di kartu',
+      typeof kartu.__geotaniLsd12Watch !== 'boolean');
 
+    /* Dibuka oleh kode: harus tetap terbuka. Sebelumnya toggle penjaga
+       membatalkannya. */
     kartu.open = true;
     await tick();
-    ok('kode yang menugaskan open = true dibatalkan', kartu.open === false,
+    ok('kode yang menugaskan open = true tidak dibatalkan', kartu.open === true,
       'open=' + kartu.open);
 
+    /* Klik pengguna tetap boleh menutup. */
     var s = kartu.querySelector('summary');
     s.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     await tick();
-    ok('klik pengguna pada summary boleh membuka', kartu.open === true,
+    ok('klik pengguna pada summary boleh menutup', kartu.open === false,
       'open=' + kartu.open);
 
-    kartu.open = false;
-    await tick();
-    ok('menutup lagi secara manual tetap bisa', kartu.open === false);
-
-    /* Reset dari kartu yang terbuka harus mengembalikan keadaan awal. */
+    /* Dibuka lagi, lalu Reset Polygon: kartu harus tetap terbuka. */
     kartu.open = true;
     await tick();
     M.reset();
     await tick();
-    ok('reset menutup kartu', kartu.open === false, 'open=' + kartu.open);
-    ok('collapse() tidak melempar saat kartu sudah terlipat', (function () {
-      M.collapse(); M.collapse();
-      return kartu.open === false;
-    })());
-    ok('collapse() mengembalikan true (kartu ada)', M.collapse() === true);
+    ok('Reset Polygon tidak menutup kartu', kartu.open === true,
+      'open=' + kartu.open);
+
+    /* Simulasi selesai memuat: klik tombol lalu tunggu, kartu harus tetap
+       terbuka supaya hasilnya langsung terlihat. out dipakai dari bagian 12,
+       jadi tidak dideklarasikan lagi di sini. */
+    M.setSelectedKode('51.11.01.2001', 'Desa Uji');
+    window.fetch = function () {
+      return Promise.resolve({
+        ok: true,
+        json: function () {
+          return Promise.resolve({ features: [{
+            attributes: { LSD: 'Lahan Sawah yang Dilindungi di dalam Penetapan Kawasan Hutan' },
+            geometry: { rings: [[[0, 0], [0, 1], [1, 1], [0, 0]]] }
+          }] });
+        }
+      });
+    };
+    btn.click();
+    await tick(); await tick(); await tick(); await tick(); await tick();
+    ok('setelah selesai memuat, kartu tetap terbuka', kartu.open === true,
+      'open=' + kartu.open);
+    ok('hasilnya benar-benar sudah ditulis', out.innerHTML.length > 0,
+      out.innerHTML.length + ' karakter');
+
+    /* Dan saat reset-all di map-core, yang dipanggil adalah clear() saja --
+       tidak ada collapse() yang bisa menutup kartu. */
+    ok('clear() juga tidak menutup kartu', (function () {
+      M.clear();
+      return kartu.open === true;
+    })(), 'open=' + kartu.open);
+    kartu.open = false;
+    await tick();
 
     say('');
     say((fail === 0 ? 'SEMUA LULUS' : 'ADA YANG GAGAL') + ': ' + pass + ' lulus, ' + fail + ' gagal');

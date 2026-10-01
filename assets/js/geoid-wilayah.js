@@ -2853,7 +2853,7 @@ window.printGeotaniPdf = async function() {
     pdf.setTextColor(120, 120, 120);
       /* Sumber data. Kalau SLS dipakai, keterangan BPS ikut tampil karena
          Ketentuan Penggunaan BPS (pasal 13.2) mewajibkan kutipan yang memuat
-         judul konten, tanggal akses, penulis, dan tautan langsung. Ketentuan
+         judul konten, tanggal akses, penulis, dan tautan ke konten asli.
          Ketentuan BIG mewajibkan hal serupa: Badan Informasi Geospasial
          disebut pada setiap laporan yang memakai datanya. */
       const sumberDasar = 'Sumber data: BMKG · BIG SatuPeta · Sentinel-2';
