@@ -211,6 +211,15 @@
       var gempaPanel = document.getElementById('gempa-subtab-gempa');
       if (gempaPanel && gempaPanel.classList.contains('active') && typeof loadEarthquakeData === 'function') loadEarthquakeData();
     }
+    /* Kartu LSD 12 Provinsi harus terlipat setiap GeoTani dibuka. Kalau tidak,
+      kartu yang dibiarkan terbuka dari kunjungan sebelumnya menutupi
+      workflow desa di atasnya, dan panel langsung dimulai dari isi kartu,
+      bukan dari GeoTani. */
+    if (tabId === 'geotoolsTabGeoTani') {
+      if (window.GeoTaniLsd12 && typeof window.GeoTaniLsd12.collapse === 'function') {
+        window.GeoTaniLsd12.collapse();
+      }
+    }
     if (tabId === 'geotoolsTabGeoPangan') {
       if (typeof window.openGeoPanganSourceTab === 'function') window.openGeoPanganSourceTab('pihps');
       else if (typeof window.geopanganAutoLoad === 'function') window.geopanganAutoLoad();

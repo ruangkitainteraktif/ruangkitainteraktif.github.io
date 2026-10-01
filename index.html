@@ -1402,6 +1402,12 @@
                  perbandingannya terlihat, terpisah supaya tidak salah
                  dijumlahkan. Cakupannya hanya 12 provinsi -- lihat
                  assets/js/geotani-lsd12prov.js. -->
+            <!-- WAJIB tanpa atribut `open`. Bukan cuma gaya: init(),
+                 selesai memuat, Reset Polygon, dan pindah tab GeoTani
+                 semuanya menutup kartu ini lagi, dan penjaga di
+                 geotani-lsd12prov.js membatalkan open dari kode mana
+                 pun. Kartu ini hanya boleh terbuka karena pengguna yang
+                 menekan judulnya. -->
             <details class="geotani-lbslsd" id="geotani-lsd12-card" aria-labelledby="geotani-lsd12-title">
               <summary class="gt-card-head">
                 <span class="gt-card-icon" aria-hidden="true">&#127807;</span>
@@ -2805,7 +2811,7 @@
                 <span class="gt-card-icon" aria-hidden="true">&#127793;</span>
                 <span>
                   <b id="geofarmCardTitle">GeoFarm Analisis</b>
-                  <small>Gambar atau unggah petak, lalu lihat kondisi lahan dan kebutuhan airnya</small>
+                  <small>Gambar/unggah petak, lalu lihat kondisi lahan dan kebutuhan airnya</small>
                 </span>
               </summary>
               <div class="geofarm-card-body">

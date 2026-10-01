@@ -15,7 +15,11 @@
 <!-- Markup kartu disalin persis dari index.html supaya kelas yang diukur
      memang yang dipakai di halaman, bukan versi yang disederhanakan. -->
 <div style="width: 320px;">
-<details class="geotani-lbslsd" id="geotani-lsd12-card" open aria-labelledby="geotani-lsd12-title">
+<!-- Tanpa `open`, sama seperti di index.html. Buka lewat init() di bawah
+     supaya kartu tetap terlipat hanya karena init(), dan pengukuran
+     tampilan di bagian 12 memakai buka sementara lewat bypass yang
+     diuji di bagian 14. -->
+<details class="geotani-lbslsd" id="geotani-lsd12-card" aria-labelledby="geotani-lsd12-title">
   <summary class="gt-card-head">
     <span class="gt-card-icon" aria-hidden="true">&#127807;</span>
     <span>
@@ -295,6 +299,12 @@ window.GeoTaniLbsLsd = {
     var card = document.getElementById('geotani-lsd12-card');
     ok('kartu ada di DOM', !!card);
     if (card) {
+      /* Kartu terlipat, jadi pengukuran dibuka dulu. Penjaga modul dimatikan
+         sementara lewat penandanya supaya pemanggilan open dari harness ini
+         tidak dibatalkan -- sama seperti yang terjadi kalau summary diklik.
+         Perilaku penjaga sendiri diuji terpisah di bagian 14. */
+      card.__geotaniLsd12Watch = false;
+      card.open = true;
       ok('kartu memakai kelas .geotani-lbslsd yang sama dengan kartu BIG',
         card.classList.contains('geotani-lbslsd'));
       var cs = getComputedStyle(card);
@@ -310,6 +320,13 @@ window.GeoTaniLbsLsd = {
         /Jawa/.test(desc.textContent) && /tidak punya data/.test(desc.textContent));
       var fs = parseFloat(getComputedStyle(desc).fontSize);
       ok('font deskripsi >= 9px', fs >= 9, fs + 'px');
+
+      /* Dikembalikan ke terlipat dan penjaga dipasang lagi, supaya bagian 14
+         mengukur kondisi yang sama dengan halaman. */
+      card.open = false;
+      card.__geotaniLsd12Watch = false;
+      M.init(card);
+      ok('pengukuran tidak meninggalkan kartu terbuka', card.open === false);
     }
 
     say('');
@@ -323,6 +340,53 @@ window.GeoTaniLbsLsd = {
     ok('setelah reset input pencarian dikosongkan', inp.value === '');
     M.clear();
     ok('clear tidak melempar', true);
+
+    say('');
+    say('14. Kartu selalu terlipat');
+    /* Ini syarat yang diminta, jadi diuji di markup yang sama dengan
+       index.html: tanpa atribut open. Tiga sumber pembuka diuji satu
+       per satu -- init, kode, dan reset -- dan yang diizinkan
+       hanyalah klik pengguna, satu-satunya pembuka yang sah. */
+    var kartu = document.getElementById('geotani-lsd12-card');
+    ok('markup kartu tidak punya atribut open',
+      !kartu.hasAttribute('open'), kartu.hasAttribute('open') ? 'open ada' : 'tanpa open');
+    /* toggle adalah peristiwa yang dijadwalkan browser, jadi tidak sinkron:
+       menugaskan open = true masih terlihat terbuka di baris yang sama,
+       dan baru tertutup setelah antrean tugas berjalan. Semua pemeriksaan
+       di sini menunggu satu giliran tugas karena itu. */
+    var tick = function () { return new Promise(function (r) { setTimeout(r, 0); }); };
+
+    kartu.setAttribute('open', '');
+    M.init(kartu);
+    await tick();
+    ok('init menutup kartu walau markup terbuka', kartu.open === false);
+
+    kartu.open = true;
+    await tick();
+    ok('kode yang menugaskan open = true dibatalkan', kartu.open === false,
+      'open=' + kartu.open);
+
+    var s = kartu.querySelector('summary');
+    s.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    await tick();
+    ok('klik pengguna pada summary boleh membuka', kartu.open === true,
+      'open=' + kartu.open);
+
+    kartu.open = false;
+    await tick();
+    ok('menutup lagi secara manual tetap bisa', kartu.open === false);
+
+    /* Reset dari kartu yang terbuka harus mengembalikan keadaan awal. */
+    kartu.open = true;
+    await tick();
+    M.reset();
+    await tick();
+    ok('reset menutup kartu', kartu.open === false, 'open=' + kartu.open);
+    ok('collapse() tidak melempar saat kartu sudah terlipat', (function () {
+      M.collapse(); M.collapse();
+      return kartu.open === false;
+    })());
+    ok('collapse() mengembalikan true (kartu ada)', M.collapse() === true);
 
     say('');
     say((fail === 0 ? 'SEMUA LULUS' : 'ADA YANG GAGAL') + ': ' + pass + ' lulus, ' + fail + ' gagal');

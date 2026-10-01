@@ -1578,6 +1578,9 @@ L.control.scale({
         // harus ikut hilang. Kalau tidak, poligon dari desa sebelumnya
         // tertinggal di peta setelah Reset Polygon.
         if (typeof GeoTaniLsd12 !== 'undefined' && typeof GeoTaniLsd12.clear === 'function') GeoTaniLsd12.clear();
+        // Dan kartunya ikut terlipat: "Reset" di sini berarti kembali ke
+        // keadaan awal, sedangkan keadaan awal kartu ini adalah terlipat.
+        if (typeof GeoTaniLsd12 !== 'undefined' && typeof GeoTaniLsd12.collapse === 'function') GeoTaniLsd12.collapse();
 
         // 5d. Bersihkan file yang dimuat lewat Alat Analisis, termasuk GPX/KML
         // serta marker, jejak, dan kartu Animasi Track.

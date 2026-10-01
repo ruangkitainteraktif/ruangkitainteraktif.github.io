@@ -18,7 +18,7 @@
  * fitur di Kapuas dan Barito Timur -- sedikit, tapi nyata, jadi tidak
  * boleh ikut masuk daftar 12 hanya supaya angkanya bulat.
  *
- * Empat hal yang membentuk desain modul ini:
+ * Lima hal yang membentuk desain modul ini:
  *
  * 1. KARTU INI TIDAK MENYENTUH LBS/LSD BIG.
  *    Dua layer itu mengukur hal yang sama dari sumber berbeda, dan
@@ -45,6 +45,16 @@
  * 4. LUASHA SUDAH DALAM HEKTARE, bukan meter persegi. Terbukti: jumlah
  *    Shape_Area 27.516.732.116 m2 sama dengan jumlah LUASHA 2.751.673 ha.
  *    Jadi luasnya bisa dibandingkan langsung dengan luas_polyg BIG.
+ *
+ * 5. KARTU INI SELALU TERLIPAT. Bukan sekadar tidak memakai atribut
+ *    `open` di markup: apa pun yang membukanya -- init, selesai memuat,
+ *    Reset Polygon, pindah tab, atau baris kode lain yang menyentuh
+ *    `card.open` -- akan menutupnya lagi. Satu-satunya pembuka yang
+ *    diizinkan adalah klik pengguna pada <summary>, karena itulah satu
+ *    tempat hasil analisis di dalam kartu ini bisa dibaca. Tanpa penjaga
+ *    itu, kartu bisa tertinggal terbuka setelah pindah tab, dan panel
+ *    GeoTani yang dibuka berikutnya langsung memuat satu badan kartu
+ *    setinggi layar di atas workflow lainnya.
  *
  * Retry itu wajib, bukan_opsional. GISTARU terbukti membalas 500 lalu
  * 400 tanpa pesan ketika sedang dibebani, lalu pulih sendiri; satu query
@@ -111,6 +121,20 @@
   /* Dinaikkan setiap kali pengguna menekan "Reset Polygon". Lihat load(). */
   var generasi = 0;
   var selectedKode = null;
+
+  /* ── terlipat ──
+     Kartu harus selalu tertutup kecuali pengguna sendiri yang menekan
+     <summary>. `hostCard` disimpan supaya collapse() bisa dipanggil dari
+     luar modul (sidebar.js saat pindah tab, map-core.js saat reset semua)
+     tanpa mencari elemennya lagi.
+
+     `klikSummary` menghitung klik pada summary yang belum dicatat.
+     Satu klik menghasilkan satu peristiwa toggle, jadi setiap klik
+     yang tercatat berarti satu hak buka. Dua klik cepat sebelum
+     toggle-nya sempat diproses dihitung sebagai dua hak buka, bukan
+     satu. */
+  var hostCard = null;
+  var klikSummary = 0;
 
   /* ── dependensi ──
      Modul ini berdiri di atas kartu LBS & LSD untuk batas desa, cache meta
@@ -520,6 +544,9 @@
     if (out) out.innerHTML = '';
     if (status) status.textContent = '';
     if (btn) btn.disabled = false;
+    /* Reset mengembalikan kartu ke keadaan semula, dan keadaan semula
+       kartu ini adalah terlipat. */
+    collapse();
   }
 
   function getState() { return state; }
@@ -679,9 +706,57 @@
 
   function getSelectedKode() { return selectedKode; }
 
+  /* Menutup kartu. Dipanggil dari init, selesai memuat, Reset Polygon,
+     dan dari luar modul. Aman dipanggil berulang: menugaskan false ke
+     `open` yang sudah false tidak memicu toggle, jadi tidak ada
+     sisa yang harus dibersihkan di sini. */
+  function collapse() {
+    var host = hostCard || document.getElementById('geotani-lsd12-card');
+    if (!host) return false;
+    hostCard = host;
+    klikSummary = 0;
+    if (!host.open) return true;
+    host.open = false;
+    return true;
+  }
+
+  /* Penjaga yang membatalkan pembuka yang bukan dari pengguna.
+
+     Peristiwa toggle tidak membawa asal-usulnya, jadi yang dicatat
+     bukan toggle-nya melainkan kliknya: klik pada summary selalu
+     mendahului toggle, sehingga saat toggle tiba, sisa klikSummary
+     mengatakan apakah itu klik pengguna atau kode yang menugaskan
+     `open = true`. Yang kedua dibatalkan.
+
+     Menempel sekali per elemen lewat penanda di host, supaya init()
+     yang dipanggil berkali-kali (boot retry, tab yang dibuka ulang)
+     tidak menumpuk penjaga. */
+  function watchCollapse(host) {
+    if (!host || host.__geotaniLsd12Watch) return;
+    host.__geotaniLsd12Watch = true;
+
+    var summary = host.querySelector('summary');
+    if (summary) {
+      summary.addEventListener('click', function () { klikSummary += 1; });
+    }
+
+    host.addEventListener('toggle', function () {
+      if (!host.open) { klikSummary = 0; return; }
+      if (klikSummary > 0) { klikSummary -= 1; return; }
+      /* Bukan klik pengguna: tutup lagi. Toggle berikutnya melihat
+         open === false, jadi langkah ini tidak berputar. */
+      host.open = false;
+    });
+  }
+
   function init(root) {
     var host = root || document.getElementById('geotani-lsd12-card');
     if (!host) return null;
+    hostCard = host;
+    watchCollapse(host);
+    /* Bukan hanya andal pada markup: kartu tetap terlipat walau ada
+       yang menugaskan open sebelum init berjalan. */
+    collapse();
     var btn = document.getElementById('geotani-lsd12-load');
     var out = document.getElementById('geotani-lsd12-output');
     var status = document.getElementById('geotani-lsd12-status');
@@ -734,6 +809,9 @@
         if (input) input.focus();
         return;
       }
+      /* Pengguna hanya bisa menekan tombol ini dari dalam kartu, jadi
+         kartu sudah terbuka di sini. Ditutup lagi di finally supaya
+         hasil tidak tertinggal terbuka setelah selesai dimuat. */
       btn.disabled = true;
       out.innerHTML = '';
       if (status) status.textContent = 'Mengambil data LSD dari ATR/BPN GISTARU...';
@@ -757,6 +835,7 @@
         }
       } finally {
         btn.disabled = false;
+        collapse();
       }
     });
 
@@ -773,6 +852,7 @@
     clear: clear,
     init: init,
     reset: reset,
+    collapse: collapse,
     getState: getState,
     listHtml: listHtml,
     credit: credit,
