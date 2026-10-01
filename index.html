@@ -1402,6 +1402,16 @@
                  perbandingannya terlihat, terpisah supaya tidak salah
                  dijumlahkan. Cakupannya hanya 12 provinsi -- lihat
                  assets/js/geotani-lsd12prov.js. -->
+            <!-- Tutupan Lahan (KLHK via BNPB). Ketiga kartu sawah dan
+                 kartu ini berdiri sendiri, bukan tab dari satu sama lain:
+                 masing-masing punya sumber, cakupan, dan cara hitung luasnya
+                 sendiri, dan menjumlahkan angka antar kartu tidak pernah
+                 bermakna. Berdampingan di bagian teratas GeoTani supaya
+                 workflow desa -- pilih desa, lihat apa yang ada di dalamnya --
+                 terbaca lebih dulu sebelum pemetaan umum di bawahnya.
+                 Terlipat lewat markup saja, tanpa collapse() seperti
+                 kartu LSD 12 Provinsi: kartu ini tidak dipaksa menutup
+                 diri, jadi tidak butuh penjaga toggle. -->
             <!-- WAJIB tanpa atribut `open`. Bukan cuma gaya: init(),
                  selesai memuat, Reset Polygon, dan pindah tab GeoTani
                  semuanya menutup kartu ini lagi, dan penjaga di
@@ -1438,6 +1448,36 @@
                   </button>
                 <div id="geotani-lsd12-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
                 <div id="geotani-lsd12-output"></div>
+              </div>
+            </details>
+
+<details class="geotani-lbslsd" id="geotani-tutupan-card" aria-labelledby="geotani-tutupan-title">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#127793;</span>
+                <span>
+                  <b id="geotani-tutupan-title">Tutupan Lahan</b>
+                  <small>Perubahan tutupan lahan 2020 &rarr; 2024 &mdash; KLHK via BNPB</small>
+                </span>
+              </summary>
+              <div class="geotani-lbslsd-body">
+                <p class="geotani-sls-desc">
+                  Membandingkan <b>sebaran tutupan lahan 2020 dan 2024</b> di dalam desa yang dipilih.
+                  Luas tiap kelas dihitung dari irisan dengan batas desa pada kedua tahun, jadi
+                  kolom perubahannya bisa dibandingkan langsung &mdash; bukan dari selisih dua peta.
+                </p>
+                <div class="geotani-sls-search">
+                  <label class="geotani-form-label" for="geotaniTutupanVillageSearch">Cari nama desa</label>
+                  <input type="text" id="geotaniTutupanVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
+                  <div id="geotaniTutupanVillageResults" class="geotani-sls-results" hidden></div>
+                  <div id="geotaniTutupanVillageSelected" class="geotani-sls-picked" hidden></div>
+                </div>
+                  <button id="geotani-tutupan-load" class="geotani-btn-print" type="button">Bandingkan Tutupan Lahan</button>
+                  <button id="geotani-tutupan-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon Tutupan Lahan" aria-label="Reset polygon Tutupan Lahan">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    Reset Polygon
+                  </button>
+                <div id="geotani-tutupan-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                <div id="geotani-tutupan-output"></div>
               </div>
             </details>
 
@@ -1724,7 +1764,7 @@
                   <span class="gt-card-icon" aria-hidden="true">&#128506;</span>
                   <span>
                     <b id="geotani-geospasial-title">Geospasial Indonesia</b>
-                    <small>Pemilih layer BIG, SatuPeta, dan sumber resmi lain</small>
+                    <small>Katalog SatuPeta BIG dan sumber resmi lain</small>
                   </span>
                 </summary>
                 <!-- margin-top inline DIHAPUS: nilai inline menang atas
@@ -3292,6 +3332,12 @@
        satu implementasi. Data ATR/BPN diambil runtime lewat
        tres/proxy.ashx, yang mengirim header CORS. -->
   <script src="assets/js/geotani-lsd12prov.js"></script>
+  <!-- Tutupan Lahan 2020 dan 2024 (KLHK via BNPB). WAJIB setelah
+       geotani-lbs-lsd.js: modul ini memakai villageMeta, clipKeDesa, dan
+       bboxDariRings dari window.GeoTaniLbsLsd supaya batas desa dan hitung
+       luasnya cuma ada satu implementasi. BNPB mengirim header CORS yang
+       echo origin, jadi request diambil langsung tanpa worker proxy. -->
+  <script src="assets/js/geotani-tutupan-lahan.js"></script>
   <!-- KKPR / NIB (ATR/BPN GISTARU): hanya butuh Leaflet dan peta, jadi
        tidak bergantung geodesic-area maupun geoid-wilayah. -->
   <script src="assets/js/geotani-kkpr.js"></script>

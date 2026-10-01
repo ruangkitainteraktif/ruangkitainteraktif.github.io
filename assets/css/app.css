@@ -8579,6 +8579,172 @@ details[open] > .gt-card-head::after {
 .geotani-lbslsd-list--ringkas li { cursor: default; }
 .geotani-lbslsd-list--ringkas li:hover { background: transparent; }
 
+/* ── Grafik & insight: Tutupan Lahan ──
+   SVG-nya digambar sendiri oleh geotani-tutupan-lahan.js (pola yang sama
+   dengan grafik tren GeoFarm), jadi yang didefinisikan di sini hanya
+   warna dan ukuran. Tanpa max-height di blok manapun: tinggi grafik
+   mengikuti jumlah batang, dan grafik yang dipotong diam-diam sama
+   saja dengan menyembunyikan kelas. */
+
+/* Isi lingkaran (donat). Dipakai lewat atribut fill per irisan, bukan
+   lewat kelas, karena warnanya berbeda per kelas dan berasal dari warna
+   yang sama dengan peta. */
+.gt-grafik { display: block; width: 100%; height: auto; margin-top: 6px; overflow: visible; }
+.gt-grafik-lingkar {
+  fill: none; stroke: var(--border-color); stroke-width: 1;
+}
+/* Garis pemisah tipis antar iris supaya kelas kecil masih bisa dibedakan
+   saat berdekatan. */
+.gt-grafik-iris { stroke: var(--bg-card); stroke-width: 0.8; stroke-linejoin: round; }
+.gt-grafik-donat {
+  fill: var(--text-primary); font-size: 11px; font-weight: 700;
+  paint-order: stroke; stroke: var(--bg-card); stroke-width: 2.5px;
+}
+.gt-grafik-ax { fill: var(--text-muted); font-size: 8px; }
+.gt-grafik-kelas { fill: var(--text-secondary); font-size: 8.5px; }
+.gt-grafik-nilai { font-size: 8.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.gt-grafik-grid { stroke: var(--border-color); stroke-width: 1; stroke-dasharray: 2 3; }
+
+/* Warna batang mengikuti ARAH perubahan, bukan warna kelas.
+   Warna kelas sudah dipakai di peta, di legenda, dan di tabel; kalau
+   batang memakai warna yang sama, batang naik dan batang turun untuk satu
+   kelas akan dibedakan oleh posisi saja -- dan posisi sulit dibaca saat
+   batang pendek. Warna arah dipakai karena naik/turun adalah informasi
+   yang dicari orang, sementara warna kelas sudah ada di tempat lain.
+
+   Oranye dan biru, bukan hijau dan merah: hijau/merah dibaca sebagai
+   bagus/buruk, padahal naik tutupan hutan dan naik tutupan permukiman
+   bukan dua hal yang berlawanan. */
+.gt-grafik-bar { opacity: .9; }
+.gt-grafik-bar--naik { fill: #d97706; }
+.gt-grafik-bar--turun { fill: #2563eb; }
+.gt-grafik-bar--lainnya { fill: #94a3b8; opacity: .75; }
+.gt-grafik-nilai.gt-grafik-bar--naik { fill: #b45309; }
+.gt-grafik-nilai.gt-grafik-bar--turun { fill: #1d4ed8; }
+.gt-grafik-nilai.gt-grafik-bar--lainnya { fill: var(--text-muted); }
+
+/* Legenda satu baris per kelas, flowed. Bukan satu baris per kelas yang
+   berurutan vertikal -- daftar 22 warna vertikal akan memaksa area
+   menggulir, dan tidak ada yang bisa disimpulkan dari daftar itu selain
+   "ada banyak kelas". */
+.gt-legenda { display: flex; flex-wrap: wrap; gap: 3px 8px; margin-top: 6px; }
+.gt-legenda-item {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 8.5px; color: var(--text-secondary); line-height: 1.4;
+}
+.gt-legenda-item i {
+  width: 8px; height: 8px; border-radius: 2px; flex: 0 0 auto;
+  border: 1px solid rgba(15, 23, 42, .18);
+}
+
+/* Insight: satu butir per temuan. `penting` dipakai untuk hal yang
+   mengubah cara orang membaca seluruh angka di kartu ini -- kelas yang
+   hilang, dan peta yang tidak sebanding -- bukan untuk yang terbesar saja. */
+.gt-insight {
+  margin-top: 9px; padding: 7px 8px;
+  border: 1px solid var(--border-color); border-radius: 6px;
+  background: var(--bg-primary);
+}
+.gt-insight-item {
+  display: flex; align-items: flex-start; gap: 6px;
+  font-size: 10px; line-height: 1.5; color: var(--text-secondary);
+}
+.gt-insight-item + .gt-insight-item {
+  margin-top: 5px; padding-top: 5px;
+  border-top: 1px dashed var(--border-color);
+}
+.gt-insight-item b { color: var(--text-primary); font-weight: 700; }
+.gt-insight-ikon {
+  flex: 0 0 auto; width: 14px; height: 14px; margin-top: 1px;
+  display: grid; place-items: center;
+  border-radius: 50%; font-size: 9px; font-weight: 700;
+  background: var(--bg-card-hover); color: var(--text-muted);
+}
+.gt-insight-item--penting {
+  color: var(--text-primary);
+}
+.gt-insight-item--penting .gt-insight-ikon {
+  background: #fef3c7; color: #92400e;
+}
+[data-theme="dark"] .gt-grafik-iris { stroke: var(--bg-card); }
+[data-theme="dark"] .gt-grafik-bar--naik { fill: #fbbf24; }
+[data-theme="dark"] .gt-grafik-bar--turun { fill: #93c5fd; }
+[data-theme="dark"] .gt-grafik-nilai.gt-grafik-bar--naik { fill: #fcd34d; }
+[data-theme="dark"] .gt-grafik-nilai.gt-grafik-bar--turun { fill: #bfdbfe; }
+[data-theme="dark"] .gt-insight-item--penting .gt-insight-ikon { background: #422006; color: #fde68a; }
+
+/* Tabel perubahan 2020 -> 2024.
+
+   Dibuat sebagai <table> sungguhan dengan <thead>, bukan daftar <ul>
+   dengan label di kaki. Tiga kolom angka tanpa judul membuat "12,4 ha"
+   di kolom kedua bisa berarti 2020 atau 2024, dan yang salah baca delta-nya
+   salah arah -- jadi judul kolom harus melekat pada kolomnya.
+
+   TIDAK memakai max-height atau overflow. Daftar kelas bisa 22 baris, dan
+   daftar yang perlu digulir di dalam panel yang sudah punya daftar lain
+   di atasnya hanya membuat panel terasa sempit tanpa menambah informasi;
+   baris tabel ini pendek, jadi semuanya muat. Lebar kolom dikunci lewat
+   .geotani-tutupan-ha dan .geotani-tutupan-delta supaya kelas dengan luas
+   besar tidak mendorong kolom perubahan ke luar panel -- perubahan justru
+   yang paling ingin dilihat, jadi itu yang harus terakhir hilang. */
+.geotani-tutupan-tabel {
+  width: 100%; margin-top: 6px;
+  border-collapse: collapse; table-layout: fixed;
+}
+.geotani-tutupan-tabel th,
+.geotani-tutupan-tabel td {
+  padding: 4px 4px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 10px; vertical-align: baseline;
+}
+.geotani-tutupan-tabel thead th {
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 8.5px; font-weight: 700; line-height: 1.3;
+  color: var(--text-muted); text-align: left;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.geotani-tutupan-tabel tbody th {
+  font-weight: 400; text-align: left;
+}
+/* Sel kelas memuat swatch + nama dalam satu sel, jadi rata kiri dan
+   boleh membungkus; kolom angka rata kanan dan tidak boleh membungkus. */
+.geotani-tutupan-tabel tbody th > .geotani-lbslsd-swatch { margin-right: 5px; }
+.geotani-tutupan-tabel .geotani-sls-name { display: inline; }
+.geotani-tutupan-tabel tbody tr[data-tutupan-kelas] { cursor: pointer; }
+.geotani-tutupan-tabel tbody tr[data-tutupan-kelas]:hover { background: var(--bg-card-hover); }
+.geotani-tutupan-tabel tbody tr:last-child th,
+.geotani-tutupan-tabel tbody tr:last-child td { border-bottom: none; }
+
+.geotani-tutupan-ha {
+  width: 62px; text-align: right; white-space: nowrap;
+  color: var(--text-secondary); font-variant-numeric: tabular-nums;
+}
+.geotani-tutupan-delta {
+  width: 68px; text-align: right; white-space: nowrap;
+  font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.geotani-tutupan-tabel thead .geotani-tutupan-ha,
+.geotani-tutupan-tabel thead .geotani-tutupan-delta { text-align: right; }
+
+/* Arah perubahan dibedakan warna, bukan hanya tanda plus dan minus. Tanda
+   sudah ada di teks, jadi ini lapisan kedua untuk pembaca yang menangkap
+   warna sebelum membaca. Hijau di kelas naik bisa disalahartikan sebagai
+   hal bagus dan merah sebagai bahaya, padahal keduanya cuma arah --
+   pertanian bisa naik atau turun tanpa itu berarti baik atau buruk. Jadi
+   kedua warna dipilih netral dan sengaja tidak memakai hijau dan merah. */
+.geotani-tutupan-delta--naik { color: #b45309; }
+.geotani-tutupan-delta--turun { color: #1d4ed8; }
+.geotani-tutupan-delta--nol { color: var(--text-muted); font-weight: 400; }
+
+/* Catatan kelas hilang dari tahun terakhir diberi warna, bukan gaya miring:
+   gaya miring dipakai juga untuk penanda "di luar daftar", jadi memakai
+   bentuk yang sama membuat dua kondisi berbeda terlihat sama. */
+.geotani-tutupan-tabel i { color: #b91c1c; font-style: normal; font-weight: 600; }
+[data-theme="dark"] .geotani-tutupan-delta--naik { color: #fbbf24; }
+[data-theme="dark"] .geotani-tutupan-delta--turun { color: #93c5fd; }
+[data-theme="dark"] .geotani-tutupan-tabel i { color: #fca5a5; }
+
 /* GeoTani Search */
 .geotani-search-container { position: relative; }
 

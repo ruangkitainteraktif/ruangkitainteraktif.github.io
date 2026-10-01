@@ -1581,6 +1581,9 @@ L.control.scale({
         // Dan kartunya ikut terlipat: "Reset" di sini berarti kembali ke
         // keadaan awal, sedangkan keadaan awal kartu ini adalah terlipat.
         if (typeof GeoTaniLsd12 !== 'undefined' && typeof GeoTaniLsd12.collapse === 'function') GeoTaniLsd12.collapse();
+        // Tutupan Lahan 2024 juga terikat pada satu desa. Kartu ini tidak
+        // dipaksa terlipat, jadi cukup mapanya yang dilepas.
+        if (typeof GeoTaniTutupan !== 'undefined' && typeof GeoTaniTutupan.clear === 'function') GeoTaniTutupan.clear();
 
         // 5d. Bersihkan file yang dimuat lewat Alat Analisis, termasuk GPX/KML
         // serta marker, jejak, dan kartu Animasi Track.

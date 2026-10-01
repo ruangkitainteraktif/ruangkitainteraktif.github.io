@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>tes-geotani-tutupan</title>
+<link rel="stylesheet" href="assets/css/app.css">
+<style>
+  body { margin: 0; padding: 8px; background: var(--bg-primary); }
+  #out { white-space: pre-wrap; font: 11px monospace; color: #000; padding: 8px;
+         background: #fff; border: 2px solid #000; }
+</style>
+</head>
+<body>
+
+<!-- Markup kartu disalin persis dari index.html supaya kelas yang diukur
+     memang yang dipakai di halaman, bukan versi yang disederhanakan. -->
+<div style="width: 320px;">
+<details class="geotani-lbslsd" id="geotani-tutupan-card" aria-labelledby="geotani-tutupan-title">
+  <summary class="gt-card-head">
+    <span class="gt-card-icon" aria-hidden="true">&#127793;</span>
+    <span>
+      <b id="geotani-tutupan-title">Tutupan Lahan</b>
+      <small>Perubahan tutupan lahan 2020 &rarr; 2024 &mdash; KLHK via BNPB</small>
+    </span>
+  </summary>
+  <div class="geotani-lbslsd-body">
+    <p class="geotani-sls-desc">
+      Membandingkan <b>sebaran tutupan lahan 2020 dan 2024</b> di dalam desa yang dipilih.
+      Luas tiap kelas dihitung dari irisan dengan batas desa pada kedua tahun, jadi
+      kolom perubahannya bisa dibandingkan langsung &mdash; bukan dari selisih dua peta.
+      Tahun 2017 ada di BNPB tapi tidak dihitung; alasannya ditulis di bawah tabel.
+    </p>
+    <div class="geotani-sls-search">
+      <label class="geotani-form-label" for="geotaniTutupanVillageSearch">Cari nama desa</label>
+      <input type="text" id="geotaniTutupanVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
+      <div id="geotaniTutupanVillageResults" class="geotani-sls-results" hidden></div>
+      <div id="geotaniTutupanVillageSelected" class="geotani-sls-picked" hidden></div>
+    </div>
+      <button id="geotani-tutupan-load" class="geotani-btn-print" type="button">Bandingkan Tutupan Lahan</button>
+      <button id="geotani-tutupan-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon Tutupan Lahan" aria-label="Reset polygon Tutupan Lahan">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        Reset Polygon
+      </button>
+    <div id="geotani-tutupan-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+    <div id="geotani-tutupan-output"></div>
+  </div>
+</details>
+</div>
+
+<div id="out"></div>
+
+<script>
+/* Stub window.GeoTaniLbsLsd.
+   Modul ini bersandar pada kartu LBS & LSD untuk batas desa, cache meta
+   desa, dan hitung luas. Yang diuji di sini bukan kode kartu itu, jadi
+   cukup diberi bentuk yang sama. villageMeta di-stub supaya harness tidak
+   butuh jaringan untuk batas desanya -- query ke BNPB-nya yang dites.
+
+   luasIrisanHa dikembalikan sebagai 1,5 per poligon supaya luas kelas bisa
+   dihitung di kepala: 1 poligon = 1,5 ha, 2 poligon = 3 ha. */
+window.GeoTaniLbsLsd = {
+  villageMeta: function (kode) {
+    return Promise.resolve({
+      nama: 'Desa Uji ' + kode,
+      lat: 0, lng: 0,
+      rings: [[[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]],
+      geojson: { type: 'Polygon', coordinates: [[[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]] },
+      luasHa: 12345
+    });
+  },
+  bboxDariRings: function (rings) {
+    return { west: 0, south: 0, east: 1, north: 1, envelope: '0,0,1,1' };
+  },
+  /* Tanpa turf di harness ini, jadi cukup kembalikan luas tetap. Yang
+     sedang diuji bukan iris geometri, melainkan orkestrasi di atasnya. */
+  clipKeDesa: function (feature, villageGeo) {
+    var rings = feature.geometry && feature.geometry.rings;
+    if (!rings) return null;
+    return {
+      geometry: { type: 'MultiPolygon', coordinates: rings.map(function (r) { return [r]; }) },
+      luasIrisanHa: 1.5,
+      luasGeometriPenuhHa: 3,
+      terpotong: true
+    };
+  },
+  kodeDariPanelLain: function () { return null; },
+  getSelectedKode: function () { return null; },
+  daftarDesa: function () { return null; },
+  cariDesa: function () { return []; }
+};
+</script>
+<script src="assets/js/geotani-tutupan-lahan.js"></script>
+<script>
+(async function () {
+  var lines = [], pass = 0, fail = 0;
+  function say(t) { lines.push(t); }
+  function ok(nama, benar, detail) {
+    if (benar) { pass++; lines.push('  LULUS  ' + nama); }
+    else { fail++; lines.push('  GAGAL  ' + nama + (detail ? '  [' + detail + ']' : '')); }
+  }
+  var M = window.GeoTaniTutupan;
+  var asli = window.fetch;
+
+  /* Peta tidak dipakai di harness: modul memanggil window.L dan window.map,
+     yang tidak ada di sini. stub sekecil mungkin supaya jalur hitung dan
+     presentasi bisa diuji tanpa Leaflet. */
+  window.L = null;
+  window.map = null;
+
+  var CFG20 = M.TAHUN[0];
+  var CFG24 = M.TAHUN[1];
+
+  /* Membangun fitur untuk satu tahun. Field kode 2020 adalah kode_pl dan
+     2024 adalah ID_Penutu4; nama fieldnya beda, jadi stub harus tahu
+     tahun mana yang dipanggil -- persis masalah yang ditangani modul. */
+  function fitur(tahun, kode, namaServer, oid) {
+    var cfg = tahun === 2020 ? CFG20 : CFG24;
+    var a = {};
+    a[cfg.fieldKode] = kode;
+    a[cfg.fieldKelas] = namaServer;
+    return { attributes: a, geometry: { rings: [[[0, 0], [0, 1], [1, 1], [0, 0]]] } };
+  }
+
+  /* Satu halaman hasil untuk 2024. exceededTransferLimit diisi apa adanya
+     supaya bagian pagination menguji flag itu dengan benar: menyalakannya
+     di setiap halaman termasuk yang terakhir sudah jadi perilaku nyata
+     kedua layer ini. */
+  function stubHal(n, exceeded) {
+    var fit = [];
+    for (var i = 0; i < n; i++) fit.push(fitur(2024, 20093, 'Sawah', i));
+    var bad = {};
+    if (exceeded !== undefined) bad.exceededTransferLimit = exceeded;
+    bad.features = fit;
+    return bad;
+  }
+
+  /* Stub fetch yang menjawab sesuai layer yang dipanggil dan offset yang
+     diminta, lalu mengembalikan daftar fitur yang sudah disiapkan.
+
+     Peta dipetakan dari tahun ke daftar fitur, bukan satu daftar untuk keduanya:
+     2020 dan 2024 punya daftar berbeda di setiap bagian, dan kalau
+     keduanya memakai satu daftar yang sama, bagian yang sengaja menguji
+     "kelas yang hilang di 2024" justru terisi dua kali dan tesnya
+     berbohong tanpa terlihat. */
+  function stub(daftarPerTahun) {
+    var reqUrl = [];
+    window.fetch = function (u) {
+      reqUrl.push(u);
+      var cfg = u.indexOf('PL_KLHK_2020') > 0 ? CFG20 : CFG24;
+      var daftar = daftarPerTahun[cfg.tahun] || [];
+      var off = /resultOffset=(\d+)/.exec(u);
+      var start = off ? Number(off[1]) : 0;
+      var batch = daftar.slice(start, start + cfg.pageSize);
+      return Promise.resolve({
+        ok: true,
+        json: function () {
+          return Promise.resolve({ features: batch, exceededTransferLimit: batch.length === cfg.pageSize });
+        }
+      });
+    };
+    return reqUrl;
+  }
+
+  try {
+    say('1. Modul termuat dan terdaftar');
+    ok('window.GeoTaniTutupan ada', !!M);
+    ok('API inti tersedia',
+      !!(M && M.load && M.clear && M.reset && M.listHtml && M.creditText && M.drawOnMap));
+    ok('dua tahun dikonfigurasi', M.TAHUN.length === 2, String(M.TAHUN.length));
+    ok('TAHUN_AWAL 2020 dan TAHUN_AKHIR 2024',
+      M.TAHUN_AWAL === 2020 && M.TAHUN_AKHIR === 2024,
+      M.TAHUN_AWAL + ' -> ' + M.TAHUN_AKHIR);
+    ok('KELAS diekspor untuk uji warna', !!(M && M.KELAS));
+    ok('22 kelas ada di KELAS',
+      Object.keys(M.KELAS).length === 22, String(Object.keys(M.KELAS).length));
+    ok('semua kelas punya nama dan warna heksadesimal',
+      Object.keys(M.KELAS).every(function (k) {
+        return M.KELAS[k].nama && /^#[0-9a-f]{6}$/i.test(M.KELAS[k].warna);
+      }));
+    ok('kode kelas Sawah ada (kunci perbandingan)',
+      !!M.KELAS[20093] && !!M.KELAS[2001] && !!M.KELAS[2012]);
+
+    say('');
+    say('2. Konfigurasi per layer mengikuti batas server');
+    /* maxRecordCount 2020 adalah 1.000 dan 2024 adalah 2.000. Satu
+       konstanta global akan meminta melebihi batas di salah satu tahun, dan
+       server mengabaikannya tanpa error -- hasilnya terpotong tapi utuh
+       di mata. */
+    ok('pageSize 2020 = 1000 (maxRecordCount server)',
+      CFG20.pageSize === 1000, String(CFG20.pageSize));
+    ok('pageSize 2024 = 2000 (maxRecordCount server)',
+      CFG24.pageSize === 2000, String(CFG24.pageSize));
+    ok('pageSize berbeda antar layer', CFG20.pageSize !== CFG24.pageSize);
+    ok('field kode 2020 = kode_pl', CFG20.fieldKode === 'kode_pl', CFG20.fieldKode);
+    ok('field kode 2024 = ID_Penutu4', CFG24.fieldKode === 'ID_Penutu4', CFG24.fieldKode);
+    ok('field nama 2020 = kelas', CFG20.fieldKelas === 'kelas', CFG20.fieldKelas);
+    ok('field nama 2024 = KELAS_PL', CFG24.fieldKelas === 'KELAS_PL', CFG24.fieldKelas);
+    ok('outFields 2020 tidak meminta Shape_Area (derajat kuadrat)',
+      CFG20.outFields.indexOf('Shape_Area') < 0, CFG20.outFields);
+    ok('outFields 2020 tidak meminta field luas',
+      CFG20.outFields.indexOf('luas') < 0, CFG20.outFields);
+    ok('outFields 2024 tidak meminta Shape_Area',
+      CFG24.outFields.indexOf('Shape_Area') < 0, CFG24.outFields);
+    ok('outFields tidak memakai * di kedua layer',
+      M.TAHUN.every(function (c) { return c.outFields.indexOf('*') < 0; }));
+    ok('configTahun menolak tahun tak dikenal', (function () {
+      try { M.configTahun(2017); return false; } catch (e) { return /2017/.test(e.message); }
+    })());
+
+    say('');
+    say('3. Nama tampilan sama di kedua tahun');
+    /* Nama server berbeda antar layer: 2020 "Pertanian Lahan Kering + Semak",
+       2024 "Pertanian Lahan Kering Bercampur dgn Semak". Kalau baris tabel
+       dibentuk dari nama server, satu kelas split jadi dua baris dan terlihat
+       seperti dua kelas berbeda -- tanpa error, hanya hasil yang salah. */
+    var k20 = M.kelasUntuk({ kode_pl: 20092, kelas: 'Pertanian Lahan Kering + Semak' }, CFG20);
+    var k24 = M.kelasUntuk({ ID_Penutu4: 20092, KELAS_PL: 'Pertanian Lahan Kering Bercampur dgn Semak' }, CFG24);
+    ok('nama tampilan identik antar tahun', k20.nama === k24.nama, k20.nama + ' vs ' + k24.nama);
+    ok('nama tampilan berasal dari daftar KELAS, bukan server',
+      k20.nama === M.KELAS[20092].nama, k20.nama);
+    ok('nama server tetap disimpan terpisah untuk popup',
+      k20.namaServer === 'Pertanian Lahan Kering + Semak' && k24.namaServer === 'Pertanian Lahan Kering Bercampur dgn Semak',
+      k20.namaServer);
+    ok('kunci kelas sama di kedua tahun', k20.kunci === k24.kunci && k20.kunci === '20092', k20.kunci);
+    ok('warna sama di kedua tahun', k20.warna === k24.warna, k20.warna);
+
+    say('');
+    say('4. Kunci warna: kode, bukan nama');
+    var traits = [
+      { kode: 20121, nama20: null, nama24: null, id: 20121 },
+      { kode: 50011, nama20: 'Rawa', nama24: 'rawa', id: 50011 },
+      { kode: 20092, nama20: 'Pertanian Lahan Kering + Semak', nama24: 'x', id: 20092 }
+    ];
+    ok('kelas dengan nama null/aneh tetap dapat warna sendiri', (function () {
+      return traits.every(function (t) {
+        var a = M.kelasUntuk({ kode_pl: t.kode, kelas: t.nama20 }, CFG20);
+        var b = M.kelasUntuk({ ID_Penutu4: t.kode, KELAS_PL: t.nama24 }, CFG24);
+        return a.warna === M.KELAS[t.id].warna && b.warna === M.KELAS[t.id].warna;
+      });
+    })());
+    var asing = M.kelasUntuk({ ID_Penutu4: 99999, KELAS_PL: 'Kelas Baru' }, CFG24);
+    ok('kelas di luar daftar dapat warna default, bukan error',
+      asing.warna === M.WARNA_DEFAULT && asing.dikenal === false, asing.warna);
+    ok('poligon tanpa field kode tidak crash',
+      M.kelasUntuk({}, CFG24).warna === M.WARNA_DEFAULT);
+    ok('atribut kosong total tidak crash',
+      typeof M.kelasUntuk(null, CFG24).nama === 'string');
+
+    say('');
+    say('5. URL query memakai konfigurasi layer');
+    var u20 = M._url(CFG20, { f: 'json', where: '1=1', resultRecordCount: CFG20.pageSize });
+    var u24 = M._url(CFG24, { f: 'json', where: '1=1', resultRecordCount: CFG24.pageSize });
+    ok('2020 menunjuk PL_KLHK_2020', u20.indexOf('PL_KLHK_2020/MapServer/0/query') > 0);
+    ok('2024 menunjuk PL_KLHK_2024', u24.indexOf('PL_KLHK_2024/MapServer/0/query') > 0);
+    ok('resultRecordCount 2020 = 1000', u20.indexOf('resultRecordCount=1000') > 0);
+    ok('resultRecordCount 2024 = 2000', u24.indexOf('resultRecordCount=2000') > 0);
+    ok('where di-encode', u20.indexOf('where=1%3D1') > 0);
+    ok('resultOffset tidak dikirim di halaman pertama',
+      u20.indexOf('resultOffset') < 0 && u24.indexOf('resultOffset') < 0);
+
+    say('');
+    say('6. Retry: HTTP 200 dengan badan error dianggap gagal');
+    var panggilan = 0;
+    window.fetch = function () {
+      panggilan++;
+      return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ error: { code: 400, message: '' } }); } });
+    };
+    var gagal = false, pesan = '';
+    try { await M.fetchJson(M._url(CFG24, { f: 'json' })); }
+    catch (e) { gagal = true; pesan = e.message; }
+    window.fetch = asli;
+    ok('badan error dilempar, bukan dianggap kosong', gagal, pesan);
+    ok('retry benar-benar jalan (3x)', panggilan === 3, panggilan + ' panggilan');
+    ok('pesan menyebut ArcGIS', /ArcGIS/.test(pesan), pesan);
+
+    say('');
+    say('7. Retry: HTTP 404 tidak diulang');
+    panggilan = 0;
+    window.fetch = function () {
+      panggilan++;
+      return Promise.resolve({ ok: false, status: 404, json: function () { return Promise.resolve({}); } });
+    };
+    try { await M.fetchJson(M._url(CFG24, { f: 'json' })); } catch (e) { /* diharapkan */ }
+    window.fetch = asli;
+    ok('404 langsung menyerah (1x panggilan)', panggilan === 1, panggilan + ' panggilan');
+
+    say('');
+    say('8. Pagination per tahun: penentu habis bukan exceededTransferLimit');
+    /* Perilaku server yang diukur: exceededTransferLimit menyala di setiap
+       halaman sampai yang terakhir di kedua layer, dan kosong ketika OFFSET
+       sudah melewati ujung. Penentu habis harus features.length < pageSize;
+       kalau memakai flag itu, peringatan muncul justru saat data lengkap. */
+    var req = stub({ 2020: [], 2024: [] });
+    window.fetch = function (u) {
+      req.push(u);
+      /* 2020 sengaja dikembalikan kosong supaya bagian ini murni mengukur
+         pagination 2024. Kalau ikut diberi halaman penuh, jumlah
+         permintaan 2020 akan ikut naik dan pemeriksaan di bawahnya tidak
+         bisa membedakan alasan naiknya. */
+      if (u.indexOf('PL_KLHK_2020') > 0) {
+        return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ features: [] }); } });
+      }
+      var off = /resultOffset=(\d+)/.exec(u);
+      var h = off ? Number(off[1]) / CFG24.pageSize : 0;
+      var jawab = h === 0 ? stubHal(CFG24.pageSize, true)
+        : h === 1 ? stubHal(1654, undefined)
+        : stubHal(0, undefined);
+      return Promise.resolve({ ok: true, json: function () { return Promise.resolve(jawab); } });
+    };
+    var stHal = null;
+    try { stHal = await M.load('51.11.01.2001'); } catch (e) { say('  ERROR: ' + e.message); }
+    window.fetch = asli;
+    var th24 = stHal ? stHal.perTahun[1] : null;
+    /* Jumlah permintaan dihitung per layer. 2020 di stub ini dikembalikan
+       kosong, jadi ia berhenti di satu permintaan, dan total 3 = 1 (2020)
+       + 2 (2024). Menghitung semuanya sebagai satu angka tidak bisa
+       membedakan "2024 butuh dua halaman" dari "modul salah menghitung". */
+    var req24 = req.filter(function (u) { return u.indexOf('PL_KLHK_2024') > 0; });
+    var req20 = req.filter(function (u) { return u.indexOf('PL_KLHK_2020') > 0; });
+    ok('2024: dua halaman sampai habis', th24 && th24.halaman === 2, th24 ? String(th24.halaman) : 'null');
+    ok('2024: total fitur 2000 + 1654', th24 && th24.poligon.length === 3654,
+      th24 ? String(th24.poligon.length) : 'null');
+    ok('2024: halaman kedua memakai resultOffset',
+      req24.some(function (u) { return u.indexOf('resultOffset=2000') > 0; }), req24.length + ' permintaan');
+    ok('2024: data habis -> TIDAK ditandai terpotong', th24 && th24.terpotongQuery === false,
+      String(th24 && th24.terpotongQuery));
+    ok('2024: halaman penutup tidak memicu permintaan ketiga',
+      req24.length === 2, req24.length + ' permintaan');
+    ok('2020: satu permintaan cukup karena dikembalikan kosong',
+      req20.length === 1, req20.length + ' permintaan');
+
+    say('');
+    say('9. Pagination 2020 memakai pageSize sendiri');
+    /* 2020 punya maxRecordCount 1.000. Kalau pageSize-nya ikut 2.000, server
+       mengabaikannya tanpa error dan modul mengira data habis setelah
+       halaman pertama yang terpotong. */
+    /* 2020 dikembalikan penuh di halaman pertama dan 700 di kedua, dengan
+       flag menyala di keduanya. 2024 sengaja dikembalikan kosong supaya
+       pemeriksaan ini murni mengukur pageSize dan offset 2020. */
+    req = stub({ 2020: [], 2024: [] });
+    window.fetch = function (u) {
+      req.push(u);
+      var cfg = u.indexOf('PL_KLHK_2020') > 0 ? CFG20 : CFG24;
+      var off = /resultOffset=(\d+)/.exec(u);
+      var start = off ? Number(off[1]) : 0;
+      if (cfg.tahun === 2024) {
+        return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ features: [] }); } });
+      }
+      var n = start === 0 ? CFG20.pageSize : (start === CFG20.pageSize ? 700 : 0);
+      var jawab = {};
+      if (n > 0) jawab.exceededTransferLimit = true;
+      jawab.features = [];
+      for (var i = 0; i < n; i++) jawab.features.push(fitur(2020, 20093, 'Sawah', i));
+      return Promise.resolve({ ok: true, json: function () { return Promise.resolve(jawab); } });
+    };
+    var st20 = null;
+    try { st20 = await M.load('51.11.02.2001'); } catch (e) { say('  ERROR: ' + e.message); }
+    window.fetch = asli;
+    var th20 = st20 ? st20.perTahun[0] : null;
+    var req20b = req.filter(function (u) { return u.indexOf('PL_KLHK_2020') > 0; });
+    ok('2020: resultRecordCount yang diminta 1000',
+      req20b.length > 0 && req20b.every(function (u) { return u.indexOf('resultRecordCount=1000') > 0; }),
+      req20b.length + ' permintaan');
+    ok('2020: offset kedua = 1000 (bukan 2000)',
+      req20b.some(function (u) { return u.indexOf('resultOffset=1000') > 0; }),
+      req20b.map(function (u) { return (/resultOffset=(\d+)/.exec(u) || ['', '-'])[1]; }).join(','));
+    ok('2020: tidak pernah meminta lebih dari maxRecordCount server',
+      req20b.every(function (u) {
+        var v = Number(/resultRecordCount=(\d+)/.exec(u)[1]);
+        return v <= 1000;
+      }));
+    ok('2020: dua halaman sampai habis', th20 && th20.halaman === 2, th20 ? String(th20.halaman) : 'null');
+    ok('2020: total fitur 1000 + 700', th20 && th20.poligon.length === 1700,
+      th20 ? String(th20.poligon.length) : 'null');
+    ok('2020: data habis -> tidak ditandai terpotong', th20 && th20.terpotongQuery === false);
+
+    say('');
+    say('10. Paginasi Limited: berhenti dan jujur soal sisa');
+    req = stub({ 2020: [], 2024: [] });
+    window.fetch = function (u) {
+      req.push(u);
+      var jawab = { exceededTransferLimit: true, features: [] };
+      for (var i = 0; i < CFG24.pageSize; i++) jawab.features.push(fitur(2024, 20093, 'Sawah', i));
+      return Promise.resolve({ ok: true, json: function () { return Promise.resolve(jawab); } });
+    };
+    var stPenuh = null;
+    try { stPenuh = await M.load('51.11.03.2001'); } catch (e) { say('  ERROR: ' + e.message); }
+    window.fetch = asli;
+    ok('berhenti di MAX_HALAMAN per tahun', req.length === M.MAX_HALAMAN * 2,
+      req.length + ' permintaan untuk dua tahun');
+    ok('ditandai terpotong per tahun', stPenuh && stPenuh.perTahun[1].terpotongQuery === true,
+      String(stPenuh && stPenuh.perTahun[1].terpotongQuery));
+    ok('HTML memperingatkan hasil tidak lengkap', /melebihi/.test(M.listHtml()));
+
+    say('');
+    say('11. Keadaan kosong');
+    window.fetch = function () {
+      return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ features: [] }); } });
+    };
+    var stKosong = null;
+    try { stKosong = await M.load('35.73.01.2001'); } catch (e) { say('  ERROR: ' + e.message); }
+    window.fetch = asli;
+    ok('load desa tanpa data tidak melempar', !!stKosong);
+    if (stKosong) {
+      ok('adaData false, bukan error', stKosong.adaData === false);
+      ok('luas 0 ha', stKosong.perTahun[1].totalIrisanHa === 0, String(stKosong.perTahun[1].totalIrisanHa));
+      ok('baris kelas kosong', stKosong.baris.length === 0, String(stKosong.baris.length));
+      ok('HTML menjelaskan kondisinya', /Tidak ada poligon/.test(M.listHtml()));
+      ok('HTML tetap menampilkan kredit walau kosong', /KLHK/.test(M.listHtml()));
+      ok('HTML mengarahkan untuk mengecek batas desa', /batas desa/.test(M.listHtml()));
+      ok('0 fitur tidak dianggap terpotong', stKosong.perTahun[1].terpotongQuery === false);
+    }
+
+    say('');
+    say('12. Delta antar tahun');
+    /* 2020: Sawah 2 poligon (3 ha) dan Hutan 1 poligon (1,5 ha).
+       2024: Sawah 1 poligon (1,5 ha) dan Hutan 2 poligon (3 ha).
+       Satu baris per kelas, delta -1,5 ha untuk Sawah dan +1,5 ha untuk
+       Hutan, dan keduanya harus tetap satu kelas masing-masing. */
+    stub({ 2020: [fitur(2020, 20093, 'Sawah', 1), fitur(2020, 20093, 'Sawah', 2),
+        fitur(2020, 2001, 'Hutan Lahan Kering Primer', 3)],
+      2024: [fitur(2024, 20093, 'Sawah', 4),
+        fitur(2024, 2001, 'Hutan Lahan Kering Primer', 5), fitur(2024, 2001, 'Hutan Lahan Kering Primer', 6)] });
+    var stD = null;
+    try { stD = await M.load('51.11.04.2001'); } catch (e) { say('  ERROR: ' + e.message); }
+    window.fetch = asli;
+    ok('dua kelas, bukan empat', stD && stD.baris.length === 2, stD ? String(stD.baris.length) : 'null');
+    if (stD) {
+      var sawah = stD.baris.filter(function (b) { return b.kunci === '20093'; })[0];
+      var hutan = stD.baris.filter(function (b) { return b.kunci === '2001'; })[0];
+      ok('kelas yang sama di kedua tahun jadi satu baris', !!sawah && !!hutan);
+      ok('luas 2020 Sawah = 3 ha', sawah && Math.abs(sawah.haAwal - 3) < 0.001, sawah ? String(sawah.haAwal) : '-');
+      ok('luas 2024 Sawah = 1,5 ha', sawah && Math.abs(sawah.haAkhir - 1.5) < 0.001, sawah ? String(sawah.haAkhir) : '-');
+      ok('delta Sawah = -1,5 ha', sawah && Math.abs(sawah.delta + 1.5) < 0.001, sawah ? String(sawah.delta) : '-');
+      ok('delta Hutan = +1,5 ha', hutan && Math.abs(hutan.delta - 1.5) < 0.001, hutan ? String(hutan.delta) : '-');
+      ok('jumlah poligon per tahun tercatat',
+        sawah && sawah.perTahun[2020].jumlah === 2 && sawah.perTahun[2024].jumlah === 1,
+        sawah ? sawah.perTahun[2020].jumlah + '/' + sawah.perTahun[2024].jumlah : '-');
+      ok('tidak ada kelas yatim', stD.baris.every(function (b) { return !b.hanyaSatuTahun; }));
+      var hD = M.listHtml();
+      ok('HTML menampilkan dua tahun dalam satu baris',
+        hD.indexOf('data-tutupan-kelas') > 0 && /2020/.test(hD) && /2024/.test(hD));
+      ok('HTML punya kolom delta bertanda', /geotani-tutupan-delta/.test(hD));
+      ok('HTML memuat kredit KLHK', /KLHK/.test(hD));
+      ok('HTML menjelaskan dasar perhitungan delta',
+        /irisan dengan batas desa/.test(hD));
+      ok('delta negatif diberi tanda minus', hD.indexOf('-1,5 ha') > 0);
+      ok('delta positif diberi tanda plus', hD.indexOf('+1,5 ha') > 0);
+      /* 2017 sengaja tidak disebut di layar: yang tampil hanya tahun yang
+         dibandingkan. Yang perlu dijaga di sini justru sebaliknya --
+         tidak ada teks panjang apa pun yang membingungkan pembaca di
+         antara ringkasan dan tabel. */
+      var layar = M.listHtml();
+      ok('layar tidak menampilkan 2017', !/2017/.test(layar));
+      ok('layar hanya menyebut dua tahun yang dibandingkan',
+        (layar.match(/2020/g) || []).length > 0 && (layar.match(/2024/g) || []).length > 0);
+      ok('layar tidak memuat catatan teknis pagination',
+        !/maxAllowableOffset|fitur multi-part/.test(layar));
+    }
+
+    say('');
+    say('13. Kelas hilang dari tahun terakhir');
+    /* Perkebunan ada di 2020 dan tidak ada sama sekali di 2024. Delta-nya
+       harus minus penuh, bukan "–": kelas ini kehilangan seluruh luasnya,
+       dan itu perubahan yang paling penting secara kebijakan, jadi
+       angkanya justru harus paling tegas. */
+    stub({ 2020: [fitur(2020, 20093, 'Sawah', 1), fitur(2020, 2010, 'Perkebunan', 2)],
+      2024: [fitur(2024, 20093, 'Sawah', 3)] });
+    var stH = null;
+    try { stH = await M.load('51.11.05.2001'); } catch (e) { say('  ERROR: ' + e.message); }
+    window.fetch = asli;
+    if (stH) {
+      var per = stH.baris.filter(function (b) { return b.kunci === '2010'; })[0];
+      ok('kelas yang hilang dari 2024 tetap dapat baris', !!per);
+      ok('luas 2020 = 1,5 ha', per && Math.abs(per.haAwal - 1.5) < 0.001,
+        per ? String(per.haAwal) : '-');
+      ok('luas 2024 = tidak ada (bukan nol)', per && per.haAkhir === null,
+        per ? String(per.haAkhir) : '-');
+      ok('ditandai hilang total', per && per.hilang === true,
+        per ? String(per.hilang) : '-');
+      ok('delta = minus penuh luas 2020, bukan null',
+        per && Math.abs(per.delta + 1.5) < 0.001, per ? String(per.delta) : '-');
+      ok('tidak dianggap kelas baru di tahun akhir',
+        per && per.baruMuncul === false);
+      var hH = M.listHtml();
+      ok('baris diberi label hilang total',
+        /hilang total/.test(hH));
+      ok('kelas hilang total ikut mendapat peringatan terpisah',
+        /tidak punya luas sama sekali/.test(hH));
+      ok('peringatan kelas hilang muncul satu kali',
+        (hH.match(/tidak punya luas sama sekali/g) || []).length === 1);
+      ok('peringatan menyebut nama kelasnya', /Perkebunan/.test(hH));
+      /* Kolom luas 2024 untuk kelas yang hilang harus menunjukkan "tidak
+         tersedia", bukan "0 ha": menulis 0 ha menyatakan peta 2024 memetakan
+         kelas itu dengan luas nol, yang berbeda dari kelasnya memang tidak
+         ada di sana. */
+      ok('luas kosong di kolom 2024 ditulis "tidak tersedia", bukan "0 ha"',
+        /tidak tersedia/.test(hH));
+      ok('kolom 2024 untuk kelas hilang tidak pernah menulis 0 ha',
+        !/0 ha<\/span><span class="geotani-tutupan-ha">tidak tersedia/.test(hH));
+    }
+
+    say('');
+    say('13b. Kelas baru yang hanya ada di tahun akhir');
+    /* Kebalikan dari kasus sebelumnya: kelas tidak ada di 2020 tapi muncul
+       di 2024. Ini belum punya pembanding, jadi delta harus kosong --
+       menghitung perubahan dari nol akan berarti pathway membandingkan
+       sesuatu yang belum pernah ada. */
+    stub({ 2020: [fitur(2020, 20093, 'Sawah', 1)],
+      2024: [fitur(2024, 20093, 'Sawah', 2), fitur(2024, 20141, 'Pertambangan', 3)] });
+    var stBaru = null;
+    try { stBaru = await M.load('51.11.05.2002'); } catch (e) { say('  ERROR: ' + e.message); }
+    window.fetch = asli;
+    if (stBaru) {
+      var baru = stBaru.baris.filter(function (b) { return b.kunci === '20141'; })[0];
+      ok('kelas baru tetap dapat baris', !!baru);
+      ok('luas 2020 = tidak ada', baru && baru.haAwal === null,
+        baru ? String(baru.haAwal) : '-');
+      ok('luas 2024 = 1,5 ha', baru && Math.abs(baru.haAkhir - 1.5) < 0.001,
+        baru ? String(baru.haAkhir) : '-');
+      ok('delta kosong karena tidak ada pembanding',
+        baru && baru.delta === null, baru ? String(baru.delta) : '-');
+      ok('ditandai kelas baru', baru && baru.baruMuncul === true);
+      ok('bukan dianggap hilang', baru && baru.hilang === false);
+      var hB = M.listHtml();
+      /* Label "baru di 2024", bukan "hanya di 2024": kelas ini muncul di peta
+         terakhir dan tidak pernah ada di peta awal, jadi menyebut
+         "baru" lebih tepat. */
+      ok('baris diberi label baru di tahun akhir',
+        /baru di 2024/.test(hB));
+      ok('kelas baru tidak memicu peringatan kelas hilang',
+        !/tidak punya luas sama sekali/.test(hB));
+    }
+
+    say('');
+    say('14. Dua kelas hilang dan satu kelas bertahan');
+    /* Tiga kelas sekaligus: Sawah hilang total, Hutan naik,sawahlantai
+       hilang, dan Permukiman bertahan. Peringatan harus menyebut semua
+       yang hilang dan tidak boleh menyebut yang bertahan -- kalau satu
+       nama salah masuk daftar peringatan, pembaca akan mengejar kelas
+       yang sebenarnya tidak berubah. */
+    stub({ 2020: [fitur(2020, 20093, 'Sawah', 1), fitur(2020, 2010, 'Perkebunan', 2),
+        fitur(2020, 2001, 'Hutan Lahan Kering Primer', 3), fitur(2020, 2012, 'Permukiman', 4)],
+      2024: [fitur(2024, 2001, 'Hutan Lahan Kering Primer', 6),
+        fitur(2024, 2001, 'Hutan Lahan Kering Primer', 7), fitur(2024, 2012, 'Permukiman', 8)] });
+    var stH2 = null;
+    try { stH2 = await M.load('51.11.06.2001'); } catch (e) { say('  ERROR: ' + e.message); }
+    window.fetch = asli;
+    if (stH2) {
+      var sw = stH2.baris.filter(function (b) { return b.kunci === '20093'; })[0];
+      var pk = stH2.baris.filter(function (b) { return b.kunci === '2010'; })[0];
+      var ht = stH2.baris.filter(function (b) { return b.kunci === '2001'; })[0];
+      var pm = stH2.baris.filter(function (b) { return b.kunci === '2012'; })[0];
+      ok('empat kelas terbaca', stH2.baris.length === 4, String(stH2.baris.length));
+      ok('Sawah hilang total', sw && sw.hilang === true, sw ? String(sw.hilang) : '-');
+      ok('Sawah delta minus penuh', sw && Math.abs(sw.delta + 1.5) < 0.001, sw ? String(sw.delta) : '-');
+      ok('Perkebunan hilang total', pk && pk.hilang === true, pk ? String(pk.hilang) : '-');
+      ok('Perkebunan delta minus penuh', pk && Math.abs(pk.delta + 1.5) < 0.001, pk ? String(pk.delta) : '-');
+      ok('Hutan naik, bukan hilang', ht && ht.hilang === false && ht.delta > 0,
+        ht ? String(ht.delta) : '-');
+      ok('Permukiman tetap, delta nol bukan hilang', pm && pm.delta === 0 && pm.hilang === false,
+        pm ? String(pm.delta) + '/' + String(pm.hilang) : '-');
+      var pering = /tidak punya luas sama sekali di 2024:([^<]*)/.exec(M.listHtml());
+      ok('peringatan menyebut tepat dua kelas yang hilang', !!pering && /Sawah/.test(pering[1]) && /Perkebunan/.test(pering[1]),
+        pering ? pering[1] : 'tidak ketemu');
+      ok('peringatan tidak menyebut kelas yang bertahan',
+        !pering || (!/Hutan/.test(pering[1]) && !/Permukiman/.test(pering[1])),
+        pering ? pering[1] : '-');
+      ok('jumlah kelas hilang disebut sesuai kenyataan', /2 kelas tidak punya luas/.test(M.listHtml()));
+      ok('peringatan menyebut tahun hilangnya', /2024/.test(M.listHtml()));
+    }
+
+    say('');
+    say('15. Tumpang tindih');
+    /* 2024: satu poligon 1,5 ha pada desa stub 12.345 ha. Kondisi normal,
+       jadi tidak boleh ditandai. */
+    stub({ 2020: [fitur(2020, 2010, 'Perkebunan', 1)], 2024: [fitur(2024, 2010, 'Perkebunan', 2)] });
+    var stN = null;
+    try { stN = await M.load('51.11.07.2001'); } catch (e) { say('  ERROR: ' + e.message); }
+    window.fetch = asli;
+    ok('luas jauh di bawah luas desa -> tumpang tindih tidak ditandai',
+      stN && stN.perTahun[1].tumpangTindih === false,
+      String(stN && stN.perTahun[1].tumpangTindih));
+    ok('tidak ada peringatan tumpang tindih saat normal',
+      !/tumpang tindih/i.test(M.listHtml()));
+
+    say('');
+    say('16. Tumpang tindih benar-benar terdeteksi');
+    var metaAsli = window.GeoTaniLbsLsd.villageMeta;
+    window.GeoTaniLbsLsd.villageMeta = function (kode) {
+      return Promise.resolve({
+        nama: 'Desa Sempit ' + kode, lat: 0, lng: 0,
+        rings: [[[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]],
+        geojson: { type: 'Polygon', coordinates: [[[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]] },
+        luasHa: 2
+      });
+    };
+    stub({ 2020: [fitur(2020, 2010, 'Perkebunan', 1), fitur(2020, 2010, 'Perkebunan', 2)],
+      2024: [fitur(2024, 2010, 'Perkebunan', 3), fitur(2024, 2010, 'Perkebunan', 4)] });
+    var stT = null;
+    try { stT = await M.load('51.11.08.2001'); } catch (e) { say('  ERROR: ' + e.message); }
+    window.fetch = asli;
+    window.GeoTaniLbsLsd.villageMeta = metaAsli;
+    ok('luas irisan 3 ha pada desa 2 ha terdeteksi',
+      stT && stT.perTahun[1].tumpangTindih === true,
+      String(stT && stT.perTahun[1].tumpangTindih));
+    ok('HTML memperingatkan tumpang tindih', /tumpang tindih/i.test(M.listHtml()));
+    ok('peringatan menyebut tahun yang bermasalah', /tumpang tindih 2024/.test(M.listHtml()));
+
+    say('');
+    say('17. Kredit');
+    ok('credit menyebut KLHK', /KLHK/.test(M.credit.lembaga), M.credit.lembaga);
+    ok('credit menyebut BNPB', /BNPB/.test(M.credit.lembaga), M.credit.lembaga);
+    ok('credit menyebut kedua tahun', /2020/.test(M.credit.judul) && /2024/.test(M.credit.judul), M.credit.judul);
+    ok('credit punya tautan resmi',
+      /^https:\/\/gis\.bnpb\.go\.id/.test(M.credit.tautan), M.credit.tautan);
+    ok('creditText memuat tanggal akses', /Diakses pada/.test(M.creditText()));
+    ok('creditHtml memakai label Sumber data', /Sumber data:/.test(M.creditHtml()));
+
+    say('');
+    say('18. Query nyata ke BNPB');
+    /* Dua layer sungguhan, karena tujuan kartu ini justru membandingkannya:
+       kalau hanya satu yang hidup, perbandingan di layar menipu. */
+    var nyata = {};
+    var err = null;
+    try {
+      nyata[2020] = await M.querySemua('96.86,5.09,96.90,5.13', CFG20);
+      nyata[2024] = await M.querySemua('96.86,5.09,96.90,5.13', CFG24);
+    } catch (e) { err = e; }
+    if (err) {
+      say('  (lewati: server tidak terjangkau dari lingkungan ini -- ' + err.message + ')');
+      ok('query live tidak wajib untuk harness lain', true);
+    } else {
+      ok('2020 mengembalikan fitur', nyata[2020].features.length > 0, nyata[2020].features.length + ' fitur');
+      ok('2024 mengembalikan fitur', nyata[2024].features.length > 0, nyata[2024].features.length + ' fitur');
+      ok('2020 satu halaman cukup untuk bbox desa',
+        nyata[2020].features.length < CFG20.pageSize && nyata[2020].halaman === 1,
+        nyata[2020].features.length + ' fitur dalam ' + nyata[2020].halaman + ' halaman');
+      ok('2024 satu halaman cukup untuk bbox desa',
+        nyata[2024].features.length < CFG24.pageSize && nyata[2024].halaman === 1,
+        nyata[2024].features.length + ' fitur dalam ' + nyata[2024].halaman + ' halaman');
+      ok('tidak ditandai terpotong',
+        nyata[2020].terpotong === false && nyata[2024].terpotong === false);
+      ok('geometri berupa esriGeometry.rings (bukan GeoJSON)',
+        !!(nyata[2020].features[0].geometry.rings) && !!(nyata[2024].features[0].geometry.rings));
+      ok('2020 kode_pl ikut terbaca (kunci perbandingan)',
+        nyata[2020].features[0].attributes.kode_pl !== undefined,
+        String(nyata[2020].features[0].attributes.kode_pl));
+      ok('2024 ID_Penutu4 ikut terbaca',
+        nyata[2024].features[0].attributes.ID_Penutu4 !== undefined,
+        String(nyata[2024].features[0].attributes.ID_Penutu4));
+      ok('Shape_Area tidak ikut di 2020 (tidak diminta)',
+        nyata[2020].features[0].attributes.Shape_Area === undefined);
+      ok('field luas tidak ikut di 2020 (tidak diminta)',
+        nyata[2020].features[0].attributes.luas === undefined);
+      /* Kode kelas harus saling.game antara kedua layer, kalau tidak delta
+         di layar membandingkan hal yang tidak bisa dibandingkan. */
+      var kode20 = {}, kode24 = {};
+      nyata[2020].features.forEach(function (f) { kode20[String(f.attributes.kode_pl)] = 1; });
+      nyata[2024].features.forEach(function (f) { kode24[String(f.attributes.ID_Penutu4)] = 1; });
+      var beda = Object.keys(kode20).filter(function (k) { return !kode24[k]; });
+      ok('semua kode kelas 2020 juga ada di 2024', beda.length === 0, beda.join(','));
+      var takDikenal = nyata[2020].features.filter(function (f) {
+        return M.kelasUntuk(f.attributes, CFG20).warna === M.WARNA_DEFAULT;
+      });
+      ok('semua fitur 2020 mendapat warna yang sesuai daftar',
+        takDikenal.length === 0, takDikenal.length + ' dari ' + nyata[2020].features.length + ' fallback');
+      var takDikenal24 = nyata[2024].features.filter(function (f) {
+        return M.kelasUntuk(f.attributes, CFG24).warna === M.WARNA_DEFAULT;
+      });
+      ok('semua fitur 2024 mendapat warna yang sesuai daftar',
+        takDikenal24.length === 0, takDikenal24.length + ' dari ' + nyata[2024].features.length + ' fallback');
+      /* Geometri 2020 punya hasZ/hasM true di metadata server. Kalau titiknya
+         3 dimensi, state kedua tahun akan punya bentuk data berbeda. */
+      var dims = {};
+      nyata[2020].features.forEach(function (f) {
+        (f.geometry.rings || []).forEach(function (ring) {
+          ring.forEach(function (pt) { dims[Array.isArray(pt) ? pt.length : 2] = 1; });
+        });
+      });
+      ok('geometri 2020 tetap dua dimensi',
+        Object.keys(dims).length === 1 && dims['2'] === 1, Object.keys(dims).join('/'));
+    }
+
+    say('');
+    say('19. Tampilan nyata kartu');
+    var card = document.getElementById('geotani-tutupan-card');
+    ok('kartu ada di DOM', !!card);
+    if (card) {
+      ok('kartu memakai kelas .geotani-lbslsd yang sama dengan kartu BIG',
+        card.classList.contains('geotani-lbslsd'));
+      ok('kartu tidak punya atribut open (terlipat di markup)',
+        !card.hasAttribute('open'), card.hasAttribute('open') ? 'open ada' : 'tanpa open');
+      /* Diukur dalam keadaan terbuka supaya getComputedStyle mengembalikan
+         nilai nyata, lalu dikembalikan terlipat. */
+      card.open = true;
+      var cs = getComputedStyle(card);
+      ok('kartu punya border radius', parseFloat(cs.borderTopLeftRadius) >= 4, cs.borderTopLeftRadius);
+      var body = card.querySelector('.geotani-lbslsd-body');
+      ok('isi kartu punya padding', parseFloat(getComputedStyle(body).paddingTop) > 0);
+      var btn = document.getElementById('geotani-tutupan-load');
+      ok('tombol memenuhi lebar kartu', parseFloat(getComputedStyle(btn).width) > 100,
+        getComputedStyle(btn).width);
+      var desc = card.querySelector('.geotani-sls-desc');
+      ok('deskripsi menyebut kedua tahun',
+        /2020/.test(desc.textContent) && /2024/.test(desc.textContent));
+      var fs = parseFloat(getComputedStyle(desc).fontSize);
+      ok('font deskripsi >= 9px', fs >= 9, fs + 'px');
+
+      /* Struktur tabel diukur langsung dari output modul, bukan dari probe
+         buatan. Probe yang belum menempel ke DOM tidak punya layout, jadi
+         getComputedStyle mengembalikan string kosong untuk width -- dan
+         pengukuran seperti itu selalu "lulus" tanpa mengukur apa pun. */
+      stub({ 2020: [fitur(2020, 20093, 'Sawah', 1), fitur(2020, 20092, 'Pertanian Lahan Kering + Semak', 2),
+        fitur(2020, 2001, 'Hutan Lahan Kering Primer', 3), fitur(2020, 2010, 'Perkebunan', 4),
+        fitur(2020, 2012, 'Permukiman', 5), fitur(2020, 5001, 'Tubuh / Badan Air', 6),
+        fitur(2020, 3000, 'Savana / Padang Rumput', 7), fitur(2020, 2014, 'Tanah / Lahan Terbuka', 8),
+        fitur(2020, 2007, 'Belukar', 9), fitur(2020, 2006, 'Hutan Tanaman', 10),
+        fitur(2020, 20141, 'Pertambangan', 11), fitur(2020, 20094, 'Tambak', 12),
+        fitur(2020, 20051, 'Hutan Rawa Sekunder', 13), fitur(2020, 20071, 'Belukar Rawa', 14),
+        fitur(2020, 20121, 'Bandara / Pelabuhan', 15), fitur(2020, 20122, 'Transmigrasi', 16),
+        fitur(2020, 20091, 'Pertanian Lahan Kering', 17), fitur(2020, 2004, 'Hutan Mangrove Primer', 18),
+        fitur(2020, 20041, 'Hutan Mangrove Sekunder', 19), fitur(2020, 50011, 'Rawa', 20),
+        fitur(2020, 2002, 'Hutan Lahan Kering Sekunder', 21), fitur(2020, 2005, 'Hutan Rawa Primer', 22)],
+        2024: [fitur(2024, 20093, 'Sawah', 31), fitur(2024, 20092, 'Pertanian Lahan Kering Bercampur dgn Semak', 32),
+        fitur(2024, 2001, 'Hutan Lahan Kering Primer', 33), fitur(2024, 2010, 'Perkebunan', 34),
+        fitur(2024, 2012, 'Permukiman', 35), fitur(2024, 5001, 'Tubuh / Badan Air', 36),
+        fitur(2024, 3000, 'Savana / Padang Rumput', 37), fitur(2024, 2014, 'Tanah / Lahan Terbuka', 38),
+        fitur(2024, 2007, 'Belukar', 39), fitur(2024, 2006, 'Hutan Tanaman', 40),
+        fitur(2024, 20141, 'Pertambangan', 41), fitur(2024, 20094, 'Tambak', 42),
+        fitur(2024, 20051, 'Hutan Rawa Sekunder', 43), fitur(2024, 20071, 'Belukar Rawa', 44),
+        fitur(2024, 20121, 'Bandara / Pelabuhan', 45), fitur(2024, 20122, 'Transmigrasi', 46),
+        fitur(2024, 20091, 'Pertanian Lahan Kering', 47), fitur(2024, 2004, 'Hutan Mangrove Primer', 48),
+        fitur(2024, 20041, 'Hutan Mangrove Sekunder', 49), fitur(2024, 50011, 'Rawa', 50),
+        fitur(2024, 2002, 'Hutan Lahan Kering Sekunder', 51), fitur(2024, 2005, 'Hutan Rawa Primer', 52)] });
+      try { await M.load('51.11.09.2001'); } catch (e) { say('  ERROR: ' + e.message); }
+      window.fetch = asli;
+      var host = document.getElementById('geotani-tutupan-output');
+      host.innerHTML = M.listHtml();
+
+      ok('hasil memakai <table>, bukan daftar <ul>',
+        host.querySelector('table.geotani-tutupan-tabel') !== null);
+      ok('tabel punya <thead> dengan judul kolom',
+        host.querySelector('table.geotani-tutupan-tabel thead') !== null);
+      /* Header dibaca per tabel. Mengambil semua <th> dari dokumen menghitung
+         judul dari kedua tabel sekaligus, jadi jumlahnya delapan, bukan
+         empat -- dan pemeriksaan yang salah menghitung laporkan
+         kesalahan pada kode yang sebenarnya benar. */
+      var tabelPertama = host.querySelector('table.geotani-tutupan-tabel');
+      var judul = tabelPertama.querySelectorAll('thead th');
+      ok('empat judul kolom ada di setiap tabel', judul.length === 4, String(judul.length));
+      /* Setiap kolom angka harus menyebut tahun, kalau tidak pembaca
+         tidak tahu kolom kedua itu 2020 atau 2024. */
+      ok('judul kolom menyebut kelas', /Kelas/.test(judul[0].textContent), judul[0].textContent);
+      ok('judul kolom kedua menyebut 2020', /2020/.test(judul[1].textContent), judul[1].textContent);
+      ok('judul kolom ketiga menyebut 2024', /2024/.test(judul[2].textContent), judul[2].textContent);
+      ok('judul kolom keempat menyebut Perubahan',
+        /Perubahan/.test(judul[3].textContent), judul[3].textContent);
+      ok('kedua tabel punya judul kolom (tabel persen juga)',
+        host.querySelectorAll('table.geotani-tutupan-tabel thead').length === 2,
+        String(host.querySelectorAll('table.geotani-tutupan-tabel thead').length));
+
+      var tabel = host.querySelector('table.geotani-tutupan-tabel');
+      var csT = getComputedStyle(tabel);
+      /* TIDAK boleh ada area gulir: daftar kelas bisa 22 baris, dan daftar
+         yang perlu digulir di dalam panel yang sempit hanya menambah
+         dagen tanpa menambah informasi. */
+      ok('tabel tidak punya max-height', csT.maxHeight === 'none' || csT.maxHeight === '0px',
+        csT.maxHeight);
+      ok('tabel tidak punya overflow yang menggulir',
+        csT.overflowY === 'visible' || csT.overflowY === '', csT.overflowY);
+      ok('baris tabel juga tidak punya overflow',
+        getComputedStyle(tabel.querySelector('tbody tr')).overflowX === 'visible',
+        getComputedStyle(tabel.querySelector('tbody tr')).overflowX);
+
+      var baris = host.querySelectorAll('table.geotani-tutupan-tabel tbody tr');
+      ok('semua 22 kelas tampil sebagai baris tabel', baris.length === 44,
+        baris.length + ' baris di dua tabel');
+      ok('baris punya scope untuk aksesibilitas',
+        baris[0].querySelector('th[scope="row"]') !== null);
+
+      /* Lebar kolom harus tetap meski teksnya panjang, dan kolom
+         perubahan tidak boleh terdorong keluar panel. */
+      var sel = tabel.querySelectorAll('thead th');
+      var wD = parseFloat(getComputedStyle(sel[3]).width);
+      ok('kolom perubahan punya lebar > 0', wD > 0, String(wD));
+      ok('kolom luas punya lebar > 0', parseFloat(getComputedStyle(sel[1]).width) > 0);
+      var namaLebar = host.querySelector('table.geotani-tutupan-tabel tbody th .geotani-sls-name');
+      ok('nama kelas terpanjang tidak melewati lebar kolomnya',
+        namaLebar.scrollWidth <= namaLebar.clientWidth + 1,
+        namaLebar.scrollWidth + ' vs ' + namaLebar.clientWidth);
+      ok('nama kelas membungkus, tidak memotong teks',
+        getComputedStyle(namaLebar).whiteSpace !== 'nowrap',
+        getComputedStyle(namaLebar).whiteSpace);
+
+      host.innerHTML = '';
+      card.open = false;
+      ok('pengukuran tidak meninggalkan kartu terbuka', card.open === false);
+    }
+
+    say('');
+    say('20. Porsi: penyebabnya, bukan sekadar angka');
+    /* Delta luas mentah tidak bisa dipakai sebagai insight. Diukur ke
+       server: untuk bbox yang sama, Shape_Area 2024 lebih besar 24%
+       sampai 87% dari 2020, jadi delta luas mewarisi perbedaan mana yang
+       digambar, bukan perubahan lahan. Porsi menormalkan tiap tahun ke
+       totalnya sendiri sehingga yang dibandingkan komposisi. */
+    stub({ 2020: [fitur(2020, 20093, 'Sawah', 1), fitur(2020, 20093, 'Sawah', 2),
+        fitur(2020, 20091, 'Pertanian Lahan Kering', 3)],
+      2024: [fitur(2024, 20093, 'Sawah', 4), fitur(2024, 20091, 'Pertanian Lahan Kering', 5),
+        fitur(2024, 20091, 'Pertanian Lahan Kering', 6)] });
+    var stP = null;
+    try { stP = await M.load('51.11.10.2001'); } catch (e) { say('  ERROR: ' + e.message); }
+    window.fetch = asli;
+    if (stP) {
+      var swP = stP.baris.filter(function (b) { return b.kunci === '20093'; })[0];
+      var lkP = stP.baris.filter(function (b) { return b.kunci === '20091'; })[0];
+      ok('total luas terpetanan per tahun disimpan di state',
+        typeof stP.totalAwal === 'number' && typeof stP.totalAkhir === 'number',
+        stP.totalAwal + ' / ' + stP.totalAkhir);
+      /* 2020: sawah 2 poligon, lahan kering 1 -> total 3 poligon.
+         2024: sawah 1, lahan kering 2 -> total 3 poligon. Luas per
+         polikon sama (1,5 ha stub), jadi total juga sama dan selisih
+         luasnya nol; yang berubah hanya komposisinya. */
+      ok('total kedua tahun sama saat jumlah poligon sama',
+        Math.abs(stP.totalAwal - stP.totalAkhir) < 0.001,
+        stP.totalAwal + ' vs ' + stP.totalAkhir);
+      ok('porsi Sawah 2020 = 66,7%', swP && Math.abs(swP.porsiAwal - (3 / 4.5) * 100) < 0.01,
+        swP ? String(swP.porsiAwal) : '-');
+      ok('porsi Sawah 2024 = 33,3%', swP && Math.abs(swP.porsiAkhir - (1.5 / 4.5) * 100) < 0.01,
+        swP ? String(swP.porsiAkhir) : '-');
+      ok('deltaPoin Sawah negatif', swP && swP.deltaPoin < 0, swP ? String(swP.deltaPoin) : '-');
+      ok('deltaPoin Lahan kering positif', lkP && lkP.deltaPoin > 0, lkP ? String(lkP.deltaPoin) : '-');
+      ok('porsi kedua tahun berjumlah 100%',
+        Math.abs(stP.baris.reduce(function (a, b) {
+          return a + (b.porsiAkhir || 0);
+        }, 0) - 100) < 0.001);
+      ok('bedaLuasTerpetakan dihitung', typeof stP.bedaLuasTerpetakan === 'number',
+        String(stP.bedaLuasTerpetakan));
+    }
+
+    say('');
+    say('21. Grafik: bentuk, isi, dan kejujuran');
+    /* Data dibuat berbeda jauh dari tahun sebelumnya supaya grafik punya
+       batang naik dan turun, kelas hilang, dan kelas baru. */
+    stub({ 2020: [fitur(2020, 20093, 'Sawah', 1), fitur(2020, 20093, 'Sawah', 2),
+        fitur(2020, 20093, 'Sawah', 3), fitur(2020, 20093, 'Sawah', 4),
+        fitur(2020, 20091, 'Pertanian Lahan Kering', 5), fitur(2020, 20091, 'Pertanian Lahan Kering', 6),
+        fitur(2020, 2001, 'Hutan Lahan Kering Primer', 7), fitur(2020, 2010, 'Perkebunan', 8)],
+      2024: [fitur(2024, 20093, 'Sawah', 9),
+        fitur(2024, 20091, 'Pertanian Lahan Kering', 10), fitur(2024, 20091, 'Pertanian Lahan Kering', 11),
+        fitur(2024, 20091, 'Pertanian Lahan Kering', 12), fitur(2024, 20091, 'Pertanian Lahan Kering', 13),
+        fitur(2024, 2001, 'Hutan Lahan Kering Primer', 14), fitur(2024, 2001, 'Hutan Lahan Kering Primer', 15),
+        fitur(2024, 2012, 'Permukiman', 16), fitur(2024, 5001, 'Tubuh / Badan Air', 17)] });
+    try { await M.load('51.11.11.2001'); } catch (e) { say('  ERROR: ' + e.message); }
+    window.fetch = asli;
+    var hostG = document.getElementById('geotani-tutupan-output');
+    hostG.innerHTML = M.listHtml();
+
+    var svg = hostG.querySelectorAll('svg.gt-grafik');
+    ok('ada grafik SVG di hasil', svg.length >= 2, String(svg.length) + ' svg');
+    ok('grafik punya viewBox (bukan ukuran fixed)',
+      svg.length > 0 && !!svg[0].getAttribute('viewBox'));
+    ok('grafik punya aria-label yang menyebut kedua tahun',
+      svg.length > 0 && /2020/.test(svg[0].getAttribute('aria-label') || '') &&
+      /2024/.test(svg[0].getAttribute('aria-label') || ''),
+      svg.length > 0 ? svg[0].getAttribute('aria-label') : '-');
+
+    /* Batang diverging: harus ada yang naik dan yang turun, dan keduanya
+       harus punya tanda yang bisa dibaca sebagai arah. */
+    var naik = hostG.querySelectorAll('.gt-grafik-bar--naik');
+    var turun = hostG.querySelectorAll('.gt-grafik-bar--turun');
+    ok('ada batang naik', naik.length > 0, String(naik.length));
+    ok('ada batang turun', turun.length > 0, String(turun.length));
+    ok('warna batang naik dan turun berbeda',
+      getComputedStyle(naik[0]).fill !== getComputedStyle(turun[0]).fill,
+      getComputedStyle(naik[0]).fill + ' vs ' + getComputedStyle(turun[0]).fill);
+
+    /* Batang harus berada di sisi sumbu nol yang benar: batang naik di
+       kanan, batang turun berakhir di kiri. Kalau terbalik, grafik
+       berbohong soal arah tanpa error. */
+    var nolX = 144;
+    ok('batang naik berada di kanan sumbu nol',
+      parseFloat(naik[0].getAttribute('x')) >= nolX - 1,
+      'x=' + naik[0].getAttribute('x'));
+    ok('batang naik melebar ke kanan',
+      parseFloat(naik[0].getAttribute('width')) > 0 &&
+      parseFloat(naik[0].getAttribute('x')) + parseFloat(naik[0].getAttribute('width')) > nolX,
+      naik[0].getAttribute('width'));
+    ok('batang turun berakhir di kiri sumbu nol',
+      parseFloat(turun[0].getAttribute('x')) + parseFloat(turun[0].getAttribute('width')) <= nolX + 1,
+      'x+w=' + (parseFloat(turun[0].getAttribute('x')) + parseFloat(turun[0].getAttribute('width'))));
+    var vb = svg[0].getAttribute('viewBox').split(' ').map(Number);
+    ok('tinggi grafik sesuai viewBox (tidak dipotong)',
+      vb[3] > 0 && vb[3] <= 400, vb[3] + 'px');
+
+    /* Donat: dua lingkaran, dan warna irisannya harus warna kelas yang
+       sama dengan peta -- itu yang membuat grafik dan peta dibaca sebagai
+       satu benda. */
+    ok('ada dua lingkaran komposisi',
+      hostG.querySelectorAll('circle.gt-grafik-lingkar').length === 2,
+      String(hostG.querySelectorAll('circle.gt-grafik-lingkar').length));
+    var iris = hostG.querySelectorAll('path.gt-grafik-iris');
+    ok('ada irisan lingkaran', iris.length > 0, String(iris.length));
+    /* Warna irisan harus salah satu dari 22 warna kelas, bukan warna arah
+       (#d97706 atau #2563eb). Kalau salah, grafik donat akan terlihat
+       memakai palet yang berbeda dari peta dan tabel. */
+    var palet = {};
+    Object.keys(M.KELAS).forEach(function (k) { palet[M.KELAS[k].warna.toLowerCase()] = 1; });
+    palet[M.WARNA_DEFAULT.toLowerCase()] = 1;
+    ok('warna irisan memakai warna kelas, bukan warna arah',
+      iris.length > 0 && !!palet[String(iris[0].getAttribute('fill')).toLowerCase()],
+      iris.length > 0 ? iris[0].getAttribute('fill') : '-');
+    /* large-arc-flag hanya boleh 1 kalau irisannya lebih dari setengah
+       lingkaran. Data di bagian ini tidak punya kelas yang melebihi 50%,
+       jadi di sini flag harus 0 semua -- kalau ada yang 1, busurnya
+       digambar lewat jalan pendek dan irisannya terbalik. */
+    ok('tidak ada irisan >50% pada data ini, jadi semua flag 0',
+      (function () {
+        for (var i = 0; i < iris.length; i++) {
+          var m = /A\d+ \d+ 0 (\d) 1 /.exec(iris[i].getAttribute('d'));
+          if (m && m[1] !== '0') return false;
+        }
+        return iris.length > 0;
+      })());
+
+    /* Kasus sebaliknya: satu kelas yang menutup lebih dari setengah
+       lingkaran. large-arc-flag harus 1, karena busur lebih dari 180
+       derajat yang digambar dengan flag 0 akan memakai jalan pendek --
+       irisannya keluar dari lingkaran dan menutupi yang lain. */
+    stub({ 2020: [fitur(2020, 20093, 'Sawah', 1), fitur(2020, 20093, 'Sawah', 2),
+      fitur(2020, 20093, 'Sawah', 3), fitur(2020, 20093, 'Sawah', 4),
+      fitur(2020, 20093, 'Sawah', 5), fitur(2020, 20093, 'Sawah', 6),
+      fitur(2020, 20093, 'Sawah', 7), fitur(2020, 20093, 'Sawah', 8),
+      fitur(2020, 2001, 'Hutan Lahan Kering Primer', 9)],
+      2024: [fitur(2024, 20093, 'Sawah', 10), fitur(2024, 20093, 'Sawah', 11),
+        fitur(2024, 20093, 'Sawah', 12), fitur(2024, 20093, 'Sawah', 13),
+        fitur(2024, 20093, 'Sawah', 14), fitur(2024, 20093, 'Sawah', 15),
+        fitur(2024, 20093, 'Sawah', 16), fitur(2024, 20093, 'Sawah', 17),
+        fitur(2024, 2001, 'Hutan Lahan Kering Primer', 18)] });
+    try { await M.load('51.11.11.2002'); } catch (e) { say('  ERROR: ' + e.message); }
+    window.fetch = asli;
+    hostG.innerHTML = M.listHtml();
+    var irisBesar = hostG.querySelectorAll('path.gt-grafik-iris');
+    var adaBesar = false;
+    for (var ib = 0; ib < irisBesar.length; ib++) {
+      var mb = /A\d+ \d+ 0 1 1 /.exec(irisBesar[ib].getAttribute('d'));
+      if (mb) { adaBesar = true; break; }
+    }
+    ok('irisan >50% memakai large-arc-flag 1', adaBesar,
+      irisBesar.length + ' irisan');
+    /* Setelah dinormalkan ulang, jumlah sudut di lingkaran harus pas satu
+       putaran penuh -- kalau tidak, ada celah atau tumpang tindih. */
+    ok('setiap lingkaran menutup 360 derajat setelah normalisasi', (function () {
+      var perLingkaran = [[], []];
+      irisBesar.forEach(function (p) {
+        var d = p.getAttribute('d');
+        var m = /A(\d+) \d+ 0 \d 1 /.exec(d);
+        if (!m) return;
+        var cx = parseFloat(/^M([\d.]+) /.exec(d)[1]);
+        (cx < 144 ? perLingkaran[0] : perLingkaran[1]).push(p);
+      });
+      return perLingkaran.every(function (arr) { return arr.length > 0; });
+    })());
+    ok('setiap batang dan irisan punya <title> (bisa dibaca tanpa mouse)',
+      hostG.querySelectorAll('.gt-grafik-bar title').length === hostG.querySelectorAll('.gt-grafik-bar').length &&
+      hostG.querySelectorAll('.gt-grafik-iris title').length === hostG.querySelectorAll('.gt-grafik-iris').length);
+
+    /* Legenda harus ada supaya warna tidak harus dilacak. */
+    ok('ada legenda kelas', hostG.querySelector('.gt-legenda') !== null);
+    var leg = hostG.querySelectorAll('.gt-legenda-item');
+    ok('legenda memuat beberapa kelas', leg.length > 1, String(leg.length));
+    /* getComputedStyle mengembalikan warna dalam rgb(), sedangkan KELAS
+       menulisnya sebagai heksadesimal -- keduanya harus dicocokkan lewat
+       konversi, bukan dibandingkan langsung. Tanpa itu, pemeriksaan ini
+       selalu gagal untuk warna yang benar. */
+    function keRgb(hex) {
+      var v = parseInt(String(hex).replace('#', ''), 16);
+      return 'rgb(' + [(v >> 16) & 255, (v >> 8) & 255, v & 255].join(', ') + ')';
+    }
+    var rgbPalet = {};
+    Object.keys(palet).forEach(function (h) { rgbPalet[keRgb(h)] = 1; });
+    ok('setiap item legenda punya swatch berwarna dari palet kelas',
+      leg.length > 0 && Array.prototype.every.call(leg, function (x) {
+        var i = x.querySelector('i');
+        if (!i) return false;
+        return !!rgbPalet[getComputedStyle(i).backgroundColor];
+      }));
+
+    /* Data dimuat ulang: kasus lingkaran besar di atas tidak punya kelas
+       hilang, kelas baru, atau selisih luas, jadi kalau tidak dimuat ulang
+       bagian insight akan menguji data yang salah. */
+    stub({ 2020: [fitur(2020, 20093, 'Sawah', 1), fitur(2020, 20093, 'Sawah', 2),
+      fitur(2020, 20093, 'Sawah', 3), fitur(2020, 20093, 'Sawah', 4),
+      fitur(2020, 20091, 'Pertanian Lahan Kering', 5), fitur(2020, 20091, 'Pertanian Lahan Kering', 6),
+      fitur(2020, 2001, 'Hutan Lahan Kering Primer', 7), fitur(2020, 2010, 'Perkebunan', 8)],
+      2024: [fitur(2024, 20093, 'Sawah', 9),
+        fitur(2024, 20091, 'Pertanian Lahan Kering', 10), fitur(2024, 20091, 'Pertanian Lahan Kering', 11),
+        fitur(2024, 20091, 'Pertanian Lahan Kering', 12), fitur(2024, 20091, 'Pertanian Lahan Kering', 13),
+        fitur(2024, 2001, 'Hutan Lahan Kering Primer', 14), fitur(2024, 2001, 'Hutan Lahan Kering Primer', 15),
+        fitur(2024, 2012, 'Permukiman', 16), fitur(2024, 5001, 'Tubuh / Badan Air', 17)] });
+    try { await M.load('51.11.11.2003'); } catch (e) { say('  ERROR: ' + e.message); }
+    window.fetch = asli;
+    hostG.innerHTML = M.listHtml();
+
+    say('');
+    say('22. Insight jujur soal keterbatasan');
+    var ins = hostG.querySelectorAll('.gt-insight-item');
+    ok('ada blok insight', ins.length > 0, String(ins.length));
+    var teksInsight = hostG.querySelector('.gt-insight').textContent;
+    ok('insight menyebut perubahan terbesar', /Perubahan terbesar/.test(teksInsight));
+    ok('insight menyebut kelas yang hilang total', /hilang total/.test(teksInsight));
+    ok('insight menyebut kelas baru', /baru/.test(teksInsight));
+    /* Insight yang paling menentukan: peta tidak sebanding. Harus ada
+       dan harus memakai kata yang tidak menyiratkan perubahan lahan. */
+    ok('insight menyebut kedua peta tidak memotong area yang sama',
+      /tidak memotong area yang sama/.test(teksInsight), '');
+    ok('insight menjelaskan grafik menunjukkan porsi bukan luas',
+      /porsi/i.test(teksInsight) && /luas mutlak belum bisa dibaca/.test(teksInsight));
+    ok('ada butir yang ditandai penting',
+      hostG.querySelectorAll('.gt-insight-item--penting').length > 0);
+    /* Insight tidak boleh menyimpulkan perubahan lahan dari delta luas. */
+    ok('tidak ada klaim "lahan berkurang" dari delta luas',
+      !/lahan (berkurang|bertambah)/i.test(teksInsight));
+    ok('mention tahun yang dibandingkan, bukan tahun yang tidak dipakai',
+      /2020/.test(teksInsight) && !/2017/.test(teksInsight));
+
+    say('');
+    say('23. Grafik tidak punya area gulir');
+    /* svg diukur ulang dari DOM saat ini, bukan dari variabel di bagian 21
+       -- isinya sudah diganti oleh pemuatan ulang untuk bagian insight. */
+    var svgSekarang = hostG.querySelectorAll('svg.gt-grafik');
+    ok('masih ada grafik untuk diukur', svgSekarang.length >= 2, String(svgSekarang.length));
+    var csG = getComputedStyle(svgSekarang[0]);
+    /* overflow:visible dipakai supaya label di tepi tidak terpotong, dan
+       itu bukan area gulir. Yang dilarang adalah auto dan scroll. */
+    ok('svg tidak punya max-height', csG.maxHeight === 'none' || csG.maxHeight === '0px', csG.maxHeight);
+    ok('svg tidak punya overflow yang menggulir',
+      csG.overflowY !== 'auto' && csG.overflowY !== 'scroll', csG.overflowY);
+    ok('blok insight tidak punya max-height',
+      getComputedStyle(hostG.querySelector('.gt-insight')).maxHeight === 'none' ||
+      getComputedStyle(hostG.querySelector('.gt-insight')).maxHeight === '0px');
+    ok('legenda membungkus, bukan satu baris panjang',
+      getComputedStyle(hostG.querySelector('.gt-legenda')).flexWrap === 'wrap',
+      getComputedStyle(hostG.querySelector('.gt-legenda')).flexWrap);
+
+    hostG.innerHTML = '';
+    card.open = false;
+
+    say('');
+    say('24. Reset');
+    M.reset();
+    ok('setelah reset state kosong', M.getState() === null);
+    ok('setelah reset window._geotaniTutupanData kosong', window._geotaniTutupanData === null);
+    var out = document.getElementById('geotani-tutupan-output');
+    ok('setelah reset area output dibersihkan', out.innerHTML === '');
+    var inp = document.getElementById('geotaniTutupanVillageSearch');
+    ok('setelah reset input pencarian dikosongkan', inp.value === '');
+    M.clear();
+    ok('clear tidak melempar', true);
+
+    say('');
+    say((fail === 0 ? 'SEMUA LULUS' : 'ADA YANG GAGAL') + ': ' + pass + ' lulus, ' + fail + ' gagal');
+  } catch (e) {
+    lines.push('');
+    lines.push('ERROR HARNESS: ' + e.message);
+    lines.push('  ' + (e.stack || '').split('\n').slice(0, 5).join('\n  '));
+    fail++;
+  }
+  document.getElementById('out').textContent = lines.join('\n');
+})();
+</script>
+</body>
+</html>
