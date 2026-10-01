@@ -46,6 +46,70 @@
    Field kd_izin sengaja tidak dipakai meski terlihat menggoda: nilainya
    konstan "056000000002" pada 241.434 dari 241.435 baris, jadi tidak
    memfilter apa pun.
+
+   ═══════════════════════════════════════════════════════════════════
+   MODE KEDUA: CARI NAMA USAHA
+   ═══════════════════════════════════════════════════════════════════
+   Dua mode dalam satu kartu, karena folder KKPR di ATR/BPN berisi 24
+   service dengan bentuk yang sangat berbeda. Ringkasnya:
+
+     Punya NIB, sudah dipakai mode pertama  KKPR_OSS_ALL, KKPR_BERUSAHA
+     Punya NIB, kembaran                   _KKPR_SPR_ALL (= persis
+                                           KKPR_BERUSAHA: baris, SUM
+                                           objectid, dan id_izin sama
+                                           semua), PUSAT_24_25_
+     Punya NIB, tapi isinya sudah tercakup  KKPR_SPR_ALL_PUSAT_24_25,
+                                           KSN_MERAPI, KOTA_Denpasar,
+                                           *_dev, *_dev_new_api (0 baris)
+     TANPA nib, kuncinya lain             kkpr_nonber_all (0),
+                                           kkpr_stranas_all (0),
+                                           kkpr_dev_otomatis (id_proyek_lokasi),
+                                           NONBERUSAHA_STRANAS (924),
+                                           Hasil_Cek_Tumpang_Tindih (17.746),
+                                           HPL_IKN (NIB_HPL), IKN 45/54
+
+   Layer kembaran TIDAK ditambah: menyalinnya hanya menghasilkan dua baris
+   izin yang identik dengan jenis_kkpr berbeda. Yang benar-benar menambah
+   nilai dari kelompok itu cuma kolom Kewenangan dan Tgl_Final di PUSAT_24_25,
+   dan itu terbatas pada satu wilayah kecil -- bukan pencarian nationwide,
+   jadi tidak layak jadi tab sendiri.
+
+   Mode kedua membaca kkpr_spr_all (18.603 baris): satu-satunya layer di
+   folder ini yang punya NAMA_PMHN, jadi satu-satunya yang bisa dijangkau
+   tanpa NIB. Verifikasi lewat NAMA_PMHN LIKE: UNISBA 2, FERRY 15,
+   INDONESIA 1.545.
+
+   TIGA HAL YANG BISA MEMBUAT MODE INI MENYESATKAN
+
+   1. f=geojson TIDAK BISA DIPAKAI di layer ini. Terbukti: query
+      PROVINSI='Aceh' dengan f=geojson mengembalikan 0 fitur, dengan
+      f=json mengembalikan 3. service tetap mengiklankan
+      "JSON, geoJSON" di supportedQueryFormats, jadi ini bukan salah
+      parameter. Geometrinya datang sebagai esriGeometry.rings, jadi
+      dikonversi lewat esriKeTurf() dari window.GeoTaniLbsLsd -- bukan
+      dipakai langsung seperti hasil GeoJSON.
+
+   2. LUAS ADALAH STRING BUKAN ANGKA. Nilai aslinya "47324 m2" dan
+      "93968.2851474 m2", sementara NILAI_INVEST dan NILAI_PNBP juga string.
+      Semua dikonversi di sisi klien. Nilai yang gagal di-parse ditampilkan
+      mentah -- bukan jadi 0, karena 0 adalah jawaban dan sedangkan teks
+      aslinya yang gagal dibaca adalah ketidaktahuan.
+
+   3. NAMA USAHA DI MODE INI BUKAN DARI CODEBOOK LOKAL. Layer punya
+      NOMEN_KBLI sendiri dari ATR/BPN, jadi kbli-2020.json tidak diunduh
+      sama sekali di mode ini. Dua sumber nama yang berbeda itu tidak boleh
+      disamakan: yang dari codebook adalah terjemahan, yang ini bawaan
+      server. Kalau suatu saat keduanya tampil berdampingan, sumbernya
+      ikut ditulis supaya tidak dibaca sebagai angka yang sama.
+
+   JOIN KE NIB, DAN KENAPA TIDAK BISA DIANDALKAN
+   kkpr_spr_all tidak punya field nib. Satu-satunya jalan ke NIB adalah
+   IDPLOK, yang nilainya sama dengan id_proyek_lokasi di OSS_ALL -- terbukti
+   IDPLOK 'L-201912302351328643730' di kkpr_spr_all = NIB 9120107131248 di
+   OSS_ALL. Tapi dari 20 sampel IDPLOK, hanya 5 yang ketemu. Jadi tombol
+   "cari NIB" hanya muncul kalau join benar-benar kena, dan hasil yang
+   dibuka adalah angka milik OSS_ALL. Menampilkan tombol yang tiga perempat
+   gagal akan merusak kepercayaan pada semua angka lain.
    */
 (function () {
   'use strict';
@@ -54,6 +118,22 @@
   var DASAR_LAYER = 'https://gistaru.atrbpn.go.id/arcgis/rest/services/KKPR/';
   var LAYER_OSS = DASAR_LAYER + 'KKPR_OSS_ALL/MapServer/0/query';
   var LAYER_BERUSAHA = DASAR_LAYER + 'KKPR_BERUSAHA/MapServer/0/query';
+
+  /* Mode kedua. Layer ini satu-satunya di folder KKPR yang punya NAMA_PMHN,
+     jadi satu-satunya yang bisa dijangkau tanpa NIB. 18.603 baris, extent
+     95,23 - 140,87 BT dan -10,76 - 5,89 LU. */
+  var LAYER_NAMA = DASAR_LAYER + 'kkpr_spr_all/MapServer/0/query';
+
+  /* LUAS, NILAI_INVEST, dan NILAI_PNBP di layer ini semuanya STRING, bukan
+     angka -- "47324 m2", "21000000000". Kalau dibaca langsung tanpa
+     konversi, hasilnya NaN dan luas tiap baris kosong tanpa error. */
+  var FIELDS_NAMA = 'IDPLOK,NAMA_PMHN,NOMEN_KBLI,KODE_KBLI,PROVINSI,KAB_KOT,'
+    + 'KWNGN,LUAS,NO_KKPR,TGL_KKPR,NILAI_INVEST,NILAI_PNBP';
+
+  /* Batas server: maxRecordCount 1000 di layer ini. requestRecordCount yang
+     lebih besar tetap dijawab 1000, jadi paginasi selalu 1000 per halaman
+     dan angka "dipotong" harus dinyatakan. */
+  var BATAS_NAMA = 1000;
 
   /* Dipakai kalau services ATR/BPN tidak mengirim header CORS. Pola yang
      sama sudah dipakai attribute-table.js untuk ArcGIS, jadi tidak ada
@@ -93,6 +173,17 @@
   var kodebook = null;
   var kodebookMuat = null;
 
+  /* Mode kedua punya state sendiri dan peta sendiri. Menyatukannya dengan
+     state NIB akan membuat "Reset Polygon" menghapus hasil yang bukan miliknya,
+     dan dua hasil dari dua sumber berbeda akan tercampur di satu tabel --
+     padahal kolomnya tidak sama sekali. */
+  var stateNama = null;
+  var mapLayerNama = null;
+  var cacheNama = new Map();
+  var inFlightNama = new Map();
+  var tokenNama = 0;
+  var provinsiCache = null;
+
   function esc(v) {
     if (v == null) return '-';
     return String(v).replace(/[&<>"']/g, function (c) {
@@ -130,6 +221,133 @@
     return /^\d{13}$/.test(v);
   }
 
+  /* ── utilitas mode kedua ──
+     semua di sini bekerja pada nilai yang datang sebagai STRING dari layer
+     kkpr_spr_all. Kegagalan parse dikembalikan sebagai null, bukan 0:
+     0 adalah jawaban yang sah dan tidak boleh dipakai sebagai pengganti
+     ketidaktahuan. */
+
+  /* LUAS di layer ini BUKAN satu format. Dari 1.000 baris pertama yang
+     dicek, hanya sebagian yang bisa dibaca sebagai satu angka sederhana:
+
+       "47324 m2", "93968.2851474 m2"   titik = desimal        778 baris
+       "19,97 Ha", "3,01 Ha"            koma  = desimal         34 baris
+       "5.652,64 m2"                    titik = RIBUAN, koma   = desimal
+       "104.841,05 m2"                    10 baris
+       "30.474 m2"                       3 desimal -> seribu  28 baris
+
+     Dua yang pertama tidak boleh disamakan: "93968.2851474" jelas desimal
+     (7 desimal), sementara "30.474" bisa berarti 30,474 atau 30.474 --
+     dan untuk luas tanah, 30.474 ha masuk akal sedangkan 30,474 m2 tidak.
+     Jadi titik TIGA desimal di akhir dianggap pemisah ribuan, titik lain
+     dianggap desimal. Bukan tebakan tanpa dasar: "30.474" dan "93968.285"
+     ada di baris yang sama, jadi keduanya harus bisa dibaca.
+
+     Yang punya titik DAN koma ("5.652,64"), titik pasti ribuan.
+
+     Satuan juga tidak seragam: 843 baris m2, 146 baris Ha, dan 1 baris
+     "m�" (mojibake). Konversi ke satuan sama dilakukan di sini supaya
+     penjumlahan tidak menjumlahkan m2 dengan Ha, yang akan menghasilkan
+     angka 10.000 kali lebih besar dari yang benar tanpa error sama sekali.
+
+     Hasil selalu dalam m2. Kegagalan parse mengembalikan null, bukan 0:
+     0 adalah jawaban yang sah, sedangkan string yang tidak terbaca adalah
+     ketidaktahuan, dan keduanya tidak boleh disamakan di tabel. */
+  function parseLuas(v) {
+    var s = String(v == null ? '' : v).replace(/ /g, ' ').trim();
+    if (!s || s === '<Null>') return null;
+
+    /* Satuan diambil dari token terakhir, tapi hanya kalau looks like
+       satuan -- supaya "242,06" (tanpa satuan) tidak kehilangan angkanya
+       hanya karena tidak ada spasi. */
+    var satuan = '';
+    var mSat = s.match(/\s*(m2|m\^?2|ha)$/i);
+    if (mSat) {
+      satuan = mSat[1].toLowerCase();
+      s = s.slice(0, mSat.index).trim();
+    } else if (/\s/.test(s)) {
+      /* Ada spasi tapi bukan satuan yang dikenal: sisanya dibuang dan
+         hasilnya dianggap tidak terbaca. Menebak satuan dari kata yang
+         tak dikenal akan menghasilkan angka yang terlihat sahih. */
+      return null;
+    }
+
+    if (!/^[0-9.,\s]+$/.test(s)) return null;
+
+    var angka;
+    if (s.indexOf(',') >= 0 && s.indexOf('.') >= 0) {
+      /* Ribuan gaya Indonesia: titik membuang, koma jadi titik. */
+      angka = s.replace(/\./g, '').replace(',', '.');
+    } else if (s.indexOf(',') >= 0) {
+      /* Hanya koma: desimal gaya Indonesia. */
+      angka = s.replace(',', '.');
+    } else if (/\.\d{3}$/.test(s) && !/\.\d{1,2}$/.test(s)) {
+      /* Titik tiga desimal di akhir dan bukan satu-dua desimal: ribuan.
+         30.474 -> 30474, sedangkan 93968.2851474 tetap apa adanya karena
+         desimalnya lebih dari tiga. */
+      angka = s.replace(/\./g, '');
+    } else {
+      angka = s;
+    }
+
+    /* Buang spasi sisa ("2 500") lalu pastikan benar-benar angka. */
+    angka = angka.replace(/\s+/g, '');
+    if (!/^\d+(\.\d+)?$/.test(angka)) return null;
+    var n = Number(angka);
+    if (!isFinite(n)) return null;
+
+    /* Ha ke m2. Satu-satunya konversi satuan yang dilakukan di sini. */
+    if (satuan === 'ha') return n * 10000;
+    return n;
+  }
+
+  /* NILAI_INVEST = "21000000000", NILAI_PNBP = "802167". Keduanya string
+     dan keduanya sudah dalam rupiah penuh, jadi tidak ada konversi satuan
+     -- cukup pastikan itu angka. Nilai seperti "1,2 M" tidak ditemukan dan
+     akan jadi null. */
+  function parseRupiah(v) {
+    var s = String(v == null ? '' : v).replace(/[\s.]/g, '').replace(/,/g, '.');
+    if (!/^\d+(\.\d+)?$/.test(s)) return null;
+    var n = Number(s);
+    return isFinite(n) ? n : null;
+  }
+
+  function formatRupiah(n) {
+    if (n == null || !isFinite(n)) return '-';
+    return 'Rp ' + Math.round(n).toLocaleString('id-ID');
+  }
+
+  /* TGL_KKPR di layer ini datang sebagai epoch milidetik, sama seperti
+     created_at di layer NIB, dan 0 berarti server tidak mengisinya -- bukan
+     1 Januari 1970. */
+  function tanggalMs(ms) {
+    if (ms == null) return '-';
+    var n = Number(ms);
+    if (!isFinite(n) || n <= 0) return '-';
+    try {
+      return new Date(n).toLocaleDateString('id-ID', {
+        day: '2-digit', month: 'short', year: 'numeric'
+      });
+    } catch (e) {
+      return '-';
+    }
+  }
+
+  /* Nama pemohon dari server sometimes punya spasi ganda atau spasi di
+     awal/akhir. Untuk LIKE, "  UNISBA " tidak akan cocok dengan "%UNISBA%"
+     kalau yang diketik pengguna persis, jadi input dibersihkan dan query
+     dibuat dari teks yang sudah bersih -- bukan dari input mentah. */
+  function bersihNama(v) {
+    return String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
+  }
+
+  /* Kutip nilai string untuk WHERE. Nama pemohon bisa mengandung tanda
+     kutip tunggal ("GUDANG PT 'X'"), dan tanda itu harus dilipat dua kali
+     supaya tidak menutup query dan membuat seluruh WHERE gagal. */
+  function kutipSql(s) {
+    return "'" + String(s == null ? '' : s).replace(/'/g, "''") + "'";
+  }
+
   /* Host proxy expects the inner URL mentah --JX, bukan percent-encoded.
      Karena itu query string-nya dirakit sendiri, tanpa encode. */
   function buildUrl(opts) {
@@ -148,7 +366,32 @@
       q.push('inSR=4326');
       q.push('spatialRel=esriSpatialRelIntersects');
     }
+    if (o.offset) q.push('resultOffset=' + o.offset);
     return HOST_PROXY + (o.layer || LAYER_OSS) + '?' + q.join('&');
+  }
+
+  /* URL khusus mode kedua, dan bedanya bukan sekadar mengganti nama layer.
+
+     f=json, bukan f=geojson. Terbukti: PROVINSI='Aceh' di kkpr_spr_all
+     mengembalikan 0 fitur dengan f=geojson dan 3 fitur dengan f=json,
+     padahal service mengiklankan "JSON, geoJSON" di supportedQueryFormats.
+     Jadi hasil f=json di sini datang sebagai esriGeometry.rings dan WAJIB
+     dikonversi lewat esriKeTurf() -- bukan dipakai langsung seperti GeoJSON.
+
+     where juga tetap mentah, sama seperti mode pertama: proxy ini tidak
+     meng-encode URL di dalamnya, jadi parameter harus ikut sebagai & biasa. */
+  function buildUrlNama(opts) {
+    var o = opts || {};
+    var q = [
+      'f=json',
+      'where=' + (o.where || '1=1'),
+      'outFields=' + FIELDS_NAMA,
+      'returnGeometry=true',
+      'outSR=4326',
+      'resultRecordCount=' + BATAS_NAMA
+    ];
+    if (o.offset) q.push('resultOffset=' + o.offset);
+    return HOST_PROXY + LAYER_NAMA + '?' + q.join('&');
   }
 
   function corsUrl(url) {
@@ -439,6 +682,268 @@
     return !!(hasil && hasil.grup && hasil.grup.length);
   }
 
+  /* ══════════════════════════════════════════════════════════════════
+     MODE KEDUA: CARI NAMA USAHA -- kkpr_spr_all
+     ══════════════════════════════════════════════════════════════════ */
+
+  /* Daftar provinsi untuk dropdown.
+
+     groupByFieldsForStatistics TIDAK bisa dipakai di layer ini: query
+     groupBy PROVINSI membalas {"error":{"code":400,"message":"Unable to
+     complete operation."}} -- dicoba dan gagal. Jadi daftar provinsi
+     dikumpulkan dengan resultOffset, satu halaman 1000 baris per
+     permintaan, dan berhenti begitu halaman terurut kehabisan nilai baru.
+
+     18.603 baris total berarti 19 permintaan untuk daftar lengkap. Itu
+     banyak, jadi hasilnya disimpan di cache dan HANYA diambil saat dropdown
+     dibuka untuk pertama kali -- bukan bersama setiap pencarian. */
+  var HALAMAN_PROVINSI = 1000;
+
+  async function daftarProvinsi() {
+    if (provinsiCache) return provinsiCache;
+    var seen = new Set();
+    var offset = 0;
+    /* Pengaman terhadap halaman kosong yang diulang tanpa henti. Sembilan
+       belas halaman memang cukup untuk 18.603 baris, tapi server yang salah
+       akan mengembalikan offset yang sama selamanya dan loop ini tidak akan
+       pernah berhenti. */
+    var maxIterasi = 40;
+    for (var i = 0; i < maxIterasi; i++) {
+      var url = buildUrlNama({ where: '1=1', offset: offset });
+      var json = await fetchJson(url);
+      var fitur = (json && json.features) || [];
+      if (!fitur.length) break;
+      for (var f = 0; f < fitur.length; f++) {
+        var p = (fitur[f] && fitur[f].attributes) || {};
+        var prov = String(p.PROVINSI || '').replace(/\s+/g, ' ').trim();
+        if (prov) seen.add(prov);
+      }
+      if (fitur.length < HALAMAN_PROVINSI) break;
+      offset += HALAMAN_PROVINSI;
+    }
+    provinsiCache = Array.from(seen).sort(function (a, b) { return a.localeCompare(b, 'id'); });
+    return provinsiCache;
+  }
+
+  /* Susun WHERE dari input pengguna. Setiap bagian yang kosong TIDAK
+     ditambahkan -- jadi satu pencarian "UNISBA" tanpa provinsi tidak
+     berubah jadi dua syarat. Satu-satunya syarat wajibnya ada satu saja,
+     yaitu minimal satu filter, supaya "tampilkan semua 18.603 baris" tidak
+     bisa terjadi karena tombolnya ditekan tanpa sengaja.
+
+     WILDCARD LIKE DI-TULIS SEBAGAI %25, BUKAN %. Ini bukan gaya penulisan.
+
+     WAF di depan tres/proxy.ashx menolak request yang memuat persen mentah
+     di query string, dan membalas HTTP 200 dengan badan HTML
+     "<title>Request Rejected</title>" beserta support ID -- bukan 4xx, jadi
+     fetch() menganggapnya sukses dan res.json() gagal dengan
+     "Unexpected token '<'". Terverifikasi: raw '%' ditolak, %25 dijawab
+     {"count":2}. Query tanpa wildcard, dan query dengan kurung UPPER(),
+     keduanya lolos -- jadi penolakannya benar-benar hanya pada persen.
+
+     ArcGIS men-decode %25 kembali menjadi % sebelum mem-parsing WHERE, jadi
+     polanya tetap bekerja seperti LIKE '%...%'.
+
+     Perhatikan juga UPPER(): nama pemohon di server tidak konsisten
+     huruf besar-kecilnya, dan LIKE di ArcGIS sensitif huruf. Tanpa UPPER,
+     "unisba" tidak akan menemukan "UNISBA". */
+  var WILDCARD = '%25';
+
+  function whereNama(nama, provinsi) {
+    var syarat = [];
+    var n = bersihNama(nama);
+    var p = bersihNama(provinsi);
+    if (n) {
+      /* Kutip nilai tetap harus dilipat dua kali, dan itu dilakukan oleh
+         kutipSql sebelum penyisipan wildcard, supaya tanda kutip milik
+         pengguna tidak bisa menutup query. */
+      syarat.push('UPPER(NAMA_PMHN) LIKE ' + kutipSql(WILDCARD + n.toUpperCase() + WILDCARD));
+    }
+    if (p) syarat.push('PROVINSI=' + kutipSql(p));
+    if (!syarat.length) return null;
+    return syarat.join(' AND ');
+  }
+
+  /* Konversi satu fitur kkpr_spr_all menjadi baris tabel.
+
+     Geometri f=json berupa esriGeometry.rings, jadi wajib lewat
+     esriKeTurf(). Fungsi itu milik window.GeoTaniLbsLsd -- dipinjam, bukan
+     disalin, supaya konversi rings di repo ini cuma ada satu implementasi.
+     Kalau modul itu belum termuat, geometri ditolak dan baris tetap
+     ditampilkan tanpa peta: lebih baik daripada tidak menampilkan izin
+     sama sekali hanya karena satu script belum dimuat. */
+  function keGeoJson(feat) {
+    var rings = feat && feat.geometry && feat.geometry.rings;
+    if (!rings) return null;
+    var m = window.GeoTaniLbsLsd;
+    if (m && typeof m.esriKeTurf === 'function') {
+      var f = m.esriKeTurf(feat);
+      return (f && f.geometry) || null;
+    }
+    return { type: 'Polygon', coordinates: rings };
+  }
+
+  /* Satu geometry per IDPLOK, bukan per baris.
+
+     Feature yang sama bisa muncul lebih dari sekali: query bbox di Aceh
+     mengembalikan "ACEH ENERGI EOLIANA" dua kali, dan itu bukan Request
+     kembar, melainkan satu bidang dengan lebih dari satu izin. IDPLOK
+     dipakai sebagai kunci -- itu id proyek lokasi, yang sama dengan
+     id_proyek_lokasi di OSS_ALL, dan satu lokasi Normally punya satu
+     bidang. */
+  function grupkanNama(features) {
+    var grup = [];
+    var peta = new Map();
+    for (var i = 0; i < features.length; i++) {
+      var f = features[i];
+      if (!f) continue;
+      var p = f.attributes || {};
+      var idplok = String(p.IDPLOK || '').trim();
+      /* Baris tanpa IDPLOK tidak bisa di Keys dengan aman: kalau
+         semuanya kosong, semua akan collapse jadi satu bidang besar yang
+         salah. Baris seperti itu tetap ditampilkan, satu per baris. */
+      var kunci = idplok ? 'p:' + idplok : 'x:' + i;
+      var geom = keGeoJson(f);
+      var ada = peta.get(kunci);
+      if (!ada) {
+        ada = {
+          kunci: kunci,
+          geometry: geom,
+          idplok: idplok,
+          nama: bersihNama(p.NAMA_PMHN) || '(tanpa nama)',
+          aktivitas: bersihkan(p.NOMEN_KBLI),
+          kodeKbli: bersihkan(p.KODE_KBLI),
+          provinsi: bersihkan(p.PROVINSI),
+          kabKota: bersihkan(p.KAB_KOT),
+          kewenangan: bersihkan(p.KWNGN),
+          noKkpr: bersihkan(p.NO_KKPR),
+          tglKkpr: tanggalMs(p.TGL_KKPR),
+          luasM2: parseLuas(p.LUAS),
+          luasMentah: bersihkan(p.LUAS),
+          investasi: parseRupiah(p.NILAI_INVEST),
+          pnbp: parseRupiah(p.NILAI_PNBP),
+          /* NIB diisi belakangan oleh lookupNibUntuk(). Kosong berarti
+             join tidak kena -- dan itu kondisi yang biasa, bukan error. */
+          nib: null,
+          /* Atribut mentah disimpan supaya popup bisa menampilkan nilai
+             server apa adanya kalau format lokal gagal mem-parse. */
+          attrs: p,
+          ganjil: geom ? ganjil(geom) : true
+        };
+        peta.set(kunci, ada);
+        grup.push(ada);
+      }
+    }
+    grup.sort(function (a, b) { return (b.luasM2 || 0) - (a.luasM2 || 0); });
+    return grup;
+  }
+
+  /* Server mengisi banyak field dengan satu spasi (" ", "NO_KKPR": " "),
+     yang secara visual sama dengan kosong tapi tidak sama dengan null.
+     Perlakukan sebagai kosong supaya tabel tidak penuh sel berisi " ". */
+  function bersihkan(v) {
+    var s = String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
+    return (s === '-' || s === '-') ? '' : s;
+  }
+
+  /* Satu request. Tidak ada paginasi di sini: BATAS_NAMA sudah 1000 dan
+     exceedTransferLimit pada hasil itu yang dilaporkan, bukan diperbaiki
+     diam-diam dengan mengambil halaman berikutnya. Layer ini mengembalikan
+     1.545 baris untuk nama umum; mengambil semua halaman hanya akan
+     memperlambat tanpa memberi jawaban yang lebih benar, karena pengguna
+     yang mengetik "INDONESIA" sedang mencari perusahaan tertentu, bukan
+     daftar seluruhnya. */
+  async function queryNama(where) {
+    var json = await fetchJson(buildUrlNama({ where: where }));
+    if (json && json.error) {
+      throw new Error('ArcGIS ' + (json.error.code || '?') + ': ' + (json.error.message || 'tanpa pesan'));
+    }
+    var fitur = (json && json.features) || [];
+    return {
+      fitur: fitur,
+      terpotong: !!(json && json.exceededTransferLimit) || fitur.length >= BATAS_NAMA
+    };
+  }
+
+  /* Cari NIB untuk satu IDPLOK.
+
+    Join kkpr_spr_all ke OSS_ALL lewat IDPLOK = id_proyek_lokasi. Dari 20
+     sampel hanya 5 yang ketemu, jadi sebagian besar GAGAL dan itu kondisi biasa.
+
+     Karena itu hasilnya dipakai sebagai tambahan, bukan sumber. Kalau tidak
+     ketemu, baris tetap tampil tanpa NIB dan tombol "cari NIB" tidak
+     muncul sama sekali -- bukan muncul lalu gagal. */
+  async function lookupNibUntuk(idplok) {
+    var id = String(idplok || '').trim();
+    if (!id) return null;
+    var where = 'id_proyek_lokasi=' + kutipSql(id);
+    var url = buildUrl({ where: where, fields: 'nib,id_proyek_lokasi', limit: 1 });
+    var json = await fetchJson(url);
+    var fitur = (json && json.features) || [];
+    if (!fitur.length) return null;
+    var p = fitur[0] && (fitur[0].properties || {});
+    /* f=geojson mengembalikan properties; kalau server suatu saat mengubah
+       bentuknya, fallback membaca attributes supaya tidak diam-diam null. */
+    var attrs = p && p.nib !== undefined ? p : ((fitur[0] && fitur[0].attributes) || {});
+    return attrs.nib ? String(attrs.nib) : null;
+  }
+
+  /* isiNibUntuk grup. Request per IDPLOK bisa banyak untuk hasil besar, jadi
+     dibatasi 12: mengisi semuanya berarti puluhan request dan itu lambat
+     tanpa manfaat. Baris yang tidak sempat dicek ditandai apa adanya. */
+  async function isiNibUntuk(grup) {
+    var batasi = grup.slice(0, 12);
+    var sisa = grup.slice(12);
+    var antre = Promise.all(batasi.map(function (g) {
+      return lookupNibUntuk(g.idplok).then(function (nib) {
+        g.nib = nib;
+      }).catch(function () {
+        /* Join gagal adalah kondisi biasa (3 dari 4 gagal). Tidak boleh
+           menggagalkan seluruh pencarian karena satu request join gagal. */
+        g.nib = null;
+      });
+    }));
+    for (var i = 0; i < sisa.length; i++) sisa[i].nibTidakDicek = true;
+    await antre;
+    return grup;
+  }
+
+  function loadNama(opts) {
+    var o = opts || {};
+    var where = whereNama(o.nama, o.provinsi);
+    if (!where) return Promise.reject(new Error('Isi nama usaha atau pilih provinsi lebih dulu.'));
+    var kunci = where;
+
+    if (cacheNama.has(kunci)) return Promise.resolve(cacheNama.get(kunci));
+    if (inFlightNama.has(kunci)) return inFlightNama.get(kunci);
+
+    var p = queryNama(where).then(function (got) {
+      inFlightNama.delete(kunci);
+      var grup = grupkanNama(got.fitur);
+      var hasil = {
+        where: where,
+        nama: bersihNama(o.nama),
+        provinsi: bersihNama(o.provinsi),
+        grup: grup,
+        total: got.fitur.length,
+        terpotong: got.terpotong
+      };
+      return isiNibUntuk(grup).then(function () { return hasil; });
+    }).then(function (hasil) {
+      /* Cache tidak menyimpan hasil kosong, sama seperti mode NIB: data
+         ATR/BPN berubah, dan mengunci "tidak ditemukan" membuat pengguna
+         yakin layer itu tidak punya data padahal filter-nya terlalu sempit. */
+      if (hasil.grup.length) cacheNama.set(kunci, hasil);
+      return hasil;
+    }).catch(function (err) {
+      inFlightNama.delete(kunci);
+      throw err;
+    });
+
+    inFlightNama.set(kunci, p);
+    return p;
+  }
+
   function popupHtml(g) {
     var baris = '';
     for (var i = 0; i < g.izin.length; i++) {
@@ -465,6 +970,218 @@
       window.map.removeLayer(mapLayer);
     }
     mapLayer = null;
+  }
+
+  /* Peta mode kedua. Warna sengaja sama dengan mode NIB: dua mode ini
+     menampilkan hal yang sama (bidang KKPR), jadi warna yang berbeda akan
+     membuat pengguna mengira yang di layar adalah layer yang lain.
+
+     Layer tanpa geometri TIDAK diberi warna merah. Merah di sini berarti
+     geometri tidak wajar, yaitu ada masalah; tidak ada geometri sama
+     sekali adalah masalah berbeda dan tidak boleh memakai tanda yang sama.
+     Baris seperti itu tetap tampil di daftar tanpa peta. */
+  function clearMapNama() {
+    if (mapLayerNama && window.map && window.map.hasLayer(mapLayerNama)) {
+      window.map.removeLayer(mapLayerNama);
+    }
+    mapLayerNama = null;
+  }
+
+  function gambarNama(grup) {
+    clearMapNama();
+    if (!grupnyaAda({ grup: grup }) || !window.L || !window.map) return false;
+    var items = [];
+    for (var i = 0; i < grup.length; i++) {
+      var g = grup[i];
+      if (!g.geometry) continue;
+      items.push(window.L.geoJSON(g.geometry, {
+        style: g.ganjil
+          ? { color: '#dc2626', weight: 2, dashArray: '5,4', fillColor: '#dc2626', fillOpacity: 0.12 }
+          : { color: '#0e7490', weight: 2, fillColor: '#22d3ee', fillOpacity: 0.25 }
+      }));
+    }
+    if (!items.length) return false;
+    mapLayerNama = window.L.featureGroup(items).addTo(window.map);
+    return true;
+  }
+
+  function zoomKeNama(grup) {
+    /* Hanya grup yang punya geometri yang boleh dipakai untuk zoom. Kalau
+       tidak ada satu pun, fitBounds akan menerima daftar kosong dan melempar
+       error, bukan diam-diam tidak menggeser kamera. */
+    var punyaGeom = [];
+    for (var i = 0; i < (grup || []).length; i++) {
+      if (grup[i] && grup[i].geometry) punyaGeom.push(grup[i]);
+    }
+    var u = unionBbox(punyaGeom);
+    if (!u || !window.map || !window.L) return false;
+    window.map.fitBounds(
+      window.L.latLngBounds([[u.miny, u.minx], [u.maxy, u.maxx]]).pad(0.15),
+      { maxZoom: 18 }
+    );
+    return true;
+  }
+
+  function drawOnMapNama(opts) {
+    if (!stateNama) return false;
+    var o = opts || {};
+    if (!gambarNama(stateNama.grup)) return false;
+    if (o.flyTo !== false) zoomKeNama(stateNama.grup);
+    return true;
+  }
+
+  function popupNama(g) {
+    var baris = '';
+    function tambah(label, nilai, mentah) {
+      if (nilai === '' || nilai == null) return;
+      baris += '<div class="geotani-sls-popup-row"><span>' + esc(label) +
+        '</span><b>' + (mentah ? nilai : esc(nilai)) + '</b></div>';
+    }
+    tambah('Aktivitas', g.aktivitas);
+    tambah('Kode KBLI', g.kodeKbli);
+    tambah('Provinsi', g.provinsi);
+    tambah('Kab/Kota', g.kabKota);
+    tambah('Kewenangan', g.kewenangan);
+    tambah('No. KKPR', g.noKkpr);
+    tambah('Tanggal KKPR', g.tglKkpr);
+    /* Luas: kalau gagal di-parse, teks server ditampilkan mentah. Menampilkan
+       0 ha di sini berarti menyatakan tidak ada tanah, dan itu beda dari
+       "server menulis luas dalam format yang tidak.dimahami". */
+    if (g.luasM2 != null) {
+      baris += '<div class="geotani-sls-popup-row"><span>Luas</span><b>' +
+        nomor(g.luasM2) + ' m2</b></div>';
+    } else if (g.luasMentah) {
+      baris += '<div class="geotani-sls-popup-row"><span>Luas</span><b>' +
+        esc(g.luasMentah) + '</b></div>';
+    }
+    if (g.investasi != null) tambah('Investasi', formatRupiah(g.investasi));
+    if (g.pnbp != null) tambah('PNBP', formatRupiah(g.pnbp));
+    /* NIB hanya muncul kalau join ke OSS_ALL kena. */
+    tambah('NIB (dari KKPR_OSS_ALL)', g.nib);
+    return '<div class="geotani-sls-popup">' +
+      '<div class="geotani-sls-popup-title">' + esc(g.nama) + '</div>' +
+      '<div class="geotani-sls-popup-row"><span>Sumber</span><b>ATR/BPN kkpr_spr_all</b></div>' +
+      baris +
+      (g.ganjil && g.geometry
+        ? '<div class="geotani-sls-popup-row"><span>Catatan</span><b>geometri tidak wajar (terlalu besar untuk satu bidang)</b></div>'
+        : '') +
+      (g.geometry ? '' :
+        '<div class="geotani-sls-popup-row"><span>Catatan</span><b>geometri tidak termuat, bidang hanya tampil di daftar</b></div>') +
+      '</div>';
+  }
+
+  function listNamaHtml(hasil) {
+    var s = hasil || stateNama;
+    if (!s) return '';
+    var g = s.grup;
+    if (!g.length) return '';
+
+    var html = '';
+    /* Jumlah luas dijumlahkan hanya dari baris yang luasnya benar-benar
+       terbaca. Kalau ada baris berformat aneh, jumlahnya diberi catatan --
+       bukan diperlakukan sebagai nol, yang akan membuat total terlihat
+       lengkap padahal ada baris yang tidak ikut terhitung. */
+    var totalM2 = 0;
+    var tanpaLuas = 0;
+    for (var i = 0; i < g.length; i++) {
+      if (g[i].luasM2 == null) tanpaLuas += 1; else totalM2 += g[i].luasM2;
+    }
+
+    var nGanjil = 0, tanpaNib = 0, tanpaGeom = 0;
+    for (var j = 0; j < g.length; j++) {
+      if (g[j].ganjil && g[j].geometry) nGanjil += 1;
+      if (!g[j].nib) tanpaNib += 1;
+      if (!g[j].geometry) tanpaGeom += 1;
+    }
+
+    html += '<div class="geotani-sls-desc">';
+    html += 'ATR/BPN <b>kkpr_spr_all</b> menemukan <b>' + nomor(g.length) + ' bidang</b>';
+    if (s.nama) html += ' untuk nama mengandung &ldquo;' + esc(s.nama) + '&rdquo;';
+    if (s.provinsi) html += ' di <b>' + esc(s.provinsi) + '</b>';
+    html += '.</div>';
+
+    var catatan = [];
+    if (s.terpotong) {
+      catatan.push('Server membatasi hasil per permintaan (' + nomor(BATAS_NAMA) +
+        '). Ada data yang tidak ditampilkan, jadi jumlah di bawah understated');
+    }
+    if (tanpaLuas) {
+      catatan.push(nomor(tanpaLuas) +
+        ' baris punya luas dalam format yang tidak dipahami dan tidak ikut dijumlahkan');
+    }
+    if (tanpaGeom) {
+      catatan.push(nomor(tanpaGeom) +
+        ' bidang tidak punya geometri, jadi tidak bisa digambar di peta');
+    }
+    if (nGanjil) {
+      catatan.push(nomor(nGanjil) +
+        ' geometri berukuran tidak wajar (> 5 km) dan ditandai garis putus-putus merah');
+    }
+    if (catatan.length) {
+      html += '<div class="geotani-kkpr-warn">' + esc(catatan.join('. ') + '.') + '</div>';
+    }
+
+    if (g.length - tanpaNib > 0) {
+      html += '<div class="geotani-sls-desc" style="font-size:10px;opacity:.75;">' +
+        nomor(g.length - tanpaNib) + ' dari ' + nomor(g.length) +
+        ' bidang punya NIB yang ditemukan di KKPR_OSS_ALL lewat IDPLOK. ' +
+        'Layer ini tidak punya field NIB, jadi sisanya memang tidak bisa dicocokkan &mdash; ' +
+        'bukan berarti NIB-nya tidak ada.</div>';
+    }
+
+    html += '<div class="geotani-sls-desc" style="margin-top:8px;">Total luas terbaca: <b>' +
+      nomor(Math.round(totalM2)) + ' m2</b></div>';
+
+    html += '<div class="geotani-kkpr-table-wrap"><table class="geotani-kkpr-table">';
+    html += '<thead><tr><th>Nama Pemohon</th><th>Aktivitas</th><th>Kab/Kota</th>'
+      + '<th>Luas</th><th>Kewenangan</th><th>NIB</th></tr></thead><tbody>';
+    for (var k = 0; k < g.length; k++) {
+      var gr = g[k];
+      html += '<tr>';
+      html += '<td>' + esc(gr.nama) + (gr.noKkpr ? '<br><span class="geotani-kkpr-kosong">' +
+        esc(gr.noKkpr) + '</span>' : '') + '</td>';
+      html += '<td>' + (gr.aktivitas
+        ? esc(gr.aktivitas)
+        : (gr.kodeKbli
+          ? '<span class="geotani-kkpr-kode">' + esc(gr.kodeKbli) + '</span>'
+          : '<span class="geotani-kkpr-kosong">-</span>')) + '</td>';
+      html += '<td>' + esc(gr.kabKota || gr.provinsi || '-') + '</td>';
+      /* Tiga keadaan luas harus dibedakan: terbaca, ada tapi formatnya
+         tidak dipahami, dan tidak ada sama sekali. */
+      html += '<td>' + (gr.luasM2 != null
+        ? nomor(Math.round(gr.luasM2)) + ' m2'
+        : (gr.luasMentah
+          ? '<span class="geotani-kkpr-kosong" title="format tidak dipahami oleh modul ini">' +
+            esc(gr.luasMentah) + '</span>'
+          : '<span class="geotani-kkpr-kosong">-</span>')) + '</td>';
+      html += '<td>' + esc(gr.kewenangan || '-') + '</td>';
+      html += '<td>' + (gr.nib
+        ? esc(gr.nib)
+        : (gr.nibTidakDicek
+          ? '<span class="geotani-kkpr-kosong" title="di luar 12 baris pertama yang dicek NIB-nya">tidak dicek</span>'
+          : '<span class="geotani-kkpr-kosong" title="IDPLOK tidak ditemukan di KKPR_OSS_ALL">tidak ketemu</span>')) + '</td>';
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>';
+
+    html += '<div class="geotani-sls-desc" style="margin-top:10px;font-size:10px;opacity:.75;">' +
+      'ATR/BPN GISTARU, service kkpr_spr_all. Nama pemohon dan nomen KBLI dibaca ' +
+      'apa adanya dari server ATR/BPN &mdash; bukan terjemahan codebook lokal.<br>'
+      + 'Kolom luas sudah dikonversi ke m2: server menulis satuan campuran (843 baris m2, ' +
+      '146 baris Ha pada sampel 1.000 baris) dan menuliskannya sebagai teks. Baris yang ' +
+      'formatnya tidak terbaca ditampilkan mentah dan tidak ikut dijumlahkan.<br>'
+      + 'Kolom NIB berasal dari KKPR_OSS_ALL yang dicocokkan lewat ' +
+      'IDPLOK = id_proyek_lokasi, dan hanya cocok pada sebagian baris.</div>';
+    return html;
+  }
+
+  function resetNama() {
+    tokenNama++;
+    cacheNama.clear();
+    inFlightNama.clear();
+    stateNama = null;
+    clearMapNama();
+    return true;
   }
 
   function gambar(grup) {
@@ -725,7 +1442,151 @@
       }
     });
 
+    pasangModeNama();
+    pasangTab();
     return api;
+  }
+
+  /* ── perpindahan tab ──
+     Dipisah dari init() utama dengan alasan yang sama seperti mode kedua:
+     init() menandai tombol NIB sebagai terpasang, jadi wiring tab yang salah
+     tidak boleh ikut menggagalkan mode NIB yang sudah jalan.
+
+     Event delegation di <details>, bukan listener per tombol. Kartunya
+     <details> yang mulai terlipat, dan isinya tetap ada di DOM walau
+     tidak terlihat -- jadi listener yang dipasang di init() tetap hidup
+     tanpa perlu memasang ulang saat kartu dibuka. */
+  function pasangTab() {
+    var host = document.getElementById('geotani-kkpr-card');
+    if (!host || host.__geotaniKkprTabBound) return;
+    host.__geotaniKkprTabBound = true;
+
+    var tablist = host.querySelector('.geotani-kkpr-tab');
+    if (!tablist) return;
+
+    tablist.addEventListener('click', function (ev) {
+      var btn = ev.target.closest ? ev.target.closest('[data-kkpr-tab]') : null;
+      if (!btn) return;
+      var kunci = btn.getAttribute('data-kkpr-tab');
+      var tabBtn = tablist.querySelectorAll('[data-kkpr-tab]');
+      var panel = host.querySelectorAll('[data-kkpr-panel]');
+      for (var i = 0; i < tabBtn.length; i++) {
+        var aktif = tabBtn[i].getAttribute('data-kkpr-tab') === kunci;
+        tabBtn[i].classList.toggle('is-active', aktif);
+        tabBtn[i].setAttribute('aria-selected', aktif ? 'true' : 'false');
+      }
+      for (var j = 0; j < panel.length; j++) {
+        var p = panel[j].getAttribute('data-kkpr-panel') === kunci;
+        panel[j].classList.toggle('is-active', p);
+        panel[j].hidden = !p;
+        panel[j].setAttribute('aria-hidden', p ? 'false' : 'true');
+      }
+      /* Pindah tab TIDAK menghapus hasil mode yang ditinggalkan. Dua mode
+         membaca layer berbeda dan punya request sendiri;<?, memuat ulang
+         satu mode karena yang lain sedang dilihat akan membuang cache yang
+         baru dibangun. "Reset Polygon" masing-masing yang membersihkan. */
+    });
+  }
+
+  /* ── mode kedua: sambungkan tombol dan dropdown ──
+     Dipisah dari init() supaya mode NIB tidak ikut gagal kalau ada yang
+     salah di wiring mode kedua: init() sudah menandai tombol NIB sebagai
+     terpasang, jadi ketidaksesuaian kedua mode tidak saling menimpa. */
+  function pasangModeNama() {
+    var input = document.getElementById('geotaniKkprNamaSearch');
+    var prov = document.getElementById('geotaniKkprNamaProvinsi');
+    var btn = document.getElementById('geotani-kkpr-nama-load');
+    var out = document.getElementById('geotani-kkpr-nama-output');
+    var status = document.getElementById('geotani-kkpr-nama-status');
+    var resetBtn = document.getElementById('geotani-kkpr-nama-reset');
+    if (!btn || !out) return;
+    if (btn.__geotaniKkprNamaBound) return;
+    btn.__geotaniKkprNamaBound = true;
+
+    if (resetBtn && !resetBtn.__geotaniKkprNamaResetBound) {
+      resetBtn.__geotaniKkprNamaResetBound = true;
+      resetBtn.addEventListener('click', function () {
+        resetNama();
+        if (input) input.value = '';
+        if (status) status.textContent = '';
+        out.innerHTML = '';
+        if (input) input.focus();
+      });
+    }
+
+    /* Daftar provinsi diambil sekali, saat select pertama kali dibuka --
+       bukan saat halaman dimuat. 19 request HTTP untuk mengisi dropdown
+       tidak layak dibayar oleh setiap pengunjung yang hanya mau mencari NIB. */
+    if (prov && !prov.__geotaniKkprProvBound) {
+      prov.__geotaniKkprProvBound = true;
+      prov.addEventListener('focus', function () { isiProvinsi(prov, status); });
+      prov.addEventListener('click', function () { isiProvinsi(prov, status); });
+    }
+
+    btn.addEventListener('click', async function () {
+      var nama = input ? bersihNama(input.value) : '';
+      var provinsi = prov && prov.value ? prov.value : '';
+      if (!nama && !provinsi) {
+        if (status) status.textContent = 'Isi nama usaha atau pilih provinsi lebih dulu.';
+        if (input) input.focus();
+        return;
+      }
+
+      var myToken = ++tokenNama;
+      btn.disabled = true;
+      if (out) out.innerHTML = '';
+      if (status) status.textContent = 'Mencari bidang KKPR di ATR/BPN...';
+
+      try {
+        var hasil = await loadNama({ nama: nama, provinsi: provinsi });
+        if (myToken !== tokenNama) return;
+        stateNama = hasil;
+        if (!hasil.grup.length) {
+          out.innerHTML = '';
+          if (status) {
+            status.textContent = 'Tidak ada bidang di kkpr_spr_all yang cocok dengan filter itu. '
+              + 'Coba nama yang lebih pendek atau tanpa provinsi.';
+          }
+          return;
+        }
+        drawOnMapNama();
+        out.innerHTML = listNamaHtml(hasil);
+        if (status) status.textContent = hasil.grup.length + ' bidang dimuat.';
+      } catch (err) {
+        if (myToken !== tokenNama) return;
+        if (out) out.innerHTML = '';
+        if (status) status.textContent = pesanGagal(err);
+      } finally {
+        if (myToken === tokenNama) btn.disabled = false;
+      }
+    });
+  }
+
+  var provinsiMuat = null;
+  async function isiProvinsi(sel, status) {
+    if (!sel || sel.__geotaniKkprProvTerisi) return;
+    if (provinsiMuat) { await provinsiMuat; return; }
+    if (status) status.textContent = 'Mengambil daftar provinsi dari ATR/BPN...';
+    provinsiMuat = daftarProvinsi().then(function (list) {
+      sel.__geotaniKkprProvTerisi = true;
+      var html = '<option value="">Semua provinsi</option>';
+      for (var i = 0; i < list.length; i++) {
+        html += '<option value="' + esc(list[i]) + '">' + esc(list[i]) + '</option>';
+      }
+      sel.innerHTML = html;
+      if (status && status.textContent.indexOf('Mengambil daftar provinsi') === 0) status.textContent = '';
+    }).catch(function () {
+      /* Dropdown yang gagal diisi bukan alasan mematikan panel. Nama usaha
+         saja masih bisa dicari; hanya filter provinsi yang tidak tersedia,
+         dan itu disebut di baris status supaya tidak disalahpikan
+         sebagai "tidak ada provinsi". */
+      sel.innerHTML = '<option value="">Semua provinsi</option>';
+      if (status) {
+        status.textContent = 'Daftar provinsi tidak dapat dimuat. Pencarian nama usaha tetap bisa dipakai.';
+      }
+      provinsiMuat = null;
+    });
+    await provinsiMuat;
   }
 
   var api = {
@@ -744,7 +1605,37 @@
     nibValid: nibValid,
     buildUrl: buildUrl,
     NIB_PANJANG: NIB_PANJANG,
-    getState: function () { return state; }
+    getState: function () { return state; },
+
+    /* mode kedua */
+    LAYER_NAMA: LAYER_NAMA,
+    FIELDS_NAMA: FIELDS_NAMA,
+    BATAS_NAMA: BATAS_NAMA,
+    parseLuas: parseLuas,
+    parseRupiah: parseRupiah,
+    formatRupiah: formatRupiah,
+    tanggalMs: tanggalMs,
+    bersihNama: bersihNama,
+    bersihkanNama: bersihkan,
+    bersihkan: bersihkan,
+    kutipSql: kutipSql,
+    whereNama: whereNama,
+    WILDCARD: WILDCARD,
+    grupkanNama: grupkanNama,
+    keGeoJson: keGeoJson,
+    queryNama: queryNama,
+    loadNama: loadNama,
+    lookupNibUntuk: lookupNibUntuk,
+    isiNibUntuk: isiNibUntuk,
+    daftarProvinsi: daftarProvinsi,
+    isiProvinsi: isiProvinsi,
+    listNamaHtml: listNamaHtml,
+    popupNama: popupNama,
+    buildUrlNama: buildUrlNama,
+    drawOnMapNama: drawOnMapNama,
+    clearMapNama: clearMapNama,
+    resetNama: resetNama,
+    getStateNama: function () { return stateNama; }
   };
   window.GeoTaniKkpr = api;
 

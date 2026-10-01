@@ -1021,7 +1021,10 @@
             <option value="geotoolsTabGeoWatch">GeoWatch</option>
           </select>
 
-                <div id="geotoolsTabMuatData" class="geotools-main-tab-panel">
+          <div id="geotoolsTabMuatData" class="geotools-main-tab-panel">
+            <h4 style="font-size:15px; margin-bottom:4px;">GeoData Analysis</h4>
+            <p class="geotools-desc" style="margin-bottom:20px;">Pilih dan masukkan berbagai sumber data untuk analisis.</p>
+
 
             <div class="geotools-2col-main">
              <div class="geoid-subtabs geotools-upload-tabs">
@@ -1222,7 +1225,9 @@
             </div>
 
              <div id="geotoolsTabDemnas" class="geotools-main-tab-panel">
-              <div class="geotools-2col-side">
+              <h4 style="font-size:15px; margin-bottom:4px;">GeoRaster Analysis</h4>
+                <p class="geotools-desc" style="margin-bottom:20px;">Pilih wilayah untuk menampilkan data raster.</p>
+                <div class="geotools-2col-side">
                  <h4 style="font-size:13px; margin-bottom:4px;">Unduh DEMNAS</h4>
                  <p class="geotools-desc" style="margin-bottom:12px; font-size:11px;">Pilih index raster DEMNAS untuk memuat wilayah yang dapat direkomendasikan, lalu clip dan unduh TIFF tanpa token.</p>
                  <label class="geotani-form-label" for="demnasSearchInput">Cari DEMNAS</label>
@@ -1330,8 +1335,9 @@
           <!-- Panel: Geoportal -->
           <div id="geotoolsTabGeoportal" class="geotools-main-tab-panel">
             <div class="geoportal-sticky-header">
-              <h4 style="font-size:15px; margin-bottom:10px;">Geoportal Hub</h4>
-              <p class="geotools-desc" style="margin-bottom:10px;">Pilih layer untuk ditampilkan di peta.</p>
+              <h4 style="font-size:15px; margin-bottom:4px;">GeoPortal Hub</h4>
+              <p class="geotools-desc" style="margin-bottom:20px;">Pilih wilayah untuk ditampilkan di peta.</p>
+
               <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
               <div class="geoportal-search-container">
                 <div class="geoportal-search-input-wrapper">
@@ -1386,6 +1392,46 @@
                   </button>
                 <div id="geotani-lbslsd-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
                 <div id="geotani-lbslsd-output"></div>
+              </div>
+            </details>
+
+            <!-- LSD 12 Provinsi (ATR/BPN GISTARU). Kartu terpisah, bukan
+                 tambahan di kartu LBS & LSD: dua layer itu mengukur hal
+                 yang sama dari sumber berbeda, dan menjumlahkannya
+                 menghitung sawah dilindungi dua kali. Berdampingan supaya
+                 perbandingannya terlihat, terpisah supaya tidak salah
+                 dijumlahkan. Cakupannya hanya 12 provinsi -- lihat
+                 assets/js/geotani-lsd12prov.js. -->
+            <details class="geotani-lbslsd" id="geotani-lsd12-card" aria-labelledby="geotani-lsd12-title">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#127807;</span>
+                <span>
+                  <b id="geotani-lsd12-title">LSD 12 Provinsi</b>
+                  <small>Lahan Sawah Dilindungi &mdash; ATR/BPN GISTARU</small>
+                </span>
+              </summary>
+              <div class="geotani-lbslsd-body">
+                <p class="geotani-sls-desc">
+                  Menampilkan <b>Lahan Sawah yang Dilindungi</b> dari ATR/BPN di dalam desa
+                  yang dipilih, dengan luas dihitung dari irisan dengan batas desa.
+                  <b>Cakupan hanya 12 provinsi</b>: Aceh, Sumatera Utara, Riau, Kepulauan Riau,
+                  Jambi, Sumatera Selatan, Bengkulu, Lampung, Bangka Belitung, Kalimantan Barat,
+                  Kalimantan Selatan, dan Sulawesi Selatan. Di luar itu, termasuk seluruh Jawa,
+                  layer ini tidak punya data.
+                </p>
+                <div class="geotani-sls-search">
+                  <label class="geotani-form-label" for="geotaniLsd12VillageSearch">Cari nama desa</label>
+                  <input type="text" id="geotaniLsd12VillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
+                  <div id="geotaniLsd12VillageResults" class="geotani-sls-results" hidden></div>
+                  <div id="geotaniLsd12VillageSelected" class="geotani-sls-picked" hidden></div>
+                </div>
+                  <button id="geotani-lsd12-load" class="geotani-btn-print" type="button">Tampilkan LSD 12 Provinsi</button>
+                  <button id="geotani-lsd12-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon LSD 12 Provinsi" aria-label="Reset polygon LSD 12 Provinsi">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    Reset Polygon
+                  </button>
+                <div id="geotani-lsd12-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                <div id="geotani-lsd12-output"></div>
               </div>
             </details>
 
@@ -1864,34 +1910,66 @@
               </summary>
               <div class="geotani-lbslsd-body">
                 <p class="geotani-sls-desc">
-                  Menampilkan bidang tanah dari <b>Kartu Kepemilikan Plekitas</b> untuk satu
-                  NIB. Satu NIB bisa punya beberapa izin, jadi hasilnya tetap berupa
-                  daftar izin di bawah bidangnya.
+                  Menampilkan bidang tanah dari <b>Kartu Kepemilikan Plekitas</b> di ATR/BPN.
+                  Ada dua cara mencari: per <b>NIB</b>, atau per <b>nama pemohon</b>.
+                  Dua mode ini membaca layer berbeda dan tidak bisa digabung &mdash; lihat catatan
+                  di tiap panel.
                 </p>
-                <div class="geotani-sls-search">
-                  <label class="geotani-form-label" for="geotaniKkprSearch">Nomor Induk Bidang (NIB)</label>
-                  <input type="text" id="geotaniKkprSearch" placeholder="Masukkan NIB 13 digit" inputmode="numeric" autocomplete="off" class="geotani-form-input-search" />
+                <div class="geotani-kkpr-tab" role="tablist" aria-label="Cara mencari KKPR">
+                  <button type="button" class="geotani-kkpr-tab-btn is-active" data-kkpr-tab="nib" role="tab" aria-selected="true" aria-controls="geotani-kkpr-panel-nib">Cari NIB</button>
+                  <button type="button" class="geotani-kkpr-tab-btn" data-kkpr-tab="nama" role="tab" aria-selected="false" aria-controls="geotani-kkpr-panel-nama">Cari Nama Usaha</button>
                 </div>
-                <button id="geotani-kkpr-load" class="geotani-btn-print" type="button">Tampilkan NIB</button>
-                <button id="geotani-kkpr-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon KKPR" aria-label="Reset polygon KKPR">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                  Reset Polygon
-                </button>
-                <div id="geotani-kkpr-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
-                <div id="geotani-kkpr-output"></div>
+
+                <div class="geotani-kkpr-panel is-active" id="geotani-kkpr-panel-nib" role="tabpanel" aria-hidden="false" data-kkpr-panel="nib">
+                  <div class="geotani-sls-search">
+                    <label class="geotani-form-label" for="geotaniKkprSearch">Nomor Induk Bidang (NIB)</label>
+                    <input type="text" id="geotaniKkprSearch" placeholder="Masukkan NIB 13 digit" inputmode="numeric" autocomplete="off" class="geotani-form-input-search" />
+                  </div>
+                  <button id="geotani-kkpr-load" class="geotani-btn-print" type="button">Tampilkan NIB</button>
+                  <button id="geotani-kkpr-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon KKPR" aria-label="Reset polygon KKPR">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    Reset Polygon
+                  </button>
+                  <div id="geotani-kkpr-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                  <div id="geotani-kkpr-output"></div>
+                </div>
+
+                <div class="geotani-kkpr-panel" id="geotani-kkpr-panel-nama" role="tabpanel" aria-hidden="true" data-kkpr-panel="nama" hidden>
+                  <div class="geotani-sls-search">
+                    <label class="geotani-form-label" for="geotaniKkprNamaSearch">Nama Pemohon</label>
+                    <input type="text" id="geotaniKkprNamaSearch" placeholder="Sebagian nama, mis. UNISBA" autocomplete="off" class="geotani-form-input-search" />
+                    <label class="geotani-form-label" for="geotaniKkprNamaProvinsi" style="margin-top:6px;">Atau provinsi</label>
+                    <select id="geotaniKkprNamaProvinsi" class="geotani-form-input-search">
+                      <option value="">Semua provinsi</option>
+                    </select>
+                  </div>
+                  <button id="geotani-kkpr-nama-load" class="geotani-btn-print" type="button">Cari Nama Usaha</button>
+                  <button id="geotani-kkpr-nama-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon KKPR" aria-label="Reset polygon KKPR">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    Reset Polygon
+                  </button>
+                  <div id="geotani-kkpr-nama-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                  <div id="geotani-kkpr-nama-output"></div>
+                  <div class="geotani-sls-desc" style="margin-top:8px;font-size:10px;opacity:.75;">
+                    Mode ini membaca service <b>kkpr_spr_all</b> (18.603 bidang), satu-satunya layer
+                    di folder KKPR yang punya nama pemohon. Layer ini tidak punya field NIB, jadi kolom
+                    NIB diambil dari <b>KKPR_OSS_ALL</b> lewat IDPLOK &mdash; dan itu hanya cocok pada
+                    sebagian baris, bukan semuanya.
+                  </div>
+                </div>
               </div>
             </details>
 </div>
 
           <div id="geotoolsTabGeoPangan" class="geotools-main-tab-panel">
-            <div class="geopangan-source-tabs" role="tablist" aria-label="Sumber GeoPangan">
+            <h4 style="font-size:15px; margin-bottom:4px;">GeoPangan</h4>
+                <p class="geotools-desc" style="margin-bottom:25px;">Harga Pangan Nasional - PIHPS & SP2KP</p>
+                <div class="geopangan-source-tabs" role="tablist" aria-label="Sumber GeoPangan">
               <button type="button" class="geopangan-source-tab active" data-geopangan-source="pihps" role="tab" aria-selected="true" aria-controls="geopangan-pihps-panel">PIHPS / BI</button>
               <button type="button" class="geopangan-source-tab" data-geopangan-source="sp2kp" role="tab" aria-selected="false" aria-controls="geopangan-sp2kp-panel">SP2KP</button>
             </div>
             <div id="geopangan-pihps-panel" class="geopangan-source-panel active" role="tabpanel" aria-hidden="false" data-geopangan-source-panel="pihps">
               <div class="geopangan-sticky-header">
-                <h4 style="font-size:15px; margin-bottom:4px;">GeoPangan</h4>
-                <p class="geotools-desc" style="margin-bottom:25px;">Harga Pangan Nasional - PIHPS Bank Indonesia</p>
                 <div class="cctv-card">
                   <div class="cctv-card-header">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -2719,6 +2797,9 @@
                  baru (geofarm-card-body)omena perlu: supaya isi kartu punya
                  padding sendiri, bukan bergantung pada padding kartu yang
                  sekaligus dipakai untuk menyedot tepi kepala ke atas. -->
+            <h4 style="font-size:15px; margin-bottom:4px;">GeoFarm Analysis</h4>
+            <p class="geotools-desc" style="margin-bottom:20px;">Gambar Petak, Analisis & Optimalkan</p>
+
             <details class="geofarm-card" aria-labelledby="geofarmCardTitle">
               <summary class="gt-card-head">
                 <span class="gt-card-icon" aria-hidden="true">&#127793;</span>
@@ -3199,6 +3280,12 @@
   <!-- LBS & LSD (BIG SatuPeta): butuh geodesic-area untuk luas, dan
        geoid-wilayah untuk seksi PDF. -->
   <script src="assets/js/geotani-lbs-lsd.js"></script>
+  <!-- LSD 12 Provinsi (ATR/BPN GISTARU). WAJIB setelah geotani-lbs-lsd.js:
+       modul ini memakai villageMeta, clipKeDesa, dan bboxDariRings dari
+       window.GeoTaniLbsLsd supaya batas desa dan hitung luasnya cuma ada
+       satu implementasi. Data ATR/BPN diambil runtime lewat
+       tres/proxy.ashx, yang mengirim header CORS. -->
+  <script src="assets/js/geotani-lsd12prov.js"></script>
   <!-- KKPR / NIB (ATR/BPN GISTARU): hanya butuh Leaflet dan peta, jadi
        tidak bergantung geodesic-area maupun geoid-wilayah. -->
   <script src="assets/js/geotani-kkpr.js"></script>

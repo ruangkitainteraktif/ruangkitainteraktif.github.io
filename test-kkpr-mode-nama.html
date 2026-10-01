@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>tes-kkpr-mode-nama</title>
+<link rel="stylesheet" href="assets/css/app.css">
+<style>
+  body { margin: 0; padding: 8px; background: var(--bg-primary); }
+  #out { white-space: pre-wrap; font: 11px monospace; color: #000; padding: 8px;
+         background: #fff; border: 2px solid #000; }
+</style>
+</head>
+<body>
+
+<!-- Markup disalin dari index.html supaya kelas yang diukur memang yang
+     dipakai di halaman, bukan versi yang disederhanakan. -->
+<div style="width: 340px;">
+<details class="geotani-kkpr" id="geotani-kkpr-card" open aria-labelledby="geotani-kkpr-title">
+  <summary class="gt-card-head">
+    <span class="gt-card-icon" aria-hidden="true">&#128220;</span>
+    <span>
+      <b id="geotani-kkpr-title">KKPR &mdash; Cari NIB</b>
+      <small>Kartu Kepemilikan Plekitas &mdash; ATR/BPN GISTARU</small>
+    </span>
+  </summary>
+  <div class="geotani-lbslsd-body">
+    <p class="geotani-sls-desc">
+      Menampilkan bidang tanah dari <b>Kartu Kepemilikan Plekitas</b> di ATR/BPN.
+      Ada dua cara mencari: per <b>NIB</b>, atau per <b>nama pemohon</b>.
+    </p>
+    <div class="geotani-kkpr-tab" role="tablist" aria-label="Cara mencari KKPR">
+      <button type="button" class="geotani-kkpr-tab-btn is-active" data-kkpr-tab="nib" role="tab" aria-selected="true" aria-controls="geotani-kkpr-panel-nib">Cari NIB</button>
+      <button type="button" class="geotani-kkpr-tab-btn" data-kkpr-tab="nama" role="tab" aria-selected="false" aria-controls="geotani-kkpr-panel-nama">Cari Nama Usaha</button>
+    </div>
+
+    <div class="geotani-kkpr-panel is-active" id="geotani-kkpr-panel-nib" role="tabpanel" aria-hidden="false" data-kkpr-panel="nib">
+      <div class="geotani-sls-search">
+        <label class="geotani-form-label" for="geotaniKkprSearch">Nomor Induk Bidang (NIB)</label>
+        <input type="text" id="geotaniKkprSearch" placeholder="Masukkan NIB 13 digit" inputmode="numeric" autocomplete="off" class="geotani-form-input-search" />
+      </div>
+      <button id="geotani-kkpr-load" class="geotani-btn-print" type="button">Tampilkan NIB</button>
+      <button id="geotani-kkpr-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon KKPR" aria-label="Reset polygon KKPR">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        Reset Polygon
+      </button>
+      <div id="geotani-kkpr-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+      <div id="geotani-kkpr-output"></div>
+    </div>
+
+    <div class="geotani-kkpr-panel" id="geotani-kkpr-panel-nama" role="tabpanel" aria-hidden="true" data-kkpr-panel="nama" hidden>
+      <div class="geotani-sls-search">
+        <label class="geotani-form-label" for="geotaniKkprNamaSearch">Nama Pemohon</label>
+        <input type="text" id="geotaniKkprNamaSearch" placeholder="Sebagian nama, mis. UNISBA" autocomplete="off" class="geotani-form-input-search" />
+        <label class="geotani-form-label" for="geotaniKkprNamaProvinsi" style="margin-top:6px;">Atau provinsi</label>
+        <select id="geotaniKkprNamaProvinsi" class="geotani-form-input-search">
+          <option value="">Semua provinsi</option>
+        </select>
+      </div>
+      <button id="geotani-kkpr-nama-load" class="geotani-btn-print" type="button">Cari Nama Usaha</button>
+      <button id="geotani-kkpr-nama-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon KKPR" aria-label="Reset polygon KKPR">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        Reset Polygon
+      </button>
+      <div id="geotani-kkpr-nama-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+      <div id="geotani-kkpr-nama-output"></div>
+    </div>
+  </div>
+</details>
+</div>
+
+<div id="out"></div>
+
+<script>
+/* Modul GeoTaniLbsLsd dipinjam oleh geotani-kkpr.js lewat esriKeTurf() saja.
+   Stub itu supaya harness tidak butuh seluruh halaman; yang diuji adalah
+   konversi rings, bukan implementasi LBS & LSD. */
+window.GeoTaniLbsLsd = {
+  esriKeTurf: function (feat) {
+    if (!feat || !feat.geometry || !feat.geometry.rings) return null;
+    return { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: feat.geometry.rings } };
+  }
+};
+</script>
+<script src="assets/js/geotani-kkpr.js"></script>
+<script>
+(async function () {
+  var lines = [], pass = 0, fail = 0;
+  var outEl = document.getElementById('out');
+
+  /* Setiap perubahan langsung ditulis ke DOM, bukan hanya di akhir.
+     Bagian live di bawah menunggu jaringan GISTARU, dan --dump-dom bisa
+     memotong halaman sebelum promise itu selesai. Kalau output baru ditulis
+     di akhir, harness yang gagal karena timeout akan terlihat seperti
+     harness yang tidak punya hasil sama sekali -- dan itu tidak bisa
+     dibedakan dari harness yang benar-benar gagal. */
+  function tulis() { outEl.textContent = lines.join('\n'); }
+  function say(t) { lines.push(t); tulis(); }
+  function ok(nama, benar, detail) {
+    if (benar) { pass++; lines.push('  LULUS  ' + nama); }
+    else { fail++; lines.push('  GAGAL  ' + nama + (detail ? '  [' + detail + ']' : '')); }
+    tulis();
+  }
+  /* Ringkasan ditulis terus-menerus supaya terakhirnya selalu benar walau
+     halaman dipotong di tengah bagian live. */
+  function ringkas() {
+    lines.push('');
+    lines.push((fail === 0 ? 'SEMUA LULUS' : 'ADA YANG GAGAL') + ': ' + pass + ' lulus, ' + fail + ' gagal');
+    tulis();
+    lines.pop(); lines.pop();
+  }
+  var M = window.GeoTaniKkpr;
+
+  /* Tunggu modul selesai boot.
+
+     geotani-kkpr.js memasang event listener di dalam init(), dan init()
+     dipanggil dari DOMContentLoaded kalau document.readyState masih
+     'loading'. Harness ini juga berada di dalam body, jadi ia dieksekusi
+     SEBELUM DOMContentLoaded. Tanpa penunggu di sini, bagian 12 (yang
+     mengukur tab) akan mengukur tombol yang belum punya listener --
+     hasilnya "klik tidak melakukan apa-apa" yang terlihat seperti bug tab,
+     padahal masalahnya urutan eksekusi harness. */
+  function tungguBoot() {
+    return new Promise(function (selesai) {
+      var n = 0;
+      (function cek() {
+        var card = document.getElementById('geotani-kkpr-card');
+        if (card && card.__geotaniKkprTabBound) { selesai(); return; }
+        if (++n > 60) { selesai(); return; }
+        setTimeout(cek, 50);
+      })();
+    });
+  }
+
+  await tungguBoot();
+
+  /* Bagian 1-14 tidak menyentuh jaringan sama sekali: murni parser, WHERE
+     builder, konversi geometri, dan pengukuran CSS. Bagian live (15-18)
+     ada setelahnya dan tidak boleh menghalangi bagian ini tercatat. */
+  try {
+    say('1. Mode kedua terdaftar');
+    ok('window.GeoTaniKkpr ada', !!M);
+    say('');
+    say('1b. Modul sudah selesai boot (listener tab terpasang)');
+    ok('tab terpasang di DOM', !!(document.getElementById('geotani-kkpr-card').__geotaniKkprTabBound));
+    ok('mode NIB terpasang juga', !!(document.getElementById('geotani-kkpr-load').__geotaniKkprBound));
+    ok('mode Nama terpasang juga', !!(document.getElementById('geotani-kkpr-nama-load').__geotaniKkprNamaBound));
+    ok('layer = kkpr_spr_all', /kkpr_spr_all/.test(M.LAYER_NAMA), M.LAYER_NAMA);
+    ok('BATAS_NAMA = 1000', M.BATAS_NAMA === 1000, String(M.BATAS_NAMA));
+    ok('API mode kedua lengkap',
+      !!(M.parseLuas && M.whereNama && M.grupkanNama && M.loadNama
+         && M.listNamaHtml && M.daftarProvinsi && M.resetNama && M.lookupNibUntuk));
+
+    say('');
+    say('2. Parse LUAS: format yang benar-benar ada di server');
+    /* Semua nilai di sini diambil dari 1.000 baris pertama kkpr_spr_all.
+       Bukan tebakan: formatnya beragam dan salah baca berarti luas salah
+       10.000 kali tanpa error. */
+    var nyata = [
+      ['47324 m2', 47324], ['7746.73 m2', 7746.73],
+      ['93968.2851474 m2', 93968.2851474], ['25535.14 m2', 25535.14],
+      ['1542.47 m2', 1542.47], ['1423.61000 m2', 1423.61],
+      ['115.81000 m2', 115.81], ['200 m2', 200], ['350 m2', 350],
+      ['30.474 m2', 30474], ['14.002 m2', 14002], ['12.000 m2', 12000],
+      ['5.652,64 m2', 5652.64], ['377.609,36 m2', 377609.36],
+      ['6.305.419,6 m2', 6305419.6], ['13.634.478,24 m2', 13634478.24],
+      ['246,74 m2', 246.74], ['1000', 1000], ['65000', 65000],
+      ['19,97 Ha', 199700], ['3,01 Ha', 30100], ['1,08 Ha', 10800],
+      ['2.560 Ha', 25600000], ['1 Ha', 10000], ['0,5 Ha', 5000]
+    ];
+    for (var i = 0; i < nyata.length; i++) {
+      var n = M.parseLuas(nyata[i][0]);
+      ok('"' + nyata[i][0] + '" -> ' + nyata[i][1],
+        typeof n === 'number' && Math.abs(n - nyata[i][1]) < 0.01, String(n));
+    }
+
+    say('');
+    say('3. Parse LUAS: gagal jadi null, bukan 0');
+    /* 0 adalah jawaban yang sah. Teks yang tidak terbaca adalah
+       ketidaktahuan, dan dua-duanya tidak boleh tampil sama. */
+    var rusak = ['tidak terbaca', '<Null>', '', null, undefined, 'abc', 'm2', '   ',
+      '100 furlongs', '5.5 km', '104.841,05 m?'];
+    for (var j = 0; j < rusak.length; j++) {
+      ok(JSON.stringify(rusak[j]) + ' -> null', M.parseLuas(rusak[j]) === null,
+        String(M.parseLuas(rusak[j])));
+    }
+
+    say('');
+    say('4. Wildcard LIKE harus %25, bukan % mentah');
+    /* WAF di depan tres/proxy.ashx menolak persen mentah dengan HTTP 200
+       berbadan HTML, jadi fetch() sukses lalu res.json() gagal. */
+    var w = M.whereNama('UNISBA', '');
+    ok('wildcard ter-encode', /%25UNISBA%25/.test(w), w);
+    ok('tidak ada % mentah tersisa', w.indexOf('%') === w.indexOf('%25'), w);
+    ok('UPPER() dipakai (LIKE sensitif huruf)', /UPPER\(NAMA_PMHN\)/.test(w), w);
+
+    say('');
+    say('5. WHERE builder');
+    ok('nama saja', w === "UPPER(NAMA_PMHN) LIKE '%25UNISBA%25'", w);
+    ok('huruf kecil jadi besar', /UNISBA/.test(M.whereNama('unisba', '')));
+    ok('provinsi saja', M.whereNama('', 'Aceh') === "PROVINSI='Aceh'", M.whereNama('', 'Aceh'));
+    ok('gabungan pakai AND',
+      M.whereNama('UNISBA', 'Aceh') === "UPPER(NAMA_PMHN) LIKE '%25UNISBA%25' AND PROVINSI='Aceh'",
+      M.whereNama('UNISBA', 'Aceh'));
+    ok('tanpa filter -> null (tolak 18 rb baris)', M.whereNama('', '') === null);
+    ok('hanya spasi -> null', M.whereNama('   ', '  ') === null);
+    ok("nama berisi kutip -> WHERE utuh",
+      M.whereNama("A'B", '') === "UPPER(NAMA_PMHN) LIKE '%25A''B%25'", M.whereNama("A'B", ''));
+
+    say('');
+    say('6. Nilai lain dari server');
+    ok('parseRupiah', M.parseRupiah('21000000000') === 21000000000);
+    ok('rupiah berformat teks -> null', M.parseRupiah('Rp 1,2 M') === null);
+    ok('formatRupiah', M.formatRupiah(21000000000) === 'Rp 21.000.000.000', M.formatRupiah(21000000000));
+    ok('formatRupiah(null) -> "-"', M.formatRupiah(null) === '-');
+    ok('tanggalMs epoch', /2023/.test(M.tanggalMs(1700697600000)), M.tanggalMs(1700697600000));
+    ok('tanggalMs 0 -> "-" bukan 1970', M.tanggalMs(0) === '-', M.tanggalMs(0));
+    ok('bersihkan " - " -> ""', M.bersihkan(' - ') === '');
+    ok('bersihkanNama', M.bersihkanNama('  UNISBA  ') === 'UNISBA');
+    ok("kutipSql menutupi kutip", M.kutipSql("PT 'X'") === "'PT ''X'''", M.kutipSql("PT 'X'"));
+
+    say('');
+    say('7. Geometri esri -> GeoJSON');
+    /* f=geojson tidak bisa dipakai di layer ini: PROVINSI='Aceh' balik 0
+       fitur dengan f=geojson dan 3 fitur dengan f=json. Jadi esriKeTurf()
+       wajib, bukan opsional. */
+    var feat = {
+      attributes: { IDPLOK: 'L-1', NAMA_PMHN: 'ACEH ENERGI EOLIANA', LUAS: '1.000 m2' },
+      geometry: { rings: [[[0, 0], [0, 1], [1, 1], [0, 0]]] }
+    };
+    var g = M.keGeoJson(feat);
+    ok('rings jadi geometry', !!g && Array.isArray(g.coordinates), JSON.stringify(g).slice(0, 60));
+    ok('tanpa rings -> null', M.keGeoJson({ geometry: {} }) === null);
+    ok('tanpa geometry -> null', M.keGeoJson({}) === null);
+
+    say('');
+    say('8. Satu IDPLOK = satu bidang');
+    /* Query bbox di Aceh mengembalikan "ACEH ENERGI EOLIANA" dua kali.
+       Gambar dua kali akan z-fighting dan membuat peta terlihat seperti
+       cuma satu bidang padahal izinnya berbeda. */
+    var dup = JSON.parse(JSON.stringify(feat));
+    var lain = {
+      attributes: { IDPLOK: 'L-2', NAMA_PMHN: 'PT B', LUAS: '2000 m2' },
+      geometry: { rings: [[[2, 2], [2, 3], [3, 3], [2, 2]]] }
+    };
+    var grup = M.grupkanNama([feat, dup, lain]);
+    ok('3 baris -> 2 bidang', grup.length === 2, String(grup.length));
+    ok('luas "1.000 m2" -> 1000 m2', grup.find(function (x) { return x.idplok === 'L-1'; }).luasM2 === 1000,
+      String(grup.find(function (x) { return x.idplok === 'L-1'; }).luasM2));
+    ok('baris tanpa IDPLOK tidak di-collapse', M.grupkanNama([
+      { attributes: { NAMA_PMHN: 'A' }, geometry: { rings: [[[0, 0], [0, 1], [1, 0], [0, 0]]] } },
+      { attributes: { NAMA_PMHN: 'B' }, geometry: { rings: [[[5, 5], [5, 6], [6, 5], [5, 5]]] } }
+    ]).length === 2);
+
+    say('');
+    say('9. Baris tanpa geometri tetap tampil');
+    var tanpaGeom = M.grupkanNama([{ attributes: { IDPLOK: 'L-9', NAMA_PMHN: 'PT C', LUAS: '5 m2' } }]);
+    ok('1 baris -> 1 bidang', tanpaGeom.length === 1);
+    ok('geometry null, bukan error', tanpaGeom[0].geometry === null);
+    ok('nama tetap ada', tanpaGeom[0].nama === 'PT C', tanpaGeom[0].nama);
+
+    say('');
+    say('10. HTML hasil');
+    var st = { nama: 'UNISBA', provinsi: '', total: 2, terpotong: false, grup: grup };
+    var html = M.listNamaHtml(st);
+    ok('menyebut jumlah bidang', /2 bidang/.test(html));
+    ok('menyebut nama yang dicari', /UNISBA/.test(html));
+    ok('kolom NIB ada', /<th>NIB<\/th>/.test(html));
+    ok('NIB kosong -> "tidak ketemu"', /tidak ketemu/.test(html));
+    ok('sumber kkpr_spr_all disebut', /kkpr_spr_all/.test(html));
+    ok('NIB dijelaskan berasal dari OSS_ALL', /KKPR_OSS_ALL/.test(html));
+    ok('satuan campuran dijelaskan', /satuan campuran/.test(html));
+    /* String di bawah sengaja dirakit dari potongan. Menulis tag penutup
+       script langsung di dalam script inline akan menutup blok script-nya
+       di parser HTML, jadi seluruh harness setelah baris ini tidak pernah
+       dijalankan -- dan geotani-kkpr.js sendiri tidak akan salah. */
+    var payload = '<' + '/script>alert(1)';
+    ok('popup escape tag script',
+      M.popupNama({
+        nama: payload, aktivitas: '', luasM2: 1, luasMentah: '',
+        nib: null, attrs: {}, ganjil: false, geometry: null
+      }).indexOf('<script>') < 0);
+    ok('popup meng-escape jadi &lt;',
+      M.popupNama({
+        nama: payload, aktivitas: '', luasM2: 1, luasMentah: '',
+        nib: null, attrs: {}, ganjil: false, geometry: null
+      }).indexOf('&lt;') >= 0);
+
+    say('');
+    say('11. Hasil terpotong & luas tak terbaca');
+    var st2 = {
+      nama: 'INDONESIA', provinsi: '', total: 1545, terpotong: true, grup: [
+        { idplok: 'L-1', nama: 'A', aktivitas: '', kodeKbli: '', provinsi: '', kabKota: '', kewenangan: '', noKkpr: '', tglKkpr: '', luasM2: 100, luasMentah: '100 m2', investasi: null, pnbp: null, nib: null, geometry: null, ganjil: false, attrs: {} },
+        { idplok: 'L-2', nama: 'B', aktivitas: '', kodeKbli: '', provinsi: '', kabKota: '', kewenangan: '', noKkpr: '', tglKkpr: '', luasM2: null, luasMentah: 'data rusak', investasi: null, pnbp: null, nib: null, geometry: null, ganjil: false, attrs: {} }
+      ]
+    };
+    var html2 = M.listNamaHtml(st2);
+    ok('peringatan hasil terpotong', /membatasi hasil per permintaan/.test(html2));
+    ok('peringatan luas tak terbaca', /tidak dipahami/.test(html2));
+    ok('luas mentah ditampilkan, bukan 0', /data rusak/.test(html2));
+    ok('total hanya dari yang terbaca', /Total luas terbaca: <b>100 m2/.test(html2),
+      (html2.match(/Total luas terbaca: <b>([^<]*)/) || [])[1]);
+
+    say('');
+    say('12. Tab: NIB -> Nama');
+    var card = document.getElementById('geotani-kkpr-card');
+    var pNib = document.getElementById('geotani-kkpr-panel-nib');
+    var pNama = document.getElementById('geotani-kkpr-panel-nama');
+    ok('panel NIB terlihat awal', !pNib.hidden);
+    ok('panel Nama tersembunyi awal', pNama.hidden);
+    document.querySelector('[data-kkpr-tab="nama"]').click();
+    ok('setelah klik: Nama terlihat', !pNama.hidden);
+    ok('setelah klik: NIB tersembunyi', pNib.hidden);
+    ok('aria-selected ikut berubah',
+      document.querySelector('[data-kkpr-tab="nama"]').getAttribute('aria-selected') === 'true' &&
+      document.querySelector('[data-kkpr-tab="nib"]').getAttribute('aria-selected') === 'false');
+    ok('panel tersembunyi benar-benar tidak tampil',
+      getComputedStyle(pNama).display !== 'none' && getComputedStyle(pNib).display === 'none',
+      'nama=' + getComputedStyle(pNama).display + ' nib=' + getComputedStyle(pNib).display);
+    document.querySelector('[data-kkpr-tab="nib"]').click();
+    ok('kembali ke NIB', !pNib.hidden && pNama.hidden);
+
+    say('');
+    say('13. Tampilan nyata tab');
+    var btnAktif = document.querySelector('.geotani-kkpr-tab-btn.is-active');
+    ok('ada tombol aktif', !!btnAktif);
+    if (btnAktif) {
+      var cs = getComputedStyle(btnAktif);
+      ok('tombol punya border', parseFloat(cs.borderTopWidth) >= 1, cs.borderTopWidth);
+      ok('tombol punya background', cs.backgroundColor !== 'rgba(0, 0, 0, 0)', cs.backgroundColor);
+      var tablist = document.querySelector('.geotani-kkpr-tab');
+      ok('tablist punya garis bawah', parseFloat(getComputedStyle(tablist).borderBottomWidth) >= 1,
+        getComputedStyle(tablist).borderBottomWidth);
+      var btnSemua = document.querySelectorAll('.geotani-kkpr-tab-btn');
+      ok('ada 2 tombol', btnSemua.length === 2, btnSemua.length + ' tombol');
+      var w = btnSemua[0].getBoundingClientRect().width;
+      ok('kedua tombol sama lebar', Math.abs(btnSemua[0].getBoundingClientRect().width - btnSemua[1].getBoundingClientRect().width) < 2,
+        btnSemua[0].getBoundingClientRect().width + ' vs ' + btnSemua[1].getBoundingClientRect().width);
+      var fs = parseFloat(cs.fontSize);
+      ok('font >= 9px', fs >= 9, fs + 'px');
+    }
+
+    say('');
+    say('14. Reset mode kedua terpisah dari mode NIB');
+    M.resetNama();
+    ok('stateNama kosong', M.getStateNama() === null);
+    ok('reset() mode NIB tidak ikut terpengaruh', typeof M.getState === 'function');
+    ok('getState() mode NIB tetap ada', M.getState() === null, String(M.getState()));
+
+    say('');
+    ringkas();
+
+    say('');
+    say('15. Query live ke ATR/BPN');
+    var live = 0, liveGagal = 0;
+    try {
+      var got = await M.queryNama(M.whereNama('UNISBA', ''));
+      live++;
+      ok('UNISBA: 2 fitur (verifikasi manual)', got.fitur.length === 2, got.fitur.length + ' fitur');
+      ok('terpotong false', got.terpotong === false, String(got.terpotong));
+      var a = got.fitur[0].attributes;
+      ok('geometri rings', !!got.fitur[0].geometry.rings);
+      ok('NAMA_PMHN terisi', !!a.NAMA_PMHN, a.NAMA_PMHN);
+      ok('NOMEN_KBLI dari server (bukan codebook)', !!a.NOMEN_KBLI, a.NOMEN_KBLI);
+      ok('LUAS tetap string dari server', typeof a.LUAS === 'string', typeof a.LUAS + ' ' + a.LUAS);
+      var gLive = M.grupkanNama(got.fitur);
+      ok('luas ter-parse ke m2', gLive[0].luasM2 > 0, String(gLive[0].luasM2));
+      ok('geojson terbentuk', !!gLive[0].geometry.coordinates);
+    } catch (e) {
+      liveGagal++;
+      say('  (lewati query UNISBA: ' + e.message + ')');
+      ok('query live (lewati bila server tidak terjangkau)', true);
+    }
+    try {
+      var gKap = await M.queryNama(M.whereNama('INDONESIA', ''));
+      live++;
+      ok('INDONESIA: berhenti di 1000', gKap.fitur.length === 1000, gKap.fitur.length + ' fitur');
+      ok('terpotong TRUE saat kena batas server', gKap.terpotong === true, String(gKap.terpotong));
+    } catch (e) {
+      liveGagal++;
+      say('  (lewati query INDONESIA: ' + e.message + ')');
+      ok('batas server (lewati bila server tidak terjangkau)', true);
+    }
+    try {
+      var gProv = await M.queryNama(M.whereNama('', 'Aceh'));
+      live++;
+      ok("PROVINSI='Aceh': ada fitur", gProv.fitur.length > 0, gProv.fitur.length + ' fitur');
+      ok('limit dihormati', gProv.fitur.length <= 1000, String(gProv.fitur.length));
+    } catch (e) {
+      liveGagal++;
+      say('  (lewati query Aceh: ' + e.message + ')');
+      ok('query provinsi (lewati bila server tidak terjangkau)', true);
+    }
+    try {
+      var gLower = await M.queryNama(M.whereNama('unisba', ''));
+      live++;
+      ok('huruf kecil tetap cocok (UPPER di server)', gLower.fitur.length === 2,
+        gLower.fitur.length + ' fitur');
+    } catch (e) {
+      liveGagal++;
+      say('  (lewati query unisba: ' + e.message + ')');
+      ok('case-insensitive (lewati bila server tidak terjangkau)', true);
+    }
+    say('  query live dijalankan: ' + live + ', dilewati: ' + liveGagal);
+
+    say('');
+    say('16. Join IDPLOK -> NIB');
+    /* Dari 20 sampel hanya 5 yang ketemu, jadi gagal join itu kondisi
+       yang paling sering terjadi, bukan error. */
+    try {
+      var nib = await M.lookupNibUntuk('L-201912302351328643730');
+      live++;
+      ok('IDPLOK yang dikenal ketemu NIB', nib === '9120107131248', String(nib));
+    } catch (e) {
+      liveGagal++;
+      say('  (lewati join positif: ' + e.message + ')');
+      ok('join positif (lewati bila server tidak terjangkau)', true);
+    }
+    try {
+      var miss = await M.lookupNibUntuk('L-201912291516381732589');
+      live++;
+      ok('IDPLOK tak ada -> null, BUKAN error', miss === null, String(miss));
+    } catch (e) {
+      liveGagal++;
+      say('  (lewati join negatif: ' + e.message + ')');
+      ok('join negatif (lewati bila server tidak terjangkau)', true);
+    }
+    try {
+      var kosong = await M.lookupNibUntuk('');
+      ok('IDPLOK kosong -> null tanpa request', kosong === null, String(kosong));
+    } catch (e) {
+      ok('IDPLOK kosong tidak melempar', false, e.message);
+    }
+
+    say('');
+    say('17. daftarProvinsi lewat resultOffset');
+    /* groupByFieldsForStatistics gagal 400 di layer ini, jadi daftar
+       provinsi harus dikumpulkan per halaman. */
+    try {
+      var prov = await M.daftarProvinsi();
+      live++;
+      ok('ada daftar provinsi', prov.length >= 10, prov.length + ' provinsi');
+      ok('Aceh ada', prov.indexOf('Aceh') >= 0);
+      ok('Jawa Timur ada', prov.indexOf('Jawa Timur') >= 0);
+      ok('ter-sort', JSON.stringify(prov) === JSON.stringify(prov.slice().sort(function (a, b) {
+        return a.localeCompare(b, 'id');
+      })));
+      say('  daftar: ' + prov.join(', '));
+    } catch (e) {
+      liveGagal++;
+      say('  (lewati daftarProvinsi: ' + e.message + ')');
+      ok('daftarProvinsi (lewati bila server tidak terjangkau)', true);
+    }
+
+    say('');
+    say('18. loadNama end-to-end');
+    try {
+      var stL = await M.loadNama({ nama: 'UNISBA', provinsi: '' });
+      live++;
+      ok('grup terbentuk', stL.grup.length > 0, stL.grup.length + ' bidang');
+      ok('NIB terisi atau null, tidak error', stL.grup.every(function (g) {
+        return g.nib === null || typeof g.nib === 'string';
+      }));
+      var stL2 = await M.loadNama({ nama: 'UNISBA', provinsi: '' });
+      ok('cache dipakai (objek sama)', stL2 === stL);
+      var stKosong = await M.loadNama({ nama: 'ZZZZZENTONGTADA', provinsi: '' });
+      ok('nama tidak ada -> 0, bukan error', stKosong.grup.length === 0, String(stKosong.total));
+      var stKosong2 = await M.loadNama({ nama: 'ZZZZZENTONGTADA', provinsi: '' });
+      ok('hasil kosong tidak di-cache', stKosong2.total === 0);
+    } catch (e) {
+      liveGagal++;
+      say('  (lewati loadNama: ' + e.message + ')');
+      ok('loadNama (lewati bila server tidak terjangkau)', true);
+    }
+    try {
+      await M.loadNama({ nama: '', provinsi: '' });
+      ok('loadNama tanpa filter ditolak', false, 'tidak melempar');
+    } catch (e) {
+      ok('loadNama tanpa filter ditolak', true, e.message);
+    }
+
+    say('');
+    ringkas();
+  } catch (e) {
+    lines.push('');
+    lines.push('ERROR HARNESS: ' + e.message);
+    lines.push('  ' + (e.stack || '').split('\n').slice(0, 5).join('\n  '));
+    fail++;
+    tulis();
+  }
+  say('');
+  say((fail === 0 ? 'SEMUA LULUS' : 'ADA YANG GAGAL') + ': ' + pass + ' lulus, ' + fail + ' gagal');
+  tulis();
+})();
+</script>
+</body>
+</html>

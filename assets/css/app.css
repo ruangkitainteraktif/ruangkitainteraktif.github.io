@@ -8510,6 +8510,43 @@ details[open] > .gt-card-head::after {
 .geotani-lbslsd-list li:first-child { border-top: 0; }
 .geotani-lbslsd-list li:hover { background: var(--bg-card-hover); }
 .geotani-lbslsd-list i { font-style: normal; font-size: 9px; color: var(--text-muted); }
+/* GeoTani — KKPR: tab "Cari NIB" dan "Cari Nama Usaha".
+   Dua panel, bukan dua kartu. Satu kartu dengan dua mode pencarian yang
+   memakai tombol dan area hasil yang sama jauh lebih mudah dibandingkan
+   daripada dua kartu terpisah -- dan perbandingan itu justru yang
+   dibutuhkan di sini, karena kedua mode membaca layer berbeda.
+
+   Bentuk tombolnya mengikuti .geopangan-source-tab yang sudah dipakai
+   GeoPangan di halaman ini, bukan kelas baru, supaya tidak ada dua
+   tampilan tab dalam satu panel. Yang ditambahkan hanya prefix-nya. */
+.geotani-kkpr-tab {
+  display: flex; gap: 4px; margin: 8px 0 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+.geotani-kkpr-tab-btn {
+  flex: 1 1 0; padding: 6px 8px; cursor: pointer;
+  font-size: 11px; font-weight: 600; font-family: inherit;
+  color: var(--text-muted); background: transparent;
+  border: 1px solid transparent; border-bottom: none;
+  border-radius: 5px 5px 0 0; margin-bottom: -1px;
+}
+.geotani-kkpr-tab-btn:hover { color: var(--text-primary); background: var(--bg-card-hover); }
+.geotani-kkpr-tab-btn.is-active {
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border-color: var(--border-color);
+  border-bottom: 1px solid var(--bg-card);
+}
+.geotani-kkpr-tab-btn:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: -2px;
+}
+
+/* Panel yang tidak aktif disembunyikan dua cara: hidden untuk browser
+   dan display:none untuk CSS. Hanya hidden tidak cukup kalau ada aturan
+   display lain yang lebih spesifik, dan hanya display:none tidak cukup
+   untuk pembaca layar. */
+.geotani-kkpr-panel[hidden] { display: none; }
+
 /* Kredit BIG: ketentuan BIG mewajibkan menyebut Badan Informasi Geospasial
    pada setiap laporan yang memakai datanya. */
 .geotani-lbslsd-credit {
@@ -8522,6 +8559,25 @@ details[open] > .gt-card-head::after {
   border-color: #a16207; background: #451a03; color: #fcd34d;
 }
 [data-theme="dark"] .geotani-lbslsd-credit a { color: #4ade80; }
+
+/* Kartu "LSD 12 Provinsi" memakai kelas yang sama persis dengan kartu
+   LBS & LSD di atas. Keduanya harus terlihat sama, dan menyalin aturan
+   warna/jarak ke kelas baru hanya menghasilkan satu tempat yang harus
+   ikut dirawat setiap tema berubah.
+
+   Yang tetap perlu sendiri: tiga metrik ringkasan kartu ini tidak sama
+   maknanya. Kartu LBS & LSD punya LBS, LSD, dan luas desa; kartu ini
+   hanya punya satu angka sawah dilindungi, jadi tiga kolom akan terlihat
+   seperti ada data yang hilang. Karena itu grid-nya tiga kolom tetap,
+   tapi isinya hanya dua atau tiga nilai yang memang ada -- lihat
+   listHtml() di geotani-lsd12prov.js. */
+
+/* Rincian per kategori: hanya ada dua baris, jadi tidak perlu menggulir,
+   dan barisnya bukan target klik sehingga tidak boleh terlihat seperti
+   daftar yang bisa diklik. */
+.geotani-lbslsd-list--ringkas { max-height: none; }
+.geotani-lbslsd-list--ringkas li { cursor: default; }
+.geotani-lbslsd-list--ringkas li:hover { background: transparent; }
 
 /* GeoTani Search */
 .geotani-search-container { position: relative; }

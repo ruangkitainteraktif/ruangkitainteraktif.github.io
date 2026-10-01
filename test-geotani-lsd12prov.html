@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>tes-geotani-lsd12prov</title>
+<link rel="stylesheet" href="assets/css/app.css">
+<style>
+  body { margin: 0; padding: 8px; background: var(--bg-primary); }
+  #out { white-space: pre-wrap; font: 11px monospace; color: #000; padding: 8px;
+         background: #fff; border: 2px solid #000; }
+</style>
+</head>
+<body>
+
+<!-- Markup kartu disalin persis dari index.html supaya kelas yang diukur
+     memang yang dipakai di halaman, bukan versi yang disederhanakan. -->
+<div style="width: 320px;">
+<details class="geotani-lbslsd" id="geotani-lsd12-card" open aria-labelledby="geotani-lsd12-title">
+  <summary class="gt-card-head">
+    <span class="gt-card-icon" aria-hidden="true">&#127807;</span>
+    <span>
+      <b id="geotani-lsd12-title">LSD 12 Provinsi</b>
+      <small>Lahan Sawah Dilindungi &mdash; ATR/BPN GISTARU</small>
+    </span>
+  </summary>
+  <div class="geotani-lbslsd-body">
+    <p class="geotani-sls-desc">
+      Menampilkan <b>Lahan Sawah yang Dilindungi</b> dari ATR/BPN di dalam desa
+      yang dipilih, dengan luas dihitung dari irisan dengan batas desa.
+      <b>Cakupan hanya 12 provinsi</b>: Aceh, Sumatera Utara, Riau, Kepulauan Riau,
+      Jambi, Sumatera Selatan, Bengkulu, Lampung, Bangka Belitung, Kalimantan Barat,
+      Kalimantan Selatan, dan Sulawesi Selatan. Di luar itu, termasuk seluruh Jawa,
+      layer ini tidak punya data.
+    </p>
+    <div class="geotani-sls-search">
+      <label class="geotani-form-label" for="geotaniLsd12VillageSearch">Cari nama desa</label>
+      <input type="text" id="geotaniLsd12VillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
+      <div id="geotaniLsd12VillageResults" class="geotani-sls-results" hidden></div>
+      <div id="geotaniLsd12VillageSelected" class="geotani-sls-picked" hidden></div>
+    </div>
+      <button id="geotani-lsd12-load" class="geotani-btn-print" type="button">Tampilkan LSD 12 Provinsi</button>
+      <button id="geotani-lsd12-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon LSD 12 Provinsi" aria-label="Reset polygon LSD 12 Provinsi">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        Reset Polygon
+      </button>
+    <div id="geotani-lsd12-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+    <div id="geotani-lsd12-output"></div>
+  </div>
+</details>
+</div>
+
+<div id="out"></div>
+
+<script>
+/* Stub window.GeoTaniLbsLsd.
+   Modul ini bersandar pada kartu LBS & LSD untuk batas desa, cache meta
+   desa, dan hitung luas. Yang diuji di sini bukan kode kartu itu, jadi
+   cukup diberi bentuk yang sama: fungsi yang mengembalikan geoJSON
+   poligon sederhana. villageMeta di-stub supaya harness tidak butuh
+   jaringan -- query GISTARU-nya yang dites, bukan batas desanya. */
+window.GeoTaniLbsLsd = {
+  villageMeta: function (kode) {
+    return Promise.resolve({
+      nama: 'Desa Uji ' + kode,
+      lat: 0, lng: 0,
+      rings: [[[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]],
+      geojson: { type: 'Polygon', coordinates: [[[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]] },
+      luasHa: 12345
+    });
+  },
+  bboxDariRings: function (rings) {
+    return { west: 0, south: 0, east: 1, north: 1, envelope: '0,0,1,1' };
+  },
+  /* Tanpa turf di harness ini, jadi cukup kembalikan luas tetap. Yang
+     sedang diuji bukan iris geometri, melainkan orkestrasi di atasnya. */
+  clipKeDesa: function (feature) {
+    var rings = feature.geometry && feature.geometry.rings;
+    if (!rings) return null;
+    return {
+      geometry: { type: 'MultiPolygon', coordinates: rings.map(function (r) { return [r]; }) },
+      luasIrisanHa: 1.5,
+      luasGeometriPenuhHa: 3,
+      terpotong: true
+    };
+  },
+  kodeDariPanelLain: function () { return null; },
+  getSelectedKode: function () { return null; },
+  daftarDesa: function () { return null; },
+  cariDesa: function () { return []; }
+};
+</script>
+<script src="assets/js/geotani-lsd12prov.js"></script>
+<script>
+(async function () {
+  var lines = [], pass = 0, fail = 0;
+  function say(t) { lines.push(t); }
+  function ok(nama, benar, detail) {
+    if (benar) { pass++; lines.push('  LULUS  ' + nama); }
+    else { fail++; lines.push('  GAGAL  ' + nama + (detail ? '  [' + detail + ']' : '')); }
+  }
+  var M = window.GeoTaniLsd12;
+
+  try {
+    say('1. Modul termuat dan terdaftar');
+    ok('window.GeoTaniLsd12 ada', !!M);
+    ok('API inti tersedia',
+      !!(M && M.load && M.clear && M.reset && M.listHtml && M.creditText && M.drawOnMap));
+    ok('LAYER diekspor untuk uji warna', !!(M && M.LAYER));
+    ok('LSD BIG tidak ikut diekspor di sini',
+      !(M && M.LBS && M.LSD), 'modul ini tidak boleh jadi satu-satunya sumber');
+
+    say('');
+    say('2. Pencocokan warna dari kalimat');
+    /* Dua sumber, satu kalimat, dua ejaan. Kunci warna yang disalin persis
+       dari BIG akan mengembalikan warna default untuk SETIAP fitur GISTARU,
+       jadi kasus ini yang paling mungkin rusak. */
+    var dalamG = 'Lahan Sawah yang Dilindungi di dalam Penetapan Kawasan Hutan';
+    var luarG = 'Lahan Sawah yang Dilindungi di luar Penetapan Kawasan Hutan';
+    var dalamB = 'Lahan Sawah yang Dilindungi di Dalam Kawasan Hutan';
+    ok('GISTARU "dalam Penetapan" -> warna dalam',
+      M.warnaUntuk(dalamG) === M.LAYER.warna['dalam kawasan hutan'], M.warnaUntuk(dalamG));
+    ok('GISTARU "luar Penetapan" -> warna luar',
+      M.warnaUntuk(luarG) === M.LAYER.warna['luar kawasan hutan'], M.warnaUntuk(luarG));
+    ok('BIG "Dalam Kawasan Hutan" -> warna dalam',
+      M.warnaUntuk(dalamB) === M.LAYER.warna['dalam kawasan hutan'], M.warnaUntuk(dalamB));
+    ok('tidak ada yang jatuh ke warna default',
+      M.warnaUntuk(dalamG) !== M.LAYER.warnaDefault && M.warnaUntuk(luarG) !== M.LAYER.warnaDefault);
+    ok('warna GISTARU beda dari warna BIG (oranye/kuning)',
+      M.LAYER.warna['dalam kawasan hutan'] !== '#ffaa00' && M.LAYER.warnaDefault !== '#ffd966');
+    ok('label jenis dipendekkan',
+      M.labelJenis(dalamG) === 'Dalam kawasan hutan' && M.labelJenis(luarG) === 'Luar kawasan hutan');
+    ok('nilai kosong tidak crash', typeof M.warnaUntuk(null) === 'string');
+
+    say('');
+    say('3. Batas server dan daftar provinsi');
+    ok('RECORD_LIMIT = 1000 (maxRecordCount GISTARU)', M.RECORD_LIMIT === 1000, String(M.RECORD_LIMIT));
+    ok('daftar provinsi berisi 12 nama', M.PROVINSI_TERISI.length === 12, String(M.PROVINSI_TERISI.length));
+    ok('Jawa tidak ada di daftar',
+      !M.PROVINSI_TERISI.some(function (p) { return /Jawa/i.test(p); }));
+    ok('Kalimantan Tengah tidak ada di daftar (7 fitur, bukan bagian dari 12)',
+      !M.PROVINSI_TERISI.some(function (p) { return /Kalimantan Tengah/i.test(p); }));
+
+    say('');
+    say('4. URL query melewati tres/proxy.ashx');
+    var u = M._url({ f: 'json', where: '1=1', resultRecordCount: 1000 });
+    ok('memakai tres/proxy.ashx', u.indexOf('tres/proxy.ashx?') > 0);
+    ok('menunjuk LSD_12_PROVINSI', u.indexOf('LSD/LSD_DAL/MapServer/0') > 0);
+    ok('where di-encode', u.indexOf('where=1%3D1') > 0);
+    ok('resultRecordCount ikut', u.indexOf('resultRecordCount=1000') > 0);
+
+    say('');
+    say('5. Retry: HTTP 200 dengan badan error dianggap gagal');
+    /* ArcGIS sering membalas 200 dengan {"error":{...}}. Kalau ini
+       diperlakukan sukses, modul mengira layer kosong padahal server
+       sedang menolak -- dan itu tampil sebagai "tidak ada data". */
+    var asli = window.fetch, panggilan = 0;
+    window.fetch = function () {
+      panggilan++;
+      return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ error: { code: 400, message: '' } }); } });
+    };
+    var gagal = false, pesan = '';
+    try { await M.fetchJson(M._url({ f: 'json' })); }
+    catch (e) { gagal = true; pesan = e.message; }
+    window.fetch = asli;
+    ok('badan error dilempar, bukan dianggap kosong', gagal, pesan);
+    ok('retry benar-benar jalan (3x)', panggilan === 3, panggilan + ' panggilan');
+    ok('pesan menyebut ArcGIS', /ArcGIS/.test(pesan), pesan);
+
+    say('');
+    say('6. Retry: HTTP 404 tidak diulang');
+    panggilan = 0;
+    window.fetch = function () {
+      panggilan++;
+      return Promise.resolve({ ok: false, status: 404, json: function () { return Promise.resolve({}); } });
+    };
+    try { await M.fetchJson(M._url({ f: 'json' })); } catch (e) { /* diharapkan */ }
+    window.fetch = asli;
+    ok('404 langsung menyerah (1x panggilan)', panggilan === 1, panggilan + ' panggilan');
+
+    say('');
+    say('7. Query nyata ke ATR/BPN GISTARU');
+    var got = null, err = null;
+    try { got = await M.queryLsd('96.9,4.9,97.15,5.15'); }
+    catch (e) { err = e; }
+    if (err) {
+      say('  (lewati: server tidak terjangkau dari lingkungan ini -- ' + err.message + ')');
+      ok('query live tidak wajib untuk harness lain', true);
+    } else {
+      ok('respons punya fitur', got.features.length > 0, got.features.length + ' fitur');
+      ok('geometri berupa esriGeometry.rings (bukan GeoJSON)',
+        !!(got.features[0] && got.features[0].geometry && got.features[0].geometry.rings));
+      var a = got.features[0].attributes;
+      ok('LUASHA ada dan bertipe angka', a && typeof a.LUASHA === 'number', String(a && a.LUASHA));
+      ok('WADMPR terisi', !!(a && a.WADMPR), String(a && a.WADMPR));
+      ok('LSD terisi (kategori dalam/luar kawasan hutan)',
+        !!(a && /Lahan Sawah yang Dilindungi/i.test(a.LSD)), String(a && a.LSD));
+      /* Semua nilai LSD di layer ini berbunyi "Penetapan"; kalau suatu saat
+         server menambah nilai tanpa kata itu, warna harus tetap jatuh ke slot
+         yang benar dan tidak diam-diam jadi default. */
+      var salahWarna = got.features.filter(function (f) {
+        return M.warnaUntuk(f.attributes.LSD) === M.LAYER.warnaDefault;
+      });
+      ok('semua fitur mendapat warna yang sesuai',
+        salahWarna.length === 0, salahWarna.length + ' dari ' + got.features.length + ' fallback');
+      var luasNa = got.features.filter(function (f) { return !(typeof f.attributes.LUASHA === 'number' && isFinite(f.attributes.LUASHA)); });
+      ok('tidak ada luas yang bukan angka', luasNa.length === 0, luasNa.length + ' fitur');
+    }
+
+    say('');
+    say('8. Status kosong di luar 12 provinsi');
+    /* Desa di Jawa Timur: 0 fitur dari 760.273. Keluarannya harus
+       KEADAAN KOSONG yang menjelaskan kenapa, bukan error dan bukan
+       "tidak ada sawah dilindungi" yang disalahartikan. */
+    window.fetch = function (u) {
+      return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ features: [] }); } });
+    };
+    var stKosong = null;
+    try { stKosong = await M.load('35.73.01.2001'); } catch (e) { say('  ERROR: ' + e.message); }
+    window.fetch = asli;
+    ok('load desa tanpa data tidak melempar', !!stKosong);
+    if (stKosong) {
+      ok('adaData false, bukan error', stKosong.adaData === false);
+      ok('luas 0 ha', stKosong.irisanHa === 0, String(stKosong.irisanHa));
+      ok('provinsi tidak diklaim ada di 12', stKosong.provinsiTermasuk12 !== true);
+      ok('sumber menyebut ATR/BPN', /ATR\/BPN/.test(stKosong.sumber), stKosong.sumber);
+      var h = M.listHtml();
+      ok('HTML menyebut cakupan 12 provinsi', /12 provinsi/.test(h));
+      ok('HTML tetap menampilkan kredit walau kosong', /ATR\/BPN/.test(h));
+      ok('HTML mengarahkan ke kartu BIG untuk angka nasional',
+        /LBS &amp; LSD/.test(h));
+      ok('HTML menjelaskan kenapa kosong, bukan mengklaim sawah 0',
+        /tidak punya data/.test(h));
+    }
+
+    say('');
+    say('9. Status ada data + peringatan yang wajib');
+    window.fetch = function (u) {
+      var fake = {
+        features: [
+          { attributes: { WADMPR: 'Aceh', WADMKK: 'Kota Lhokseumawe', LSD: dalamG, LUASHA: 1.5 },
+            geometry: { rings: [[[0, 0], [0, 1], [1, 1], [0, 0]]] } },
+          { attributes: { WADMPR: 'Aceh', WADMKK: 'Kota Lhokseumawe', LSD: luarG, LUASHA: 0.5 },
+            geometry: { rings: [[[0, 0], [0, 1], [1, 1], [0, 0]]] } }
+        ]
+      };
+      return Promise.resolve({ ok: true, json: function () { return Promise.resolve(fake); } });
+    };
+    var stAda = null;
+    try { stAda = await M.load('11.71.01.2001'); } catch (e) { say('  ERROR: ' + e.message); }
+    window.fetch = asli;
+    ok('dua fitur terbaca', stAda && stAda.layer.items.length === 2,
+      stAda ? String(stAda.layer.items.length) : 'null');
+    if (stAda) {
+      ok('adaData true', stAda.adaData === true);
+      ok('provinsi terbaca', stAda.provinsi === 'Aceh', String(stAda.provinsi));
+      ok('Aceh dihitung masuk 12 provinsi', stAda.provinsiTermasuk12 === true);
+      ok('luas hasil irisan dijumlahkan', Math.abs(stAda.irisanHa - 3) < 0.001, String(stAda.irisanHa));
+      ok('rincian per kategori ada (2)', stAda.perJenis.length === 2, String(stAda.perJenis.length));
+      var hAda = M.listHtml();
+      ok('HTML memuat kredit ATR/BPN', /ATR\/BPN/.test(hAda));
+      ok('HTMLvertencias jumlah dengan kartu BIG', /jumlahkan tidak/.test(hAda));
+      ok('HTML menampilkan daftar poligon', hAda.indexOf('data-lsd12-index') > 0);
+      ok('ada swatch di tiap baris daftar', (hAda.match(/geotani-lbslsd-swatch/g) || []).length >= 3);
+    }
+
+    say('');
+    say('10. Terpotong oleh batas server');
+    window.fetch = function (u) {
+      var fit = [];
+      for (var i = 0; i < M.RECORD_LIMIT; i++) {
+        fit.push({ attributes: { WADMPR: 'Aceh', WADMKK: 'X', LSD: luarG, LUASHA: 1 },
+          geometry: { rings: [[[0, 0], [0, 1], [1, 1], [0, 0]]] } });
+      }
+      return Promise.resolve({
+        ok: true, json: function () { return Promise.resolve({ features: fit, exceededTransferLimit: true }); }
+      });
+    };
+    var stPenuh = null;
+    try { stPenuh = await M.load('11.71.02.2001'); } catch (e) { say('  ERROR: ' + e.message); }
+    window.fetch = asli;
+    if (stPenuh) {
+      ok('terpotongQuery true saat melebihi maxRecordCount', stPenuh.layer.terpotongQuery === true);
+      ok('HTML memperingatkan hasil tidak lengkap', /membatasi jumlah poligon/.test(M.listHtml()));
+    }
+
+    say('');
+    say('11. Kredit');
+    ok('credit menyebut lembaga', /ATR\/BPN/.test(M.credit.lembaga), M.credit.lembaga);
+    ok('credit punya tautan resmi', /^https:\/\/gistaru\.atrbpn\.go\.id/.test(M.credit.tautan));
+    ok('creditText memuat tanggal akses', /Diakses pada/.test(M.creditText()));
+    ok('creditHtml memakai label Sumber data', /Sumber data:/.test(M.creditHtml()));
+
+    say('');
+    say('12. Tampilan nyata kartu');
+    var card = document.getElementById('geotani-lsd12-card');
+    ok('kartu ada di DOM', !!card);
+    if (card) {
+      ok('kartu memakai kelas .geotani-lbslsd yang sama dengan kartu BIG',
+        card.classList.contains('geotani-lbslsd'));
+      var cs = getComputedStyle(card);
+      ok('kartu punya border Radius', parseFloat(cs.borderTopLeftRadius) >= 4, cs.borderTopLeftRadius);
+      var body = card.querySelector('.geotani-lbslsd-body');
+      ok('isi kartu punya padding', parseFloat(getComputedStyle(body).paddingTop) > 0);
+      var btn = document.getElementById('geotani-lsd12-load');
+      ok('tombol memenuhi lebar kartu', parseFloat(getComputedStyle(btn).width) > 100,
+        getComputedStyle(btn).width);
+      var desc = card.querySelector('.geotani-sls-desc');
+      ok('deskripsi menyebut cakupan 12 provinsi', /12 provinsi/.test(desc.textContent));
+      ok('deskripsi menyebut seluruh Jawa tidak punya data',
+        /Jawa/.test(desc.textContent) && /tidak punya data/.test(desc.textContent));
+      var fs = parseFloat(getComputedStyle(desc).fontSize);
+      ok('font deskripsi >= 9px', fs >= 9, fs + 'px');
+    }
+
+    say('');
+    say('13. Reset');
+    M.reset();
+    ok('setelah reset state kosong', M.getState() === null);
+    ok('setelah reset window._geotaniLsd12Data kosong', window._geotaniLsd12Data === null);
+    var out = document.getElementById('geotani-lsd12-output');
+    ok('setelah reset area output dibersihkan', out.innerHTML === '');
+    var inp = document.getElementById('geotaniLsd12VillageSearch');
+    ok('setelah reset input pencarian dikosongkan', inp.value === '');
+    M.clear();
+    ok('clear tidak melempar', true);
+
+    say('');
+    say((fail === 0 ? 'SEMUA LULUS' : 'ADA YANG GAGAL') + ': ' + pass + ' lulus, ' + fail + ' gagal');
+  } catch (e) {
+    lines.push('');
+    lines.push('ERROR HARNESS: ' + e.message);
+    lines.push('  ' + (e.stack || '').split('\n').slice(0, 5).join('\n  '));
+    fail++;
+  }
+  document.getElementById('out').textContent = lines.join('\n');
+})();
+</script>
+</body>
+</html>

@@ -1574,6 +1574,10 @@ L.control.scale({
         // desa sebelumnya masih tertinggal di peta.
         if (typeof GeoTaniSls !== 'undefined' && typeof GeoTaniSls.clear === 'function') GeoTaniSls.clear();
         if (typeof GeoTaniLbsLsd !== 'undefined' && typeof GeoTaniLbsLsd.clear === 'function') GeoTaniLbsLsd.clear();
+        // Kartu LSD 12 Provinsi (ATR/BPN) juga terikat pada satu desa, jadi
+        // harus ikut hilang. Kalau tidak, poligon dari desa sebelumnya
+        // tertinggal di peta setelah Reset Polygon.
+        if (typeof GeoTaniLsd12 !== 'undefined' && typeof GeoTaniLsd12.clear === 'function') GeoTaniLsd12.clear();
 
         // 5d. Bersihkan file yang dimuat lewat Alat Analisis, termasuk GPX/KML
         // serta marker, jejak, dan kartu Animasi Track.
