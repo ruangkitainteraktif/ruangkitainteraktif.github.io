@@ -633,6 +633,15 @@
           GeoTools
         </span>
         <div class="gs-sheet-actions">
+          <select class="geotools-dropdown" onchange="openGeotoolsMainTab(this)">
+            <option value="geotoolsTabGeoportal">GeoPortal</option>
+            <option value="geotoolsTabGeoOss">GeoOSS</option>
+            <option value="geotoolsTabGeoFarm" selected>GeoFarm</option>
+            <option value="geotoolsTabDemnas">GeoRaster</option>
+            <option value="geotoolsTabGeoPulse">GeoCuaca</option>
+            <option value="geotoolsTabGeonusa">GeoNusa</option>
+            <option value="geotoolsTabGeoWatch">GeoWatch</option>
+          </select>
           <button class="gs-sheet-minimize" type="button" aria-label="Minimalkan" onclick="minimizeGeotoolsSheet()">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
@@ -767,7 +776,7 @@
         </span>
         <div class="dm-sidebar-actions">
           <button class="dm-sidebar-minimize" type="button" aria-label="Minimalkan" onclick="minimizeDrawSidebar()">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
           <button class="dm-sidebar-close" type="button" aria-label="Tutup" onclick="closeDrawSidebar()">&#xd7;</button>
         </div>
@@ -891,7 +900,7 @@
         </span>
         <div class="lg-sidebar-actions">
           <button class="lg-sidebar-minimize" type="button" aria-label="Minimalkan" onclick="minimizeLegendSidebar()">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
           <button class="lg-sidebar-close" type="button" aria-label="Tutup" onclick="closeLegendSidebar()">&#xd7;</button>
         </div>
@@ -980,14 +989,6 @@
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
           <span>GEOPULSE</span>
         </button>
-        <button class="tab-btn" data-label="GEOPANGAN" aria-label="GEOPANGAN" onclick="openTab(event, 'tab-geopangan')">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-          <span>GEOPANGAN</span>
-        </button>
-        <button class="tab-btn" data-label="GEOTANI" aria-label="GEOTANI" onclick="openTab(event, 'tab-geotani')">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          <span>GEOTANI</span>
-        </button>
         <button class="tab-btn" data-label="GEOWATCH" aria-label="GEOWATCH" onclick="openTab(event, 'tab-cctv')">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
           <span>GEOWATCH</span>
@@ -1015,24 +1016,6 @@
           </div>
         </div>
 
-        <!-- TAB: GEOTANI -->
-        <div id="tab-geotani" class="tab-content">
-          <div style="text-align:center; padding:40px 20px;">
-            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#94a3b8" stroke-width="1.5" style="margin-bottom:12px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <p class="geotools-desc">GeoTani sekarang ada di tab <b>GeoTools</b>.</p>
-             <button onclick="openTab(null, 'tab-geotools'); setTimeout(function(){ var dd = document.querySelector('.geotools-dropdown'); if(dd){ dd.value='geotoolsTabGeoTani'; dd.dispatchEvent(new Event('change')); } }, 200);" style="padding:8px 16px; font-size:12px; font-weight:600; color:#fff; background:#0891b2; border:none; border-radius:6px; cursor:pointer;">Buka GeoTools → GeoTani</button>
-          </div>
-        </div>
-
-        <!-- TAB: GEOPANGAN -->
-        <div id="tab-geopangan" class="tab-content">
-          <div style="text-align:center; padding:40px 20px;">
-            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#94a3b8" stroke-width="1.5" style="margin-bottom:12px;"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 01.553-.894L9 2l6 3 5.447-2.724A1 1 0 0121 3.382v10.764a1 1 0 01-.553.894L15 18l-6 3z"/><path d="M9 2v20"/><path d="M15 6v15"/></svg>
-            <p class="geotools-desc">GeoPangan sekarang ada di tab <b>GeoTools</b>.</p>
-             <button onclick="openTab(null, 'tab-geotools'); setTimeout(function(){ var dd = document.querySelector('.geotools-dropdown'); if(dd){ dd.value='geotoolsTabGeoPangan'; dd.dispatchEvent(new Event('change')); } }, 200);" style="padding:8px 16px; font-size:12px; font-weight:600; color:#fff; background:#0891b2; border:none; border-radius:6px; cursor:pointer;">Buka GeoTools → GeoPangan</button>
-          </div>
-        </div>
-
         <div id="tab-cctv" class="tab-content">
           <div style="text-align:center; padding:40px 20px;">
             <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#94a3b8" stroke-width="1.5" style="margin-bottom:12px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -1043,34 +1026,8 @@
 
         <!-- TAB: GEOTOOLS -->
         <div id="tab-geotools" class="tab-content">
-          <select class="geotools-dropdown" onchange="openGeotoolsMainTab(this)">
-            <!-- GeoData SENGAJA TIDAK ada di daftar ini. Ia punya jalurnya
-                 sendiri lewat tombol FAB "GeoData" (createGeoDataFAB di
-                 map-core.js), jadi memaksanya masuk sini hanya menghasilkan
-                 dropdown yang menampilkan tab lain sementara panel GeoData
-                 yang sedang terlihat. Panel #geotoolsTabMuatData tetap ada
-                 di bawah - yang hilang hanya <option>-nya.
-                 openGeoDataPanel() (sidebar.js) yang mengaktifkannya, dan
-                 ia juga menyembunyikan dropdown ini selama GeoData aktif.
-
-                 Urutan yang tersisa disengaja: GeoPortal di depan karena
-                 dipakai paling sering, lalu GeoOSS dan GeoFarm yang bekerja
-                 di atas peta yang sedang dikerjakan, lalu modul analisis.
-                 Urutan di sini TIDAK harus sama dengan urutan <div> panel di
-                 bawah: openGeotoolsMainTab() mencari panel lewat id, bukan
-                 lewat urutan. Jangan dicocokkan keduanya. -->
-            <option value="geotoolsTabGeoportal">GeoPortal</option>
-            <option value="geotoolsTabGeoOss">GeoOSS</option>
-            <option value="geotoolsTabGeoFarm" selected>GeoFarm</option>
-            <option value="geotoolsTabGeoTani">GeoTani</option>
-            <option value="geotoolsTabGeoPangan">GeoPangan</option>
-            <option value="geotoolsTabDemnas">GeoRaster</option>
-            <option value="geotoolsTabGeoPulse">GeoPulse</option>
-            <option value="geotoolsTabGeonusa">GeoNusa</option>
-            <option value="geotoolsTabGeoWatch">GeoWatch</option>
-          </select>
-
-          
+          <!-- Dropdown GeoTools dipindah ke header sheet agar selalu terlihat
+               bersama judul GeoTools, bukan di dalam body tab. -->
 
           <!-- Panel: GeoRaster (id panel: geotoolsTabDemnas)
                September 2026: bagian "Unduh DEMNAS" diubah jadi <details> yang
@@ -1250,506 +1207,6 @@
             </details>
           </div>
 
-          <!-- Panel: Geoportal -->
-          <div id="geotoolsTabGeoportal" class="geotools-main-tab-panel">
-            <div class="geoportal-sticky-header">
-              <h4 style="font-size:15px; margin-bottom:4px;">GeoPortal Hub</h4>
-              <p class="geotools-desc" style="margin-bottom:20px;">Pilih wilayah untuk ditampilkan di peta.</p>
-
-              <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
-              <div class="geoportal-search-container">
-                <div class="geoportal-search-input-wrapper">
-                  <span class="search-icon">🔍</span>
-                  <input type="text" id="geoportalSearchInput" class="geoportal-search-input with-icon" placeholder="Cari layer..." autocomplete="off" />
-                </div>
-              </div>
-            </div>
-            <div id="geoportalLayerList"></div>
-          </div>
-
-          <!-- Panel: GeoTani -->
-          <div id="geotoolsTabGeoTani" class="geotools-main-tab-panel">
-            <h4 style="font-size:15px; margin-bottom:4px;">GeoTani Analysis</h4>
-            <p class="geotools-desc" style="margin-bottom:20px;">Petakan, Analisis, dan Optimalkan</p>
-            <!-- LBS & LSD: workflow mandiri di bagian teratas GeoTani. Diletakkan
-                 di sini (tempat grid kartu analisis) supaya jadi konten pertama
-                 yang terlihat. Grid .geotani-analysis-cards sendiri sedang
-                 display:none di app.css, jadi kartu ini sengaja tidak ikut
-                 mekanisme openGeotaniAnalysisTab. -->
-            <!-- September 2026: kartu GeoTani diubah jadi <details> yang mulai
-                 terlipat, sama seperti GeoOSS, KKPR, dan GeoFarm.
-
-                 Lima tab analisis yang sudah lama mati (LBS/NDVI/LULC/DEM/KTA)
-                 TIDAK ikut diubah: grid pemicunya display:none, jadi tidak ada
-                 yang bisa membukanya. Mengubah struktur kartu yang tidak terlihat
-                 hanya menambah risiko tanpa manfaat yang bisa dilihat. -->
-            <details class="geotani-lbslsd" id="geotani-lbslsd-card" aria-labelledby="geotani-lbslsd-title">
-              <summary class="gt-card-head">
-                <span class="gt-card-icon" aria-hidden="true">&#127807;</span>
-                <span>
-                  <b id="geotani-lbslsd-title">LBS &amp; LSD</b>
-                  <small>Lahan Baku &amp; Sawah Dilindungi &mdash; BIG 1:50.000</small>
-                </span>
-              </summary>
-              <div class="geotani-lbslsd-body">
-                <p class="geotani-sls-desc">
-                  Menampilkan <b>Lahan Baku Sawah</b> dan <b>Lahan Sawah Dilindungi</b> di dalam desa
-                  yang dipilih. Luas dihitung dari irisan dengan batas desa, bukan dari penjumlahan
-                  seluruh poligon.
-                </p>
-                <div class="geotani-sls-search">
-                  <label class="geotani-form-label" for="geotaniLbsLsdVillageSearch">Cari nama desa</label>
-                  <input type="text" id="geotaniLbsLsdVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
-                  <div id="geotaniLbsLsdVillageResults" class="geotani-sls-results" hidden></div>
-                  <div id="geotaniLbsLsdVillageSelected" class="geotani-sls-picked" hidden></div>
-                </div>
-                  <button id="geotani-lbslsd-load" class="geotani-btn-print" type="button">Tampilkan LBS &amp; LSD</button>
-                  <button id="geotani-lbslsd-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon LBS &amp; LSD" aria-label="Reset polygon LBS &amp; LSD">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                    Reset Polygon
-                  </button>
-                <div id="geotani-lbslsd-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
-                <div id="geotani-lbslsd-output"></div>
-              </div>
-            </details>
-
-            <!-- LSD 12 Provinsi (ATR/BPN GISTARU). Kartu terpisah, bukan
-                 tambahan di kartu LBS & LSD: dua layer itu mengukur hal
-                 yang sama dari sumber berbeda, dan menjumlahkannya
-                 menghitung sawah dilindungi dua kali. Berdampingan supaya
-                 perbandingannya terlihat, terpisah supaya tidak salah
-                 dijumlahkan. Cakupannya hanya 12 provinsi -- lihat
-                 assets/js/geotani-lsd12prov.js. -->
-            <!-- Tutupan Lahan (KLHK via BNPB). Ketiga kartu sawah dan
-                 kartu ini berdiri sendiri, bukan tab dari satu sama lain:
-                 masing-masing punya sumber, cakupan, dan cara hitung luasnya
-                 sendiri, dan menjumlahkan angka antar kartu tidak pernah
-                 bermakna. Berdampingan di bagian teratas GeoTani supaya
-                 workflow desa -- pilih desa, lihat apa yang ada di dalamnya --
-                 terbaca lebih dulu sebelum pemetaan umum di bawahnya. -->
-
-            <!-- WAJIB tanpa atribut `open`: itu membuat kartu ini MULAI
-                 terlipat, dan tidak lebih dari itu. Tidak ada kode yang
-                 menutupnya lagi setelah itu -- bukan setelah selesai memuat,
-                 bukan di Reset Polygon, bukan saat pindah tab GeoTani. Tombol
-                 "Tampilkan" ada di dalam kartu, jadi menutupnya begitu selesai
-                 memuat akan menyembunyikan hasilnya tepat di tempat pengguna
-                 memintanya, dan memaksanya menekan judul lagi hanya untuk
-                 membaca angka yang sudah selesai dihitung. Status terbuka atau
-                 tertutupnya kartu sepenuhnya milik pengguna. -->
-            <details class="geotani-lbslsd" id="geotani-lsd12-card" aria-labelledby="geotani-lsd12-title">
-              <summary class="gt-card-head">
-                <span class="gt-card-icon" aria-hidden="true">&#127807;</span>
-                <span>
-                  <b id="geotani-lsd12-title">LSD 12 Provinsi</b>
-                  <small>Lahan Sawah Dilindungi &mdash; ATR/BPN GISTARU</small>
-                </span>
-              </summary>
-              <div class="geotani-lbslsd-body">
-                <p class="geotani-sls-desc">
-                  Menampilkan <b>Lahan Sawah yang Dilindungi</b> dari ATR/BPN di dalam desa
-                  yang dipilih, dengan luas dihitung dari irisan dengan batas desa.
-                  <b>Cakupan hanya 12 provinsi</b>: Aceh, Sumatera Utara, Riau, Kepulauan Riau,
-                  Jambi, Sumatera Selatan, Bengkulu, Lampung, Bangka Belitung, Kalimantan Barat,
-                  Kalimantan Selatan, dan Sulawesi Selatan. Di luar itu, termasuk seluruh Jawa,
-                  layer ini tidak punya data.
-                </p>
-                <div class="geotani-sls-search">
-                  <label class="geotani-form-label" for="geotaniLsd12VillageSearch">Cari nama desa</label>
-                  <input type="text" id="geotaniLsd12VillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
-                  <div id="geotaniLsd12VillageResults" class="geotani-sls-results" hidden></div>
-                  <div id="geotaniLsd12VillageSelected" class="geotani-sls-picked" hidden></div>
-                </div>
-                  <button id="geotani-lsd12-load" class="geotani-btn-print" type="button">Tampilkan LSD 12 Provinsi</button>
-                  <button id="geotani-lsd12-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon LSD 12 Provinsi" aria-label="Reset polygon LSD 12 Provinsi">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                    Reset Polygon
-                  </button>
-                <div id="geotani-lsd12-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
-                <div id="geotani-lsd12-output"></div>
-              </div>
-            </details>
-
-<details class="geotani-lbslsd" id="geotani-tutupan-card" aria-labelledby="geotani-tutupan-title">
-              <summary class="gt-card-head">
-                <span class="gt-card-icon" aria-hidden="true">&#127793;</span>
-                <span>
-                  <b id="geotani-tutupan-title">Tutupan Lahan</b>
-                  <small>Perubahan tutupan lahan 2020 &rarr; 2024 &mdash; KLHK via BNPB</small>
-                </span>
-              </summary>
-              <div class="geotani-lbslsd-body">
-                <p class="geotani-sls-desc">
-                  Membandingkan <b>sebaran tutupan lahan 2020 dan 2024</b> di dalam desa yang dipilih.
-                  Luas tiap kelas dihitung dari irisan dengan batas desa pada kedua tahun, jadi
-                  kolom perubahannya bisa dibandingkan langsung &mdash; bukan dari selisih dua peta.
-                </p>
-                <div class="geotani-sls-search">
-                  <label class="geotani-form-label" for="geotaniTutupanVillageSearch">Cari nama desa</label>
-                  <input type="text" id="geotaniTutupanVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
-                  <div id="geotaniTutupanVillageResults" class="geotani-sls-results" hidden></div>
-                  <div id="geotaniTutupanVillageSelected" class="geotani-sls-picked" hidden></div>
-                </div>
-                  <button id="geotani-tutupan-load" class="geotani-btn-print" type="button">Bandingkan Tutupan Lahan</button>
-                  <button id="geotani-tutupan-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon Tutupan Lahan" aria-label="Reset polygon Tutupan Lahan">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                    Reset Polygon
-                  </button>
-                <div id="geotani-tutupan-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
-                <div id="geotani-tutupan-output"></div>
-              </div>
-            </details>
-
-            <div class="geotani-analysis-cards" role="tablist" aria-label="Menu analisis Geotani">
-              <button id="geotani-lbs-tab" class="geotani-analysis-card" type="button" role="tab" aria-selected="false" aria-controls="geotani-lbs-panel" onclick="openGeotaniAnalysisTab('lbs')">
-                <span class="geotani-card-icon">🌾</span>
-                <span class="geotani-card-title">LBS Analysis</span>
-                <span class="geotani-card-desc">Lahan Baku Sawah</span>
-              </button>
-              <button id="geotani-ndvi-tab" class="geotani-analysis-card" type="button" role="tab" aria-selected="false" aria-controls="geotani-ndvi-panel" onclick="openGeotaniAnalysisTab('ndvi')">
-                <span class="geotani-card-icon">🛰️</span>
-                <span class="geotani-card-title">NDVI Analysis</span>
-                <span class="geotani-card-desc">Indeks Vegetasi</span>
-              </button>
-              <button id="geotani-landcover-tab" class="geotani-analysis-card" type="button" role="tab" aria-selected="false" aria-controls="geotani-landcover-panel" onclick="openGeotaniAnalysisTab('landcover')">
-                <span class="geotani-card-icon">🗺️</span>
-                <span class="geotani-card-title">LULC Analysis</span>
-                <span class="geotani-card-desc">Land Use Land Cover</span>
-              </button>
-              <button id="geotani-dem-tab" class="geotani-analysis-card" type="button" role="tab" aria-selected="false" aria-controls="geotani-dem-panel" onclick="openGeotaniAnalysisTab('dem')">
-                <span class="geotani-card-icon">🏔️</span>
-                <span class="geotani-card-title">TERRAIN Analysis</span>
-                <span class="geotani-card-desc">DEM & Topografi</span>
-              </button>
-              <button id="geotani-kta-tab" class="geotani-analysis-card" type="button" role="tab" aria-selected="false" aria-controls="geotani-kta-panel" onclick="openGeotaniAnalysisTab('kta')">
-                <span class="geotani-card-icon">📊</span>
-                <span class="geotani-card-title">KTA Analysis</span>
-                <span class="geotani-card-desc">Ketahanan Pangan</span>
-              </button>
-              <button id="geotani-satupeta-tab" class="geotani-analysis-card active" type="button" role="tab" aria-selected="true" aria-controls="geotani-satupeta-panel" onclick="openGeotaniAnalysisTab('satupeta')">
-                <span class="geotani-card-icon">🌿</span>
-                <span class="geotani-card-title">Analisis Spasial</span>
-                <span class="geotani-card-desc">Penggunaan Tanah 10K</span>
-              </button>
-            </div>
-            <div id="geotani-lbs-panel" class="geotani-analysis-panel" role="tabpanel" aria-labelledby="geotani-lbs-tab" hidden>
-              <section class="geotani-kta-card" aria-labelledby="lbsOverlayTitle">
-                <h5 id="lbsOverlayTitle">LBS</h5>
-                <div style="display:grid;gap:10px;margin-top:8px;">
-                  <div>
-                    <label class="geotani-form-label">Input Layer 1</label>
-                    <select id="lbsLayer1" class="geotani-form-select">
-                      <option value="sawah-2023" selected>Lahan Baku Sawah 2023</option>
-                    </select>
-                  </div>
-                  <div style="display:grid;gap:10px;">
-                    <div>
-                      <label class="geotani-form-label">Input Layer 2</label>
-                      <select id="lbsLevelMode" class="geotani-form-select">
-                        <option value="desa" selected>Desa/Kelurahan</option>
-                        <option value="kabupaten">Kabupaten/Kota</option>
-                      </select>
-                    </div>
-                    <div style="position:relative;">
-                      <label id="lbsLevelLabel" class="geotani-form-label">Cari nama wilayah</label>
-                      <div style="position:relative;">
-                        <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
-                        <input type="text" id="lbsVillageSearch" placeholder="Pilih nama wilayah..." autocomplete="off" class="geotani-form-input-search" />
-                      </div>
-                      <div id="lbsVillageResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
-                      <div id="lbsVillageSelected" style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;"></div>
-                    </div>
-                  </div>
-                  <button id="btnRunLbs" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Hitung Luas Sawah</button>
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">
-                    <button id="btnClearLbs" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Hapus Layer</button>
-                    <button id="btnDetailLbs" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Detail</button>
-                  </div>
-                  <div id="lbsResultArea" style="display:none;margin-top:8px;padding:10px;background:#fff;border:1px solid #bbf7d0;border-radius:6px;font-size:11px;"></div>
-                </div>
-              </section>
-            </div>
-            <div id="geotani-kta-panel" class="geotani-analysis-panel" role="tabpanel" aria-labelledby="geotani-kta-tab" hidden>
-              <section class="geotani-kta-card" aria-labelledby="geoportalOverlayTitle">
-                <h5 id="geoportalOverlayTitle">KTA</h5>
-                <div style="display:grid;gap:10px;margin-top:8px;">
-                  <div>
-                    <label class="geotani-form-label">Input Layer 1</label>
-                    <select id="overlayLayer1" class="geotani-form-select">
-                      <option value="sawah-2023" selected>Lahan Baku Sawah 2023</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="geotani-form-label">Input Layer 2</label>
-                    <select id="overlayLayer2" class="geotani-form-select">
-                      <option value="erosi" selected>Peta Rawan Erosi (BIG)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="geotani-form-label">Pilih Wilayah Observasi</label>
-                    <select id="overlayLevelMode" class="geotani-form-select">
-                      <option value="desa" selected>Desa/Kelurahan</option>
-                      <option value="kabupaten">Kabupaten/Kota</option>
-                    </select>
-                  </div>
-                  <div style="position:relative;">
-                    <label id="overlayAreaLabel" class="geotani-form-label">Input Layer 3 — Desa/Kelurahan</label>
-                    <div style="position:relative;">
-                      <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
-                        <input type="text" id="overlayVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
-                    </div>
-                    <div id="overlayVillageResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
-                    <div id="overlayVillageSelected" style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;"></div>
-                  </div>
-                  <label class="geoportal-filter" style="margin-top:2px;display:none;"><input type="checkbox" id="overlayClipVillage" checked><span>Clip ke Batas Wilayah</span></label>
-                  <button id="btnRunOverlay" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Jalankan</button>
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">
-                    <button id="btnClearKta" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Hapus Layer</button>
-                    <button id="btnDetailKta" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Detail</button>
-                  </div>
-                </div>
-              </section>
-            </div>
-            <div id="geotani-ndvi-panel" class="geotani-analysis-panel" role="tabpanel" aria-labelledby="geotani-ndvi-tab" hidden>
-              <section class="geotani-kta-card" aria-labelledby="ndviOverlayTitle">
-                <h5 id="ndviOverlayTitle">NDVI</h5>
-                <div style="display:grid;gap:10px;margin-top:8px;">
-                  <div>
-                    <label class="geotani-form-label">Input Layer 1</label>
-                    <select id="ndviInputLayer" class="geotani-form-select">
-                      <option value="ndvi" selected>NDVI (Sentinel-2)</option>
-                    </select>
-                  </div>
-                  <div style="display:grid;gap:10px;">
-                    <div>
-                      <label class="geotani-form-label">Input Layer 2</label>
-                      <select id="ndviLevelMode" class="geotani-form-select">
-                        <option value="desa" selected>Desa/Kelurahan</option>
-                        <option value="kabupaten">Kabupaten/Kota</option>
-                      </select>
-                    </div>
-                    <div style="position:relative;">
-                      <label id="ndviLevelLabel" class="geotani-form-label">Desa/Kelurahan</label>
-                      <div style="position:relative;">
-                        <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
-                        <input type="text" id="ndviVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
-                      </div>
-                      <div id="ndviVillageResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
-                      <div id="ndviVillageSelected" style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;"></div>
-                    </div>
-                  </div>
-                  <button id="btnRunNdvi" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Analisis NDVI</button>
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">
-                    <button id="btnClearNdvi" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Hapus Layer</button>
-                    <button id="btnDetailNdvi" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Detail</button>
-                  </div>
-                </div>
-              </section>
-            </div>
-            <div id="geotani-landcover-panel" class="geotani-analysis-panel" role="tabpanel" aria-labelledby="geotani-landcover-tab" hidden>
-              <section class="geotani-kta-card" aria-labelledby="landcoverOverlayTitle">
-                <h5 id="landcoverOverlayTitle">LULC</h5>
-                <div style="display:grid;gap:10px;margin-top:8px;">
-                  <div>
-                    <label class="geotani-form-label">Input Layer 1</label>
-                    <select id="landcoverInputLayer" class="geotani-form-select">
-                      <option value="https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer" selected>Sentinel-2 10m Land Cover (Esri)</option>
-                    </select>
-                  </div>
-                  <div style="display:grid;gap:10px;">
-                    <div>
-                      <label class="geotani-form-label">Input Layer 2</label>
-                      <select id="landcoverLevelMode" class="geotani-form-select">
-                        <option value="desa" selected>Desa/Kelurahan</option>
-                        <option value="kabupaten">Kabupaten/Kota</option>
-                      </select>
-                    </div>
-                    <div style="position:relative;">
-                      <label id="landcoverLevelLabel" class="geotani-form-label">Desa/Kelurahan</label>
-                      <div style="position:relative;">
-                        <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
-                        <input type="text" id="landcoverVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
-                      </div>
-                      <div id="landcoverVillageResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
-                      <div id="landcoverVillageSelected" style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;"></div>
-                    </div>
-                  </div>
-                  <button id="btnRunLandcover" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#0d9488;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;" onmouseover="this.style.background='#0f766e'" onmouseout="this.style.background='#0d9488'">Jalankan Analisis</button>
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">
-                    <button id="btnClearLandcover" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#0d9488;background:#fff;border:1px solid #0d9488;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdfa'" onmouseout="this.style.background='#fff'">Hapus Layer</button>
-                    <button id="btnDetailLandcover" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;color:#0d9488;background:#fff;border:1px solid #0d9488;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdfa'" onmouseout="this.style.background='#fff'">Detail</button>
-                  </div>
-                </div>
-                <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #d0dde8;">
-                  <label class="geotani-form-label" style="font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.03em;">Legenda LULC</label>
-                  <div class="landcover-legend-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:10px;">
-                    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#419bdf;"></span>Water</div>
-                    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#397d49;"></span>Trees</div>
-                    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#7a87c6;"></span>Flooded Veg</div>
-                    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#e49635;"></span>Crops</div>
-                    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#c4281b;"></span>Built Area</div>
-                    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#a59b8f;"></span>Bare Ground</div>
-                    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#a8ebff;"></span>Snow/Ice</div>
-                    <div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#616161;"></span>Clouds</div>
-                    <div style="display:flex;align-items:center;gap:6px;grid-column:span 2;"><span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#e3e2c3;"></span>Rangeland</div>
-                  </div>
-                </div>
-              </section>
-            </div>
-            <div id="geotani-dem-panel" class="geotani-analysis-panel" role="tabpanel" aria-labelledby="geotani-dem-tab" hidden>
-              <section class="geotani-kta-card" aria-labelledby="demOverlayTitle">
-                <h5 id="demOverlayTitle">Topografi (DEM)</h5>
-                <div style="display:grid;gap:10px;margin-top:8px;">
-                  <div style="display:grid;gap:10px;">
-                    <div>
-                      <label class="geotani-form-label">Level</label>
-                      <select id="demLevelMode" class="geotani-form-select">
-                        <option value="desa" selected>Desa/Kelurahan</option>
-                        <option value="kabupaten">Kabupaten/Kota</option>
-                      </select>
-                    </div>
-                    <div style="position:relative;">
-                      <label id="demLevelLabel" class="geotani-form-label">Cari nama wilayah</label>
-                      <div style="position:relative;">
-                        <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
-                        <input type="text" id="demVillageSearch" placeholder="Pilih nama wilayah..." autocomplete="off" class="geotani-form-input-search" />
-                      </div>
-                      <div id="demVillageResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
-                      <div id="demVillageSelected" style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;"></div>
-                    </div>
-                  </div>
-                  <button id="btnRunDem" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#7c3aed;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;" onmouseover="this.style.background='#6d28d9'" onmouseout="this.style.background='#7c3aed'">Analisis Topografi</button>
-                  <button id="btnClearDem" style="margin-top:4px;padding:7px 14px;font-size:11px;font-weight:600;color:#7c3aed;background:#fff;border:1px solid #7c3aed;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:none;" onmouseover="this.style.background='#f5f3ff'" onmouseout="this.style.background='#fff'">Hapus Overlay</button>
-                  <label class="cctv-layer-toggle" style="margin-top:6px;display:none;" id="demnasToggleWrap">
-                    <input type="checkbox" id="toggleDemnasOverlay">
-                    <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
-                    <span class="cctv-layer-info">
-                      <span class="cctv-layer-name">Terrain Overlay</span>
-                      <small>Tampilkan visualisasi elevasi (SRTM)</small>
-                    </span>
-                  </label>
-                  <div id="dem-progress" style="display:none;">
-                    <div style="height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden;margin-top:4px;">
-                      <div id="dem-progress-fill" style="height:100%;background:#7c3aed;border-radius:2px;transition:width .3s;width:0%;"></div>
-                    </div>
-                    <div id="dem-progress-text" style="font-size:10px;color:#64748b;margin-top:4px;">Memuat data elevasi...</div>
-                  </div>
-                  <div id="dem-report-container" style="display:none;"></div>
-                </div>
-              </section>
-            </div>
-            <div id="geotani-satupeta-panel" class="geotani-analysis-panel active" role="tabpanel" aria-labelledby="geotani-satupeta-tab">
-              <!-- Kartu SLS: batas Satuan Lingkungan Setempat di dalam desa.
-                   Punya pencarian desa sendiri karena kode desa di panel lain
-                   (mis. satupeta) disimpan di state modul lokal, bukan global,
-                   jadi tidak bisa dibaca dari sini. Sumber daftar desa
-                   (window.KODE_WILAYAH_DATA) sudah termuat di halaman ini. -->
-              <details class="geotani-kta-card geotani-sls-card" id="geotani-sls-card" aria-labelledby="geotani-sls-title">
-                <summary class="gt-card-head">
-                  <span class="gt-card-icon" aria-hidden="true">&#129517;</span>
-                  <span>
-                    <b id="geotani-sls-title">SLS Desa <span class="geotani-sls-badge">BPS</span></b>
-                    <small>Satuan Lingkungan Setempat RT/RW/dusun &mdash; BPS</small>
-                  </span>
-                </summary>
-                <div>
-                  <p class="geotani-sls-desc">
-                    Menampilkan batas <b>Satuan Lingkungan Setempat</b> (RT/RW/dusun) di dalam desa
-                    yang dipilih, sebagai acuan kerja lapangan.
-                  </p>
-                  <div class="geotani-sls-search">
-                    <label class="geotani-form-label" for="geotaniSlsVillageSearch">Cari nama desa</label>
-                    <input type="text" id="geotaniSlsVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
-                    <div id="geotaniSlsVillageResults" class="geotani-sls-results" hidden></div>
-                    <div id="geotaniSlsVillageSelected" class="geotani-sls-picked" hidden></div>
-                  </div>
-                  <button id="geotani-sls-load" class="geotani-btn-print" type="button">Tampilkan SLS Desa</button>
-                  <button id="geotani-sls-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon SLS" aria-label="Reset polygon SLS">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                    Reset Polygon
-                  </button>
-                  <div id="geotani-sls-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
-                  <div id="geotani-sls-output"></div>
-                </div>
-              </details>
-
-              <!-- Kartu Geospasial Indonesia: pemilih layer BIG/SatuPeta.
-                   Ditaruh paling bawah supaya alur bacaGeoTani mulai dari
-                 workflow desa (LBS & LSD, SLS) lalu berakhir di pemetaan
-                 umum, dan supaya kartu ini punya header seperti kartu lain
-                 di panel ini. -->
-              <details class="geotani-kta-card" id="geotani-geospasial-card" aria-labelledby="geotani-geospasial-title">
-                <summary class="gt-card-head">
-                  <span class="gt-card-icon" aria-hidden="true">&#128506;</span>
-                  <span>
-                    <b id="geotani-geospasial-title">Geospasial Indonesia</b>
-                    <small>Katalog SatuPeta BIG dan sumber resmi lain</small>
-                  </span>
-                </summary>
-                <!-- margin-top inline DIHAPUS: nilai inline menang atas
-                     stylesheet, jadi ia akan mengalahkan margin 12px
-                     dari #geotani-satupeta-panel > .geotani-kta-card > div
-                     dan jarak atas kartu ini jadi beda dari kartu SLS
-                     di atasnya. Jarak kartu sekarang diurus sepenuhnya
-                     oleh CSS. -->
-                <div style="display:grid;gap:10px;">
-                  <div>
-                    <label class="geotani-form-label">Cari layer</label>
-                    <select id="satupetaInputLayer" class="geotani-form-select">
-                      <option value="lsd-50k" selected>LSD 50K (BIG)</option>
-                      <option value="lbs-50k">LBS 50K (BIG)</option>
-                      <option value="likuifaksi-big">Kerentanan Likuifaksi (BIG)</option>
-                      <option value="geostruktur-big">Geologi Geostruktur (BIG)</option>
-                      <option value="erosi-big">Peta Rawan Erosi (BIG)</option>
-                      <option value="penggunaan10k">Penggunaan Tanah 10K (SatuPeta)</option>
-                      <option value="geologi-bnpb">Peta Geologi (BNPB)</option>
-                      <option value="kh-esdm">Kawasan Hutan (ESDM)</option>
-                      <option value="kh-kemenhut">Kawasan Hutan (Kemenhut)</option>
-                      <optgroup label="Kependudukan (Dukcapil)">
-                        <option value="duk-prop">Penduduk Provinsi (Dukcapil)</option>
-                        <option value="duk-kab">Penduduk Kabupaten (Dukcapil)</option>
-                        <option value="duk-kec">Penduduk Kecamatan (Dukcapil)</option>
-                        <option value="duk-kel">Penduduk Desa (Dukcapil)</option>
-                      </optgroup>
-                    </select>
-                  </div>
-                  <div style="display:grid;gap:10px;">
-                    <div>
-                      <label class="geotani-form-label">Level</label>
-                      <select id="satupetaLevelMode" class="geotani-form-select">
-                        <option value="provinsi">Provinsi</option>
-                        <option value="kabupaten" selected>Kabupaten/Kota</option>
-                        <option value="kecamatan">Kecamatan</option>
-                        <option value="desa">Desa/Kelurahan</option>
-                      </select>
-                    </div>
-                    <div style="position:relative;">
-                      <label id="satupetaLevelLabel" class="geotani-form-label">Cari nama wilayah</label>
-                      <div style="position:relative;">
-                        <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
-                        <input type="text" id="satupetaKabSearch" placeholder="Pilih nama wilayah..." autocomplete="off" class="geotani-form-input-search" />
-                      </div>
-                      <div id="satupetaKabResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
-                      <div id="satupetaKabSelected" style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;"></div>
-                    </div>
-                  </div>
-                  <div id="satupetaInfo" style="display:none;font-size:11px;color:#475569;padding:6px 0;"></div>
-                  <div id="satupetaFeatureTable" style="display:none;"></div>
-                  <button id="satupetaToggleBtn" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:none;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Tampilkan Data</button>
-                  <!-- Tombol reset. ID "btnClearSatupeta" sengaja dipertahankan:
-                       sidebar.js memasang listener di situ. Nama tombol disamakan
-                       dengan kartu LBS & LSD dan SLS ("Reset Polygon") supaya
-                       ketiga workflow GeoTani punya kontrol yang sama. -->
-                  <button id="btnClearSatupeta" class="geotani-btn-reset" type="button" style="display:none;" title="Reset polygon dan pilihan wilayah" aria-label="Reset polygon dan pilihan wilayah">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                    Reset Polygon
-                  </button>
-                  <button id="btnDetailSatupeta" style="margin-top:4px;display:none;width:100%;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Detail</button>
-                </div>
-              </details>
-            </div>
-            <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
-          </div>
 
           <!-- Panel: GeoPangan -->
           <!-- Modul GeoOSS. Dua kartu ini sebelumnya berada di panel GeoTani, lalu
@@ -1961,115 +1418,6 @@
      .cctv-card, .cctv-card-header, dan .cctv-card-body dipakai bersama
      dengan panel GeoPulse; gayanya tetap, hanya pemakaian di sini yang
      hilang. -->
-<div id="geotoolsTabGeoPangan" class="geotools-main-tab-panel">
-  <h4 style="font-size:15px; margin-bottom:4px;">GeoPangan</h4>
-  <p class="geotools-desc" style="margin-bottom:25px;">Harga Pangan Nasional - PIHPS &amp; SP2KP</p>
-
-  <details class="geopangan-card" id="geopangan-card-pihps" aria-labelledby="geopanganPihpsTitle">
-    <summary class="gt-card-head">
-      <span class="gt-card-icon" aria-hidden="true">&#128717;</span>
-      <span>
-        <b id="geopanganPihpsTitle">PIHPS - Bank Indonesia</b>
-        <small>Harga pangan nasional dari PIHPS / Badan Pusat Statistik</small>
-      </span>
-    </summary>
-    <div class="geopangan-card-body">
-      <div class="geopangan-field">
-        <label style="margin-top:12px;">Jenis Pasar</label>
-        <select id="geopanganPriceType">
-          <option value="1">Pasar Tradisional</option>
-          <option value="2">Pasar Modern (Supermarket/Minimarket)</option>
-          <option value="3">Pedagang Besar / Grosir</option>
-          <option value="4">Produsen</option>
-        </select>
-      </div>
-      <div class="geopangan-field">
-        <label>Komoditas</label>
-        <select id="geopanganCommodity"></select>
-      </div>
-      <div class="geopangan-field">
-        <label>Provinsi</label>
-        <select id="geopanganProvince">
-          <option value="">Semua Provinsi</option>
-        </select>
-      </div>
-      <div class="geopangan-field" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-        <div>
-          <label>Dari</label>
-          <input type="date" id="geopanganDateStart" />
-        </div>
-        <div>
-          <label>Sampai</label>
-          <input type="date" id="geopanganDateEnd" />
-        </div>
-      </div>
-      <button id="geopanganLoadBtn" class="geopangan-btn" style="margin-top:4px;">Tampilkan</button>
-
-      <div id="geopangan-table-home">
-                      <div id="geopanganResult"></div>
-                      <div id="geopanganTable"></div>
-                      <div id="sppgSebaranTable"></div>
-                      <button id="geopanganResetBtn" type="button" class="geopangan-btn geopangan-reset-btn" style="margin-top:10px;">Reset Layer PIHPS</button>
-                    </div>
-    </div>
-  </details>
-
-  <details class="geopangan-card" id="geopangan-card-sp2kp" aria-labelledby="geopanganSp2kpTitle">
-    <summary class="gt-card-head">
-      <span class="gt-card-icon" aria-hidden="true">&#128200;</span>
-      <span>
-        <b id="geopanganSp2kpTitle">SP2KP - Kemendag</b>
-        <small>Choropleth HNT dan disparitas harga provinsi</small>
-      </span>
-    </summary>
-    <div class="geopangan-card-body">
-      <p class="geotools-desc" style="font-size:11px;margin:12px 0;">Choropleth Harga Numerik Tertimbang (HNT) dan disparitas harga provinsi dari Sistem Pemantauan Pasar Kebutuhan Pokok Kementerian Perdagangan.</p>
-      <div class="geopangan-field">
-        <label>Variant / Komoditas SP2KP</label>
-        <select id="sp2kpVariantSelect"></select>
-      </div>
-      <div class="geopangan-field">
-        <label>Tanggal HNT</label>
-        <input type="date" id="sp2kpLatestDate" />
-      </div>
-      <button id="sp2kpLoadBtn" class="geopangan-btn" style="margin-top:4px;">Tampilkan Choropleth SP2KP</button>
-      <div id="sp2kpStatus" class="cctv-message" style="display:none;margin-top:10px;"></div>
-      <div id="sp2kpResult"></div>
-      <div id="sp2kpTable"></div>
-      <div id="sp2kpHntChartCard" style="display:none;margin-top:12px;padding:10px;border:1px solid #dbe7e1;border-radius:8px;background:#fbfefc;">
-        <div class="sp2kp-table-title">Harga HNT Provinsi — 10 Tertinggi</div>
-        <div id="sp2kpHntChartSubtitle" class="sp2kp-table-subtitle"></div>
-        <div style="height:260px;margin-top:8px;"><canvas id="sp2kpHntChart"></canvas></div>
-      </div>
-      <button id="sp2kpResetBtn" type="button" class="geopangan-btn geopangan-reset-btn" style="margin-top:10px;">Reset Layer SP2KP</button>
-      <div style="margin-top:14px;padding-top:12px;border-top:1px solid #dbe7e1;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <strong style="font-size:12px;color:#24523a;">Periode histori HNT</strong>
-          <span style="margin-left:auto;font-size:9px;color:#64748b;">Tabel dan grafik terpisah</span>
-        </div>
-        <p class="geotools-desc" style="font-size:10px;margin:5px 0 10px;">Pilih rentang tanggal untuk melihat perkembangan HNT nasional.</p>
-        <div class="geopangan-field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div>
-            <label>Dari</label>
-            <input type="date" id="sp2kpHistoryStart" />
-          </div>
-          <div>
-            <label>Sampai</label>
-            <input type="date" id="sp2kpHistoryEnd" />
-          </div>
-        </div>
-        <button id="sp2kpHistoryLoadBtn" class="geopangan-btn" style="margin-top:4px;">Muat histori HNT</button>
-        <div id="sp2kpHistoryStatus" class="cctv-message" style="display:none;margin-top:10px;"></div>
-        <div id="sp2kpHistoryTable"></div>
-        <div id="sp2kpHistoryCard" style="display:none;margin-top:12px;padding:10px;border:1px solid #dbe7e1;border-radius:8px;background:#fbfefc;">
-          <div class="sp2kp-chart-title">Series Perkembangan Harga Nasional Tertimbang (HNT) - SEBULAN TERAKHIR</div>
-          <div style="height:170px;margin-top:8px;"><canvas id="sp2kpHistoryChart"></canvas></div>
-        </div>
-      </div>
-    </div>
-  </details>
-</div>
-
           <!-- Panel: GeoWatch
                September 2026: kartu .cctv-card + .cctv-card-header (pita biru
                gradien) diganti <details> yang mengikuti .gt-card-head, sama seperti
@@ -2118,8 +1466,8 @@
           <div id="geotoolsTabGeoPulse" class="geotools-main-tab-panel">
 
 
-          <h4 style="font-size:15px; margin-bottom:4px;">GeoPulse Analysis</h4>
-          <p class="geotools-desc" style="margin-bottom:12px;">Monitoring Bumi secara realtime dalam satu peta.</p>
+          <h4 style="font-size:15px; margin-bottom:4px;">GeoCuaca Analysis</h4>
+          <p class="geotools-desc" style="margin-bottom:12px;">Monitoring Cuaca secara realtime dalam satu peta.</p>
 
           <div class="search-weather-container" style="margin-top:16px; margin-bottom:12px;">
             <input type="text" id="weatherSearchInput" class="search-weather-input"
@@ -2821,6 +2169,121 @@
              </div>
              </div>
 
+                <div id="geotoolsTabGeoportal" class="geotools-main-tab-panel">
+                  <h4 style="font-size:15px; margin-bottom:4px;">GeoPortal Hub</h4>
+                  <p class="geotools-desc" style="margin-bottom:20px;">Pilih wilayah untuk ditampilkan di peta</p>
+
+                  <details class="geoportal-card" aria-labelledby="geoportalHubTitle">
+                    <summary class="gt-card-head">
+                      <span class="gt-card-icon" aria-hidden="true">📂</span>
+                      <span>
+                        <b id="geoportalHubTitle">GeoPortal Hub</b>
+                        <small>Pilih wilayah untuk ditampilkan di peta</small>
+                      </span>
+                    </summary>
+                    <div class="geoportal-card-body">
+                      <div class="geoportal-sticky-header">
+                        <div class="geoportal-search-container">
+                          <div class="geoportal-search-input-wrapper">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="geoportalSearchInput" class="geoportal-search-input with-icon" placeholder="Cari layer..." autocomplete="off" />
+                          </div>
+                        </div>
+                      </div>
+                      <div id="geoportalLayerList"></div>
+                    </div>
+                  </details>
+
+                  <details class="geotani-kta-card geotani-sls-card" id="geotani-sls-card" aria-labelledby="geotani-sls-title">
+                    <summary class="gt-card-head">
+                      <span class="gt-card-icon" aria-hidden="true">&#129517;</span>
+                      <span>
+                        <b id="geotani-sls-title">SLS Desa <span class="geotani-sls-badge">BPS</span></b>
+                        <small>Satuan Lingkungan Setempat RT/RW/dusun &mdash; BPS</small>
+                      </span>
+                    </summary>
+                    <div>
+                      <p class="geotani-sls-desc">
+                        Menampilkan batas <b>Satuan Lingkungan Setempat</b> (RT/RW/dusun) di dalam desa
+                        yang dipilih, sebagai acuan kerja lapangan.
+                      </p>
+                      <div class="geotani-sls-search">
+                        <label class="geotani-form-label" for="geotaniSlsVillageSearch">Cari nama desa</label>
+                        <input type="text" id="geotaniSlsVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
+                        <div id="geotaniSlsVillageResults" class="geotani-sls-results" hidden></div>
+                        <div id="geotaniSlsVillageSelected" class="geotani-sls-picked" hidden></div>
+                      </div>
+                      <button id="geotani-sls-load" class="geotani-btn-print" type="button">Tampilkan SLS Desa</button>
+                      <button id="geotani-sls-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon SLS" aria-label="Reset polygon SLS">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        Reset Polygon
+                      </button>
+                      <div id="geotani-sls-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                      <div id="geotani-sls-output"></div>
+                    </div>
+                  </details>
+
+                  <details class="geotani-kta-card" id="geotani-geospasial-card" aria-labelledby="geotani-geospasial-title">
+                    <summary class="gt-card-head">
+                      <span class="gt-card-icon" aria-hidden="true">&#128506;</span>
+                      <span>
+                        <b id="geotani-geospasial-title">Geospasial Indonesia</b>
+                        <small>Katalog SatuPeta BIG dan sumber resmi lain</small>
+                      </span>
+                    </summary>
+                    <div style="display:grid;gap:10px;">
+                      <div>
+                        <label class="geotani-form-label">Cari layer</label>
+                        <select id="satupetaInputLayer" class="geotani-form-select">
+                          <option value="lsd-50k" selected>LSD 50K (BIG)</option>
+                          <option value="lbs-50k">LBS 50K (BIG)</option>
+                          <option value="likuifaksi-big">Kerentanan Likuifaksi (BIG)</option>
+                          <option value="geostruktur-big">Geologi Geostruktur (BIG)</option>
+                          <option value="erosi-big">Peta Rawan Erosi (BIG)</option>
+                          <option value="penggunaan10k">Penggunaan Tanah 10K (SatuPeta)</option>
+                          <option value="geologi-bnpb">Peta Geologi (BNPB)</option>
+                          <option value="kh-esdm">Kawasan Hutan (ESDM)</option>
+                          <option value="kh-kemenhut">Kawasan Hutan (Kemenhut)</option>
+                          <optgroup label="Kependudukan (Dukcapil)">
+                            <option value="duk-prop">Penduduk Provinsi (Dukcapil)</option>
+                            <option value="duk-kab">Penduduk Kabupaten (Dukcapil)</option>
+                            <option value="duk-kec">Penduduk Kecamatan (Dukcapil)</option>
+                            <option value="duk-kel">Penduduk Desa (Dukcapil)</option>
+                          </optgroup>
+                        </select>
+                      </div>
+                      <div style="display:grid;gap:10px;">
+                        <div>
+                          <label class="geotani-form-label">Level</label>
+                          <select id="satupetaLevelMode" class="geotani-form-select">
+                            <option value="provinsi">Provinsi</option>
+                            <option value="kabupaten" selected>Kabupaten/Kota</option>
+                            <option value="kecamatan">Kecamatan</option>
+                            <option value="desa">Desa/Kelurahan</option>
+                          </select>
+                        </div>
+                        <div style="position:relative;">
+                          <label id="satupetaLevelLabel" class="geotani-form-label">Cari nama wilayah</label>
+                          <div style="position:relative;">
+                            <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
+                            <input type="text" id="satupetaKabSearch" placeholder="Pilih nama wilayah..." autocomplete="off" class="geotani-form-input-search" />
+                          </div>
+                          <div id="satupetaKabResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
+                          <div id="satupetaKabSelected" style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;"></div>
+                        </div>
+                      </div>
+                      <div id="satupetaInfo" style="display:none;font-size:11px;color:#475569;padding:6px 0;"></div>
+                      <div id="satupetaFeatureTable" style="display:none;"></div>
+                      <button id="satupetaToggleBtn" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:none;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Tampilkan Data</button>
+                      <button id="btnClearSatupeta" class="geotani-btn-reset" type="button" style="display:none;" title="Reset polygon dan pilihan wilayah" aria-label="Reset polygon dan pilihan wilayah">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        Reset Polygon
+                      </button>
+                      <button id="btnDetailSatupeta" style="margin-top:4px;display:none;width:100%;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Detail</button>
+                    </div>
+                  </details>
+                </div>
+
                 <div id="geotoolsTabGeoFarm" class="geotools-main-tab-panel active">
 
             <!-- ============ KARTU: GeoFarm Analisis ============
@@ -2843,7 +2306,7 @@
 
             <details class="geofarm-card" aria-labelledby="geofarmCardTitle">
               <summary class="gt-card-head">
-                <span class="gt-card-icon" aria-hidden="true">&#127793;</span>
+                <span class="gt-card-icon" aria-hidden="true">🌱</span>
                 <span>
                   <b id="geofarmCardTitle">GeoFarm Analisis</b>
                   <small>Gambar petak lalu cek kondisi lahan & kebutuhan air.</small>
@@ -2971,6 +2434,204 @@
               </div>
             </details>
 
+            <details class="geotani-lbslsd" id="geotani-tutupan-card" aria-labelledby="geotani-tutupan-title">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">🌾</span>
+                <span>
+                  <b id="geotani-tutupan-title">Tutupan Lahan</b>
+                  <small>Perubahan tutupan lahan 2020 &rarr; 2024 &mdash; KLHK via BNPB</small>
+                </span>
+              </summary>
+              <div class="geotani-lbslsd-body">
+                <p class="geotani-sls-desc">
+                  Membandingkan <b>sebaran tutupan lahan 2020 dan 2024</b> di dalam desa yang dipilih.
+                  Luas tiap kelas dihitung dari irisan dengan batas desa pada kedua tahun, jadi
+                  kolom perubahannya bisa dibandingkan langsung &mdash; bukan dari selisih dua peta.
+                </p>
+                <div class="geotani-sls-search">
+                  <label class="geotani-form-label" for="geotaniTutupanVillageSearch">Cari nama desa</label>
+                  <input type="text" id="geotaniTutupanVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
+                  <div id="geotaniTutupanVillageResults" class="geotani-sls-results" hidden></div>
+                  <div id="geotaniTutupanVillageSelected" class="geotani-sls-picked" hidden></div>
+                </div>
+                  <button id="geotani-tutupan-load" class="geotani-btn-print" type="button">Bandingkan Tutupan Lahan</button>
+                  <button id="geotani-tutupan-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon Tutupan Lahan" aria-label="Reset polygon Tutupan Lahan">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    Reset Polygon
+                  </button>
+                <div id="geotani-tutupan-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                <div id="geotani-tutupan-output"></div>
+              </div>
+            </details>
+
+            <!-- LBS & LSD: dipindahkan dari GeoTani agar menjadi bagian dari
+                 workflow GeoFarm yang lebih relevan dengan analisis lahan. -->
+            <details class="geotani-lbslsd" id="geotani-lbslsd-card" aria-labelledby="geotani-lbslsd-title">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">🧭</span>
+                <span>
+                  <b id="geotani-lbslsd-title">LBS &amp; LSD</b>
+                  <small>Lahan Baku &amp; Sawah Dilindungi &mdash; BIG 1:50.000</small>
+                </span>
+              </summary>
+              <div class="geotani-lbslsd-body">
+                <p class="geotani-sls-desc">
+                  Menampilkan <b>Lahan Baku Sawah</b> dan <b>Lahan Sawah Dilindungi</b> di dalam desa
+                  yang dipilih. Luas dihitung dari irisan dengan batas desa, bukan dari penjumlahan
+                  seluruh poligon.
+                </p>
+                <div class="geotani-sls-search">
+                  <label class="geotani-form-label" for="geotaniLbsLsdVillageSearch">Cari nama desa</label>
+                  <input type="text" id="geotaniLbsLsdVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
+                  <div id="geotaniLbsLsdVillageResults" class="geotani-sls-results" hidden></div>
+                  <div id="geotaniLbsLsdVillageSelected" class="geotani-sls-picked" hidden></div>
+                </div>
+                  <button id="geotani-lbslsd-load" class="geotani-btn-print" type="button">Tampilkan LBS &amp; LSD</button>
+                  <button id="geotani-lbslsd-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon LBS &amp; LSD" aria-label="Reset polygon LBS &amp; LSD">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    Reset Polygon
+                  </button>
+                <div id="geotani-lbslsd-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                <div id="geotani-lbslsd-output"></div>
+              </div>
+            </details>
+
+            <details class="geotani-lbslsd" id="geotani-lsd12-card" aria-labelledby="geotani-lsd12-title">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">🗺️</span>
+                <span>
+                  <b id="geotani-lsd12-title">LSD 12 Provinsi</b>
+                  <small>Lahan Sawah Dilindungi &mdash; ATR/BPN GISTARU</small>
+                </span>
+              </summary>
+              <div class="geotani-lbslsd-body">
+                <p class="geotani-sls-desc">
+                  Menampilkan <b>Lahan Sawah yang Dilindungi</b> dari ATR/BPN di dalam desa
+                  yang dipilih, dengan luas dihitung dari irisan dengan batas desa.
+                  <b>Cakupan hanya 12 provinsi</b>: Aceh, Sumatera Utara, Riau, Kepulauan Riau,
+                  Jambi, Sumatera Selatan, Bengkulu, Lampung, Bangka Belitung, Kalimantan Barat,
+                  Kalimantan Selatan, dan Sulawesi Selatan. Di luar itu, termasuk seluruh Jawa,
+                  layer ini tidak punya data.
+                </p>
+                <div class="geotani-sls-search">
+                  <label class="geotani-form-label" for="geotaniLsd12VillageSearch">Cari nama desa</label>
+                  <input type="text" id="geotaniLsd12VillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
+                  <div id="geotaniLsd12VillageResults" class="geotani-sls-results" hidden></div>
+                  <div id="geotaniLsd12VillageSelected" class="geotani-sls-picked" hidden></div>
+                </div>
+                  <button id="geotani-lsd12-load" class="geotani-btn-print" type="button">Tampilkan LSD 12 Provinsi</button>
+                  <button id="geotani-lsd12-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon LSD 12 Provinsi" aria-label="Reset polygon LSD 12 Provinsi">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    Reset Polygon
+                  </button>
+                <div id="geotani-lsd12-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                <div id="geotani-lsd12-output"></div>
+              </div>
+            </details>
+
+            <details class="geopangan-card" id="geopangan-card-pihps" aria-labelledby="geopanganPihpsTitle">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">🛒</span>
+                <span>
+                  <b id="geopanganPihpsTitle">PIHPS - Bank Indonesia</b>
+                  <small>Harga pangan nasional dari PIHPS / Badan Pusat Statistik</small>
+                </span>
+              </summary>
+              <div class="geopangan-card-body">
+                <div class="geopangan-field">
+                  <label style="margin-top:12px;">Jenis Pasar</label>
+                  <select id="geopanganPriceType">
+                    <option value="1">Pasar Tradisional</option>
+                    <option value="2">Pasar Modern (Supermarket/Minimarket)</option>
+                    <option value="3">Pedagang Besar / Grosir</option>
+                    <option value="4">Produsen</option>
+                  </select>
+                </div>
+                <div class="geopangan-field">
+                  <label>Komoditas</label>
+                  <select id="geopanganCommodity"></select>
+                </div>
+                <div class="geopangan-field">
+                  <label>Provinsi</label>
+                  <select id="geopanganProvince">
+                    <option value="">Semua Provinsi</option>
+                  </select>
+                </div>
+                <div class="geopangan-field" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                  <div>
+                    <label>Dari</label>
+                    <input type="date" id="geopanganDateStart" />
+                  </div>
+                  <div>
+                    <label>Sampai</label>
+                    <input type="date" id="geopanganDateEnd" />
+                  </div>
+                </div>
+                <button id="geopanganLoadBtn" class="geopangan-btn" style="margin-top:4px;">Tampilkan</button>
+                <div id="geopangan-table-home">
+                  <div id="geopanganResult"></div>
+                  <div id="geopanganTable"></div>
+                  <div id="sppgSebaranTable"></div>
+                  <button id="geopanganResetBtn" type="button" class="geopangan-btn geopangan-reset-btn" style="margin-top:10px;">Reset Layer PIHPS</button>
+                </div>
+              </div>
+            </details>
+
+            <details class="geopangan-card" id="geopangan-card-sp2kp" aria-labelledby="geopanganSp2kpTitle">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">📈</span>
+                <span>
+                  <b id="geopanganSp2kpTitle">SP2KP - Kemendag</b>
+                  <small>Choropleth HNT dan disparitas harga provinsi</small>
+                </span>
+              </summary>
+              <div class="geopangan-card-body">
+                <p class="geotools-desc" style="font-size:11px;margin:12px 0;">Choropleth Harga Numerik Tertimbang (HNT) dan disparitas harga provinsi dari Sistem Pemantauan Pasar Kebutuhan Pokok Kementerian Perdagangan.</p>
+                <div class="geopangan-field">
+                  <label>Variant / Komoditas SP2KP</label>
+                  <select id="sp2kpVariantSelect"></select>
+                </div>
+                <div class="geopangan-field">
+                  <label>Tanggal HNT</label>
+                  <input type="date" id="sp2kpLatestDate" />
+                </div>
+                <button id="sp2kpLoadBtn" class="geopangan-btn" style="margin-top:4px;">Tampilkan Choropleth SP2KP</button>
+                <div id="sp2kpStatus" class="cctv-message" style="display:none;margin-top:10px;"></div>
+                <div id="sp2kpResult"></div>
+                <div id="sp2kpTable"></div>
+                <div id="sp2kpHntChartCard" style="display:none;margin-top:12px;padding:10px;border:1px solid #dbe7e1;border-radius:8px;background:#fbfefc;">
+                  <div class="sp2kp-table-title">Harga HNT Provinsi — 10 Tertinggi</div>
+                  <div id="sp2kpHntChartSubtitle" class="sp2kp-table-subtitle"></div>
+                  <div style="height:260px;margin-top:8px;"><canvas id="sp2kpHntChart"></canvas></div>
+                </div>
+                <button id="sp2kpResetBtn" type="button" class="geopangan-btn geopangan-reset-btn" style="margin-top:10px;">Reset Layer SP2KP</button>
+                <div style="margin-top:14px;padding-top:12px;border-top:1px solid #dbe7e1;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <strong style="font-size:12px;color:#24523a;">Periode histori HNT</strong>
+                    <span style="margin-left:auto;font-size:9px;color:#64748b;">Tabel dan grafik terpisah</span>
+                  </div>
+                  <p class="geotools-desc" style="font-size:10px;margin:5px 0 10px;">Pilih rentang tanggal untuk melihat perkembangan HNT nasional.</p>
+                  <div class="geopangan-field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <div>
+                      <label>Dari</label>
+                      <input type="date" id="sp2kpHistoryStart" />
+                    </div>
+                    <div>
+                      <label>Sampai</label>
+                      <input type="date" id="sp2kpHistoryEnd" />
+                    </div>
+                  </div>
+                  <button id="sp2kpHistoryLoadBtn" class="geopangan-btn" style="margin-top:4px;">Muat histori HNT</button>
+                  <div id="sp2kpHistoryStatus" class="cctv-message" style="display:none;margin-top:10px;"></div>
+                  <div id="sp2kpHistoryTable"></div>
+                  <div id="sp2kpHistoryCard" style="display:none;margin-top:12px;padding:10px;border:1px solid #dbe7e1;border-radius:8px;background:#fbfefc;">
+                    <div class="sp2kp-chart-title">Series Perkembangan Harga Nasional Tertimbang (HNT) - SEBULAN TERAKHIR</div>
+                    <div style="height:170px;margin-top:8px;"><canvas id="sp2kpHistoryChart"></canvas></div>
+                  </div>
+                </div>
+              </div>
+            </details>
+
             <!-- Kenapa status unggah (#geofarmUploadStatus) diletakkan tepat di
                  atas tombol Buka Analisis, bukan di bawah catatan SHP:
                  pesan "1 poligon dimuat · total 0,21 ha" adalah hasil dari aksi
@@ -2992,7 +2653,7 @@
                  pembungkus geofarm-kalk-body tidak menggentarkan apa pun. -->
             <details class="geofarm-kalk" id="geofarm-kalkulator-card" aria-labelledby="geofarm-kalk-title">
               <summary class="gt-card-head">
-                <span class="gt-card-icon" aria-hidden="true">&#127807;</span>
+                <span class="gt-card-icon" aria-hidden="true">🧮</span>
                 <span>
                   <b id="geofarm-kalk-title">Kalkulator Benih &amp; Pupuk</b>
                   <small>Kebutuhan benih dan pupuk dari luas lahan yang sama</small>
@@ -3166,6 +2827,23 @@
                        datanya benar-benar ada. -->
                   <select id="geofarmRefOpeteFilter" class="geofarm-ref-select" data-ref-filter
                           aria-label="Saring menurut kategori" hidden></select>
+                  <p class="geofarm-ref-status" data-ref-status role="status" aria-live="polite"></p>
+                  <div class="geofarm-ref-list" data-ref-list></div>
+                  <button class="geofarm-ref-more" data-ref-more type="button" hidden>Muat 20 lagi</button>
+                </div>
+              </details>
+
+              <details class="geofarm-ref" data-ref-card="pupuk-publik" aria-labelledby="geofarmRefPupukPublikTitle">
+                <summary class="gt-card-head">
+                  <span class="gt-card-icon" aria-hidden="true">&#127793;</span>
+                  <span>
+                    <b id="geofarmRefPupukPublikTitle">Info Pupuk</b>
+                    <small>Katalog pupuk, bentuk formula, dan status pendaftaran</small>
+                  </span>
+                </summary>
+                <div class="geofarm-ref-body">
+                  <input type="search" id="geofarmRefPupukPublikCari" class="geofarm-ref-input" data-ref-cari
+                         placeholder="Cari merek dagang, jenis formula, atau perusahaan" autocomplete="off" />
                   <p class="geofarm-ref-status" data-ref-status role="status" aria-live="polite"></p>
                   <div class="geofarm-ref-list" data-ref-list></div>
                   <button class="geofarm-ref-more" data-ref-more type="button" hidden>Muat 20 lagi</button>

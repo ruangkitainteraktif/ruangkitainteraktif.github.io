@@ -888,6 +888,20 @@
     if (el) el.textContent = 'Tabel';
   }
 
+  function openAttrTableShell() {
+    if (window.SheetDrag) {
+      window.SheetDrag.buka('attr');
+      return;
+    }
+    var sheet = document.getElementById('attr-table-sheet');
+    if (!sheet) return;
+    sheet.classList.add('attr-table-sheet-open');
+    sheet.classList.remove('attr-table-sheet-minimized');
+    document.body.classList.add('attr-table-sheet-open');
+    document.body.classList.remove('attr-table-sheet-minimized');
+    document.body.classList.add('sheet-terbuka');
+  }
+
     function atLayerSubtitle(name) {
       var teks = name == null ? '' : String(name).trim();
       if (!teks) return '';
@@ -933,13 +947,9 @@
     setAttrSheetTitle();
     var backBtn = document.getElementById('atSheetBackBtn');
     if (backBtn) backBtn.style.display = '';
-    sheet.classList.add('attr-table-sheet-open');
-    sheet.classList.remove('attr-table-sheet-minimized');
     _attrTableOpen = true;
     _attrTableMinimized = false;
-
-    document.body.classList.add('attr-table-sheet-open');
-    document.body.classList.remove('attr-table-sheet-minimized');
+    openAttrTableShell();
 
     loadFeatures();
   }
@@ -960,13 +970,9 @@
     setAttrSheetTitle();
     var backBtn = document.getElementById('atSheetBackBtn');
     if (backBtn) backBtn.style.display = '';
-    sheet.classList.add('attr-table-sheet-open');
-    sheet.classList.remove('attr-table-sheet-minimized');
     _attrTableOpen = true;
     _attrTableMinimized = false;
-
-    document.body.classList.add('attr-table-sheet-open');
-    document.body.classList.remove('attr-table-sheet-minimized');
+    openAttrTableShell();
 
     var content = document.getElementById('at-sheet-content');
     content.innerHTML = atLayerSubtitle(config.name) +
@@ -1627,12 +1633,9 @@
   // Sedang menampilkan daftar, jadi tombol "kembali ke daftar" disembunyikan.
   if (backBtn) backBtn.style.display = 'none';
 
-    sheet.classList.add('attr-table-sheet-open');
-    sheet.classList.remove('attr-table-sheet-minimized');
     _attrTableOpen = true;
     _attrTableMinimized = false;
-    document.body.classList.add('attr-table-sheet-open');
-    document.body.classList.remove('attr-table-sheet-minimized');
+    openAttrTableShell();
 
     var items = collectAttrPickerItems().map(function (it) {
       var b = attrPickerBadge(it.id);

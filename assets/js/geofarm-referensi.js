@@ -117,7 +117,28 @@
     throw new Error('literal ' + nama + ' tidak tertutup');
   }
 
-  function muatArray(url, nama) {
+  function muatJsonArray(url, fallbackUrl) {
+    var attemp = function (target) {
+      return fetch(target, { credentials: 'same-origin' }).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      }).then(function (src) {
+        var data = JSON.parse(src);
+        if (!Array.isArray(data)) throw new Error(target + ' bukan array JSON');
+        return data;
+      });
+    };
+
+    return attemp(url).catch(function (err) {
+      if (!fallbackUrl || fallbackUrl === url) throw err;
+      return attemp(fallbackUrl);
+    });
+  }
+
+  function muatArray(url, nama, mode, fallbackUrl) {
+    if (mode === 'json' || /\.json(?:\?|$)/i.test(String(url || ''))) {
+      return muatJsonArray(url, fallbackUrl);
+    }
     return fetch(url, { credentials: 'same-origin' }).then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.text();
@@ -284,6 +305,69 @@
        ("VULGAR 865 SL (umum) 2,4-D dimetil amina : 865 g/l …"), jadi
        dipecah: nama jadi judul, sisanya jadi keterangan di dalam. Yang
        ditampilkan sebagai ringkasan adalah perusahaan, bukan ulasannya. */
+    'pupuk-publik': {
+      file: 'https://ap-simpel.pertanian.go.id/pupuk/json_pupuk_publik_new',
+      fallbackFile: 'assets/data/pertanian/pupuk-publik.json',
+      varName: 'pupukPublik',
+      mode: 'json',
+      satuan: 'pupuk publik',
+      placeholder: 'Cari merek dagang, jenis formula, atau perusahaan',
+      normalisasi: function (rows) {
+        var out = [];
+        for (var i = 0; i < rows.length; i++) {
+          var r = rows[i] || {};
+          var no = String(r.no == null ? i + 1 : r.no);
+          var merk = String(r.merk_dagang || '').trim();
+          var bentuk = String(r.bentuk_formula || '').trim();
+          var jenis = String(r.jenis_formula || '').trim();
+          var warna = String(r.warna_pupuk || '').trim();
+          var pendaftaran = String(r.nomor_pendaftaran || '').trim();
+          var perusahaan = String(r.pemegang_nomor_pendaftaran || '').trim();
+          var permohonan = String(r.jenis_permohonan || '').trim();
+          var terbit = String(r.tanggal_terbit || '').trim();
+          var berakhir = String(r.tanggal_berakhir || '').trim();
+          out.push({
+            no: no,
+            judul: merk || ('#' + no),
+            bentuk: bentuk,
+            jenis: jenis,
+            warna: warna,
+            pendaftaran: pendaftaran,
+            perusahaan: perusahaan,
+            permohonan: permohonan,
+            terbit: terbit,
+            berakhir: berakhir,
+            cari: (merk + ' ' + bentuk + ' ' + jenis + ' ' + warna + ' ' + perusahaan + ' ' + pendaftaran).toLowerCase()
+          });
+        }
+        return out;
+      },
+      render: function (it) {
+        var meta = [it.jenis, it.bentuk, it.warna].filter(function (v) { return v; }).join(' · ');
+        var isi = '';
+        if (it.perusahaan) {
+          isi += '<p class="geofarm-ref-blok"><b>Pemegang nomor pendaftaran</b><br />' + esc(it.perusahaan) + '</p>';
+        }
+        if (it.permohonan) {
+          isi += '<p class="geofarm-ref-blok"><b>Jenis permohonan</b><br />' + esc(it.permohonan) + '</p>';
+        }
+        if (it.pendaftaran) {
+          isi += '<p class="geofarm-ref-blok"><b>Nomor pendaftaran</b><br />' + esc(it.pendaftaran) + '</p>';
+        }
+        if (it.terbit || it.berakhir) {
+          var rentang = [it.terbit, it.berakhir].filter(function (v) { return v; }).join('–');
+          if (rentang) {
+            isi += '<p class="geofarm-ref-blok"><b>Periode</b><br />' + esc(rentang) + '</p>';
+          }
+        }
+        return entri(
+          '<b>' + esc(it.judul) + '</b><small>' + esc(meta || ('#' + it.no)) + '</small>',
+          isi || '<p class="geofarm-ref-blok">Data pupuk publik tidak lengkap pada sumber.</p>',
+          'geofarm-ref-item-pupuk'
+        );
+      }
+    },
+
     pestisida: {
       file: 'assets/data/pertanian/pestisida.js',
       varName: 'pestisida',
@@ -406,15 +490,14 @@
     st.sedang = true;
     if (st.u.more) st.u.more.hidden = true;
     status(st, 'Mengambil ' + st.conf.satuan + '…', 'is-busy');
-    muatArray(st.conf.file, st.conf.varName).then(function (rows) {
+    muatArray(st.conf.file, st.conf.varName, st.conf.mode, st.conf.fallbackFile).then(function (rows) {
       st.data = st.conf.normalisasi(rows);
       st.sedang = false;
       isiFilter(st, rows);
       tampilkan(st, false);
-    }).catch(function (err) {
+    }).catch(function () {
       st.sedang = false;
-      status(st, 'Gagal membaca ' + st.conf.file + ' — ' +
-        (err && err.message ? err.message : 'error tidak diketahui') + '.', 'is-error');
+      status(st, 'Gagal membaca data ' + st.conf.satuan + '. Silakan coba lagi nanti.', 'is-error');
     });
   }
 

@@ -1679,6 +1679,7 @@
     * overflow: hidden aman di sini: panel GeoPangan tidak punya satu pun
     * elemen ber-posisi absolute. Berbeda dari .geowatch-cctv yang memakai
     * visible karena sel Google Maps di dalamnya boleh keluar dari kotak. */
+    .geoportal-card,
     .geopangan-card {
       padding: 0;
       overflow: hidden;
@@ -1686,11 +1687,14 @@
       border-radius: 10px;
       background: var(--bg-card);
     }
+    .geoportal-card:not([open]) > .geoportal-card-body,
     .geopangan-card:not([open]) > .geopangan-card-body { display: none; }
+    .geoportal-card-body,
     .geopangan-card-body { padding: 12px 13px; }
     /* Jarak 10px antar kartu, sama seperti .geonusa-card + .geonusa-card
     * dan .geofarm-ref. Kartu PERTAMA tidak diberi margin: jarak ke
     * arahnya datang dari margin-bottom paragraf pengantar panel. */
+    .geoportal-card + .geoportal-card,
     .geopangan-card + .geopangan-card { margin-top: 10px; }
     .sp2kp-table-title {
       margin: 0;
@@ -3269,31 +3273,28 @@
     #satupetaFeatureTable .at-table { width: max-content; min-width: 100%; }
     .geotani-kta-card { margin: 0; padding: 13px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-card); }
 
-    /* Dua kartu yang benar-benar terlihat di panel ini (SLS dan
-       Geospasial) disamakan bentuknya dengan kartu LBS & LSD: kartu
-       tanpa padding, pita kepala menyatu ke tepi, dan jarak 13px datang
-       dari padding kepala -- bukan dari padding kartu yang menumpuk.
-       Sebelum ini:
-         LBS & LSD  -> padding kartu 0   + kepala 13px = ikon mulai 13px
-         SLS/Geo   -> padding kartu 13px + kepala 13px = ikon mulai 26px
-
-       Jadi jaraknya berbeda 13px dan pita kepalanya tidak sampai ke tepi,
-       padahal keduanya memakai kelas kepala yang sama.
-
-       Aturan ini di-scope ke #geotani-satupeta-panel. Kartu kta di lima
-       tab analisis yang sudah lama mati (LBS/NDVI/LULC/DEM/KTA) tidak
-       ikut berubah: panelnya display:none, dan mengubahnya berarti
-       mengubah hal yang tidak terlihat. */
-    #geotani-satupeta-panel > .geotani-kta-card {
+    /* Dua kartu yang terlihat di panel GeoPortal (SLS dan Geospasial)
+       disamakan bentuknya dengan GeoPortal Hub: satu kontainer kartu yang
+       rapi, tanpa inner box tambahan, dan body yang dimulai tepat di bawah
+       header. Dengan gaya lama, tiap kartu punya padding dalam dan border
+       sendiri, sehingga bentuknya lebih "kubus" daripada kartu utama
+       GeoPortal yang flat dan konsisten. */
+    #geotoolsTabGeoportal > .geotani-kta-card {
       padding: 0;
       overflow: hidden;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background: var(--bg-card);
     }
-    #geotani-satupeta-panel > .geotani-kta-card > div {
-      margin: 12px 13px;
+    #geotoolsTabGeoportal > .geotani-kta-card > div {
+      margin: 0;
+      padding: 12px 13px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
     }
     .geotani-kta-card h5 { display: flex; align-items: center; gap: 6px; margin: 0 0 5px; color: var(--text-primary); font-size: 13px; text-transform: none; letter-spacing: normal; }
     .geotani-kta-card h5::before { content: '◈'; color: var(--accent-green); font-size: 15px; }
-    .geotani-kta-card > div { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-input); }
     .geotani-kta-card .geoportal-filter { padding: 6px 8px; border-radius: 5px; background: var(--bg-secondary); }
     .geotani-form-select, .geotani-form-input {
       width: 100%; padding: 7px 10px; font-size: 11px;
@@ -4138,6 +4139,37 @@
       outline: none;
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(8,145,178,.2);
+    }
+    #geotools-sheet .gs-sheet-title {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+    #geotools-sheet .gs-sheet-actions {
+      display: flex; align-items: center; gap: 6px; margin-left: auto;
+    }
+    #geotools-sheet .geotools-dropdown {
+      flex: 0 0 auto;
+      width: 124px;
+      min-width: 0;
+      max-width: 124px;
+      margin-bottom: 0;
+      font-size: 10.5px;
+      padding: 7px 24px 7px 9px;
+      border: 0;
+      border-radius: 999px;
+      background-color: rgba(15, 23, 42, 0.04);
+      box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.45);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 9px center;
+    }
+    #geotools-sheet .geotools-dropdown:hover,
+    #geotools-sheet .geotools-dropdown:focus {
+      border: 0;
+      box-shadow: inset 0 0 0 1px rgba(8, 145, 178, 0.8), 0 0 0 2px rgba(8, 145, 178, 0.12);
+    }
+    #geotools-sheet.gs-sheet-minimized .geotools-dropdown {
+      display: none;
     }
     .geotools-main-tab-panel { display: none; overflow-x: hidden; }
     .geotools-main-tab-panel.active { display: block; }
@@ -6784,14 +6816,29 @@
     #geotools-sheet .gs-sheet-title {
       display: flex; align-items: center; gap: 6px;
       color: var(--text-primary); font-size: 13px; font-weight: 700;
+      white-space: nowrap;
+    }
+    #geotools-sheet .gs-sheet-actions {
+      display: flex; align-items: center; gap: 6px;
+    }
+    #geotools-sheet .geotools-dropdown {
+      flex: 0 0 auto; width: 124px; min-width: 0; max-width: 124px;
+      margin-bottom: 0; font-size: 10.5px; font-weight: 600; line-height: 1.2;
+      padding: 7px 24px 7px 9px; color: var(--text-primary);
+      border: 1px solid var(--border-color); border-radius: 8px;
+      background: var(--bg-card); box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 9px center;
+    }
+    #geotools-sheet .geotools-dropdown:hover,
+    #geotools-sheet .geotools-dropdown:focus {
+      border-color: var(--border-color);
+      box-shadow: 0 0 0 2px rgba(8,145,178,.08);
     }
     #geotools-sheet .gs-sheet-close {
       display: grid; width: 28px; height: 28px; place-items: center;
       border: 0; border-radius: 50%; background: var(--bg-tertiary); color: var(--text-tertiary);
       cursor: pointer; font-size: 16px;
-    }
-    #geotools-sheet .gs-sheet-actions {
-      display: flex; align-items: center; gap: 6px;
     }
     #geotools-sheet .gs-sheet-minimize {
       display: grid; width: 28px; height: 28px; place-items: center;
@@ -6932,6 +6979,23 @@
       color: var(--text-primary); font-size: 13px; font-weight: 700;
     }
     .dm-sidebar-actions { display: flex; align-items: center; gap: 6px; }
+    #hotspot-sheet .hs-sheet-minimize svg,
+    #geopangan-sheet .gp-sheet-minimize svg,
+    #transjakarta-sheet .tj-sheet-minimize svg,
+    #geotools-sheet .gs-sheet-minimize svg,
+    #geodata-sheet .geodata-sheet-minimize svg,
+    #attr-table-sheet .at-sheet-minimize svg,
+    #ai-sheet .ais-sheet-minimize svg,
+    .dm-sidebar-minimize svg,
+    .lg-sidebar-minimize svg,
+    .pa-minimize svg {
+      display: block;
+      width: 14px;
+      height: 14px;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
     .dm-sidebar-close {
       display: grid; width: 28px; height: 28px; place-items: center;
       border: 0; border-radius: 50%; background: var(--bg-tertiary); color: var(--text-tertiary);
@@ -8950,7 +9014,7 @@
    Grid .geotani-analysis-cards sedang display:none, jadi kartu ini memakai
    gaya sendiri dan tidak bergantung pada mekanisme tab analysis. */
 .geotani-lbslsd {
-  margin-bottom: 14px; padding: 0; overflow: hidden;
+  margin-bottom: 0; padding: 0; overflow: hidden;
   border: 1px solid var(--border-color); border-radius: 8px;
   background: var(--bg-card);
 }
@@ -8986,8 +9050,14 @@
   outline: 2px solid var(--accent); outline-offset: -2px;
 }
 .gt-card-icon {
-  flex: 0 0 auto;
-  font-size: 20px; line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+  line-height: 1;
 }
 .gt-card-head b {
   display: block; font-size: 13px; font-weight: 700;
@@ -14186,10 +14256,39 @@ details[open] > .gt-card-head::after {
   color: var(--text-muted);
 }
 
-/* margin-top harus sama dengan .geofarm-ref (10px): kartu-kartu di tab
-   GeoFarm tidak boleh terlihat berlapis jarak berbeda. */
-.geofarm-kalk {
+/* GeoFarm stack memakai satu ritme jarak yang sama: kartu pertama tidak
+   punya margin atas, dan kartu berikutnya hanya diberi gap kecil agar blok
+   terasa rapi dan konsisten setelah LBS/LSD dan GeoPangan dipindahkan ke
+   dalam panel yang sama. */
+#geotoolsTabGeoFarm > .geofarm-card,
+#geotoolsTabGeoFarm > .geotani-lbslsd,
+#geotoolsTabGeoFarm > .geopangan-card,
+#geotoolsTabGeoFarm > .geofarm-kalk,
+#geotoolsTabGeoFarm > .geofarm-ref-group,
+#geotoolsTabGeoportal > .geoportal-card,
+#geotoolsTabGeoOss > details {
+  margin-top: 0;
+}
+#geotoolsTabGeoFarm > .geofarm-card + .geotani-lbslsd,
+#geotoolsTabGeoFarm > .geofarm-card + .geopangan-card,
+#geotoolsTabGeoFarm > .geotani-lbslsd + .geotani-lbslsd,
+#geotoolsTabGeoFarm > .geotani-lbslsd + .geopangan-card,
+#geotoolsTabGeoFarm > .geopangan-card + .geopangan-card,
+#geotoolsTabGeoFarm > .geopangan-card + .geofarm-kalk,
+#geotoolsTabGeoFarm > .geotani-lbslsd + .geofarm-kalk,
+#geotoolsTabGeoFarm > details + details,
+#geotoolsTabGeoFarm > .geofarm-ref-group + details,
+#geotoolsTabGeoFarm > details + .geofarm-ref-group,
+#geotoolsTabGeoFarm > .geofarm-kalk + .geofarm-ref-group,
+#geotoolsTabGeoFarm > .geofarm-ref-group + .geofarm-ref-group,
+#geotoolsTabGeoFarm > .geofarm-ref-group > .geofarm-ref + .geofarm-ref,
+#geotoolsTabGeoportal > details + details,
+#geotoolsTabGeoportal > .geoportal-card + .geoportal-card,
+#geotoolsTabGeoOss > details + details {
   margin-top: 10px;
+}
+
+.geofarm-kalk {
   padding: 0;
   overflow: hidden;
   border: 1px solid var(--border-color);
@@ -14656,17 +14755,22 @@ body.geofarm-draw-active .draw-actions-wrap {
    Sebelumnya tiap kartu punya angkanya sendiri — Kalkulator 14px, grup
    Referensi 20px, kartu Referensi 8px — sehingga enam kartu dalam satu
    panel terlihat seperti tiga modul berbeda yang ditempel beruntun.
-   Sekarang .geofarm-kalk (baris 13892) dan .geofarm-ref memakai angka
-   yang sama, dan jarak sebelum grup Referensi diambil dari margin kartu
-   pertamanya, bukan dari margin pembungkus.
+   Sekarang .geofarm-kalk dan .geofarm-ref memakai angka yang sama, dan
+   jarak sebelum grup Referensi diambil dari margin kartu sebelumnya,
+   bukan dari margin pembungkus.
 
    .geofarm-card (kartu pertama) sengaja tetap tanpa margin-top: jarak
    menuju kartu itu datang dari margin-bottom paragraf pengantar panel,
    dan itu jarak "pembuka", bukan jarak antar kartu. */
-.geofarm-ref-group { margin-top: 0; }
+#geotoolsTabGeoFarm > .geofarm-ref-group { margin-top: 0; }
+#geotoolsTabGeoFarm > .geofarm-kalk + .geofarm-ref-group,
+#geotoolsTabGeoFarm > .geofarm-ref-group + .geofarm-ref-group,
+#geotoolsTabGeoFarm > .geofarm-ref-group > .geofarm-ref + .geofarm-ref {
+  margin-top: 10px;
+}
 
 .geofarm-ref {
-  margin-top: 10px;
+  margin-top: 0;
   padding: 0;
   overflow: hidden;
   border: 1px solid var(--border-color);
