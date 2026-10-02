@@ -43,9 +43,10 @@
   'use strict';
 
   var DASAR = 'https://services8.arcgis.com/mpSDBlkEzjS62WgX/ArcGIS/rest/services/TransJakarta_Network/FeatureServer/';
+  var DASAR_JALUR = 'https://services8.arcgis.com/mpSDBlkEzjS62WgX/arcgis/rest/services/Data_Jaringan_TransJakarta/FeatureServer/';
   var DASAR_JAKARTASATU = 'https://jakartasatu.jakarta.go.id/server/rest/services/JakartaSatu/Transjakarta/MapServer/';
   var ID_HALTE = 0;
-  var ID_JALUR = 1;
+  var ID_JALUR = 0;
 
   var PROXY = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=';
 
@@ -346,6 +347,12 @@
     return DASAR + id + '/query?' + q.join('&');
   }
 
+  function urlQueryJalur(params) {
+    var q = ['where=1%3D1', 'returnGeometry=true', 'outSR=4326', 'geometryPrecision=5', 'f=json'];
+    for (var i = 0; i < params.length; i++) q.push(params[i]);
+    return DASAR_JALUR + ID_JALUR + '/query?' + q.join('&');
+  }
+
   function ambilJson(url) {
     return fetch(url, { headers: { Accept: 'application/json' } })
       .then(function (r) {
@@ -450,7 +457,7 @@
       var p = f.properties || {};
       var k = kunciKoridor(p.KORIDOR);
       if (!k) k = 'Rute';
-      if (!peta[k]) peta[k] = { kode: k, nama: (infoKoridor(k) || {}).nama || ('Rute ' + k), warna: warnaKoridor(k), tipe: p.route_type_text || p.route_desc || 'Layanan bus', panjangM: 0, ruas: [], fitur: [] };
+      if (!peta[k]) peta[k] = { kode: k, nama: (infoKoridor(k) || {}).nama || ('Rute ' + k), warna: warnaKoridor(k), tipe: p.route_desc || '', panjangM: 0, ruas: [], fitur: [] };
       var len = Number(p['SHAPE.LEN']) || 0;
       peta[k].panjangM += len;
       if (p.JURUSAN) peta[k].ruas.push(String(p.JURUSAN));
@@ -462,7 +469,7 @@
 
   function muatData() {
     if (state.dimuat || state.gagal) return Promise.resolve();
-    var pJalur = ambilJson(urlQuery(ID_JALUR, ['outFields=' + encodeURIComponent(FIELD_JALUR.join(','))]))
+    var pJalur = ambilJson(urlQueryJalur(['outFields=' + encodeURIComponent(FIELD_JALUR.join(','))]))
       .then(function (d) {
         if (d && d.error) throw new Error(d.error.message || 'ArcGIS error');
         cacheJalur = featuresKeGeoJson(d);
@@ -830,7 +837,7 @@ function tampilkanHalte(v) {
      * sebagai teks "&middot;" di layar. Karakter titik tengah itu
      * terpengaruh esc(). */
     var ruas = r.ruas.join(' · ');
-    var tipe = r.tipe || 'Layanan bus';
+    var tipe = r.tipe || '-';
     var dipilih = kunciKoridor(r.kode) === koridorTerpilih;
     return '<tr class="tj-row' + (dipilih ? ' is-selected' : '') + '" data-koridor="' + esc(r.kode) + '" tabindex="0">'
       + '<td class="tj-td-chip"><span class="tj-chip" style="background:' + r.warna + ';"></span></td>'
@@ -866,7 +873,9 @@ function tampilkanHalte(v) {
       return;
     }
 
-    var filtered = state.ringkas.filter(cocokFilterKoridor);
+    var filtered = state.ringkas.filter(cocokFilterKoridor).sort(function (a, b) {
+      return String(a.tipe || '').localeCompare(String(b.tipe || ''), 'id', { sensitivity: 'base' });
+    });
     var baris = filtered.map(barisKoridor).join('');
     var ada = filtered.filter(function (r) { return r.panjangM > 0; }).length;
     var totalKm = filtered.reduce(function (sum, r) { return sum + r.panjangM; }, 0) / 1000;
