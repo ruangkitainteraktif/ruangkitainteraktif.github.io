@@ -102,11 +102,7 @@
     }
 
     if (tabId !== 'tab-cctv') {
-      var sheet = document.getElementById('cctv-search-sheet');
-      if (sheet) {
-        sheet.classList.remove('sheet-open');
-        applyCctvSearchVisibility();
-      }
+      applyCctvSearchVisibility();
     }
 
     if (tabId !== 'tab-geoportal') closeGeoportalModal();
@@ -212,8 +208,12 @@
       if (gempaPanel && gempaPanel.classList.contains('active') && typeof loadEarthquakeData === 'function') loadEarthquakeData();
     }
     if (tabId === 'geotoolsTabGeoPangan') {
-      if (typeof window.openGeoPanganSourceTab === 'function') window.openGeoPanganSourceTab('pihps');
-      else if (typeof window.geopanganAutoLoad === 'function') window.geopanganAutoLoad();
+      /* Nav sumber GeoPangan sudah dihapus (kartu PIHPS + SP2KP), jadi
+       * yang dipanggil di sini hanya pemuat data PIHPS. Sebelumnya
+       * baris ini memanggil openGeoPanganSourceTab('pihps'), yang pada
+       * akhirnya memanggil geopanganAutoLoad() juga - jadi jalur ini
+       * memanggilnya langsung. */
+      if (typeof window.geopanganAutoLoad === 'function') window.geopanganAutoLoad();
     }
     if (tabId === 'geotoolsTabGeoWatch') {
       if (typeof window.loadCctvData === 'function') {

@@ -301,12 +301,6 @@
     }
   });
 
-  // CCTV Bottom Sheet Toggle (Mobile)
-  window.toggleCctvSheet = function () {
-    var sheet = document.getElementById('cctv-search-sheet');
-    if (sheet) sheet.classList.toggle('sheet-open');
-  };
-
   window.toggleTollRoadLayer = async function (visible) {
     var cb = document.getElementById('toggleTollRoad');
     if (cb) { cb.checked = visible; cb.dispatchEvent(new Event('change')); return; }

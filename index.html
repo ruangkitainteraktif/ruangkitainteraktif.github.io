@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=61">
+  <link rel="stylesheet" href="assets/css/app.css?v=65">
 
 </head>
 
@@ -260,14 +260,6 @@
                 <div class="welcome-feature-desc">Import SHP, GeoJSON, GPX, Timeline, KMZ via bottom sheet. Animasi GPX dan export video.</div>
               </div>
             </div>
-          </div>
-          <div class="welcome-features-label">Modul Lainnya</div>
-          <div class="welcome-tech-badges">
-            <span class="welcome-tech-badge"><i style="background:#22c55e"></i> GEOTANI</span>
-            <span class="welcome-tech-badge"><i style="background:#06b6d4"></i> GEOPULSE</span>
-            <span class="welcome-tech-badge"><i style="background:#6366f1"></i> GEOPORTAL</span>
-            <span class="welcome-tech-badge"><i style="background:#f59e0b"></i> GEOPANGAN</span>
-            <span class="welcome-tech-badge"><i style="background:#ef4444"></i> GEOWATCH</span>
           </div>
         </div>
 
@@ -1242,112 +1234,182 @@
               </div>
             </div>
 
-             <div id="geotoolsTabDemnas" class="geotools-main-tab-panel">
-              <h4 style="font-size:15px; margin-bottom:4px;">GeoRaster Analysis</h4>
-                <p class="geotools-desc" style="margin-bottom:20px;">Pilih wilayah untuk menampilkan data raster.</p>
-                <div class="geotools-2col-side">
-                 <h4 style="font-size:13px; margin-bottom:4px;">Unduh DEMNAS</h4>
-                 <p class="geotools-desc" style="margin-bottom:12px; font-size:11px;">Pilih index raster DEMNAS untuk memuat wilayah yang dapat direkomendasikan, lalu clip dan unduh TIFF tanpa token.</p>
-                 <label class="geotani-form-label" for="demnasSearchInput">Cari DEMNAS</label>
-                 <input id="demnasSearchInput" class="geotani-form-input" type="search" placeholder="Ketik Nama atau OBJECTID…" autocomplete="off" />
-                 <div id="demnasSearchCount" style="margin-top:5px;font-size:10px;color:#64748b;"></div>
-                 <label class="geotani-form-label" for="demnasNamobjSelect" style="margin-top:8px;">Index DEMNAS (OBJECTID / Name)</label>
-                 <select id="demnasNamobjSelect" class="geotani-form-input" size="1">
+          <!-- Panel: GeoRaster (id panel: geotoolsTabDemnas)
+               September 2026: bagian "Unduh DEMNAS" diubah jadi <details> yang
+               mengikuti .gt-card-head, sama seperti kartu GeoFarm, GeoTani, dan
+               GeoWatch, dan mulai terlipat.
+
+               Pembungkus .geotools-2col-side dihapus: kelas itu hanya dipakai
+               sekali di seluruh dokumen, namanya merujuk "sisi" dari grid dua
+               kolom yang memang tidak pernah dipakai markup, dan
+               position:sticky-nya sudah tidak aktif karena area scroll-nya
+               height:auto. Memakainya pada kartu justru akan membuat seluruh
+               kartu ikut menempel.
+
+               Terjemahan panjang yang tadinya jadi <p> dipindah ke catatan di
+               dalam badan kartu, jadi tidak hilang tapi tidak juga memenuhi
+               kepala.
+
+               Semua id demnas* dipertahankan apa adanya; lihat
+               test-georaster-card.cjs untuk pemeriksaan lengkap. -->
+          <div id="geotoolsTabDemnas" class="geotools-main-tab-panel">
+            <h4 style="font-size:15px; margin-bottom:4px;">GeoRaster Analysis</h4>
+            <p class="geotools-desc" style="margin-bottom:20px;">Pilih wilayah untuk menampilkan data raster.</p>
+
+            <details class="georaster-card" aria-labelledby="georasterCardTitle">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#128506;</span>
+                <span>
+                  <b id="georasterCardTitle">Unduh DEMNAS</b>
+                  <small>Clip batas wilayah, lalu unduh TIFF tanpa token</small>
+                </span>
+              </summary>
+              <div class="georaster-card-body">
+                <p class="georaster-card-note">
+                  Pilih index raster DEMNAS untuk memuat wilayah yang dapat direkomendasikan,
+                  lalu clip dan unduh TIFF tanpa token.
+                </p>
+
+                <label class="geotani-form-label" for="demnasSearchInput">Cari DEMNAS</label>
+                <input id="demnasSearchInput" class="geotani-form-input" type="search" placeholder="Ketik Nama atau OBJECTID…" autocomplete="off" />
+                <div id="demnasSearchCount" style="margin-top:5px;font-size:10px;color:#64748b;"></div>
+
+                <label class="geotani-form-label" for="demnasNamobjSelect" style="margin-top:8px;">Index DEMNAS (OBJECTID / Name)</label>
+                <select id="demnasNamobjSelect" class="geotani-form-input" size="1">
                   <option value="">Memuat katalog DEMNAS…</option>
                 </select>
-                 <div id="demnasIndexSelected" style="display:none;margin-top:8px;padding:6px 8px;font-size:10px;color:#166534;background:#f0fdf4;border-radius:4px;"></div>
-                 <div id="demnasRecommendationBox" class="demnas-recommendation-box" hidden>
-                   <div class="demnas-recommendation-heading"><strong>Rekomendasi wilayah clip</strong><span id="demnasRecommendationCount"></span></div>
-                   <div id="demnasRecommendationStatus" class="demnas-recommendation-status"></div>
-                   <select id="demnasRecommendedSelect" class="geotani-form-input" size="1">
-                     <option value="">Pilih rekomendasi wilayah…</option>
-                   </select>
-                 </div>
-                 <div class="demnas-clip-box">
-                   <div class="demnas-clip-heading"><strong>Clip Batas Wilayah</strong><span>Opsional</span></div>
-                   <label class="geotani-form-label" for="demnasAdminLevel">Tingkat Wilayah</label>
-                   <select id="demnasAdminLevel" class="geotani-form-input">
-                     <option value="">Tanpa clip</option>
-                     <option value="4">Desa/Kelurahan</option>
-                     <option value="3">Kecamatan</option>
-                     <option value="2">Kabupaten/Kota</option>
-                   </select>
-                   <div id="demnasAdminSearchWrap" class="demnas-admin-search-wrap" hidden>
-                     <label class="geotani-form-label" for="demnasAdminSearch">Cari Kode atau Nama</label>
-                     <input id="demnasAdminSearch" class="geotani-form-input" type="search" placeholder="Contoh: 33.01.10.2001" autocomplete="off" />
-                     <select id="demnasAdminSelect" class="geotani-form-input" size="1">
-                       <option value="">Pilih wilayah…</option>
-                     </select>
-                     <div id="demnasAdminSearchCount" class="demnas-admin-search-count"></div>
-                   </div>
-                   <div id="demnasAdminSelected" class="demnas-admin-selected" hidden></div>
-                    <div class="demnas-clip-actions">
-                      <button id="demnasClipRefreshBtn" class="demnas-clip-refresh-btn" type="button" hidden>Perbarui Preview</button>
-                      <button id="demnasClipResetBtn" class="demnas-clip-reset-btn" type="button" hidden>Reset Polygon</button>
-                    </div>
-                    <div id="demnasPreviewStatus" class="demnas-preview-status" aria-live="polite"></div>
-                   <div id="demnasElevationLegend" class="demnas-elevation-legend" hidden>
-                     <strong>Elevasi (mdpl)</strong>
-                     <div class="demnas-elevation-bar"></div>
-                     <div class="demnas-elevation-labels"><span>0</span><span>500</span><span>1.000</span><span>1.500</span><span>2.000+</span></div>
-                   </div>
-                 </div>
-                 <button id="demnasDownloadBtn" class="geotools-btn" type="button" style="margin-top:12px;width:100%;">
+                <div id="demnasIndexSelected" style="display:none;margin-top:8px;padding:6px 8px;font-size:10px;color:#166534;background:#f0fdf4;border-radius:4px;"></div>
+
+                <div id="demnasRecommendationBox" class="demnas-recommendation-box" hidden>
+                  <div class="demnas-recommendation-heading"><strong>Rekomendasi wilayah clip</strong><span id="demnasRecommendationCount"></span></div>
+                  <div id="demnasRecommendationStatus" class="demnas-recommendation-status"></div>
+                  <select id="demnasRecommendedSelect" class="geotani-form-input" size="1">
+                    <option value="">Pilih rekomendasi wilayah…</option>
+                  </select>
+                </div>
+
+                <div class="demnas-clip-box">
+                  <div class="demnas-clip-heading"><strong>Clip Batas Wilayah</strong><span>Opsional</span></div>
+                  <label class="geotani-form-label" for="demnasAdminLevel">Tingkat Wilayah</label>
+                  <select id="demnasAdminLevel" class="geotani-form-input">
+                    <option value="">Tanpa clip</option>
+                    <option value="4">Desa/Kelurahan</option>
+                    <option value="3">Kecamatan</option>
+                    <option value="2">Kabupaten/Kota</option>
+                  </select>
+                  <div id="demnasAdminSearchWrap" class="demnas-admin-search-wrap" hidden>
+                    <label class="geotani-form-label" for="demnasAdminSearch">Cari Kode atau Nama</label>
+                    <input id="demnasAdminSearch" class="geotani-form-input" type="search" placeholder="Contoh: 33.01.10.2001" autocomplete="off" />
+                    <select id="demnasAdminSelect" class="geotani-form-input" size="1">
+                      <option value="">Pilih wilayah…</option>
+                    </select>
+                    <div id="demnasAdminSearchCount" class="demnas-admin-search-count"></div>
+                  </div>
+                  <div id="demnasAdminSelected" class="demnas-admin-selected" hidden></div>
+                  <div class="demnas-clip-actions">
+                    <button id="demnasClipRefreshBtn" class="demnas-clip-refresh-btn" type="button" hidden>Perbarui Preview</button>
+                    <button id="demnasClipResetBtn" class="demnas-clip-reset-btn" type="button" hidden>Reset Polygon</button>
+                  </div>
+                  <div id="demnasPreviewStatus" class="demnas-preview-status" aria-live="polite"></div>
+                  <div id="demnasElevationLegend" class="demnas-elevation-legend" hidden>
+                    <strong>Elevasi (mdpl)</strong>
+                    <div class="demnas-elevation-bar"></div>
+                    <div class="demnas-elevation-labels"><span>0</span><span>500</span><span>1.000</span><span>1.500</span><span>2.000+</span></div>
+                  </div>
+                </div>
+
+                <button id="demnasDownloadBtn" class="geotools-btn" type="button" style="margin-top:12px;width:100%;">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   Unduh DEMNAS TIFF
                 </button>
-                  <div id="demnasStatus" class="cctv-message" style="display:none; margin-top:12px;"></div>
-                  <div id="demnasLoadingLayer" class="demnas-loading-layer" hidden aria-live="polite">
-                    <div class="demnas-loading-head">
-                      <span class="demnas-loading-spinner" aria-hidden="true"></span>
-                      <div>
-                        <strong id="demnasLoadingTitle">Menyiapkan GeoTIFF DEMNAS</strong>
-                        <small id="demnasLoadingMessage">Menyiapkan permintaan raster…</small>
-                      </div>
-                    </div>
-                    <div class="demnas-loading-track"><span id="demnasLoadingBar"></span></div>
-                    <div class="demnas-loading-meta"><span id="demnasLoadingStage">Menyiapkan</span><strong id="demnasLoadingPercent">0%</strong></div>
-                  </div>
-              </div>
-            </div>
 
-          <!-- Panel: Geonusa -->
+                <div id="demnasStatus" class="cctv-message" style="display:none; margin-top:12px;"></div>
+                <div id="demnasLoadingLayer" class="demnas-loading-layer" hidden aria-live="polite">
+                  <div class="demnas-loading-head">
+                    <span class="demnas-loading-spinner" aria-hidden="true"></span>
+                    <div>
+                      <strong id="demnasLoadingTitle">Menyiapkan GeoTIFF DEMNAS</strong>
+                      <small id="demnasLoadingMessage">Menyiapkan permintaan raster…</small>
+                    </div>
+                  </div>
+                  <div class="demnas-loading-track"><span id="demnasLoadingBar"></span></div>
+                  <div class="demnas-loading-meta"><span id="demnasLoadingStage">Menyiapkan</span><strong id="demnasLoadingPercent">0%</strong></div>
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <!-- Panel: Geonusa
+               September 2026: nav subtab dihapus dan dua panelnya dipisah menjadi
+               dua kartu <details> yang mengikuti .gt-card-head, sama seperti kartu
+               GeoFarm, GeoTani, GeoWatch, dan GeoRaster.
+
+               Nav dihapus karena isinya hanya berpindah-pindah antara dua isi,
+               bukan berpindah fitur: bentuk <details> memberi hasil yang sama
+               tanpa tombol, tanpa state .active, dan tanpa satu baris JavaScript.
+
+               Yang SENGAJA TIDAK dipakai: kelas .geoid-subtab-panel.
+               sidebar.js:184 mencarinya dengan querySelectorAll di SELURUH
+               dokumen, jadi begitu pengguna menekan salah satu tombol Alat di panel
+               GeoData, kelas .active akan dilepas dari kartu ini dan
+               ".geoid-subtab-panel { display:none }" menyembunyikannya permanen —
+               tanpa nav, tidak ada cara membukanya lagi.
+
+               openGeoidSubtab() dan seluruh aturan .geoid-subtab* tetap dipakai
+               oleh nav Alat yang enam tombolnya masih hidup.
+
+               Id geoid-subtab-statistik / geoid-subtab-indikator dibuang: keduanya
+               hanya dirujuk nav yang dihapus, dan nama "subtab" pada elemen yang
+               tidak lagi punya subtab akan menyesatkan. Id di dalamnya tetap. -->
           <div id="geotoolsTabGeonusa" class="geotools-main-tab-panel">
             <h4 style="font-size:15px; margin-bottom:4px;">GeoNusa Analysis</h4>
             <p class="geotools-desc" style="margin-bottom:20px;">Pilih wilayah untuk menampilkan insight.</p>
 
-            <div class="geoid-subtabs">
-              <button class="geoid-subtab-btn active" data-subtab="geoid-subtab-statistik" onclick="openGeoidSubtab(this)">Statistik Indonesia</button>
-              <button class="geoid-subtab-btn" data-subtab="geoid-subtab-indikator" onclick="openGeoidSubtab(this)">Indikator Penduduk</button>
-            </div>
-
-            <div id="geoid-subtab-statistik" class="geoid-subtab-panel active">
-              <div id="geoidSummaryCards" class="geoid-summary-cards">
-                <div class="geoid-summary-box geoid-summary-prov">
-                  <span class="geoid-summary-count" id="geoidCountProv" style="font-size:20px;font-weight:700;line-height:1;">–</span>
-                  <span class="geoid-summary-label">Provinsi</span>
+            <details class="geonusa-card" aria-labelledby="geonusaStatistikTitle">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#128202;</span>
+                <span>
+                  <b id="geonusaStatistikTitle">Statistik Indonesia</b>
+                  <small>Ringkasan wilayah, piramida, dan generasi</small>
+                </span>
+              </summary>
+              <div class="geonusa-card-body">
+                <div id="geoidSummaryCards" class="geoid-summary-cards">
+                  <div class="geoid-summary-box geoid-summary-prov">
+                    <span class="geoid-summary-count" id="geoidCountProv" style="font-size:20px;font-weight:700;line-height:1;">–</span>
+                    <span class="geoid-summary-label">Provinsi</span>
+                  </div>
+                  <div class="geoid-summary-box geoid-summary-kab">
+                    <span class="geoid-summary-count" id="geoidCountKab" style="font-size:20px;font-weight:700;line-height:1;">–</span>
+                    <span class="geoid-summary-label">Kab/Kota</span>
+                  </div>
+                  <div class="geoid-summary-box geoid-summary-kec">
+                    <span class="geoid-summary-count" id="geoidCountKec" style="font-size:20px;font-weight:700;line-height:1;">–</span>
+                    <span class="geoid-summary-label">Kecamatan</span>
+                  </div>
+                  <div class="geoid-summary-box geoid-summary-desa">
+                    <span class="geoid-summary-count" id="geoidCountDesa" style="font-size:20px;font-weight:700;line-height:1;">–</span>
+                    <span class="geoid-summary-label">Desa/Kel</span>
+                  </div>
                 </div>
-                <div class="geoid-summary-box geoid-summary-kab">
-                  <span class="geoid-summary-count" id="geoidCountKab" style="font-size:20px;font-weight:700;line-height:1;">–</span>
-                  <span class="geoid-summary-label">Kab/Kota</span>
-                </div>
-                <div class="geoid-summary-box geoid-summary-kec">
-                  <span class="geoid-summary-count" id="geoidCountKec" style="font-size:20px;font-weight:700;line-height:1;">–</span>
-                  <span class="geoid-summary-label">Kecamatan</span>
-                </div>
-                <div class="geoid-summary-box geoid-summary-desa">
-                  <span class="geoid-summary-count" id="geoidCountDesa" style="font-size:20px;font-weight:700;line-height:1;">–</span>
-                  <span class="geoid-summary-label">Desa/Kel</span>
-                </div>
+                <p style="font-size:10px;color:#94a3b8;text-align:center;margin:8px 0 0;">Sumber: BIG RBI (Rupa Bumi Indonesia) Edisi Juni 2026</p>
+                <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
+                <div id="geoidStatsCard" class="geoid-population-card"></div>
               </div>
-              <p style="font-size:10px;color:#94a3b8;text-align:center;margin:8px 0 0;">Sumber: BIG RBI (Rupa Bumi Indonesia) Edisi Juni 2026</p>
-              <hr style="margin: 12px 0 16px; border:0; border-top:1px solid #e8eef3;">
-              <div id="geoidStatsCard" class="geoid-population-card"></div>
-            </div>
+            </details>
 
-            <div id="geoid-subtab-indikator" class="geoid-subtab-panel">
-              <div id="geoidIndicatorCard" class="geoid-indicator-card"></div>
-            </div>
+            <details class="geonusa-card" aria-labelledby="geonusaIndikatorTitle">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#128101;</span>
+                <span>
+                  <b id="geonusaIndikatorTitle">Indikator Penduduk</b>
+                  <small>Pilih indikator dan lihat peringkat provinsi</small>
+                </span>
+              </summary>
+              <div class="geonusa-card-body">
+                <div id="geoidIndicatorCard" class="geoid-indicator-card"></div>
+              </div>
+            </details>
           </div>
 
           <!-- Panel: Geoportal -->
@@ -1865,7 +1927,7 @@
        pernah membuka situs akan memakai stylesheet lama dari cache dan
        daftar saran tampil tanpa gaya. -->
 
-          
+
             <!-- GeoOSS — pemeriksaan awal zona peruntukan sebelum pengajuan resmi.
                  Berdiri sendiri sebagai modul GeoTools tersendiri, bukan bagian
                  GeoTani. Alurnya berurutan dan bukan free-form:
@@ -2027,140 +2089,189 @@
             </details>
 </div>
 
-          <div id="geotoolsTabGeoPangan" class="geotools-main-tab-panel">
-            <h4 style="font-size:15px; margin-bottom:4px;">GeoPangan</h4>
-                <p class="geotools-desc" style="margin-bottom:25px;">Harga Pangan Nasional - PIHPS & SP2KP</p>
-                <div class="geopangan-source-tabs" role="tablist" aria-label="Sumber GeoPangan">
-              <button type="button" class="geopangan-source-tab active" data-geopangan-source="pihps" role="tab" aria-selected="true" aria-controls="geopangan-pihps-panel">PIHPS / BI</button>
-              <button type="button" class="geopangan-source-tab" data-geopangan-source="sp2kp" role="tab" aria-selected="false" aria-controls="geopangan-sp2kp-panel">SP2KP</button>
-            </div>
-            <div id="geopangan-pihps-panel" class="geopangan-source-panel active" role="tabpanel" aria-hidden="false" data-geopangan-source-panel="pihps">
-              <div class="geopangan-sticky-header">
-                <div class="cctv-card">
-                  <div class="cctv-card-header">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                    <span>Cari Wilayah - Harga pangan</span>
-                  </div>
-                  <div class="cctv-card-body">
-                    <div class="geopangan-field">
-                      <label style="margin-top:12px;">Jenis Pasar</label>
-                      <select id="geopanganPriceType">
-                        <option value="1">Pasar Tradisional</option>
-                        <option value="2">Pasar Modern (Supermarket/Minimarket)</option>
-                        <option value="3">Pedagang Besar / Grosir</option>
-                        <option value="4">Produsen</option>
-                      </select>
-                    </div>
-                    <div class="geopangan-field">
-                      <label>Komoditas</label>
-                      <select id="geopanganCommodity"></select>
-                    </div>
-                    <div class="geopangan-field">
-                      <label>Provinsi</label>
-                      <select id="geopanganProvince">
-                        <option value="">Semua Provinsi</option>
-                      </select>
-                    </div>
-                    <div class="geopangan-field" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                      <div>
-                        <label>Dari</label>
-                        <input type="date" id="geopanganDateStart" />
-                      </div>
-                      <div>
-                        <label>Sampai</label>
-                        <input type="date" id="geopanganDateEnd" />
-                      </div>
-                    </div>
-                    <button id="geopanganLoadBtn" class="geopangan-btn" style="margin-top:4px;">Tampilkan</button>
-                  </div>
-                </div>
-              </div>
-              <div id="geopangan-table-home">
-                <div id="geopanganResult"></div>
-                <div id="geopanganTable"></div>
-                <div id="sppgSebaranTable"></div>
-                <button id="geopanganResetBtn" type="button" class="geopangan-btn geopangan-reset-btn" style="margin-top:10px;">Reset Layer PIHPS</button>
-              </div>
-            </div>
-            <div id="geopangan-sp2kp-panel" class="geopangan-source-panel" role="tabpanel" aria-hidden="true" data-geopangan-source-panel="sp2kp">
-              <div class="cctv-card">
-                <div class="cctv-card-header">
-                  <span>SP2KP</span>
-                </div>
-                <div class="cctv-card-body">
-                  <p class="geotools-desc" style="font-size:11px;margin:12px 0;">Choropleth Harga Numerik Tertimbang (HNT) dan disparitas harga provinsi dari Sistem Pemantauan Pasar Kebutuhan Pokok Kementerian Perdagangan.</p>
-                  <div class="geopangan-field">
-                    <label>Variant / Komoditas SP2KP</label>
-                    <select id="sp2kpVariantSelect"></select>
-                  </div>
-                  <div class="geopangan-field">
-                    <label>Tanggal HNT</label>
-                    <input type="date" id="sp2kpLatestDate" />
-                  </div>
-                  <button id="sp2kpLoadBtn" class="geopangan-btn" style="margin-top:4px;">Tampilkan Choropleth SP2KP</button>
-                  <div id="sp2kpStatus" class="cctv-message" style="display:none;margin-top:10px;"></div>
-                  <div id="sp2kpResult"></div>
-                  <div id="sp2kpTable"></div>
-                  <div id="sp2kpHntChartCard" style="display:none;margin-top:12px;padding:10px;border:1px solid #dbe7e1;border-radius:8px;background:#fbfefc;">
-                    <div class="sp2kp-table-title">Harga HNT Provinsi — 10 Tertinggi</div>
-                    <div id="sp2kpHntChartSubtitle" class="sp2kp-table-subtitle"></div>
-                    <div style="height:260px;margin-top:8px;"><canvas id="sp2kpHntChart"></canvas></div>
-                  </div>
-                  <button id="sp2kpResetBtn" type="button" class="geopangan-btn geopangan-reset-btn" style="margin-top:10px;">Reset Layer SP2KP</button>
-                  <div style="margin-top:14px;padding-top:12px;border-top:1px solid #dbe7e1;">
-                    <div style="display:flex;align-items:center;gap:8px;">
-                      <strong style="font-size:12px;color:#24523a;">Periode histori HNT</strong>
-                      <span style="margin-left:auto;font-size:9px;color:#64748b;">Tabel dan grafik terpisah</span>
-                    </div>
-                    <p class="geotools-desc" style="font-size:10px;margin:5px 0 10px;">Pilih rentang tanggal untuk melihat perkembangan HNT nasional.</p>
-                    <div class="geopangan-field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                      <div>
-                        <label>Dari</label>
-                        <input type="date" id="sp2kpHistoryStart" />
-                      </div>
-                      <div>
-                        <label>Sampai</label>
-                        <input type="date" id="sp2kpHistoryEnd" />
-                      </div>
-                    </div>
-                    <button id="sp2kpHistoryLoadBtn" class="geopangan-btn" style="margin-top:4px;">Muat histori HNT</button>
-                    <div id="sp2kpHistoryStatus" class="cctv-message" style="display:none;margin-top:10px;"></div>
-                    <div id="sp2kpHistoryTable"></div>
-                    <div id="sp2kpHistoryCard" style="display:none;margin-top:12px;padding:10px;border:1px solid #dbe7e1;border-radius:8px;background:#fbfefc;">
-                      <div class="sp2kp-chart-title">Series Perkembangan Harga Nasional Tertimbang (HNT) - SEBULAN TERAKHIR</div>
-                      <div style="height:170px;margin-top:8px;"><canvas id="sp2kpHistoryChart"></canvas></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- Panel: GeoPangan
+     September 2026: nav sumber (PIHPS / SP2KP) dihapus dan dua panelnya
+     dipisah menjadi dua kartu <details> yang mengikuti .gt-card-head,
+     sama seperti kartu GeoFarm, GeoTani, GeoWatch, GeoRaster, dan GeoNusa.
 
-          <!-- Panel: GeoWatch -->
+     Nav dihapus karena isinya hanya berpindah-pindah antara dua sumber
+     data, bukan berpindah fitur. <details> memberi hasil yang sama tanpa
+     tombol, tanpa state .active, dan tanpa satu baris JavaScript.
+
+     openGeoPanganSourceTab() dihapus dari sp2kp-geopangan.js. Fungsi itu
+     mencari [data-geopangan-source] dan [data-geopangan-source-panel] di
+     SELURUH dokumen; dengan nav dan panel-panel lamanya sudah tidak ada,
+     funcinya tidak melakukan apa-apa. sidebar.js kini memanggil
+     geopanganAutoLoad() langsung, sama seperti cabang else-if yang
+     sebelumnya sudah ada.
+
+     PENTING: loadVariants() yang mengisi #sp2kpVariantSelect dipanggil
+     dari fungsi itu. Kalau ikut hilang, katalog variant tidak pernah
+     dimuat dan dropdown SP2KP kosong selamanya. Sekarang dipanggil dari
+     kartu SP2KP saat pertama kali dibuka.
+
+     Atribut data-geopangan-source* tidak dipakai ulang. Memakainya pada
+     kartu baru akan membuat pencarian global di atas mencabut .active
+     darinya, dan ".geopangan-source-panel { display:none }" akan
+     menyembunyikannya secara permanen.
+
+     <canvas> HNT dan histori tetap berada di dalam pembungkus
+     <div style="height:…"> di dalam badan kartu. Wajib: Chart.js
+     memasang ResizeObserver pada induk canvas, dan pembungkus tinggi tetap
+     itulah yang membuat grafik menggambar ulang saat kartu dibuka lagi.
+
+     .cctv-card, .cctv-card-header, dan .cctv-card-body dipakai bersama
+     dengan panel GeoPulse; gayanya tetap, hanya pemakaian di sini yang
+     hilang. -->
+<div id="geotoolsTabGeoPangan" class="geotools-main-tab-panel">
+  <h4 style="font-size:15px; margin-bottom:4px;">GeoPangan</h4>
+  <p class="geotools-desc" style="margin-bottom:25px;">Harga Pangan Nasional - PIHPS &amp; SP2KP</p>
+
+  <details class="geopangan-card" id="geopangan-card-pihps" aria-labelledby="geopanganPihpsTitle">
+    <summary class="gt-card-head">
+      <span class="gt-card-icon" aria-hidden="true">&#128717;</span>
+      <span>
+        <b id="geopanganPihpsTitle">PIHPS - Bank Indonesia</b>
+        <small>Harga pangan nasional dari PIHPS / Badan Pusat Statistik</small>
+      </span>
+    </summary>
+    <div class="geopangan-card-body">
+      <div class="geopangan-field">
+        <label style="margin-top:12px;">Jenis Pasar</label>
+        <select id="geopanganPriceType">
+          <option value="1">Pasar Tradisional</option>
+          <option value="2">Pasar Modern (Supermarket/Minimarket)</option>
+          <option value="3">Pedagang Besar / Grosir</option>
+          <option value="4">Produsen</option>
+        </select>
+      </div>
+      <div class="geopangan-field">
+        <label>Komoditas</label>
+        <select id="geopanganCommodity"></select>
+      </div>
+      <div class="geopangan-field">
+        <label>Provinsi</label>
+        <select id="geopanganProvince">
+          <option value="">Semua Provinsi</option>
+        </select>
+      </div>
+      <div class="geopangan-field" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <div>
+          <label>Dari</label>
+          <input type="date" id="geopanganDateStart" />
+        </div>
+        <div>
+          <label>Sampai</label>
+          <input type="date" id="geopanganDateEnd" />
+        </div>
+      </div>
+      <button id="geopanganLoadBtn" class="geopangan-btn" style="margin-top:4px;">Tampilkan</button>
+
+      <div id="geopangan-table-home">
+                      <div id="geopanganResult"></div>
+                      <div id="geopanganTable"></div>
+                      <div id="sppgSebaranTable"></div>
+                      <button id="geopanganResetBtn" type="button" class="geopangan-btn geopangan-reset-btn" style="margin-top:10px;">Reset Layer PIHPS</button>
+                    </div>
+    </div>
+  </details>
+
+  <details class="geopangan-card" id="geopangan-card-sp2kp" aria-labelledby="geopanganSp2kpTitle">
+    <summary class="gt-card-head">
+      <span class="gt-card-icon" aria-hidden="true">&#128200;</span>
+      <span>
+        <b id="geopanganSp2kpTitle">SP2KP - Kemendag</b>
+        <small>Choropleth HNT dan disparitas harga provinsi</small>
+      </span>
+    </summary>
+    <div class="geopangan-card-body">
+      <p class="geotools-desc" style="font-size:11px;margin:12px 0;">Choropleth Harga Numerik Tertimbang (HNT) dan disparitas harga provinsi dari Sistem Pemantauan Pasar Kebutuhan Pokok Kementerian Perdagangan.</p>
+      <div class="geopangan-field">
+        <label>Variant / Komoditas SP2KP</label>
+        <select id="sp2kpVariantSelect"></select>
+      </div>
+      <div class="geopangan-field">
+        <label>Tanggal HNT</label>
+        <input type="date" id="sp2kpLatestDate" />
+      </div>
+      <button id="sp2kpLoadBtn" class="geopangan-btn" style="margin-top:4px;">Tampilkan Choropleth SP2KP</button>
+      <div id="sp2kpStatus" class="cctv-message" style="display:none;margin-top:10px;"></div>
+      <div id="sp2kpResult"></div>
+      <div id="sp2kpTable"></div>
+      <div id="sp2kpHntChartCard" style="display:none;margin-top:12px;padding:10px;border:1px solid #dbe7e1;border-radius:8px;background:#fbfefc;">
+        <div class="sp2kp-table-title">Harga HNT Provinsi — 10 Tertinggi</div>
+        <div id="sp2kpHntChartSubtitle" class="sp2kp-table-subtitle"></div>
+        <div style="height:260px;margin-top:8px;"><canvas id="sp2kpHntChart"></canvas></div>
+      </div>
+      <button id="sp2kpResetBtn" type="button" class="geopangan-btn geopangan-reset-btn" style="margin-top:10px;">Reset Layer SP2KP</button>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid #dbe7e1;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <strong style="font-size:12px;color:#24523a;">Periode histori HNT</strong>
+          <span style="margin-left:auto;font-size:9px;color:#64748b;">Tabel dan grafik terpisah</span>
+        </div>
+        <p class="geotools-desc" style="font-size:10px;margin:5px 0 10px;">Pilih rentang tanggal untuk melihat perkembangan HNT nasional.</p>
+        <div class="geopangan-field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div>
+            <label>Dari</label>
+            <input type="date" id="sp2kpHistoryStart" />
+          </div>
+          <div>
+            <label>Sampai</label>
+            <input type="date" id="sp2kpHistoryEnd" />
+          </div>
+        </div>
+        <button id="sp2kpHistoryLoadBtn" class="geopangan-btn" style="margin-top:4px;">Muat histori HNT</button>
+        <div id="sp2kpHistoryStatus" class="cctv-message" style="display:none;margin-top:10px;"></div>
+        <div id="sp2kpHistoryTable"></div>
+        <div id="sp2kpHistoryCard" style="display:none;margin-top:12px;padding:10px;border:1px solid #dbe7e1;border-radius:8px;background:#fbfefc;">
+          <div class="sp2kp-chart-title">Series Perkembangan Harga Nasional Tertimbang (HNT) - SEBULAN TERAKHIR</div>
+          <div style="height:170px;margin-top:8px;"><canvas id="sp2kpHistoryChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </details>
+</div>
+
+          <!-- Panel: GeoWatch
+               September 2026: kartu .cctv-card + .cctv-card-header (pita biru
+               gradien) diganti <details> yang mengikuti .gt-card-head, sama seperti
+               kartu GeoFarm dan GeoTani, dan mulai terlipat. Panel ini satu-satunya
+               di GeoTools yang belum ikut template itu.
+
+               Handle .cctv-sheet-handle yang memanggil toggleCctvSheet() ikut
+               dihapus: aturannya display:none di semua viewport, jadi tidak pernah
+               bisa diklik. toggleCctvSheet() di cctv.js dihapus karena tidak ada
+               pemanggilnya lagi.
+
+               .cctv-search-body dipertahankan pada pembungkus isian, sehingga gaya
+               input dan select tidak berubah. -->
           <div id="geotoolsTabGeoWatch" class="geotools-main-tab-panel">
-            <div class="geopangan-sticky-header" style="background:transparent; border-bottom:0; padding-left:0; padding-right:0; margin-left:0; margin-right:0;">
-              <h4 style="font-size:15px; margin-bottom:4px;">CCTV Analysis</h4>
-              <p class="geotools-desc" style="margin-bottom:12px;">Klik pencarian untuk melihat lokasi cctv.</p>
-            </div>
-            <div id="cctv-search-sheet">
-              <div class="cctv-sheet-handle" onclick="toggleCctvSheet()"></div>
-              <div class="cctv-card cctv-search-card" style="margin-top:0;">
-                <div class="cctv-card-header">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                  <span>Pencarian CCTV</span>
-                </div>
-                <div class="cctv-card-body cctv-search-body">
-                  <div class="cctv-autocomplete">
-                    <input id="cctvSearchInput" type="search" placeholder="Cari disini" autocomplete="off">
-                    <div id="cctvAutocomplete" class="cctv-autocomplete-list"></div>
+      <h4 style="font-size:15px; margin-bottom:4px;">CCTV Analysis</h4>
+      <p class="geotools-desc" style="margin-bottom:12px;">Klik pencarian untuk melihat lokasi cctv.</p>
+      <div id="cctv-search-sheet">
+
+              <details class="geowatch-cctv" aria-labelledby="geowatchCctvTitle">
+                <summary class="gt-card-head">
+                  <span class="gt-card-icon" aria-hidden="true">&#128249;</span>
+                  <span>
+                    <b id="geowatchCctvTitle">Pencarian CCTV</b>
+                    <small>Ketik lokasi atau pilih wilayah</small>
+                  </span>
+                </summary>
+                <div class="geowatch-cctv-body">
+                  <div class="cctv-search-body">
+                    <div class="cctv-autocomplete">
+                      <input id="cctvSearchInput" type="search" placeholder="Cari disini" autocomplete="off">
+                      <div id="cctvAutocomplete" class="cctv-autocomplete-list"></div>
+                    </div>
+                    <select id="cctvAreaFilter">
+                      <option value="">Pilih wilayah</option>
+                    </select>
                   </div>
-                  <select id="cctvAreaFilter">
-                    <option value="">Pilih wilayah</option>
-                  </select>
+                  <div id="cctvStatus" class="cctv-message">Buka tab CCTV untuk memuat daftar.</div>
+                  <div id="cctvResults" class="cctv-results"></div>
                 </div>
-              </div>
-              <div id="cctvStatus" class="cctv-message">Buka tab CCTV untuk memuat daftar.</div>
-              <div id="cctvResults" class="cctv-results"></div>
+              </details>
             </div>
           </div>
 
@@ -2179,7 +2290,7 @@
           </div>
 
           <div class="gempa-subtabs" style="display:none;">
-            
+
             <button class="gempa-subtab-btn active" data-subtab="gempa-subtab-infocuaca" onclick="openGempaSubtab(this)">Cuaca</button>
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-gempa" onclick="openGempaSubtab(this)">Gempa</button>
             <button class="gempa-subtab-btn" data-subtab="gempa-subtab-karhutla" onclick="openGempaSubtab(this)">Kehutanan</button>
@@ -2478,17 +2589,40 @@
           </div>
 
           <div id="gempa-subtab-infocuaca" class="gempa-subtab-panel active">
-            <div id="weather-content">
+            <!-- Section "Cuaca" GeoPulse: dua kartu .cctv-card + pita biru
+     .cctv-card-header diganti menjadi kartu <details> .geopulse-card yang
+     mengikuti template kartu GeoTools (GeoFarm, GeoTani, GeoWatch,
+     GeoRaster, GeoNusa, GeoPangan).
+
+     Bandingkan dengan empat section lain (Gempa, Kehutanan, Geologi,
+     Forecasting) yang masih memakai pita .cctv-card-header: tombol
+     subtabnya ada di .gempa-subtabs, tapi pembungkus itu inline
+     style="display:none;" dan tidak ada JS yang membukanya, sehingga
+     hanya section ini yang terlihat di aplikasi.
+
+     .cctv-layers sengaja dipertahankan di badan kartu: itu yang memberi
+     max-height 35vh + overflow-y:auto pada daftar 10 toggle kualitas
+     udara. Aturannya tetap berlaku karena wrapper .gempa-subtab-panel
+     tidak dihapus. Sebaliknya margin 12px bawaan .cctv-layers dinolkan
+     di CSS supaya tidak menumpuk dengan padding badan kartu.
+
+     Wrapper .gempa-subtab-panel TIDAK boleh dilepas: itu yang membuat
+     section ini terlihat, dan sidebar.js:162 mencari
+     '.gempa-subtab-panel' secara global untuk menukar .active. -->
+    <div id="weather-content">
               <div style="font-size:13px; color:#fff; background:#0a4d8c; padding:10px; margin-bottom: 100px; border-radius:5px;">
                 ℹ️ Pilih lokasi dari pencarian untuk melihat cuaca.
               </div>
             </div>
-            <div class="cctv-card" style="margin-bottom:12px;">
-              <div class="cctv-card-header">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14l9-9 9 9"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-                <span>Layer Cuaca Maritim</span>
-              </div>
-              <div class="cctv-card-body cctv-layers">
+            <details class="geopulse-card" id="geopulse-cuaca-maritim" aria-labelledby="geopulseCuacaMaritimTitle">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#127818;</span>
+                <span>
+                  <b id="geopulseCuacaMaritimTitle">Cuaca Maritim</b>
+                  <small>Prakiraan cuaca perairan dan pelabuhan - BMKG Maritim</small>
+                </span>
+              </summary>
+              <div class="geopulse-card-body cctv-layers">
                 <label class="cctv-layer-toggle">
                   <input type="checkbox" id="toggleCuacaPerairanLayer">
                   <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
@@ -2506,13 +2640,16 @@
                   </span>
                 </label>
               </div>
-            </div>
-            <div class="cctv-card" style="margin-bottom:12px;">
-              <div class="cctv-card-header">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
-                <span>Kualitas Udara</span>
-              </div>
-              <div class="cctv-card-body cctv-layers">
+            </details>
+            <details class="geopulse-card" id="geopulse-kualitas-udara" aria-labelledby="geopulseKualitasUdaraTitle">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#127755;&#65039;</span>
+                <span>
+                  <b id="geopulseKualitasUdaraTitle">Kualitas Udara</b>
+                  <small>PM2.5, PM10, ozon, serta pemantauan stasiun OpenAQ</small>
+                </span>
+              </summary>
+              <div class="geopulse-card-body cctv-layers">
                 <label class="cctv-layer-toggle"><input type="checkbox" id="toggleAirVisualPm25" data-airvisual-layer="airvisual-pm25"><span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="cctv-layer-info"><span class="cctv-layer-name">PM2.5</span><small>Partikel halus PM2.5 dari AirVisual</small></span></label>
                 <label class="cctv-layer-toggle"><input type="checkbox" data-airvisual-layer="airvisual-pm10"><span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="cctv-layer-info"><span class="cctv-layer-name">PM10</span><small>Partikel kasar PM10 dari AirVisual</small></span></label>
                 <label class="cctv-layer-toggle"><input type="checkbox" data-airvisual-layer="airvisual-o3"><span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="cctv-layer-info"><span class="cctv-layer-name">O3 (Ozon)</span><small>Konsentrasi ozon dari AirVisual</small></span></label>
@@ -2544,7 +2681,7 @@
                   </span>
                 </label>
               </div>
-            </div>
+            </details>
           </div>
 
           <div id="gempa-subtab-prediksicuaca" class="gempa-subtab-panel" style="display:none;">

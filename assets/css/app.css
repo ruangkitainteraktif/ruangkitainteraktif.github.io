@@ -1666,31 +1666,32 @@
       padding-right: 15px;
     }
 
-    .geopangan-source-tabs {
-      display: flex;
-      gap: 4px;
-      margin: 0 0 12px;
-      padding: 4px;
-      background: #eef5f8;
-      border: 1px solid #dbe7ee;
-      border-radius: 8px;
+    /* Panel GeoPangan - dua kartu yang menggantikan nav sumber
+    * (PIHPS / SP2KP). Nav itu isinya cuma berpindah antara dua sumber
+    * data, bukan berpindah fitur, jadi <details> memberi hasil yang sama
+    * tanpa tombol dan tanpa state .active.
+    *
+    * Aturan .geopangan-source-tab* DIHAPUS, bukan dialiaskan: kelas itu
+    * eksklusif milik panel ini. Tapi .cctv-card, .cctv-card-header, dan
+    * .cctv-card-body TIDAK ikut dihapus - GeoPulse memakainya 9 kali dan
+    * masih membutuhkannya.
+    *
+    * overflow: hidden aman di sini: panel GeoPangan tidak punya satu pun
+    * elemen ber-posisi absolute. Berbeda dari .geowatch-cctv yang memakai
+    * visible karena sel Google Maps di dalamnya boleh keluar dari kotak. */
+    .geopangan-card {
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background: var(--bg-card);
     }
-    .geopangan-source-tab {
-      flex: 1;
-      padding: 8px 10px;
-      border: 0;
-      border-radius: 5px;
-      background: transparent;
-      color: #52728a;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .geopangan-source-tab:hover { background: #e0f0f7; color: #24527a; }
-    .geopangan-source-tab.active { background: #0b5cab; color: #fff; }
-    .geopangan-source-tab:focus-visible { outline: 2px solid #70b9dd; outline-offset: 1px; }
-    .geopangan-source-panel { display: none; }
-    .geopangan-source-panel.active { display: block; }
+    .geopangan-card:not([open]) > .geopangan-card-body { display: none; }
+    .geopangan-card-body { padding: 12px 13px; }
+    /* Jarak 10px antar kartu, sama seperti .geonusa-card + .geonusa-card
+    * dan .geofarm-ref. Kartu PERTAMA tidak diberi margin: jarak ke
+    * arahnya datang dari margin-bottom paragraf pengantar panel. */
+    .geopangan-card + .geopangan-card { margin-top: 10px; }
     .sp2kp-table-title {
       margin: 0;
       color: #24523a;
@@ -1751,15 +1752,6 @@
     .sp2kp-data-table td:nth-child(2) { white-space: normal; }
     .sp2kp-data-table tbody tr:nth-child(even),
     .sp2kp-history-table tbody tr:nth-child(even) { background: #fbfefc; }
-
-    .geopangan-sticky-header {
-      background: #fff;
-      padding: 0 0 8px;
-      margin-left: -15px; margin-right: -15px;
-      padding-left: 15px; padding-right: 15px;
-      border-bottom: 1px solid #e8eef3;
-      flex-shrink: 0;
-    }
 
     .geopangan-field {
       margin-bottom: 10px;
@@ -1905,9 +1897,6 @@
       .gp-comparison-chart { height: 200px; }
       .gp-commodity-comparison { align-items: flex-start; }
       .gp-commodity-comparison button { max-width: 126px; }
-      .geopangan-sticky-header h4 { margin-bottom: 0; font-size: 13px; }
-      .geopangan-sticky-header p { margin-bottom: 6px; font-size: 11px; }
-      .geopangan-sticky-header .cctv-card { margin-top: 0; }
     }
 
     /* ===== GeoPangan Legend ===== */
@@ -4142,29 +4131,21 @@
     .geotools-main-tab-panel { display: none; overflow-x: hidden; }
     .geotools-main-tab-panel.active { display: block; }
 
-    /* DEMNAS panel: Muat Data | Unduh DEMNAS */
-    .geotools-2col {
-      display: grid;
-      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-      gap: 14px;
-      align-items: start;
-    }
-    .geotools-2col-main,
-    .geotools-2col-side { min-width: 0; }
-    .geotools-2col-side {
-      padding: 12px;
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      background: var(--bg-secondary);
-      position: sticky;
-      top: 0;
-    }
-    .geotools-2col-side .geotools-steps { margin-bottom: 12px; }
-    .geotools-2col-side .geotools-step { padding: 6px 8px; font-size: 11px; }
-    @media (max-width: 420px) {
-      .geotools-2col { grid-template-columns: 1fr; }
-      .geotools-2col-side { position: static; }
-    }
+    /* Panel GeoRaster (id geotoolsTabDemnas). Dulunya "Unduh DEMNAS"
+       dibungkus .geotools-2col-side; September 2026 wrapper itu diganti
+       kartu .georaster-card di bawah.
+
+       Aturan .geotools-2col* dihapus, bukan dibiarkan jadi alias:
+         - .geotools-2col (grid dua kolom) tidak pernah dipakai markup,
+           tidak ada satu pun elemen dengan kelas itu di index.html.
+         - .geotools-2col-side hanya ada di panel ini, dan sekarang sudah
+           tidak dipakai.
+         - .geotools-2col-side .geotools-steps / .geotools-step tidak
+           pernah cocok: satu-satunya .geotools-steps ada di panel GeoData,
+           bukan di dalam .geotools-2col-side.
+       .geotools-2col-main masih dipakai di panel GeoData, jadi
+       min-width:0 nya dipertahankan. */
+    .geotools-2col-main { min-width: 0; }
 
     .info-card {
       background: var(--bg-secondary);
@@ -4369,6 +4350,12 @@
         z-index: 1200;
       }
 
+      /* #cctv-search-sheet kini hanya pembungkus, bukan sheet visual.
+         Bingkai, radius, padding, dan latar yang dulu ada di sini
+         (padding:10px; border:1px solid; border-radius:8px) dihapus,
+         karena kartu .geowatch-cctv di dalamnya sudah menyediakan
+         semuanya. Kalau tidak, di layar sempit terlihat dua bingkai
+         bersarang. */
       #cctv-search-sheet {
         position: static;
         bottom: auto;
@@ -4376,7 +4363,6 @@
         right: auto;
         height: auto;
         width: 100%;
-        border-radius: 8px;
         z-index: auto;
         transform: none;
         transition: none;
@@ -4384,24 +4370,13 @@
         flex-direction: unset;
         overflow: visible;
         margin-top: 10px;
-        background: transparent;
-        box-shadow: none;
-        padding: 10px;
-        border: 1px solid #e0e0e0;
       }
-      #cctv-search-sheet.sheet-open {
-        transform: none;
-      }
-      #cctv-search-sheet .cctv-sheet-handle {
-        display: none;
-      }
-      #cctv-search-sheet .cctv-sheet-handle::after {
-        display: none;
-      }
-      #cctv-search-sheet > .cctv-card {
-        margin: 0 0 10px;
-        border-radius: 8px;
-      }
+      /* .cctv-sheet-handle, .sheet-open, dan "> .cctv-card" dihapus:
+         kartu sekarang <details class="geowatch-cctv"> dengan kepala
+         .gt-card-head, dan handle yang memanggil toggleCctvSheet() sudah
+         tidak ada di markup. Selector "> .cctv-card" juga tidak berlaku
+         lagi karena kartu bukan anak langsung #cctv-search-sheet dan
+         sudah tidak memakai kelas .cctv-card. */
       #cctv-search-sheet #cctvStatus,
       #cctv-search-sheet #cctvResults {
         padding: 0 5px;
@@ -6433,8 +6408,10 @@
       overflow: hidden;
       color: var(--text-primary);
     }
+    /* .cctv-card tetap ada: cctv.js memakai ulang kelas ini untuk tiap
+       tombol hasil pencarian (class="cctv-card cctv-result-item"). Yang
+       dihapus hanya .cctv-sheet-handle, yang tidak lagi ada di markup. */
     #cctv-search-sheet { margin-top: 10px; }
-    .cctv-sheet-handle { display: none; }
     #geotoolsTabGeoWatch { padding-bottom: 4px; }
     #geotoolsTabGeoWatch #cctv-search-sheet { margin-top: 12px; }
 
@@ -7976,16 +7953,12 @@
       }
     }
 
-    .cctv-search-card {
-      position: relative;
-      z-index: 3;
-      padding: 0;
-      border: 1px solid #d9e8f2;
-      border-radius: 14px;
-      background: #fff;
-      box-shadow: 0 8px 20px rgba(22, 70, 108, .08);
-      overflow: visible;
-    }
+    /* .cctv-card-header dipakai bersama, dan SETELAH GeoPangan pindah ke
+       template .gt-card-head yang tersisa adalah GeoPulse (9 pita).
+       Gempa dan Cuaca Maritime memakai subtab GeoPulse itu, bukan panel
+       terpisah. Kelas ini BUKAN milik GeoWatch maupun GeoPangan, jadi
+       jangan ikut dihapus saat salah satu dari keduanya jadi kartu
+       .gt-card-head. */
     .cctv-card-header {
       display: flex; align-items: center; gap: 6px;
       padding: 10px 14px; background: linear-gradient(110deg, #066aa8, #1198c7); border-bottom: 1px solid #066aa8;
@@ -7993,8 +7966,107 @@
       font-size: 12px; font-weight: 700; color: #fff;
     }
     .cctv-card-header svg { color: #fff; flex-shrink: 0; }
-    .cctv-search-card .cctv-card-body { padding: 14px 16px 16px; }
+
+    /* CCTV — kartu pencarian, sekarang <details> yang mengikuti template
+       kartu GeoTools: <summary class="gt-card-head"> + badan, dan badan
+       disembunyikan saat terlipat.
+
+       Dua hal yang TIDAK sama dengan kartu GeoFarm/GeoTani:
+
+       1. overflow: visible, bukan hidden. Daftar .cctv-autocomplete-list
+          diposisikan absolute di dalam .cctv-autocomplete dan harus bisa
+          keluar dari kotak kartu seperti sebelumnya; overflow: hidden akan
+          memotongnya sehingga daftar autocomplete tidak pernah terlihat.
+          Karena kartu tidak memotong, sudut atas kepala dibulatkan sendiri
+          pada .geowatch-cctv > .gt-card-head di bawah.
+
+       2. z-index: 3 dipertahankan dari .cctv-search-card yang lama, supaya
+          daftar autocomplete tetap berada di atas isi kartu lain di sheet.
+
+       .cctv-search-body (grid + gaya isian) sengaja tetap dipakai pada
+       pembungkus isian di dalam badan, sehingga tampilan input dan select
+       tidak berubah sama sekali. */
+    .geowatch-cctv {
+      position: relative;
+      z-index: 3;
+      padding: 0;
+      overflow: visible;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background: var(--bg-card);
+    }
+    .geowatch-cctv > .gt-card-head { border-radius: 9px 9px 0 0; }
+    .geowatch-cctv:not([open]) > .geowatch-cctv-body { display: none; }
+    .geowatch-cctv-body { padding: 12px 13px; }
+    /* Jarak antara isian, pesan status, dan daftar hasil. */
+    .geowatch-cctv-body > .cctv-message { margin-top: 10px; }
+    .geowatch-cctv-body > .cctv-results { margin-top: 10px; }
     .cctv-search-body { display: grid; gap: 12px; }
+
+    /* Panel GeoRaster — kartu "Unduh DEMNAS", mengikuti template kartu
+     * GeoTools seperti GeoFarm, GeoTani, dan GeoWatch.
+     *
+     * overflow: hidden aman di sini, BERBEDA dari .geowatch-cctv yang
+     * memakai visible. Panel GeoRaster tidak punya satu pun popup
+     * ber-posisi absolute, dan satu-satunya elemen absolute di dalamnya
+     * (#demnasDownloadBtn.is-loading::after) sudah terpotong oleh
+     * .geotools-btn { overflow: hidden } sejak sebelumnya. Yang perlu
+     * dipotong di sini adalah tepi pita kepala kartu. */
+    .georaster-card {
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background: var(--bg-card);
+    }
+    .georaster-card:not([open]) > .georaster-card-body { display: none; }
+    .georaster-card-body { padding: 12px 13px; }
+    /* Terjemahan panjang yang tadinya <p> di dalam wrapper lama. Dipindah
+     * ke sini supaya tidak hilang, tapi tidak juga memenuhi kepala kartu. */
+    .georaster-card-note {
+      margin: 0 0 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed var(--border-color);
+      font-size: 9.5px;
+      line-height: 1.5;
+      color: var(--text-muted);
+    }
+    /* Isi form memakai .geotani-form-input yang bordernya lebih tebal dan
+     * sudutnya 6px; di dalam kartu yang padding-nya 12px, selisih ke
+     * tepi kartu jadi sempit. Menambah tinggi sedikit lebih baik
+     * daripada isian yang menempel. */
+    .georaster-card-body .geotani-form-input { min-height: 34px; }
+    .georaster-card-body .geotools-btn { margin-top: 12px; }
+
+    /* Panel GeoNusa — dua kartu ("Statistik Indonesia" dan "Indikator
+     * Penduduk") yang menggantikan nav subtab. Kelas .geoid-subtab-panel
+     * SENGAJA tidak dipakai di sini: sidebar.js:184 mencarinya dengan
+     * querySelectorAll di seluruh dokumen, jadi begitu pengguna menekan
+     * salah satu tombol Alat di panel GeoData, kelas .active akan dilepas
+     * dari kartu ini dan ".geoid-subtab-panel { display:none }"
+     * menyembunyikannya permanen. Tanpa nav, kartu tidak bisa dibuka lagi.
+     *
+     * overflow: hidden aman: population-chart.js hanya menghasilkan satu
+     * elemen ber-posisi absolute — ikon pembesar 12x12 px yang terpusat
+     * di dalam wrapper position:relative-nya sendiri, dengan
+     * pointer-events:none. <select> penanda indikator adalah select
+     * bawaan browser, digambar di lapisan teratas sehingga tidak pernah
+     * terpotong overflow leluhur. */
+    .geonusa-card {
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background: var(--bg-card);
+    }
+    .geonusa-card:not([open]) > .geonusa-card-body { display: none; }
+    .geonusa-card-body { padding: 12px 13px; }
+    /* Jarak 10px yang sama dengan .geofarm-kalk dan .geofarm-ref, supaya
+       ritme antar kartu di panel GeoTools seragam. Kartu PERTAMA tidak
+       diberi margin: jarak ke arahnya datang dari margin-bottom paragraf
+       pengantar panel, persis seperti .geofarm-card. */
+    .geonusa-card + .geonusa-card { margin-top: 10px; }
+
     .cctv-search-body input, .cctv-search-body select {
       width: 100%; height: 40px; padding: 7px 11px; margin-bottom: 0;
       border: 1px solid #d5e3ed; border-radius: 9px; font-size: 12px;
@@ -8007,6 +8079,68 @@
 
     /* CCTV Layer Toggle */
     .cctv-layers { margin: 12px 0; }
+
+    /* Panel GeoPulse, section "Cuaca" - dua kartu ("Layer Cuaca Maritim"
+     * dan "Kualitas Udara") yang mengikuti template kartu GeoTools seperti
+     * GeoFarm, GeoTani, GeoWatch, GeoRaster, GeoNusa, dan GeoPangan.
+     *
+     * Yang BELUM ikut berubah: section Gempa, Kehutanan, Geologi, dan
+     * Forecasting masih memakai pita .cctv-card-header. Tombol subtabnya
+     * ada, tapi pembungkus .gempa-subtabs itu inline style="display:none;"
+     * dan tidak ada JS yang membukanya, jadi di aplikasi yang terlihat
+     * memang hanya section Cuaca ini.
+     *
+     * overflow: hidden aman di sini: isi kartu cuma daftar toggle
+     * .cctv-layer-toggle, dan satu-satunya positioning di dalamnya adalah
+     * .cctv-layer-check { position: relative } untuk centangnya - tidak
+     * ada elemen absolute yang perlu keluar dari kotak. */
+    .geopulse-card {
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background: var(--bg-card);
+    }
+    .geopulse-card:not([open]) > .geopulse-card-body { display: none; }
+    .geopulse-card-body { padding: 12px 13px; }
+    /* Jarak 10px antar kartu, sama seperti .geonusa-card dan
+     * .geopangan-card. Kartu PERTAMA tidak diberi margin: jaraknya datang
+     * dari margin-bottom blok #weather-content di atasnya. */
+    .geopulse-card + .geopulse-card { margin-top: 10px; }
+    /* .cctv-layers sengaja dipertahankan di badan kartu: di dalam
+     * .gempa-subtab-panel ia yang memberi max-height:35vh + overflow-y:auto,
+     * supaya daftar 10 toggle kualitas udara tetap bisa digulir dan tidak
+     * mendorong seluruh panel. Tapi margin 12px bawaannya harus dinolkan,
+     * kalau tidak menumpuk dengan padding 12px badan kartu.
+     * Aturan max-height-nya sendiri (yang di-scope ke .gempa-subtab-panel)
+     * TIDAK boleh dihapus: wrapper .gempa-subtab-panel sengaja dipertahankan
+     * di markup, justru supaya aturan itu terus berlaku. */
+    .geopulse-card-body.cctv-layers { margin: 0; }
+
+    /* Tiga kartu runtime di #weather-content (dibuat oleh displayWeatherInfo()
+     * lewat innerHTML, jadi tidak ada di index.html): "Cuaca Sekarang",
+     * "Grafik Suhu", dan "Prakiraan Cuaca".
+     *
+     * Ketiganya memakai .geopulse-card yang sama, dan jarak 10px antar
+     * kartu di dalamnya sudah otomatis oleh ".geopulse-card + .geopulse-card".
+     * Yang perlu ditambah hanya jarak dari blok #weather-content ke kartu
+     * static pertama ("Layer Cuaca Maritim") - keduanya bukan saudara
+     * langsung, karena #weather-content menyelip di antaranya. */
+    #weather-content { margin-bottom: 10px; }
+    /* Dua isi kartu berikut TIDAK dipipihkan ke gaya kartu template:
+     *
+     *  - .weather-hero memakai color:#fff di atas gradien biru. Kalau
+     *    dipipihkan ke badan kartu yang berlatar var(--bg-card), teksnya
+     *    jadi putih di atas putih. Jadi blok gradiennya tetap utuh di
+     *    dalam badan kartu; yang dinolkan hanya margin bawaannya, karena
+     *    jarak sudah disediakan padding badan kartu.
+     *
+     *  - .temp-chart-section punya background:#fff sendiri, jadi isinya
+     *    (SVG digambar tangan oleh buildTemperatureChart, BUKAN Chart.js)
+     *    tetap terbaca. Margin dan radius-nya yang dirapikan saja. */
+    .geopulse-card-body .weather-hero { margin: 0; border-radius: 8px; }
+    .geopulse-card-body .temp-chart-section { margin: 0; border-radius: 8px; }
+
     .cctv-layer-toggle {
       display: flex;
       align-items: center;
@@ -8768,9 +8902,10 @@ details[open] > .gt-card-head::after {
    daripada dua kartu terpisah -- dan perbandingan itu justru yang
    dibutuhkan di sini, karena kedua mode membaca layer berbeda.
 
-   Bentuk tombolnya mengikuti .geopangan-source-tab yang sudah dipakai
-   GeoPangan di halaman ini, bukan kelas baru, supaya tidak ada dua
-   tampilan tab dalam satu panel. Yang ditambahkan hanya prefix-nya. */
+   Bentuknya sudah mandiri: nav .geopangan-source-tab yang pernah jadi
+   rujukan kelas ini sudah dihapus bersama panel GeoPangan, tapi nav
+   GeoTani (KKPR/Trase) memang perlu tetap berdampingan dengan mode
+   peta, jadi kelas .geotani-kkpr-tab tidak ikut dibubarkan. */
 .geotani-kkpr-tab {
   display: flex; gap: 4px; margin: 8px 0 10px;
   border-bottom: 1px solid var(--border-color);
@@ -12026,11 +12161,8 @@ details[open] > .gt-card-head::after {
       border-color: var(--border-color);
       color: var(--text-primary);
     }
-    [data-theme="dark"] .geopangan-sticky-header {
-      background: var(--bg-primary);
-      border-color: var(--border-color);
-    }
     [data-theme="dark"] .choropleth-legend {
+
       background: var(--bg-primary);
       color: var(--text-primary);
       border-color: var(--border-color);
@@ -12090,11 +12222,9 @@ details[open] > .gt-card-head::after {
       background: var(--bg-primary);
       color: var(--text-primary);
     }
-    [data-theme="dark"] .cctv-search-card {
-      background: var(--bg-card);
-      color: var(--text-primary);
-      border-color: var(--border-color);
-    }
+    /* .cctv-search-card dihapus (kartu jadi .geowatch-cctv, yang warnanya
+       sudah dari variabel tema). .cctv-search-body masih dipakai, jadi
+       aturan gelapnya tetap. */
     [data-theme="dark"] .cctv-search-body input,
     [data-theme="dark"] .cctv-search-body select {
       background: var(--bg-input);

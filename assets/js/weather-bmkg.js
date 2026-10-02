@@ -373,45 +373,62 @@
     const maxTemp = Math.max(...allSlots);
 
     let html = `
-      <div class="weather-hero" style="margin-bottom:12px;">
-        <p class="weather-hero-location">${escapeHTML(lokasi.desa || 'Wilayah')}, ${escapeHTML(lokasi.kecamatan || '')}</p>
-        <p class="weather-hero-region">${escapeHTML(lokasi.kabkota || '')}, ${escapeHTML(lokasi.provinsi || '')}</p>
-        <div class="weather-now">
-          <img src="${escapeHTML(current.image || '')}" alt="${escapeHTML(current.weather_desc || 'Cuaca')}">
-          <div><div class="weather-now-temp">${escapeHTML(current.t ?? '-')}°C</div><div class="weather-now-desc">${escapeHTML(current.weather_desc || 'Tidak tersedia')} · ${formatTime(current.local_datetime)}</div></div>
+      <details class="geopulse-card" id="weather-card-sekarang" aria-labelledby="weatherCardSekarangTitle">
+        <summary class="gt-card-head">
+          <span class="gt-card-icon" aria-hidden="true">&#9729;&#65039;</span>
+          <span>
+            <b id="weatherCardSekarangTitle">Cuaca Sekarang</b>
+            <small>${escapeHTML(lokasi.desa || 'Wilayah')}${lokasi.kecamatan ? ' &middot; ' + escapeHTML(lokasi.kecamatan) : ''}</small>
+          </span>
+        </summary>
+        <div class="geopulse-card-body">
+          <div class="weather-hero">
+                  <p class="weather-hero-location">${escapeHTML(lokasi.desa || 'Wilayah')}, ${escapeHTML(lokasi.kecamatan || '')}</p>
+                  <p class="weather-hero-region">${escapeHTML(lokasi.kabkota || '')}, ${escapeHTML(lokasi.provinsi || '')}</p>
+                  <div class="weather-now">
+                    <img src="${escapeHTML(current.image || '')}" alt="${escapeHTML(current.weather_desc || 'Cuaca')}">
+                    <div><div class="weather-now-temp">${escapeHTML(current.t ?? '-')}°C</div><div class="weather-now-desc">${escapeHTML(current.weather_desc || 'Tidak tersedia')} · ${formatTime(current.local_datetime)}</div></div>
+                  </div>
+                  <div class="weather-metrics">
+                    <div class="weather-metric" style="color:#fff">Kelembapan<strong style="color:#fff">${escapeHTML(current.hu ?? '-')}%</strong></div>
+                    <div class="weather-metric" style="color:#fff">Angin<strong style="color:#fff">${escapeHTML(current.ws ?? '-')} km/j</strong></div>
+                    <div class="weather-metric" style="color:#fff">Awan<strong style="color:#fff">${escapeHTML(current.tcc ?? '-')}%</strong></div>
+                    <div class="weather-metric" style="color:#fff">Arah Angin<strong style="color:#fff">${escapeHTML(current.wd_to ?? '-')} (${escapeHTML(current.wd ?? '-')})</strong></div>
+                  </div>
+                </div>
         </div>
-        <div class="weather-metrics">
-          <div class="weather-metric" style="color:#fff">Kelembapan<strong style="color:#fff">${escapeHTML(current.hu ?? '-')}%</strong></div>
-          <div class="weather-metric" style="color:#fff">Angin<strong style="color:#fff">${escapeHTML(current.ws ?? '-')} km/j</strong></div>
-          <div class="weather-metric" style="color:#fff">Awan<strong style="color:#fff">${escapeHTML(current.tcc ?? '-')}%</strong></div>
-          <div class="weather-metric" style="color:#fff">Arah Angin<strong style="color:#fff">${escapeHTML(current.wd_to ?? '-')} (${escapeHTML(current.wd ?? '-')})</strong></div>
-        </div>
-      </div>
+      </details>
 
-      <div class="cctv-card" style="margin-bottom:12px;">
-        <div class="cctv-card-header">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          <span>Grafik Suhu Prakiraan 3 Hari</span>
-        </div>
-        <div class="cctv-card-body">
+      <details class="geopulse-card" id="weather-card-grafik-suhu" aria-labelledby="weatherCardGrafikSuhuTitle">
+        <summary class="gt-card-head">
+          <span class="gt-card-icon" aria-hidden="true">&#128202;</span>
+          <span>
+            <b id="weatherCardGrafikSuhuTitle">Grafik Suhu</b>
+            <small>Prakiraan 3 hari</small>
+          </span>
+        </summary>
+        <div class="geopulse-card-body">
           <div class="temp-chart-section">
-            <div class="temp-chart-header">
-              <div class="temp-chart-legend">
-                <span class="temp-chart-legend-item"><span class="temp-chart-legend-dot" style="background:#e74c3c"></span>${maxTemp}°</span>
-                <span class="temp-chart-legend-item"><span class="temp-chart-legend-dot" style="background:#3498db"></span>${minTemp}°</span>
-              </div>
-            </div>
-            ${buildTemperatureChart(forecastDays)}
-          </div>
+                      <div class="temp-chart-header">
+                        <div class="temp-chart-legend">
+                          <span class="temp-chart-legend-item"><span class="temp-chart-legend-dot" style="background:#e74c3c"></span>${maxTemp}°</span>
+                          <span class="temp-chart-legend-item"><span class="temp-chart-legend-dot" style="background:#3498db"></span>${minTemp}°</span>
+                        </div>
+                      </div>
+                      ${buildTemperatureChart(forecastDays)}
+                    </div>
         </div>
-      </div>
+      </details>
 
-      <div class="cctv-card" style="margin-bottom:12px;">
-        <div class="cctv-card-header">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <span>Prakiraan 3 Hari · per 3 jam</span>
-        </div>
-        <div class="cctv-card-body">
+      <details class="geopulse-card" id="weather-card-prakiraan" aria-labelledby="weatherCardPrakiraanTitle">
+        <summary class="gt-card-head">
+          <span class="gt-card-icon" aria-hidden="true">&#128197;</span>
+          <span>
+            <b id="weatherCardPrakiraanTitle">Prakiraan Cuaca</b>
+            <small>3 hari &middot; per 3 jam</small>
+          </span>
+        </summary>
+        <div class="geopulse-card-body">
           <div class="weather-days-grid">
     `;
 
@@ -427,7 +444,7 @@
       `;
     });
 
-    html += `</div></div><p class="weather-source" style="margin-bottom: 5px">BMKG · diperbarui ${escapeHTML(current.local_datetime || '-')}</p>`;
+    html += `</div></div></details><p class="weather-source" style="margin: 10px 0 0">BMKG · diperbarui ${escapeHTML(current.local_datetime || '-')}</p>`;
     container.innerHTML = html;
     if (typeof initWeatherSearch === 'function') initWeatherSearch();
   }

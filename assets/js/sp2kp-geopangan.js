@@ -411,35 +411,30 @@
     setHistoryStatus('');
   }
 
-  function openGeoPanganSourceTab(source) {
-    var selected = source === 'sp2kp' ? 'sp2kp' : 'pihps';
-    var tabs = document.querySelectorAll('[data-geopangan-source]');
-    var panels = document.querySelectorAll('[data-geopangan-source-panel]');
-    tabs.forEach(function (tab) {
-      var active = tab.getAttribute('data-geopangan-source') === selected;
-      tab.classList.toggle('active', active);
-      tab.setAttribute('aria-selected', active ? 'true' : 'false');
-      tab.setAttribute('tabindex', active ? '0' : '-1');
-    });
-    panels.forEach(function (panel) {
-      var active = panel.getAttribute('data-geopangan-source-panel') === selected;
-      panel.classList.toggle('active', active);
-      panel.setAttribute('aria-hidden', active ? 'false' : 'true');
-    });
-    if (selected === 'sp2kp') {
-      if (typeof window.clearGeopanganLayers === 'function') window.clearGeopanganLayers();
-      loadVariants().catch(function () {});
-    } else if (typeof window.geopanganAutoLoad === 'function') {
-      window.geopanganAutoLoad();
-    }
-  }
-
-  function bindSourceTabs() {
-    var tabs = document.querySelectorAll('[data-geopangan-source]');
-    tabs.forEach(function (tab) {
-      tab.addEventListener('click', function () {
-        openGeoPanganSourceTab(this.getAttribute('data-geopangan-source'));
-      });
+  /* Nav sumber GeoPangan (PIHPS / SP2KP) dihapus: sekarang keduanya
+   * kartu <details> terpisah. openGeoPanganSourceTab() dan
+   * bindSourceTabs() ikut dihapus.
+   *
+   * Fungsi lamanya mencari '[data-geopangan-source]' dan
+   * '[data-geopangan-source-panel]' di SELURUH dokumen, jadi selama
+   * markup lamanya masih ada, funcinya tidak bisa asal dibuang: begitu
+   * sidebar.js memanggilnya, kelas .active dicabut dari panel yang salah
+   * dan ".geopangan-source-panel { display:none }" menyembunyikannya
+   * permanen. Nav DAN panelnya sudah dibuang bersama, jadi sekarang
+   * funcinya benar-benar tidak melakukan apa-apa.
+   *
+   * Yang berikut ini PENTING: loadVariants() mengisi
+   * #sp2kpVariantSelect, dan sebelumnya HANYA dipanggil dari
+   * openGeoPanganSourceTab(). Kalau ikut hilang, katalog variant tidak
+   * pernah dimuat dan dropdown SP2KP kosong selamanya. Sekarang ia
+   * dipanggil dari kartu SP2KP saat pertama kali dibuka - fungsi ini
+   * sudah memoize (variantPromise), jadi buka-tutup berulang tidak
+   * menarik data dua kali. */
+  function bindSp2kpCard() {
+    var card = document.getElementById('geopangan-card-sp2kp');
+    if (!card) return;
+    card.addEventListener('toggle', function () {
+      if (card.open) loadVariants().catch(function () {});
     });
   }
 
@@ -519,7 +514,7 @@
     var resetButton = $('sp2kpResetBtn');
     if (!button) return;
     setDefaultDates();
-    bindSourceTabs();
+    bindSp2kpCard();
     button.addEventListener('click', loadSp2kp);
     if (historyButton) historyButton.addEventListener('click', loadSp2kpHistory);
     if (resetButton) resetButton.addEventListener('click', function () {
@@ -527,9 +522,10 @@
     });
   }
 
-  window.openGeoPanganSourceTab = openGeoPanganSourceTab;
   window.sp2kpGeoPanganOpen = function () {
-    openGeoPanganSourceTab('sp2kp');
+    var card = document.getElementById('geopangan-card-sp2kp');
+    if (card && !card.open) card.open = true;
+    loadVariants().catch(function () {});
   };
   window.clearSp2kpGeoPangan = function () {
     clearLayer();
