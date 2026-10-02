@@ -603,16 +603,15 @@
        katalog, jadi entri dengan kunci itu tidak akan pernah
        dipanggil -- hanya jadi kode mati.
 
-       Sheet modul sudah menampilkan rekap 12 koridor. Tabel di
-       sini sengaja dibiarkan apa adanya: 24 baris = 12 koridor x 2
-       arah, lengkap dengan SHAPE.LEN per arah, supaya angka
-       panjangnya bisa ditelusuri. */
+       Sheet menampilkan ringkasan satu baris per nama rute. Tabel
+       atribut menyimpan satu baris per geometri arah agar bentuk dan
+       panjang masing-masing ruas tetap bisa ditelusuri. */
     toggleTransjakarta: {
-      name: 'Jalur TransJakarta (JakartaSatu)',
+      name: 'Koridor Transportasi Umum — TransJakarta Network (2026)',
       type: 'arcgis',
-      url: 'https://jakartasatu.jakarta.go.id/server/rest/services/JakartaSatu/Transjakarta/MapServer/1/query',
-      outFields: ['KORIDOR', 'JURUSAN', 'SHAPE.LEN'],
-      props: ['KORIDOR', 'JURUSAN', 'SHAPE.LEN']
+      url: 'https://services8.arcgis.com/mpSDBlkEzjS62WgX/ArcGIS/rest/services/TransJakarta_Network/FeatureServer/1/query',
+      outFields: ['route_short_name', 'route_long_name', 'route_desc', 'route_type_text', 'route_color', 'Shape__Length'],
+      props: ['route_short_name', 'route_long_name', 'route_desc', 'route_type_text', 'route_color', 'Shape__Length']
     },
     toggleJalurEvakuasi: {
       name: 'Jalur Evakuasi (BNPB)',

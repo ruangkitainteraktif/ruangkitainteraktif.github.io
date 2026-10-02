@@ -1,3 +1,16 @@
+  let weatherFetchToken = 0;
+
+  window.clearSelectedWeatherLayer = function () {
+    weatherFetchToken++;
+    if (mapClickMarker) {
+      map.removeLayer(mapClickMarker);
+      mapClickMarker = null;
+    }
+    selectedWeatherGroup.clearLayers();
+    window.currentWeatherData = null;
+    if (typeof updateInsightWeatherCard === 'function') updateInsightWeatherCard();
+  };
+
   // Fetch Data Prakiraan Cuaca BMKG
   function focusWeatherLocation(data) {
     const lokasi = data.lokasi || {};
@@ -33,6 +46,7 @@
   }
 
   async function fetchWeatherBMKG(adm4Code, { focusMap = true } = {}) {
+    const requestToken = ++weatherFetchToken;
     const weatherContainer = document.getElementById('weather-content');
     weatherContainer.innerHTML = '<p style="font-size:12px; color:#666;">Memuat data cuaca BMKG...</p>';
 
@@ -41,9 +55,11 @@
       if (!response.ok) throw new Error('Gagal mengambil data cuaca');
       
       const result = await response.json();
+      if (focusMap && requestToken !== weatherFetchToken) return;
       displayWeatherInfo(result);
       if (focusMap) focusWeatherLocation(result);
     } catch (error) {
+      if (focusMap && requestToken !== weatherFetchToken) return;
       console.error('Error BMKG API:', error);
       weatherContainer.innerHTML = `<p style="color:red; font-size:12px;">Gagal memuat cuaca untuk kode: ${adm4Code}</p>`;
     }

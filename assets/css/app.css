@@ -1805,6 +1805,15 @@
       border: 1px solid #fecaca;
     }
     .geopangan-reset-btn:hover { background: #fef2f2; color: #991b1b; }
+    .geotools-reset-layer-btn {
+      display: block;
+      box-sizing: border-box;
+      min-height: 38px;
+      margin: 4px 0 14px;
+      padding: 9px 12px;
+      line-height: 18px;
+    }
+    .geotools-weather-reset-btn { margin-bottom: 24px; }
 
     .geopangan-loading {
       display: flex; align-items: center; gap: 8px;
@@ -2447,13 +2456,14 @@
     .ql-btn svg { flex-shrink: 0; stroke: var(--text-secondary); }
     .ql-btn:hover { border-color: var(--accent); background: var(--bg-card-hover); }
     .ql-btn.active { color: #fff; border-color: transparent; }
-    #qlHotspot.active   { background: #dc2626; }
-    #qlPm25.active      { background: #7c3aed; }
-    #qlWind.active      { background: #0ea5e9; }
-    #qlHujan.active     { background: #06b6d4; }
-    #qlRadar.active     { background: #059669; }
-    #qlProvinsi.active  { background: #0d9488; }
-    #qlSstAnomali.active { background: #0284c7; }
+    #qlHotspot.active      { background: #dc2626; }
+    #qlTransjakarta.active { background: #2563eb; }
+    #qlPm25.active        { background: #7c3aed; }
+    #qlWind.active        { background: #0ea5e9; }
+    #qlHujan.active       { background: #06b6d4; }
+    #qlRadar.active       { background: #059669; }
+    #qlProvinsi.active    { background: #0d9488; }
+    #qlSstAnomali.active  { background: #0284c7; }
 
     .radar-timestamp {
       position: absolute;
@@ -6770,24 +6780,43 @@
     #transjakarta-sheet button.tj-stat-item.is-on { border-color: var(--accent); background: var(--bg-card-hover); }
     #transjakarta-sheet button.tj-stat-item.is-on b { color: var(--accent); }
     /* Isi sheet: tiga angka ringkas, lalu tabel koridor. */
-    #transjakarta-sheet .tj-stat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 12px 0 10px; }
+    #transjakarta-sheet .tj-stat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 0 0 8px; }
     #transjakarta-sheet .tj-stat-item { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 8px 4px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); }
     #transjakarta-sheet .tj-stat-item b { font-size: 17px; font-weight: 800; letter-spacing: -.02em; color: var(--text-primary); font-variant-numeric: tabular-nums; }
     #transjakarta-sheet .tj-stat-item span { font-size: 9px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-tertiary); }
+    #transjakarta-sheet .tj-filter-box { display: flex; flex-direction: column; gap: 10px; padding: 0 0 8px; }
+    #transjakarta-sheet .tj-filter-row { display: flex; flex-direction: column; gap: 6px; }
+    #transjakarta-sheet .tj-filter-label { font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary); }
+    #transjakarta-sheet .tj-filter-search {
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 36px;
+      padding: 8px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font: inherit;
+      font-size: 12px;
+    }
     #transjakarta-sheet .tj-table-wrap { overflow: visible; }
+    #transjakarta-sheet .tj-empty-row { padding: 16px 8px; text-align: center; color: var(--text-tertiary); font-size: 11px; }
     #transjakarta-sheet .tj-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; }
     #transjakarta-sheet .tj-table thead th { position: sticky; top: 0; z-index: 2; padding: 6px 6px; text-align: left; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-tertiary); background: var(--bg-primary); border-bottom: 1px solid var(--border-color); }
     #transjakarta-sheet .tj-th-chip { width: 16px; }
-    #transjakarta-sheet .tj-th-km { text-align: right; white-space: nowrap; }
+    #transjakarta-sheet .tj-th-km { text-align: right; white-space: nowrap; font-size: 10px; font-weight: 800; letter-spacing: .08em; }
+    #transjakarta-sheet .tj-th-nama { font-size: 10px; font-weight: 800; letter-spacing: .08em; }
     #transjakarta-sheet .tj-row { cursor: pointer; transition: background .12s ease; }
     #transjakarta-sheet .tj-row:hover { background: var(--bg-card-hover); }
+    #transjakarta-sheet .tj-row.is-selected { background: rgba(249, 115, 22, 0.08); box-shadow: inset 3px 0 0 #f97316; }
     #transjakarta-sheet .tj-row:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
     #transjakarta-sheet .tj-row td { padding: 7px 6px; border-bottom: 1px solid var(--border-secondary); vertical-align: middle; }
     #transjakarta-sheet .tj-td-chip { width: 16px; }
     #transjakarta-sheet .tj-chip { display: block; width: 11px; height: 11px; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18); }
-    #transjakarta-sheet .tj-td-nama b { display: block; font-weight: 650; color: var(--text-primary); }
-    #transjakarta-sheet .tj-td-nama small { display: block; margin-top: 1px; font-size: 9.5px; line-height: 1.35; color: var(--text-tertiary); }
-    #transjakarta-sheet .tj-td-km { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+    #transjakarta-sheet .tj-td-nama { min-width: 0; }
+    #transjakarta-sheet .tj-td-nama b { display: block; font-size: 12px; font-weight: 750; color: var(--text-primary); }
+    #transjakarta-sheet .tj-td-nama small { display: block; margin-top: 2px; font-size: 10px; line-height: 1.35; color: var(--text-tertiary); }
+    #transjakarta-sheet .tj-td-km { text-align: right; white-space: nowrap; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
     #transjakarta-sheet .tj-sumber { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--border-color); font-size: 9.5px; line-height: 1.5; color: var(--text-tertiary); }
     #transjakarta-sheet .tj-kosong { display: flex; flex-direction: column; gap: 5px; padding: 26px 12px; text-align: center; }
     #transjakarta-sheet .tj-kosong b { font-size: 13px; color: var(--text-primary); }
@@ -8772,7 +8801,11 @@
    tetap global di bawah. Yang di-scope ke .dm-cek-lokasi hanya kerangka
    form-nya, karena harus serasi dengan .dm-sidebar-option yang warnanya
    mengikuti var(--bg-secondary) / var(--border-color). */
-.dm-cek-lokasi { margin-bottom: 4px; }
+.dm-cek-lokasi {
+  margin: 0 0 12px; padding: 12px 12px 10px;
+  border: 1px solid var(--border-color); border-radius: 12px;
+  background: var(--bg-secondary); box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+}
 .dm-cek-lokasi-desc {
   margin: 0 0 10px; font-size: 11px; line-height: 1.5;
   color: var(--text-secondary);

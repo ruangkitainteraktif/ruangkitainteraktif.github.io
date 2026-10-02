@@ -2276,9 +2276,10 @@ L.control.scale({
      ═══════════════════════════════════════════════════════ */
   (function initQuickLayerBar() {
     var cfg = {
-      qlHotspot:   { type: 'sheet' },
-      qlPm25:      { target: 'toggleAirVisualPm25',         type: 'checkbox' },
-      qlWind:      { target: 'toggleWindAnim',              type: 'checkbox' },
+      qlHotspot:     { type: 'sheet' },
+      qlTransjakarta:{ type: 'toggle-fn',                    fn: function(v) { if (typeof window.toggleTransjakarta === 'function') window.toggleTransjakarta(v); } },
+      qlPm25:        { target: 'toggleAirVisualPm25',         type: 'checkbox' },
+      qlWind:        { target: 'toggleWindAnim',              type: 'checkbox' },
       qlHujan:     { type: 'toggle-fn',                    fn: toggleHujanLayer },
       qlRadar:     { type: 'toggle-fn',                    fn: function(v) { if (typeof window.toggleBmkgRadar === 'function') window.toggleBmkgRadar(v); } },
       qlProvinsi:  { type: 'toggle-fn',                    fn: function(v) { if (typeof window.toggleProvinceBoundary === 'function') window.toggleProvinceBoundary(v); } },
@@ -2312,8 +2313,9 @@ L.control.scale({
           else if (c.fn === toggleEcmwfFireLayer) isOn = !!(ecmwfFireLayer && map.hasLayer(ecmwfFireLayer));
           else if (c.fn === toggleHujanLayer) isOn = typeof isHujanLayerActive === 'function' && isHujanLayerActive();
           else if (btnId === 'qlRadar') isOn = typeof window.isBmkgRadarActive === 'function' && window.isBmkgRadarActive();
-            else if (btnId === 'qlProvinsi') isOn = typeof isProvinceBoundaryActive === 'function' && isProvinceBoundaryActive();
-            else if (c.fn === toggleGhrsstSstAnomali) isOn = !!(_ghrsstLayer && map.hasLayer(_ghrsstLayer));
+          else if (btnId === 'qlProvinsi') isOn = typeof isProvinceBoundaryActive === 'function' && isProvinceBoundaryActive();
+          else if (btnId === 'qlTransjakarta') isOn = typeof window.isTransjakartaActive === 'function' ? window.isTransjakartaActive() : (typeof window.isTransjakartaJalurActive === 'function' && (window.isTransjakartaJalurActive() || (typeof window.isTransjakartaHalteActive === 'function' && window.isTransjakartaHalteActive())));
+          else if (c.fn === toggleGhrsstSstAnomali) isOn = !!(_ghrsstLayer && map.hasLayer(_ghrsstLayer));
           btn.classList.toggle('active', isOn);
         } else {
           btn.classList.toggle('active', currentBasemapName === c.target);
@@ -2338,7 +2340,8 @@ L.control.scale({
             else if (c.fn === toggleEcmwfFireLayer) isOn = !!(ecmwfFireLayer && map.hasLayer(ecmwfFireLayer));
             else if (c.fn === toggleHujanLayer) isOn = typeof isHujanLayerActive === 'function' && isHujanLayerActive();
             else if (btnId === 'qlRadar') isOn = typeof window.isBmkgRadarActive === 'function' && window.isBmkgRadarActive();
-          else if (btnId === 'qlProvinsi') isOn = typeof isProvinceBoundaryActive === 'function' && isProvinceBoundaryActive();
+            else if (btnId === 'qlProvinsi') isOn = typeof isProvinceBoundaryActive === 'function' && isProvinceBoundaryActive();
+            else if (btnId === 'qlTransjakarta') isOn = typeof window.isTransjakartaActive === 'function' ? window.isTransjakartaActive() : (typeof window.isTransjakartaJalurActive === 'function' && (window.isTransjakartaJalurActive() || (typeof window.isTransjakartaHalteActive === 'function' && window.isTransjakartaHalteActive())));
             else if (c.fn === toggleGhrsstSstAnomali) isOn = !!(_ghrsstLayer && map.hasLayer(_ghrsstLayer));
             if (c.fn) c.fn(!isOn);
           } else {
@@ -2847,7 +2850,7 @@ L.control.scale({
        * tempat mencari tanpa menambah informasi. */
       cat: 'Transportasi',
       layers: [
-        { id: 'toggleTransjakarta', label: 'TransJakarta — Jalur & Halte' }
+        { id: 'toggleTransjakarta', label: 'Koridor Transportasi Umum — TransJakarta Network' }
       ]
     },
     {

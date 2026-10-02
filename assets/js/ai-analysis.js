@@ -196,7 +196,7 @@
   function extractActiveLayers() {
     var layers = [];
     document.querySelectorAll('.ql-btn.active').forEach(function (btn) {
-      var m = { qlHotspot: 'Hotspot', qlPm25: 'PM2.5', qlWind: 'Angin', qlHujan: 'Hujan', qlRadar: 'Radar', qlProvinsi: 'Batas Provinsi' };
+      var m = { qlHotspot: 'Hotspot', qlTransjakarta: 'Transjakarta', qlPm25: 'PM2.5', qlWind: 'Angin', qlHujan: 'Hujan', qlRadar: 'Radar', qlProvinsi: 'Batas Provinsi' };
       if (m[btn.id]) layers.push(m[btn.id]);
     });
     document.querySelectorAll('.lc-item input[type="checkbox"]:checked').forEach(function (cb) {
@@ -221,7 +221,7 @@
     });
     var quickBtns = [];
     document.querySelectorAll('.ql-btn.active').forEach(function (btn) {
-      var m = { qlHotspot: 'Hotspot', qlPm25: 'PM2.5', qlWind: 'Angin', qlHujan: 'Hujan', qlRadar: 'Radar', qlProvinsi: 'Batas Provinsi' };
+      var m = { qlHotspot: 'Hotspot', qlTransjakarta: 'Transjakarta', qlPm25: 'PM2.5', qlWind: 'Angin', qlHujan: 'Hujan', qlRadar: 'Radar', qlProvinsi: 'Batas Provinsi' };
       if (m[btn.id]) quickBtns.push(m[btn.id]);
     });
     if (quickBtns.length) result['Quick Layers'] = quickBtns;

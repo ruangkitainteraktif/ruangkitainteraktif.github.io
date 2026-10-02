@@ -21,6 +21,39 @@
   }
   window.closeWelcomeModal = closeWelcomeModal;
 
+  window.resetGeoPulseLayers = function () {
+    var panel = document.getElementById('geotoolsTabGeoPulse');
+    if (!panel) return;
+
+    var airVisualIds = {
+      'airvisual-pm10': 'toggleAirVisualPm10',
+      'airvisual-o3': 'toggleAirVisualO3',
+      'airvisual-no2': 'toggleAirVisualNo2',
+      'airvisual-so2': 'toggleAirVisualSo2',
+      'airvisual-co': 'toggleAirVisualCo'
+    };
+    panel.querySelectorAll('input[type="checkbox"]').forEach(function (input) {
+      var catalogId = input.id || airVisualIds[input.getAttribute('data-airvisual-layer')];
+      var catalogToggle = catalogId && document.querySelector('.lc-item input[data-layer-id="' + catalogId + '"]');
+      if (catalogToggle && catalogToggle.checked) {
+        catalogToggle.checked = false;
+        catalogToggle.dispatchEvent(new Event('change', { bubbles: true }));
+      } else if (input.checked) {
+        input.checked = false;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+
+    ['quakeResetLayers', 'cuacaMaritimCleanup', 'khLayerCleanup', 'clearGeoPulseWeatherMarkers', 'clearSelectedWeatherLayer'].forEach(function (name) {
+      if (typeof window[name] === 'function') {
+        try { window[name](); } catch (error) { console.warn('[GeoPulse] gagal mereset ' + name + ':', error); }
+      }
+    });
+  };
+
+  var geopulseResetLayersBtn = document.getElementById('geopulseResetLayersBtn');
+  if (geopulseResetLayersBtn) geopulseResetLayersBtn.addEventListener('click', window.resetGeoPulseLayers);
+
   window.addEventListener('load', () => {
     setTimeout(() => {
       document.getElementById('appLoadingOverlay')?.classList.add('is-hidden');

@@ -437,6 +437,17 @@
         <span>Hotspot</span>
         <span class="ql-badge">NEW</span>
       </button>
+      <button type="button" class="ql-btn" id="qlTransjakarta" title="Koridor Transportasi Umum — Transjakarta Network">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="7" width="16" height="10" rx="2.5"/>
+          <path d="M7 7V5.5A1.5 1.5 0 0 1 8.5 4h7A1.5 1.5 0 0 1 17 5.5V7"/>
+          <path d="M7 11h10"/>
+          <circle cx="7.5" cy="18" r="1.4" fill="currentColor" stroke="none"/>
+          <circle cx="16.5" cy="18" r="1.4" fill="currentColor" stroke="none"/>
+        </svg>
+        <span>Transjakarta</span>
+        <span class="ql-badge">NEW</span>
+      </button>
       <button type="button" class="ql-btn" id="qlPm25" title="PM2.5 AirVisual">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
@@ -606,13 +617,13 @@
       <div id="geopangan-sheet-content" class="gp-sheet-body"></div>
     </div>
 
-    <!-- TRANSJAKARTA BOTTOM SHEET (mobile: daftar 12 koridor) -->
+    <!-- TRANSJAKARTA BOTTOM SHEET (mobile: rute, jenis layanan, halte) -->
     <div id="transjakarta-sheet" aria-label="Daftar Jalur TransJakarta">
       <div class="tj-sheet-handle"></div>
       <div class="tj-sheet-head">
         <div class="tj-sheet-title">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ff4d6d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="14" rx="3"/><path d="M3 11h18"/><circle cx="7.5" cy="14.5" r="1.2"/><circle cx="16.5" cy="14.5" r="1.2"/><path d="M7 17v2M17 17v2"/></svg>
-          <span>Jalur TransJakarta<span class="tj-sheet-sub">12 koridor &middot; JakartaSatu</span></span>
+          <span>TransJakarta Network<span class="tj-sheet-sub">GTFS · JakartaSatu</span></span>
         </div>
         <div class="tj-sheet-actions">
           <button id="transjakarta-sheet-minimize" class="tj-sheet-minimize" type="button" aria-label="Minimalkan panel Jalur TransJakarta" title="Minimalkan panel">
@@ -782,6 +793,37 @@
         </div>
       </div>
       <div class="dm-sidebar-body">
+        <!-- Cek Lokasi: koordinat -> nama wilayah (kecamatan ke bawah).
+             Sheet TIDAK ditutup saat tombol ditekan, karena hasilnya harus
+             langsung terbaca. Di desktop sidebar 380px di kanan, jadi peta
+             masih bisa diklik; di mobile sheet 50vh, peta masih terlihat
+             di atasnya.
+
+             ID-nya dmCekLokasi, bukan alat-tab-lokasi: awalan "alat-tab-"
+             sudah tidak benar karena ini bukan subtab GeoData lagi. -->
+        <div id="dmCekLokasi" class="dm-cek-lokasi">
+          <div class="dm-sidebar-section-title">Cek Lokasi</div>
+          <p class="dm-cek-lokasi-desc">
+            Ketik koordinat untuk melihat kecamatan, kabupaten, dan provinsinya.
+          </p>
+          <label class="dm-cek-lokasi-label" for="geolokasiInput">Koordinat (latitude, longitude)</label>
+          <input type="text" id="geolokasiInput" class="dm-cek-lokasi-input"
+                 placeholder="-7.470000, 112.650000"
+                 inputmode="decimal" autocomplete="off" />
+          <div class="geolokasi-tombol">
+            <button id="geolokasiCek" class="dm-cek-lokasi-btn" type="button">Cek Lokasi</button>
+            <button id="geolokasiPin" class="dm-cek-lokasi-btn dm-cek-lokasi-btn--orange" type="button"
+                    title="Pasang pin di peta, lalu klik titik yang ingin dicek">Pasang Pin</button>
+          </div>
+          <div id="geolokasiStatus" class="dm-cek-lokasi-status" role="status" aria-live="polite"></div>
+          <div id="geolokasiHasil"></div>
+          <!-- Tombol Salin sengaja disembunyikan sampai ada hasil. Menampilkan
+               tombol yang belum bisa dipakai lebih buruk daripada tidak
+               menampilkannya. -->
+          <button id="geolokasiSalin" class="dm-cek-lokasi-btn dm-cek-lokasi-btn--green"
+                  type="button" style="display:none;margin-top:8px;">Salin Koordinat</button>
+        </div>
+
         <div class="dm-sidebar-section-title">Draw</div>
         <div class="dm-sidebar-grid">
           <div class="dm-sidebar-option" onclick="startDraw('marker'); closeDrawSidebar()">
@@ -830,37 +872,6 @@
             <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg></div>
             <span class="dm-sidebar-option-label">Lokasi Saya</span>
           </div>
-        </div>
-
-        <!-- Cek Lokasi: koordinat -> nama wilayah (kecamatan ke bawah).
-             Sheet TIDAK ditutup saat tombol ditekan, karena hasilnya harus
-             langsung terbaca. Di desktop sidebar 380px di kanan, jadi peta
-             masih bisa diklik; di mobile sheet 50vh, peta masih terlihat
-             di atasnya.
-
-             ID-nya dmCekLokasi, bukan alat-tab-lokasi: awalan "alat-tab-"
-             sudah tidak benar karena ini bukan subtab GeoData lagi. -->
-        <div class="dm-sidebar-section-title">Cek Lokasi</div>
-        <div id="dmCekLokasi" class="dm-cek-lokasi">
-          <p class="dm-cek-lokasi-desc">
-            Ketik koordinat untuk melihat kecamatan, kabupaten, dan provinsinya.
-          </p>
-          <label class="dm-cek-lokasi-label" for="geolokasiInput">Koordinat (latitude, longitude)</label>
-          <input type="text" id="geolokasiInput" class="dm-cek-lokasi-input"
-                 placeholder="-7.470000, 112.650000"
-                 inputmode="decimal" autocomplete="off" />
-          <div class="geolokasi-tombol">
-            <button id="geolokasiCek" class="dm-cek-lokasi-btn" type="button">Cek Lokasi</button>
-            <button id="geolokasiPin" class="dm-cek-lokasi-btn dm-cek-lokasi-btn--orange" type="button"
-                    title="Pasang pin di peta, lalu klik titik yang ingin dicek">Pasang Pin</button>
-          </div>
-          <div id="geolokasiStatus" class="dm-cek-lokasi-status" role="status" aria-live="polite"></div>
-          <div id="geolokasiHasil"></div>
-          <!-- Tombol Salin sengaja disembunyikan sampai ada hasil. Menampilkan
-               tombol yang belum bisa dipakai lebih buruk daripada tidak
-               menampilkannya. -->
-          <button id="geolokasiSalin" class="dm-cek-lokasi-btn dm-cek-lokasi-btn--green"
-                  type="button" style="display:none;margin-top:8px;">Salin Koordinat</button>
         </div>
       </div>
      </div>
@@ -1456,6 +1467,7 @@
                   </div>
                   <div id="cctvStatus" class="cctv-message">Buka tab CCTV untuk memuat daftar.</div>
                   <div id="cctvResults" class="cctv-results"></div>
+                  <button id="geowatchResetLayersBtn" class="geopangan-btn geopangan-reset-btn geotools-reset-layer-btn" type="button" title="Reset layer CCTV dan jalan GeoWatch" aria-label="Reset layer GeoWatch">Reset Layer GeoWatch</button>
                 </div>
               </details>
             </div>
@@ -1469,11 +1481,12 @@
           <h4 style="font-size:15px; margin-bottom:4px;">GeoCuaca Analysis</h4>
           <p class="geotools-desc" style="margin-bottom:12px;">Monitoring Cuaca secara realtime dalam satu peta.</p>
 
-          <div class="search-weather-container" style="margin-top:16px; margin-bottom:12px;">
+          <div class="search-weather-container" style="margin-top:8px; margin-bottom:4px;">
             <input type="text" id="weatherSearchInput" class="search-weather-input"
               placeholder="🔍 Cari Desa/Kelurahan..." autocomplete="off" />
             <div id="autocompleteResults" class="autocomplete-results"></div>
           </div>
+          <button id="geopulseResetLayersBtn" class="geopangan-btn geopangan-reset-btn geotools-reset-layer-btn geotools-weather-reset-btn" type="button" title="Reset semua layer GeoCuaca" aria-label="Reset layer GeoCuaca">Reset Layer GeoCuaca</button>
 
           <div class="gempa-subtabs" style="display:none;">
 

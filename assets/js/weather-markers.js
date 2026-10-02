@@ -1,4 +1,11 @@
   // Generasi 38 Marker Cuaca Random di Peta
+  let weatherMarkerGeneration = 0;
+
+  window.clearGeoPulseWeatherMarkers = function () {
+    weatherMarkerGeneration++;
+    weatherMarkersGroup.clearLayers();
+  };
+
   function getRandomWeatherLocations(count) {
     const total = Math.min(count, weatherSearchLocations.length);
     const selected = [];
@@ -87,6 +94,7 @@
 
   async function generate38RandomWeatherMarkers() {
     if (!weatherSearchLocations.length) return;
+    const generation = ++weatherMarkerGeneration;
     weatherMarkersGroup.clearLayers();
 
     const selected38 = getRandomWeatherLocations(38);
@@ -113,6 +121,7 @@
     });
 
     const results = await Promise.allSettled(requests);
+    if (generation !== weatherMarkerGeneration) return;
     const markers = results.filter(result => result.status === 'fulfilled').map(result => result.value);
     weatherMarkersGroup.addLayers(markers);
     console.info(`${markers.length} marker cuaca BMKG ditampilkan dari ${selected38.length} desa acak.`);

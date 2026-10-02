@@ -371,3 +371,32 @@
       } else if (nationalRoadLayer) { nationalRoadLayer.addTo(map); }
     } else if (nationalRoadLayer) { map.removeLayer(nationalRoadLayer); }
   };
+
+  window.resetGeoWatchLayers = function () {
+    var input = document.getElementById('cctvSearchInput');
+    var area = document.getElementById('cctvAreaFilter');
+    var autocomplete = document.getElementById('cctvAutocomplete');
+    if (input) input.value = '';
+    if (area) area.value = '';
+    if (autocomplete) { autocomplete.replaceChildren(); autocomplete.style.display = 'none'; }
+
+    cctvMarkersGroup.clearLayers();
+    closeCctvModal();
+    [
+      ['toggleTollRoad', 'toggleTollRoadLayer'],
+      ['toggleNonTollRoad', 'toggleNonTollRoadLayer'],
+      ['toggleNationalRoad', 'toggleNationalRoadLayer']
+    ].forEach(function (entry) {
+      var catalogToggle = document.querySelector('.lc-item input[data-layer-id="' + entry[0] + '"]');
+      if (catalogToggle) {
+        catalogToggle.checked = false;
+        catalogToggle.dispatchEvent(new Event('change', { bubbles: true }));
+      } else if (typeof window[entry[1]] === 'function') {
+        window[entry[1]](false);
+      }
+    });
+    renderCctvList();
+  };
+
+  var geowatchResetLayersBtn = document.getElementById('geowatchResetLayersBtn');
+  if (geowatchResetLayersBtn) geowatchResetLayersBtn.addEventListener('click', window.resetGeoWatchLayers);

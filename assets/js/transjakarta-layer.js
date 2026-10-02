@@ -1,8 +1,8 @@
-/* ── TransJakarta — Jalur & Halte (JakartaSatu) ──
+/* ── TransJakarta — Koridor Transportasi Umum (2026) ──
  *
- * Dua layer dari satu MapServer:
- *   /0  Halte Transjakarta   point, 231 fitur
- *   /1  Jalur Transjakarta   polyline, 24 fitur = 12 koridor x 2 arah
+ * Dua layer dari satu FeatureServer:
+ *   /0  Bus Stops  point
+ *   /1  Bus Routes polyline
  *
  * TIGA TEMUAN YANG MENENTUKAN CARA KERJA MODUL INI. Semuanya diuji
  * langsung ke endpoint, bukan diasumsikan, karena tiga asumsi yang
@@ -42,14 +42,15 @@
 (function () {
   'use strict';
 
-  var DASAR = 'https://jakartasatu.jakarta.go.id/server/rest/services/JakartaSatu/Transjakarta/MapServer/';
+  var DASAR = 'https://services8.arcgis.com/mpSDBlkEzjS62WgX/ArcGIS/rest/services/TransJakarta_Network/FeatureServer/';
+  var DASAR_JAKARTASATU = 'https://jakartasatu.jakarta.go.id/server/rest/services/JakartaSatu/Transjakarta/MapServer/';
   var ID_HALTE = 0;
   var ID_JALUR = 1;
 
   var PROXY = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=';
 
-  var FIELD_JALUR = ['KORIDOR', 'JURUSAN', 'SHAPE.LEN'];
-  var FIELD_HALTE = ['NAMA', 'JENIS', 'KORIDOR', 'KELURAHAN', 'KECAMATAN', 'KOTA_ADMIN', 'ALAMAT'];
+  var FIELD_JALUR = ['route_short_name', 'route_long_name', 'route_desc', 'route_type', 'route_type_text', 'route_color', 'route_text_color', 'Shape__Length'];
+  var FIELD_HALTE = ['stop_name', 'stop_desc', 'stop_code', 'Type', 'route_info', 'wheelchair_boarding', 'platform_code'];
 
   var WARNA_DEFAULT = '#94a3b8';
 
@@ -111,6 +112,10 @@
   var cacheHalte = null;
   var visibleJalur = false;
   var visibleHalte = false;
+  var moduleActive = false;
+  var koridorTerpilih = null;
+  var koridorDisorot = null;
+  var jenisDisorot = null;
 
   /* Sheet harus terbuka saat layer dinyalakan, tapi TIDAK boleh memaksa
    * buka ulang setelah user menutup manual. Tanpa flag ini, toggle
@@ -123,7 +128,118 @@
    * pengguna di peta tanpa diminta. */
   var sudahTerbang = false;
 
-  var state = { dimuat: false, gagal: false, ringkas: [], totalKm: 0, halte: 0 };
+  var state = {
+    dimuat: false,
+    gagal: false,
+    ringkas: [],
+    totalKm: 0,
+    halte: 0,
+    filter: { q: '', kategori: 'all', jenis: {} }
+  };
+
+  function normalizeLayanan(v) {
+    var s = String(v == null ? '' : v).trim();
+    if (!s) return 'Layanan umum';
+    var lower = s.toLowerCase();
+    if (lower.indexOf('brt') !== -1 || lower.indexOf('bus rapid transit') !== -1) return 'BRT';
+    if (lower.indexOf('feeder') !== -1) return 'Feeder';
+    if (lower.indexOf('mikro') !== -1 || lower.indexOf('micro') !== -1) return 'Mikrotrans';
+    if (lower.indexOf('non-brt') !== -1 || lower.indexOf('non brt') !== -1) return 'Non-BRT';
+    if (lower.indexOf('angkot') !== -1 || lower.indexOf('bus') !== -1) return 'Bus';
+    if (lower.indexOf('transit') !== -1) return 'Transit';
+    return s;
+  }
+
+  function opsiJenisLayanan() {
+    var map = {};
+    state.ringkas.forEach(function (r) {
+      var label = normalizeLayanan(r.tipe || 'Layanan umum');
+      map[label] = (map[label] || 0) + 1;
+    });
+    return Object.keys(map).sort(function (a, b) {
+      return a.localeCompare(b, 'id');
+    });
+  }
+
+  function siapkanFilterJenis() {
+    var opsi = opsiJenisLayanan();
+    if (!state.filter.jenis) state.filter.jenis = {};
+    opsi.forEach(function (jenis) {
+      if (typeof state.filter.jenis[jenis] !== 'boolean') state.filter.jenis[jenis] = true;
+    });
+    Object.keys(state.filter.jenis).forEach(function (jenis) {
+      if (opsi.indexOf(jenis) === -1) delete state.filter.jenis[jenis];
+    });
+    return opsi;
+  }
+
+  function cocokFilterKoridor(r) {
+    var q = (state.filter.q || '').trim().toLowerCase();
+    var nama = (r.nama || '').toLowerCase();
+    var kode = String(r.kode || '').toLowerCase();
+    var tipe = normalizeLayanan(r.tipe || 'Layanan umum');
+
+    if (q) {
+      var haystack = [nama, kode, tipe, (r.ruas || []).join(' ')].join(' ').toLowerCase();
+      if (haystack.indexOf(q) === -1) return false;
+    }
+
+    return true;
+  }
+
+  function filterFeatureByState(f) {
+    var p = f && f.properties ? f.properties : {};
+    var q = (state.filter.q || '').trim().toLowerCase();
+    var tipe = normalizeLayanan(p.route_type_text || p.route_desc || p.Type || 'Layanan umum');
+    var haystack = [
+      p.route_short_name || '',
+      p.KORIDOR || '',
+      p.route_long_name || '',
+      p.route_desc || '',
+      p.route_info || '',
+      p.stop_name || '',
+      p.NAMA || '',
+      tipe
+    ].join(' ').toLowerCase();
+
+    if (q && haystack.indexOf(q) === -1) return false;
+    return true;
+  }
+
+  function fiturTerfilterJalur() {
+    if (!cacheJalur || !cacheJalur.features) return { type: 'FeatureCollection', features: [] };
+    var fitur = cacheJalur.features.filter(filterFeatureByState);
+    if (koridorDisorot) {
+      fitur = fitur.filter(function (f) { return kunciKoridor((f.properties || {}).KORIDOR) === koridorDisorot; });
+    } else if (jenisDisorot) {
+      fitur = fitur.filter(function (f) {
+        var p = f.properties || {};
+        return normalizeLayanan(p.route_type_text || p.route_desc || p.Type || 'Layanan umum') === jenisDisorot;
+      });
+    }
+    return {
+      type: 'FeatureCollection',
+      features: fitur
+    };
+  }
+
+  function refreshLayerJalur() {
+    if (!visibleJalur || !layerJalur || !cacheJalur) return;
+    var data = fiturTerfilterJalur();
+    layerJalur.halo.clearLayers();
+    layerJalur.utama.clearLayers();
+    layerJalur.halo.addData(data);
+    layerJalur.utama.addData(data);
+    refreshStyleKoridorTerpilih();
+  }
+
+  function fiturTerfilterHalte() {
+    if (!cacheHalte || !cacheHalte.features) return { type: 'FeatureCollection', features: [] };
+    return {
+      type: 'FeatureCollection',
+      features: cacheHalte.features.filter(filterFeatureByState)
+    };
+  }
 
   function esc(v) {
     return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
@@ -148,13 +264,80 @@
   }
 
   function warnaKoridor(v) {
+    var f = cacheJalur && cacheJalur.features || [];
+    for (var i = 0; i < f.length; i++) {
+      var p = f[i].properties || {};
+      if (kunciKoridor(p.KORIDOR) === kunciKoridor(v) && /^[0-9a-f]{6}$/i.test(p.route_color || '')) return '#' + p.route_color;
+    }
     var info = infoKoridor(v);
-    return info ? info.line : WARNA_DEFAULT;
+    if (info) return info.line;
+    return WARNA_DEFAULT;
   }
 
   function haloKoridor(v) {
     var info = infoKoridor(v);
     return info ? info.halo : 'rgba(255,255,255,.8)';
+  }
+
+  function getStyleJalur(f, selectedKode) {
+    var p = f && f.properties || {};
+    var kode = kunciKoridor(p.KORIDOR);
+    var tipe = normalizeLayanan(p.route_type_text || p.route_desc || p.Type || 'Layanan umum');
+    var sorot = koridorDisorot ? kode === koridorDisorot : !!(jenisDisorot && tipe === jenisDisorot);
+    var aktif = sorot || !!(selectedKode != null ? (kode === selectedKode) : (kode === koridorTerpilih));
+    return {
+      color: aktif ? '#f97316' : warnaKoridor(kode),
+      weight: aktif ? 5.2 : 3.5,
+      opacity: 1,
+      lineCap: 'round',
+      lineJoin: 'round'
+    };
+  }
+
+  function getStyleHaloJalur(f, selectedKode) {
+    var p = f && f.properties || {};
+    var kode = kunciKoridor(p.KORIDOR);
+    var tipe = normalizeLayanan(p.route_type_text || p.route_desc || p.Type || 'Layanan umum');
+    var sorot = koridorDisorot ? kode === koridorDisorot : !!(jenisDisorot && tipe === jenisDisorot);
+    var aktif = sorot || !!(selectedKode != null ? (kode === selectedKode) : (kode === koridorTerpilih));
+    return {
+      color: aktif ? '#fff7ed' : haloKoridor(kode),
+      weight: aktif ? 10 : 7,
+      opacity: 0.95,
+      lineCap: 'round',
+      lineJoin: 'round'
+    };
+  }
+
+  function refreshStyleKoridorTerpilih() {
+    if (!layerJalur) return;
+    if (layerJalur.halo && layerJalur.halo.eachLayer) {
+      layerJalur.halo.eachLayer(function (layer) {
+        if (layer && layer.feature) layer.setStyle(getStyleHaloJalur(layer.feature));
+      });
+    }
+    if (layerJalur.utama && layerJalur.utama.eachLayer) {
+      layerJalur.utama.eachLayer(function (layer) {
+        if (layer && layer.feature) layer.setStyle(getStyleJalur(layer.feature));
+      });
+    }
+  }
+
+  function pilihKoridor(kode, opts) {
+    var target = kunciKoridor(kode);
+    koridorTerpilih = target || null;
+    refreshStyleKoridorTerpilih();
+    if (opts && opts.zoom !== false && target && cacheJalur && cacheJalur.features) {
+      var feats = cacheJalur.features.filter(function (f) {
+        return kunciKoridor((f.properties || {}).KORIDOR) === target;
+      });
+      if (feats.length) {
+        var group = L.geoJSON({ type: 'FeatureCollection', features: feats });
+        try {
+          map.fitBounds(group.getBounds(), { padding: [36, 36], maxZoom: 15 });
+        } catch (e) {} 
+      }
+    }
   }
 
   /* ── ambil data ──
@@ -268,29 +451,18 @@
    * tidak bisa dipercaya. */
   function rekapKoridor(geojson) {
     var peta = {};
-    KODE_URUT.forEach(function (k) {
-      peta[k] = { kode: k, nama: KORIDOR[k].nama, warna: KORIDOR[k].line, panjangM: 0, ruas: [], fitur: [] };
-    });
-
     geojson.features.forEach(function (f) {
       var p = f.properties || {};
       var k = kunciKoridor(p.KORIDOR);
-      if (!peta[k]) {
-        /* Koridor di luar 1-12. Tidak diabaikan diam-diam: dicatat
-         * supaya kalau nanti Jakarta menambah koridor, kelewatannya
-         * terlihat di konsol, bukan hilang diam-diam dari tabel. */
-        if (window.console && console.warn) {
-          console.warn('[TransJakarta] koridor di luar 1-12:', k);
-        }
-        return;
-      }
+      if (!k) k = 'Rute';
+      if (!peta[k]) peta[k] = { kode: k, nama: (infoKoridor(k) || {}).nama || ('Rute ' + k), warna: warnaKoridor(k), tipe: p.route_type_text || p.route_desc || 'Layanan bus', panjangM: 0, ruas: [], fitur: [] };
       var len = Number(p['SHAPE.LEN']) || 0;
       peta[k].panjangM += len;
       if (p.JURUSAN) peta[k].ruas.push(String(p.JURUSAN));
       peta[k].fitur.push(f);
     });
 
-    return KODE_URUT.map(function (k) { return peta[k]; });
+    return Object.keys(peta).sort(function (a, b) { return a.localeCompare(b, 'id', { numeric: true }); }).map(function (k) { return peta[k]; });
   }
 
   function muatData() {
@@ -299,6 +471,7 @@
       .then(function (d) {
         if (d && d.error) throw new Error(d.error.message || 'ArcGIS error');
         cacheJalur = featuresKeGeoJson(d);
+        cacheJalur.features.forEach(function (f) { var p = f.properties || {}; p.KORIDOR = p.route_short_name; p.JURUSAN = p.route_long_name || p.route_desc; p['SHAPE.LEN'] = p.Shape__Length; });
         state.ringkas = rekapKoridor(cacheJalur);
         state.totalKm = state.ringkas.reduce(function (a, b) { return a + b.panjangM; }, 0) / 1000;
       });
@@ -307,11 +480,36 @@
       .then(function (d) {
         if (d && d.error) throw new Error(d.error.message || 'ArcGIS error');
         cacheHalte = featuresKeGeoJson(d);
+        cacheHalte.features.forEach(function (f) { var p = f.properties || {}; p.NAMA = p.stop_name; p.JENIS = p.Type; p.KORIDOR = p.route_info; p.ALAMAT = p.stop_desc; });
         state.halte = cacheHalte.features.length;
+      }).catch(function (e) {
+        /* JakartaSatu layer 0 is the authoritative fallback for stop locations. */
+        var url = DASAR_JAKARTASATU + '0/query?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326&geometryPrecision=5&f=json';
+        return ambilJson(url).then(function (d) {
+          if (d && d.error) throw new Error(d.error.message || 'JakartaSatu error');
+          cacheHalte = featuresKeGeoJson(d);
+          cacheHalte.features.forEach(function (f) {
+            var p = f.properties || {};
+            p.stop_name = p.NAMA || p.NAMA_HALTE || p.NAME || 'Halte Transjakarta';
+            p.NAMA = p.stop_name;
+            p.JENIS = p.JENIS || 'Halte';
+            p.KORIDOR = p.KORIDOR || '';
+            p.ALAMAT = p.ALAMAT || p.ALAMAT_HALTE || '';
+          });
+          state.halte = cacheHalte.features.length;
+        }).catch(function (fallbackError) {
+          if (window.console) console.warn('[TransJakarta] sumber halte utama dan JakartaSatu gagal:', e, fallbackError);
+          cacheHalte = { type: 'FeatureCollection', features: [] };
+          state.halte = 0;
+        });
       });
 
     return Promise.all([pJalur, pHalte])
-      .then(function () { state.dimuat = true; renderSheet(); })
+      .then(function () {
+        state.dimuat = true;
+        siapkanFilterJenis();
+        renderSheet();
+      })
       .catch(function (e) {
         state.gagal = true;
         if (window.console) console.error('[TransJakarta] gagal memuat data:', e);
@@ -383,9 +581,10 @@ function popupJalur(p) {
 
   html += '<div class="agol-popup-body"><div class="agol-popup-fields">';
   html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Ruas</span><span class="agol-popup-field-value">' + esc(p.JURUSAN || '-') + '</span></div>';
+  if (p.route_type_text || p.route_desc) html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Jenis layanan</span><span class="agol-popup-field-value">' + esc(p.route_type_text || p.route_desc) + '</span></div>';
   html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Panjang</span><span class="agol-popup-field-value">' + esc(km.toLocaleString('id-ID', { maximumFractionDigits: 1 })) + ' km</span></div>';
   html += '</div></div>';
-  html += '<div class="agol-popup-footer"><span>Sumber: JakartaSatu (Pemprov DKI Jakarta)</span></div>';
+  html += '<div class="agol-popup-footer"><span>Sumber: TransJakarta Network (GTFS)</span></div>';
   html += '</div>';
   return html;
 }
@@ -402,9 +601,9 @@ function popupHalte(p) {
     + esc(nama) + '</div>');
 
   html += '<div class="agol-popup-body"><div class="agol-popup-fields">';
-  html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Koridor</span><span class="agol-popup-field-value">' + esc(infoKoridor(kode) ? infoKoridor(kode).nama : (kode || '-')) + '</span></div>';
+  if (kode) html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Rute yang dilayani</span><span class="agol-popup-field-value">' + esc(kode) + '</span></div>';
   if (p.JENIS) {
-    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Jenis</span><span class="agol-popup-field-value">' + esc(p.JENIS) + '</span></div>';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Tipe halte</span><span class="agol-popup-field-value">' + esc(p.JENIS === 'BRT' ? 'Halte BRT' : 'Pemberhentian non-BRT') + '</span></div>';
   }
   if (p.KECAMATAN || p.KELURAHAN) {
     html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Wilayah</span><span class="agol-popup-field-value">'
@@ -414,7 +613,7 @@ function popupHalte(p) {
     html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Alamat</span><span class="agol-popup-field-value">' + esc(p.ALAMAT) + '</span></div>';
   }
   html += '</div></div>';
-  html += '<div class="agol-popup-footer"><span>Sumber: JakartaSatu (Pemprov DKI Jakarta)</span></div>';
+  html += '<div class="agol-popup-footer"><span>Sumber: TransJakarta Network (GTFS)</span></div>';
   html += '</div>';
   return html;
 }
@@ -444,17 +643,14 @@ function buatLayerJalur() {
   var utama = L.geoJSON(null, {
     pane: 'transjakartaPane',
     style: function (f) {
-      var kode = kunciKoridor((f.properties || {}).KORIDOR);
-      return {
-        color: warnaKoridor(kode),
-        weight: 3.5,
-        opacity: 1,
-        lineCap: 'round',
-        lineJoin: 'round'
-      };
+      return getStyleJalur(f);
     },
     onEachFeature: function (f, l) {
       l.bindPopup(popupJalur(f.properties || {}), { maxWidth: 320, className: 'agol-leaflet-popup' });
+      l.on('click', function () {
+        var kode = kunciKoridor((f.properties || {}).KORIDOR);
+        if (kode) pilihKoridor(kode, { zoom: true });
+      });
     }
   });
 
@@ -462,14 +658,7 @@ function buatLayerJalur() {
     pane: 'transjakartaPane',
     interactive: false,
     style: function (f) {
-      var kode = kunciKoridor((f.properties || {}).KORIDOR);
-      return {
-        color: haloKoridor(kode),
-        weight: 7,
-        opacity: 0.9,
-        lineCap: 'round',
-        lineJoin: 'round'
-      };
+      return getStyleHaloJalur(f);
     }
   });
 
@@ -483,61 +672,40 @@ function tampilkanJalur(v) {
       if (map.hasLayer(layerJalur.utama)) map.removeLayer(layerJalur.utama);
     }
     visibleJalur = false;
-    if (!visibleHalte) tutupSheet();
     return;
   }
 
   if (!layerJalur) layerJalur = buatLayerJalur();
   visibleJalur = true;
 
-  /* Sheet dibuka SEBELUM data masuk, bukan sesudahnya. SheetDrag.buka()
-   * bisa detach, bisa gagal. Kalau sheet menunggu, layer menyala tapi
-   * tidak ada apa-apa yang terjadi, dan itu terbaca sebagai tidak
-   * berfungsi. Sheet yang terbuka dengan tulisan "Memuat data" jauh
-   * lebih jujur. */
+  /* Tampilkan panel segera agar pengguna mendapat umpan balik saat data
+   * jaringan masih dimuat. */
   if (!userTutupSheet) bukaSheet();
 
-  /* Baru menyala pertama kali? Terbang ke jalurnya.
-   *
-   * Tanpa ini layer menyala di Jakarta tapi peta masih di tempat yang
-   * sama, dan tidak ada yang terlihat terjadi -- padahal tidak ada
-   * yang salah. Ini yang paling sering dikeluhkan orang: layer
-   * "tidak muncul" padahal isinya ada, cuma di luar viewport.
-   *
-   * Dijalankan hanya sekali per sesi. Kalau setiap nyalakan terbang
-   * lagi, orang yang sedang menata peta kehilangan posisi kerjanya
-   * setiap kali layer dimatikan sebentar.
-   *
-   * Ditunda sampai data masuk karena batas wilayah baru diketahui
-   * setelah query selesai. */
   var perluTerbang = !sudahTerbang;
   sudahTerbang = true;
-
   muatData().then(function () {
-    if (!cacheJalur) return;
-    layerJalur.halo.clearLayers();
-    layerJalur.utama.clearLayers();
-    layerJalur.halo.addData(cacheJalur);
-    layerJalur.utama.addData(cacheJalur);
+    if (!visibleJalur || !cacheJalur) return;
+
+    refreshLayerJalur();
     if (!map.hasLayer(layerJalur.halo)) layerJalur.halo.addTo(map);
     if (!map.hasLayer(layerJalur.utama)) layerJalur.utama.addTo(map);
-
     if (perluTerbang) terbangKeSeluruhJalur();
   });
 }
 
-/* Terbang ke seluruh jaringan koridor. Dipakai saat layer pertama kali
- * dinyalakan, karena bounds-nya hanya diketahui setelah data masuk. */
 function terbangKeSeluruhJalur() {
-  if (!cacheJalur || !cacheJalur.features.length) return;
+  if (!cacheJalur || !cacheJalur.features || !cacheJalur.features.length) return;
   try {
-    var b = L.geoJSON(cacheJalur).getBounds();
-    if (!b.isValid()) return;
-    map.fitBounds(b, { padding: [48, 48], maxZoom: 13 });
+    var fc = { type: 'FeatureCollection', features: cacheJalur.features.filter(function (f) {
+      return !!(f && f.geometry);
+    }) };
+    var group = L.geoJSON(fc);
+    var bounds = group.getBounds();
+    if (bounds && bounds.isValid && bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [48, 48], maxZoom: 13 });
+    }
   } catch (e) {
-    /* Batas tidak valid bukan alasan menggagalkan seluruh nyalanya
-     * layer -- gejalanya hanya peta tidak bergerak, dan itu jauh
-     * lebih mild daripada checkbox mati sendiri. */
     if (window.console && console.warn) console.warn('[TransJakarta] gagal menghitung batas jalur:', e);
   }
 }
@@ -574,7 +742,6 @@ function tampilkanHalte(v) {
   if (!v) {
     if (layerHalte && map.hasLayer(layerHalte)) map.removeLayer(layerHalte);
     visibleHalte = false;
-    if (!visibleJalur) tutupSheet();
     return;
   }
   if (!layerHalte) {
@@ -584,7 +751,7 @@ function tampilkanHalte(v) {
   visibleHalte = true;
   if (!userTutupSheet) bukaSheet();
   muatData().then(function () {
-    if (!cacheHalte) return;
+    if (!visibleHalte || !cacheHalte) return;
     layerHalte.clearLayers();
     layerHalte.addData(cacheHalte);
     if (!map.hasLayer(layerHalte)) layerHalte.addTo(map);
@@ -594,18 +761,17 @@ function tampilkanHalte(v) {
   function buatLegend() {
     if (typeof addUnifiedLegend !== 'function' || typeof createLegendWithToggle !== 'function') return;
     var items = '';
-    KODE_URUT.forEach(function (k) {
-      var info = KORIDOR[k];
+    (state.ringkas.length ? state.ringkas : KODE_URUT.map(function (k) { return { kode: k, nama: KORIDOR[k].nama, warna: KORIDOR[k].line }; })).forEach(function (info) {
       items += '<div class="hotspot-legend-item">'
-        + '<span class="hotspot-legend-dot" style="background:' + info.line + ';"></span>'
+        + '<span class="hotspot-legend-dot" style="background:' + (info.warna || info.line) + ';"></span>'
         + '<span>' + esc(info.nama) + '</span>'
         + '</div>';
     });
     var div = L.DomUtil.create('div', 'hotspot-legend');
     L.DomEvent.disableClickPropagation(div);
-    div.innerHTML = '<div class="hotspot-legend-title">Koridor TransJakarta</div>'
+    div.innerHTML = '<div class="hotspot-legend-title">Rute TransJakarta</div>'
       + '<div class="hotspot-legend-items">' + items + '</div>'
-      + '<div class="hotspot-legend-source">Sumber: JakartaSatu,Provinsi DKI Jakarta</div>';
+      + '<div class="hotspot-legend-source">BRT & bus non-BRT · Sumber: GTFS</div>';
     addUnifiedLegend('transjakarta', createLegendWithToggle(div));
   }
 
@@ -631,6 +797,34 @@ function tampilkanHalte(v) {
 
   function tutupSheet() {
     if (window.SheetDrag) window.SheetDrag.close(SHEET_ID);
+    else resetTransjakartaSheet();
+  }
+
+  function resetTransjakartaSheet() {
+    userTutupSheet = true;
+    moduleActive = false;
+    visibleJalur = false;
+    visibleHalte = false;
+    sementaraHalte = false;
+    koridorTerpilih = null;
+    koridorDisorot = null;
+    jenisDisorot = null;
+    sudahTerbang = false;
+    state.filter.q = '';
+    var cb = document.getElementById('toggleTransjakarta');
+    if (cb) cb.checked = false;
+    if (layerJalur) {
+      if (map.hasLayer(layerJalur.halo)) map.removeLayer(layerJalur.halo);
+      if (map.hasLayer(layerJalur.utama)) map.removeLayer(layerJalur.utama);
+      layerJalur.halo.clearLayers();
+      layerJalur.utama.clearLayers();
+    }
+    if (layerHalte) {
+      if (map.hasLayer(layerHalte)) map.removeLayer(layerHalte);
+      layerHalte.clearLayers();
+    }
+    buangLegend();
+    renderSheet();
   }
 
   function barisKoridor(r) {
@@ -641,9 +835,11 @@ function tampilkanHalte(v) {
      * sebagai teks "&middot;" di layar. Karakter titik tengah itu
      * terpengaruh esc(). */
     var ruas = r.ruas.join(' · ');
-    return '<tr class="tj-row" data-koridor="' + esc(r.kode) + '" tabindex="0">'
+    var tipe = r.tipe || 'Layanan bus';
+    var dipilih = kunciKoridor(r.kode) === koridorTerpilih;
+    return '<tr class="tj-row' + (dipilih ? ' is-selected' : '') + '" data-koridor="' + esc(r.kode) + '" tabindex="0">'
       + '<td class="tj-td-chip"><span class="tj-chip" style="background:' + r.warna + ';"></span></td>'
-      + '<td class="tj-td-nama"><b>' + esc(r.nama) + '</b><small>' + esc(ruas || '-') + '</small></td>'
+      + '<td class="tj-td-nama"><b>' + esc(tipe) + '</b><small>' + esc(ruas || '-') + '</small></td>'
       + '<td class="tj-td-km">' + esc(km.toLocaleString('id-ID', { maximumFractionDigits: 1 })) + '</td>'
       + '</tr>';
   }
@@ -665,7 +861,7 @@ function tampilkanHalte(v) {
     if (state.gagal) {
       body.innerHTML = '<div class="tj-kosong">'
         + '<b>Data TransJakarta belum bisa dimuat.</b>'
-        + '<span>Layanan JakartaSatu sedang tidak terjangkau. Coba beberapa saat lagi.</span>'
+        + '<span>Layanan jaringan TransJakarta sedang tidak terjangkau. Coba beberapa saat lagi.</span>'
         + '</div>';
       return;
     }
@@ -675,33 +871,35 @@ function tampilkanHalte(v) {
       return;
     }
 
-    var baris = state.ringkas.map(barisKoridor).join('');
-    var ada = state.ringkas.filter(function (r) { return r.panjangM > 0; }).length;
-
-    var km = esc(state.totalKm.toLocaleString('id-ID', { maximumFractionDigits: 0 }));
+    var filtered = state.ringkas.filter(cocokFilterKoridor);
+    var baris = filtered.map(barisKoridor).join('');
+    var ada = filtered.filter(function (r) { return r.panjangM > 0; }).length;
+    var totalKm = filtered.reduce(function (sum, r) { return sum + r.panjangM; }, 0) / 1000;
+    var km = esc(totalKm.toLocaleString('id-ID', { maximumFractionDigits: 0 }));
 
     body.innerHTML =
-      '<div class="tj-ctrl">'
-      + tombolLayer('jalur', visibleJalur, ada + ' koridor', '', 'Jalur Koridor')
-      + '</div>'
-      + '<div class="tj-stat">'
+      '<div class="tj-stat">'
       + '<div class="tj-stat-item"><b>' + nomor(ada) + '</b><span>koridor</span></div>'
       + '<div class="tj-stat-item"><b>' + km + '</b><span>km total</span></div>'
-      /* Kartu halte adalah tombol layer, bukan sekadar angka. Dipakai
-         element button supaya bisa difokus dan punya peran untuk
-         pembaca layar. Kelas tj-stat-item dipakai bersama supaya
-         gaya kotak statistiknya tidak ditulis ulang. */
       + '<button type="button" class="tj-stat-item tj-cardHalte' + (visibleHalte ? ' is-on' : '') + '"'
       + ' data-tj-layer="halte"'
       + ' aria-pressed="' + (visibleHalte ? 'true' : 'false') + '"'
       + ' aria-label="Tampilkan halte TransJakarta">'
       + '<b>' + nomor(state.halte) + '</b><span>halte</span></button>'
       + '</div>'
+      + '<div class="tj-filter-box">'
+      + '<div class="tj-filter-row">'
+      + '<label class="tj-filter-label" for="tj-filter-search">Cari koridor</label>'
+      + '<input id="tj-filter-search" class="tj-filter-search" type="search" value="' + esc(state.filter.q || '') + '" placeholder="Cari kode atau nama koridor" aria-label="Cari koridor TransJakarta">'
+      + '</div>'
+      + '</div>'
+      + '<div class="tj-ctrl">'
+      + tombolLayer('jalur', visibleJalur, ada + ' koridor', '', 'TransJakarta · Jalur Koridor')
+      + '</div>'
       + '<div class="tj-table-wrap"><table class="tj-table">'
-      + '<thead><tr><th class="tj-th-chip"></th><th class="tj-th-nama">Koridor</th><th class="tj-th-km">Panjang</th></tr></thead>'
-      + '<tbody>' + baris + '</tbody></table></div>'
-      + '<div class="tj-sumber">Sumber data: JakartaSatu, Provinsi DKI Jakarta. '
-      + 'Panjang dihitung dari geometri jalur, bukan dari panjang jalan raya.</div>';
+      + '<thead><tr><th class="tj-th-chip"></th><th class="tj-th-nama">Jenis layanan</th><th class="tj-th-km">Panjang</th></tr></thead>'
+      + '<tbody>' + (baris || '<tr><td colspan="3" class="tj-empty-row">Tidak ada koridor yang cocok dengan filter.</td></tr>') + '</tbody></table></div>'
+      + '<div class="tj-sumber">Sumber data: TransJakarta Network, olahan GTFS. Nama dan tipe rute mengikuti data layanan.</div>';
   }
 
   /* Klik baris = zoom ke koridor itu. Dipakai bersama klik+tap karena
@@ -711,10 +909,26 @@ function tampilkanHalte(v) {
     if (!body || body.__tjPasang) return;
     body.__tjPasang = true;
 
-    /* Tombol layer dicek LEBIH DAHULU. Urutan ini penting: kartu halte
-     * dan tombol jalur ada di dalam sheet yang sama dengan tabel, dan
-     * tanpa pengecekan lebih dulu, klik tombol ikut memicu zoom ke
-     * koridor -- yang sama sekali bukan yang dimaksud pengguna. */
+    function sorotanDariTarget(target) {
+      if (!target || !target.closest) return null;
+      var baris = target.closest('.tj-row');
+      if (baris && body.contains(baris)) return { koridor: baris.dataset.koridor || null, jenis: null };
+      return null;
+    }
+
+    function setSorotanDariTarget(target) {
+      var berikut = sorotanDariTarget(target) || { koridor: null, jenis: null };
+      if (koridorDisorot === berikut.koridor && jenisDisorot === berikut.jenis) return;
+      koridorDisorot = berikut.koridor;
+      jenisDisorot = berikut.jenis;
+      refreshLayerJalur();
+    }
+
+    body.addEventListener('pointerover', function (e) { setSorotanDariTarget(e.target); });
+    body.addEventListener('pointerout', function (e) { setSorotanDariTarget(e.relatedTarget); });
+    body.addEventListener('focusin', function (e) { setSorotanDariTarget(e.target); });
+    body.addEventListener('focusout', function (e) { setSorotanDariTarget(e.relatedTarget); });
+
     function keTombolLayer(e) {
       var btn = e.target.closest ? e.target.closest('[data-tj-layer]') : null;
       if (!btn || !body.contains(btn)) return false;
@@ -728,18 +942,36 @@ function tampilkanHalte(v) {
     function keBaris(e) {
       var tr = e.target.closest ? e.target.closest('.tj-row') : null;
       if (!tr) return;
-      zoomKeKoridor(tr.dataset.koridor);
+      var kode = tr.dataset.koridor;
+      pilihKoridor(kode, { zoom: true });
+      zoomKeKoridor(kode);
     }
 
     body.addEventListener('click', function (e) {
       if (keTombolLayer(e)) return;
       keBaris(e);
     });
+
+    body.addEventListener('input', function (e) {
+      var target = e.target;
+      if (!target || !body.contains(target)) return;
+      if (target.matches && target.matches('.tj-filter-search')) {
+        state.filter.q = target.value;
+        koridorDisorot = null;
+        jenisDisorot = null;
+        renderSheet();
+        refreshLayerJalur();
+        return;
+      }
+    });
+
+    body.addEventListener('change', function (e) {
+      var target = e.target;
+      if (!target || !body.contains(target)) return;
+    });
+
     body.addEventListener('keydown', function (e) {
       if (e.key !== 'Enter' && e.key !== ' ') return;
-      /* Element button sudah menangani Enter dan Space sendiri lewat
-       * perilaku bawaan, jadi di sini cukup biarkan. Menangkapnya
-       * akan membuat tombol terpicu dua kali. */
       if (e.target.closest && e.target.closest('[data-tj-layer]')) return;
       if (!e.target.closest || !e.target.closest('.tj-row')) return;
       e.preventDefault();
@@ -770,18 +1002,14 @@ function tampilkanHalte(v) {
     }
   }
 
-  /* Dua setter ini adalah satu-satunya jalan untuk menyalakan dan
-   * mematikan layer. Tombol di sheet dan sakelar utama di Layer Catalog
-   * sama-sama memanggilnya, jadi tidak mungkin salah satu menyalakan
-   * layer tapi dianggap masih mati oleh yang lain. Keduanya selalu
-   * menutup sheet kalau tidak ada layer yang tersisa -- sheet tanpa
-   * isi di layar adalah panel yang tidak menjelaskan apa pun. */
+  /* Sakelar dalam sheet hanya mengatur visibilitas sublayer. Layer utama
+   * dan sheet tetap hidup sampai sakelar utama Transjakarta dimatikan. */
   function setJalur(v) {
     if (v) { tampilkanJalur(true); buatLegend(); }
     else {
+      koridorDisorot = null;
+      jenisDisorot = null;
       tampilkanJalur(false);
-      buangLegend();
-      if (!visibleHalte) tutupSheet();
     }
     renderSheet();
   }
@@ -793,7 +1021,6 @@ function tampilkanHalte(v) {
       /* Kalau halte hanya dinyalakan sementara untuk zoom koridor,
        * matikan lagi supaya tidak menggantung tanpa disengaja. */
       if (sementaraHalte) sementaraHalte = false;
-      if (!visibleJalur) tutupSheet();
     }
     renderSheet();
   }
@@ -826,7 +1053,7 @@ function tampilkanHalte(v) {
         minButton: '.tj-sheet-minimize',
         labelMin: 'Minimalkan panel Jalur TransJakarta',
         labelOpen: 'Perluas panel Jalur TransJakarta',
-        onClose: function () { userTutupSheet = true; }
+        onClose: resetTransjakartaSheet
       });
     }
 
@@ -849,11 +1076,14 @@ function tampilkanHalte(v) {
     var cb = document.getElementById('toggleTransjakarta');
     if (cb && cb.checked !== v) cb.checked = v;
     if (v) {
+      moduleActive = true;
+      userTutupSheet = false;
       setJalur(true);
-      if (!userTutupSheet) bukaSheet();
     } else {
+      moduleActive = false;
       setJalur(false);
       setHalte(false);
+      buangLegend();
       tutupSheet();
     }
   };
@@ -863,9 +1093,9 @@ function tampilkanHalte(v) {
 
   window.isTransjakartaJalurActive = function () { return visibleJalur; };
   window.isTransjakartaHalteActive = function () { return visibleHalte; };
+  window.isTransjakartaActive = function () { return moduleActive || visibleJalur || visibleHalte; };
   window.transjakartaCleanup = function () {
-    window.toggleTransjakartaJalur(false);
-    window.toggleTransjakartaHalte(false);
+    window.toggleTransjakarta(false);
   };
   Object.defineProperty(window, 'transjakartaLayerObj', { get: function () { return layerJalur ? layerJalur.utama : null; } });
   Object.defineProperty(window, 'transjakartaHalteLayerObj', { get: function () { return layerHalte; } });
