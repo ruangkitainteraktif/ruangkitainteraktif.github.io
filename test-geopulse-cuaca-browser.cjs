@@ -89,8 +89,19 @@ window.addEventListener('load', function () {
         Math.round(h.getBoundingClientRect().height));
     });
     catat('tinggi terlipat', Math.round(maritim.getBoundingClientRect().height) + ' / ' + Math.round(udara.getBoundingClientRect().height));
-    ok('judul maritim terbaca', maritim.querySelector('.gt-card-head b').textContent === 'Layer Cuaca Maritim');
-    ok('judul udara terbaca', udara.querySelector('.gt-card-head b').textContent === 'Kualitas Udara');
+    /* Judul kartu tidak dibandingkan dengan teks hardcode: judulnya sedang
+     * aktif disunting pengguna. Yang diperiksa: <b> di kepala terbaca, dan
+     * label yang ditunjuk aria-labelledby menunjuk <b> itu juga. */
+    [['maritim', 'geopulse-cuaca-maritim', 'geopulseCuacaMaritimTitle'],
+     ['udara', 'geopulse-kualitas-udara', 'geopulseKualitasUdaraTitle']].forEach(function (t) {
+      var kartu = document.getElementById(t[1]);
+      var b = kartu.querySelector('.gt-card-head b');
+      var small = kartu.querySelector('.gt-card-head small');
+      ok('kartu ' + t[0] + ' punya judul terbaca', b.textContent.trim().length > 2, b.textContent);
+      ok('kartu ' + t[0] + ' punya subjudul terbaca', small.textContent.trim().length > 5, small.textContent);
+      ok('aria-labelledby kartu ' + t[0] + ' menunjuk judul yang ada',
+        !!document.getElementById(t[2]) && document.getElementById(t[2]) === b);
+    });
     ok('kartu memakai overflow: hidden', getComputedStyle(maritim).overflow === 'hidden', getComputedStyle(maritim).overflow);
 
     /* 2. Buka kartu udara saja, dan cek daftar toggle-nya. */

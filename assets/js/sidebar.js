@@ -228,6 +228,7 @@
   }
   window.openGeotoolsMainTab = openGeotoolsMainTab;
 
+
   function applyCctvSearchVisibility() {
     var sheet = document.getElementById('cctv-search-sheet');
     if (!sheet) return;

@@ -119,10 +119,20 @@ kepala.forEach(function (k, i) {
   equal(hitung(k, /<b\b/g), 1, 'kepala ' + (i + 1) + ': satu judul <b>');
   equal(hitung(k, /<small\b/g), 1, 'kepala ' + (i + 1) + ': satu subjudul <small>');
 });
-ok('judul kartu maritim ada', /<b id="geopulseCuacaMaritimTitle">Layer Cuaca Maritim<\/b>/.test(SK));
-ok('judul kartu udara ada', /<b id="geopulseKualitasUdaraTitle">Kualitas Udara<\/b>/.test(SK));
-ok('kedua aria-labelledby menunjuk judul yang ada',
-  /aria-labelledby="geopulseCuacaMaritimTitle"/.test(SK) && /aria-labelledby="geopulseKualitasUdaraTitle"/.test(SK));
+/* Teks judul TIDAK di-hardcode: judul kartu sedang aktif disunting pengguna
+ * (mis. "Layer Cuaca Maritim" -> "Cuaca Maritim"). Yang diuji kontraknya:
+ * aria-labelledby menunjuk <b> yang ada, dan isinya bukan placeholder. */
+function cekJudul(id, label) {
+  const m = new RegExp('<b id="' + id + '">([^<]*)</b>').exec(SK);
+  ok('kartu ' + label + ' punya judul <b id="' + id + '">', !!m);
+  ok('judul kartu ' + label + ' tidak kosong', m && m[1].trim().length > 2, m && m[1]);
+  ok('kartu ' + label + ' memakai aria-labelledby yang menunjuk judulnya',
+    new RegExp('aria-labelledby="' + id + '"').test(SK));
+  const sub = new RegExp('<b id="' + id + '">[^<]*</b>\\s*<small>([^<]*)</small>').exec(SK);
+  ok('kartu ' + label + ' punya subjudul', sub && sub[1].trim().length > 5, sub && sub[1]);
+}
+cekJudul('geopulseCuacaMaritimTitle', 'Cuaca Maritim');
+cekJudul('geopulseKualitasUdaraTitle', 'Kualitas Udara');
 ok('kedua id kartu unik di halaman',
   hitung(HTML, /id="geopulse-cuaca-maritim"/g) === 1 && hitung(HTML, /id="geopulse-kualitas-udara"/g) === 1);
 equal(hitung(HTML, /class="geopulse-card"/g), 2, 'hanya dua kartu geopulse-card di halaman');

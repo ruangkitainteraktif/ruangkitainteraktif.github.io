@@ -1840,6 +1840,10 @@ L.control.scale({
   /* ── Pindahkan tombol ke dalam FAB ── */
   setTimeout(function () {
     createGeotoolsFAB();
+    /* GeoData ditempelkan tepat setelah GeoTools: keduanya membuka sheet
+     * yang sama, dan GeoData adalah tab yang paling sering dipakai, jadi
+     * dua tombol ini sebaiknya bersebelahan di barisan FAB. */
+    createGeoDataFAB();
     moveToFAB('.draw-fab-wrap', 'Gambar & Ukur');
     createAttrTableFAB();
     createLegendFAB();
@@ -2511,7 +2515,20 @@ L.control.scale({
       var tabContent = document.getElementById('tab-geotools');
       var sheet = document.getElementById('geotools-sheet');
       if (!body || !tabContent || !sheet || sheet.dataset.moved) return;
-      while (tabContent.firstChild) body.appendChild(tabContent.firstChild);
+      /* Lewati #geodata-panel-host secara eksplisit.
+       *
+       * Host itu milik sheet GeoData. Sekarang host-nya memang berada di
+       * luar #tab-geotools, jadi while-loop biasa tidak akan menyentuhnya.
+       * Tapi kalau suatu saat host_without sengaja dipindah ke dalam
+       * #tab-geotools, loop ini akan menarik GeoData Analysis ke sheet
+       * GeoTools - dan user akan melihat panel yang sama dua kali. Lewatinya
+       * secara eksplisit supaya posisi host tidak lagi jadi hal yang rapuh.
+       * childNodes disalin dulu supaya boleh menghapus sambil iterating. */
+      var nodes = Array.prototype.slice.call(tabContent.childNodes);
+      nodes.forEach(function (n) {
+        if (n.nodeType === 1 && n.id === 'geodata-panel-host') return;
+        body.appendChild(n);
+      });
       sheet.dataset.moved = '1';
     },
     onClose: function () {
@@ -2536,6 +2553,75 @@ L.control.scale({
   window.closeGeotoolsSheet = closeGeotoolsSheet;
   window.minimizeGeotoolsSheet = minimizeGeotoolsSheet;
   window.restoreGeotoolsSheet = restoreGeotoolsSheet;
+
+  /* ── GeoData Sheet (terpisah dari GeoTools) ──
+   *
+   * GeoData dulu jadi salah satu <option> di .geotools-dropdown, lalu
+   * disembunyikan bersama dropdown-nya agar tidak terlihat "GeoFarm"
+   * tertulis di atas isi GeoData. Dua masalah muncul dari situ:
+   *
+   *  1. Menyembunyikan dropdown ikut menghapus satu-satunya cara pindah tab,
+   *     jadi user terjebak di GeoData dan tidak bisa melihat card lainnya.
+   *  2. openGeotoolsMainTab() melepas .active dari SEMUA
+   *     .geotools-main-tab-panel. Selama GeoData masih memakai kelas itu,
+   *     memilih tab lain akan membuat GeoData ikut hilang - gejala yang
+   *     sama, dari arah berbeda.
+   *
+   * Penyebabnya sama: GeoData diperlakukan sebagai tab GeoTools padahal
+   * jalurnya sendiri (tombol FAB "GeoData"). Sekarang panelnya dipindah ke
+   * #geodata-panel-host - di luar #tab-geotools - dengan kelas .geodata-panel,
+   * dan punya sheet sendiri. Dropdown GeoTools tidak pernah perlu
+   * disembunyikan lagi, jadi selalu tampil dan selalu bisa dipakai.
+   *
+   * Pola onOpen/onClose-nya sama persis dengan sheet GeoTools: memindahkan
+   * isi host ke dalam body saat dibuka, dan mengembalikannya saat ditutup.
+   * Karena host dan tab GeoTools terpisah di markup, keduanya tidak pernah
+   * berebut elemen yang sama. */
+  /* Sheet GeoData punya kelas sendiri, bukan milik GeoTools.
+   *
+   * bodyOpen/bodyMin PENTING: keduanya ditoggle ke <body> (lihat
+   * setBody di sheet-drag.js). Kalau ikut memakai geotools-sheet-open,
+   * membuka GeoData akan memasang kelas milik GeoTools di <body> - dan
+   * menutup GeoData akan melepasnya, meski sheet GeoTools masih terbuka.
+   * Sheet tabel, legenda, dan alat & ukur juga masing-masing punya
+   * bodyOpen/bodyMin sendiri, jadi ini memang polanya.
+   *
+   * openClass/minClass juga milik GeoData sendiri karena seluruh aturan
+   * .gs-sheet-* di app.css di-scope ke #geotools-sheet. Sheet GeoData tidak
+   * akan dikenai satu pun aturan itu. */
+  window.SheetDrag && window.SheetDrag.register('geodata', {
+    el: 'geodata-sheet',
+    openClass: 'geodata-sheet-open',
+    minClass: 'geodata-sheet-minimized',
+    bodyOpen: 'geodata-sheet-open',
+    bodyMin: 'geodata-sheet-minimized',
+    handle: '.geodata-sheet-handle',
+    header: '.geodata-sheet-head',
+    minButton: '.geodata-sheet-minimize',
+    labelMin: 'Minimalkan',
+    labelOpen: 'Perluas GeoData',
+    onOpen: function () {
+      var body = document.getElementById('geodataSheetBody');
+      var host = document.getElementById('geodata-panel-host');
+      if (!body || !host) return;
+      while (host.firstChild) body.appendChild(host.firstChild);
+    },
+    onClose: function () {
+      var body = document.getElementById('geodataSheetBody');
+      var host = document.getElementById('geodata-panel-host');
+      if (!body || !host) return;
+      while (body.firstChild) host.appendChild(body.firstChild);
+    }
+  });
+
+  function openGeoDataSheet() { if (window.SheetDrag) window.SheetDrag.buka('geodata'); }
+  function closeGeoDataSheet() { if (window.SheetDrag) window.SheetDrag.close('geodata'); }
+  function minimizeGeoDataSheet() { if (window.SheetDrag) window.SheetDrag.toggleMinimize('geodata'); }
+  function restoreGeoDataSheet() { if (window.SheetDrag) window.SheetDrag.restore('geodata'); }
+  window.openGeoDataSheet = openGeoDataSheet;
+  window.closeGeoDataSheet = closeGeoDataSheet;
+  window.minimizeGeoDataSheet = minimizeGeoDataSheet;
+  window.restoreGeoDataSheet = restoreGeoDataSheet;
 
   /* ── Export TIF FAB (viewport GeoTIFF) ── */
   function createExportTiffFAB() {
@@ -2564,6 +2650,58 @@ L.control.scale({
       e.stopPropagation();
       closeFAB();
       openGeotoolsSheet();
+    });
+  }
+
+  /* ── GeoData FAB Button ──
+   *
+   * Membuka sheet GeoTools langsung di tab GeoData, jadi pengguna tidak
+   * harus membuka GeoTools dulu lalu memilih GeoData dari dropdown.
+   * GeoData adalah tab yang paling sering dipakai (lihat komentar urutan
+   * <option> di index.html), dan tombol ini adalah jalan 1-klik ke sana.
+   *
+   * Dua hal soal URUTANNYA, keduanya sudah dibuktikan oleh
+   * returnToGeoFarmTab() di geofarm-draw.js - jadi jangan dibalik:
+   *
+   *  1. openGeotoolsSheet() harus lebih dulu. Hook onOpen sheet ini
+   *     memindahkan SELURUH isi #tab-geotools ke dalam #geotoolsSheetBody
+   *     (sekali saja, lewat sheet.dataset.moved), dan <select
+   *     class="geotools-dropdown"> ikut terbawa karena dia anak
+   *     #tab-geotools. Sheet-nya sudah benar-benar terbuka saat
+   *     SheetDrag.buka() kembali, jadi langkah kedua bisa langsung jalan -
+   *     tidak perlu setTimeout seperti yang dipakai tombol shortcut di
+   *     sidebar (yang harus lebih dulu membuka tab lewat openTab()).
+   *
+   *  2. openTab() sengaja TIDAK dipakai. Isi tab sudah pindah ke sheet,
+   *     jadi membuka sidebar kiri hanya akan menampilkan tab kosong.
+   *
+   * Dropdown dicari ulang lewat querySelector setiap klik, bukan
+   * disimpan sebagai reference: node-nya dipindahkan oleh hook onOpen,
+   * bukan di-kloning, jadi reference yang disimpan sebelumnya tetap
+   * benar - tapi querySelector juga aman bila sheet belum pernah dibuka.
+   *
+   * Ikon: silinder "database" (Feather). Dipilih supaya berbeda dari
+   * lima ikon FAB yang sudah ada - kotak GeoTools, baki download Export
+   * TIF, mata Gambar & Ukur, panel peta Legenda, dan kisi Semua Tabel.
+   */
+  function createGeoDataFAB() {
+    if (!__fabItems) __fabItems = document.querySelector('.map-fab-items');
+    if (!__fabItems) return;
+    var item = L.DomUtil.create('button', 'map-fab-item geodata-fab');
+    item.title = 'GeoData';
+    item.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>';
+    __fabItems.appendChild(item);
+    item.addEventListener('click', function (e) {
+      e.stopPropagation();
+      closeFAB();
+      /* Satu panggilan saja. GeoData punya sheet sendiri (register 'geodata'
+       * di atas), jadi tidak ada dropdown yang perlu disetel, tidak ada
+       * panel yang perlu diaktifkan manual, dan tidak ada kelas sembunyi
+       * yang perlu dilepas.
+       *
+       * openTab() juga tidak dipakai: isi tab sudah dipindahkan ke sheet,
+       * jadi membuka sidebar kiri hanya menampilkan tab kosong. */
+      openGeoDataSheet();
     });
   }
 
