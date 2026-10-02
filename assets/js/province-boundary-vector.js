@@ -5,6 +5,18 @@
   var PBF_URL = 'https://tiles.circlegeo.com/data/administration/{z}/{x}/{y}.pbf';
   var _provinceLayer = null;
   var _active = false;
+  var AUTO_BOUNDARY_BASEMAPS = {
+    'modis-terra': true, 'modis-aqua': true,
+    'viirs-noaa20': true, 'viirs-noaa21': true, 'viirs-snpp': true,
+    'oci-pace': true,
+    'bmkg-himawari': true, 'bmkg-himawari-nc': true, 'bmkg-himawari-wv': true,
+    'bmkg-himawari-rp': true, 'bmkg-himawari-sw': true, 'bmkg-himawari-sm': true,
+    'bmkg-himawari-va': true, 'bmkg-himawari-vs': true, 'bmkg-himawari-fd': true,
+    'bmkg-himawari-hires': true, 'bmkg-gk2a': true, 'bmkg-gk2a-wv': true,
+    'bmkg-gk2a-rp': true,
+    'noaa-true-color': true, 'noaa-goes-ir': true,
+    'sentinel2': true, 'eox-s2cloudless-2024': true, 'eox-blackmarble': true
+  };
 
   function show() {
     if (!_provinceLayer) {
@@ -48,4 +60,22 @@
   };
   window.isProvinceBoundaryActive = isActive;
   window.provinceBoundaryCleanup = cleanup;
+
+  function syncWithBasemap(name) {
+    var shouldShow = !!AUTO_BOUNDARY_BASEMAPS[name] &&
+      typeof window.currentBasemapName !== 'undefined' &&
+      window.currentBasemapName === name;
+
+    if (shouldShow) show(); else hide();
+
+    var button = document.getElementById('qlProvinsi');
+    if (button) button.classList.toggle('active', shouldShow);
+  }
+
+  if (window.map && typeof window.map.on === 'function') {
+    window.map.on('basemapchanged', function (event) {
+      syncWithBasemap(event && event.basemap);
+    });
+    syncWithBasemap(window.currentBasemapName);
+  }
 })();
