@@ -71,6 +71,7 @@
   var activeLegend = null;
   var loaded = false;
   var inflasiCache = null;
+  var geopanganInitPromise = null;
   var sebaranPasarLayer = null;
   var sppgLayer = null;
   var sppgSebaranLayer = null;
@@ -274,8 +275,28 @@
     var sel = $('geopanganCommodity');
     if (!sel) return;
     try {
-      var json = await fetchWithProxy(COMMODITY_URL);
-      var items = json.data || [];
+      // This is a same-origin asset. Passing its relative path through the
+      // external CORS proxy turns it into an invalid upstream URL.
+      var urls = [
+        new URL(COMMODITY_URL, document.baseURI).toString(),
+        new URL('/' + COMMODITY_URL, window.location.origin).toString()
+      ].filter(function (url, index, all) { return all.indexOf(url) === index; });
+      var json = null;
+      var lastError = null;
+      for (var i = 0; i < urls.length; i++) {
+        try {
+          var response = await fetch(urls[i] + (urls[i].indexOf('?') === -1 ? '?v=20261002' : '&v=20261002'), { cache: 'no-store' });
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          json = await response.json();
+          if (json && Array.isArray(json.data) && json.data.length) break;
+          throw new Error('Respons katalog kosong');
+        } catch (error) { lastError = error; }
+      }
+      if (!json) throw lastError || new Error('Katalog PIHPS tidak tersedia');
+      var items = json && Array.isArray(json.data) ? json.data : [];
+      if (!items.some(function (item) { return item && item.cat_id; })) {
+        throw new Error('Daftar komoditas kosong atau format data tidak valid');
+      }
       commodityItemsCache = items;
       var cats = {};
       var catOrder = [];
@@ -303,9 +324,11 @@
         html += '</optgroup>';
       });
       sel.innerHTML = html;
+      return !!html;
     } catch (e) {
       console.error('[Geopangan] Gagal load komoditas:', e);
       sel.innerHTML = '<option value="">Gagal memuat komoditas</option>';
+      return false;
     }
   }
 
@@ -313,6 +336,7 @@
   function populateProvinces() {
     var sel = $('geopanganProvince');
     if (!sel) return;
+    if (sel.options.length > 1) return;
     Object.keys(PROVINCE_MAP).sort(function (a, b) { return a - b; }).forEach(function (id) {
       var p = PROVINCE_MAP[id];
       var opt = document.createElement('option');
@@ -320,6 +344,23 @@
       opt.textContent = p.name;
       sel.appendChild(opt);
     });
+  }
+
+  function initializeGeopangan() {
+    if (loaded) return Promise.resolve(true);
+    if (geopanganInitPromise) return geopanganInitPromise;
+    geopanganInitPromise = Promise.all([loadCommodities(), Promise.resolve(populateProvinces())])
+      .then(function (results) {
+        loaded = results[0] !== false;
+        setDefaultDates();
+        if (!loaded) geopanganInitPromise = null;
+        return loaded;
+      })
+      .catch(function (error) {
+        geopanganInitPromise = null;
+        throw error;
+      });
+    return geopanganInitPromise;
   }
 
   /* ── Default dates: last 7 days ── */
@@ -547,9 +588,11 @@
   }
 
   async function getGpCommodityItems() {
-    if (commodityItemsCache) return commodityItemsCache.filter(function (item) { return item.cat_id; });
-    var json = await fetchWithProxy(COMMODITY_URL);
-    commodityItemsCache = json.data || [];
+    if (!commodityItemsCache) await loadCommodities();
+    if (!commodityItemsCache) throw new Error('Gagal memuat daftar komoditas PIHPS');
+    if (!commodityItemsCache.some(function (item) { return item && item.cat_id; })) {
+      throw new Error('Daftar komoditas PIHPS kosong atau format data tidak valid');
+    }
     return commodityItemsCache.filter(function (item) { return item.cat_id; });
   }
 
@@ -1079,11 +1122,7 @@
   async function loadAndDisplay() {
     if (typeof window.clearSp2kpGeoPangan === 'function') window.clearSp2kpGeoPangan();
     try {
-      if (!loaded) {
-        loaded = true;
-        await Promise.all([loadCommodities(), populateProvinces()]);
-        setDefaultDates();
-      }
+      await initializeGeopangan();
     } catch (e) {
       console.error('[Geopangan] Gagal inisialisasi:', e);
     }
@@ -1095,9 +1134,32 @@
     }
     var resultEl = $('geopanganResult');
     var loadBtn = $('geopanganLoadBtn');
+    var commodityEl = $('geopanganCommodity');
+    if (!commodityEl || !commodityEl.value) {
+      if (resultEl) resultEl.innerHTML = '<div class="geopangan-loading"><span style="color:#dc2626;">Daftar komoditas PIHPS belum tersedia. Buka kembali card atau muat ulang halaman untuk mencoba lagi.</span></div>';
+      return;
+    }
+    var startInput = $('geopanganDateStart');
+    var endInput = $('geopanganDateEnd');
+    if (startInput && endInput && startInput.value && endInput.value && startInput.value > endInput.value) {
+      if (resultEl) resultEl.innerHTML = '<div class="geopangan-loading"><span style="color:#dc2626;">Tanggal awal harus sama dengan atau sebelum tanggal akhir.</span></div>';
+      return;
+    }
     if (loadBtn) loadBtn.disabled = true;
     setGeopanganLoading(true);
     if (resultEl) resultEl.innerHTML = '<div class="geopangan-loading"><span>Menyiapkan hasil...</span></div>';
+
+    // Remove the previous result before requesting a new one, so an empty or
+    // failed response cannot leave an outdated price map visible.
+    var mapBeforeLoad = getMap();
+    if (mapBeforeLoad && activeLayer) mapBeforeLoad.removeLayer(activeLayer);
+    activeLayer = null;
+    var tableBeforeLoad = $('geopanganTable');
+    if (tableBeforeLoad) tableBeforeLoad.innerHTML = '';
+    if (activeLegend) {
+      if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('geopangan');
+      activeLegend = null;
+    }
 
     try {
       var results = await Promise.all([fetchPriceData(), loadGeoJSON(), fetchInflasiData()]);
@@ -1127,9 +1189,6 @@
       var priceTypeName = priceTypeEl && priceTypeEl.selectedOptions[0] ? priceTypeEl.selectedOptions[0].textContent : '';
 
       var _m = getMap();
-      if (_m && activeLayer) { _m.removeLayer(activeLayer); activeLayer = null; }
-    if (activeLegend) { if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('geopangan'); activeLegend = null; }
-
       activeLayer = L.geoJSON(geojson, {
         style: function (feature) {
           var provName = normalize(feature.properties.nmprov);
@@ -1363,11 +1422,7 @@
 
   /* ── Public auto-load (called by sidebar.js) ── */
   window.geopanganAutoLoad = async function () {
-    if (!loaded) {
-      loaded = true;
-      await Promise.all([loadCommodities(), populateProvinces()]);
-      setDefaultDates();
-    }
+    await initializeGeopangan();
   };
 
   /* ── Public cleanup (called by reset layers) ── */
@@ -1623,12 +1678,22 @@
 
   /* ── Init on first load if already on tab ── */
   async function init() {
-    await Promise.all([loadCommodities(), populateProvinces()]);
-    setDefaultDates();
+    await initializeGeopangan();
   }
 
   /* ── Event listeners ── */
   document.addEventListener('DOMContentLoaded', function () {
+    var pihpsCard = $('geopangan-card-pihps');
+    if (pihpsCard) {
+      pihpsCard.addEventListener('toggle', function () {
+        if (pihpsCard.open) window.geopanganAutoLoad().catch(function (error) {
+          console.error('[Geopangan] Gagal menyiapkan card PIHPS:', error);
+        });
+      });
+      if (pihpsCard.open) window.geopanganAutoLoad().catch(function (error) {
+        console.error('[Geopangan] Gagal menyiapkan card PIHPS:', error);
+      });
+    }
     var loadBtn = $('geopanganLoadBtn');
     if (loadBtn) loadBtn.addEventListener('click', loadAndDisplay);
     var resetBtn = $('geopanganResetBtn');

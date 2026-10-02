@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=70">
+  <link rel="stylesheet" href="assets/css/app.css?v=71">
 
 </head>
 
@@ -1481,12 +1481,19 @@
           <h4 style="font-size:15px; margin-bottom:4px;">GeoCuaca Analysis</h4>
           <p class="geotools-desc" style="margin-bottom:12px;">Monitoring Cuaca secara realtime dalam satu peta.</p>
 
-          <div class="search-weather-container" style="margin-top:8px; margin-bottom:4px;">
-            <input type="text" id="weatherSearchInput" class="search-weather-input"
-              placeholder="🔍 Cari Desa/Kelurahan..." autocomplete="off" />
-            <div id="autocompleteResults" class="autocomplete-results"></div>
-          </div>
-          <button id="geopulseResetLayersBtn" class="geopangan-btn geopangan-reset-btn geotools-reset-layer-btn geotools-weather-reset-btn" type="button" title="Reset semua layer GeoCuaca" aria-label="Reset layer GeoCuaca">Reset Layer GeoCuaca</button>
+          <!-- Pencarian lokasi + tombol Reset Layer TIDAK lagi berdiri sendiri
+               di level panel ini. Keduanya dipindahkan ke paling bawah badan
+               kartu "Cuaca Sekarang" (#weather-card-sekarang) di dalam
+               #gempa-subtab-infocuaca.
+
+               Alasannya: sebagai kontrol yang melayang bebas di atas kartu,
+               keduanya memakan tinggi sheet GeoCuaca sejak panel dibuka,
+               padahal isinya baru berguna setelah kartu itu dibuka. Sekarang
+               keduanya ikut terlipat bersama kartu.
+
+               Id keduanya (#weatherSearchInput, #autocompleteResults,
+               #geopulseResetLayersBtn) sengaja tidak berubah, jadi
+               weather-data.js dan weather-init.js tidak perlu disentuh. -->
 
           <div class="gempa-subtabs" style="display:none;">
 
@@ -1809,9 +1816,61 @@
      section ini terlihat, dan sidebar.js:162 mencari
      '.gempa-subtab-panel' secara global untuk menukar .active. -->
     <div id="weather-content">
-              <div style="font-size:13px; color:#fff; background:#0a4d8c; padding:10px; margin-bottom: 100px; border-radius:5px;">
-                ℹ️ Pilih lokasi dari pencarian untuk melihat cuaca.
-              </div>
+              <!-- Kartu "Cuaca Sekarang" sekarang STATIS.
+     
+                  Sebelumnya kartu ini dibuat runtime oleh displayWeatherInfo()
+                  di weather-bmkg.js, dan itu membuat dua masalah yang tidak
+                  bisa diselesaikan dengan memindahkan markup:
+     
+                  1. Chicken-and-egg. Kotak pencarian itulah yang dipakai
+                     untuk memilih lokasi pertama, sedangkan kartunya baru ada
+                     setelah ada lokasi. Kalau pencarian dipindahkan ke dalam
+                     kartu runtime, tidak ada cara masuk ke sana.
+                  2. #weather-content dihapus total di empat tempat
+                     (weather-bmkg.js: loading, error, data kosong, dan hasil
+                     render). Apa pun yang ditaruh di dalamnya ikut hilang
+                     tiap kali lokasi diganti.
+     
+                  Karena itu #weather-content sekarang hanya pembungkus, dan
+                  isinya dipecah jadi dua host yang terpisah:
+                   - #weather-now-host  : hero cuaca saat ini (.weather-hero)
+                   - #weather-extra-host: kartu "Grafik Suhu", "Prakiraan
+                                          Cuaca", dan .weather-source
+     
+JS hanya mengisi kedua host itu, tidak pernah mengosongkan
+                  #weather-content.
+
+                  Perhatikan bahwa ketiga pembungkus di dalam section ini tidak
+                  memakai kelas, hanya id. Alasannya: test-geopulse-cuaca.cjs
+                  memakai pola selector yang bergantung pada keberadaan
+                  `class="` untuk membedakan kartu yang jadi anak langsung
+                  section dari kartu yang dibungkus host.
+     
+                  Dua kontrol (Cari + Reset Layer) diletakkan paling bawah
+                  badan kartu, setelah #weather-now-host. -->
+              <details class="geopulse-card" id="weather-card-sekarang" aria-labelledby="weatherCardSekarangTitle">
+                <summary class="gt-card-head">
+                  <span class="gt-card-icon" aria-hidden="true">&#9729;&#65039;</span>
+                  <span>
+                    <b id="weatherCardSekarangTitle">Cuaca Sekarang</b>
+                    <small id="weatherCardSekarangLokasi">Pilih lokasi di bawah</small>
+                  </span>
+                </summary>
+                <div class="geopulse-card-body">
+                  <div id="weather-now-host">
+                    <p class="weather-empty">&#9432;&#65039; Pilih lokasi dari pencarian di bawah untuk melihat cuaca.</p>
+                  </div>
+
+                  <div class="search-weather-container">
+                    <input type="text" id="weatherSearchInput" class="search-weather-input"
+                      placeholder="&#128269; Cari Desa/Kelurahan..." autocomplete="off" />
+                    <div id="autocompleteResults" class="autocomplete-results"></div>
+                  </div>
+                  <button id="geopulseResetLayersBtn" class="geopangan-btn geopangan-reset-btn geotools-reset-layer-btn geotools-weather-reset-btn" type="button" title="Reset semua layer GeoCuaca" aria-label="Reset layer GeoCuaca">Reset Layer GeoCuaca</button>
+                </div>
+              </details>
+
+              <div id="weather-extra-host"></div>
             </div>
             <details class="geopulse-card" id="geopulse-cuaca-maritim" aria-labelledby="geopulseCuacaMaritimTitle">
               <summary class="gt-card-head">
@@ -2931,10 +2990,6 @@
 
 <div id="geodata-panel-host">
   <div id="geotoolsTabMuatData" class="geodata-panel">
-              <h4 style="font-size:15px; margin-bottom:4px;">GeoData Analysis</h4>
-              <p class="geotools-desc" style="margin-bottom:20px;">Pilih dan masukkan berbagai sumber data untuk analisis.</p>
-
-
               <div class="geotools-2col-main">
                <div class="geoid-subtabs geotools-upload-tabs">
                <button class="geoid-subtab-btn" data-subtab="alat-tab-shp" onclick="openGeoidSubtab(this)">
@@ -3394,7 +3449,7 @@
   <script src="assets/js/likuifaksi.js"></script>
   <script src="assets/js/karst.js"></script>
   <script src="assets/js/concessions-layer.js"></script>
-  <script src="assets/js/geopangan.js"></script>
+  <script src="assets/js/geopangan.js?v=20261002"></script>
   <script src="assets/js/sp2kp-geopangan.js"></script>
   <script src="assets/js/sppg-district.js"></script>
   <script src="assets/js/water-need.js?v=1"></script>

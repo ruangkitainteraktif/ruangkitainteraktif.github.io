@@ -45,10 +45,39 @@
     map.once('moveend', () => selectedWeatherMarker?.openPopup());
   }
 
+  /* Host tempat modul ini menulis hasil render.
+   *
+   * kartu "Cuaca Sekarang" sekarang statis di index.html (lihat
+   * test-geopulse-cuaca.cjs bagian "kartu statis + host"), jadi #weather-content
+   * tidak boleh lagi dipakai sebagai target innerHTML: mem-performing
+   * replacement utuhnya akan ikut menghapus kartu itu beserta kotak pencarian
+   * dan tombol Reset Layer yang kini tinggal di dalamnya.
+   *
+   * Karena itu isinya dipecah dua:
+   *   #weather-now-host   - hero cuaca saat ini
+   *   #weather-extra-host - kartu "Grafik Suhu" dan "Prakiraan Cuaca"
+   *                         (.weather-source ikut di dalam badan kartu
+   *                         "Prakiraan Cuaca", bukan di luar kartu)
+   *
+   * Fallback ke #weather-content dipakai supaya halaman uji yang masih memuat
+   * markup lama tidak berhenti total: tanpa host, hasilnya ditumpuk di satu
+   * wadah seperti perilaku sebelumnya. */
+  function hostCuaca(id, html) {
+    const host = document.getElementById(id) || document.getElementById('weather-content');
+    if (!host) return null;
+    host.innerHTML = html;
+    return host;
+  }
+
+  function kosongkanHostCuaca(id) {
+    const host = document.getElementById(id);
+    if (host) host.innerHTML = '';
+  }
+
   async function fetchWeatherBMKG(adm4Code, { focusMap = true } = {}) {
     const requestToken = ++weatherFetchToken;
-    const weatherContainer = document.getElementById('weather-content');
-    weatherContainer.innerHTML = '<p style="font-size:12px; color:#666;">Memuat data cuaca BMKG...</p>';
+    kosongkanHostCuaca('weather-extra-host');
+    hostCuaca('weather-now-host', '<p class="weather-empty">Memuat data cuaca BMKG...</p>');
 
     try {
       const response = await fetch(`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${adm4Code}`);
@@ -61,7 +90,7 @@
     } catch (error) {
       if (focusMap && requestToken !== weatherFetchToken) return;
       console.error('Error BMKG API:', error);
-      weatherContainer.innerHTML = `<p style="color:red; font-size:12px;">Gagal memuat cuaca untuk kode: ${adm4Code}</p>`;
+      hostCuaca('weather-now-host', `<p class="weather-empty weather-error">Gagal memuat cuaca untuk kode: ${escapeBMKGHTML(adm4Code)}</p>`);
     }
   }
 
@@ -360,17 +389,28 @@
 
   window.updateInsightWeatherCard = updateInsightWeatherCard;
 
+  /* Kartu "Cuaca Sekarang" tidak lagi dibangun di sini: markup-nya statis di
+   index.html, supaya kotak pencarian di dalamnya selalu bisa dijangkau
+   (termasuk sebelum lokasi pertama dipilih). Yang ditulis fungsi ini hanya
+   host di dalam kartu itu, bukan kartu itu sendiri. */
   function displayWeatherInfo(data) {
-    const container = document.getElementById('weather-content');
     const lokasi = data.lokasi || {};
     const forecastDays = (data.data?.[0]?.cuaca || []).filter(day => Array.isArray(day) && day.length);
 
     if (!forecastDays.length) {
-      container.innerHTML = '<p style="font-size:12px;">Data cuaca tidak tersedia untuk wilayah ini.</p>';
+      kosongkanHostCuaca('weather-extra-host');
+      hostCuaca('weather-now-host', '<p class="weather-empty">Data cuaca tidak tersedia untuk wilayah ini.</p>');
+      const judulTanpaData = document.getElementById('weatherCardSekarangLokasi');
+      if (judulTanpaData) judulTanpaData.textContent = 'Wilayah ini tidak punya data';
       return;
     }
 
     const current = forecastDays[0][0];
+    const labelWilayah = [lokasi.desa, lokasi.kecamatan, lokasi.kabkota, lokasi.provinsi]
+      .filter(nama => typeof nama === 'string' && nama.trim())
+      .map(nama => nama.trim())
+      .join(', ') || 'Wilayah terpilih';
+    const wilayahAman = escapeHTML(labelWilayah);
     window.currentWeatherData = { lokasi, cuaca: current };
     updateInsightWeatherCard();
     const formatTime = datetime => String(datetime || '').split(' ')[1]?.slice(0, 5) || '-';
@@ -388,39 +428,35 @@
     const minTemp = Math.min(...allSlots);
     const maxTemp = Math.max(...allSlots);
 
-    let html = `
-      <details class="geopulse-card" id="weather-card-sekarang" aria-labelledby="weatherCardSekarangTitle">
-        <summary class="gt-card-head">
-          <span class="gt-card-icon" aria-hidden="true">&#9729;&#65039;</span>
-          <span>
-            <b id="weatherCardSekarangTitle">Cuaca Sekarang</b>
-            <small>${escapeHTML(lokasi.desa || 'Wilayah')}${lokasi.kecamatan ? ' &middot; ' + escapeHTML(lokasi.kecamatan) : ''}</small>
-          </span>
-        </summary>
-        <div class="geopulse-card-body">
-          <div class="weather-hero">
-                  <p class="weather-hero-location">${escapeHTML(lokasi.desa || 'Wilayah')}, ${escapeHTML(lokasi.kecamatan || '')}</p>
-                  <p class="weather-hero-region">${escapeHTML(lokasi.kabkota || '')}, ${escapeHTML(lokasi.provinsi || '')}</p>
-                  <div class="weather-now">
-                    <img src="${escapeHTML(current.image || '')}" alt="${escapeHTML(current.weather_desc || 'Cuaca')}">
-                    <div><div class="weather-now-temp">${escapeHTML(current.t ?? '-')}°C</div><div class="weather-now-desc">${escapeHTML(current.weather_desc || 'Tidak tersedia')} · ${formatTime(current.local_datetime)}</div></div>
-                  </div>
-                  <div class="weather-metrics">
-                    <div class="weather-metric" style="color:#fff">Kelembapan<strong style="color:#fff">${escapeHTML(current.hu ?? '-')}%</strong></div>
-                    <div class="weather-metric" style="color:#fff">Angin<strong style="color:#fff">${escapeHTML(current.ws ?? '-')} km/j</strong></div>
-                    <div class="weather-metric" style="color:#fff">Awan<strong style="color:#fff">${escapeHTML(current.tcc ?? '-')}%</strong></div>
-                    <div class="weather-metric" style="color:#fff">Arah Angin<strong style="color:#fff">${escapeHTML(current.wd_to ?? '-')} (${escapeHTML(current.wd ?? '-')})</strong></div>
-                  </div>
-                </div>
-        </div>
-      </details>
+    const judulLokasi = document.getElementById('weatherCardSekarangLokasi');
+    if (judulLokasi) {
+      judulLokasi.textContent = `${escapeHTML(lokasi.desa || 'Wilayah')}${lokasi.kecamatan ? ' · ' + escapeHTML(lokasi.kecamatan) : ''}`;
+    }
 
+    hostCuaca('weather-now-host', `
+      <div class="weather-hero">
+              <p class="weather-hero-location">${escapeHTML(lokasi.desa || 'Wilayah')}, ${escapeHTML(lokasi.kecamatan || '')}</p>
+              <p class="weather-hero-region">${escapeHTML(lokasi.kabkota || '')}, ${escapeHTML(lokasi.provinsi || '')}</p>
+              <div class="weather-now">
+                <img src="${escapeHTML(current.image || '')}" alt="${escapeHTML(current.weather_desc || 'Cuaca')}">
+                <div><div class="weather-now-temp">${escapeHTML(current.t ?? '-')}°C</div><div class="weather-now-desc">${escapeHTML(current.weather_desc || 'Tidak tersedia')} · ${formatTime(current.local_datetime)}</div></div>
+              </div>
+              <div class="weather-metrics">
+                <div class="weather-metric" style="color:#fff">Kelembapan<strong style="color:#fff">${escapeHTML(current.hu ?? '-')}%</strong></div>
+                <div class="weather-metric" style="color:#fff">Angin<strong style="color:#fff">${escapeHTML(current.ws ?? '-')} km/j</strong></div>
+                <div class="weather-metric" style="color:#fff">Awan<strong style="color:#fff">${escapeHTML(current.tcc ?? '-')}%</strong></div>
+                <div class="weather-metric" style="color:#fff">Arah Angin<strong style="color:#fff">${escapeHTML(current.wd_to ?? '-')} (${escapeHTML(current.wd ?? '-')})</strong></div>
+              </div>
+            </div>
+    `);
+
+    let html = `
       <details class="geopulse-card" id="weather-card-grafik-suhu" aria-labelledby="weatherCardGrafikSuhuTitle">
         <summary class="gt-card-head">
           <span class="gt-card-icon" aria-hidden="true">&#128202;</span>
           <span>
             <b id="weatherCardGrafikSuhuTitle">Grafik Suhu</b>
-            <small>Prakiraan 3 hari</small>
+            <small>${wilayahAman} · Prakiraan 3 hari</small>
           </span>
         </summary>
         <div class="geopulse-card-body">
@@ -441,7 +477,7 @@
           <span class="gt-card-icon" aria-hidden="true">&#128197;</span>
           <span>
             <b id="weatherCardPrakiraanTitle">Prakiraan Cuaca</b>
-            <small>3 hari &middot; per 3 jam</small>
+            <small>${wilayahAman} · 3 hari &middot; per 3 jam</small>
           </span>
         </summary>
         <div class="geopulse-card-body">
@@ -460,7 +496,17 @@
       `;
     });
 
-    html += `</div></div></details><p class="weather-source" style="margin: 10px 0 0">BMKG · diperbarui ${escapeHTML(current.local_datetime || '-')}</p>`;
-    container.innerHTML = html;
+    /* Tiga tag penutup, bukan empat.
+   *
+   * .weather-source ("BMKG · diperbarui ...") dulu berada DI LUAR kartu
+   * "#weather-card-prakiraan", jadi ia tampil sebagai baris yang menggantung
+   * di bawah kartu. Sekarang ikut masuk ke dalam badan kartu, tepat di bawah
+   * .weather-days-grid - isinya kartu yang terakhir harus diketahui pembaca
+   * (kapan angka-angka ini dibuat), bukan baris lepas yang menempel ke kartu
+   * berikutnya.
+   *
+   * Urutan penutup sekarang: grid -> .weather-source -> badan kartu -> kartu. */
+    html += `</div><p class="weather-source" style="margin: 10px 0 0">BMKG · diperbarui ${escapeHTML(current.local_datetime || '-')}</p></div></details>`;
+    hostCuaca('weather-extra-host', html);
     if (typeof initWeatherSearch === 'function') initWeatherSearch();
   }

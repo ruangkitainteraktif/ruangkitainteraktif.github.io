@@ -4739,8 +4739,10 @@
     }
     .search-weather-input {
       width: 100%;
-      padding: 8px 12px;
+      min-height: 38px;
+      padding: 9px 12px;
       font-size: 12px;
+      line-height: 18px;
       border: 1px solid #ccc;
       border-radius: 6px;
       box-sizing: border-box;
@@ -8378,16 +8380,20 @@
      * di markup, justru supaya aturan itu terus berlaku. */
     .geopulse-card-body.cctv-layers { margin: 0; }
 
-    /* Tiga kartu runtime di #weather-content (dibuat oleh displayWeatherInfo()
-     * lewat innerHTML, jadi tidak ada di index.html): "Cuaca Sekarang",
-     * "Grafik Suhu", dan "Prakiraan Cuaca".
-     *
-     * Ketiganya memakai .geopulse-card yang sama, dan jarak 10px antar
-     * kartu di dalamnya sudah otomatis oleh ".geopulse-card + .geopulse-card".
-     * Yang perlu ditambah hanya jarak dari blok #weather-content ke kartu
-     * static pertama ("Layer Cuaca Maritim") - keduanya bukan saudara
-     * langsung, karena #weather-content menyelip di antaranya. */
+    /* #weather-content sekarang hanya pembungkus statis, dan isinya dipecah dua
+     host yang diisi displayWeatherInfo():
+       #weather-now-host   -> .weather-hero  (dalam kartu "Cuaca Sekarang")
+       #weather-extra-host -> "Grafik Suhu" dan "Prakiraan Cuaca"
+                               (.weather-source sudah jadi anak badan kartu
+                               "Prakiraan Cuaca", bukan baris lepas)
+     Ketiganya - kartu statis ini, kartu runtime di host kedua, dan kartu
+     "Cuaca Maritim" setelah pembungkus - bukan saudara langsung, jadi
+     ".geopulse-card + .geopulse-card" tidak lagi menyalakan jaraknya di
+     salah satu batas. Jarak 10px ditulis eksplisit per batas. */
     #weather-content { margin-bottom: 10px; }
+    #weather-extra-host { margin-top: 10px; }
+    /* Dua kartu di dalam host kedua tetap bersaudara, jadi aturan asal tetap
+     * berlaku untuk batas di antaranya - tidak perlu diulang. */
     /* Dua isi kartu berikut TIDAK dipipihkan ke gaya kartu template:
      *
      *  - .weather-hero memakai color:#fff di atas gradien biru. Kalau
@@ -8401,6 +8407,49 @@
      *    tetap terbaca. Margin dan radius-nya yang dirapikan saja. */
     .geopulse-card-body .weather-hero { margin: 0; border-radius: 8px; }
     .geopulse-card-body .temp-chart-section { margin: 0; border-radius: 8px; }
+
+    /* ── Kartu "Cuaca Sekarang": statis, dan jadi rumah dua kontrol ──
+     *
+     * Dua kontrol yang tadinya berdiri sendiri di level panel
+     * (#weatherSearchInput + #autocompleteResults, lalu
+     * #geopulseResetLayersBtn) dipindahkan ke paling bawah badan kartu ini,
+     * supaya ikut terlipat bersama kartu dan tidak memakan tinggi sheet
+     * GeoCuaca sejak panel dibuka. Lihat test-geopulse-cuaca.cjs.
+     *
+     * Dua masalah yang muncul karena pindah ke dalam kartu:
+     *
+     *  1. .autocomplete-results punya position:absolute + top:100% dan
+     *     max-height 200px, jadi selama .geopulse-card memakai
+     *     overflow:hidden (aturan di atas) daftar hasil pencarian akan
+     *     TERPOTONG di tepi bawah kartu. Kartu ini karena itu dibuat
+     *     overflow:visible.
+     *  2. Kepala kartu tidak punya border-radius sendiri - rounded corner-nya
+     *     selama ini datang dari overflow:hidden kartu. Kalau overflow
+     *     dilepas, radius harus dipasang langsung di kepala. ONLY di kartu
+     *     ini; kartu .geopulse-card lain tetap relies on overflow:hidden. */
+    #weather-card-sekarang { overflow: visible; }
+    #weather-card-sekarang > .gt-card-head { border-radius: 10px 10px 0 0; }
+
+    /* Jarak dua kontrol di dalam badan kartu. Nilai aslinya (margin-top 8px /
+     * margin-bottom 4px pada .search-weather-container, dan margin-bottom 24px
+     * pada .geotools-weather-reset-btn) berasal dari posisi lama di level
+     * panel, di mana keduanya menghadap ke kartu berikutnya. Di dalam kartu
+     * jaraknya hanya jarak antar kontrol dan ke padding badan kartu, jadi
+     * margin bawahnya harus hilang. */
+    #weather-card-sekarang .search-weather-container { margin: 12px 0 0; }
+    #weather-card-sekarang .geotools-weather-reset-btn { margin: 8px 0 0; }
+
+    /* Placeholder dan pesan galat di #weather-now-host. Awalnya keduanya
+     * <p> dengan inline style, yang hilang bersama kartu runtime. Sekarang
+     * kartu ini tidak pernah rebuilt, jadi stylenya dipindah ke sini supaya
+     * tidak hilang dan tidak perlu inline style yang menimpa. */
+    .weather-empty {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-muted);
+    }
+    .weather-error { color: #b91c1c; }
 
     .cctv-layer-toggle {
       display: flex;
