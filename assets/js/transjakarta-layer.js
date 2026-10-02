@@ -209,14 +209,8 @@
   function fiturTerfilterJalur() {
     if (!cacheJalur || !cacheJalur.features) return { type: 'FeatureCollection', features: [] };
     var fitur = cacheJalur.features.filter(filterFeatureByState);
-    if (koridorDisorot) {
-      fitur = fitur.filter(function (f) { return kunciKoridor((f.properties || {}).KORIDOR) === koridorDisorot; });
-    } else if (jenisDisorot) {
-      fitur = fitur.filter(function (f) {
-        var p = f.properties || {};
-        return normalizeLayanan(p.route_type_text || p.route_desc || p.Type || 'Layanan umum') === jenisDisorot;
-      });
-    }
+    /* Saat pertama dibuka tampilkan jaringan lengkap; klik baris membatasi ke koridor itu. */
+    if (koridorTerpilih) fitur = fitur.filter(function (f) { return kunciKoridor((f.properties || {}).KORIDOR) === koridorTerpilih; });
     return {
       type: 'FeatureCollection',
       features: fitur
@@ -326,6 +320,7 @@
   function pilihKoridor(kode, opts) {
     var target = kunciKoridor(kode);
     koridorTerpilih = target || null;
+    refreshLayerJalur();
     refreshStyleKoridorTerpilih();
     if (opts && opts.zoom !== false && target && cacheJalur && cacheJalur.features) {
       var feats = cacheJalur.features.filter(function (f) {
@@ -909,26 +904,6 @@ function tampilkanHalte(v) {
     if (!body || body.__tjPasang) return;
     body.__tjPasang = true;
 
-    function sorotanDariTarget(target) {
-      if (!target || !target.closest) return null;
-      var baris = target.closest('.tj-row');
-      if (baris && body.contains(baris)) return { koridor: baris.dataset.koridor || null, jenis: null };
-      return null;
-    }
-
-    function setSorotanDariTarget(target) {
-      var berikut = sorotanDariTarget(target) || { koridor: null, jenis: null };
-      if (koridorDisorot === berikut.koridor && jenisDisorot === berikut.jenis) return;
-      koridorDisorot = berikut.koridor;
-      jenisDisorot = berikut.jenis;
-      refreshLayerJalur();
-    }
-
-    body.addEventListener('pointerover', function (e) { setSorotanDariTarget(e.target); });
-    body.addEventListener('pointerout', function (e) { setSorotanDariTarget(e.relatedTarget); });
-    body.addEventListener('focusin', function (e) { setSorotanDariTarget(e.target); });
-    body.addEventListener('focusout', function (e) { setSorotanDariTarget(e.relatedTarget); });
-
     function keTombolLayer(e) {
       var btn = e.target.closest ? e.target.closest('[data-tj-layer]') : null;
       if (!btn || !body.contains(btn)) return false;
@@ -943,7 +918,7 @@ function tampilkanHalte(v) {
       var tr = e.target.closest ? e.target.closest('.tj-row') : null;
       if (!tr) return;
       var kode = tr.dataset.koridor;
-      pilihKoridor(kode, { zoom: true });
+      pilihKoridor(kode, { zoom: false });
       zoomKeKoridor(kode);
     }
 
@@ -1061,7 +1036,7 @@ function tampilkanHalte(v) {
     if (btnTutup) btnTutup.addEventListener('click', function () { tutupSheet(); });
     var btnMin = document.getElementById('transjakarta-sheet-minimize');
     if (btnMin) btnMin.addEventListener('click', function () {
-      if (window.SheetDrag) window.SheetDrag.minimize(SHEET_ID);
+      if (window.SheetDrag) window.SheetDrag.toggleMinimize(SHEET_ID);
     });
   });
 
@@ -1079,6 +1054,7 @@ function tampilkanHalte(v) {
       moduleActive = true;
       userTutupSheet = false;
       setJalur(true);
+      setHalte(true);
     } else {
       moduleActive = false;
       setJalur(false);

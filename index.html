@@ -2846,6 +2846,32 @@
                 </div>
               </details>
 
+              <details class="geofarm-ref geofarm-pupuk-rekom" id="geofarmPupukRekomCard" aria-labelledby="geofarmPupukRekomTitle">
+                <summary class="gt-card-head">
+                  <span class="gt-card-icon" aria-hidden="true">&#127793;</span>
+                  <span>
+                    <b id="geofarmPupukRekomTitle">Rekomendasi Pupuk Subsidi 2027</b>
+                    <small>Pencarian dosis pupuk bersubsidi per wilayah & komoditas</small>
+                  </span>
+                </summary>
+                <div class="geofarm-ref-body geofarm-pupuk-rekom-body">
+                  <div class="gfpr-filter-grid">
+                    <label>Provinsi<select id="gfprProvinsi"><option value="">Memuat daftar wilayah…</option></select></label>
+                    <label>Kabupaten / kota<select id="gfprKabupaten" disabled><option value="">Semua kabupaten/kota</option></select></label>
+                    <label>Kecamatan<select id="gfprKecamatan" disabled><option value="">Semua kecamatan</option></select></label>
+                    <label>Komoditas<select id="gfprKomoditas" disabled><option value="">Pilih komoditas</option></select></label>
+                    <label>Jenis pupuk<select id="gfprPupuk" disabled><option value="">Pilih jenis pupuk</option></select></label>
+                  </div>
+                  <button type="button" id="gfprCari" class="gfpr-run" disabled>
+                    <span aria-hidden="true">&#128269;</span> Tampilkan
+                  </button>
+                  <p id="gfprStatus" class="geofarm-ref-status" role="status" aria-live="polite">Buka kartu ini untuk memuat dosis 2027.</p>
+                  <div id="gfprResult" class="gfpr-result" hidden></div>
+                  <div id="gfprMapLegend" class="gfpr-map-legend" hidden></div>
+                  <p class="gfpr-source">Sumber dosis: <a href="https://erdkk25.pertanian.go.id/uploads/ref/Dosis_2027_Semua_Komoditas_Subsidi.xlsx" target="_blank" rel="noopener noreferrer">e-RDKK Kementerian Pertanian · 2027</a>. Polygon kabupaten memakai batas wilayah BPS lokal; hasil kecamatan memakai batas BIG yang digunakan GeoFarm.</p>
+                </div>
+              </details>
+
               <details class="geofarm-ref" data-ref-card="pupuk-publik" aria-labelledby="geofarmRefPupukPublikTitle">
                 <summary class="gt-card-head">
                   <span class="gt-card-icon" aria-hidden="true">&#127793;</span>
@@ -3287,6 +3313,7 @@
   <script src="assets/js/dukcapil-population.js"></script>
   <script src="assets/data/kode_wilayah.js"></script>
   <script src="assets/js/geoid-wilayah.js"></script>
+  <script src="assets/js/geofarm-rekomendasi-pupuk.js"></script>
   <script src="assets/js/weather-data.js"></script>
   <script src="assets/js/weather-bmkg.js"></script>
   <script src="assets/js/weather-markers.js"></script>
