@@ -4,6 +4,7 @@
 
   var DATA_URL = 'assets/data/pertanian/dosis-subsidi-2027.json';
   var BATAS_URL = 'assets/data/bps/geojson/kabupaten.geojson';
+  var TITIK_KECAMATAN_URL = 'assets/data/SPPG_Sebaran.geojson';
   var FILE_SUMBER = 'https://erdkk25.pertanian.go.id/uploads/ref/Dosis_2027_Semua_Komoditas_Subsidi.xlsx';
   var LABEL_PUPUK = {
     urea: 'Urea', sp36: 'SP-36', za: 'ZA', npk: 'NPK', organik: 'Organik',
@@ -12,6 +13,7 @@
   var COLORS = ['#eff6ff', '#bfdbfe', '#60a5fa', '#2563eb', '#1e3a8a'];
   var dataPromise = null;
   var batasPromise = null;
+  var titikKecamatanPromise = null;
   var data = null;
   var boundaryLayer = null;
   var kodeIndex = null;
@@ -140,6 +142,19 @@
       });
     }
     return batasPromise;
+  }
+
+  function loadLocalKecamatanPoints() {
+    if (!titikKecamatanPromise) {
+      titikKecamatanPromise = fetch(TITIK_KECAMATAN_URL).then(function (response) {
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        return response.json();
+      }).catch(function (error) {
+        titikKecamatanPromise = null;
+        throw error;
+      });
+    }
+    return titikKecamatanPromise;
   }
 
   function regionName(code) {
@@ -276,6 +291,45 @@
       boundaryLayer = L.featureGroup(layers).addTo(window.map);
       var bounds = boundaryLayer.getBounds();
       if (bounds && bounds.isValid()) window.map.fitBounds(bounds, { padding: [32, 32], maxZoom: 13 });
+    }).catch(function (bigError) {
+      console.warn('[GeoFarm Pupuk] Batas BIG gagal, mencoba titik lokal SPPG:', bigError);
+      return showKecamatanPoints(result, fertilizerName, commodityName);
+    });
+  }
+
+  function showKecamatanPoints(result, fertilizerName, commodityName) {
+    var rawCode = String(result.code || '').replace(/\D/g, '').padStart(6, '0');
+    var bigCode = rawCode.slice(0, 2) + '.' + rawCode.slice(2, 4) + '.' + rawCode.slice(4, 6);
+    return loadLocalKecamatanPoints().then(function (collection) {
+      var features = (collection.features || []).filter(function (feature) {
+        var props = feature.properties || {};
+        return String(props.KDCPUM || '').replace(/\D/g, '').padStart(6, '0') === rawCode
+          && feature.geometry && feature.geometry.type === 'Point' && feature.geometry.coordinates;
+      });
+      if (!features.length) throw new Error('Batas BIG gagal dan tidak ada titik SPPG lokal untuk Kecamatan ' + result.name + ' (' + bigCode + ').');
+
+      var markers = features.map(function (feature) {
+        var props = feature.properties || {};
+        var coords = feature.geometry.coordinates;
+        var marker = L.circleMarker([coords[1], coords[0]], {
+          radius: 7, color: '#fff', weight: 2, fillColor: '#16a34a', fillOpacity: 0.95
+        });
+        marker.bindPopup('<div class="gfpr-popup"><b>' + escapeHtml(props['Nama SPPG'] || props.NAMOBJ || 'Titik SPPG') + '</b><br>'
+          + escapeHtml(props.Alamat || props['Kelurahan'] || '') + '<br>'
+          + '<small>Titik lokasi SPPG · Kode kecamatan BIG: ' + escapeHtml(props.KDCPUM || bigCode) + '</small><br>'
+          + escapeHtml(commodityName) + ' · ' + escapeHtml(fertilizerName) + ': <b>' + formatNumber(result.dose, 1) + ' kg/ha</b><br>'
+          + '<small>Dosis berlaku untuk kecamatan terpilih; titik ini bukan batas atau centroid kecamatan.</small></div>');
+        return marker;
+      });
+      boundaryLayer = L.featureGroup(markers).addTo(window.map);
+      var firstPoint = markers[0].getLatLng();
+      if (window.map.flyTo) window.map.flyTo(firstPoint, Math.max(window.map.getZoom(), 13), { animate: true, duration: 0.8 });
+      else window.map.setView(firstPoint, Math.max(window.map.getZoom(), 13));
+      el.legend.innerHTML = '<b>Titik lokasi SPPG · ' + formatNumber(markers.length, 0) + ' titik</b><br>'
+        + 'Batas kecamatan BIG tidak tersedia. Dosis ' + escapeHtml(fertilizerName) + ' sebesar '
+        + formatNumber(result.dose, 1) + ' kg/ha berlaku untuk kecamatan terpilih; titik SPPG hanya sebagai referensi lokasi.';
+      el.legend.hidden = false;
+      status('Batas kecamatan BIG gagal dimuat. Menampilkan ' + formatNumber(markers.length, 0) + ' titik lokasi SPPG lokal untuk ' + result.name + '.', 'success');
     });
   }
 
@@ -306,7 +360,7 @@
     status('Menampilkan ' + formatNumber(results.length, 0) + ' polygon wilayah berdasarkan dosis ' + fertilizerName + '.', 'success');
 
     if (el.kecamatan.value) {
-      el.legend.innerHTML = '<b>Polygon kecamatan dipilih</b><br>' + escapeHtml(fertilizerName) + ': ' + formatNumber(results[0].dose, 1) + ' kg/ha';
+      el.legend.innerHTML = '<b>Kecamatan dipilih</b><br>' + escapeHtml(fertilizerName) + ': ' + formatNumber(results[0].dose, 1) + ' kg/ha';
       el.legend.hidden = false;
       clearMapResults();
       return showKecamatanPolygon(results[0], fertilizerName, commodityName);

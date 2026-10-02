@@ -14879,7 +14879,7 @@ body.geofarm-draw-active .draw-actions-wrap {
 .gfpr-table th, .gfpr-table td { padding: 8px; border-bottom: 1px solid var(--border-secondary); text-align: left; }
 .gfpr-table th { position: sticky; top: 0; background: var(--bg-secondary); color: var(--text-tertiary); font-size: 9px; text-transform: uppercase; }
 .gfpr-table td:last-child, .gfpr-table th:last-child { text-align: right; white-space: nowrap; }
-.gfpr-table-wrap-primary { max-height: 320px; border-color: #86efac; box-shadow: 0 5px 18px rgba(22, 101, 52, .12); }
+.gfpr-table-wrap-primary { max-height: 320px; margin-bottom: 12px; border-color: #86efac; box-shadow: 0 5px 18px rgba(22, 101, 52, .12); }
 .gfpr-table--primary { font-size: 12px; }
 .gfpr-table--primary th { padding: 11px 10px; background: #f0fdf4; color: #166534; font-size: 10px; letter-spacing: .04em; }
 .gfpr-table--primary td { padding: 12px 10px; }
