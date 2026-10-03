@@ -45,6 +45,7 @@
   var DASAR = 'https://services8.arcgis.com/mpSDBlkEzjS62WgX/ArcGIS/rest/services/TransJakarta_Network/FeatureServer/';
   var DASAR_JALUR = 'https://services8.arcgis.com/mpSDBlkEzjS62WgX/arcgis/rest/services/Data_Jaringan_TransJakarta/FeatureServer/';
   var DASAR_JAKARTASATU = 'https://jakartasatu.jakarta.go.id/server/rest/services/JakartaSatu/Transjakarta/MapServer/';
+  var DATA_TRANSPORTASI_JAKARTA = 'https://gis-dpmptsp.jakarta.go.id/arcgis/rest/services/Hosted/Transportasi_Umum_Jakarta_v2/FeatureServer/0/query';
   var DASAR_JALAN_JAKARTASATU = 'https://jakartasatu.jakarta.go.id/server/rest/services/JakartaSatu/Peta_Jalan/MapServer/';
   var ID_HALTE = 0;
   var ID_JALUR = 0;
@@ -112,11 +113,14 @@
   var layerJalur = null;
   var layerJalurJakartaSatu = null;
   var layerHalte = null;
+  var layerAntarmoda = null;
   var cacheJalur = null;
   var cacheHalte = null;
+  var cacheAntarmoda = null;
   var visibleJalur = false;
   var visibleJalurJakartaSatu = false;
   var visibleHalte = false;
+  var visibleAntarmoda = false;
   var moduleActive = false;
   var koridorTerpilih = null;
   var koridorDisorot = null;
@@ -140,6 +144,8 @@
     ringkasJakartaSatu: [],
     totalKm: 0,
     halte: 0,
+    antarmoda: 0,
+    antarmodaError: '',
     filter: { q: '', kategori: 'all', jenis: {} }
   };
 
@@ -850,6 +856,92 @@ function popupHalte(p) {
    di atas batnasPane (100 = hillshade dan terrain) dan di bawah
    labelsPane (2000), supaya jalur tidak hilang di bawah relief tapi
    nama jalan tetap terbaca. */
+var KELAS_ANTARMODA = {
+  'STASIUN KA BANDARA': { nama: 'Kereta Bandara', warna: '#a855f7' },
+  'STASIUN KRL': { nama: 'KRL Commuter Line', warna: '#ef4444' },
+  'STASIUN LRT - FASE 1': { nama: 'LRT Jakarta', warna: '#0ea5e9' },
+  'STASIUN LRT - JABODEBEK': { nama: 'LRT Jabodebek', warna: '#f59e0b' },
+  'STASIUN MRT - FASE 1': { nama: 'MRT Jakarta', warna: '#14b8a6' },
+  'STASIUN UTAMA': { nama: 'Stasiun utama', warna: '#6366f1' }
+};
+
+function popupAntarmoda(p) {
+  var kelas = String(p.kelas || p.KELAS || '').toUpperCase();
+  var info = KELAS_ANTARMODA[kelas] || { nama: 'Transportasi publik', warna: '#64748b' };
+  var nama = p.nama || p.NAMA || p.alamat || p.ALAMAT || info.nama;
+  var html = '<div class="agol-popup" style="min-width:210px">';
+  html += headerPopup(info.warna, '<div class="agol-popup-title"><span class="agol-popup-badge-dot" style="background:' + info.warna + ';"></span>' + esc(nama) + '</div>');
+  html += '<div class="agol-popup-body"><div class="agol-popup-fields">';
+  html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Moda</span><span class="agol-popup-field-value">' + esc(info.nama) + '</span></div>';
+  if (p.jenis || p.JENIS) html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Jenis</span><span class="agol-popup-field-value">' + esc(p.jenis || p.JENIS) + '</span></div>';
+  if (p.koridor || p.KORIDOR) html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Koridor / jalur</span><span class="agol-popup-field-value">' + esc(p.koridor || p.KORIDOR) + '</span></div>';
+  if (p.alamat || p.ALAMAT) html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Alamat</span><span class="agol-popup-field-value">' + esc(p.alamat || p.ALAMAT) + '</span></div>';
+  html += '</div></div><div class="agol-popup-footer"><span>Sumber: DPMPTSP DKI Jakarta · Transportasi Umum Jakarta</span></div></div>';
+  return html;
+}
+
+function muatDataAntarmoda() {
+  if (cacheAntarmoda) return Promise.resolve(cacheAntarmoda);
+  var fitur = [];
+  function halaman(offset) {
+    var q = 'where=1%3D1&outFields=*&returnGeometry=true&outSR=4326&resultRecordCount=2000&resultOffset=' + offset + '&f=json';
+    return ambilJson(DATA_TRANSPORTASI_JAKARTA + '?' + q).then(function (data) {
+      if (data && data.error) throw new Error(data.error.message || 'Data simpul antarmoda gagal dimuat');
+      var batch = data && data.features || [];
+      fitur = fitur.concat(batch);
+      if (data && data.exceededTransferLimit && batch.length) return halaman(offset + batch.length);
+      var geojson = featuresKeGeoJson({ features: fitur });
+      geojson.features = geojson.features.filter(function (f) {
+        var kelas = String((f.properties || {}).kelas || '').toUpperCase();
+        return !!KELAS_ANTARMODA[kelas];
+      });
+      cacheAntarmoda = geojson;
+      state.antarmoda = geojson.features.length;
+      state.antarmodaError = '';
+      return geojson;
+    });
+  }
+  return halaman(0);
+}
+
+function buatLayerAntarmoda() {
+  if (!map.getPane('antarmodaPane')) map.createPane('antarmodaPane');
+  map.getPane('antarmodaPane').style.zIndex = '432';
+  return L.geoJSON(null, {
+    pane: 'antarmodaPane',
+    pointToLayer: function (f, latlng) {
+      var p = f.properties || {};
+      var info = KELAS_ANTARMODA[String(p.kelas || '').toUpperCase()] || {};
+      return L.circleMarker(latlng, { pane: 'antarmodaPane', radius: 6, color: '#fff', weight: 1.5, fillColor: info.warna || '#64748b', fillOpacity: .95 });
+    },
+    onEachFeature: function (f, layer) {
+      layer.bindPopup(popupAntarmoda(f.properties || {}), { maxWidth: 320, className: 'agol-leaflet-popup' });
+    }
+  });
+}
+
+function tampilkanAntarmoda(v) {
+  visibleAntarmoda = !!v;
+  if (!v) {
+    if (layerAntarmoda && map.hasLayer(layerAntarmoda)) map.removeLayer(layerAntarmoda);
+    renderSheet();
+    return;
+  }
+  if (!layerAntarmoda) layerAntarmoda = buatLayerAntarmoda();
+  renderSheet();
+  muatDataAntarmoda().then(function (data) {
+    if (!visibleAntarmoda) return;
+    layerAntarmoda.clearLayers();
+    layerAntarmoda.addData(data);
+    if (!map.hasLayer(layerAntarmoda)) layerAntarmoda.addTo(map);
+    renderSheet();
+  }).catch(function (err) {
+    state.antarmodaError = err && err.message ? err.message : 'Data simpul antarmoda tidak tersedia.';
+    visibleAntarmoda = false;
+    renderSheet();
+  });
+}
+
 function siapkanPane() {
   if (!map.getPane('transjakartaPane')) map.createPane('transjakartaPane');
   var p = map.getPane('transjakartaPane');
@@ -1398,12 +1490,14 @@ function tampilkanHalte(v) {
     visibleJalur = false;
     visibleJalurJakartaSatu = false;
     visibleHalte = false;
+    visibleAntarmoda = false;
     sementaraHalte = false;
     koridorTerpilih = null;
     koridorDisorot = null;
     jenisDisorot = null;
     sudahTerbang = false;
     state.filter.q = '';
+    if (layerAntarmoda && map.hasLayer(layerAntarmoda)) map.removeLayer(layerAntarmoda);
     tutupRouting();
     routingHalteAsal = '';
     routingHalteTujuan = '';
@@ -1510,6 +1604,7 @@ function tampilkanHalte(v) {
       + '</div>'
       + '</div>'
       + '<div class="tj-ctrl">'
+      + tombolLayer('antarmoda', visibleAntarmoda, state.antarmodaError ? 'gagal' : (state.antarmoda ? nomor(state.antarmoda) + ' simpul' : 'lihat'), '', 'KRL · MRT · LRT · Kereta Bandara')
       + tombolLayer('jalur', visibleJalur, ada + ' koridor', '', 'TransJakarta · Jalur Koridor')
       + tombolLayer('jakartasatu-jalur', visibleJalurJakartaSatu, nomor(state.ringkasJakartaSatu.length) + ' koridor', '', 'TransJakarta · Jalur Koridor JakartaSatu')
       + '</div>'
@@ -1520,7 +1615,7 @@ function tampilkanHalte(v) {
       + '<div class="tj-table-wrap"><table class="tj-table">'
       + '<thead><tr><th class="tj-th-koridor">Koridor</th><th class="tj-th-nama">Jenis layanan</th><th class="tj-th-km">Panjang</th></tr></thead>'
       + '<tbody>' + (barisJakartaSatu || '<tr><td colspan="3" class="tj-empty-row">Data koridor JakartaSatu tidak tersedia.</td></tr>') + '</tbody></table></div>'
-      + '<div class="tj-sumber">Sumber jalur: Data_Jaringan_TransJakarta (GTFS) dan JakartaSatu. Data halte digabung dari TransJakarta Network dan JakartaSatu.</div>';
+      + '<div class="tj-sumber">Sumber jalur: Data_Jaringan_TransJakarta (GTFS) dan JakartaSatu. Data halte digabung dari TransJakarta Network dan JakartaSatu. Titik antarmoda: DPMPTSP DKI Jakarta.</div>';
   }
 
   /* Klik baris = zoom ke koridor itu. Dipakai bersama klik+tap karena
@@ -1536,6 +1631,7 @@ function tampilkanHalte(v) {
       var key = btn.dataset.tjLayer;
       if (key === 'jalur') setJalur(!visibleJalur);
       else if (key === 'jakartasatu-jalur') setJalurJakartaSatu(!visibleJalurJakartaSatu);
+      else if (key === 'antarmoda') tampilkanAntarmoda(!visibleAntarmoda);
       else if (key === 'halte') setHalte(!visibleHalte);
       else return false;
       return true;
@@ -1792,6 +1888,7 @@ function tampilkanHalte(v) {
       moduleActive = false;
       setJalur(false);
       setJalurJakartaSatu(false);
+      tampilkanAntarmoda(false);
       setHalte(false);
       buangLegend();
       tutupSheet();
@@ -1805,7 +1902,7 @@ function tampilkanHalte(v) {
   window.isTransjakartaJalurActive = function () { return visibleJalur; };
   window.isTransjakartaJakartaSatuJalurActive = function () { return visibleJalurJakartaSatu; };
   window.isTransjakartaHalteActive = function () { return visibleHalte; };
-  window.isTransjakartaActive = function () { return moduleActive || visibleJalur || visibleJalurJakartaSatu || visibleHalte; };
+  window.isTransjakartaActive = function () { return moduleActive || visibleJalur || visibleJalurJakartaSatu || visibleHalte || visibleAntarmoda; };
   window.transjakartaCleanup = function () {
     window.toggleTransjakarta(false);
   };

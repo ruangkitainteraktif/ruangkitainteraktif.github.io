@@ -7763,7 +7763,7 @@
         -webkit-backdrop-filter: blur(14px);
       }
       .tj-routing-panel[hidden] { display: none; }
-      .tj-routing-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 9px; }
+      .tj-routing-head { position: sticky; top: -18px; z-index: 5; display: flex; justify-content: space-between; align-items: flex-start; margin: -18px -18px 10px; padding: 14px 18px 10px; border-bottom: 1px solid rgba(203, 213, 225, .72); border-radius: 16px 16px 0 0; background: rgba(255, 255, 255, .98); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
       .tj-routing-eyebrow { color: #0e7490; font-size: 9px; font-weight: 800; letter-spacing: .1em; }
       .tj-routing-head h3 { margin: 2px 0 0; color: #0f172a; font-size: 16px; line-height: 1.2; }
       .tj-routing-close { width: 28px; height: 28px; border: 0; border-radius: 50%; background: #f1f5f9; color: #64748b; font-size: 20px; line-height: 1; cursor: pointer; }
@@ -7811,6 +7811,7 @@
       #transjakarta-sheet.tj-routing-mode { transform: translateY(100%); visibility: hidden; pointer-events: none; }
       #transjakarta-sheet.sheet-open.tj-routing-mode { transform: translateY(100%); visibility: hidden; pointer-events: none; }
       [data-theme="dark"] .tj-routing-panel { border-color: #334155; background: rgba(15, 23, 42, .97); color: #e2e8f0; }
+      [data-theme="dark"] .tj-routing-head { border-bottom-color: rgba(71, 85, 105, .8); background: rgba(15, 23, 42, .98); }
       [data-theme="dark"] .tj-routing-head h3, [data-theme="dark"] .tj-routing-corridor b { color: #f1f5f9; }
       [data-theme="dark"] .tj-routing-minimize, [data-theme="dark"] .tj-routing-close { background: #1e293b; color: #cbd5e1; }
       [data-theme="dark"] .tj-routing-corridor { border-color: #164e63; background: #102b3a; }
