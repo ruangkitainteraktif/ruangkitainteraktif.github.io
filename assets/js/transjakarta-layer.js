@@ -45,6 +45,7 @@
   var DASAR = 'https://services8.arcgis.com/mpSDBlkEzjS62WgX/ArcGIS/rest/services/TransJakarta_Network/FeatureServer/';
   var DASAR_JALUR = 'https://services8.arcgis.com/mpSDBlkEzjS62WgX/arcgis/rest/services/Data_Jaringan_TransJakarta/FeatureServer/';
   var DASAR_JAKARTASATU = 'https://jakartasatu.jakarta.go.id/server/rest/services/JakartaSatu/Transjakarta/MapServer/';
+  var DASAR_JALAN_JAKARTASATU = 'https://jakartasatu.jakarta.go.id/server/rest/services/JakartaSatu/Peta_Jalan/MapServer/';
   var ID_HALTE = 0;
   var ID_JALUR = 0;
   var ID_JALUR_JAKARTASATU = 1;
@@ -1033,6 +1034,345 @@ function tampilkanHalte(v) {
 
   /* ── sheet ── */
   var SHEET_ID = 'transjakarta';
+  var routingKoridor = null;
+  var routingHalteAsal = '';
+  var routingHalteTujuan = '';
+  var layerRuteJalan = null;
+  var cacheJalanRute = Object.create(null);
+
+  function jarakKoordinat(a, b) {
+    var rad = Math.PI / 180;
+    var dLat = (b[1] - a[1]) * rad;
+    var dLon = (b[0] - a[0]) * rad;
+    var lat1 = a[1] * rad;
+    var lat2 = b[1] * rad;
+    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+      + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return 6371000 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+  }
+
+  function muatRuasJalan(awal, akhir) {
+    var titikAwal = awal.map(function (v) { return Number(v).toFixed(5); }).join(',');
+    var titikAkhir = akhir.map(function (v) { return Number(v).toFixed(5); }).join(',');
+    var key = [titikAwal, titikAkhir].sort().join('|');
+    if (cacheJalanRute[key]) return Promise.resolve(cacheJalanRute[key]);
+
+    /* Query sepanjang koridor lurus, bukan satu envelope raksasa yang
+     * ikut mengambil seluruh jaringan di antara dua titik berjauhan. */
+    var jarakLurus = jarakKoordinat(awal, akhir);
+    var jumlahTile = Math.max(1, Math.ceil(jarakLurus / 800));
+    var tiles = [];
+    for (var ti = 0; ti <= jumlahTile; ti++) {
+      var t = ti / jumlahTile;
+      var lon = awal[0] + (akhir[0] - awal[0]) * t;
+      var lat = awal[1] + (akhir[1] - awal[1]) * t;
+      tiles.push([lon - 0.0075, lat - 0.006, lon + 0.0075, lat + 0.006]);
+    }
+    var limit = 1000;
+    var unik = Object.create(null);
+    var jumlahUnik = 0;
+    function identitas(f) {
+      var a = f.attributes || {};
+      var idKey = Object.keys(a).filter(function (k) { return /^(objectid|fid|id)$/i.test(k); })[0];
+      if (idKey && a[idKey] != null) return 'id:' + a[idKey];
+      var g = f.geometry || {};
+      var paths = g.paths || [];
+      var line = paths[0] || [];
+      if (line.length) return 'geo:' + line.length + ':' + line[0].join(',') + ':' + line[line.length - 1].join(',');
+      return 'raw:' + JSON.stringify(g);
+    }
+    function bacaTile(index) {
+      if (index >= tiles.length || jumlahUnik >= 30000) return Promise.resolve();
+      var box = tiles[index];
+      function halaman(offset, jumlahTileFitur) {
+      var q = [
+        'where=1%3D1', 'returnGeometry=true', 'outFields=*', 'outSR=4326',
+        'geometry=' + box.join('%2C'),
+        'geometryType=esriGeometryEnvelope', 'inSR=4326',
+        'spatialRel=esriSpatialRelIntersects', 'resultRecordCount=' + limit,
+        'resultOffset=' + offset, 'f=json'
+      ].join('&');
+      return ambilJson(DASAR_JALAN_JAKARTASATU + '0/query?' + q).then(function (data) {
+        if (data && data.error) throw new Error(data.error.message || 'Layanan Peta Jalan menolak permintaan');
+        var batch = data && data.features || [];
+        batch.forEach(function (f) {
+          var id = identitas(f);
+          if (unik[id]) return;
+          unik[id] = f;
+          jumlahUnik++;
+        });
+        jumlahTileFitur += batch.length;
+        if (jumlahTileFitur >= 6000 && (data.exceededTransferLimit || batch.length === limit)) {
+          throw new Error('Satu area jalan terlalu padat untuk diproses. Pilih halte di area yang lebih dekat.');
+        }
+        if (jumlahUnik < 30000 && ((data && data.exceededTransferLimit) || batch.length === limit) && batch.length) {
+          return halaman(offset + batch.length, jumlahTileFitur);
+        }
+        return bacaTile(index + 1);
+      });
+      }
+      return halaman(0, 0);
+    }
+    return bacaTile(0).then(function () {
+      var features = Object.keys(unik).map(function (id) { return unik[id]; });
+      var geojson = featuresKeGeoJson({ features: features });
+      cacheJalanRute[key] = geojson.features;
+      return geojson.features;
+    });
+  }
+
+  function grafJalan(features) {
+    var nodes = Object.create(null);
+    function nodeUntuk(c) {
+      var lon = Number(c[0]), lat = Number(c[1]);
+      if (!Number.isFinite(lon) || !Number.isFinite(lat)) return null;
+      var k = lon.toFixed(5) + ':' + lat.toFixed(5);
+      if (!nodes[k]) nodes[k] = { key: k, c: [lon, lat], edges: [] };
+      return nodes[k];
+    }
+    function tambahGaris(coords) {
+      for (var i = 1; i < coords.length; i++) {
+        var a = nodeUntuk(coords[i - 1]), b = nodeUntuk(coords[i]);
+        if (!a || !b || a.key === b.key) continue;
+        var d = jarakKoordinat(a.c, b.c);
+        if (!(d > 0) || d > 2000) continue;
+        a.edges.push({ ke: b.key, jarak: d });
+        b.edges.push({ ke: a.key, jarak: d });
+      }
+    }
+    (features || []).forEach(function (f) {
+      var g = f.geometry;
+      if (!g) return;
+      if (g.type === 'LineString') tambahGaris(g.coordinates || []);
+      else if (g.type === 'MultiLineString') (g.coordinates || []).forEach(tambahGaris);
+    });
+    return nodes;
+  }
+
+  function nodeTerdekat(nodes, c) {
+    var terdekat = null, dMin = Infinity;
+    Object.keys(nodes).forEach(function (k) {
+      var d = jarakKoordinat(nodes[k].c, c);
+      if (d < dMin) { dMin = d; terdekat = nodes[k]; }
+    });
+    return terdekat && dMin <= 1200 ? terdekat : null;
+  }
+
+  function jalurTerpendek(nodes, sumber, tujuan) {
+    if (!sumber || !tujuan) return null;
+    var jarak = Object.create(null), sebelum = Object.create(null), selesai = Object.create(null);
+    var antrean = [];
+    function push(item) {
+      var i = antrean.length;
+      antrean.push(item);
+      while (i > 0) {
+        var parent = Math.floor((i - 1) / 2);
+        if (antrean[parent].d <= item.d) break;
+        antrean[i] = antrean[parent]; i = parent;
+      }
+      antrean[i] = item;
+    }
+    function pop() {
+      var first = antrean[0], last = antrean.pop();
+      if (antrean.length) {
+        var i = 0;
+        while (true) {
+          var left = i * 2 + 1, right = left + 1;
+          if (left >= antrean.length) break;
+          var child = right < antrean.length && antrean[right].d < antrean[left].d ? right : left;
+          if (antrean[child].d >= last.d) break;
+          antrean[i] = antrean[child]; i = child;
+        }
+        antrean[i] = last;
+      }
+      return first;
+    }
+    jarak[sumber.key] = 0;
+    push({ key: sumber.key, d: 0 });
+    while (antrean.length) {
+      var kini = pop();
+      if (selesai[kini.key]) continue;
+      if (kini.key === tujuan.key) break;
+      selesai[kini.key] = true;
+      nodes[kini.key].edges.forEach(function (e) {
+        if (selesai[e.ke]) return;
+        var baru = kini.d + e.jarak;
+        if (jarak[e.ke] == null || baru < jarak[e.ke]) {
+          jarak[e.ke] = baru;
+          sebelum[e.ke] = kini.key;
+          push({ key: e.ke, d: baru });
+        }
+      });
+    }
+    if (jarak[tujuan.key] == null) return null;
+    var keys = [], k = tujuan.key;
+    while (k) { keys.push(k); if (k === sumber.key) break; k = sebelum[k]; }
+    if (keys[keys.length - 1] !== sumber.key) return null;
+    keys.reverse();
+    return { coordinates: keys.map(function (id) { return nodes[id].c; }), distanceM: jarak[tujuan.key] };
+  }
+
+  function halteDenganNama(nama) {
+    var q = String(nama || '').trim().toLowerCase();
+    return (cacheHalte && cacheHalte.features || []).filter(function (f) {
+      var p = f.properties || {};
+      return String(p.stop_name || p.NAMA || '').trim().toLowerCase() === q;
+    })[0] || null;
+  }
+
+  function proyeksiKeRuas(titik, a, b) {
+    var lat0 = titik[1] * Math.PI / 180;
+    var skalaX = 111320 * Math.cos(lat0), skalaY = 110574;
+    var bx = (b[0] - a[0]) * skalaX, by = (b[1] - a[1]) * skalaY;
+    var px = (titik[0] - a[0]) * skalaX, py = (titik[1] - a[1]) * skalaY;
+    var panjang2 = bx * bx + by * by;
+    var t = panjang2 ? Math.max(0, Math.min(1, (px * bx + py * by) / panjang2)) : 0;
+    var c = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+    return { t: t, koordinat: c, jarak: jarakKoordinat(titik, c) };
+  }
+
+  function posisiTerdekatPadaGaris(garis, titik) {
+    var kumulatif = 0, hasil = null;
+    for (var i = 1; i < garis.length; i++) {
+      var a = garis[i - 1], b = garis[i];
+      var segmen = jarakKoordinat(a, b);
+      var proyeksi = proyeksiKeRuas(titik, a, b);
+      if (!hasil || proyeksi.jarak < hasil.jarak) {
+        hasil = { jarak: proyeksi.jarak, posisi: kumulatif + segmen * proyeksi.t };
+      }
+      kumulatif += segmen;
+    }
+    return hasil;
+  }
+
+  function perbandinganKoridor(awal, akhir, kodeTerpilih, sumberTerpilih) {
+    if (!cacheJalur || !cacheJalur.features) return [];
+    var hasil = Object.create(null);
+    cacheJalur.features.forEach(function (f) {
+      var p = f.properties || {};
+      var kode = kunciKoridor(p.KORIDOR || p.route_short_name || p.ROUTE_ID);
+      if (!kode || !f.geometry) return;
+      var paths = f.geometry.type === 'LineString' ? [f.geometry.coordinates]
+        : f.geometry.type === 'MultiLineString' ? f.geometry.coordinates : [];
+      var terbaik = null;
+      paths.forEach(function (line) {
+        if (!line || line.length < 2) return;
+        var a = posisiTerdekatPadaGaris(line, awal);
+        var b = posisiTerdekatPadaGaris(line, akhir);
+        if (!a || !b || a.jarak > 450 || b.jarak > 450) return;
+        var jarak = a.jarak + Math.abs(a.posisi - b.posisi) + b.jarak;
+        if (!terbaik || jarak < terbaik.jarakM) terbaik = { jarakM: jarak, celahAsalM: a.jarak, celahTujuanM: b.jarak };
+      });
+      if (!terbaik) return;
+      var tipe = normalizeLayanan(p.route_type_text || p.route_desc || p.Type || 'Layanan umum');
+      var sumber = p.__rangkumanRoute === false ? 'jakartasatu' : 'gtfs';
+      var key = sumber + ':' + kode + ':' + tipe;
+      if (!hasil[key] || terbaik.jarakM < hasil[key].jarakM) {
+        hasil[key] = {
+          kode: kode,
+          nama: (infoKoridor(kode) || {}).nama || p.route_short_name || p.JURUSAN || ('Koridor ' + kode),
+          tipe: tipe,
+          sumber: sumber,
+          jarakM: terbaik.jarakM,
+          celahAsalM: terbaik.celahAsalM,
+          celahTujuanM: terbaik.celahTujuanM,
+          terpilih: kode === kunciKoridor(kodeTerpilih) && sumber === sumberTerpilih
+        };
+      }
+    });
+    return Object.keys(hasil).map(function (key) { return hasil[key]; }).sort(function (a, b) { return a.jarakM - b.jarakM; });
+  }
+
+  function htmlPerbandinganRute(awal, akhir) {
+    var pilihan = perbandinganKoridor(awal, akhir, routingKoridor && routingKoridor.kode,
+      routingKoridor && routingKoridor.sumber === 'jakartasatu' ? 'jakartasatu' : 'gtfs');
+    if (!pilihan.length) {
+      return '<div class="tj-route-compare"><b>Perbandingan layanan</b><p>Belum ada satu koridor langsung yang terdeteksi dekat dengan kedua halte. Pertimbangkan perpindahan koridor; urutan transfer belum dihitung.</p></div>';
+    }
+    var baris = pilihan.slice(0, 6).map(function (r) {
+      return '<tr' + (r.terpilih ? ' class="is-selected"' : '') + '><td>' + esc(r.tipe) + '</td><td>'
+        + esc(r.nama) + (r.terpilih ? ' <small>dipilih</small>' : '') + '</td><td>'
+        + esc((r.jarakM / 1000).toLocaleString('id-ID', { maximumFractionDigits: 2 })) + ' km</td></tr>';
+    }).join('');
+    return '<div class="tj-route-compare"><b>Perbandingan koridor langsung</b>'
+      + '<p>Jarak mengikuti geometri layanan dan mencakup akses lurus halte ke jalur. Urut dari jarak terpendek.</p>'
+      + '<div class="tj-route-compare-table"><table><thead><tr><th>Jenis layanan</th><th>Koridor</th><th>Jarak</th></tr></thead><tbody>'
+      + baris + '</tbody></table></div></div>';
+  }
+
+  function hitungRuteJalan(awal, akhir) {
+    return muatRuasJalan(awal, akhir).then(function (features) {
+      if (!features.length) throw new Error('Tidak ada ruas jalan JakartaSatu di sekitar kedua halte.');
+      var nodes = grafJalan(features);
+      var mulai = nodeTerdekat(nodes, awal), selesai = nodeTerdekat(nodes, akhir);
+      if (!mulai || !selesai) throw new Error('Halte terlalu jauh dari jaringan jalan yang ditemukan.');
+      var hasil = jalurTerpendek(nodes, mulai, selesai);
+      if (!hasil) throw new Error('Rute jalan tidak tersambung di area ini.');
+      hasil.coordinates.unshift(awal);
+      hasil.coordinates.push(akhir);
+      hasil.distanceM += jarakKoordinat(awal, mulai.c) + jarakKoordinat(akhir, selesai.c);
+      hasil.jumlahRuas = features.length;
+      return hasil;
+    });
+  }
+
+  function routingEl() { return document.getElementById('transjakarta-routing'); }
+  function panelHasilRouting() {
+    var panel = routingEl();
+    return panel && panel.querySelector('[data-tj-routing-result]');
+  }
+
+  function daftarPilihanHalte() {
+    if (!cacheHalte || !cacheHalte.features) return '';
+    var seen = Object.create(null);
+    return cacheHalte.features.map(function (f) {
+      var p = f.properties || {};
+      var nama = String(p.stop_name || p.NAMA || '').trim();
+      if (!nama || seen[nama.toLowerCase()]) return '';
+      seen[nama.toLowerCase()] = true;
+      return '<option value="' + esc(nama) + '"></option>';
+    }).join('');
+  }
+
+  function renderRouting() {
+    var panel = routingEl();
+    if (!panel || !routingKoridor) return;
+    var r = routingKoridor;
+    var nama = r.nama || ('Koridor ' + r.kode);
+    var ruas = (r.ruas || []).filter(Boolean).join(' · ') || 'Informasi arah belum tersedia';
+    var idAsal = 'tj-routing-halte-asal';
+    var idTujuan = 'tj-routing-halte-tujuan';
+    panel.innerHTML = '<div class="tj-routing-head">'
+      + '<div><span class="tj-routing-eyebrow">PERENCANA PERJALANAN</span><h3>Rute TransJakarta</h3></div>'
+      + '<button type="button" class="tj-routing-minimize" data-tj-routing-minimize aria-label="Minimalkan panel routing" title="Minimalkan panel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>'
+      + '<button type="button" class="tj-routing-close" data-tj-routing-close aria-label="Tutup perencana rute">&times;</button>'
+      + '</div>'
+      + '<div class="tj-routing-corridor"><span class="tj-routing-dot"></span><div><b>' + esc(nama) + '</b>'
+      + '<small>' + esc(r.tipe || 'Layanan TransJakarta') + ' · ' + esc((Number(r.panjangM || 0) / 1000).toLocaleString("id-ID", { maximumFractionDigits: 1 })) + ' km jalur</small></div></div>'
+      + '<div class="tj-routing-fields">'
+      + '<label for="' + idAsal + '"><span class="tj-routing-origin-dot"></span>'
+      + '<input id="' + idAsal + '" aria-label="Halte asal" list="tj-routing-halte-list" value="' + esc(routingHalteAsal) + '" placeholder="Pilih halte keberangkatan" autocomplete="off"></label>'
+      + '<div class="tj-routing-connector"></div>'
+      + '<label for="' + idTujuan + '"><span class="tj-routing-dest-dot"></span>'
+      + '<input id="' + idTujuan + '" aria-label="Halte tujuan" list="tj-routing-halte-list" value="' + esc(routingHalteTujuan) + '" placeholder="Pilih halte tujuan" autocomplete="off"></label>'
+      + '<datalist id="tj-routing-halte-list">' + daftarPilihanHalte() + '</datalist>'
+      + '</div>'
+      + '<div class="tj-routing-note"><b>Arah layanan</b><span>' + esc(ruas) + '</span>'
+      + '<small>Jalur jalan dihitung dari geometri Peta Jalan JakartaSatu. Data ini belum memuat jadwal bus, arah satu arah, penutupan jalan, atau lalu lintas langsung.</small></div>'
+      + '<div class="tj-routing-result" data-tj-routing-result aria-live="polite">Pilih dua halte untuk menghitung jalur jalan pendukung.</div>'
+      + '<div class="tj-routing-actions"><button type="button" data-tj-routing-swap aria-label="Tukar halte asal dan tujuan" title="Tukar halte">↕</button>'
+      + '<button type="button" class="tj-routing-submit" data-tj-routing-submit>Hitung &amp; bandingkan</button></div>';
+    panel.hidden = false;
+  }
+
+  function tutupRouting(pulihkanSheet) {
+    routingKoridor = null;
+    var panel = routingEl();
+    if (panel) { panel.hidden = true; panel.classList.remove('is-minimized'); panel.innerHTML = ''; }
+    var el = sheetEl();
+    if (el) { el.classList.remove('tj-routing-mode'); el.style.removeProperty('--sheet-h'); }
+    if (pulihkanSheet && el && el.classList.contains('sheet-open')) document.body.classList.add('transjakarta-sheet-open');
+  }
 
   function sheetEl() {
     return document.getElementById('transjakarta-sheet');
@@ -1064,6 +1404,11 @@ function tampilkanHalte(v) {
     jenisDisorot = null;
     sudahTerbang = false;
     state.filter.q = '';
+    tutupRouting();
+    routingHalteAsal = '';
+    routingHalteTujuan = '';
+    if (layerRuteJalan && map.hasLayer(layerRuteJalan)) map.removeLayer(layerRuteJalan);
+    layerRuteJalan = null;
     var cb = document.getElementById('toggleTransjakarta');
     if (cb) cb.checked = false;
     if (layerJalur) {
@@ -1208,6 +1553,20 @@ function tampilkanHalte(v) {
       }
       pilihKoridor(kode, { zoom: false });
       zoomKeKoridor(kode);
+      if (layerRuteJalan && map.hasLayer(layerRuteJalan)) map.removeLayer(layerRuteJalan);
+      layerRuteJalan = null;
+      var daftarKoridor = sumberJakartaSatu ? state.ringkasJakartaSatu : state.ringkas;
+      routingKoridor = daftarKoridor.filter(function (r) { return kunciKoridor(r.kode) === kunciKoridor(kode); })[0]
+        || { kode: kode, nama: 'Koridor ' + kode, tipe: 'Layanan TransJakarta', panjangM: 0, ruas: [] };
+      routingKoridor.sumber = sumberJakartaSatu ? 'jakartasatu' : 'gtfs';
+      var el = sheetEl();
+      if (el) {
+        el.classList.add('tj-routing-mode');
+      }
+      var panelAktif = routingEl();
+      if (panelAktif) panelAktif.classList.remove('is-minimized');
+      document.body.classList.remove('transjakarta-sheet-open', 'transjakarta-sheet-minimized');
+      renderRouting();
       renderSheet();
     }
 
@@ -1227,6 +1586,83 @@ function tampilkanHalte(v) {
         refreshLayerJalur();
         return;
       }
+    });
+
+    var panelRouting = routingEl();
+    if (panelRouting) panelRouting.addEventListener('click', function (e) {
+      var close = e.target.closest && e.target.closest('[data-tj-routing-close]');
+      if (close) { tutupRouting(true); return; }
+      var minimize = e.target.closest && e.target.closest('[data-tj-routing-minimize]');
+      if (minimize) {
+        var minimized = panelRouting.classList.toggle('is-minimized');
+        minimize.setAttribute('aria-label', minimized ? 'Perluas panel routing' : 'Minimalkan panel routing');
+        minimize.setAttribute('title', minimized ? 'Perluas panel' : 'Minimalkan panel');
+        minimize.innerHTML = minimized
+          ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>'
+          : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>';
+        return;
+      }
+      var swap = e.target.closest && e.target.closest('[data-tj-routing-swap]');
+      if (swap) {
+        var asal = document.getElementById('tj-routing-halte-asal');
+        var tujuan = document.getElementById('tj-routing-halte-tujuan');
+        routingHalteAsal = tujuan ? tujuan.value : routingHalteTujuan;
+        routingHalteTujuan = asal ? asal.value : routingHalteAsal;
+        renderRouting();
+        return;
+      }
+      var submit = e.target.closest && e.target.closest('[data-tj-routing-submit]');
+      if (submit && routingKoridor) {
+        var asalEl = document.getElementById('tj-routing-halte-asal');
+        var tujuanEl = document.getElementById('tj-routing-halte-tujuan');
+        routingHalteAsal = asalEl ? asalEl.value.trim() : '';
+        routingHalteTujuan = tujuanEl ? tujuanEl.value.trim() : '';
+        if (!routingHalteAsal || !routingHalteTujuan) {
+          submit.textContent = 'Pilih halte asal dan tujuan';
+          return;
+        }
+        if (routingHalteAsal.toLowerCase() === routingHalteTujuan.toLowerCase()) {
+          submit.textContent = 'Pilih dua halte yang berbeda';
+          return;
+        }
+        var asalFeature = halteDenganNama(routingHalteAsal);
+        var tujuanFeature = halteDenganNama(routingHalteTujuan);
+        if (!asalFeature || !tujuanFeature) {
+          var hasilInvalid = panelHasilRouting();
+          if (hasilInvalid) hasilInvalid.textContent = 'Pilih halte dari daftar saran agar nama dan lokasinya dikenali.';
+          return;
+        }
+        var awal = asalFeature.geometry && asalFeature.geometry.coordinates;
+        var akhir = tujuanFeature.geometry && tujuanFeature.geometry.coordinates;
+        if (!awal || !akhir) return;
+        submit.disabled = true;
+        submit.textContent = 'Menghitung jalur jalan…';
+        var hasilEl = panelHasilRouting();
+        if (hasilEl) hasilEl.textContent = 'Memuat ruas jalan JakartaSatu di sekitar perjalanan…';
+        hitungRuteJalan(awal, akhir).then(function (hasil) {
+          if (layerRuteJalan && map.hasLayer(layerRuteJalan)) map.removeLayer(layerRuteJalan);
+          if (!map.getPane('transjakartaRoutingPane')) map.createPane('transjakartaRoutingPane');
+          map.getPane('transjakartaRoutingPane').style.zIndex = 460;
+          layerRuteJalan = L.polyline(hasil.coordinates.map(function (c) { return [c[1], c[0]]; }), {
+            pane: 'transjakartaRoutingPane', color: '#06b6d4', weight: 6, opacity: .95,
+            lineCap: 'round', lineJoin: 'round'
+          }).addTo(map);
+          map.fitBounds(layerRuteJalan.getBounds(), { padding: [44, 44], maxZoom: 16 });
+          var km = (hasil.distanceM / 1000).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+          if (hasilEl) hasilEl.innerHTML = '<div class="tj-route-road-summary"><b>Akses jalan pendukung: ' + esc(km) + ' km</b><span>Jaringan JakartaSatu · ' + esc(hasil.jumlahRuas) + ' fitur jalan di area rute</span></div>'
+            + htmlPerbandinganRute(awal, akhir);
+          submit.textContent = 'Hitung ulang jalur jalan';
+        }).catch(function (err) {
+          if (hasilEl) hasilEl.textContent = err && err.message ? err.message : 'Jaringan jalan gagal dimuat. Periksa koneksi lalu coba lagi.';
+          submit.textContent = 'Coba hitung lagi';
+        }).then(function () { submit.disabled = false; });
+        return;
+      }
+    });
+
+    if (panelRouting) panelRouting.addEventListener('input', function (e) {
+      if (e.target.id === 'tj-routing-halte-asal') routingHalteAsal = e.target.value;
+      if (e.target.id === 'tj-routing-halte-tujuan') routingHalteTujuan = e.target.value;
     });
 
     body.addEventListener('keydown', function (e) {
