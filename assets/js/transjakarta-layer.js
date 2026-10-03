@@ -1606,7 +1606,7 @@ function tampilkanHalte(v) {
       + '<div class="tj-ctrl">'
       + tombolLayer('antarmoda', visibleAntarmoda, state.antarmodaError ? 'gagal' : (state.antarmoda ? nomor(state.antarmoda) + ' simpul' : 'lihat'), '', 'KRL · MRT · LRT · Kereta Bandara')
       + tombolLayer('jalur', visibleJalur, ada + ' koridor', '', 'TransJakarta · Jalur Koridor')
-      + tombolLayer('jakartasatu-jalur', visibleJalurJakartaSatu, nomor(state.ringkasJakartaSatu.length) + ' koridor', '', 'TransJakarta · Jalur Koridor JakartaSatu')
+      + tombolLayer('jakartasatu-jalur', visibleJalurJakartaSatu, nomor(state.ringkasJakartaSatu.length) + ' koridor', '', 'TransJakarta · JakartaSatu')
       + '</div>'
       + '<div class="tj-table-wrap"><table class="tj-table">'
       + '<thead><tr><th class="tj-th-koridor">Koridor</th><th class="tj-th-nama">Jenis layanan</th><th class="tj-th-km">Panjang</th></tr></thead>'
