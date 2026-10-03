@@ -1414,16 +1414,33 @@ function tampilkanHalte(v) {
     return panel && panel.querySelector('[data-tj-routing-result]');
   }
 
-  function daftarPilihanHalte() {
-    if (!cacheHalte || !cacheHalte.features) return '';
+  function namaNamaHalte() {
+    if (!cacheHalte || !cacheHalte.features) return [];
     var seen = Object.create(null);
     return cacheHalte.features.map(function (f) {
       var p = f.properties || {};
-      var nama = String(p.stop_name || p.NAMA || '').trim();
-      if (!nama || seen[nama.toLowerCase()]) return '';
-      seen[nama.toLowerCase()] = true;
-      return '<option value="' + esc(nama) + '"></option>';
-    }).join('');
+      return String(p.stop_name || p.NAMA || '').trim();
+    }).filter(function (nama) {
+      var key = nama.toLowerCase();
+      if (!nama || seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
+  }
+
+  function renderSaranHalte(input) {
+    var label = input && input.closest('label');
+    var list = label && label.querySelector('.tj-stop-suggestions');
+    if (!list) return;
+    var query = input.value.trim().toLocaleLowerCase('id-ID');
+    var matches = namaNamaHalte().filter(function (nama) {
+      return !query || nama.toLocaleLowerCase('id-ID').indexOf(query) !== -1;
+    }).slice(0, 8);
+    list.innerHTML = matches.length ? matches.map(function (nama) {
+      return '<button type="button" role="option" class="tj-stop-suggestion" data-tj-stop-name="' + esc(nama) + '">' + esc(nama) + '</button>';
+    }).join('') : '<span class="tj-stop-no-suggestion">Halte tidak ditemukan</span>';
+    list.hidden = false;
+    input.setAttribute('aria-expanded', 'true');
   }
 
   function renderRouting() {
@@ -1443,11 +1460,12 @@ function tampilkanHalte(v) {
       + '<small>' + esc(r.tipe || 'Layanan TransJakarta') + ' · ' + esc((Number(r.panjangM || 0) / 1000).toLocaleString("id-ID", { maximumFractionDigits: 1 })) + ' km jalur</small></div></div>'
       + '<div class="tj-routing-fields">'
       + '<label for="' + idAsal + '"><span class="tj-routing-origin-dot"></span>'
-      + '<input id="' + idAsal + '" aria-label="Halte asal" list="tj-routing-halte-list" value="' + esc(routingHalteAsal) + '" placeholder="Pilih halte keberangkatan" autocomplete="off"></label>'
+      + '<input id="' + idAsal + '" aria-label="Halte asal" role="combobox" aria-autocomplete="list" aria-expanded="false" value="' + esc(routingHalteAsal) + '" placeholder="Pilih halte keberangkatan" autocomplete="off">'
+      + '<div class="tj-stop-suggestions" role="listbox" hidden></div></label>'
       + '<div class="tj-routing-connector"></div>'
       + '<label for="' + idTujuan + '"><span class="tj-routing-dest-dot"></span>'
-      + '<input id="' + idTujuan + '" aria-label="Halte tujuan" list="tj-routing-halte-list" value="' + esc(routingHalteTujuan) + '" placeholder="Pilih halte tujuan" autocomplete="off"></label>'
-      + '<datalist id="tj-routing-halte-list">' + daftarPilihanHalte() + '</datalist>'
+      + '<input id="' + idTujuan + '" aria-label="Halte tujuan" role="combobox" aria-autocomplete="list" aria-expanded="false" value="' + esc(routingHalteTujuan) + '" placeholder="Pilih halte tujuan" autocomplete="off">'
+      + '<div class="tj-stop-suggestions" role="listbox" hidden></div></label>'
       + '</div>'
       + '<div class="tj-routing-note"><b>Arah layanan</b><span>' + esc(ruas) + '</span>'
       + '<small>Jalur jalan dihitung dari geometri Peta Jalan JakartaSatu. Data ini belum memuat jadwal bus, arah satu arah, penutupan jalan, atau lalu lintas langsung.</small></div>'
@@ -1759,6 +1777,36 @@ function tampilkanHalte(v) {
     if (panelRouting) panelRouting.addEventListener('input', function (e) {
       if (e.target.id === 'tj-routing-halte-asal') routingHalteAsal = e.target.value;
       if (e.target.id === 'tj-routing-halte-tujuan') routingHalteTujuan = e.target.value;
+      if (e.target.matches && e.target.matches('.tj-routing-fields input')) renderSaranHalte(e.target);
+    });
+    if (panelRouting) panelRouting.addEventListener('focusin', function (e) {
+      if (e.target.matches && e.target.matches('.tj-routing-fields input')) renderSaranHalte(e.target);
+    });
+    if (panelRouting) panelRouting.addEventListener('click', function (e) {
+      var option = e.target.closest && e.target.closest('[data-tj-stop-name]');
+      if (option) {
+        var label = option.closest('label');
+        var input = label && label.querySelector('input');
+        if (input) {
+          input.value = option.getAttribute('data-tj-stop-name');
+          input.setAttribute('aria-expanded', 'false');
+          if (input.id === 'tj-routing-halte-asal') routingHalteAsal = input.value;
+          if (input.id === 'tj-routing-halte-tujuan') routingHalteTujuan = input.value;
+          var list = label.querySelector('.tj-stop-suggestions');
+          if (list) list.hidden = true;
+        }
+      }
+    });
+    if (panelRouting) panelRouting.addEventListener('focusout', function (e) {
+      var input = e.target;
+      if (!input.matches || !input.matches('.tj-routing-fields input')) return;
+      window.setTimeout(function () {
+        if (document.activeElement && document.activeElement.closest('.tj-stop-suggestions')) return;
+        var label = input.closest('label');
+        var list = label && label.querySelector('.tj-stop-suggestions');
+        if (list) list.hidden = true;
+        input.setAttribute('aria-expanded', 'false');
+      }, 180);
     });
 
     body.addEventListener('keydown', function (e) {
