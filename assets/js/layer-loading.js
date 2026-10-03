@@ -167,6 +167,7 @@
     'toggleGeologiBNPB': 'Data Peta Geologi (BNPB) tidak tersedia.',
     'toggleSekolahLayer': 'Data Sekolah Indonesia (BNPB) tidak tersedia.',
     'toggleTransjakarta': 'Data Jalur TransJakarta tidak tersedia.',
+    'toggleTransjogja': 'Data Rute Trans Jogja tidak tersedia.',
     'toggleHillshade': 'Data Hillshade tidak tersedia.',
     'toggleBatnas': 'Data Batnas (Batimetri) tidak tersedia.',
     'toggleProvinceBoundary': 'Data Batas Provinsi (PBF) tidak tersedia.',

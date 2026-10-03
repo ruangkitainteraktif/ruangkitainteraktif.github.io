@@ -6684,7 +6684,7 @@
        panel sisi kanan di desktop, bottom sheet di mobile, chip saat
        diminimize. Sheet ini bukan pola baru, dan tidak boleh punya
        perilaku berbeda dari yang sudah dipakai. */
-    #transjakarta-sheet {
+    :is(#transjakarta-sheet, #transjogja-sheet) {
       display: flex;
       position: fixed;
       top: 120px;
@@ -6704,26 +6704,27 @@
       transition: transform .3s ease-in-out, visibility .3s;
       color: var(--text-primary);
     }
-    #transjakarta-sheet.sheet-open { transform: translateX(0); visibility: visible; }
+    :is(#transjakarta-sheet, #transjogja-sheet).sheet-open { transform: translateX(0); visibility: visible; }
     body.transjakarta-sheet-open:not(.transjakarta-sheet-minimized) .leaflet-bottom.leaflet-right { right: calc(min(390px, calc(100vw - 106px)) + 28px); }
-    #transjakarta-sheet .tj-sheet-handle { display: none; }
-    #transjakarta-sheet .tj-sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; border-bottom: 1px solid var(--border-color); }
-    #transjakarta-sheet .tj-sheet-title, #transjakarta-sheet .tj-sheet-actions { display: flex; align-items: center; }
-    #transjakarta-sheet .tj-sheet-title { gap: 7px; color: var(--text-primary); font-size: 13px; font-weight: 700; }
-    #transjakarta-sheet .tj-sheet-sub { display: block; font-size: 10px; font-weight: 500; color: var(--text-tertiary); }
-    #transjakarta-sheet.sheet-minimized .tj-sheet-sub { display: none; }
-    #transjakarta-sheet .tj-sheet-actions { gap: 6px; }
-    #transjakarta-sheet .tj-sheet-minimize, #transjakarta-sheet .tj-sheet-close { display: grid; width: 28px; height: 28px; place-items: center; border: 0; border-radius: 50%; background: var(--bg-tertiary); color: var(--text-tertiary); cursor: pointer; }
-    #transjakarta-sheet .tj-sheet-close { font-size: 16px; }
-    #transjakarta-sheet .tj-sheet-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 12px 12px 16px; -webkit-overflow-scrolling: touch; }
+    body.transjogja-sheet-open:not(.transjogja-sheet-minimized) .leaflet-bottom.leaflet-right { right: calc(min(390px, calc(100vw - 106px)) + 28px); }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-handle { display: none; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; border-bottom: 1px solid var(--border-color); }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-title, :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-actions { display: flex; align-items: center; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-title { gap: 7px; color: var(--text-primary); font-size: 13px; font-weight: 700; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-sub { display: block; font-size: 10px; font-weight: 500; color: var(--text-tertiary); }
+    :is(#transjakarta-sheet, #transjogja-sheet).sheet-minimized .tj-sheet-sub { display: none; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-actions { gap: 6px; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-minimize, :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-close { display: grid; width: 28px; height: 28px; place-items: center; border: 0; border-radius: 50%; background: var(--bg-tertiary); color: var(--text-tertiary); cursor: pointer; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-close { font-size: 16px; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 12px 12px 16px; -webkit-overflow-scrolling: touch; }
     @media (min-width: 769px) {
-      #transjakarta-sheet.sheet-minimized { top: auto; right: auto; bottom: 68px; left: 50%; width: min(300px, calc(100vw - 24px)); height: 52px; transform: translateX(-50%); z-index: 100; }
-      #transjakarta-sheet.sheet-minimized .tj-sheet-body { display: none; }
+      :is(#transjakarta-sheet, #transjogja-sheet).sheet-minimized { top: auto; right: auto; bottom: 68px; left: 50%; width: min(300px, calc(100vw - 24px)); height: 52px; transform: translateX(-50%); z-index: 100; }
+      :is(#transjakarta-sheet, #transjogja-sheet).sheet-minimized .tj-sheet-body { display: none; }
     }
 
 /* Kontrol Jalur di sheet, dan kartu halte yang jadi tombol. */
-    #transjakarta-sheet .tj-ctrl { display: flex; flex-direction: column; gap: 6px; padding: 12px 0 2px; }
-    #transjakarta-sheet .tj-switch {
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-ctrl { display: flex; flex-direction: column; gap: 6px; padding: 12px 0 2px; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-switch {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -6739,10 +6740,10 @@
       cursor: pointer;
       transition: background .12s ease, border-color .12s ease;
     }
-    #transjakarta-sheet .tj-switch:hover { background: var(--bg-card-hover); }
-    #transjakarta-sheet .tj-switch:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
-    #transjakarta-sheet .tj-switch.is-on { border-color: var(--accent); background: var(--bg-card-hover); }
-    #transjakarta-sheet .tj-switch-dot {
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-switch:hover { background: var(--bg-card-hover); }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-switch:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-switch.is-on { border-color: var(--accent); background: var(--bg-card-hover); }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-switch-dot {
       width: 26px;
       height: 15px;
       flex-shrink: 0;
@@ -6752,7 +6753,7 @@
       position: relative;
       transition: background .15s ease;
     }
-    #transjakarta-sheet .tj-switch-dot::after {
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-switch-dot::after {
       content: "";
       position: absolute;
       top: 2px;
@@ -6763,34 +6764,34 @@
       background: var(--text-muted);
       transition: transform .15s ease, background .15s ease;
     }
-    #transjakarta-sheet .tj-switch.is-on .tj-switch-dot { background: var(--accent); box-shadow: none; }
-    #transjakarta-sheet .tj-switch.is-on .tj-switch-dot::after { transform: translateX(11px); background: #fff; }
-    #transjakarta-sheet .tj-switch-label { flex: 1 1 auto; font-weight: 600; }
-    #transjakarta-sheet .tj-switch-count { font-size: 10px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-switch.is-on .tj-switch-dot { background: var(--accent); box-shadow: none; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-switch.is-on .tj-switch-dot::after { transform: translateX(11px); background: #fff; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-switch-label { flex: 1 1 auto; font-weight: 600; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-switch-count { font-size: 10px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 
     /* Kartu halte. Statistiknya tetap angka, tapi element-nya button
        supaya bisa difokus dan punya aria-pressed. Bentuknya sengaja
        sama dengan tj-stat-item supaya tidak terlihat seperti kotak
        baru yang tidak Serializeran. */
-    #transjakarta-sheet button.tj-stat-item {
+    :is(#transjakarta-sheet, #transjogja-sheet) button.tj-stat-item {
       font: inherit;
       color: inherit;
       cursor: pointer;
       transition: background .12s ease, border-color .12s ease;
     }
-    #transjakarta-sheet button.tj-stat-item:hover { background: var(--bg-card-hover); }
-    #transjakarta-sheet button.tj-stat-item:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
-    #transjakarta-sheet button.tj-stat-item.is-on { border-color: var(--accent); background: var(--bg-card-hover); }
-    #transjakarta-sheet button.tj-stat-item.is-on b { color: var(--accent); }
+    :is(#transjakarta-sheet, #transjogja-sheet) button.tj-stat-item:hover { background: var(--bg-card-hover); }
+    :is(#transjakarta-sheet, #transjogja-sheet) button.tj-stat-item:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+    :is(#transjakarta-sheet, #transjogja-sheet) button.tj-stat-item.is-on { border-color: var(--accent); background: var(--bg-card-hover); }
+    :is(#transjakarta-sheet, #transjogja-sheet) button.tj-stat-item.is-on b { color: var(--accent); }
     /* Isi sheet: tiga angka ringkas, lalu tabel koridor. */
-    #transjakarta-sheet .tj-stat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 12px; padding: 0 0 8px; }
-    #transjakarta-sheet .tj-stat-item { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 8px 4px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); }
-    #transjakarta-sheet .tj-stat-item b { font-size: 17px; font-weight: 800; letter-spacing: -.02em; color: var(--text-primary); font-variant-numeric: tabular-nums; }
-    #transjakarta-sheet .tj-stat-item span { font-size: 9px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-tertiary); }
-    #transjakarta-sheet .tj-filter-box { display: flex; flex-direction: column; gap: 10px; padding: 0 0 8px; }
-    #transjakarta-sheet .tj-filter-row { display: flex; flex-direction: column; gap: 6px; }
-    #transjakarta-sheet .tj-filter-label { font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary); }
-    #transjakarta-sheet .tj-filter-search {
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-stat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 12px; padding: 0 0 8px; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-stat-item { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 8px 4px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-stat-item b { font-size: 17px; font-weight: 800; letter-spacing: -.02em; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-stat-item span { font-size: 9px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-tertiary); }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-filter-box { display: flex; flex-direction: column; gap: 10px; padding: 0 0 8px; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-filter-row { display: flex; flex-direction: column; gap: 6px; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-filter-label { font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary); }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-filter-search {
       width: 100%;
       box-sizing: border-box;
       min-height: 36px;
@@ -6802,35 +6803,100 @@
       font: inherit;
       font-size: 12px;
     }
-    #transjakarta-sheet .tj-table-title { margin: 16px 0 5px; font-size: 11px; font-weight: 750; color: var(--text-secondary); }
-    #transjakarta-sheet .tj-table-wrap { overflow: visible; }
-    #transjakarta-sheet .tj-empty-row { padding: 16px 8px; text-align: center; color: var(--text-tertiary); font-size: 11px; }
-    #transjakarta-sheet .tj-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; }
-    #transjakarta-sheet .tj-table thead th { position: sticky; top: 0; z-index: 2; padding: 6px 6px; text-align: left; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-tertiary); background: var(--bg-primary); border-bottom: 1px solid var(--border-color); }
-    #transjakarta-sheet .tj-th-koridor { width: 78px; }
-    #transjakarta-sheet .tj-th-km { text-align: right; white-space: nowrap; font-size: 10px; font-weight: 800; letter-spacing: .08em; }
-    #transjakarta-sheet .tj-th-nama { font-size: 10px; font-weight: 800; letter-spacing: .08em; }
-    #transjakarta-sheet .tj-row { cursor: pointer; transition: background .12s ease; }
-    #transjakarta-sheet .tj-row:hover { background: var(--bg-card-hover); }
-    #transjakarta-sheet .tj-row.is-selected { background: rgba(249, 115, 22, 0.08); box-shadow: inset 3px 0 0 #f97316; }
-    #transjakarta-sheet .tj-row:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
-    #transjakarta-sheet .tj-row td { padding: 7px 6px; border-bottom: 1px solid var(--border-secondary); vertical-align: middle; }
-    #transjakarta-sheet .tj-td-koridor { width: 78px; }
-    #transjakarta-sheet .tj-koridor-toggle { display: flex; align-items: flex-start; gap: 5px; cursor: pointer; }
-    #transjakarta-sheet .tj-koridor-check { width: 13px; height: 13px; margin: 1px 0 0; accent-color: var(--accent); flex: 0 0 auto; }
-    #transjakarta-sheet .tj-koridor-toggle > span { min-width: 0; }
-    #transjakarta-sheet .tj-koridor-toggle b { display: block; font-size: 11px; font-weight: 750; color: var(--text-primary); }
-    #transjakarta-sheet .tj-koridor-toggle small { display: block; margin-top: 2px; font-size: 8px; line-height: 1.25; color: var(--text-tertiary); }
-    #transjakarta-sheet .tj-td-nama { min-width: 0; }
-    #transjakarta-sheet .tj-td-nama b { display: block; font-size: 12px; font-weight: 750; color: var(--text-primary); }
-    #transjakarta-sheet .tj-td-nama small { display: block; margin-top: 2px; font-size: 10px; line-height: 1.35; color: var(--text-tertiary); }
-    #transjakarta-sheet .tj-td-km { text-align: right; white-space: nowrap; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
-    #transjakarta-sheet .tj-sumber { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--border-color); font-size: 9.5px; line-height: 1.5; color: var(--text-tertiary); }
-    #transjakarta-sheet .tj-kosong { display: flex; flex-direction: column; gap: 5px; padding: 26px 12px; text-align: center; }
-    #transjakarta-sheet .tj-kosong b { font-size: 13px; color: var(--text-primary); }
-    #transjakarta-sheet .tj-kosong span { font-size: 11px; line-height: 1.55; color: var(--text-tertiary); }
-    [data-theme="dark"] #transjakarta-sheet { background: var(--bg-secondary); }
-    [data-theme="dark"] #transjakarta-sheet .tj-sheet-head { border-bottom-color: var(--border-color); }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-table-title { margin: 16px 0 5px; font-size: 11px; font-weight: 750; color: var(--text-secondary); }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-table-wrap { overflow: visible; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-empty-row { padding: 16px 8px; text-align: center; color: var(--text-tertiary); font-size: 11px; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-table thead th { position: sticky; top: 0; z-index: 2; padding: 6px 6px; text-align: left; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-tertiary); background: var(--bg-primary); border-bottom: 1px solid var(--border-color); }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-th-koridor { width: 78px; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-th-km { text-align: right; white-space: nowrap; font-size: 10px; font-weight: 800; letter-spacing: .08em; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-th-nama { font-size: 10px; font-weight: 800; letter-spacing: .08em; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-row { cursor: pointer; transition: background .12s ease; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-row:hover { background: var(--bg-card-hover); }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-row.is-selected { background: rgba(249, 115, 22, 0.08); box-shadow: inset 3px 0 0 #f97316; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-row:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-row td { padding: 7px 6px; border-bottom: 1px solid var(--border-secondary); vertical-align: middle; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-td-koridor { width: 78px; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-koridor-toggle { display: flex; align-items: flex-start; gap: 5px; cursor: pointer; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-koridor-check { width: 13px; height: 13px; margin: 1px 0 0; accent-color: var(--accent); flex: 0 0 auto; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-koridor-toggle > span { min-width: 0; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-koridor-toggle b { display: block; font-size: 11px; font-weight: 750; color: var(--text-primary); }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-koridor-toggle small { display: block; margin-top: 2px; font-size: 8px; line-height: 1.25; color: var(--text-tertiary); }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-td-nama { min-width: 0; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-td-nama b { display: block; font-size: 12px; font-weight: 750; color: var(--text-primary); }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-td-nama small { display: block; margin-top: 2px; font-size: 10px; line-height: 1.35; color: var(--text-tertiary); }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-td-km { text-align: right; white-space: nowrap; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-sumber { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--border-color); font-size: 9.5px; line-height: 1.5; color: var(--text-tertiary); }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-kosong { display: flex; flex-direction: column; gap: 5px; padding: 26px 12px; text-align: center; }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-kosong b { font-size: 13px; color: var(--text-primary); }
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-kosong span { font-size: 11px; line-height: 1.55; color: var(--text-tertiary); }
+    #transjogja-sheet .tgj-route-list { display: grid; gap: 5px; margin-top: 8px; }
+    #transjogja-sheet .tgj-route { display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 10px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-secondary); color: var(--text-primary); text-align: left; cursor: pointer; }
+    #transjogja-sheet .tgj-route:hover, #transjogja-sheet .tgj-route.is-selected { border-color: #22d3ee; background: var(--bg-card-hover); }
+    #transjogja-sheet .tgj-route-color { width: 4px; height: 28px; flex: 0 0 auto; border-radius: 99px; }
+    #transjogja-sheet .tgj-route > span:nth-child(2) { min-width: 0; flex: 1; }
+    #transjogja-sheet .tgj-route b, #transjogja-sheet .tgj-route small { display: block; }
+    #transjogja-sheet .tgj-route b { font-size: 11px; }
+    #transjogja-sheet .tgj-route small { margin-top: 2px; color: var(--text-tertiary); font-size: 9px; }
+    #transjogja-sheet .tgj-route .tgj-route-summary { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-height: 1.45; white-space: normal; }
+    #transjogja-sheet .tgj-route .tgj-route-summary strong { color: var(--text-secondary); font-weight: 750; }
+    #transjogja-sheet .tgj-route-details { margin: 0 8px 7px 23px; padding: 11px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); color: var(--text-secondary); }
+    #transjogja-sheet .tgj-gis-title { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
+    #transjogja-sheet .tgj-gis-pin { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 9px; background: #cffafe; color: #0e7490; font-size: 18px; }
+    #transjogja-sheet .tgj-gis-title b, #transjogja-sheet .tgj-gis-title small { display: block; }
+    #transjogja-sheet .tgj-gis-title b { color: var(--text-primary); font-size: 11px; }
+    #transjogja-sheet .tgj-gis-title small { margin-top: 2px; color: var(--text-tertiary); font-size: 9px; }
+    #transjogja-sheet .tgj-gis-diagram { padding: 10px; border: 1px solid #dbeafe; border-radius: 10px; background: linear-gradient(145deg, #f8fbff, #eff6ff); }
+    #transjogja-sheet .tgj-gis-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 9px; color: #334155; font-size: 9px; font-weight: 800; letter-spacing: .07em; }
+    #transjogja-sheet .tgj-gis-heading small { color: #64748b; font-size: 8px; letter-spacing: .04em; }
+    #transjogja-sheet .tgj-gis-direction + .tgj-gis-direction { margin-top: 12px; padding-top: 10px; border-top: 1px dashed #cbd5e1; }
+    #transjogja-sheet .tgj-gis-direction-label { margin-bottom: 6px; color: #64748b; font-size: 9px; font-weight: 700; }
+    #transjogja-sheet .tgj-gis-path { position: relative; display: flex; align-items: stretch; gap: 0; max-height: none; overflow-x: auto; overflow-y: hidden; padding: 8px 2px 10px; scroll-snap-type: x proximity; scrollbar-width: thin; scrollbar-color: #94a3b8 transparent; }
+    #transjogja-sheet .tgj-gis-path::before { top: 20px; right: 20px; bottom: auto; left: 20px; width: calc(100% - 40px); border-top: 2px solid #bae6fd; border-left: 0; }
+    #transjogja-sheet .tgj-gis-node { display: flex; flex: 0 0 148px; flex-direction: column; align-items: flex-start; gap: 8px; min-height: 112px; padding: 0 10px; scroll-snap-align: start; }
+    #transjogja-sheet .tgj-gis-marker { width: 27px; height: 27px; flex-basis: 27px; box-shadow: 0 0 0 4px #f8fbff; }
+    #transjogja-sheet .tgj-gis-node-label { width: 100%; padding: 0; }
+    #transjogja-sheet .tgj-gis-node-label b { font-size: 10px; }
+    #transjogja-sheet .tgj-gis-more { display: flex; flex: 0 0 120px; align-items: center; padding: 0 10px; }
+    [data-theme="dark"] #transjogja-sheet .tgj-gis-path::before { border-top-color: #155e75; border-left-color: transparent; }
+    [data-theme="dark"] #transjogja-sheet .tgj-gis-marker { box-shadow: 0 0 0 4px #172235; }
+    #transjogja-sheet .tgj-gis-path::before { position: absolute; top: 13px; bottom: 15px; left: 12px; border-left: 2px solid #bae6fd; content: ""; }
+    #transjogja-sheet .tgj-gis-node { position: relative; display: flex; align-items: center; gap: 9px; min-height: 34px; }
+    #transjogja-sheet .tgj-gis-marker { z-index: 1; display: grid; width: 25px; height: 25px; flex: 0 0 25px; place-items: center; border: 2px solid #7dd3fc; border-radius: 50%; background: #fff; color: #0369a1; font-size: 8px; font-weight: 800; }
+    #transjogja-sheet .tgj-gis-node.is-start .tgj-gis-marker { border-color: #34d399; background: #ecfdf5; color: #047857; }
+    #transjogja-sheet .tgj-gis-node.is-end .tgj-gis-marker { border-color: #fb7185; background: #fff1f2; color: #be123c; }
+    #transjogja-sheet .tgj-gis-node-label { min-width: 0; padding: 4px 0; }
+    #transjogja-sheet .tgj-gis-node-label small, #transjogja-sheet .tgj-gis-node-label b { display: block; }
+    #transjogja-sheet .tgj-gis-node-label small { color: #64748b; font-size: 7px; font-weight: 800; letter-spacing: .07em; }
+    #transjogja-sheet .tgj-gis-node-label b { color: #1e293b; font-size: 10px; line-height: 1.35; overflow-wrap: anywhere; }
+    #transjogja-sheet .tgj-gis-more { padding: 5px 0 5px 34px; color: #64748b; font-size: 9px; }
+    #transjogja-sheet .tgj-route-empty { padding: 8px; border-radius: 8px; background: #fff7ed; color: #9a3412; font-size: 9px; }
+    [data-theme="dark"] #transjogja-sheet .tgj-gis-pin { background: #164e63; color: #cffafe; }
+    [data-theme="dark"] #transjogja-sheet .tgj-gis-diagram { border-color: #334155; background: linear-gradient(145deg, #172235, #111827); }
+    [data-theme="dark"] #transjogja-sheet .tgj-gis-heading,
+    [data-theme="dark"] #transjogja-sheet .tgj-gis-node-label b { color: #e2e8f0; }
+    [data-theme="dark"] #transjogja-sheet .tgj-gis-heading small,
+    [data-theme="dark"] #transjogja-sheet .tgj-gis-direction-label,
+    [data-theme="dark"] #transjogja-sheet .tgj-gis-node-label small,
+    [data-theme="dark"] #transjogja-sheet .tgj-gis-more { color: #94a3b8; }
+    [data-theme="dark"] #transjogja-sheet .tgj-gis-direction + .tgj-gis-direction { border-top-color: #475569; }
+    [data-theme="dark"] #transjogja-sheet .tgj-gis-path::before { border-left-color: #155e75; }
+    /* Trans Jogja stop sequence: scrollable horizontal route strip. */
+    #transjogja-sheet .tgj-gis-path { display: flex; align-items: stretch; gap: 0; max-height: none; overflow-x: auto; overflow-y: hidden; padding: 8px 2px 10px; scroll-snap-type: x proximity; scrollbar-width: thin; scrollbar-color: #94a3b8 transparent; }
+    #transjogja-sheet .tgj-gis-path::before { top: 20px; right: 20px; bottom: auto; left: 20px; width: calc(100% - 40px); border-top: 2px solid #bae6fd; border-left: 0; }
+    #transjogja-sheet .tgj-gis-node { display: flex; flex: 0 0 148px; flex-direction: column; align-items: flex-start; gap: 8px; min-height: 112px; padding: 0 10px; scroll-snap-align: start; }
+    #transjogja-sheet .tgj-gis-marker { width: 27px; height: 27px; flex-basis: 27px; box-shadow: 0 0 0 4px #f8fbff; }
+    #transjogja-sheet .tgj-gis-node-label { width: 100%; padding: 0; }
+    #transjogja-sheet .tgj-gis-more { display: flex; flex: 0 0 120px; align-items: center; padding: 0 10px; }
+    [data-theme="dark"] #transjogja-sheet .tgj-gis-path::before { border-top-color: #155e75; border-left-color: transparent; }
+    [data-theme="dark"] #transjogja-sheet .tgj-gis-marker { box-shadow: 0 0 0 4px #172235; }
+
+    [data-theme="dark"] #transjogja-sheet .tgj-gis-marker { border-color: #0e7490; background: #1e293b; color: #bae6fd; }
+    [data-theme="dark"] #transjogja-sheet .tgj-gis-node.is-start .tgj-gis-marker { border-color: #059669; background: #064e3b; color: #a7f3d0; }
+    [data-theme="dark"] #transjogja-sheet .tgj-gis-node.is-end .tgj-gis-marker { border-color: #e11d48; background: #881337; color: #fecdd3; }
+    #transjogja-sheet .tgj-route:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+    [data-theme="dark"] :is(#transjakarta-sheet, #transjogja-sheet) { background: var(--bg-secondary); }
+    [data-theme="dark"] :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-head { border-bottom-color: var(--border-color); }
     /* ── GeoTools Bottom Sheet (Desktop) ── */
     #geotools-sheet {
       position: fixed; top: 120px; right: 12px; bottom: 12px;
@@ -7018,7 +7084,7 @@
     .dm-sidebar-actions { display: flex; align-items: center; gap: 6px; }
     #hotspot-sheet .hs-sheet-minimize svg,
     #geopangan-sheet .gp-sheet-minimize svg,
-    #transjakarta-sheet .tj-sheet-minimize svg,
+    :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-minimize svg,
     #geotools-sheet .gs-sheet-minimize svg,
     #geodata-sheet .geodata-sheet-minimize svg,
     #attr-table-sheet .at-sheet-minimize svg,
@@ -7813,8 +7879,8 @@
       .tj-routing-actions button { min-height: 36px; border: 0; border-radius: 9px; cursor: pointer; font: inherit; font-size: 11px; font-weight: 750; }
       .tj-routing-actions [data-tj-routing-swap] { width: 40px; background: #f1f5f9; color: #475569; font-size: 18px; }
       .tj-routing-actions .tj-routing-submit { flex: 1; padding: 0 12px; background: #0891b2; color: white; }
-      #transjakarta-sheet.tj-routing-mode { transform: translateY(100%); visibility: hidden; pointer-events: none; }
-      #transjakarta-sheet.sheet-open.tj-routing-mode { transform: translateY(100%); visibility: hidden; pointer-events: none; }
+      :is(#transjakarta-sheet, #transjogja-sheet).tj-routing-mode { transform: translateY(100%); visibility: hidden; pointer-events: none; }
+      :is(#transjakarta-sheet, #transjogja-sheet).sheet-open.tj-routing-mode { transform: translateY(100%); visibility: hidden; pointer-events: none; }
       [data-theme="dark"] .tj-routing-panel { border-color: #334155; background: rgba(15, 23, 42, .97); color: #e2e8f0; }
       [data-theme="dark"] .tj-routing-head { border-bottom-color: rgba(71, 85, 105, .8); background: rgba(15, 23, 42, .98); }
       [data-theme="dark"] .tj-routing-head h3, [data-theme="dark"] .tj-routing-corridor b { color: #f1f5f9; }
@@ -7836,7 +7902,7 @@
       [data-theme="dark"] .tj-route-compare th, [data-theme="dark"] .tj-route-compare td { border-bottom-color: #334155; }
       [data-theme="dark"] .tj-route-compare tr.is-selected td { background: #164e63; color: #cffafe; }
       [data-theme="dark"] .tj-route-compare td small { color: #67e8f9; }
-      #transjakarta-sheet {
+      :is(#transjakarta-sheet, #transjogja-sheet) {
         top: auto;
         display: flex;
         position: fixed;
@@ -7856,8 +7922,8 @@
         transform: translateY(100%);
         transition: transform .3s ease-in-out, visibility .3s;
       }
-      #transjakarta-sheet.sheet-open { transform: translateY(0); visibility: visible; }
-      #transjakarta-sheet .tj-sheet-handle {
+      :is(#transjakarta-sheet, #transjogja-sheet).sheet-open { transform: translateY(0); visibility: visible; }
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-handle {
         display: flex;
         width: 36px;
         height: 4px;
@@ -7866,22 +7932,22 @@
         border-radius: 999px;
         background: #cbd5e1;
       }
-      #transjakarta-sheet .tj-sheet-head {
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
         padding: 0 16px 10px;
         border-bottom: 1px solid #e8eef3;
       }
-      #transjakarta-sheet .tj-sheet-title,
-      #transjakarta-sheet .tj-sheet-actions {
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-title,
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-actions {
         display: flex;
         align-items: center;
       }
-      #transjakarta-sheet .tj-sheet-title { gap: 6px; color: #1e293b; font-size: 13px; font-weight: 700; }
-      #transjakarta-sheet .tj-sheet-actions { gap: 6px; }
-      #transjakarta-sheet .tj-sheet-minimize,
-      #transjakarta-sheet .tj-sheet-close {
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-title { gap: 6px; color: #1e293b; font-size: 13px; font-weight: 700; }
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-actions { gap: 6px; }
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-minimize,
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-close {
         display: grid;
         width: 28px;
         height: 28px;
@@ -7892,19 +7958,19 @@
         color: #64748b;
         cursor: pointer;
       }
-      #transjakarta-sheet .tj-sheet-close { font-size: 16px; }
-      #transjakarta-sheet .tj-sheet-minimize:hover,
-      #transjakarta-sheet .tj-sheet-close:hover { background: #e2e8f0; color: #334155; }
-      #transjakarta-sheet .tj-sheet-minimize:focus-visible,
-      #transjakarta-sheet .tj-sheet-close:focus-visible { outline: 2px solid #0891b2; outline-offset: 2px; }
-      #transjakarta-sheet .tj-sheet-body {
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-close { font-size: 16px; }
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-minimize:hover,
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-close:hover { background: #e2e8f0; color: #334155; }
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-minimize:focus-visible,
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-close:focus-visible { outline: 2px solid #0891b2; outline-offset: 2px; }
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-body {
         flex: 1 1 auto;
         min-height: 0;
         overflow: auto;
         padding: 0 12px 16px;
         -webkit-overflow-scrolling: touch;
       }
-      #transjakarta-sheet.sheet-minimized {
+      :is(#transjakarta-sheet, #transjogja-sheet).sheet-minimized {
         top: 100px;
         right: auto;
         bottom: auto;
@@ -7921,27 +7987,27 @@
         transform: translateX(-50%);
         z-index: 100;
       }
-      #transjakarta-sheet.sheet-minimized .tj-sheet-handle,
-      #transjakarta-sheet.sheet-minimized .tj-sheet-body { display: none; }
-      #transjakarta-sheet.sheet-minimized .tj-sheet-head {
+      :is(#transjakarta-sheet, #transjogja-sheet).sheet-minimized .tj-sheet-handle,
+      :is(#transjakarta-sheet, #transjogja-sheet).sheet-minimized .tj-sheet-body { display: none; }
+      :is(#transjakarta-sheet, #transjogja-sheet).sheet-minimized .tj-sheet-head {
         min-height: 36px;
         box-sizing: border-box;
         padding: 4px 12px;
         border-bottom: 0;
       }
-      #transjakarta-sheet .tj-switch { background: #f8fafc; border-color: #e2e8f0; }
-      #transjakarta-sheet .tj-switch.is-on { background: #ecfeff; border-color: #22d3ee; }
-      #transjakarta-sheet .tj-switch-dot { background: #e2e8f0; box-shadow: inset 0 0 0 1px #cbd5e1; }
-      #transjakarta-sheet .tj-switch.is-on .tj-switch-dot { background: #22d3ee; }
-      #transjakarta-sheet button.tj-stat-item { background: #f8fafc; border-color: #e2e8f0; }
-      #transjakarta-sheet button.tj-stat-item.is-on { background: #ecfeff; border-color: #22d3ee; }
-      #transjakarta-sheet button.tj-stat-item.is-on b { color: #0e7490; }
-      #transjakarta-sheet .tj-stat-item { background: #f8fafc; border-color: #e2e8f0; }
-      #transjakarta-sheet .tj-stat-item b { color: #1e293b; }
-      #transjakarta-sheet .tj-table thead th { background: #fff; border-bottom-color: #e8eef3; color: #94a3b8; }
-      #transjakarta-sheet .tj-td-nama b { color: #1e293b; }
-      #transjakarta-sheet .tj-sumber { border-top-color: #e8eef3; color: #94a3b8; }
-      #transjakarta-sheet .tj-row td { border-bottom-color: #f1f5f9; }
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-switch { background: #f8fafc; border-color: #e2e8f0; }
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-switch.is-on { background: #ecfeff; border-color: #22d3ee; }
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-switch-dot { background: #e2e8f0; box-shadow: inset 0 0 0 1px #cbd5e1; }
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-switch.is-on .tj-switch-dot { background: #22d3ee; }
+      :is(#transjakarta-sheet, #transjogja-sheet) button.tj-stat-item { background: #f8fafc; border-color: #e2e8f0; }
+      :is(#transjakarta-sheet, #transjogja-sheet) button.tj-stat-item.is-on { background: #ecfeff; border-color: #22d3ee; }
+      :is(#transjakarta-sheet, #transjogja-sheet) button.tj-stat-item.is-on b { color: #0e7490; }
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-stat-item { background: #f8fafc; border-color: #e2e8f0; }
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-stat-item b { color: #1e293b; }
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-table thead th { background: #fff; border-bottom-color: #e8eef3; color: #94a3b8; }
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-td-nama b { color: #1e293b; }
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-sumber { border-top-color: #e8eef3; color: #94a3b8; }
+      :is(#transjakarta-sheet, #transjogja-sheet) .tj-row td { border-bottom-color: #f1f5f9; }
       /* Selama jari bergerak transisi harus mati. Kalau tidak, height
          mengejar nilai baru di setiap frame dan sheet terasa lengket. */
       .sheet-draggable.is-dragging,

@@ -1428,6 +1428,7 @@ L.control.scale({
         // 1. Matikan layer jalan & angin (checkbox-driven)
         const toggles = [
           'toggleTransjakarta',
+          'toggleTransjogja',
           'toggleTollRoad', 'toggleNonTollRoad', 'toggleNationalRoad',
           'toggleWindAnim', 'toggleWindRgb', 'toggleRhRgb', 'toggleTp24Rgb',
           'togglePm25Rgb', 'toggleHthRgb',
@@ -1475,6 +1476,7 @@ L.control.scale({
         });
 
         if (typeof window.toggleTransjakarta === 'function') window.toggleTransjakarta(false);
+        if (typeof window.toggleTransjogja === 'function') window.toggleTransjogja(false);
         if (typeof toggleTollRoadLayer === 'function') toggleTollRoadLayer(false);
         if (typeof toggleNonTollRoadLayer === 'function') toggleNonTollRoadLayer(false);
          if (typeof toggleNationalRoadLayer === 'function') toggleNationalRoadLayer(false);
@@ -2839,18 +2841,12 @@ L.control.scale({
       ]
     },
     {
-      /* Transportasi. Dua toggle, bukan subcat, karena isinya
-         memang cuma segelintar. Kalau nanti KAI/KTJ/LRT masuk
-         kategori yang sama, bungkus kedua baris ini jadi subcats
-         tanpa mengubah bagian lain. */
-      /* Satu entri, bukan dua. Kontrol Jalur dan Halte pindah ke
-       * dalam sheet TransJakarta, karena di sana keduanya berdiri di
-       * atas tabel koridor yang sama dan statusnya bisa dibaca
-       * sekaligus. Di katalog, dua checkbox terpisah hanya menambah
-       * tempat mencari tanpa menambah informasi. */
+      /* Jaringan bus TransJakarta dan Trans Jogja. Masing-masing punya
+       * modul dan panel kendali sendiri. */
       cat: 'Transportasi',
       layers: [
-        { id: 'toggleTransjakarta', label: 'Koridor Transportasi Umum — TransJakarta Network' }
+        { id: 'toggleTransjakarta', label: 'Koridor Transportasi Umum — TransJakarta Network' },
+        { id: 'toggleTransjogja', label: 'Jaringan Rute Trans Jogja — Geoportal DIY' }
       ]
     },
     {
@@ -3614,6 +3610,7 @@ L.control.scale({
           (id === 'toggleSppgLayer' && typeof window.toggleSppg === 'function') ||
           (id === 'toggleSppgDistrictLayer' && typeof window.toggleSppgDistrictLayer === 'function') ||
           (id === 'toggleTransjakarta' && typeof window.toggleTransjakarta === 'function') ||
+          (id === 'toggleTransjogja' && typeof window.toggleTransjogja === 'function') ||
           (id === 'toggleTollRoad' && typeof window.toggleTollRoadLayer === 'function') ||
           (id === 'toggleNationalRoad' && typeof window.toggleNationalRoadLayer === 'function') ||
           (id === 'toggleNonTollRoad' && typeof window.toggleNonTollRoadLayer === 'function') ||
@@ -3691,6 +3688,9 @@ L.control.scale({
         }
         if (id === 'toggleTransjakarta' && typeof window.toggleTransjakarta === 'function') {
           window.toggleTransjakarta(cb.checked);
+        }
+        if (id === 'toggleTransjogja' && typeof window.toggleTransjogja === 'function') {
+          window.toggleTransjogja(cb.checked);
         }
         if (id === 'toggleTollRoad' && typeof window.toggleTollRoadLayer === 'function') {
           window.toggleTollRoadLayer(cb.checked);

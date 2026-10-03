@@ -636,6 +636,19 @@
     </div>
     <section id="transjakarta-routing" class="tj-routing-panel" aria-label="Perencana perjalanan TransJakarta" hidden></section>
 
+    <!-- Panel mandiri untuk jaringan rute Trans Jogja -->
+    <div id="transjogja-sheet" aria-label="Daftar rute Trans Jogja">
+      <div class="tj-sheet-handle"></div>
+      <div class="tj-sheet-head">
+        <div class="tj-sheet-title"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#0e7490" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="14" rx="3"/><path d="M3 11h18M7 17v2M17 17v2"/></svg><span>Trans Jogja<span class="tj-sheet-sub">Jaringan Rute · Geoportal DIY</span></span></div>
+        <div class="tj-sheet-actions">
+          <button id="transjogja-sheet-minimize" class="tj-sheet-minimize" type="button" aria-label="Minimalkan panel Trans Jogja" title="Minimalkan panel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+          <button id="transjogja-sheet-close" class="tj-sheet-close" type="button" aria-label="Tutup panel Trans Jogja" title="Tutup">&times;</button>
+        </div>
+      </div>
+      <div id="transjogja-sheet-content" class="tj-sheet-body"></div>
+    </div>
+
     <!-- GEOTOOLS BOTTOM SHEET -->
     <div id="geotools-sheet">
       <div class="gs-sheet-handle"></div>
@@ -3445,6 +3458,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/krb-titik.js"></script>
   <script src="assets/js/peta-geologi.js"></script>
   <script src="assets/js/transjakarta-layer.js"></script>
+  <script src="assets/js/transjogja-layer.js"></script>
   <script src="assets/js/geostruktur.js"></script>
   <script src="assets/js/patahan-aktif.js"></script>
   <script src="assets/js/likuifaksi.js"></script>
