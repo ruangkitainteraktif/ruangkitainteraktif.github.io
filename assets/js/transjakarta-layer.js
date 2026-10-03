@@ -120,7 +120,6 @@
   var koridorTerpilih = null;
   var koridorDisorot = null;
   var jenisDisorot = null;
-  var koridorTampil = Object.create(null);
 
   /* Sheet harus terbuka saat layer dinyalakan, tapi TIDAK boleh memaksa
    * buka ulang setelah user menutup manual. Tanpa flag ini, toggle
@@ -216,10 +215,9 @@
   function fiturTerfilterJalur() {
     if (!cacheJalur || !cacheJalur.features) return { type: 'FeatureCollection', features: [] };
     var fitur = cacheJalur.features.filter(function (f) {
-      var kode = kunciKoridor((f.properties || {}).KORIDOR);
-      return koridorTampil[kode] !== false && filterFeatureByState(f);
+      return filterFeatureByState(f);
     });
-    /* Saat pertama dibuka tampilkan jaringan lengkap; klik baris membatasi ke koridor itu. */
+    /* Klik baris memilih satu koridor dan meredupkan koridor lain. */
     if (koridorTerpilih) fitur = fitur.filter(function (f) { return kunciKoridor((f.properties || {}).KORIDOR) === koridorTerpilih; });
     return {
       type: 'FeatureCollection',
@@ -1102,11 +1100,8 @@ function tampilkanHalte(v) {
     var dipilih = kunciKoridor(r.kode) === koridorTerpilih;
     return '<tr class="tj-row' + (dipilih ? ' is-selected' : '') + '" data-koridor="' + esc(r.kode) + '"'
       + (sumber ? ' data-tj-sumber="' + esc(sumber) + '"' : '') + ' tabindex="0">'
-      + '<td class="tj-td-koridor"><label class="tj-koridor-toggle">'
-      + '<input class="tj-koridor-check" type="checkbox" data-koridor="' + esc(r.kode) + '"'
-      + (koridorTampil[kunciKoridor(r.kode)] !== false ? ' checked' : '')
-      + ' aria-label="Tampilkan koridor ' + esc(kodeKoridor) + '">'
-      + '<span><b>' + esc(kodeKoridor) + '</b><small>' + esc(koridor) + '</small></span></label></td>'
+      + '<td class="tj-td-koridor"><span class="tj-koridor-toggle">'
+      + '<span><b>' + esc(kodeKoridor) + '</b><small>' + esc(koridor) + '</small></span></span></td>'
       + '<td class="tj-td-nama"><b>' + esc(tipe) + '</b><small>' + esc(ruas || '-') + '</small></td>'
       + '<td class="tj-td-km">' + esc(km.toLocaleString('id-ID', { maximumFractionDigits: 1 })) + '</td>'
       + '</tr>';
@@ -1202,14 +1197,18 @@ function tampilkanHalte(v) {
     }
 
     function keBaris(e) {
-      if (e.target.closest && e.target.closest('.tj-koridor-toggle')) return;
       var tr = e.target.closest ? e.target.closest('.tj-row') : null;
       if (!tr) return;
       var kode = tr.dataset.koridor;
-      if (koridorTampil[kunciKoridor(kode)] === false) return;
-      if (tr.dataset.tjSumber === 'jakartasatu' && !visibleJalurJakartaSatu) setJalurJakartaSatu(true);
+      var sumberJakartaSatu = tr.dataset.tjSumber === 'jakartasatu';
+      if (sumberJakartaSatu) {
+        if (!visibleJalurJakartaSatu) setJalurJakartaSatu(true);
+      } else if (!visibleJalur) {
+        setJalur(true);
+      }
       pilihKoridor(kode, { zoom: false });
       zoomKeKoridor(kode);
+      renderSheet();
     }
 
     body.addEventListener('click', function (e) {
@@ -1230,22 +1229,9 @@ function tampilkanHalte(v) {
       }
     });
 
-    body.addEventListener('change', function (e) {
-      var target = e.target;
-      if (!target || !body.contains(target)) return;
-      if (target.matches && target.matches('.tj-koridor-check')) {
-        var kode = kunciKoridor(target.dataset.koridor);
-        koridorTampil[kode] = target.checked;
-        if (!target.checked && koridorTerpilih === kode) koridorTerpilih = null;
-        refreshLayerJalur();
-        renderSheet();
-      }
-    });
-
     body.addEventListener('keydown', function (e) {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       if (e.target.closest && e.target.closest('[data-tj-layer]')) return;
-      if (e.target.closest && e.target.closest('.tj-koridor-check')) return;
       if (!e.target.closest || !e.target.closest('.tj-row')) return;
       e.preventDefault();
       keBaris(e);
@@ -1363,8 +1349,9 @@ function tampilkanHalte(v) {
     if (v) {
       moduleActive = true;
       userTutupSheet = false;
-      setJalur(true);
-      setHalte(true);
+      setJalur(false);
+      setJalurJakartaSatu(true);
+      setHalte(false);
     } else {
       moduleActive = false;
       setJalur(false);
