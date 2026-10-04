@@ -74,6 +74,45 @@
     return teks(v).toLowerCase();
   }
 
+  /* Deskripsi varietas berasal dari PDF yang teksnya rata dalam satu baris.
+     Pisahkan atribut dengan titik koma tanpa mengubah urutan sumber. */
+  function formatDeskripsiVarietas(v) {
+    var sumber = teks(v);
+    if (!sumber) return '';
+
+    var labelMulai = [
+      'Adaptasi', 'Agroekologi', 'Aroma', 'Asal', 'Berat', 'Bentuk', 'Bobot',
+      'Ciri', 'Daya', 'Diameter', 'Duri', 'Habitus', 'Hasil', 'Identitas',
+      'Izin', 'Jenis', 'Jumlah', 'Kadar', 'Kaki', 'Kandungan', 'Karakter', 'Keadaan', 'Kedaan',
+      'Kelangsungan', 'Kelarutan', 'Kepala', 'Kerapatan', 'Keseragaman',
+      'Ketahanan', 'Keterangan', 'Kekuatan', 'Kualitas', 'Lebar', 'Lingkar',
+      'Masa', 'Mutu', 'Nama', 'Nilai', 'Nomor', 'Panjang', 'Pangkal', 'Pelepah',
+      'Pemilik', 'Penampang', 'Penampilan', 'Peneliti', 'Pengusul', 'Penyebaran',
+      'Perakaran', 'Perawakan', 'Permukaan', 'Persentase', 'Phylotaksi', 'Posisi',
+      'Potensi', 'Produksi', 'Produktivitas', 'Rasa', 'Rata-rata', 'Rendemen',
+      'Sifat', 'Silsilah', 'Silisilah', 'Sumber', 'Tahun', 'Teknisi', 'Tebal', 'Tinggi',
+      'Tipe', 'Ukuran', 'Umur', 'Ujung', 'Varietas', 'Warna'
+    ];
+    var mulai = new RegExp('\\s+(' + labelMulai.join('|') + ')\\b', 'gi');
+    var potongan = [];
+    var akhir = 0;
+    var cocok;
+
+    while ((cocok = mulai.exec(sumber))) {
+      var setelahLabel = sumber.slice(cocok.index + cocok[0].length);
+      var kolon = setelahLabel.search(/\s*:\s*/);
+      // Label atribut diikuti titik dua sebelum label berikutnya.
+      if (kolon < 0 || kolon > 100) continue;
+      if (cocok.index > akhir) potongan.push(sumber.slice(akhir, cocok.index).trim());
+      akhir = cocok.index;
+    }
+
+    // Escaping dilakukan setelah pemisahan; teks dari transkripsi tetap aman.
+    if (!potongan.length) return esc(sumber);
+    potongan.push(sumber.slice(akhir).trim());
+    return potongan.filter(Boolean).map(esc).join('; ');
+  }
+
   /* Urut alfabetis untuk daftar yang dibaca manusia. Perbandingan < > tidak
      bisa dipakai: 'A' < 'a' benar, tapi 'a' < 'B' salah, sehingga huruf
      besar akan bercampur dengan huruf kecil di tengah daftar — persis di
@@ -216,7 +255,8 @@
         var meta = [it.komoditas, it.tahun, it.status].filter(function (v) { return v; }).join(' · ');
         var isi = '';
         if (it.asal) isi += '<p class="geofarm-ref-blok"><b>Asal</b><br />' + esc(it.asal) + '</p>';
-        if (it.deskripsi) isi += '<p class="geofarm-ref-blok"><b>Deskripsi</b><br />' + esc(it.deskripsi) + '</p>';
+        if (it.deskripsi) isi += '<p class="geofarm-ref-blok"><b>Deskripsi</b><br />' + formatDeskripsiVarietas(it.deskripsi) + '</p>';
+        else isi += '<p class="geofarm-ref-blok">Deskripsi atribut tidak tercantum pada transkripsi sumber.</p>';
         if (it.sk) isi += '<p class="geofarm-ref-blok"><b>SK pelepasan</b><br />' + esc(it.sk) + '</p>';
         return entri('<b>' + esc(it.nama) + '</b><small>' + esc(meta || ('Nomor ' + it.no)) + '</small>', isi || '<p class="geofarm-ref-blok">Rincian belum tercantum di transkripsi lokal.</p>', 'geofarm-ref-item-varietas');
       }

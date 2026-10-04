@@ -172,6 +172,7 @@
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
   <link rel="stylesheet" href="assets/css/app.css?v=71">
 
+  <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
 </head>
 
 <body>
@@ -2392,7 +2393,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
             <details class="geofarm-card" aria-labelledby="geofarmCardTitle">
               <summary class="gt-card-head">
-                <span class="gt-card-icon" aria-hidden="true">🌐</span>
+                <span class="gt-card-icon" aria-hidden="true">&#127919;</span>
                 <span>
                   <b id="geofarmCardTitle">GeoFarm Analisis</b>
                   <small>Gambar petak lalu cek kondisi lahan & kebutuhan air.</small>
@@ -2522,7 +2523,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
             <details class="geotani-lbslsd" id="geotani-tutupan-card" aria-labelledby="geotani-tutupan-title">
               <summary class="gt-card-head">
-                <span class="gt-card-icon" aria-hidden="true">🛰️</span>
+                <span class="gt-card-icon" aria-hidden="true">&#127748;</span>
                 <span>
                   <b id="geotani-tutupan-title">Tutupan Lahan</b>
                   <small>Perubahan tutupan lahan 2020 &rarr; 2024 &mdash; KLHK via BNPB</small>
@@ -2554,7 +2555,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                  workflow GeoFarm yang lebih relevan dengan analisis lahan. -->
             <details class="geotani-lbslsd" id="geotani-lbslsd-card" aria-labelledby="geotani-lbslsd-title">
               <summary class="gt-card-head">
-                <span class="gt-card-icon" aria-hidden="true">🧭</span>
+                <span class="gt-card-icon" aria-hidden="true">&#128208;</span>
                 <span>
                   <b id="geotani-lbslsd-title">LBS &amp; LSD</b>
                   <small>Lahan Baku &amp; Sawah Dilindungi &mdash; BIG 1:50.000</small>
@@ -2584,7 +2585,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
             <details class="geotani-lbslsd" id="geotani-lsd12-card" aria-labelledby="geotani-lsd12-title">
               <summary class="gt-card-head">
-                <span class="gt-card-icon" aria-hidden="true">🗺️</span>
+                <span class="gt-card-icon" aria-hidden="true">&#128510;</span>
                 <span>
                   <b id="geotani-lsd12-title">LSD 12 Provinsi</b>
                   <small>Lahan Sawah Dilindungi &mdash; ATR/BPN GISTARU</small>
@@ -2617,7 +2618,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
             <details class="geopangan-card" id="geopangan-card-pihps" aria-labelledby="geopanganPihpsTitle">
               <summary class="gt-card-head">
-                <span class="gt-card-icon" aria-hidden="true">🛒</span>
+                <span class="gt-card-icon" aria-hidden="true">&#127978;</span>
                 <span>
                   <b id="geopanganPihpsTitle">PIHPS - Bank Indonesia</b>
                   <small>Harga pangan nasional dari PIHPS / Badan Pusat Statistik</small>
@@ -2665,7 +2666,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
             <details class="geopangan-card" id="geopangan-card-sp2kp" aria-labelledby="geopanganSp2kpTitle">
               <summary class="gt-card-head">
-                <span class="gt-card-icon" aria-hidden="true">📈</span>
+                <span class="gt-card-icon" aria-hidden="true">&#128202;</span>
                 <span>
                   <b id="geopanganSp2kpTitle">SP2KP - Kemendag</b>
                   <small>Choropleth HNT dan disparitas harga provinsi</small>
@@ -2739,7 +2740,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                  pembungkus geofarm-kalk-body tidak menggentarkan apa pun. -->
             <details class="geofarm-kalk" id="geofarm-kalkulator-card" aria-labelledby="geofarm-kalk-title">
               <summary class="gt-card-head">
-                <span class="gt-card-icon" aria-hidden="true">🧮</span>
+                <span class="gt-card-icon" aria-hidden="true">&#128290;</span>
                 <span>
                   <b id="geofarm-kalk-title">Kalkulator Benih &amp; Pupuk</b>
                   <small>Kebutuhan benih dan pupuk dari luas lahan yang sama</small>
@@ -2862,12 +2863,40 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                  atasnya. Status terbuka atau tertutupnya kartu sepenuhnya
                  milik pengguna. -->
             <div class="geofarm-ref-group" id="geofarm-referensi">
+              <details class="geofarm-ref gf-ebook" aria-labelledby="gfEbookTitle">
+                <summary class="gt-card-head">
+                  <span class="gt-card-icon" aria-hidden="true">&#128214;</span>
+                  <span><b id="gfEbookTitle">E-Book Pertanian</b><small>Katalog publikasi BRMP dalam pembaca PDF</small></span>
+                </summary>
+                <div class="gf-ebook-content">
+                <div class="gf-ebook-grid">
+                  <article class="gf-ebook-card gf-ebook-cover-soil">
+                    <div class="gf-ebook-cover" aria-hidden="true"><i></i></div>
+                    <div class="gf-ebook-info"><span class="gf-ebook-tag">PUBLIKASI BRMP</span><h4>Publikasi Tanah &amp; Pupuk</h4><p>Buka dokumen teknis pertanian dari Balai Pengujian Standar Instrumen Tanah dan Pupuk.</p>
+                      <button class="gf-ebook-open" type="button" data-ebook-open data-title="Publikasi Tanah &amp; Pupuk" data-url="https://tanahpupuk.brmp.pertanian.go.id/storage/assets/uploads/publikasi/cPx4NdBdqxfTT9HYns8glyJ4JexdNWQ2bCvJ0ulQ.pdf">Baca publikasi <span aria-hidden="true">↗</span></button>
+                    </div>
+                  </article>
+                  <article class="gf-ebook-card gf-ebook-cover-horti">
+                    <div class="gf-ebook-cover" aria-hidden="true"><i></i></div>
+                    <div class="gf-ebook-info"><span class="gf-ebook-tag">HORTIKULTURA · 2024</span><h4>Rekomendasi Pupuk N, P, dan K untuk Tanaman Hortikultura per Kabupaten · Edisi 2</h4><p>Acuan pemupukan komoditas hortikultura per kabupaten. 227 halaman.</p>
+                      <button class="gf-ebook-open" type="button" data-ebook-open data-title="Rekomendasi Pupuk N, P, dan K untuk Tanaman Hortikultura per Kabupaten · Edisi 2" data-url="https://tanahpupuk.brmp.pertanian.go.id/storage/assets/uploads/publikasi/qsCwH5PadpgkOMNX2JW84ah9pYvtIQEvLTBAKTwH.pdf">Baca publikasi <span aria-hidden="true">↗</span></button>
+                    </div>
+                  </article>
+                </div>
+                </div>
+              </details>
+              <dialog class="gf-reader" id="gfEbookReader" aria-labelledby="gfReaderTitle">
+                <div class="gf-reader-bar"><div class="gf-reader-heading"><span class="gf-reader-mark" aria-hidden="true">GF</span><div><strong id="gfReaderTitle">Pembaca publikasi</strong><small>GeoFarm · Perpustakaan digital</small></div></div>
+                  <div class="gf-reader-actions"><a id="gfReaderDownload" class="gf-reader-download" href="#" target="_blank" rel="noopener noreferrer">Buka PDF ↗</a><button type="button" class="gf-reader-close" data-reader-close aria-label="Tutup pembaca">✕</button></div>
+                </div>
+                <div class="gf-reader-stage"><iframe id="gfReaderFrame" title="Pembaca dokumen PDF" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+              </dialog>
               <details class="geofarm-ref" data-ref-card="varietas" aria-labelledby="geofarmRefVarietasTitle">
                 <summary class="gt-card-head">
-                  <span class="gt-card-icon" aria-hidden="true">🌳</span>
+                  <span class="gt-card-icon" aria-hidden="true">&#127796;</span>
                   <span>
                     <b id="geofarmRefVarietasTitle">Database Varietas Tanaman</b>
-                    <small>Katalog varietas perkebunan: komoditas, asal, deskripsi, dan SK pelepasan</small>
+                    <small>Katalog varietas perkebunan.</small>
                   </span>
                 </summary>
                 <div class="geofarm-ref-body">
@@ -2882,7 +2911,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
               <details class="geofarm-ref" data-ref-card="artikel" aria-labelledby="geofarmRefArtikelTitle">
                 <summary class="gt-card-head">
-                  <span class="gt-card-icon" aria-hidden="true">&#128214;</span>
+                  <span class="gt-card-icon" aria-hidden="true">&#129460;</span>
                   <span>
                     <b id="geofarmRefArtikelTitle">Budidaya Tanaman</b>
                     <small>Panduan planting dan perawatan tanaman</small>
@@ -2899,7 +2928,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
               <details class="geofarm-ref" data-ref-card="kamus" aria-labelledby="geofarmRefKamusTitle">
                 <summary class="gt-card-head">
-                  <span class="gt-card-icon" aria-hidden="true">🔤</span>
+                  <span class="gt-card-icon" aria-hidden="true">&#128218;</span>
                   <span>
                     <b id="geofarmRefKamusTitle">Kamus Pertanian</b>
                     <small>Istilah bidang pertanian dan tanah</small>
@@ -2916,7 +2945,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
               <details class="geofarm-ref" data-ref-card="opete" aria-labelledby="geofarmRefOpeteTitle">
                 <summary class="gt-card-head">
-                  <span class="gt-card-icon" aria-hidden="true">&#128027;</span>
+                  <span class="gt-card-icon" aria-hidden="true">&#129431;</span>
                   <span>
                     <b id="geofarmRefOpeteTitle">Hama &amp; Penyakit</b>
                     <small>Pengenalan, inang, gejala, dan pengendalian</small>
@@ -2939,7 +2968,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
               <details class="geofarm-ref geofarm-pupuk-rekom" id="geofarmPupukRekomCard" aria-labelledby="geofarmPupukRekomTitle">
                 <summary class="gt-card-head">
-                  <span class="gt-card-icon" aria-hidden="true">🧑</span>
+                  <span class="gt-card-icon" aria-hidden="true">&#127873;</span>
                   <span>
                     <b id="geofarmPupukRekomTitle">Rekomendasi Pupuk Subsidi 2027</b>
                     <small>Pencarian dosis pupuk bersubsidi per wilayah & komoditas</small>
@@ -2965,7 +2994,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
               <details class="geofarm-ref" data-ref-card="pupuk-publik" aria-labelledby="geofarmRefPupukPublikTitle">
                 <summary class="gt-card-head">
-                  <span class="gt-card-icon" aria-hidden="true">🧴</span>
+                  <span class="gt-card-icon" aria-hidden="true">&#129529;</span>
                   <span>
                     <b id="geofarmRefPupukPublikTitle">Info Pupuk</b>
                     <small>Katalog pupuk, bentuk formula, dan status pendaftaran</small>
@@ -2982,7 +3011,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
               <details class="geofarm-ref" data-ref-card="pestisida" aria-labelledby="geofarmRefPestisidaTitle">
                 <summary class="gt-card-head">
-                  <span class="gt-card-icon" aria-hidden="true">&#129514;</span>
+                  <span class="gt-card-icon" aria-hidden="true">&#129440;</span>
                   <span>
                     <b id="geofarmRefPestisidaTitle">Info Pestisida</b>
                     <small>Merek dagang, bahan aktif, dan nomor izin</small>
@@ -3382,7 +3411,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 <script src="assets/js/geofarm-kalkulator.js"></script>
 <!-- Referensi Pertanian: kartu <details> yang mengambil data dengan fetch()
      saat dibuka (termasuk transkripsi lokal varietas perkebunan). -->
-<script src="assets/js/geofarm-referensi.js"></script>
+<script src="assets/js/geofarm-referensi.js?v=20261004-varietas2"></script>
+<script src="assets/js/geofarm-ebook.js?v=20261004"></script>
 <!-- geofarm-report.js hanya Menyediakan window.setGeoFarmReportIndexSpecs(),
      jadi harus dimuat sebelum polygon-analysis.js memanggilnya. -->
 <script src="assets/js/geofarm-report.js"></script>
