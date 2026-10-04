@@ -356,24 +356,61 @@
       if (resultsTitle) resultsTitle.textContent = categorySelect.value ? `Daftar ${selectedLabel}` : 'Hasil pencarian';
       if (resultsHint) resultsHint.textContent = categorySelect.value === 'route' ? 'Pilih rute untuk melihat urutan halte' : categorySelect.value === 'stop' ? 'Pilih halte untuk melihat lokasinya' : 'Pilih operator untuk membuka rute dan halte';
     }
-    const fragment = document.createDocumentFragment();
+    const tableWrap = document.createElement('div');
+    tableWrap.className = 'geotrans-table-wrap';
+    const table = document.createElement('table');
+    table.className = 'geotrans-table';
+    table.setAttribute('aria-label', 'Daftar operator, rute, dan halte bus');
+    table.innerHTML = '<thead><tr><th scope="col">Jenis</th><th scope="col">Nama jaringan</th><th scope="col">Informasi</th></tr></thead>';
+    const tbody = document.createElement('tbody');
     filtered.slice(0, 50).forEach(item => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = `geotrans-result-item geotrans-result-${item.kind}`;
-      button.setAttribute('aria-pressed', focusedFeatureKey === `${item.kind}:${item.id}` ? 'true' : 'false');
-      const name = document.createElement('strong');
+      const row = document.createElement('tr');
+      const key = `${item.kind}:${item.id}`;
+      row.className = `geotrans-table-row geotrans-table-${item.kind}${focusedFeatureKey === key ? ' is-selected' : ''}`;
+      row.tabIndex = 0;
+
+      const typeCell = document.createElement('td');
+      typeCell.className = 'geotrans-table-type-cell';
+      const type = document.createElement('span');
+      type.className = `geotrans-table-type geotrans-table-type-${item.kind}`;
+      type.textContent = item.kind === 'route' ? 'Rute' : item.kind === 'stop' ? 'Halte' : 'Operator';
+      typeCell.append(type);
+
+      const nameCell = document.createElement('td');
+      nameCell.className = 'geotrans-table-name-cell';
+      const name = document.createElement('b');
       name.textContent = item.name;
-      const meta = document.createElement('small');
-      const subline = item.kind === 'route'
-        ? `${item.properties.shortName || 'Rute'} | ${item.operator} | ${item.properties.origin || ''} to ${item.properties.toward || ''}`
-        : item.kind === 'stop' ? `Halte | ${item.operator || 'Operator tidak diketahui'}` : `Operator | ${item.area}`;
-      meta.textContent = subline;
-      const badge = document.createElement('span');
-      badge.className = `geotrans-result-badge geotrans-badge-${item.kind}`;
-      badge.textContent = item.kind === 'route' ? item.properties.operatingHours || 'Rute' : item.kind === 'stop' ? `${(item.properties.corridors || []).length} koridor` : 'Operator';
-      button.append(name, meta, badge);
-      button.addEventListener('click', () => {
+      const description = document.createElement('small');
+      if (item.kind === 'route') {
+        const direction = [item.properties.origin, item.properties.toward].filter(Boolean).join(' to ');
+        description.textContent = [item.properties.shortName, item.operator, direction].filter(Boolean).join(' · ');
+      } else if (item.kind === 'stop') {
+        description.textContent = item.operator || 'Operator tidak diketahui';
+      } else {
+        description.textContent = item.area || 'Wilayah layanan';
+      }
+      nameCell.append(name, description);
+
+      const infoCell = document.createElement('td');
+      infoCell.className = 'geotrans-table-info-cell';
+      const info = document.createElement('b');
+      const infoDescription = document.createElement('small');
+      if (item.kind === 'route') {
+        info.textContent = item.properties.operatingHours || 'Jam belum tersedia';
+        infoDescription.textContent = typeof item.properties.isOperating === 'boolean'
+          ? (item.properties.isOperating ? 'Beroperasi' : 'Tidak beroperasi')
+          : 'Jam layanan';
+      } else if (item.kind === 'stop') {
+        info.textContent = `${(item.properties.corridors || []).length} koridor`;
+        infoDescription.textContent = 'Melayani halte';
+      } else {
+        info.textContent = 'Operator bus';
+        infoDescription.textContent = item.properties.city || item.area || 'Wilayah layanan';
+      }
+      infoCell.append(info, infoDescription);
+      row.append(typeCell, nameCell, infoCell);
+
+      const selectItem = () => {
         if (item.kind === 'operator') {
           focusedFeatureKey = `operator:${item.id}`;
           overviewMode = false;
@@ -385,30 +422,39 @@
           window.map.flyTo([item.lat, item.lon], 13, { duration: 0.5 });
           return;
         }
-        focusedFeatureKey = `${item.kind}:${item.id}`;
+        focusedFeatureKey = key;
         showRouteDetail(item);
         const toggle = layerToggles.find(input => input.dataset.geotransLayer === item.kind);
         if (toggle && !toggle.checked) toggle.checked = true;
         render();
-        const key = `${item.kind}:${item.id}`;
         if (item.kind === 'route' && item.shape.length > 1) {
           const line = routeLayer.getLayers().find(layer => layer.geotransKey === key);
-          if (line) {
-            window.map.fitBounds(line.getBounds(), { padding: [30, 30], maxZoom: 15 });
-          }
+          if (line) window.map.fitBounds(line.getBounds(), { padding: [30, 30], maxZoom: 15 });
         } else {
-          window.map.flyTo([item.lat, item.lon], item.kind === 'operator' ? 13 : 16, { duration: 0.5 });
+          window.map.flyTo([item.lat, item.lon], 16, { duration: 0.5 });
+        }
+      };
+      row.addEventListener('click', selectItem);
+      row.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          selectItem();
         }
       });
-      fragment.append(button);
+      tbody.append(row);
     });
     if (!filtered.length) {
-      const empty = document.createElement('p');
-      empty.className = 'geotrans-empty-state';
-      empty.textContent = 'Belum ada informasi yang cocok. Coba kata kunci atau kategori lain.';
-      fragment.append(empty);
+      const row = document.createElement('tr');
+      const cell = document.createElement('td');
+      cell.colSpan = 3;
+      cell.className = 'geotrans-table-empty';
+      cell.textContent = 'Belum ada informasi yang cocok. Coba kata kunci atau kategori lain.';
+      row.append(cell);
+      tbody.append(row);
     }
-    results.replaceChildren(fragment);
+    table.append(tbody);
+    tableWrap.append(table);
+    results.replaceChildren(tableWrap);
   }
 
   function load() {

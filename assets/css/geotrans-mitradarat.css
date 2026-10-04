@@ -207,7 +207,7 @@
 .geotrans-show-all[hidden] { display: none; }
 [data-theme="dark"] .geotrans-show-all { border-color: #356965; color: #91ded7; background: #193e43; }
 
-/* Result cards keep all route and stop labels readable at narrow sheet widths. */
+/* Keep the GeoTrans list readable at narrow sheet widths. */
 .geotrans-app { min-width: 0; }
 .geotrans-results { min-width: 0; overflow-x: hidden; padding: 2px 2px 5px; }
 .geotrans-result-item {
@@ -266,4 +266,38 @@
   .geotrans-result-item { gap: 4px 9px; padding: 10px; }
   .geotrans-result-item strong { font-size: 11px; }
   .geotrans-result-item small { font-size: 10px; }
+}
+
+/* Scrollable, selectable result table follows the TransJakarta list pattern. */
+.geotrans-results { display: block; min-width: 0; max-height: none; overflow: visible; }
+.geotrans-table-wrap { max-height: min(42vh, 420px); overflow: auto; border-bottom: 1px solid var(--gtx-line); overscroll-behavior: contain; }
+.geotrans-table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; color: var(--gtx-ink); font-size: 11px; }
+.geotrans-table thead th { position: sticky; top: 0; z-index: 2; padding: 8px 6px; border-bottom: 1px solid var(--gtx-line); color: var(--gtx-muted); background: var(--gtx-surface); font-size: 9px; font-weight: 800; letter-spacing: .06em; text-align: left; text-transform: uppercase; }
+.geotrans-table thead th:first-child, .geotrans-table-type-cell { width: 64px; }
+.geotrans-table thead th:last-child { width: 90px; }
+.geotrans-table-row { cursor: pointer; transition: background .12s ease; }
+.geotrans-table-row:hover { background: var(--gtx-wash); }
+.geotrans-table-row:focus-visible { outline: 2px solid var(--gtx-teal); outline-offset: -2px; }
+.geotrans-table-row.is-selected { background: var(--gtx-teal-soft); box-shadow: inset 3px 0 0 var(--gtx-teal); }
+.geotrans-table-row > td { padding: 9px 6px; border-bottom: 1px solid var(--gtx-line); vertical-align: top; overflow-wrap: anywhere; }
+.geotrans-table-type { display: inline-block; padding: 4px 5px; border-radius: 6px; color: #087b78; background: #e4f5f3; font-size: 8px; font-weight: 800; }
+.geotrans-table-type-stop { color: #95600e; background: #fff2d9; }
+.geotrans-table-type-operator { color: #326d4a; background: #e9f5ed; }
+.geotrans-table-name-cell { min-width: 0; }
+.geotrans-table-name-cell b, .geotrans-table-info-cell b { display: block; color: var(--gtx-ink); font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
+.geotrans-table-name-cell small, .geotrans-table-info-cell small { display: block; margin-top: 3px; color: var(--gtx-muted); font-size: 9px; line-height: 1.4; overflow-wrap: anywhere; }
+.geotrans-table-info-cell b { font-size: 10px; }
+.geotrans-table-empty { padding: 18px 10px !important; color: var(--gtx-muted); font-size: 10px; line-height: 1.5; text-align: center; }
+[data-theme="dark"] .geotrans-table thead th { background: var(--gtx-surface); }
+[data-theme="dark"] .geotrans-table-type { color: #79d5cf; background: #193e43; }
+[data-theme="dark"] .geotrans-table-type-stop { color: #f2c77d; background: #493719; }
+[data-theme="dark"] .geotrans-table-type-operator { color: #9be0ae; background: #193b2a; }
+@media (max-width: 420px) {
+  .geotrans-table-wrap { max-height: 32dvh; }
+  .geotrans-table thead th:first-child, .geotrans-table-type-cell { width: 58px; }
+  .geotrans-table thead th:last-child { width: 82px; }
+  .geotrans-table thead th { padding: 7px 5px; font-size: 8px; }
+  .geotrans-table-row > td { padding: 8px 5px; }
+  .geotrans-table-name-cell b { font-size: 10px; }
+  .geotrans-table-info-cell b { font-size: 9px; }
 }
