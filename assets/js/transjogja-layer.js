@@ -10,6 +10,7 @@
   var stops = [];
   var groupCache = null;
   var active = false;
+  var routeVisible = false;
   var loaded = false;
   var loading = false;
   var stopsLoaded = false;
@@ -162,7 +163,7 @@
   }
 
   function showLayer() {
-    if (!window.map || !loaded) return;
+    if (!window.map || !loaded || !routeVisible) return;
     ensurePane('transjogjaRoutePane', 435);
     if (layer && window.map.hasLayer(layer)) window.map.removeLayer(layer);
     var shown = records.filter(function (f) { return !selectedKey || f.__routeName === selectedKey; });
@@ -229,11 +230,11 @@
   }
 
   function fokusJaringanAwal() {
-    if (!active || sudahTerbang || !loaded || !window.map || !layer) return;
+    if (!active || !routeVisible || sudahTerbang || !loaded || !window.map || !layer) return;
     var bounds = layer.getBounds();
     if (!bounds.isValid()) return;
     window.setTimeout(function () {
-      if (!active || sudahTerbang || !window.map) return;
+      if (!active || !routeVisible || sudahTerbang || !window.map) return;
       if (typeof window.map.invalidateSize === 'function') window.map.invalidateSize({ pan: false });
       fitArea(bounds, 13);
       sudahTerbang = true;
@@ -242,7 +243,7 @@
 
   function showStops() {
     if (!window.map || !stopsLoaded) return;
-    ensurePane('transjogjaHaltePane', 434);
+    ensurePane('transjogjaHaltePane', 436);
     if (halteLayer && window.map.hasLayer(halteLayer)) window.map.removeLayer(halteLayer);
     halteLayer = L.geoJSON({ type: 'FeatureCollection', features: stops }, {
       pointToLayer: function (feature, latlng) {
@@ -293,7 +294,7 @@
     var total = all.reduce(function (sum, r) { return sum + r.km; }, 0);
     el.innerHTML = '<div class="tj-stat"><div class="tj-stat-item"><b>' + all.length + '</b><span>rute</span></div><div class="tj-stat-item"><b>' + total.toLocaleString('id-ID', { maximumFractionDigits: 1 }) + '</b><span>km total</span></div><button type="button" class="tj-stat-item' + (stopsVisible ? ' is-on' : '') + '" data-tgj-halte aria-pressed="' + stopsVisible + '" aria-label="Tampilkan halte Trans Jogja"><b>' + (stopsLoaded ? stops.length : 'lihat') + '</b><span>halte</span></button></div>'
       + '<div class="tj-filter-box"><div class="tj-filter-row"><label class="tj-filter-label" for="tgj-search">Cari rute</label><input id="tgj-search" class="tj-filter-search" type="search" value="' + esc(filterText) + '" placeholder="Cari nama atau nomor rute"></div></div>'
-      + '<div class="tj-ctrl"><button type="button" class="tj-switch' + (active ? ' is-on' : '') + '" data-tgj-toggle aria-pressed="' + active + '"><span class="tj-switch-dot"></span><span class="tj-switch-label">Jalur Trans Jogja</span><span class="tj-switch-count">' + records.length + ' segmen</span></button></div>'
+      + '<div class="tj-ctrl"><button type="button" class="tj-switch' + (routeVisible ? ' is-on' : '') + '" data-tgj-toggle aria-pressed="' + routeVisible + '"><span class="tj-switch-dot"></span><span class="tj-switch-label">Jalur Trans Jogja</span><span class="tj-switch-count">' + records.length + ' segmen</span></button></div>'
       + '<div class="tj-ctrl"><button type="button" class="tj-switch' + (stopsVisible ? ' is-on' : '') + '" data-tgj-halte-toggle aria-pressed="' + stopsVisible + '"><span class="tj-switch-dot"></span><span class="tj-switch-label">Halte Trans Jogja</span><span class="tj-switch-count">' + (stopsLoaded ? stops.length + ' halte' : 'lihat') + '</span></button></div>'
       + '<div class="tgj-route-list">' + (visible.length ? visible.map(function (r, i) {
         var summary = r.details.join(' · ');
@@ -310,6 +311,7 @@
     if (cb) cb.checked = active;
     if (active) {
       userClosed = false;
+      routeVisible = true;
       sudahTerbang = false;
       loadData().then(function () {
         if (!loaded || !active) return;
@@ -318,12 +320,32 @@
       });
       if (!userClosed && window.SheetDrag) window.SheetDrag.buka(sheetId);
     } else {
+      routeVisible = false;
       if (layer && window.map && window.map.hasLayer(layer)) window.map.removeLayer(layer);
       stopsVisible = false;
       if (halteLayer && window.map && window.map.hasLayer(halteLayer)) window.map.removeLayer(halteLayer);
       if (window.SheetDrag) window.SheetDrag.close(sheetId);
     }
     render();
+  }
+
+  function setRouteVisible(value) {
+    routeVisible = !!value;
+    if (routeVisible) {
+      if (loaded) showLayer();
+      else loadData().then(function () { if (active && routeVisible && loaded) showLayer(); });
+    } else if (layer && window.map && window.map.hasLayer(layer)) {
+      window.map.removeLayer(layer);
+    }
+    render();
+  }
+
+  function syncCatalogCheckbox(value) {
+    var cb = document.getElementById('toggleTransjogja');
+    if (cb) cb.checked = !!value;
+    if (typeof window.setLayerCatalogCheckboxState === 'function') {
+      window.setLayerCatalogCheckboxState('toggleTransjogja', !!value);
+    }
   }
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -345,9 +367,9 @@
       onClose: function () {
         userClosed = true;
         active = false;
+        routeVisible = false;
         stopsVisible = false;
-        var cb = document.getElementById('toggleTransjogja');
-        if (cb) cb.checked = false;
+        syncCatalogCheckbox(false);
         if (window.map && layer && window.map.hasLayer(layer)) window.map.removeLayer(layer);
         if (window.map && halteLayer && window.map.hasLayer(halteLayer)) window.map.removeLayer(halteLayer);
         render();
@@ -360,12 +382,12 @@
     if (el) {
       el.addEventListener('input', function (e) { if (e.target.id === 'tgj-search') { filterText = e.target.value; render(); var input = document.getElementById('tgj-search'); if (input) { input.focus(); input.setSelectionRange(filterText.length, filterText.length); } } });
       el.addEventListener('click', function (e) {
-        if (e.target.closest('[data-tgj-toggle]')) { setActive(!active); return; }
+        if (e.target.closest('[data-tgj-toggle]')) { setRouteVisible(!routeVisible); return; }
         if (e.target.closest('[data-tgj-halte], [data-tgj-halte-toggle]')) { setStopsVisible(!stopsVisible); return; }
         var route = e.target.closest('[data-tgj-route]');
         if (route) {
           selectedKey = selectedKey === route.dataset.tgjRoute ? '' : route.dataset.tgjRoute;
-          if (active) showLayer();
+          if (active && routeVisible) showLayer();
           var g = groups().find(function (r) { return r.name === selectedKey; });
           if (selectedKey && g) fitArea(g.bounds, 16);
           render();

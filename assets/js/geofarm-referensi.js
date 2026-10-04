@@ -1,6 +1,6 @@
 /* ── GeoFarm: Referensi Pertanian ──
  * ──────────────────────────────────────────────────────────────────────────
- * Empat kartu referensi, diisi dari data yang sudah ada di repo tapi belum
+ * Lima kartu referensi, termasuk katalog varietas lokal:
  * pernah dipakai siapa pun:
  *
  *   data-ref-card  file                            var    isi
@@ -9,6 +9,7 @@
  *   kamus          assets/data/pertanian/kamus.js   kamus  5.613 istilah
  *   opete          assets/data/pertanian/opete.js   opt    2.172 hama & penyakit
  *   pestisida      assets/data/pertanian/pestisida.js pestisida 1.898 racun
+ *   varietas       assets/data/pertanian/varietas-perkebunan.json 351 varietas hasil ekstraksi PDF
  *
  * ── KENAPA TIDAK PAKAI <script src> ──
  * Keempat file itu bukan JSON: isinya literal `var x = [...]` diikuti
@@ -26,7 +27,7 @@
  * benar-benar dibuka user.
  *
  * ── KENAPA BUKAN SATU KARTU DENGAN TAB ──
- * Empat kartu terpisah. Alasannya praktis: hanya satu di antaranya yang perlu
+ * Kartu terpisah. Alasannya praktis: hanya satu di antaranya yang perlu
  * dibuka untuk satu tugas (nyari hama != baca artikel), dan tiap file punya
  * bentuk data sendiri sehingga biaya render-nya tidak sebanding bila digabung
  * jadi satu daftar. Semua tetap mulai terlipat, sama seperti kartu GeoFarm
@@ -184,6 +185,43 @@
   }
 
   var DATASET = {
+
+    varietas: {
+      file: 'assets/data/pertanian/varietas-perkebunan.json',
+      mode: 'json',
+      satuan: 'varietas',
+      placeholder: 'Cari varietas, komoditas, asal, atau nomor SK',
+      normalisasi: function (rows) {
+        var out = [];
+        for (var i = 0; i < rows.length; i++) {
+          var r = rows[i] || {};
+          var nama = String(r.nama || '').trim();
+          if (!nama) continue;
+          out.push({
+            no: String(r.no || ''),
+            nama: nama,
+            komoditas: String(r.komoditas || '').trim(),
+            asal: String(r.asal || '').trim(),
+            tahun: String(r.tahun || '').trim(),
+            status: String(r.status || '').trim(),
+            sk: String(r.sk || '').trim(),
+            deskripsi: String(r.deskripsi || '').trim(),
+            cari: [nama, r.komoditas, r.asal, r.tahun, r.status, r.sk, r.deskripsi].join(' ').toLowerCase()
+          });
+        }
+        out.sort(function (a, b) { return Number(a.no) - Number(b.no); });
+        return out;
+      },
+      render: function (it) {
+        var meta = [it.komoditas, it.tahun, it.status].filter(function (v) { return v; }).join(' · ');
+        var isi = '';
+        if (it.asal) isi += '<p class="geofarm-ref-blok"><b>Asal</b><br />' + esc(it.asal) + '</p>';
+        if (it.deskripsi) isi += '<p class="geofarm-ref-blok"><b>Deskripsi</b><br />' + esc(it.deskripsi) + '</p>';
+        if (it.sk) isi += '<p class="geofarm-ref-blok"><b>SK pelepasan</b><br />' + esc(it.sk) + '</p>';
+        return entri('<b>' + esc(it.nama) + '</b><small>' + esc(meta || ('Nomor ' + it.no)) + '</small>', isi || '<p class="geofarm-ref-blok">Rincian belum tercantum di transkripsi lokal.</p>', 'geofarm-ref-item-varietas');
+      }
+    },
+
 
     /* ── artikel (blog.js) ──
        Isinya HTML panjang (panduan budidaya lengkap) dan gambarnya ada di

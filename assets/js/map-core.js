@@ -3329,6 +3329,13 @@ L.control.scale({
     });
   }
 
+  window.setLayerCatalogCheckboxState = function (id, checked) {
+    _layerCatalogState[id] = !!checked;
+    document.querySelectorAll('.lc-item input[type="checkbox"]').forEach(function (cb) {
+      if (cb.dataset.layerId === id) cb.checked = !!checked;
+    });
+  };
+
   function buildLayerCatalog(container) {
     var html = '<div class="lc-donation-banner">' +
       '<div class="lc-donation-text">Dukung RuangKita</div>' +

@@ -2841,12 +2841,13 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
               </div>
             </details>
             <!-- ============ KARTU: REFERENSI PERTANIAN ============
-                 Empat kartu referensi yang memakai data yang sudah ada di
+                 Lima kartu referensi, termasuk database varietas, memakai data yang sudah ada di
                  repo tapi belum pernah dimuat siapa pun:
                    artikel   -> blog.js         42 artikel
                    kamus     -> kamus.js     5.605 istilah
                    opete     -> opete.js     2.162 hama & penyakit
                    pestisida -> pestisida.js  1.890 produk
+                   varietas  -> varietas-perkebunan.json (351 varietas dari PDF BRMP)
 
                  Total 3,7 MB, jadi TIDAK ditulis ke markup dan TIDAK dimuat
                  seketika. geofarm-referensi.js mengambilnya dengan fetch()
@@ -2861,6 +2862,23 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                  atasnya. Status terbuka atau tertutupnya kartu sepenuhnya
                  milik pengguna. -->
             <div class="geofarm-ref-group" id="geofarm-referensi">
+              <details class="geofarm-ref" data-ref-card="varietas" aria-labelledby="geofarmRefVarietasTitle">
+                <summary class="gt-card-head">
+                  <span class="gt-card-icon" aria-hidden="true">&#127793;</span>
+                  <span>
+                    <b id="geofarmRefVarietasTitle">Database Varietas Tanaman</b>
+                    <small>Katalog varietas perkebunan: komoditas, asal, deskripsi, dan SK pelepasan</small>
+                  </span>
+                </summary>
+                <div class="geofarm-ref-body">
+                  <p class="geofarm-ref-status">351 entri katalog tersimpan lokal. <a href="assets/data/pertanian/katalog-varietas-perkebunan.pdf" target="_blank" rel="noopener noreferrer">Buka PDF sumber lokal</a>.</p>
+                  <input type="search" id="geofarmRefVarietasCari" class="geofarm-ref-input" data-ref-cari
+                         placeholder="Cari varietas, komoditas, asal, atau nomor SK" autocomplete="off" />
+                  <p class="geofarm-ref-status" data-ref-status role="status" aria-live="polite"></p>
+                  <div class="geofarm-ref-list" data-ref-list></div>
+                  <button class="geofarm-ref-more" data-ref-more type="button" hidden>Muat 20 lagi</button>
+                </div>
+              </details>
 
               <details class="geofarm-ref" data-ref-card="artikel" aria-labelledby="geofarmRefArtikelTitle">
                 <summary class="gt-card-head">
@@ -3362,9 +3380,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
      dan alat-draw-measure.js (window.getDrawnLayers), keduanya sudah dimuat
      di atas. -->
 <script src="assets/js/geofarm-kalkulator.js"></script>
-<!-- Referensi Pertanian: empat kartu <details> yang ambil datanya sendiri
-     (blog.js, kamus.js, opete.js, pestisida.js) dengan fetch() saat kartu
-     dibuka. Tidak punya dependensi, jadi bebas di mana pun. -->
+<!-- Referensi Pertanian: kartu <details> yang mengambil data dengan fetch()
+     saat dibuka (termasuk transkripsi lokal varietas perkebunan). -->
 <script src="assets/js/geofarm-referensi.js"></script>
 <!-- geofarm-report.js hanya Menyediakan window.setGeoFarmReportIndexSpecs(),
      jadi harus dimuat sebelum polygon-analysis.js memanggilnya. -->
