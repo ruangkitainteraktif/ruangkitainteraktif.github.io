@@ -15029,6 +15029,9 @@ body.geofarm-draw-active .draw-actions-wrap {
 #geotoolsTabGeoFarm > .geofarm-ref-group > .geofarm-ref + .geofarm-ref {
   margin-top: 10px;
 }
+#geotoolsTabGeoFarm > .geofarm-ref-group > .gf-reader + .geofarm-ref {
+  margin-top: 10px;
+}
 
 .geofarm-ref {
   margin-top: 0;

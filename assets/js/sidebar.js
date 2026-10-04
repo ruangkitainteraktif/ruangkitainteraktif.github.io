@@ -224,6 +224,9 @@
         });
       }
     }
+    if (tabId === 'geotoolsTabGeoTrans' && typeof window.loadMitraDarat === 'function') {
+      window.loadMitraDarat().catch(function () {});
+    }
     if (typeof map !== 'undefined' && map) setTimeout(function () { map.invalidateSize(); }, 200);
   }
   window.openGeotoolsMainTab = openGeotoolsMainTab;

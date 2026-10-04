@@ -173,6 +173,7 @@
   <link rel="stylesheet" href="assets/css/app.css?v=71">
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
+  <link rel="stylesheet" href="assets/css/geotrans-mitradarat.css?v=20261005-transit-redesign5">
 </head>
 
 <body>
@@ -406,6 +407,9 @@
 
     <!-- PETA -->
     <div id="map"></div>
+    <dialog id="geotransRouteDialog" class="geotrans-route-dialog" aria-label="Detail rute angkutan umum">
+      <section id="geotransRouteDetail" class="geotrans-route-detail" aria-live="polite" hidden></section>
+    </dialog>
 
     <!-- UNIFIED SEARCH ON MAP -->
     <div class="unified-search" id="unifiedSearch">
@@ -667,6 +671,7 @@
             <option value="geotoolsTabGeoPulse">GeoCuaca</option>
             <option value="geotoolsTabGeonusa">GeoNusa</option>
             <option value="geotoolsTabGeoWatch">GeoWatch</option>
+            <option value="geotoolsTabGeoTrans">GeoTrans</option>
           </select>
           <button class="gs-sheet-minimize" type="button" aria-label="Minimalkan" onclick="minimizeGeotoolsSheet()">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -1488,6 +1493,67 @@
             </div>
           </div>
 
+
+          <!-- Panel mandiri GeoTrans: operator, rute, dan halte angkutan umum. -->
+          <div id="geotoolsTabGeoTrans" class="geotools-main-tab-panel">
+            <section class="geotrans-app" aria-labelledby="geotransPageTitle">
+              <header class="geotrans-hero">
+                <div class="geotrans-brand-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17V6a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v11M5 12h14M7 17l-2 4M17 17l2 4M8 21h8"/><circle cx="8" cy="16" r="1"/><circle cx="16" cy="16" r="1"/><path d="M8 7h8v3H8z"/></svg>
+                </div>
+                <div class="geotrans-hero-copy">
+                  <span class="geotrans-eyebrow">INFORMASI TRANSPORTASI BUS</span>
+                  <h2 id="geotransPageTitle">GeoTrans</h2>
+                  <p>Temukan operator, telusuri rute, lalu lihat urutan halte di peta.</p>
+                </div>
+                <span class="geotrans-data-pill"><i></i> Data lokal</span>
+              </header>
+
+              <div class="geotrans-summary" id="geotransSummary" aria-label="Ringkasan jaringan transportasi">
+                <div><b id="geotransOperatorCount">—</b><span>Operator</span></div>
+                <div><b id="geotransRouteCount">—</b><span>Rute</span></div>
+                <div><b id="geotransStopCount">—</b><span>Halte</span></div>
+              </div>
+
+              <div class="geotrans-workspace">
+                <div class="geotrans-controls">
+                  <label class="geotrans-field geotrans-search-field">
+                    <span>Cari informasi bus</span>
+                    <div class="geotrans-search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg><input id="geotransSearch" type="search" placeholder="Cari operator, rute, atau halte" autocomplete="off" aria-label="Cari nama operator, rute, atau halte"></div>
+                  </label>
+                  <label class="geotrans-field">
+                    <span>Pilih kategori</span>
+                    <select id="geotransCategory" aria-label="Filter jenis informasi">
+                      <option value="">Semua jenis</option>
+                      <option value="operator">Operator</option>
+                      <option value="route">Rute</option>
+                      <option value="stop">Halte</option>
+                    </select>
+                  </label>
+                  <label class="geotrans-field">
+                    <span>Pilih operator</span>
+                    <select id="geotransOperator" aria-label="Pilih operator"><option value="">Semua operator</option></select>
+                  </label>
+                </div>
+
+                <details class="geotrans-map-options">
+                  <summary>Atur tampilan peta</summary>
+                  <fieldset class="geotrans-layers">
+                    <legend>Informasi pada peta</legend>
+                    <label><input type="checkbox" data-geotrans-layer="operator" checked><i class="geotrans-hub-key"></i> Operator</label>
+                    <label><input type="checkbox" data-geotrans-layer="route"><i class="geotrans-line-key"></i> Rute bus</label>
+                    <label><input type="checkbox" data-geotrans-layer="stop"><i class="geotrans-stop-key"></i> Halte</label>
+                  </fieldset>
+                </details>
+                <div class="geotrans-data-stamp" id="geotransDataStamp">Data jaringan angkutan umum</div>
+                <div id="geotransStatus" class="geotrans-status" role="status">Memuat daftar operator dan jaringan bus.</div>
+                <button id="geotransShowAll" class="geotrans-show-all" type="button" hidden>Tampilkan semua hasil pada peta</button>
+                <div class="geotrans-results-heading"><b id="geotransResultsTitle">Operator tersedia</b><span id="geotransResultsHint">Pilih operator untuk membuka rute dan halte</span></div>
+                <div id="geotransResults" class="geotrans-results" aria-live="polite"></div>
+                <button id="geotransReset" class="geotrans-reset" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg> Kembalikan tampilan awal</button>
+              </div>
+            </section>
+          </div>
 
           <!-- Panel: GeoPulse -->
           <div id="geotoolsTabGeoPulse" class="geotools-main-tab-panel">
@@ -3395,6 +3461,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/terrarium-elevation.js"></script>
     <script src="assets/js/dem-analysis.js"></script>
     <script src="assets/js/cctv.js"></script>
+    <script src="assets/js/geotrans-mitradarat.js?v=20261005-transit-redesign5"></script>
     <script src="assets/js/detail-subtab.js"></script>
      <script src="assets/js/alat-layers.js"></script>
      <script src="assets/js/arcgis-source-manager.js"></script>
