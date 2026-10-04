@@ -342,7 +342,16 @@
           fitViewport();
         }, 360);
       },
-      onClose: function () { userClosed = true; }
+      onClose: function () {
+        userClosed = true;
+        active = false;
+        stopsVisible = false;
+        var cb = document.getElementById('toggleTransjogja');
+        if (cb) cb.checked = false;
+        if (window.map && layer && window.map.hasLayer(layer)) window.map.removeLayer(layer);
+        if (window.map && halteLayer && window.map.hasLayer(halteLayer)) window.map.removeLayer(halteLayer);
+        render();
+      }
     });
     var min = document.getElementById('transjogja-sheet-minimize');
     var close = document.getElementById('transjogja-sheet-close');
