@@ -6894,6 +6894,13 @@
     [data-theme="dark"] #transjogja-sheet .tgj-gis-marker { border-color: #0e7490; background: #1e293b; color: #bae6fd; }
     [data-theme="dark"] #transjogja-sheet .tgj-gis-node.is-start .tgj-gis-marker { border-color: #059669; background: #064e3b; color: #a7f3d0; }
     [data-theme="dark"] #transjogja-sheet .tgj-gis-node.is-end .tgj-gis-marker { border-color: #e11d48; background: #881337; color: #fecdd3; }
+    /* Trans Jogja stop sequence: vertical, scrollable route diagram. */
+    #transjogja-sheet .tgj-gis-path { flex-direction: column; align-items: stretch; max-height: 320px; overflow-x: hidden; overflow-y: auto; padding: 8px 2px 10px; scroll-snap-type: y proximity; }
+    #transjogja-sheet .tgj-gis-path::before { top: 13px; right: auto; bottom: 15px; left: 12px; width: auto; border-top: 0; border-left: 2px solid #bae6fd; }
+    #transjogja-sheet .tgj-gis-node { flex: 0 0 auto; flex-direction: row; align-items: center; gap: 9px; min-height: 34px; padding: 0; scroll-snap-align: start; }
+    #transjogja-sheet .tgj-gis-node-label { width: auto; flex: 1 1 auto; padding: 4px 0; }
+    #transjogja-sheet .tgj-gis-more { flex: 0 0 auto; align-items: center; padding: 5px 0 5px 34px; }
+    [data-theme="dark"] #transjogja-sheet .tgj-gis-path::before { border-top-color: transparent; border-left-color: #155e75; }
     #transjogja-sheet .tgj-route:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
     [data-theme="dark"] :is(#transjakarta-sheet, #transjogja-sheet) { background: var(--bg-secondary); }
     [data-theme="dark"] :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-head { border-bottom-color: var(--border-color); }

@@ -2,22 +2,17 @@
 (function () {
   'use strict';
 
-  var SERVICE = 'https://geoportal.jogjaprov.go.id/server/rest/services/DISHUB/34_DISHUB_RUTETRANSJOGJA_LN/FeatureServer/0';
-  var STOP_SERVICE = 'https://geoportal.jogjaprov.go.id/server/rest/services/DISHUB/34_DISHUB_HALTETRANSJOGJA_PT/FeatureServer/0';
-  var PROXY = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=';
+  var DATA_URL = 'assets/data/routes/transjogja.kml';
   var COLORS = ['#0e7490', '#7c3aed', '#ea580c', '#15803d', '#be123c', '#1d4ed8', '#a16207', '#0f766e', '#9333ea', '#c2410c'];
   var layer = null;
   var halteLayer = null;
   var records = [];
   var stops = [];
   var groupCache = null;
-  var fieldName = '';
   var active = false;
   var loaded = false;
   var loading = false;
   var stopsLoaded = false;
-  var stopsLoading = false;
-  var stopsFailed = false;
   var stopsVisible = false;
   var failed = false;
   var userClosed = false;
@@ -28,28 +23,6 @@
   var sheet = function () { return document.getElementById('transjogja-sheet'); };
   var body = function () { return document.getElementById('transjogja-sheet-content'); };
   var esc = function (v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); };
-
-  function request(url) {
-    return fetch(url, { mode: 'cors', credentials: 'omit' }).then(function (r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    }).catch(function (err) {
-      if (url.indexOf(PROXY) === 0) throw err;
-      return fetch(PROXY + encodeURIComponent(url), { credentials: 'omit' }).then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      });
-    });
-  }
-
-  function chooseField(fields, displayField) {
-    var priority = /rute|trayek|koridor|jurusan|namobj|nama|kode|route/i;
-    var candidates = (fields || []).filter(function (f) { return f.type === 'esriFieldTypeString' || f.type === 'esriFieldTypeInteger'; });
-    var best = candidates.find(function (f) { return f.name === displayField && priority.test(f.alias + ' ' + f.name) && !/^fcode$/i.test(f.name); })
-      || candidates.find(function (f) { return /namobj|nama|koridor|trayek|jurusan|rute|route/i.test(f.name) && !/^fcode$/i.test(f.name); })
-      || candidates.find(function (f) { return priority.test(f.alias + ' ' + f.name) && !/^fcode$/i.test(f.name); });
-    return best ? best.name : '';
-  }
 
   function property(props, names) {
     var keys = Object.keys(props || {});
@@ -67,6 +40,12 @@
   function routeDetail(props) {
     var detail = property(props, ['rute', 'trayek', 'jurusan', 'route', 'lintasan']);
     if (detail) return detail;
+    detail = property(props, ['description']);
+    if (detail) {
+      detail = detail.replace(/<br\s*\/?\s*>/gi, '\n').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').trim();
+      detail = detail.split(/\n+/).map(function (line) { return line.replace(/^\s*\d+\s*(?:=>|→)\s*/, '').trim(); }).filter(function (line) { return line && !/^(?:!|--|AWAL|START|AKHIR|END)/i.test(line); }).join(' > ');
+      if (detail) return detail;
+    }
     var keys = Object.keys(props || {});
     for (var i = 0; i < keys.length; i++) {
       if (/(rute|trayek|jurusan|route|lintasan)/i.test(keys[i]) && !/^fcode$/i.test(keys[i])) {
@@ -77,25 +56,16 @@
     return property(props, ['remark', 'metadata']);
   }
 
-  function normalizeFeatures(data) {
-    return (data.features || []).map(function (feature) {
-      if (feature.properties) return feature;
-      var g = feature.geometry || {};
-      var geometry = g.paths ? { type: g.paths.length === 1 ? 'LineString' : 'MultiLineString', coordinates: g.paths.length === 1 ? g.paths[0] : g.paths }
-        : (g.x != null && g.y != null ? { type: 'Point', coordinates: [g.x, g.y] } : null);
-      return { type: 'Feature', properties: feature.attributes || {}, geometry: geometry };
-    });
-  }
-
   function featureName(feature, i) {
     var p = feature.properties || {};
-    var title = property(p, ['nama', 'namobj', fieldName, 'rute']);
+    var title = property(p, ['name', 'nama', 'namobj', 'rute']);
     if (!title) {
       var keys = Object.keys(p);
       for (var k = 0; k < keys.length && !title; k++) {
         if (/rute|trayek|koridor|jurusan|nama|kode|route/i.test(keys[k])) title = valueOf(p, keys[k]);
       }
     }
+    title = (title || '').replace(/\s*[_–-]\s*Trans\s*Jogja\s*$/i, '').trim();
     return title || ('Rute ' + (i + 1));
   }
 
@@ -156,65 +126,30 @@
     loading = true;
     failed = false;
     render();
-    return request(SERVICE + '?f=json').then(function (meta) {
-      if (meta.error) throw new Error(meta.error.message || 'Metadata rute tidak tersedia.');
-      fieldName = chooseField(meta.fields, meta.displayField);
-      var limit = Number(meta.maxRecordCount) || 1000;
-      var allFeatures = [];
-      function ambilHalaman(offset) {
-        var url = SERVICE + '/query?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326&f=json&resultRecordCount=' + limit + '&resultOffset=' + offset;
-        return request(url).then(function (data) {
-          if (data.error) throw new Error(data.error.message || 'Data rute tidak tersedia.');
-          var chunk = normalizeFeatures(data);
-          allFeatures = allFeatures.concat(chunk);
-          if (data.exceededTransferLimit && !chunk.length) throw new Error('Layanan membatasi jumlah data rute.');
-          if (chunk.length >= limit || data.exceededTransferLimit) return ambilHalaman(offset + chunk.length);
-        });
-      }
-      return ambilHalaman(0).then(function () {
-        records = allFeatures.filter(function (f) { return f.geometry && (f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString'); }).map(function (f, i) {
-          f.__routeName = featureName(f, i);
-          f.__routeKm = lengthKm(f);
-          return f;
-        });
-        groupCache = null;
-        if (!records.length) throw new Error('Layanan belum mengembalikan geometri rute.');
-        loaded = true;
+    return fetch(DATA_URL, { credentials: 'same-origin' }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status + ' saat membaca KML lokal.');
+      return r.text();
+    }).then(function (text) {
+      if (!window.toGeoJSON || typeof window.toGeoJSON.kml !== 'function') throw new Error('Pustaka pembaca KML belum tersedia.');
+      var doc = new DOMParser().parseFromString(text, 'text/xml');
+      if (doc.querySelector('parsererror')) throw new Error('Format KML tidak valid.');
+      var data = window.toGeoJSON.kml(doc);
+      var allFeatures = data.features || [];
+      records = allFeatures.filter(function (f) { return f.geometry && (f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString'); }).map(function (f, i) {
+        f.__routeName = featureName(f, i);
+        f.__routeKm = lengthKm(f);
+        return f;
       });
+      stops = allFeatures.filter(function (f) { return f.geometry && f.geometry.type === 'Point'; });
+      groupCache = null;
+      if (!records.length) throw new Error('KML tidak berisi geometri jalur.');
+      loaded = true;
+      stopsLoaded = true;
     }).catch(function (err) {
       failed = true;
       if (window.console) console.warn('[Trans Jogja] gagal memuat rute:', err);
-    }).then(function () { loading = false; render(); });
-  }
-
-  function loadStops() {
-    if (stopsLoading || stopsLoaded) return Promise.resolve();
-    stopsLoading = true;
-    stopsFailed = false;
-    render();
-    return request(STOP_SERVICE + '?f=json').then(function (meta) {
-      if (meta.error) throw new Error(meta.error.message || 'Metadata halte tidak tersedia.');
-      var limit = Number(meta.maxRecordCount) || 1000;
-      var allStops = [];
-      function ambilHalaman(offset) {
-        var url = STOP_SERVICE + '/query?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326&f=json&resultRecordCount=' + limit + '&resultOffset=' + offset;
-        return request(url).then(function (data) {
-          if (data.error) throw new Error(data.error.message || 'Data halte tidak tersedia.');
-          var chunk = normalizeFeatures(data);
-          allStops = allStops.concat(chunk);
-          if (data.exceededTransferLimit && !chunk.length) throw new Error('Layanan membatasi jumlah data halte.');
-          if (chunk.length >= limit || data.exceededTransferLimit) return ambilHalaman(offset + chunk.length);
-        });
-      }
-      return ambilHalaman(0).then(function () {
-        stops = allStops.filter(function (f) { return f.geometry && f.geometry.type === 'Point'; });
-        stopsLoaded = true;
-      });
-    }).catch(function (err) {
-      stopsFailed = true;
-      if (window.console) console.warn('[Trans Jogja] gagal memuat halte:', err);
     }).then(function () {
-      stopsLoading = false;
+      loading = false;
       render();
       if (stopsVisible && stopsLoaded) showStops();
     });
@@ -228,15 +163,22 @@
 
   function showLayer() {
     if (!window.map || !loaded) return;
+    ensurePane('transjogjaRoutePane', 435);
     if (layer && window.map.hasLayer(layer)) window.map.removeLayer(layer);
     var shown = records.filter(function (f) { return !selectedKey || f.__routeName === selectedKey; });
     layer = L.geoJSON({ type: 'FeatureCollection', features: shown }, {
+      pane: 'transjogjaRoutePane',
       style: style,
       onEachFeature: function (f, child) {
         var title = property(f.properties, ['nama', 'namobj']) || 'Rute Trans Jogja';
         child.bindPopup(popupNama(title), { className: 'agol-leaflet-popup' });
       }
     }).addTo(window.map);
+  }
+
+  function ensurePane(name, zIndex) {
+    if (!window.map.getPane(name)) window.map.createPane(name);
+    window.map.getPane(name).style.zIndex = String(zIndex);
   }
 
   function fitArea(bounds, maxZoom) {
@@ -300,10 +242,11 @@
 
   function showStops() {
     if (!window.map || !stopsLoaded) return;
+    ensurePane('transjogjaHaltePane', 434);
     if (halteLayer && window.map.hasLayer(halteLayer)) window.map.removeLayer(halteLayer);
     halteLayer = L.geoJSON({ type: 'FeatureCollection', features: stops }, {
       pointToLayer: function (feature, latlng) {
-        return L.circleMarker(latlng, { radius: 6, color: '#fff', weight: 2, fillColor: '#f97316', fillOpacity: .95 });
+        return L.circleMarker(latlng, { pane: 'transjogjaHaltePane', radius: 4, color: '#fff', weight: 1.5, fillColor: '#f97316', fillOpacity: .9 });
       },
       onEachFeature: function (feature, child) {
         var props = feature.properties || {};
@@ -315,7 +258,10 @@
 
   function setStopsVisible(value) {
     stopsVisible = !!value;
-    if (stopsVisible) loadStops().then(function () { if (stopsLoaded) showStops(); });
+    if (stopsVisible) {
+      if (loaded) showStops();
+      else loadData().then(function () { if (stopsVisible && stopsLoaded) showStops(); });
+    }
     else if (halteLayer && window.map && window.map.hasLayer(halteLayer)) window.map.removeLayer(halteLayer);
     render();
   }
@@ -340,22 +286,22 @@
   function render() {
     var el = body();
     if (!el) return;
-    if (failed) { el.innerHTML = '<div class="tj-kosong"><b>Data rute Trans Jogja gagal dimuat.</b><span>Geoportal DIY tidak merespons. Coba aktifkan kembali layer beberapa saat lagi.</span></div>'; return; }
+    if (failed) { el.innerHTML = '<div class="tj-kosong"><b>Data rute Trans Jogja gagal dimuat.</b><span>Data KML lokal tidak dapat dibaca. Coba muat ulang halaman.</span></div>'; return; }
     if (!loaded) { el.innerHTML = '<div class="tj-kosong"><b>Memuat data rute Trans Jogja…</b></div>'; return; }
     var all = groups();
     var visible = all.filter(function (r) { return r.name.toLocaleLowerCase('id').indexOf(filterText.toLocaleLowerCase('id')) !== -1; });
     var total = all.reduce(function (sum, r) { return sum + r.km; }, 0);
-    el.innerHTML = '<div class="tj-stat"><div class="tj-stat-item"><b>' + all.length + '</b><span>rute</span></div><div class="tj-stat-item"><b>' + total.toLocaleString('id-ID', { maximumFractionDigits: 1 }) + '</b><span>km total</span></div><button type="button" class="tj-stat-item' + (stopsVisible ? ' is-on' : '') + '" data-tgj-halte aria-pressed="' + stopsVisible + '" aria-label="Tampilkan halte Trans Jogja"><b>' + (stopsLoaded ? stops.length : (stopsLoading ? '…' : 'lihat')) + '</b><span>halte</span></button></div>'
+    el.innerHTML = '<div class="tj-stat"><div class="tj-stat-item"><b>' + all.length + '</b><span>rute</span></div><div class="tj-stat-item"><b>' + total.toLocaleString('id-ID', { maximumFractionDigits: 1 }) + '</b><span>km total</span></div><button type="button" class="tj-stat-item' + (stopsVisible ? ' is-on' : '') + '" data-tgj-halte aria-pressed="' + stopsVisible + '" aria-label="Tampilkan halte Trans Jogja"><b>' + (stopsLoaded ? stops.length : 'lihat') + '</b><span>halte</span></button></div>'
       + '<div class="tj-filter-box"><div class="tj-filter-row"><label class="tj-filter-label" for="tgj-search">Cari rute</label><input id="tgj-search" class="tj-filter-search" type="search" value="' + esc(filterText) + '" placeholder="Cari nama atau nomor rute"></div></div>'
       + '<div class="tj-ctrl"><button type="button" class="tj-switch' + (active ? ' is-on' : '') + '" data-tgj-toggle aria-pressed="' + active + '"><span class="tj-switch-dot"></span><span class="tj-switch-label">Jalur Trans Jogja</span><span class="tj-switch-count">' + records.length + ' segmen</span></button></div>'
-      + '<div class="tj-ctrl"><button type="button" class="tj-switch' + (stopsVisible ? ' is-on' : '') + '" data-tgj-halte-toggle aria-pressed="' + stopsVisible + '"><span class="tj-switch-dot"></span><span class="tj-switch-label">Halte Trans Jogja</span><span class="tj-switch-count">' + (stopsLoaded ? stops.length + ' halte' : (stopsFailed ? 'gagal dimuat' : stopsLoading ? 'memuat…' : 'lihat')) + '</span></button></div>'
+      + '<div class="tj-ctrl"><button type="button" class="tj-switch' + (stopsVisible ? ' is-on' : '') + '" data-tgj-halte-toggle aria-pressed="' + stopsVisible + '"><span class="tj-switch-dot"></span><span class="tj-switch-label">Halte Trans Jogja</span><span class="tj-switch-count">' + (stopsLoaded ? stops.length + ' halte' : 'lihat') + '</span></button></div>'
       + '<div class="tgj-route-list">' + (visible.length ? visible.map(function (r, i) {
         var summary = r.details.join(' · ');
         var summaryShort = summary.length > 180 ? summary.slice(0, 177).trim() + '…' : summary;
         return '<div class="tgj-route-entry"><button type="button" class="tgj-route' + (selectedKey === r.name ? ' is-selected' : '') + '" data-tgj-route="' + esc(r.name) + '"><span class="tgj-route-color" style="background:' + COLORS[i % COLORS.length] + '"></span><span><b>' + esc(r.name) + '</b><small>' + r.count + ' segmen · ' + r.km.toLocaleString('id-ID', { maximumFractionDigits: 1 }) + ' km</small>' + (summaryShort ? '<small class="tgj-route-summary"><strong>Rute</strong> ' + esc(summaryShort) + '</small>' : '<small class="tgj-route-summary">Informasi rute belum diisi pada data ini.</small>') + '</span></button>'
           + (selectedKey === r.name ? '<div class="tgj-route-details"><div class="tgj-gis-title"><span class="tgj-gis-pin" aria-hidden="true">⌖</span><span><b>Informasi rute</b><small>' + esc(r.name) + '</small></span></div>' + diagramRute(r.details) + '</div>' : '') + '</div>';
       }).join('') : '<div class="tj-empty-row">Tidak ada rute yang cocok.</div>') + '</div>'
-      + '<div class="tj-sumber">Sumber: Dinas Perhubungan Daerah Istimewa Yogyakarta · Geoportal DIY. Pilih rute untuk menyorot jalur dan menggeser peta.</div>';
+      + '<div class="tj-sumber">Sumber data lokal: Trans Jogja v60 (5 Juni 2026). Pilih rute untuk menyorot jalur dan menggeser peta.</div>';
   }
 
   function setActive(value) {
@@ -370,7 +316,6 @@
         showLayer();
         fokusJaringanAwal();
       });
-      loadStops();
       if (!userClosed && window.SheetDrag) window.SheetDrag.buka(sheetId);
     } else {
       if (layer && window.map && window.map.hasLayer(layer)) window.map.removeLayer(layer);
