@@ -11,7 +11,6 @@ import {
   updateProfile,
   setPersistence,
   signInWithPopup,
-  signInWithRedirect,
   signOut
 } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
 
@@ -243,24 +242,13 @@ async function masukDenganGoogle() {
   if (statusEl) statusEl.textContent = 'Menghubungkan ke Google…';
 
   try {
-    const isMobile = window.matchMedia('(max-width: 768px)').matches;
-    if (isMobile) {
-      await signInWithRedirect(auth, provider);
-      return;
-    }
+    // This site is hosted on GitHub Pages, while authDomain is firebaseapp.com.
+    // Redirect sign-in can lose its session in mobile browsers that block
+    // third-party storage, so keep this flow on the site's own origin.
     const result = await signInWithPopup(auth, provider);
     selesaikanLogin(result.user);
   } catch (error) {
     console.error('[firebase-auth] Google sign-in failed:', error);
-    if (error && error.code === 'auth/popup-blocked') {
-      try {
-        await signInWithRedirect(auth, provider);
-        return;
-      } catch (redirectError) {
-        console.error('[firebase-auth] Google sign-in redirect failed:', redirectError);
-        error = redirectError;
-      }
-    }
     if (statusEl) statusEl.textContent = pesanError(error);
     signInButton.disabled = false;
     emailButton.disabled = false;
@@ -361,7 +349,10 @@ onAuthStateChanged(auth, function (user) {
   }
 });
 
-getRedirectResult(auth).catch(function (error) {
-  if (statusEl && !dialog?.hidden) statusEl.textContent = pesanError(error);
-  else console.warn('[firebase-auth] Hasil redirect gagal diproses.', error);
+getRedirectResult(auth).then(function (result) {
+  // Complete redirect attempts started by an older version of the app.
+  if (result && result.user) selesaikanLogin(result.user);
+}).catch(function (error) {
+  console.error('[firebase-auth] Hasil redirect gagal diproses.', error);
+  if (statusEl && dialog && !dialog.hidden) statusEl.textContent = pesanError(error);
 });

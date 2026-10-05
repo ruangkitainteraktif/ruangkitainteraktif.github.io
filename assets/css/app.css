@@ -15131,6 +15131,30 @@ body.geofarm-draw-active .draw-actions-wrap {
 .gfpr-legend-labels { display: flex; justify-content: space-between; }
 .gfpr-source { margin: 10px 0 0; color: var(--text-tertiary); font-size: 9px; line-height: 1.5; }
 .gfpr-source a { color: var(--accent); }
+.gf-dasimetri-desc { margin: 0 0 10px; color: var(--text-secondary); font-size: 10px; line-height: 1.55; }
+.gf-dasimetri-controls { display: grid; grid-template-columns: auto minmax(120px, 1fr) auto auto; align-items: center; gap: 6px; }
+.gf-dasimetri-controls label { color: var(--text-secondary); font-size: 10px; font-weight: 700; }
+.gf-dasimetri-controls select { min-width: 0; height: 34px; padding: 0 8px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary); font: inherit; font-size: 10px; }
+.gf-dasimetri-controls button { min-height: 34px; padding: 0 10px; border: 1px solid #0f766e; border-radius: 8px; background: linear-gradient(120deg, #0f766e, #15803d); color: #fff; font: inherit; font-size: 9px; font-weight: 750; cursor: pointer; }
+.gf-dasimetri-controls button:last-child { border-color: var(--border-color); background: var(--bg-secondary); color: var(--text-secondary); }
+.gf-dasimetri-controls button:disabled { opacity: .5; cursor: not-allowed; }
+.gf-dasimetri-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+.gf-dasimetri-summary[hidden] { display: none; }
+.gf-dasimetri-summary > div { min-width: 0; padding: 8px; border: 1px solid var(--border-color); border-radius: 9px; background: var(--bg-secondary); }
+.gf-dasimetri-summary small { display: block; color: var(--text-tertiary); font-size: 8px; }
+.gf-dasimetri-summary b { display: block; margin-top: 3px; color: var(--text-primary); font-size: 11px; font-variant-numeric: tabular-nums; }
+.gf-dasimetri-legend { margin-top: 9px; color: var(--text-secondary); font-size: 9px; }
+.gf-dasimetri-ramp { display: flex; height: 8px; margin: 6px 0 3px; overflow: hidden; border-radius: 99px; }
+.gf-dasimetri-ramp i { flex: 1; }
+.gf-dasimetri-labels { display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
+.gf-dasimetri-source { margin: 9px 0 0; color: var(--text-tertiary); font-size: 8px; line-height: 1.5; }
+.gf-dasimetri-source a { color: var(--accent); }
+.gf-dasimetri-popup { min-width: 160px; font-size: 11px; line-height: 1.5; }
+.gf-dasimetri-popup small { color: #64748b; font-size: 9px; }
+@media (max-width: 480px) {
+  .gf-dasimetri-controls { grid-template-columns: auto minmax(0, 1fr); }
+  .gf-dasimetri-controls button { grid-column: span 1; }
+}
 @media (max-width: 520px) {
   .gfpr-filter-grid { grid-template-columns: 1fr; }
   .gfpr-filter-grid label:first-child,
@@ -15468,6 +15492,22 @@ body.geofarm-draw-active .draw-actions-wrap {
   object-fit: cover;
 }
 .map-fab-item.rk-auth-account > span { font-size: 17px; font-weight: 800; }
+@media (max-width: 768px) {
+  .map-fab-item.rk-auth-account {
+    display: grid !important;
+    flex: 0 0 42px;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px;
+    min-height: 42px;
+    padding: 5px !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 50% !important;
+    background: var(--bg-card) !important;
+    color: var(--accent) !important;
+  }
+  .map-fab-item.rk-auth-account img { width: 22px; height: 22px; }
+}
 @media (max-width: 700px) {
   .rk-auth-card { display: block; width: min(430px, 100%); height: auto; min-height: 0; border-radius: 18px; }
   .rk-auth-visual { min-height: 82px; padding: 17px 20px; }

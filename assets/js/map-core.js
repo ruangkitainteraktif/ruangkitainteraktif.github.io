@@ -934,8 +934,6 @@ L.control.scale({
     if (!__fabItems) return;
     var item = L.DomUtil.create('button', 'map-fab-item');
     item.title = title;
-    item.dataset.rkRequiresGoogleLogin = 'true';
-    item.dataset.rkAuthFabId = 'draw-measure';
     item.appendChild(el);
     __fabItems.appendChild(item);
     if (el.style.display === 'none') item.style.display = 'none';
@@ -2697,8 +2695,6 @@ L.control.scale({
     if (!__fabItems) __fabItems = document.querySelector('.map-fab-items');
     if (!__fabItems) return;
     var item = L.DomUtil.create('button', 'map-fab-item geodata-fab');
-    item.dataset.rkRequiresGoogleLogin = 'true';
-    item.dataset.rkAuthFabId = 'geodata';
     item.title = 'GeoData';
     item.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>';
     __fabItems.appendChild(item);
@@ -2721,8 +2717,6 @@ L.control.scale({
     if (!__fabItems) __fabItems = document.querySelector('.map-fab-items');
     if (!__fabItems) return;
     var item = L.DomUtil.create('button', 'map-fab-item legend-sidebar-btn');
-    item.dataset.rkRequiresGoogleLogin = 'true';
-    item.dataset.rkAuthFabId = 'legend';
     item.title = 'Legenda';
     item.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>';
     __fabItems.appendChild(item);
@@ -2738,8 +2732,6 @@ L.control.scale({
     if (!__fabItems) __fabItems = document.querySelector('.map-fab-items');
     if (!__fabItems) return;
     var item = L.DomUtil.create('button', 'map-fab-item attr-table-fab');
-    item.dataset.rkRequiresGoogleLogin = 'true';
-    item.dataset.rkAuthFabId = 'attribute-table';
     item.title = 'Semua Tabel';
     item.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>';
     __fabItems.appendChild(item);

@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=79">
+  <link rel="stylesheet" href="assets/css/app.css?v=82">
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
   <link rel="stylesheet" href="assets/css/geotrans-mitradarat.css?v=20261005-transit-table2">
@@ -2601,6 +2601,30 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
               </div>
             </details>
 
+            <details class="geofarm-ref gf-dasimetri-card" id="geofarmPetaDasimetri" aria-labelledby="gfDasimetriTitle">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#127806;</span>
+                <span><b id="gfDasimetriTitle">Peta Dasimetrik Padi</b><small>Data BPS Jawa Tengah + mask Lahan Baku Sawah 2024</small></span>
+              </summary>
+              <div class="geofarm-ref-body gf-dasimetri-body">
+                <p class="gf-dasimetri-desc">Lihat statistik padi BPS per kabupaten/kota dengan sebaran sawah sebagai mask spasial. Nilai BPS tetap berada pada skala kabupaten/kota dan bukan pengukuran hasil pada tiap petak.</p>
+                <div class="gf-dasimetri-controls">
+                  <label for="gfDasimetriMetric">Indikator</label>
+                  <select id="gfDasimetriMetric">
+                    <option value="harvest">Luas panen (ha)</option>
+                    <option value="production">Produksi (ton GKG)</option>
+                    <option value="yield">Produktivitas (kuintal/ha)</option>
+                  </select>
+                  <button id="gfDasimetriLoad" type="button">Tampilkan peta</button>
+                  <button id="gfDasimetriReset" type="button" disabled>Reset</button>
+                </div>
+                <p id="gfDasimetriStatus" class="geofarm-ref-status" role="status" aria-live="polite">Sumber statistik: BPS, tabel Jawa Tengah (tahun 2025).</p>
+                <div id="gfDasimetriSummary" class="gf-dasimetri-summary" hidden></div>
+                <div id="gfDasimetriLegend" class="gf-dasimetri-legend" hidden></div>
+                <p class="gf-dasimetri-source">Data statistik: <a href="https://jateng.bps.go.id/id/statistics-table/2/NDYzIzI%3D/luas-panen--produksi--dan-produktivitas-padi-menurut-kabupaten-kota-di-provinsi-jawa-tengah.html" target="_blank" rel="noopener noreferrer">BPS Jawa Tengah</a>. Mask sawah: KSA BPS LBS 2024. Distribusi rinci per bidang memerlukan statistik dan geometri sawah pada resolusi yang sama.</p>
+              </div>
+            </details>
+
             <details class="geotani-lbslsd" id="geotani-tutupan-card" aria-labelledby="geotani-tutupan-title">
               <summary class="gt-card-head">
                 <span class="gt-card-icon" aria-hidden="true">&#127748;</span>
@@ -3435,7 +3459,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
          geopangan, attribute-table, ai-analysis, dan polygon-analysis
          semuanya mendaftarkan sheet ke window.SheetDrag saat dimuat. -->
     <script src="assets/js/sheet-drag.js"></script>
-    <script src="assets/js/map-core.js"></script>
+    <script src="assets/js/map-core.js?v=20261005-geotools-auth-only"></script>
     <script src="assets/js/layer-loading.js"></script>
     <script src="assets/js/bnpb-hillshade.js"></script>
     <script src="assets/js/geologi-bnpb.js"></script>
@@ -3595,6 +3619,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/karst.js"></script>
   <script src="assets/js/concessions-layer.js"></script>
   <script src="assets/js/geopangan.js?v=20261002"></script>
+  <script src="assets/js/geofarm-dasimetri.js?v=1"></script>
   <script src="assets/js/sp2kp-geopangan.js"></script>
   <script src="assets/js/sppg-district.js"></script>
   <script src="assets/js/water-need.js?v=1"></script>
@@ -3603,7 +3628,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
   <script src="assets/js/population-chart.js"></script>
 
-  <script type="module" src="assets/js/firebase-auth-gate.js?v=4"></script>
+  <script type="module" src="assets/js/firebase-auth-gate.js?v=5"></script>
 
   <script>
     (function() {
