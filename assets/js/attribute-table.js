@@ -11,6 +11,8 @@
   var _currentPage = 1;
   var _searchQuery = '';
   var _highlightMarker = null;
+  var _highlightedFeatureLayer = null;
+  var _highlightedFeatureStyle = null;
   var _wmsClickHandler = null;
   var _attrTableOpen = false;
   var _attrTableMinimized = false;
@@ -1310,14 +1312,20 @@
         content.querySelectorAll('.at-row-active').forEach(function (r) {
           r.classList.remove('at-row-active');
         });
-        var tampil = openFeatureDetailByIndex(idx);
+        var fitur = openFeatureDetailByIndex(idx);
+        var tampil = fitur;
         if (!tampil) return;
         row.classList.add('at-row-active');
         var lat = parseFloat(row.dataset.lat);
         var lng = parseFloat(row.dataset.lng);
+        if (fitur._layer && typeof fitur._layer.setStyle === 'function') {
+          highlightFeatureLayerOnMap(fitur._layer);
+        } else if (fitur._marker && typeof fitur._marker.setStyle === 'function') {
+          highlightFeatureLayerOnMap(fitur._marker);
+        }
         if (isFinite(lat) && isFinite(lng)) {
           map.flyTo([lat, lng], Math.max(map.getZoom(), 12), { duration: 0.5 });
-          highlightMarkerOnMap(lat, lng, row);
+          if (!fitur._layer && !fitur._marker) highlightMarkerOnMap(lat, lng, row);
         }
       });
     });
@@ -1445,6 +1453,35 @@
     var content = document.getElementById('at-sheet-content');
     if (content) content.querySelectorAll('.at-row').forEach(function (r) { r.classList.remove('at-row-active'); });
     if (rowEl) rowEl.classList.add('at-row-active');
+  }
+
+  function highlightFeatureLayerOnMap(layer) {
+    clearFeatureLayerHighlight();
+    if (_highlightMarker) {
+      map.removeLayer(_highlightMarker);
+      _highlightMarker = null;
+    }
+    var keys = ['color', 'weight', 'opacity', 'fillColor', 'fillOpacity', 'dashArray', 'lineCap', 'lineJoin'];
+    var original = {};
+    keys.forEach(function (key) {
+      if (layer.options && layer.options[key] !== undefined) original[key] = layer.options[key];
+    });
+    _highlightedFeatureLayer = layer;
+    _highlightedFeatureStyle = original;
+    layer.setStyle({ color: '#f97316', weight: 4, opacity: 1, fillColor: '#f59e0b', fillOpacity: 0.55 });
+    if (layer.bringToFront) layer.bringToFront();
+    if (layer.getBounds) {
+      var bounds = layer.getBounds();
+      if (bounds && bounds.isValid()) map.fitBounds(bounds, { padding: [32, 32], maxZoom: 15, animate: true });
+    }
+  }
+
+  function clearFeatureLayerHighlight() {
+    if (_highlightedFeatureLayer && _highlightedFeatureLayer.setStyle && _highlightedFeatureStyle) {
+      _highlightedFeatureLayer.setStyle(_highlightedFeatureStyle);
+    }
+    _highlightedFeatureLayer = null;
+    _highlightedFeatureStyle = null;
   }
 
   /* ── Highlight row from map click ── */
@@ -1737,6 +1774,7 @@
     if (list) renderPickerList();
 
     if (_highlightMarker) { map.removeLayer(_highlightMarker); _highlightMarker = null; }
+    clearFeatureLayerHighlight();
   }
   window.openAttrTablePicker = openAttrTablePicker;
 
@@ -1774,6 +1812,7 @@
       var backBtn = document.getElementById('atSheetBackBtn');
       if (backBtn) backBtn.style.display = 'none';
       if (_highlightMarker) { map.removeLayer(_highlightMarker); _highlightMarker = null; }
+      clearFeatureLayerHighlight();
     }
   });
 

@@ -205,7 +205,16 @@
   function clearMapResults() {
     if (boundaryLayer && window.map && window.map.hasLayer(boundaryLayer)) window.map.removeLayer(boundaryLayer);
     boundaryLayer = null;
+    if (el.reset) el.reset.disabled = true;
     if (typeof window.showGeoidBoundary === 'function') window.showGeoidBoundary(null);
+  }
+
+  function resetPolygon() {
+    if (queryPending) return;
+    clearMapResults();
+    el.result.hidden = true;
+    el.legend.hidden = true;
+    status('Polygon dan hasil peta pupuk subsidi telah direset. Filter wilayah tetap tersimpan.', 'success');
   }
 
   function showCountyPolygons(results, fertilizerName, commodityName) {
@@ -247,6 +256,7 @@
             + '<small>Rata-rata ' + formatNumber(p._gfpr_kec, 0) + ' kecamatan dari dosis e-RDKK 2027</small></div>');
         }
       }).addTo(window.map);
+      el.reset.disabled = false;
       var bounds = boundaryLayer.getBounds();
       if (bounds && bounds.isValid()) window.map.fitBounds(bounds, { padding: [24, 24], maxZoom: 10 });
     });
@@ -289,6 +299,7 @@
       });
       if (!layers.length) throw new Error('Geometri batas kecamatan BIG tidak valid.');
       boundaryLayer = L.featureGroup(layers).addTo(window.map);
+      el.reset.disabled = false;
       var bounds = boundaryLayer.getBounds();
       if (bounds && bounds.isValid()) window.map.fitBounds(bounds, { padding: [32, 32], maxZoom: 13 });
     }).catch(function (bigError) {
@@ -322,6 +333,7 @@
         return marker;
       });
       boundaryLayer = L.featureGroup(markers).addTo(window.map);
+      el.reset.disabled = false;
       var firstPoint = markers[0].getLatLng();
       if (window.map.flyTo) window.map.flyTo(firstPoint, Math.max(window.map.getZoom(), 13), { animate: true, duration: 0.8 });
       else window.map.setView(firstPoint, Math.max(window.map.getZoom(), 13));
@@ -402,6 +414,7 @@
     el.commodity = document.getElementById('gfprKomoditas');
     el.fertilizer = document.getElementById('gfprPupuk');
     el.run = document.getElementById('gfprCari');
+    el.reset = document.getElementById('gfprResetPolygon');
     el.status = document.getElementById('gfprStatus');
     el.result = document.getElementById('gfprResult');
     el.legend = document.getElementById('gfprMapLegend');
@@ -424,6 +437,7 @@
       select.addEventListener('change', updateRunButton);
     });
     el.run.addEventListener('click', runQuery);
+    el.reset.addEventListener('click', resetPolygon);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

@@ -170,10 +170,24 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=73">
+  <link rel="stylesheet" href="assets/css/app.css?v=79">
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
   <link rel="stylesheet" href="assets/css/geotrans-mitradarat.css?v=20261005-transit-table2">
+  <script>
+    (function () {
+      document.addEventListener('click', function (event) {
+        var item = event.target && event.target.closest
+          ? event.target.closest('.map-fab-item[data-rk-requires-google-login="true"]')
+          : null;
+        if (!item || window.RKGoogleAuthGate) return;
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        window.__rkAuthPendingFab = item.dataset.rkAuthFabId || '';
+      }, true);
+    })();
+  </script>
 </head>
 
 <body>
@@ -3052,6 +3066,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                   <button type="button" id="gfprCari" class="gfpr-run" disabled>
                     <span aria-hidden="true">&#128269;</span> Tampilkan
                   </button>
+                  <button type="button" id="gfprResetPolygon" class="gfpr-reset" disabled>Reset polygon</button>
                   <p id="gfprStatus" class="geofarm-ref-status" role="status" aria-live="polite">Buka kartu ini untuk memuat dosis 2027.</p>
                   <div id="gfprResult" class="gfpr-result" hidden></div>
                   <div id="gfprMapLegend" class="gfpr-map-legend" hidden></div>
@@ -3448,7 +3463,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/geoportal-search.js"></script>
     <script src="assets/js/sidebar.js"></script>
     <script src="assets/js/earthquake.js"></script>
-    <script src="assets/js/attribute-table.js"></script>
+    <script src="assets/js/attribute-table.js?v=2"></script>
     <script src="assets/js/katalog-gempa.js"></script>
     <script src="assets/js/sensor-seismic.js"></script>
     <script src="assets/js/sensor-global.js"></script>
@@ -3587,6 +3602,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
 
   <script src="assets/js/population-chart.js"></script>
+
+  <script type="module" src="assets/js/firebase-auth-gate.js?v=4"></script>
 
   <script>
     (function() {
