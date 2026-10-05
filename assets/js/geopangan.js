@@ -179,14 +179,27 @@
 
   // Share the existing BPS credential with other modules without copying it
   // into another source file. Requests still use the same direct/proxy path.
-  window.fetchRKBpsData = function (domain, variable, yearCode) {
+  function getRKBpsApiKey() {
     var marker = '/key/';
     var keyAt = BPS_INFLASI_URL_125.lastIndexOf(marker);
-    if (keyAt < 0) return Promise.reject(new Error('Kunci Web API BPS belum tersedia.'));
-    var apiKey = BPS_INFLASI_URL_125.slice(keyAt + marker.length);
+    return keyAt < 0 ? '' : BPS_INFLASI_URL_125.slice(keyAt + marker.length);
+  }
+
+  window.fetchRKBpsData = function (domain, variable, yearCode) {
+    var apiKey = getRKBpsApiKey();
+    if (!apiKey) return Promise.reject(new Error('Kunci Web API BPS belum tersedia.'));
     var url = 'https://webapi.bps.go.id/v1/api/list/model/data/lang/ind/domain/'
       + encodeURIComponent(domain) + '/var/' + encodeURIComponent(variable)
       + '/th/' + encodeURIComponent(yearCode) + '/key/' + apiKey;
+    return fetchBpsWithProxy(url);
+  };
+
+  window.fetchRKBpsSimdasiData = function (tableId, year, areaCode) {
+    var apiKey = getRKBpsApiKey();
+    if (!apiKey) return Promise.reject(new Error('Kunci Web API BPS belum tersedia.'));
+    var url = 'https://webapi.bps.go.id/v1/api/interoperabilitas/datasource/simdasi/id/25/tahun/'
+      + encodeURIComponent(year) + '/id_tabel/' + encodeURIComponent(tableId)
+      + '/wilayah/' + encodeURIComponent(areaCode) + '/key/' + apiKey;
     return fetchBpsWithProxy(url);
   };
 
