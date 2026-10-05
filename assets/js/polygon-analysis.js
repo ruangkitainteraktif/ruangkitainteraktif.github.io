@@ -2461,6 +2461,45 @@
       });
   }
 
+  /* Prakiraan cuaca per centroid. Rekomendasi dibatasi pada keputusan
+     operasional yang memang didukung data cuaca; diagnosis hama/penyakit
+     dan dosis pupuk memerlukan pengamatan lapang serta data tanah. */
+  function weatherSectionHtml(item) {
+    let body = '<div class="pa-note">Prakiraan 7 hari di titik tengah polygon dari Open-Meteo.</div>';
+    if (item.weatherBusy) body += '<div class="pa-block pa-block-muted"><span class="pa-spin"></span> Mengambil prakiraan cuaca…</div>';
+    else if (item.weatherError) body += '<div class="pa-block pa-block-error">' + escapeHtml(item.weatherError) + '</div>';
+    else if (item.weather) {
+      const w = item.weather;
+      body += '<div class="pa-block"><div class="pa-air-row"><span>Sekarang</span><b>' + fmt(w.temp, 1) + ' °C · RH ' + fmt(w.humidity, 0) + '% · angin ' + fmt(w.wind, 0) + ' km/j</b></div>';
+      body += '<div class="pa-subhead">Prakiraan 7 hari</div>';
+      w.days.forEach(function (d) { body += '<div class="pa-air-row"><span>' + escapeHtml(d.date) + '</span><b>' + fmt(d.min, 0) + '–' + fmt(d.max, 0) + ' °C · hujan ' + fmt(d.rain, 1) + ' mm</b></div>'; });
+      const wet = w.days.some(function (d) { return d.rain >= 10; });
+      const windy = Number(w.wind) >= 15;
+      const humid = Number(w.humidity) >= 85 && w.days.some(function (d) { return d.rain >= 1; });
+      body += '<div class="pa-block pa-block-muted"><b>Catatan tindakan</b><ul>';
+      body += wet ? '<li>Tunda pemupukan yang mudah tercuci bila hujan lebat diperkirakan; ikuti label dan kondisi lahan.</li>' : '<li>Tidak tampak sinyal hujan lebat pada prakiraan ini; waktu pemupukan tetap mengikuti fase dan rekomendasi setempat.</li>';
+      body += (wet || windy) ? '<li>Hindari penyemprotan saat hujan atau angin kencang; periksa label produk dan kondisi aktual.</li>' : '<li>Cuaca prakiraan relatif memungkinkan untuk aplikasi; cek angin dan hujan tepat sebelum menyemprot.</li>';
+      body += humid ? '<li>Kelembapan dan hujan mendukung kondisi lembap: tingkatkan pemantauan gejala penyakit jamur, ini bukan diagnosis.</li>' : '<li>Belum ada sinyal cuaca kuat untuk risiko penyakit jamur; lakukan pemantauan rutin.</li>';
+      body += '</ul><small>Data cuaca tidak cukup untuk menentukan dosis pupuk, jenis pestisida, atau memastikan hama/penyakit. Perlu jenis/fase tanaman, uji tanah, dan pengamatan lapang.</small></div></div>';
+      body += '<div class="pa-air-src">Sumber: Open-Meteo · prakiraan titik centroid, bukan pengukuran di seluruh petak.</div>';
+    }
+    return '<div class="pa-section' + (isSectionCollapsed(item, 'weather') ? ' is-collapsed' : '') + '">' + sectionHeadHtml(item, 'weather', 'Cuaca & Rekomendasi') + '<div class="pa-section-body">' + body + '<button class="pa-btn pa-btn-ghost" type="button" data-pa-action="weather" data-pa-id="' + item.id + '"' + (item.weatherBusy ? ' disabled' : '') + '>' + (item.weather ? 'Perbarui prakiraan' : 'Analisis cuaca') + '</button></div></div>';
+  }
+
+  function runPolygonWeather(item) {
+    if (item.weatherBusy) return;
+    const c = centroidOf(item.rings);
+    if (!c) { item.weatherError = 'Centroid polygon tidak bisa dihitung.'; render(); return; }
+    item.weatherBusy = true; item.weatherError = null; render();
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + encodeURIComponent(c.lat) + '&longitude=' + encodeURIComponent(c.lng) + '&current=temperature_2m,relative_humidity_2m,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Asia%2FJakarta&forecast_days=7';
+    fetch(url).then(function (r) { if (!r.ok) throw new Error('Layanan cuaca tidak merespons (' + r.status + ').'); return r.json(); })
+      .then(function (d) {
+        if (!d.current || !d.daily || !Array.isArray(d.daily.time)) throw new Error('Data prakiraan tidak lengkap.');
+        item.weather = { temp: d.current.temperature_2m, humidity: d.current.relative_humidity_2m, wind: d.current.wind_speed_10m, days: d.daily.time.map(function (date, i) { return { date: date, min: d.daily.temperature_2m_min[i], max: d.daily.temperature_2m_max[i], rain: d.daily.precipitation_sum[i] }; }) };
+      }).catch(function (e) { item.weatherError = e.message || 'Gagal mengambil prakiraan cuaca.'; })
+      .then(function () { item.weatherBusy = false; render(); });
+  }
+
   /* Select tanaman tidak memicu render penuh supaya select tidak kehilangan
      fokus saat pengguna masih menekankeyboard. Hasil dihitung ulang hanya
      bila pengguna menekan tombol, supaya tidak boros kuota Open-Meteo. */
@@ -3767,6 +3806,7 @@
          diletakkan paling akhir karena topografi dan kelembapan tanah punya
          sifat berbeda -- keduanya data tanah, bukan hasil pengukuran
          permukaan. */
+      weatherSectionHtml(item) +
       airSectionHtml(item) +
       '<div class="pa-section' + (isSectionCollapsed(item, 'terrain') ? ' is-collapsed' : '') + '">' +
         sectionHeadHtml(item, 'terrain', 'Topografi', terrainEyeBtnHtml(item)) +
@@ -4529,6 +4569,11 @@
 
     if (action === 'air') {
       runAirNeed(item);
+      return;
+    }
+
+    if (action === 'weather') {
+      runPolygonWeather(item);
       return;
     }
 

@@ -394,6 +394,9 @@
     if (!sheet.classList.contains('gs-sheet-open')) return [base, base, base, base];
     // Sheet yang sudah jadi chip hanya menyisakan baris judul tipis.
     if (sheet.classList.contains('gs-sheet-minimized')) return [base, base, base, base];
+    // Desktop sudah mengecilkan kontainer peta ke bidang di kiri sheet,
+    // jadi padding kanan tambahan akan menggeser polygon dua kali.
+    if (window.SheetDrag && !window.SheetDrag.isMobile()) return [base, base, base, base];
 
     var r = null;
     try { r = sheet.getBoundingClientRect(); } catch (e) { r = null; }

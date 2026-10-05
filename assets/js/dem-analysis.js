@@ -105,9 +105,10 @@
           }
           if (!res.ok) throw new Error('HTTP ' + res.status);
           var json = await res.json();
-          if (json.elevation) {
+          if (Array.isArray(json.elevation) && json.elevation.length === batch.length) {
             for (var j = 0; j < batch.length; j++) {
-              results.push({ lat: batch[j].lat, lng: batch[j].lng, elev: json.elevation[j] });
+              var elevation = json.elevation[j] === null || json.elevation[j] === undefined ? NaN : Number(json.elevation[j]);
+              if (Number.isFinite(elevation)) results.push({ lat: batch[j].lat, lng: batch[j].lng, elev: elevation });
             }
             success = true;
           }
@@ -119,6 +120,28 @@
       if (i + BATCH < points.length) await new Promise(function (r) { setTimeout(r, 150); });
     }
     return { results: results, rateLimited: rateLimited };
+  }
+
+  /* Sumber cadangan terakhir: SRTM 90 m dari Open Topo Data. API publik
+     membatasi 100 lokasi/request dan 1 request/detik, jadi hanya dipanggil
+     bila Terrarium serta Open-Meteo tidak memberi data. */
+  async function fetchOpenTopoData(points, progressCb) {
+    var results = [];
+    for (var i = 0; i < points.length; i += 100) {
+      if (i > 0) await new Promise(function (resolve) { setTimeout(resolve, 1100); });
+      var batch = points.slice(i, i + 100);
+      var locations = batch.map(function (p) { return p.lat.toFixed(5) + ',' + p.lng.toFixed(5); }).join('|');
+      var response = await fetch('https://api.opentopodata.org/v1/srtm90m?locations=' + encodeURIComponent(locations));
+      if (!response.ok) throw new Error('SRTM cadangan HTTP ' + response.status);
+      var data = await response.json();
+      if (data.status !== 'OK' || !Array.isArray(data.results)) throw new Error('Respons SRTM cadangan tidak valid.');
+      data.results.forEach(function (row, index) {
+        var elevation = row.elevation === null || row.elevation === undefined ? NaN : Number(row.elevation);
+        if (Number.isFinite(elevation)) results.push({ lat: batch[index].lat, lng: batch[index].lng, elev: elevation });
+      });
+      if (progressCb) progressCb(45, 'Memuat SRTM cadangan (' + Math.min(i + batch.length, points.length) + '/' + points.length + ')...');
+    }
+    return results;
   }
 
   /* ── Grid computation ── */
@@ -262,12 +285,13 @@
     return analyzeRings(boundary.geometry.rings, meta, progressCb, options);
   }
 
-  function buildElevationError(terrainError, rateLimited) {
+  function buildElevationError(terrainError, rateLimited, openTopoError) {
     var parts = [];
     if (terrainError) parts.push('Terrarium: ' + terrainError.message);
     parts.push(rateLimited
       ? 'Open-Meteo: batas harian API sudah tercapai, coba lagi besok.'
       : 'Open-Meteo: data tidak dapat dimuat, periksa koneksi lalu coba lagi.');
+    if (openTopoError) parts.push('SRTM cadangan: ' + openTopoError.message);
     return 'Data elevasi tidak dapat dimuat. ' + parts.join(' ');
   }
 
@@ -277,7 +301,8 @@
       var res = results.elevResolutionM ? ' ~' + Math.round(results.elevResolutionM) + ' m' : '';
       return 'Data: AWS Terrain Tiles' + res;
     }
-    if (results.elevSource === 'openmeteo') return 'Data: Open-Meteo SRTM ~30m';
+    if (results.elevSource === 'openmeteo') return 'Data: Copernicus DEM / Open-Meteo ~90m';
+    if (results.elevSource === 'opentopodata') return 'Data: SRTM / Open Topo Data ~90m';
     return '';
   }
 
@@ -308,12 +333,21 @@
 
     if (progressCb) progressCb(15, 'Membuat grid titik sample (spacing: ' + (spacingDeg * 111000).toFixed(0) + 'm)...');
     var gridPoints = generateGridPoints(polygon, spacingDeg);
+    // Petak kecil/sempit kadang tidak memiliki titik interior pada grid.
+    // Ambil titik representatif yang dijamin berada di dalam geometri.
+    if (!gridPoints.length && typeof turf.pointOnFeature === 'function') {
+      var representative = turf.pointOnFeature(polygon).geometry.coordinates;
+      gridPoints.push({ lat: representative[1], lng: representative[0] });
+    }
+    if (!gridPoints.length) throw new Error('Tidak dapat membuat titik sampel topografi dari polygon ini.');
 
     if (progressCb) progressCb(18, 'Mengambil data elevasi (' + gridPoints.length + ' titik)...');
     var elevData = [];
     var elevSource = null;
     var elevResolutionM = null;
     var terrainError = null;
+    var openTopoError = null;
+    var openMeteoRateLimited = false;
 
     if (typeof window.fetchTerrariumElevations === 'function') {
       try {
@@ -333,10 +367,25 @@
       if (batch.results.length) {
         elevData = batch.results;
         elevSource = 'openmeteo';
-      } else {
-        // Tanpa data, perhitungan min/max menghasilkan Infinity dan UI menampilkan "- m" tanpa penjelasan.
-        throw new Error(buildElevationError(terrainError, batch.rateLimited));
       }
+      openMeteoRateLimited = batch.rateLimited;
+    }
+
+    if (!elevData.length) {
+      if (progressCb) progressCb(40, 'Mencoba sumber SRTM cadangan...');
+      try {
+        elevData = await fetchOpenTopoData(gridPoints, progressCb);
+        if (elevData.length) {
+          elevSource = 'opentopodata';
+          elevResolutionM = 90;
+        }
+      } catch (error) {
+        openTopoError = error;
+        console.warn('[DEM] Open Topo Data gagal:', error && error.message);
+      }
+    }
+    if (!elevData.length) {
+      throw new Error(buildElevationError(terrainError || (typeof window.fetchTerrariumElevations === 'function' ? null : new Error('modul Terrarium tidak tersedia')), openMeteoRateLimited, openTopoError));
     }
 
     if (progressCb) progressCb(60, 'Menghitung slope & aspect...');

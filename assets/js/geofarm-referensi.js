@@ -227,19 +227,40 @@
 
     varietas: {
       file: 'assets/data/pertanian/varietas-perkebunan.json',
+      fileTambahan: 'assets/data/pertanian/sdg-pisang.json',
       mode: 'json',
-      satuan: 'varietas',
-      placeholder: 'Cari varietas, komoditas, asal, atau nomor SK',
+      satuan: 'varietas dan aksesi',
+      placeholder: 'Cari nama, komoditas, aksesi, spesies, atau asal',
+      opsiFilter: function (rows) {
+        var seen = {}, out = [];
+        for (var i = 0; i < rows.length; i++) {
+          var category = String(rows[i].kategori || 'Varietas Rilis Perkebunan').trim();
+          if (category && !seen[category]) { seen[category] = true; out.push(category); }
+        }
+        return out.sort();
+      },
       normalisasi: function (rows) {
         var out = [];
         for (var i = 0; i < rows.length; i++) {
           var r = rows[i] || {};
           var nama = String(r.nama || '').trim();
           if (!nama) continue;
+          if (Array.isArray(r.tabs)) {
+            var tabSearch = JSON.stringify(r.tabs);
+            out.push({
+              no: String(r.no || ''), nama: nama, komoditas: String(r.komoditas || 'Pisang'),
+              genus: String(r.genus || ''), species: String(r.species || ''),
+              kategori: String(r.kategori || 'Sumber Daya Genetik / Buah Tropika / Pisang'),
+              tabs: r.tabs, sumber: String(r.sumber || ''), url: String(r.url || ''),
+              cari: [nama, r.no, r.komoditas, r.genus, r.species, tabSearch].join(' ').toLowerCase()
+            });
+            continue;
+          }
           out.push({
             no: String(r.no || ''),
             nama: nama,
             komoditas: String(r.komoditas || '').trim(),
+            kategori: String(r.kategori || 'Varietas Rilis Perkebunan'),
             asal: String(r.asal || '').trim(),
             tahun: String(r.tahun || '').trim(),
             status: String(r.status || '').trim(),
@@ -248,10 +269,29 @@
             cari: [nama, r.komoditas, r.asal, r.tahun, r.status, r.sk, r.deskripsi].join(' ').toLowerCase()
           });
         }
-        out.sort(function (a, b) { return Number(a.no) - Number(b.no); });
+        out.sort(function (a, b) {
+          var byCategory = urut(a.kategori, b.kategori);
+          return byCategory || urut(a.nama, b.nama);
+        });
         return out;
       },
       render: function (it) {
+        if (it.tabs) {
+          var tabHtml = it.tabs.map(function (tab) {
+            var fields = (tab.fields || []).map(function (field) {
+              return '<div class="geofarm-ref-blok"><b>' + esc(field.label) + '</b><br />' + esc(field.value || '-') + '</div>';
+            }).join('');
+            if (!fields && tab.note) fields = '<p class="geofarm-ref-blok">' + esc(tab.note) + '</p>';
+            if (!fields) fields = '<p class="geofarm-ref-blok">Tidak ada data pada subtab ini.</p>';
+            return '<details class="geofarm-ref-sdg-tab"><summary>' + esc(tab.tab) +
+              (tab.fields && tab.fields.length ? ' &middot; ' + jumlah(tab.fields.length) + ' atribut' : '') +
+              '</summary><div>' + fields + '</div></details>';
+          }).join('');
+          var metaSdg = [it.komoditas, it.genus, it.species, it.no].filter(Boolean).join(' / ');
+          var sumberSdg = it.url ? '<p class="geofarm-ref-blok">Sumber: <a href="' + esc(it.url) + '" target="_blank" rel="noopener noreferrer">SISGen-Horti · ' + esc(it.sumber || 'Buka data sumber') + '</a></p>' : '';
+          return entri('<b>' + esc(it.nama) + '</b><small>' + esc(metaSdg) + '</small>',
+            sumberSdg + tabHtml, 'geofarm-ref-item-varietas geofarm-ref-item-sdg');
+        }
         var meta = [it.komoditas, it.tahun, it.status].filter(function (v) { return v; }).join(' · ');
         var isi = '';
         if (it.asal) isi += '<p class="geofarm-ref-blok"><b>Asal</b><br />' + esc(it.asal) + '</p>';
@@ -568,7 +608,10 @@
     st.sedang = true;
     if (st.u.more) st.u.more.hidden = true;
     status(st, 'Mengambil ' + st.conf.satuan + '…', 'is-busy');
-    muatArray(st.conf.file, st.conf.varName, st.conf.mode, st.conf.fallbackFile).then(function (rows) {
+    var sumber = [muatArray(st.conf.file, st.conf.varName, st.conf.mode, st.conf.fallbackFile)];
+    if (st.conf.fileTambahan) sumber.push(muatArray(st.conf.fileTambahan, null, 'json'));
+    Promise.all(sumber).then(function (kelompok) {
+      var rows = [].concat.apply([], kelompok);
       st.data = st.conf.normalisasi(rows);
       st.sedang = false;
       isiFilter(st, rows);

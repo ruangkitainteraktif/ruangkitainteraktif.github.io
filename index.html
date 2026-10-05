@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=71">
+  <link rel="stylesheet" href="assets/css/app.css?v=73">
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
   <link rel="stylesheet" href="assets/css/geotrans-mitradarat.css?v=20261005-transit-table2">
@@ -2962,13 +2962,14 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                   <span class="gt-card-icon" aria-hidden="true">&#127796;</span>
                   <span>
                     <b id="geofarmRefVarietasTitle">Database Varietas Tanaman</b>
-                    <small>Katalog varietas perkebunan.</small>
+                    <small>Varietas rilis perkebunan dan aksesi SDG buah tropika.</small>
                   </span>
                 </summary>
                 <div class="geofarm-ref-body">
-                  <p class="geofarm-ref-status">351 entri katalog tersimpan lokal. <a href="assets/data/pertanian/katalog-varietas-perkebunan.pdf" target="_blank" rel="noopener noreferrer">Buka PDF sumber lokal</a>.</p>
+                  <p class="geofarm-ref-status">351 varietas rilis dan 149 aksesi pisang tersimpan lokal. Detail aksesi memuat subtab paspor, karakterisasi, rilis, dan praevaluasi.</p>
+                  <select id="geofarmRefVarietasFilter" class="geofarm-ref-select" data-ref-filter aria-label="Filter kategori varietas"><option value="">Semua kategori</option></select>
                   <input type="search" id="geofarmRefVarietasCari" class="geofarm-ref-input" data-ref-cari
-                         placeholder="Cari varietas, komoditas, asal, atau nomor SK" autocomplete="off" />
+                         placeholder="Cari nama, komoditas, aksesi, spesies, atau asal" autocomplete="off" />
                   <p class="geofarm-ref-status" data-ref-status role="status" aria-live="polite"></p>
                   <div class="geofarm-ref-list" data-ref-list></div>
                   <button class="geofarm-ref-more" data-ref-more type="button" hidden>Muat 20 lagi</button>

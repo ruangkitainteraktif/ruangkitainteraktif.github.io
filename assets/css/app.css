@@ -15254,6 +15254,9 @@ body.geofarm-draw-active .draw-actions-wrap {
 .geofarm-ref-badge[data-kat="penyakit"] { background: #dcfce7; color: #166534; }
 
 .geofarm-ref-blok { margin: 0 0 6px; }
+.geofarm-ref-sdg-tab { margin: 7px 0; border-top: 1px solid var(--border-color); padding-top: 6px; }
+.geofarm-ref-sdg-tab > summary { cursor: pointer; font-weight: 700; color: var(--text-primary); }
+.geofarm-ref-sdg-tab > div { padding: 7px 0 0 8px; }
 .geofarm-ref-blok b {
   font-size: 9px;
   font-weight: 700;
@@ -15323,3 +15326,203 @@ body.geofarm-draw-active .draw-actions-wrap {
 [data-theme="dark"] .geofarm-ref-badge[data-kat="hama"] { background: #450a0a; color: #fecaca; }
 [data-theme="dark"] .geofarm-ref-badge[data-kat="penyakit"] { background: #052e16; color: #bbf7d0; }
 [data-theme="dark"] .geofarm-ref-poster { background: #0b1220; }
+
+/* Saat panel kanan terbuka, gunakan hanya bidang peta yang tidak tertutup.
+   Pusat Leaflet dan hasil polygon otomatis berada di tengah area tersebut. */
+@media (min-width: 769px) {
+  body.sheet-terbuka #map {
+    flex: 0 0 67vw;
+    width: 67vw;
+    max-width: 67vw;
+    transition: flex-basis .3s ease, width .3s ease;
+  }
+
+  body.sheet-terbuka .unified-search,
+  body.sheet-terbuka .quick-layer-bar {
+    left: 33.5vw;
+    transition: left .3s ease;
+  }
+}
+
+/* Desktop: samakan lebar seluruh sheet dan panel peta. */
+@media (min-width: 769px) {
+  :is(
+    #hotspot-sheet,
+    #geopangan-sheet,
+    #transjakarta-sheet,
+    #transjogja-sheet,
+    #geotools-sheet,
+    #geodata-sheet,
+    #attr-table-sheet,
+    #ai-sheet,
+    .dm-sidebar,
+    .lg-sidebar,
+    .pa-panel
+  ):not(.sheet-minimized):not(.gs-sheet-minimized):not(.geodata-sheet-minimized):not(.attr-table-sheet-minimized):not(.ais-sheet-minimized):not(.dm-sidebar-minimized):not(.lg-sidebar-minimized):not(.pa-min) {
+    box-sizing: border-box;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 33vw;
+    max-width: 33vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+
+  /* Keempat panel ini memakai bingkai desktop yang sama saat terbuka. */
+  :is(
+    #geotools-sheet:not(.gs-sheet-minimized),
+    #legendSidebar:not(.lg-sidebar-minimized),
+    #attr-table-sheet:not(.attr-table-sheet-minimized),
+    #geodata-sheet:not(.geodata-sheet-minimized),
+    #drawSidebar:not(.dm-sidebar-minimized)
+  ) {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 33vw;
+    max-width: 33vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+
+  /* Perencana rute dirender sebagai panel terpisah dari sheet daftar. */
+  .tj-routing-panel {
+    position: fixed;
+    z-index: 1101;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: auto;
+    box-sizing: border-box;
+    width: 33vw;
+    max-width: 33vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    margin: 0;
+    padding: 18px;
+    border: 1px solid rgba(203, 213, 225, .9);
+    border-radius: 0;
+    background: rgba(255, 255, 255, .97);
+    box-shadow: 0 8px 28px rgba(15, 23, 42, .2);
+    color: #0f172a;
+  }
+
+  .tj-routing-panel.is-minimized {
+    top: 120px;
+    bottom: auto;
+    height: auto;
+    max-height: none;
+    padding: 12px 16px;
+  }
+
+  .tj-routing-head {
+    position: sticky;
+    top: -18px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: -18px -18px 10px;
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid rgba(203, 213, 225, .72);
+    border-radius: 16px 16px 0 0;
+    background: rgba(255, 255, 255, .98);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .tj-routing-head > div:first-child { min-width: 0; }
+  .tj-routing-eyebrow { color: #0e7490; font-size: 9px; font-weight: 800; letter-spacing: .1em; }
+  .tj-routing-head h3 { margin: 2px 0 0; color: #0f172a; font-size: 16px; line-height: 1.2; }
+  .tj-routing-close { flex: 0 0 28px; width: 28px; height: 28px; border: 0; border-radius: 50%; background: #f1f5f9; color: #64748b; font-size: 20px; line-height: 1; cursor: pointer; }
+  .tj-routing-minimize { display: grid; flex: 0 0 30px; width: 30px; height: 28px; margin-left: auto; place-items: center; border: 0; border-radius: 8px; background: #f1f5f9; color: #475569; cursor: pointer; }
+  .tj-routing-corridor { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border: 1px solid #bae6fd; border-radius: 11px; background: #f0f9ff; }
+  .tj-routing-corridor b, .tj-routing-corridor small { display: block; }
+  .tj-routing-corridor b { color: #0f172a; font-size: 12px; }
+  .tj-routing-corridor small { margin-top: 2px; color: #475569; font-size: 10px; }
+  .tj-routing-dot { width: 10px; height: 10px; flex: 0 0 auto; border: 3px solid #0891b2; border-radius: 50%; background: white; }
+  .tj-routing-fields { position: relative; display: grid; gap: 7px; margin: 10px 0; }
+  .tj-routing-fields label { position: relative; display: block; padding-left: 22px; }
+  .tj-routing-fields input { box-sizing: border-box; width: 100%; height: 38px; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 9px; outline: none; background: #fff; color: #0f172a; font: inherit; font-size: 12px; }
+  .tj-routing-fields input:focus { border-color: #06b6d4; box-shadow: 0 0 0 3px rgba(6, 182, 212, .12); }
+  .tj-stop-suggestions { position: absolute; top: calc(100% + 4px); right: 0; left: 22px; z-index: 20; max-height: 190px; overflow-y: auto; overscroll-behavior: contain; padding: 4px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; box-shadow: 0 8px 22px rgba(15, 23, 42, .16); }
+  .tj-stop-suggestions[hidden] { display: none; }
+  .tj-stop-suggestion { display: block; width: 100%; min-height: 40px; padding: 9px 10px; border: 0; border-radius: 7px; background: transparent; color: #0f172a; font: inherit; font-size: 12px; text-align: left; cursor: pointer; touch-action: manipulation; }
+  .tj-stop-suggestion:hover, .tj-stop-suggestion:focus-visible { outline: none; background: #ecfeff; color: #0e7490; }
+  .tj-stop-no-suggestion { display: block; padding: 10px; color: #64748b; font-size: 11px; }
+  .tj-routing-origin-dot, .tj-routing-dest-dot { position: absolute; top: 12px; left: 5px; width: 10px; height: 10px; border: 2px solid #0891b2; border-radius: 50%; background: white; }
+  .tj-routing-dest-dot { border-color: #f97316; border-radius: 2px; }
+  .tj-routing-connector { position: absolute; top: 27px; bottom: 27px; left: 10px; border-left: 1px dashed #94a3b8; }
+  .tj-routing-note { display: grid; min-width: 0; gap: 3px; padding: 8px 10px; border-radius: 9px; background: #f8fafc; overflow-wrap: anywhere; }
+  .tj-routing-note b { font-size: 10px; color: #334155; }
+  .tj-routing-note span { font-size: 10px; line-height: 1.4; color: #475569; }
+  .tj-routing-note small { margin-top: 2px; font-size: 9px; line-height: 1.35; color: #64748b; }
+  .tj-routing-result { min-width: 0; margin-top: 8px; padding: 8px 10px; border-left: 3px solid #06b6d4; border-radius: 6px; background: #ecfeff; color: #164e63; font-size: 10px; line-height: 1.4; overflow-wrap: anywhere; }
+  .tj-route-road-summary { display: grid; gap: 2px; }
+  .tj-route-road-summary b { font-size: 11px; }
+  .tj-route-road-summary span { color: #475569; font-size: 9px; }
+  .tj-route-compare { margin-top: 10px; padding-top: 9px; border-top: 1px solid #cbd5e1; }
+  .tj-route-compare > b { font-size: 11px; color: #0f172a; }
+  .tj-route-compare > p { margin: 3px 0 7px; color: #64748b; font-size: 9px; line-height: 1.35; }
+  .tj-route-compare-table { max-height: 180px; overflow: auto; }
+  .tj-route-compare table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  .tj-route-compare th, .tj-route-compare td { padding: 6px 7px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+  .tj-route-compare th { position: sticky; top: 0; background: #f8fafc; color: #64748b; font-size: 9px; }
+  .tj-route-compare td:last-child, .tj-route-compare th:last-child { text-align: right; white-space: nowrap; }
+  .tj-route-compare tr.is-selected td { background: #cffafe; color: #0e7490; font-weight: 750; }
+  .tj-route-compare td small { color: #0e7490; font-size: 8px; }
+  .tj-route-compare > p:only-child { padding: 7px; border-radius: 7px; background: #fff7ed; }
+  .tj-routing-actions { display: flex; gap: 8px; margin-top: 9px; }
+  .tj-routing-actions button { min-width: 0; min-height: 36px; border: 0; border-radius: 9px; cursor: pointer; font: inherit; font-size: 11px; font-weight: 750; }
+  .tj-routing-actions [data-tj-routing-swap] { flex: 0 0 40px; width: 40px; background: #f1f5f9; color: #475569; font-size: 18px; }
+  .tj-routing-actions .tj-routing-submit { flex: 1 1 auto; padding: 0 12px; background: #0891b2; color: white; }
+
+  body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .leaflet-bottom.leaflet-right,
+  body.geopangan-sheet-open:not(.geopangan-sheet-minimized) .leaflet-bottom.leaflet-right,
+  body.geodata-sheet-open:not(.geodata-sheet-minimized) .leaflet-bottom.leaflet-right,
+  body.attr-table-sheet-open:not(.attr-table-sheet-minimized) .leaflet-bottom.leaflet-right {
+    right: 12px;
+  }
+
+  body.transjakarta-sheet-open:not(.transjakarta-sheet-minimized) .leaflet-bottom.leaflet-right,
+  body.transjogja-sheet-open:not(.transjogja-sheet-minimized) .leaflet-bottom.leaflet-right {
+    right: 12px;
+  }
+
+  [data-theme="dark"] .tj-routing-panel {
+    border-color: #334155;
+    background: rgba(15, 23, 42, .97);
+    color: #e2e8f0;
+  }
+  [data-theme="dark"] .tj-routing-head { border-bottom-color: rgba(71, 85, 105, .8); background: rgba(15, 23, 42, .98); }
+  [data-theme="dark"] .tj-routing-head h3,
+  [data-theme="dark"] .tj-routing-corridor b { color: #f1f5f9; }
+  [data-theme="dark"] .tj-routing-minimize,
+  [data-theme="dark"] .tj-routing-close { background: #1e293b; color: #cbd5e1; }
+  [data-theme="dark"] .tj-routing-corridor { border-color: #164e63; background: #102b3a; }
+  [data-theme="dark"] .tj-routing-corridor small,
+  [data-theme="dark"] .tj-routing-note span { color: #cbd5e1; }
+  [data-theme="dark"] .tj-routing-fields input { border-color: #475569; background: #1e293b; color: #f1f5f9; }
+  [data-theme="dark"] .tj-stop-suggestions { border-color: #475569; background: #0f172a; }
+  [data-theme="dark"] .tj-stop-suggestion { color: #e2e8f0; }
+  [data-theme="dark"] .tj-stop-suggestion:hover,
+  [data-theme="dark"] .tj-stop-suggestion:focus-visible { background: #164e63; color: #cffafe; }
+  [data-theme="dark"] .tj-stop-no-suggestion { color: #94a3b8; }
+  [data-theme="dark"] .tj-routing-note { background: #1e293b; }
+  [data-theme="dark"] .tj-routing-note b,
+  [data-theme="dark"] .tj-route-compare > b { color: #e2e8f0; }
+  [data-theme="dark"] .tj-routing-result { border-left-color: #22d3ee; background: #083344; color: #cffafe; }
+  [data-theme="dark"] .tj-route-road-summary span { color: #cbd5e1; }
+  [data-theme="dark"] .tj-route-compare { border-top-color: #475569; }
+  [data-theme="dark"] .tj-route-compare th { background: #1e293b; color: #cbd5e1; }
+  [data-theme="dark"] .tj-route-compare th,
+  [data-theme="dark"] .tj-route-compare td { border-bottom-color: #334155; }
+  [data-theme="dark"] .tj-route-compare tr.is-selected td { background: #164e63; color: #cffafe; }
+  [data-theme="dark"] .tj-route-compare td small { color: #67e8f9; }
+}

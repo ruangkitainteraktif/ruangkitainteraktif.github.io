@@ -286,19 +286,16 @@
   }
 
   /* Dipanggil setiap kali state sheet berubah. Selain menyalakan kelas
-     body, menjadwalkan map.invalidateSize() supaya tile dihitung ulang
-     setelah transisi tinggi #map selesai (CSS .3s, jadi 340ms memberi
-     sedikit jeda). invalidateSize hanya bermakna di mobile: di desktop
-     tinggi #map tidak ikut berubah, jadi pemanggilannya di lewati. */
+     body, menjadwalkan map.invalidateSize() setelah transisi area peta
+     selesai: tinggi di mobile dan lebar di desktop sama-sama berubah. */
   var _timerSinkron = 0;
   function sinkronkanPeta() {
     document.body.classList.toggle('sheet-terbuka', adaYangTerbuka());
     ukurChromeAtas();
-    if (!mobile()) return;
     clearTimeout(_timerSinkron);
     _timerSinkron = setTimeout(function () {
       var m = window.map;
-      if (m && typeof m.invalidateSize === 'function') m.invalidateSize();
+      if (m && typeof m.invalidateSize === 'function') m.invalidateSize({ pan: false });
     }, 340);
   }
 
@@ -599,6 +596,7 @@
     /* Chrome atas bisa berubah tinggi saat device dirotasi (quick layer
        bar membungkus atau tidak), jadi angka --map-chrome diukur ulang. */
     ukurChromeAtas();
+    sinkronkanPeta();
   });
 
   window.SheetDrag = {

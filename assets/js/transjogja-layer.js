@@ -202,8 +202,6 @@
       var panelRect = panel.getBoundingClientRect();
       if (window.SheetDrag && window.SheetDrag.isMobile()) {
         bottomPadding = Math.max(bottomPadding, mapRect.bottom - panelRect.top + 16);
-      } else {
-        rightPadding = Math.max(rightPadding, mapRect.right - panelRect.left + 16);
       }
     }
     // fitBounds mempertimbangkan area tertutup sejak awal, sehingga zoom dan
