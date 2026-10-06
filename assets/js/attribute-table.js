@@ -57,12 +57,45 @@
   }
 
   /* ── Layer Registry ── */
+  var DSS_QUERY_BASE = 'https://simontana.kehutanan.go.id/arcgis/rest/services/dss/';
+  function waitForVectorFeatures(getter) {
+    return new Promise(function (resolve) {
+      var deadline = Date.now() + 15000;
+      function check() {
+        var data = getter();
+        if ((Array.isArray(data) && data.length) || Date.now() >= deadline) {
+          resolve(Array.isArray(data) ? data : []);
+          return;
+        }
+        setTimeout(check, 250);
+      }
+      check();
+    });
+  }
+
+  function dssTableConfig(name, service, layer, props) {
+    return {
+      name: name,
+      type: 'arcgis',
+      sourceType: 'dss',
+      url: DSS_QUERY_BASE + service + '/MapServer/' + layer + '/query',
+      outFields: ['*'],
+      props: props
+    };
+  }
+
   var ATTR_LAYER_REGISTRY = {
     toggleJenisTanahJateng: {
       name: 'Jenis Tanah Jawa Tengah',
       type: 'geojson',
       getLayer: function () { return window.getJenisTanahJatengLayer ? window.getJenisTanahJatengLayer() : null; },
       props: ['MACAM_TANA', 'BAHAN_INDU', 'FISIOGRAFI', 'TANAH_ID', 'ID']
+    },
+    toggleGeologiArcGISOnline: {
+      name: 'Peta Geologi Yogyakarta',
+      type: 'geojson',
+      getLayer: function () { return window.getGeologiArcGISOnlineLayer ? window.getGeologiArcGISOnlineLayer() : null; },
+      props: function () { return window.getGeologiArcGISOnlineFields ? window.getGeologiArcGISOnlineFields() : []; }
     },
     toggleSignificantMarkers: {
       name: '15 Gempa M 5.0+ (BMKG)',
@@ -145,7 +178,7 @@
     toggleVolcanoLayer: {
       name: 'Gunung Api Indonesia (PVMBG)',
       type: 'cluster',
-      getLayer: function () { return typeof volcanoClusterGroup !== 'undefined' ? volcanoClusterGroup : null; },
+      getLayer: function () { return window.volcanoClusterGroup || null; },
       props: ['ga_nama_gapi', 'ga_status', 'ga_kab_gapi', 'ga_prov_gapi', 'ga_elev_gapi', 'ga_koter_gapi'],
       getLatLng: function (m) {
         var ll = m.getLatLng();
@@ -155,7 +188,7 @@
     toggleSebaranPasar: {
       name: 'Sebaran Pasar Indonesia',
       type: 'cluster',
-      getLayer: function () { return typeof sebaranPasarLayer !== 'undefined' ? sebaranPasarLayer : null; },
+      getLayer: function () { return window.sebaranPasarLayer || null; },
       props: ['NAMA_PASAR', 'JENIS_PASAR', 'NAMA_KOTA', 'NAMA_PROP'],
       getLatLng: function (m) {
         var ll = m.getLatLng();
@@ -165,7 +198,7 @@
     toggleSppgSebaranLayer: {
       name: 'Sebaran SPPG Indonesia',
       type: 'cluster',
-      getLayer: function () { return typeof sppgSebaranLayer !== 'undefined' ? sppgSebaranLayer : null; },
+      getLayer: function () { return window.sppgSebaranLayer || null; },
       props: ['Nama SPPG', 'Kode SPPG', 'Provinsi', 'Kab/Kota', 'Alamat'],
       getLatLng: function (m) {
         var ll = m.getLatLng();
@@ -175,7 +208,7 @@
     toggleSppgLayer: {
       name: 'SPPG Indonesia',
       type: 'cluster',
-      getLayer: function () { return typeof sppgLayer !== 'undefined' ? sppgLayer : null; },
+      getLayer: function () { return window.sppgLayer || null; },
       props: ['name', 'category', 'desc'],
       getLatLng: function (m) {
         var ll = m.getLatLng();
@@ -186,6 +219,7 @@
       name: 'SPPG per Kabupaten/Kota',
       type: 'vector',
       getFeatures: function () { return typeof window.getSppgDistrictData === 'function' ? window.getSppgDistrictData() : []; },
+      getFeaturesAsync: function () { return waitForVectorFeatures(function () { return window.getSppgDistrictData ? window.getSppgDistrictData() : []; }); },
       props: ['id', 'name', 'province', 'district', 'subDistrict', 'village'],
       getLatLng: function (item) {
         var lat = parseFloat(item.latitude);
@@ -211,7 +245,7 @@
     toggleKatalogGempa: {
       name: 'Katalog Gempa BMKG',
       type: 'cluster',
-      getLayer: function () { return typeof katalogGempaLayer !== 'undefined' ? katalogGempaLayer : null; },
+      getLayer: function () { return window.katalogGempaLayer || null; },
       props: ['date', 'mag', 'depth', 'lokasi', 'pusat', 'tsunami', 'dirasakan'],
       getLatLng: function (m) {
         var ll = m.getLatLng();
@@ -221,7 +255,7 @@
     toggleHistoryGempa: {
       name: 'Riwayat Gempa BMKG',
       type: 'cluster',
-      getLayer: function () { return typeof historyGempaLayer !== 'undefined' ? historyGempaLayer : null; },
+      getLayer: function () { return window.historyGempaLayer || null; },
       props: ['time', 'mag', 'depth', 'place', 'id', 'status'],
       getLatLng: function (m) {
         var ll = m.getLatLng();
@@ -361,7 +395,7 @@
     toggleSensorSeismic: {
       name: 'Sensor Seismic BMKG',
       type: 'cluster',
-      getLayer: function () { return typeof sensorSeismicLayer !== 'undefined' ? sensorSeismicLayer : null; },
+      getLayer: function () { return window.sensorSeismicLayer || null; },
       props: ['id', 'stakeholder', 'uptbmkg'],
       getLatLng: function (m) {
         var ll = m.getLatLng();
@@ -371,7 +405,7 @@
     toggleSensorGlobal: {
       name: 'Sensor Global (GEOFON)',
       type: 'cluster',
-      getLayer: function () { return typeof sensorGlobalLayer !== 'undefined' ? sensorGlobalLayer : null; },
+      getLayer: function () { return window.sensorGlobalLayer || null; },
       props: ['id', 'description', 'net', 'sta'],
       getLatLng: function (m) {
         var ll = m.getLatLng();
@@ -382,6 +416,7 @@
       name: 'Cuaca Pelabuhan (BMKG)',
       type: 'vector',
       getFeatures: function () { return window._cuacaPelabuhanData || []; },
+      getFeaturesAsync: function () { return waitForVectorFeatures(function () { return window._cuacaPelabuhanData || []; }); },
       props: ['name', 'code', 'weather', 'weather_desc', 'wave_cat', 'wave_desc', 'wind_from', 'wind_to', 'wind_speed_min', 'wind_speed_max', 'current_from', 'current_to', 'current_speed_min', 'current_speed_max', 'visibility', 'temp_min', 'temp_max', 'rh_min', 'rh_max', 'warning_desc', 'valid_from', 'valid_to'],
       getLatLng: function (item) {
         if (item.latitude && item.longitude) return [parseFloat(item.latitude), parseFloat(item.longitude)];
@@ -545,72 +580,17 @@
         return ll ? [ll.lat, ll.lng] : null;
       }
     },
-    toggleSawitNasionalLayer: {
-      name: 'Sawit Nasional',
-      type: 'dss',
-      toggleId: 'toggleSawitNasionalLayer',
-      props: ['namaobj', 'remark', 'pippib23_1']
-    },
-    toggleSawitPerkebunanLayer: {
-      name: 'Sawit dan Perkebunan',
-      type: 'dss',
-      toggleId: 'toggleSawitPerkebunanLayer',
-      props: ['namaobj', 'remark']
-    },
-    toggleRehabDasLayer: {
-      name: 'Rehab DAS',
-      type: 'dss',
-      toggleId: 'toggleRehabDasLayer',
-      props: ['namaobj', 'remark']
-    },
-    togglePerkebunanPl24Layer: {
-      name: 'Perkebunan PL24',
-      type: 'dss',
-      toggleId: 'togglePerkebunanPl24Layer',
-      props: ['namaobj', 'remark']
-    },
-    toggleRktnSumateraLayer: {
-      name: 'RKTN Sumatera',
-      type: 'dss',
-      toggleId: 'toggleRktnSumateraLayer',
-      props: ['namaobj', 'remark']
-    },
-    toggleRktnSulawesiLayer: {
-      name: 'RKTN Sulawesi',
-      type: 'dss',
-      toggleId: 'toggleRktnSulawesiLayer',
-      props: ['namaobj', 'remark']
-    },
-    toggleRktnPapuaLayer: {
-      name: 'RKTN Papua',
-      type: 'dss',
-      toggleId: 'toggleRktnPapuaLayer',
-      props: ['namaobj', 'remark']
-    },
-    toggleRktnMalukuLayer: {
-      name: 'RKTN Maluku',
-      type: 'dss',
-      toggleId: 'toggleRktnMalukuLayer',
-      props: ['namaobj', 'remark']
-    },
-    toggleRktnKalimantanLayer: {
-      name: 'RKTN Kalimantan',
-      type: 'dss',
-      toggleId: 'toggleRktnKalimantanLayer',
-      props: ['namaobj', 'remark']
-    },
-    toggleRktnJawaLayer: {
-      name: 'RKTN Jawa',
-      type: 'dss',
-      toggleId: 'toggleRktnJawaLayer',
-      props: ['namaobj', 'remark']
-    },
-    toggleRktnBaliNtLayer: {
-      name: 'RKTN Bali & NT',
-      type: 'dss',
-      toggleId: 'toggleRktnBaliNtLayer',
-      props: ['namaobj', 'remark']
-    },
+    toggleSawitNasionalLayer: dssTableConfig('Sawit Nasional', 'sawit_nasional', 0, ['namaobj', 'remark', 'pippib23_1']),
+    toggleSawitPerkebunanLayer: dssTableConfig('Sawit dan Perkebunan', 'sawit_dan_perkebunan', 0, ['namaobj', 'remark']),
+    toggleRehabDasLayer: dssTableConfig('Rehab DAS', 'REHAB_DAS', 0, ['namaobj', 'remark']),
+    togglePerkebunanPl24Layer: dssTableConfig('Perkebunan PL24', 'perkebunan_pl24', 0, ['namaobj', 'remark']),
+    toggleRktnSumateraLayer: dssTableConfig('RKTN Sumatera', 'rktn', 0, ['namaobj', 'remark']),
+    toggleRktnSulawesiLayer: dssTableConfig('RKTN Sulawesi', 'rktn', 1, ['namaobj', 'remark']),
+    toggleRktnPapuaLayer: dssTableConfig('RKTN Papua', 'rktn', 2, ['namaobj', 'remark']),
+    toggleRktnMalukuLayer: dssTableConfig('RKTN Maluku', 'rktn', 3, ['namaobj', 'remark']),
+    toggleRktnKalimantanLayer: dssTableConfig('RKTN Kalimantan', 'rktn', 4, ['namaobj', 'remark']),
+    toggleRktnJawaLayer: dssTableConfig('RKTN Jawa', 'rktn', 5, ['namaobj', 'remark']),
+    toggleRktnBaliNtLayer: dssTableConfig('RKTN Bali & NT', 'rktn', 6, ['namaobj', 'remark']),
     /* TransJakarta.
 
        Kuncinya toggleTransjakarta, satu-satunya id yang ada di Layer
@@ -1051,7 +1031,23 @@
     } else if (config.type === 'geojson') {
       features = extractGeoJsonFeatures(config.getLayer());
     } else if (config.type === 'cluster') {
-      features = extractClusterFeatures(config.getLayer());
+      var clusterLayer = config.getLayer();
+      features = extractClusterFeatures(clusterLayer);
+      if (features.length) {
+        _currentLayer._clusterRetryCount = 0;
+      } else {
+        var clusterRetryCount = _currentLayer._clusterRetryCount || 0;
+        if (clusterRetryCount < 20) {
+          var clusterContent = document.getElementById('at-sheet-content');
+          if (clusterContent) clusterContent.innerHTML = '<div class="at-loading">Menunggu data layer…</div>';
+          _currentLayer._clusterRetryCount = clusterRetryCount + 1;
+          setTimeout(function () {
+            if (loadToken === _loadToken && _currentLayer && _currentLayer.id === configId) loadFeatures();
+          }, 500);
+          return;
+        }
+        _currentLayer._clusterRetryCount = 0;
+      }
     } else if (config.type === 'featureLayer') {
       var fl = config.getLayer();
       var currentId = _currentLayer.id;
@@ -1130,9 +1126,18 @@
         if (!response.ok) throw new Error('HTTP ' + response.status);
         return response.json();
       }
+      function fetchJsonWithTimeout(url) {
+        var controller = typeof AbortController === 'function' ? new AbortController() : null;
+        var timer = setTimeout(function () { if (controller) controller.abort(); }, 15000);
+        var options = controller ? { signal: controller.signal } : undefined;
+        return fetch(url, options).then(readJsonResponse).finally(function () { clearTimeout(timer); });
+      }
       function fetchJsonChecked(url) {
-        return fetch(url).then(readJsonResponse).catch(function () {
-          return fetch(ARC_PROXY_PREFIX + encodeURIComponent(url)).then(readJsonResponse);
+        return fetchJsonWithTimeout(url).catch(function (directError) {
+          return fetchJsonWithTimeout(ARC_PROXY_PREFIX + encodeURIComponent(url)).catch(function (proxyError) {
+            var timedOut = (proxyError && proxyError.name === 'AbortError') || (directError && directError.name === 'AbortError');
+            throw new Error('Server tidak merespons. ' + (timedOut ? 'Waktu tunggu habis.' : (proxyError && proxyError.message) || (directError && directError.message) || 'Periksa koneksi atau layanan data.'));
+          });
         }).then(function (data) {
           if (data && data.error) {
             var error = new Error('ArcGIS ' + (data.error.code || '') + ': ' + (data.error.message || 'service error'));
@@ -1161,7 +1166,11 @@
             var merged = collected.concat(page);
             var nextOffset = offset + page.length;
             var hasMore = page.length > 0 && (total > 0 ? merged.length < total : (data.exceededTransferLimit === true || page.length >= PAGE));
-            if (arcContent && total) arcContent.innerHTML = '<div class="at-loading">Memuat ' + merged.length.toLocaleString('id-ID') + ' / ' + total.toLocaleString('id-ID') + ' data…</div>';
+            if (arcContent) {
+              var progress = 'Memuat ' + merged.length.toLocaleString('id-ID') + ' data';
+              if (total) progress += ' / ' + total.toLocaleString('id-ID');
+              arcContent.innerHTML = '<div class="at-loading">' + progress + '…</div>';
+            }
             if (!hasMore) {
               if (!total) total = merged.length;
               return merged;
@@ -1259,7 +1268,9 @@
 
     var start = (_currentPage - 1) * PAGE_SIZE;
     var page = all.slice(start, start + PAGE_SIZE);
-    var props = _currentLayer.config.props || [];
+    var props = typeof _currentLayer.config.props === 'function'
+      ? _currentLayer.config.props()
+      : (_currentLayer.config.props || []);
     // If no explicit props defined, infer from first feature's keys (exclude internal keys)
     if ((!props || props.length === 0) && _currentFeatures && _currentFeatures.length > 0) {
       var sample = _currentFeatures[0] || {};
@@ -1341,9 +1352,6 @@
 
     content.querySelectorAll('.at-row').forEach(function (row) {
       row.addEventListener('click', function () {
-        // Detail fitur selalu dibuka, walau baris ini tidak punya koordinat.
-        // Sebelumnya handler hanya bergerak ke peta, jadi klik pada tabel tanpa
-        // geometri terlihat seperti tidak terjadi apa-apa.
         var idx = parseInt(row.dataset.idx, 10);
         if (!isFinite(idx)) return;
         // Baris lain yang aktif dilepas lebih dulu, jadi hanya satu baris
@@ -1351,9 +1359,8 @@
         content.querySelectorAll('.at-row-active').forEach(function (r) {
           r.classList.remove('at-row-active');
         });
-        var fitur = openFeatureDetailByIndex(idx);
-        var tampil = fitur;
-        if (!tampil) return;
+        var fitur = getFilteredFeatures(_currentFeatures)[idx];
+        if (!fitur) return;
         row.classList.add('at-row-active');
         focusFeatureRowOnMap(fitur, row);
       });
@@ -1370,94 +1377,6 @@
         }
       });
     });
-  }
-
-  /* ── Detail fitur (diklik dari baris tabel) ───────────────────────────
-     Setiap baris sudah membawa data-idx sejak awal, tapi nilainya tidak pernah
-     dipakai: klik baris hanya menggerakkan peta dan menandai baris. Karena itu
-     atribut lengkap fitur tidak pernah terlihat. Indeks itu sekarang dipakai
-     untuk membuka panel detail di dalam sheet.
-
-     Detail sengaja tidak disimpan sebagai state. Kalau indeks disimpan lalu
-     dipakai ulang setelah pengguna mengetik di pencarian, indeks itu menunjuk
-     fitur yang berbeda sehingga detail menampilkan atribut yang salah. Jadi
-     panel hidup sebentar saja: begitu sheet digambar ulang (cari, pindah
-     halaman, ganti layer) panel ikut hilang karena .at-sheet-content
-     ditulis ulang dari awal. */
-
-  function labelAttrValue(val) {
-    if (val == null || val === '') return '-';
-    if (typeof val === 'object') {
-      try { return JSON.stringify(val); } catch (e) { return String(val); }
-    }
-    return String(val);
-  }
-
-  function featureDetailHtml(feature) {
-    if (!feature) return '';
-    // Hasil GetFeatureInfo dibungkus { attributes: {...} }. Kalau tidak
-    // diratakan, panel detail hanya menampilkan satu baris berisi JSON --
-    // tidak berguna untuk dibaca pengguna.
-    var src = feature;
-    if (feature.attributes && typeof feature.attributes === 'object' && !feature.properties) {
-      src = feature.attributes;
-    } else if (feature.properties && typeof feature.properties === 'object' && Object.keys(feature).length === 1) {
-      src = feature.properties;
-    }
-    var rows = '';
-    Object.keys(src).forEach(function (k) {
-      // Kunci internal (diawali garis bawah) bukan bagian dari atribut.
-      if (!k || k.charAt(0) === '_') return;
-      rows += '<div class="at-detail-row">'
-        + '<span class="at-detail-key" title="' + escAttr(k) + '">' + escAttr(k) + '</span>'
-        + '<span class="at-detail-val">' + escAttr(labelAttrValue(src[k])) + '</span>'
-        + '</div>';
-    });
-    if (!rows) {
-      rows = '<div class="at-empty">Fitur ini tidak punya kolom atribut.</div>';
-    }
-    return '<div class="at-detail" id="atFeatureDetail">'
-      + '<div class="at-detail-head">'
-        + '<span class="at-detail-title">Detail fitur</span>'
-        + '<button class="at-detail-close" type="button" aria-label="Tutup detail fitur"'
-        + ' onclick="closeAttrFeatureDetail()">&times;</button>'
-      + '</div>'
-      + rows
-      + '</div>';
-  }
-
-  function closeAttrFeatureDetail() {
-    var el = document.getElementById('atFeatureDetail');
-    if (el && el.parentNode) el.parentNode.removeChild(el);
-    var content = document.getElementById('at-sheet-content');
-    if (content) {
-      content.querySelectorAll('.at-row-active').forEach(function (r) {
-        r.classList.remove('at-row-active');
-      });
-    }
-  }
-  window.closeAttrFeatureDetail = closeAttrFeatureDetail;
-
-  function openFeatureDetailByIndex(idx) {
-    if (idx == null || !isFinite(idx)) return null;
-    var all = getFilteredFeatures(_currentFeatures);
-    var feature = all[idx];
-    if (!feature) return null;
-    var content = document.getElementById('at-sheet-content');
-    if (!content) return null;
-    var lama = document.getElementById('atFeatureDetail');
-    if (lama && lama.parentNode) lama.parentNode.removeChild(lama);
-
-    var holder = document.createElement('div');
-    holder.innerHTML = featureDetailHtml(feature);
-    var detail = holder.firstElementChild;
-    if (!detail) return null;
-    var tabel = content.querySelector('.at-table-wrap');
-    // Disisipkan tepat sebelum tabel supaya tidak tersembunyi di bawah
-    // navigasi halaman, dan tetap terlihat tanpa harus menggulir ke bawah.
-    if (tabel && tabel.parentNode) tabel.parentNode.insertBefore(detail, tabel);
-    else content.insertBefore(detail, content.firstChild);
-    return feature;
   }
 
   /* ── Highlight marker on map ── */
@@ -1666,9 +1585,6 @@
 
     content.innerHTML = html;
 
-    // Handler klik untuk tabel hasil WMS. openFeatureDetailByIndex() membaca
-    // dari _currentFeatures; di sini sumber datanya `features`, jadi
-    // _currentFeatures disetel dulu agar keduanya membaca daftar yang sama.
     // GetFeatureInfo tidak mengembalikan geometri per fitur. Simpan lokasi
     // query agar barisnya tetap bisa mengarahkan peta dan menandai titiknya.
     _currentFeatures = features;
@@ -1680,7 +1596,7 @@
         content.querySelectorAll('.at-row-active').forEach(function (r) {
           r.classList.remove('at-row-active');
         });
-        var feature = openFeatureDetailByIndex(idx);
+        var feature = features[idx];
         if (!feature) return;
         row.classList.add('at-row-active');
         focusFeatureRowOnMap(feature, row);
@@ -1689,11 +1605,22 @@
   }
 
   /* ── Unified Attribute Table Picker ── */
+  function isRasterPickerLayer(toggleId) {
+    var config = ATTR_LAYER_REGISTRY[toggleId];
+    if (config) return config.type === 'raster';
+    if (toggleId.indexOf('toggleFu') === 0 && window.getFuLayerDefs) {
+      return !!window.getFuLayerDefs()[toggleId];
+    }
+    return false;
+  }
+
   function attrPickerBadge(toggleId) {
     if (WMS_ATTR_REGISTRY[toggleId]) return { label: 'WMS', cls: 'badge-wms' };
     if (toggleId.indexOf('opt-') === 0 || toggleId.indexOf('optp-') === 0 || toggleId.indexOf('opth-') === 0 || toggleId.indexOf('kategori-opt-') === 0) return { label: 'ArcGIS', cls: 'badge-arcgis' };
     var cfg = ATTR_LAYER_REGISTRY[toggleId];
     var t = cfg && cfg.type ? cfg.type : '';
+    if (isRasterPickerLayer(toggleId)) return { label: 'Raster', cls: 'badge-raster' };
+    if (cfg && cfg.sourceType === 'dss') return { label: 'DSS', cls: 'badge-dss' };
     if (t === 'cluster') return { label: 'Cluster', cls: 'badge-cluster' };
     if (t === 'dss') return { label: 'DSS', cls: 'badge-dss' };
     if (t === 'feature' || t === 'vector') return { label: 'Feature', cls: 'badge-feature' };
@@ -1798,6 +1725,8 @@
         return true;
       });
       filtered.sort(function (a, b) {
+        var rasterOrder = Number(isRasterPickerLayer(a.id)) - Number(isRasterPickerLayer(b.id));
+        if (rasterOrder !== 0) return rasterOrder;
         if (sortSel === 'name-desc') return b.label.localeCompare(a.label, 'id');
         if (sortSel === 'cat-asc') {
           var c = (a.cat || '').localeCompare(b.cat || '', 'id');

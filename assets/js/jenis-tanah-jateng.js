@@ -77,7 +77,13 @@
     if (!map) return;
     getLayer().then(function (loadedLayer) {
       var bounds = loadedLayer.getBounds();
-      if (bounds && bounds.isValid()) map.flyToBounds(bounds.pad(0.06), { maxZoom: 11, duration: 0.8 });
+      if (!bounds || !bounds.isValid()) return;
+      var paddedBounds = bounds.pad(0.06);
+      if (window.SheetDrag && typeof window.SheetDrag.flyToBoundsInVisibleMap === 'function') {
+        window.SheetDrag.flyToBoundsInVisibleMap(paddedBounds, { maxZoom: 11, duration: 0.8 });
+      } else {
+        map.flyToBounds(paddedBounds, { maxZoom: 11, duration: 0.8 });
+      }
     }).catch(function () {});
   };
 

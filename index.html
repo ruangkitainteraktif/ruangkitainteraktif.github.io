@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=85">
+  <link rel="stylesheet" href="assets/css/app.css?v=86">
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
   <link rel="stylesheet" href="assets/css/geotrans-mitradarat.css?v=20261005-transit-table2">
@@ -2701,6 +2701,35 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
               </div>
             </details>
 
+            <details class="geotani-lbslsd" id="geotani-land-system-card" aria-labelledby="geotani-land-system-title">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#127758;</span>
+                <span>
+                  <b id="geotani-land-system-title">Land System Indonesia (BIG)</b>
+                  <small>Sistem Lahan skala 1:50.000 &mdash; pilih kabupaten/kota</small>
+                </span>
+              </summary>
+              <div class="geotani-lbslsd-body">
+                <p class="geotani-sls-desc">
+                  Pilih satu kabupaten/kota untuk menampilkan poligon Sistem Lahan BIG
+                  yang berada di dalam batas wilayah tersebut.
+                </p>
+                <div class="geotani-sls-search">
+                  <label class="geotani-form-label" for="geotaniLandSystemDistrictSearch">Cari kabupaten/kota</label>
+                  <input type="text" id="geotaniLandSystemDistrictSearch" placeholder="Ketik nama kabupaten/kota..." autocomplete="off" class="geotani-form-input-search" />
+                  <div id="geotaniLandSystemDistrictResults" class="geotani-sls-results" hidden></div>
+                  <div id="geotaniLandSystemDistrictSelected" class="geotani-sls-picked" hidden></div>
+                </div>
+                <button id="geotani-land-system-load" class="geotani-btn-print" type="button">Tampilkan Sistem Lahan Kabupaten</button>
+                <button id="geotani-land-system-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon Land System Indonesia" aria-label="Reset polygon Land System Indonesia">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                  Reset Polygon
+                </button>
+                <div id="geotani-land-system-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                <div id="geotani-land-system-output"></div>
+              </div>
+            </details>
+
             <details class="geotani-lbslsd" id="geotani-lsd12-card" aria-labelledby="geotani-lsd12-title">
               <summary class="gt-card-head">
                 <span class="gt-card-icon" aria-hidden="true">&#128510;</span>
@@ -3472,11 +3501,12 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <!-- sheet-drag.js SEQBELUM map-core.js: map-core, hotspot,
          geopangan, attribute-table, ai-analysis, dan polygon-analysis
          semuanya mendaftarkan sheet ke window.SheetDrag saat dimuat. -->
-    <script src="assets/js/sheet-drag.js"></script>
+    <script src="assets/js/sheet-drag.js?v=20261006-minimize-at-10"></script>
     <script src="assets/js/map-core.js?v=20261005-geotools-auth-only"></script>
     <script src="assets/js/layer-loading.js"></script>
     <script src="assets/js/bnpb-hillshade.js"></script>
     <script src="assets/js/geologi-bnpb.js"></script>
+    <script src="assets/js/geologi-arcgis-online.js?v=20261006-flycenter"></script>
     <script src="assets/js/province-boundary-vector.js"></script>
     <script src="assets/js/chlorophyll-par-overlay.js"></script>
 
@@ -3501,8 +3531,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/geoportal-search.js"></script>
     <script src="assets/js/sidebar.js"></script>
     <script src="assets/js/earthquake.js"></script>
-    <script src="assets/js/attribute-table.js?v=4"></script>
-    <script src="assets/js/katalog-gempa.js"></script>
+    <script src="assets/js/attribute-table.js?v=10"></script>
+    <script src="assets/js/katalog-gempa.js?v=20261006-attr-table"></script>
     <script src="assets/js/sensor-seismic.js"></script>
     <script src="assets/js/sensor-global.js"></script>
     <script src="assets/js/history-gempa.js"></script>
@@ -3582,6 +3612,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <!-- LBS & LSD (BIG SatuPeta): butuh geodesic-area untuk luas, dan
        geoid-wilayah untuk seksi PDF. -->
   <script src="assets/js/geotani-lbs-lsd.js"></script>
+  <!-- Land System BIG: memuat paginasi nasional InaLand saat kartu digunakan. -->
+  <script src="assets/js/geofarm-land-system.js?v=20261006-kabupaten"></script>
   <!-- LSD 12 Provinsi (ATR/BPN GISTARU). WAJIB setelah geotani-lbs-lsd.js:
        modul ini memakai villageMeta, clipKeDesa, dan bboxDariRings dari
        window.GeoTaniLbsLsd supaya batas desa dan hitung luasnya cuma ada
@@ -3625,7 +3657,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/krb-gunung-api.js"></script>
   <script src="assets/js/krb-titik.js"></script>
   <script src="assets/js/peta-geologi.js"></script>
-  <script src="assets/js/jenis-tanah-jateng.js"></script>
+  <script src="assets/js/jenis-tanah-jateng.js?v=20261006-flycenter"></script>
   <script src="assets/js/transjakarta-layer.js"></script>
   <script src="assets/js/transjogja-layer.js"></script>
   <script src="assets/js/geostruktur.js"></script>

@@ -34,11 +34,7 @@
   'use strict';
 
   var BATAS_MOBILE = 768;
-  var STOP_CHIP = 0, STOP_TENGAH = 1, STOP_PENUH = 2;
   var AMBANG_GESER = 6;      /* px; sebelum ini masih dianggap tap */
-  var WAKTU_LEMPA = 120;     /* ms; horizon proyeksi kecepatan */
-  var PLIH_DI_ATAS = 10;     /* px peta yang disisakan di stop penuh */
-  var KELAMBAT = 0.55;       /* px/ms; di bawah ini lem diabaikan */
   var SELISIH_TUTUP = 320;   /* ms; blkade click setelah drag selesai */
 
   var DAFTAR = {};           /* id -> konfigurasi */
@@ -46,6 +42,34 @@
   var geser = null;          /* state gestur yang sedang berjalan */
   var rafTinggi = 0;
   var yRaf = 0;
+  var desktopResize = null;
+
+  /* Resize sheet kanan dari tepi kirinya pada desktop. */
+  var SELECTOR_SHEET_DESKTOP = '#hotspot-sheet,#geopangan-sheet,#transjakarta-sheet,#transjogja-sheet,#geotools-sheet,#geodata-sheet,#attr-table-sheet,#ai-sheet,.dm-sidebar,.lg-sidebar,.pa-panel';
+  document.addEventListener('pointerdown', function (e) {
+    if (window.innerWidth <= BATAS_MOBILE || e.button !== 0) return;
+    var sheet = e.target.closest && e.target.closest(SELECTOR_SHEET_DESKTOP);
+    if (!sheet || e.clientX - sheet.getBoundingClientRect().left > 10) return;
+    if (sheet.classList.contains('sheet-minimized') || sheet.classList.contains('gs-sheet-minimized') || sheet.classList.contains('geodata-sheet-minimized') || sheet.classList.contains('attr-table-sheet-minimized') || sheet.classList.contains('ais-sheet-minimized') || sheet.classList.contains('dm-sidebar-minimized') || sheet.classList.contains('lg-sidebar-minimized') || sheet.classList.contains('pa-min')) return;
+    desktopResize = { sheet: sheet, x: e.clientX, width: sheet.getBoundingClientRect().width };
+    sheet.classList.add('desktop-sheet-resizing');
+    try { sheet.setPointerCapture(e.pointerId); } catch (_) {}
+    e.preventDefault();
+  });
+  window.addEventListener('pointermove', function (e) {
+    if (!desktopResize) return;
+    var width = Math.max(240, Math.min(window.innerWidth * 0.5, desktopResize.width + desktopResize.x - e.clientX));
+    desktopResize.sheet.style.setProperty('--desktop-sheet-width', width + 'px');
+    document.body.style.setProperty('--desktop-sheet-width', width + 'px');
+  });
+  function selesaiResizeDesktop() {
+    if (!desktopResize) return;
+    desktopResize.sheet.classList.remove('desktop-sheet-resizing');
+    desktopResize = null;
+    sinkronkanPeta();
+  }
+  window.addEventListener('pointerup', selesaiResizeDesktop);
+  window.addEventListener('pointercancel', selesaiResizeDesktop);
 
   /* ── util ── */
   function elDari(cfg) {
@@ -72,23 +96,6 @@
   function px(v) {
     var n = parseFloat(v);
     return isFinite(n) ? n : 0;
-  }
-
-  /*Tinggi yang berlaku saat `--sheet-h` tidak disetel, yaitu tinggi
-    tengah dari CSS. Diukur, bukan ditebak, supaya berhenti di antara
-    tinggi CSS dan viewport tetap konsisten. Measur ini memaksa reflow
-    satu kali, hanya saat sheet dibuka. */
-  var cacheTengah = {};
-  function tinggiTengah(cfg) {
-    var e = elDari(cfg);
-    if (!e) return 0;
-    if (cacheTengah[cfg.id] !== undefined) return cacheTengah[cfg.id];
-    var simpan = e.style.getPropertyValue('--sheet-h');
-    e.style.removeProperty('--sheet-h');
-    var h = e.getBoundingClientRect().height || window.innerHeight * 0.5;
-    if (simpan) e.style.setProperty('--sheet-h', simpan);
-    cacheTengah[cfg.id] = h;
-    return h;
   }
 
   function tinggiSekarang(cfg) {
@@ -150,7 +157,7 @@
      2. Karena itu nilainya ditulis ulang ke #map dengan nama sendiri,
         supaya CSS bisa menghitung tinggi layar yang tidak tertutup sheet.
 
-     Dicermin hanya di titik yang diam (keTengah dan terapkanStop), bukan
+     Dicermin hanya setelah drag selesai (keTengah dan terapkanTinggi), bukan
      di onMove: saat jari masih bergerak, tinggi peta ikut bergerak tetapi
      map.invalidateSize() belum dipanggil, jadi tile akan meleset di
      tengah gerakan. Lebih baik petanya menyusul setelah sheet berhenti. */
@@ -218,7 +225,6 @@
     keTengah(cfg);
     if (e.classList) {
       e.classList.add('sheet-draggable');
-      delete cacheTengah[id];
     }
     labelkan(cfg);
     if (cfg.onOpen) { try { cfg.onOpen(); } catch (err) { lapis(id, 'onOpen', err); } }
@@ -299,6 +305,26 @@
     }, 340);
   }
 
+  /* Jalankan FlyTo setelah ukuran peta selesai mengikuti sheet. Pada mobile
+     tinggi peta berubah, sedangkan desktop lebarnya berubah; menghitung
+     bounds selama transisi membuat pusat target bergeser dari ruang yang
+     terlihat di antara search bar dan sheet. */
+  function flyToBoundsInVisibleMap(bounds, options) {
+    var run = function () {
+      var m = window.map || window._map;
+      if (!m || !bounds || !bounds.isValid || !bounds.isValid()) return;
+      if (typeof m.invalidateSize === 'function') m.invalidateSize({ pan: false });
+      m.flyToBounds(bounds, options || {});
+    };
+    if (document.body.classList.contains('sheet-terbuka')) {
+      setTimeout(run, 380);
+    } else if (window.requestAnimationFrame) {
+      window.requestAnimationFrame(function () { window.requestAnimationFrame(run); });
+    } else {
+      setTimeout(run, 0);
+    }
+  }
+
   function toggle(id) {
     if (isOpen(id)) close(id); else buka(id);
   }
@@ -359,12 +385,7 @@
       pointerId: e.pointerId,
       y0: e.clientY,
       h0: tinggiSekarang(cfg),
-      tengah: tinggiTengah(cfg),
       geser: false,
-      v: 0,
-      yTerakhir: e.clientY,
-      tTerakhir: e.timeStamp || Date.now(),
-      stopAwal: isMinimized(id) ? STOP_CHIP : (eSheet.style.getPropertyValue('--sheet-h') ? STOP_PENUH : STOP_TENGAH)
     };
     try { if (eSheet.setPointerCapture && e.pointerId !== undefined) eSheet.setPointerCapture(e.pointerId); } catch (err) { /* tidak fatal */ }
   }
@@ -377,13 +398,6 @@
       geser.geser = true;
       geser.sheet.classList.add('is-dragging');
     }
-    /* Kecepatan instantaneous, disimpan untuk proyeksi saat lepas. */
-    var now = e.timeStamp || Date.now();
-    var dt = now - geser.tTerakhir;
-    if (dt > 0) geser.v = (e.clientY - geser.yTerakhir) / dt;
-    geser.yTerakhir = e.clientY;
-    geser.tTerakhir = now;
-
     yRaf = e.clientY;
     if (!rafTinggi) {
       rafTinggi = requestAnimationFrame(function () {
@@ -398,8 +412,8 @@
   function hitungTinggi(g) {
     var dy = yRaf - g.y0;
     var h = g.h0 - dy;
-    var min = 0;
-    var maks = Math.max(window.innerHeight - PLIH_DI_ATAS, 120);
+    var min = window.innerHeight * 0.1;
+    var maks = window.innerHeight * 0.9;
     if (h < min) h = min;
     if (h > maks) h = maks;
     return h;
@@ -415,61 +429,23 @@
 
     var h = g.sheet.getBoundingClientRect().height;
     g.sheet.classList.remove('is-dragging');
-    terapkanStop(g.cfg, pilihStop(g, h));
+    if (h <= window.innerHeight * 0.1 + 2) minimize(g.cfg.id);
+    else terapkanTinggi(g.cfg, h);
     /* Swipe yang berakhir sebagai drag tidak boleh ikut memicu onclick
        header, karena 3 dari 5 handle lama memakai onclick untuk menutup
        sheet. */
     blokadeClick(g.sheet);
   }
 
-  /* Stop tujuan ditentukan dari POSISI PROYEKSI: tinggi sekarang
-     dikoreksi kecepatan jari selama 120 ms ke depan. Tanpa ini
-     gerakan cepat yang berhenti sedikit sebelum stop selalu mentok di
-     stop yang salah. */
-  function pilihStop(g, h) {
-    var tengah = g.tengah || window.innerHeight * 0.5;
-    var penuh = window.innerHeight - PLIH_DI_ATAS;
-    if (Math.abs(g.v) < KELAMBAT) g.v = 0;
-    var proyeksi = h - g.v * WAKTU_LEMPA;
-    if (proyeksi < 0) proyeksi = 0;
-    if (proyeksi > penuh) proyeksi = penuh;
-
-    /* Dari chip hanya bisa naik: chip sudah stop paling bawah, jadi
-       satu-satunya tujuan yang masuk akal adalah tengah. Tanpa aturan
-       ini gesekan kecil dari chip akan memantulkan chip kembali. */
-    if (g.stopAwal === STOP_CHIP) return STOP_TENGAH;
-
-    /* Himpunan stop yang boleh dicapai dari posisi sekarang, lalu ambil
-       yang terdekat. Dari tengah chip boleh dicapai langsung; dari penuh
-       hanya boleh kalau jaraknya benar-benar jauh. */
-    var opsi = [STOP_TENGAH, STOP_PENUH];
-    if (g.stopAwal === STOP_TENGAH) opsi.unshift(STOP_CHIP);
-    else if (proyeksi < tengah * 0.4) opsi.unshift(STOP_CHIP);
-
-    var tinggiDari = function (s) { return s === STOP_CHIP ? 0 : (s === STOP_TENGAH ? tengah : penuh); };
-    var terbaik = opsi[0], jarak = Math.abs(proyeksi - tinggiDari(opsi[0]));
-    for (var i = 1; i < opsi.length; i++) {
-      var d = Math.abs(proyeksi - tinggiDari(opsi[i]));
-      if (d < jarak) { jarak = d; terbaik = opsi[i]; }
-    }
-    return terbaik;
-  }
-
-  function terapkanStop(cfg, stop) {
+  function terapkanTinggi(cfg, tinggi) {
     var e = elDari(cfg);
     if (!e) return;
-    if (stop === STOP_CHIP) { minimize(cfg.id); return; }
-    /* Sheet yang sedang jadi chip harus lebih dulu dilepas kelas
-       minimalnya. Hanya menghapus --sheet-h tidak cukup: aturan
-       .X-minimized mengunci `height: 36px` dan menimpa nilai custom
-       property, jadi chip-nya akan tetap 36px meski kita snap ke tengah. */
     if (isMinimized(cfg.id)) restore(cfg.id);
-    e.style.removeProperty('--sheet-h');
-    if (stop === STOP_PENUH) e.style.setProperty('--sheet-h', 'calc(100dvh - ' + PLIH_DI_ATAS + 'px)');
+    var minimum = window.innerHeight * 0.1;
+    var maksimum = window.innerHeight * 0.9;
+    tinggi = Math.max(minimum, Math.min(maksimum, tinggi));
+    e.style.setProperty('--sheet-h', tinggi + 'px');
     cerminTinggiKeMap(e);
-    /* Sheet bisa berhenti di stop penuh tanpa lewat minimize() maupun
-       restore(), jadi invalidateSize dipanggil di sini juga. Keduanya
-       idempoten: timer sebelumnya dibatalkan lalu dijadwalkan ulang. */
     sinkronkanPeta();
   }
 
@@ -503,17 +479,12 @@
     h.setAttribute('aria-label', 'Ubah tinggi panel');
     h.addEventListener('keydown', function (e) {
       if (!mobile() || !isOpen(cfg.id)) return;
-      var hTengah = tinggiTengah(cfg);
-      var penuh = window.innerHeight - PLIH_DI_ATAS;
       var h = tinggiSekarang(cfg);
-      if (e.key === 'ArrowUp') { terapkanStop(cfg, h >= hTengah ? STOP_PENUH : STOP_TENGAH); e.preventDefault(); }
-      else if (e.key === 'ArrowDown') {
-        if (h <= hTengah) terapkanStop(cfg, STOP_CHIP);
-        else terapkanStop(cfg, STOP_TENGAH);
-        e.preventDefault();
-      } else if (e.key === 'Home') { terapkanStop(cfg, STOP_TENGAH); e.preventDefault(); }
-      else if (e.key === 'End') { terapkanStop(cfg, STOP_PENUH); e.preventDefault(); }
-      else if (e.key === 'Escape') { if (h > hTengah) terapkanStop(cfg, STOP_TENGAH); else minimize(cfg.id); e.preventDefault(); }
+      if (e.key === 'ArrowUp') { terapkanTinggi(cfg, h + 24); e.preventDefault(); }
+      else if (e.key === 'ArrowDown') { terapkanTinggi(cfg, h - 24); e.preventDefault(); }
+      else if (e.key === 'Home') { terapkanTinggi(cfg, window.innerHeight * 0.1); e.preventDefault(); }
+      else if (e.key === 'End') { terapkanTinggi(cfg, window.innerHeight * 0.9); e.preventDefault(); }
+      else if (e.key === 'Escape') { minimize(cfg.id); e.preventDefault(); }
     });
   }
 
@@ -583,7 +554,6 @@
     }
     if (!DAFTAR[id]) URUT.push(id);
     DAFTAR[id] = cfg;
-    delete cacheTengah[id];
     pasang(cfg);
   }
 
@@ -592,7 +562,6 @@
      dan innerHeight yang lama. */
   window.addEventListener('resize', function () {
     if (geser) return;                      /* biarkan drag berjalan */
-    URUT.forEach(function (id) { delete cacheTengah[id]; });
     /* Chrome atas bisa berubah tinggi saat device dirotasi (quick layer
        bar membungkus atau tidak), jadi angka --map-chrome diukur ulang. */
     ukurChromeAtas();
@@ -612,6 +581,7 @@
     isOpen: isOpen,
     isMinimized: isMinimized,
     adaYangTerbuka: adaYangTerbuka,
+    flyToBoundsInVisibleMap: flyToBoundsInVisibleMap,
     sinkronkanPeta: sinkronkanPeta,
     isMobile: mobile,
     _daftar: DAFTAR

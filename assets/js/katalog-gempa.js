@@ -106,6 +106,14 @@
       var mag = parseFloat(p.mag) || 0;
       if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
 
+      var data = {
+        lat: lat, lon: lon, mag: mag,
+        depth: p.depth, date: p.date, time: p.ot_utc,
+        lokasi: p.lokasi, pusat: p.pusat_gempa,
+        tsunami: p.tsunami, dirasakan: p.dirasakan,
+        korban: p.korban_kerusakan, sumber: p.sumber, id: p.id_event
+      };
+
       var marker = L.circleMarker([lat, lon], {
         radius: getMarkerRadius(mag),
         color: getMarkerColor(mag),
@@ -115,14 +123,6 @@
         fillOpacity: 0.7,
         properties: data
       });
-
-      var data = {
-        lat: lat, lon: lon, mag: mag,
-        depth: p.depth, date: p.date, time: p.ot_utc,
-        lokasi: p.lokasi, pusat: p.pusat_gempa,
-        tsunami: p.tsunami, dirasakan: p.dirasakan,
-        korban: p.korban_kerusakan, sumber: p.sumber, id: p.id_event
-      };
 
       marker.bindPopup(buildPopupHtml(data), { maxWidth: 340, className: 'quake-leaflet-popup' });
       katalogLayerGroup.addLayer(marker);

@@ -3206,6 +3206,7 @@ L.control.scale({
     {
       cat: 'Geologi',
       layers: [
+        { id: 'toggleGeologiArcGISOnline', label: 'Peta Geologi Yogyakarta (ArcGIS)' },
         { id: 'toggleJenisTanahJateng', label: 'Jenis Tanah Jawa Tengah (ArcGIS)' },
         { id: 'toggleGeologiBNPB', label: 'Peta Geologi (BNPB)' },
         { id: 'toggleVolcanoLayer', label: 'Gunung Api Indonesia (PVMBG)' },
@@ -3533,10 +3534,11 @@ L.control.scale({
           html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
           html += '<label for="lc_' + l.id + '">' + l.label + '</label>';
           html += '<div class="lc-item-actions">';
-          html += '<button type="button" class="lc-attr-btn' + ((isChecked || l.id === 'toggleJenisTanahJateng') ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
+          html += '<button type="button" class="lc-attr-btn' + ((isChecked || l.id === 'toggleJenisTanahJateng' || l.id === 'toggleGeologiArcGISOnline') ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
           html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
           html += '</button>';
           if (l.id === 'toggleJenisTanahJateng') html += '<button type="button" class="lc-fit-btn" data-layer-id="' + l.id + '" title="Arahkan peta ke seluruh Jawa Tengah" aria-label="Arahkan peta ke seluruh Jawa Tengah"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13 13 3M5 3h8v8"/></svg></button>';
+          if (l.id === 'toggleGeologiArcGISOnline') html += '<button type="button" class="lc-fit-btn" data-layer-id="' + l.id + '" title="Arahkan peta ke seluruh data geologi" aria-label="Arahkan peta ke seluruh data geologi"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13 13 3M5 3h8v8"/></svg></button>';
           var pinned2 = isPinnedLayer(l.id);
           html += '<button type="button" class="lc-pin-btn' + (pinned2 ? ' lc-pin-btn-active' : '') + '" data-layer-id="' + l.id + '" title="' + (pinned2 ? 'Hapus Pin' : 'Pin Layer') + '">' + (pinned2 ? pinIconFilled : pinIconOutline) + '</button>';
           html += '</div></div>';
@@ -3627,6 +3629,7 @@ L.control.scale({
           (id === 'toggleNonTollRoad' && typeof window.toggleNonTollRoadLayer === 'function') ||
           (id === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') ||
           (id === 'toggleJenisTanahJateng' && typeof window.toggleJenisTanahJateng === 'function') ||
+          (id === 'toggleGeologiArcGISOnline' && typeof window.toggleGeologiArcGISOnline === 'function') ||
           (id === 'toggleHujanLayer') ||
           (id === 'toggleFsvaLayer' && typeof window.toggleFsvaLayer === 'function') ||
           id.indexOf('st2023:') === 0 ||
@@ -3722,6 +3725,9 @@ L.control.scale({
         if (id === 'toggleGeologiBNPB' && typeof window.toggleGeologiBNPB === 'function') {
           window.toggleGeologiBNPB(cb.checked);
         }
+        if (id === 'toggleGeologiArcGISOnline' && typeof window.toggleGeologiArcGISOnline === 'function') {
+          window.toggleGeologiArcGISOnline(cb.checked);
+        }
         if (id === 'toggleProvinceBoundary' && typeof window.toggleProvinceBoundary === 'function') {
           window.toggleProvinceBoundary(cb.checked);
         }
@@ -3810,6 +3816,10 @@ L.control.scale({
           window.openJenisTanahJatengTable();
           return;
         }
+        if (id === 'toggleGeologiArcGISOnline' && typeof window.openGeologiArcGISOnlineTable === 'function') {
+          window.openGeologiArcGISOnlineTable();
+          return;
+        }
         if (typeof hasAttrSupport === 'function' && hasAttrSupport(id)) {
           if (typeof isWmsAttrLayer === 'function' && isWmsAttrLayer(id)) {
             openWmsAttrTable(id);
@@ -3827,6 +3837,9 @@ L.control.scale({
         e.stopPropagation();
         if (btn.dataset.layerId === 'toggleJenisTanahJateng' && typeof window.flyToJenisTanahJateng === 'function') {
           window.flyToJenisTanahJateng();
+        }
+        if (btn.dataset.layerId === 'toggleGeologiArcGISOnline' && typeof window.flyToGeologiArcGISOnline === 'function') {
+          window.flyToGeologiArcGISOnline();
         }
       });
     });

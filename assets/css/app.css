@@ -7516,79 +7516,6 @@
       box-sizing: border-box; outline: none; transition: border-color .15s;
     }
     .at-picker-search:focus { border-color: #2563eb; }
-    /* Panel detail fitur, muncul ketika baris tabel diklik. Disisipkan sebelum
-       tabel supaya tidak tertutup navigasi halaman di bawah. */
-    .at-detail {
-      margin: 0 0 10px;
-      border: 1px solid #2563eb;
-      border-radius: 8px;
-      background: rgba(37, 99, 235, .06);
-      max-height: min(32vh, 280px);
-      overflow: auto;
-      overscroll-behavior: contain;
-      scrollbar-width: thin;
-      scrollbar-color: #93a8cc transparent;
-    }
-    .at-detail-head {
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 6px 8px 6px 10px;
-      background: #2563eb;
-      color: #fff;
-    }
-    .at-detail-title {
-      font-size: 10.5px;
-      font-weight: 700;
-      letter-spacing: .03em;
-      text-transform: uppercase;
-    }
-    .at-detail-close {
-      font: inherit;
-      font-size: 15px;
-      line-height: 1;
-      width: 20px;
-      height: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: transparent;
-      border: 0;
-      border-radius: 4px;
-      color: #fff;
-      cursor: pointer;
-    }
-    .at-detail-close:hover { background: rgba(255, 255, 255, .22); }
-    .at-detail-close:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
-    .at-detail-row {
-      display: grid;
-      grid-template-columns: minmax(90px, 40%) 1fr;
-      gap: 8px;
-      padding: 4px 10px;
-      font-size: 10.5px;
-      line-height: 1.45;
-      border-bottom: 1px solid rgba(37, 99, 235, .12);
-    }
-    .at-detail-row:last-child { border-bottom: 0; }
-    .at-detail-key {
-      color: var(--text-secondary);
-      font-weight: 600;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .at-detail-val {
-      color: var(--text-primary);
-      word-break: break-word;
-      white-space: pre-wrap;
-    }
-    .at-detail-row:nth-child(even) { background: rgba(37, 99, 235, .04); }
-    @media (max-width: 768px) {
-      .at-detail { max-height: min(28dvh, 220px); }
-    }
     /* Subjudul nama layer di dalam sheet atribut. Judul sheet sekarang seragam
        "Tabel" untuk semua layer, jadi nama layer dipindah ke sini -- kalau
        tidak, pengguna tidak tahu sedang melihat tabel layer yang mana. */
@@ -7636,6 +7563,7 @@
     .at-picker-badge.badge-cluster { background: rgba(249, 115, 22, .14); color: #c2410c; }
     .at-picker-badge.badge-dss { background: rgba(236, 72, 153, .14); color: #be185d; }
     .at-picker-badge.badge-vektor { background: rgba(6, 182, 212, .14); color: #0e7490; }
+    .at-picker-badge.badge-raster { background: rgba(100, 116, 139, .14); color: #475569; }
     .at-picker-empty { text-align: center; padding: 24px 16px; color: var(--text-tertiary); font-size: 12px; }
     #attr-table-sheet .at-sheet-body {
       flex: 1 1 auto; min-height: 0; overflow: auto;
@@ -15587,20 +15515,20 @@ body.geofarm-draw-active .draw-actions-wrap {
    Pusat Leaflet dan hasil polygon otomatis berada di tengah area tersebut. */
 @media (min-width: 769px) {
   body.sheet-terbuka #map {
-    flex: 0 0 70vw;
-    width: 70vw;
-    max-width: 70vw;
+    flex: 0 0 calc(100vw - var(--desktop-sheet-width, 30vw));
+    width: calc(100vw - var(--desktop-sheet-width, 30vw));
+    max-width: calc(100vw - var(--desktop-sheet-width, 30vw));
     transition: flex-basis .3s ease, width .3s ease;
   }
 
   body.sheet-terbuka .unified-search,
   body.sheet-terbuka .quick-layer-bar {
-    left: 35vw;
+    left: calc((100vw - var(--desktop-sheet-width, 30vw)) / 2);
     transition: left .3s ease;
   }
 
   body.sheet-terbuka .zoom-control-wrap {
-    left: 35vw !important;
+    left: calc((100vw - var(--desktop-sheet-width, 30vw)) / 2) !important;
     transition: left .3s ease;
   }
 }
@@ -15624,8 +15552,8 @@ body.geofarm-draw-active .draw-actions-wrap {
     top: 0;
     right: 0;
     bottom: 0;
-    width: 30vw;
-    max-width: 30vw;
+    width: var(--desktop-sheet-width, 30vw);
+    max-width: 50vw;
     height: 100dvh;
     max-height: 100dvh;
     border-radius: 0;
@@ -15642,11 +15570,28 @@ body.geofarm-draw-active .draw-actions-wrap {
     top: 0;
     right: 0;
     bottom: 0;
-    width: 30vw;
-    max-width: 30vw;
+    width: var(--desktop-sheet-width, 30vw);
+    max-width: 50vw;
     height: 100dvh;
     max-height: 100dvh;
     border-radius: 0;
+  }
+
+  :is(#hotspot-sheet,#geopangan-sheet,#transjakarta-sheet,#transjogja-sheet,#geotools-sheet,#geodata-sheet,#attr-table-sheet,#ai-sheet,.dm-sidebar,.lg-sidebar,.pa-panel):not(.sheet-minimized):not(.gs-sheet-minimized):not(.geodata-sheet-minimized):not(.attr-table-sheet-minimized):not(.ais-sheet-minimized):not(.dm-sidebar-minimized):not(.lg-sidebar-minimized):not(.pa-min)::before {
+    content: "";
+    position: absolute;
+    z-index: 20;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 8px;
+    cursor: ew-resize;
+    touch-action: none;
+  }
+
+  :is(#hotspot-sheet,#geopangan-sheet,#transjakarta-sheet,#transjogja-sheet,#geotools-sheet,#geodata-sheet,#attr-table-sheet,#ai-sheet,.dm-sidebar,.lg-sidebar,.pa-panel).desktop-sheet-resizing {
+    transition: none !important;
+    user-select: none;
   }
 
   /* Perencana rute dirender sebagai panel terpisah dari sheet daftar. */
