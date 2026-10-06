@@ -1,4 +1,14 @@
-﻿.geotrans-app {
+.geotrans-card {
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-card);
+}
+.geotrans-card:not([open]) > .geotrans-card-body { display: none; }
+.geotrans-card-body { padding: 12px 13px; }
+.geotrans-card .gt-card-icon svg { width: 20px; height: 20px; }
+.geotrans-app {
   --gtx-ink: #142b45;
   --gtx-muted: #6d7d91;
   --gtx-line: #dce5ed;
@@ -300,4 +310,67 @@
   .geotrans-table-row > td { padding: 8px 5px; }
   .geotrans-table-name-cell b { font-size: 10px; }
   .geotrans-table-info-cell b { font-size: 9px; }
+}
+
+/* BIG SatuPeta layer picker: search first, then choose a clear result. */
+.satupeta-layer-picker { display: grid; gap: 6px; }
+.satupeta-layer-picker .geotani-form-label {
+  margin: 3px 0 0;
+  color: var(--text-primary, #243b53);
+  font-size: 11px;
+  font-weight: 700;
+}
+.satupeta-layer-search-wrap { position: relative; }
+.satupeta-layer-search-wrap > svg {
+  position: absolute;
+  top: 50%;
+  left: 11px;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: #70849a;
+  stroke-width: 2;
+  stroke-linecap: round;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.satupeta-layer-search-wrap .geotani-form-input-search {
+  min-height: 40px;
+  padding: 9px 12px 9px 36px;
+  border: 1px solid #bdccd9;
+  border-radius: 8px;
+  color: var(--text-primary, #243b53);
+  font-size: 12px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.satupeta-layer-search-wrap .geotani-form-input-search:focus {
+  border-color: #168a58;
+  box-shadow: 0 0 0 3px rgba(22, 138, 88, .14);
+}
+.satupeta-layer-search-wrap .geotani-form-input-search::placeholder { color: #91a0af; }
+.satupeta-layer-hint, .satupeta-catalog-status {
+  display: block;
+  color: var(--text-muted, #64748b);
+  font-size: 10px;
+  line-height: 1.45;
+}
+.satupeta-layer-picker > .geotani-form-select {
+  min-height: 40px;
+  padding: 8px 34px 8px 10px;
+  border: 1px solid #bdccd9;
+  border-radius: 8px;
+  color: var(--text-primary, #243b53);
+  font-size: 12px;
+}
+.satupeta-layer-picker > .geotani-form-select:focus {
+  border-color: #168a58;
+  box-shadow: 0 0 0 3px rgba(22, 138, 88, .14);
+}
+.satupeta-catalog-status { min-height: 14px; }
+[data-theme="dark"] .satupeta-layer-search-wrap > svg { stroke: #9fb0c0; }
+[data-theme="dark"] .satupeta-layer-search-wrap .geotani-form-input-search,
+[data-theme="dark"] .satupeta-layer-picker > .geotani-form-select {
+  border-color: var(--border-color);
+  background: var(--bg-input);
+  color: var(--text-primary);
 }

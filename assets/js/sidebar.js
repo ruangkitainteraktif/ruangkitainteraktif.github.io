@@ -84,6 +84,9 @@
 
   // Tab Utama Sidebar
   function openTab(evt, tabId) {
+    if (window.currentActiveTab !== tabId && typeof window.resetAllLayers === 'function') {
+      window.resetAllLayers();
+    }
     const tabContents = document.getElementsByClassName("tab-content");
     for (let i = 0; i < tabContents.length; i++) tabContents[i].classList.remove("active");
 
@@ -193,9 +196,20 @@
   window.openGempaSubtab = openGempaSubtab;
   window.openGeoidSubtab = openGeoidSubtab;
 
+  document.addEventListener('toggle', function (event) {
+    var card = event.target;
+    if (!card || card.tagName !== 'DETAILS' || card.open) return;
+    if (!card.closest('.geotools-main-tab-panel') || !card.querySelector(':scope > .gt-card-head')) return;
+    if (typeof window.resetAllLayers === 'function') window.resetAllLayers();
+  }, true);
+
   function openGeotoolsMainTab(el) {
     var tabId = el.value || el.getAttribute('data-maintab');
     if (!tabId) return;
+    var activePanel = document.querySelector('.geotools-main-tab-panel.active');
+    if (activePanel && activePanel.id !== tabId && typeof window.resetAllLayers === 'function') {
+      window.resetAllLayers();
+    }
     var panels = document.querySelectorAll('.geotools-main-tab-panel');
     for (var j = 0; j < panels.length; j++) panels[j].classList.remove('active');
     var target = document.getElementById(tabId);

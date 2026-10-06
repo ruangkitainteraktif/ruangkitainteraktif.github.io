@@ -173,7 +173,7 @@
   <link rel="stylesheet" href="assets/css/app.css?v=86">
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
-  <link rel="stylesheet" href="assets/css/geotrans-mitradarat.css?v=20261005-transit-table2">
+  <link rel="stylesheet" href="assets/css/geotrans-mitradarat.css?v=20261006-geospatial-search-ui">
   <script>
     (function () {
       document.addEventListener('click', function (event) {
@@ -1510,18 +1510,15 @@
 
           <!-- Panel mandiri GeoTrans: operator, rute, dan halte angkutan umum. -->
           <div id="geotoolsTabGeoTrans" class="geotools-main-tab-panel">
-            <section class="geotrans-app" aria-labelledby="geotransPageTitle">
-              <header class="geotrans-hero">
-                <div class="geotrans-brand-icon" aria-hidden="true">
+            <details class="geotrans-card" aria-labelledby="geotransPageTitle">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17V6a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v11M5 12h14M7 17l-2 4M17 17l2 4M8 21h8"/><circle cx="8" cy="16" r="1"/><circle cx="16" cy="16" r="1"/><path d="M8 7h8v3H8z"/></svg>
-                </div>
-                <div class="geotrans-hero-copy">
-                  <span class="geotrans-eyebrow">INFORMASI TRANSPORTASI BUS</span>
-                  <h2 id="geotransPageTitle">GeoTrans</h2>
-                  <p>Temukan operator, telusuri rute, lalu lihat urutan halte di peta.</p>
-                </div>
-                <span class="geotrans-data-pill"><i></i> Data lokal</span>
-              </header>
+                </span>
+                <span><b id="geotransPageTitle">GeoTrans</b><small>Informasi transportasi bus · Data lokal</small></span>
+              </summary>
+              <div class="geotrans-card-body">
+              <section class="geotrans-app" aria-label="Informasi operator, rute, dan halte">
 
               <div class="geotrans-summary" id="geotransSummary" aria-label="Ringkasan jaringan transportasi">
                 <div><b id="geotransOperatorCount">—</b><span>Operator</span></div>
@@ -1566,7 +1563,9 @@
                 <div id="geotransResults" class="geotrans-results" aria-live="polite"></div>
                 <button id="geotransReset" class="geotrans-reset" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg> Kembalikan tampilan awal</button>
               </div>
-            </section>
+              </section>
+              </div>
+            </details>
           </div>
 
           <!-- Panel: GeoPulse -->
@@ -1912,11 +1911,11 @@
      '.gempa-subtab-panel' secara global untuk menukar .active. -->
     <div id="weather-content">
               <!-- Kartu "Cuaca Sekarang" sekarang STATIS.
-     
+
                   Sebelumnya kartu ini dibuat runtime oleh displayWeatherInfo()
                   di weather-bmkg.js, dan itu membuat dua masalah yang tidak
                   bisa diselesaikan dengan memindahkan markup:
-     
+
                   1. Chicken-and-egg. Kotak pencarian itulah yang dipakai
                      untuk memilih lokasi pertama, sedangkan kartunya baru ada
                      setelah ada lokasi. Kalau pencarian dipindahkan ke dalam
@@ -1925,13 +1924,13 @@
                      (weather-bmkg.js: loading, error, data kosong, dan hasil
                      render). Apa pun yang ditaruh di dalamnya ikut hilang
                      tiap kali lokasi diganti.
-     
+
                   Karena itu #weather-content sekarang hanya pembungkus, dan
                   isinya dipecah jadi dua host yang terpisah:
                    - #weather-now-host  : hero cuaca saat ini (.weather-hero)
                    - #weather-extra-host: kartu "Grafik Suhu", "Prakiraan
                                           Cuaca", dan .weather-source
-     
+
 JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                   #weather-content.
 
@@ -1940,7 +1939,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                   memakai pola selector yang bergantung pada keberadaan
                   `class="` untuk membedakan kartu yang jadi anak langsung
                   section dari kartu yang dibungkus host.
-     
+
                   Dua kontrol (Cari + Reset Layer) diletakkan paling bawah
                   badan kartu, setelah #weather-now-host. -->
               <details class="geopulse-card" id="weather-card-sekarang" aria-labelledby="weatherCardSekarangTitle">
@@ -2361,6 +2360,73 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     </div>
                   </details>
 
+                  <details class="geotani-kta-card" id="geotani-geospasial-card" aria-labelledby="geotani-geospasial-title">
+                    <summary class="gt-card-head">
+                      <span class="gt-card-icon" aria-hidden="true">&#128506;</span>
+                      <span>
+                        <b id="geotani-geospasial-title">Geospasial Indonesia</b>
+                        <small>Katalog SatuPeta BIG dan sumber resmi lain</small>
+                      </span>
+                    </summary>
+                    <div style="display:grid;gap:10px;">
+                      <div class="satupeta-layer-picker">
+                        <label class="geotani-form-label" for="satupetaLayerSearch">Cari layer</label>
+                        <div class="satupeta-layer-search-wrap">
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
+                          <input type="search" id="satupetaLayerSearch" class="geotani-form-input-search" placeholder="Contoh: penggunaan tanah" autocomplete="off" aria-label="Cari layer BIG SatuPeta" />
+                        </div>
+                        <small class="satupeta-layer-hint">Cari berdasarkan nama layer. Pilih hasil pada daftar di bawah.</small>
+                        <label class="geotani-form-label" for="satupetaInputLayer">Layer data</label>
+                        <select id="satupetaInputLayer" class="geotani-form-select" aria-describedby="satupetaCatalogStatus">
+                          <option value="lsd-50k" selected>LSD 50K (BIG)</option>
+                          <option value="lbs-50k">LBS 50K (BIG)</option>
+                          <option value="likuifaksi-big">Kerentanan Likuifaksi (BIG)</option>
+                          <option value="geostruktur-big">Geologi Geostruktur (BIG)</option>
+                          <option value="erosi-big">Peta Rawan Erosi (BIG)</option>
+                          <option value="penggunaan10k">Penggunaan Tanah 10K (SatuPeta)</option>
+                          <option value="geologi-bnpb">Peta Geologi (BNPB)</option>
+                          <option value="kh-esdm">Kawasan Hutan (ESDM)</option>
+                          <option value="kh-kemenhut">Kawasan Hutan (Kemenhut)</option>
+                          <optgroup label="Kependudukan (Dukcapil)">
+                            <option value="duk-prop">Penduduk Provinsi (Dukcapil)</option>
+                            <option value="duk-kab">Penduduk Kabupaten (Dukcapil)</option>
+                            <option value="duk-kec">Penduduk Kecamatan (Dukcapil)</option>
+                            <option value="duk-kel">Penduduk Desa (Dukcapil)</option>
+                          </optgroup>
+                        </select>
+                        <small id="satupetaCatalogStatus" class="satupeta-catalog-status" role="status" aria-live="polite">Memuat katalog layer BIG SatuPeta...</small>
+                      </div>
+                      <div style="display:grid;gap:10px;">
+                        <div>
+                          <label class="geotani-form-label">Level</label>
+                          <select id="satupetaLevelMode" class="geotani-form-select">
+                            <option value="provinsi">Provinsi</option>
+                            <option value="kabupaten" selected>Kabupaten/Kota</option>
+                            <option value="kecamatan">Kecamatan</option>
+                            <option value="desa">Desa/Kelurahan</option>
+                          </select>
+                        </div>
+                        <div style="position:relative;">
+                          <label id="satupetaLevelLabel" class="geotani-form-label">Cari nama wilayah</label>
+                          <div style="position:relative;">
+                            <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
+                            <input type="text" id="satupetaKabSearch" placeholder="Pilih nama wilayah..." autocomplete="off" class="geotani-form-input-search" />
+                          </div>
+                          <div id="satupetaKabResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
+                          <div id="satupetaKabSelected" style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;"></div>
+                        </div>
+                      </div>
+                      <div id="satupetaInfo" style="display:none;font-size:11px;color:#475569;padding:6px 0;"></div>
+                      <div id="satupetaFeatureTable" style="display:none;"></div>
+                      <button id="satupetaToggleBtn" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Tampilkan Data</button>
+                      <button id="btnClearSatupeta" class="geotani-btn-reset" type="button" style="display:none;" title="Reset polygon dan pilihan wilayah" aria-label="Reset polygon dan pilihan wilayah">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        Reset Polygon
+                      </button>
+                      <button id="btnDetailSatupeta" style="margin-top:4px;display:none;width:100%;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Detail</button>
+                    </div>
+                  </details>
+
                   <details class="geotani-kta-card geotani-sls-card" id="geotani-sls-card" aria-labelledby="geotani-sls-title">
                     <summary class="gt-card-head">
                       <span class="gt-card-icon" aria-hidden="true">&#129517;</span>
@@ -2390,65 +2456,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     </div>
                   </details>
 
-                  <details class="geotani-kta-card" id="geotani-geospasial-card" aria-labelledby="geotani-geospasial-title">
-                    <summary class="gt-card-head">
-                      <span class="gt-card-icon" aria-hidden="true">&#128506;</span>
-                      <span>
-                        <b id="geotani-geospasial-title">Geospasial Indonesia</b>
-                        <small>Katalog SatuPeta BIG dan sumber resmi lain</small>
-                      </span>
-                    </summary>
-                    <div style="display:grid;gap:10px;">
-                      <div>
-                        <label class="geotani-form-label">Cari layer</label>
-                        <select id="satupetaInputLayer" class="geotani-form-select">
-                          <option value="lsd-50k" selected>LSD 50K (BIG)</option>
-                          <option value="lbs-50k">LBS 50K (BIG)</option>
-                          <option value="likuifaksi-big">Kerentanan Likuifaksi (BIG)</option>
-                          <option value="geostruktur-big">Geologi Geostruktur (BIG)</option>
-                          <option value="erosi-big">Peta Rawan Erosi (BIG)</option>
-                          <option value="penggunaan10k">Penggunaan Tanah 10K (SatuPeta)</option>
-                          <option value="geologi-bnpb">Peta Geologi (BNPB)</option>
-                          <option value="kh-esdm">Kawasan Hutan (ESDM)</option>
-                          <option value="kh-kemenhut">Kawasan Hutan (Kemenhut)</option>
-                          <optgroup label="Kependudukan (Dukcapil)">
-                            <option value="duk-prop">Penduduk Provinsi (Dukcapil)</option>
-                            <option value="duk-kab">Penduduk Kabupaten (Dukcapil)</option>
-                            <option value="duk-kec">Penduduk Kecamatan (Dukcapil)</option>
-                            <option value="duk-kel">Penduduk Desa (Dukcapil)</option>
-                          </optgroup>
-                        </select>
-                      </div>
-                      <div style="display:grid;gap:10px;">
-                        <div>
-                          <label class="geotani-form-label">Level</label>
-                          <select id="satupetaLevelMode" class="geotani-form-select">
-                            <option value="provinsi">Provinsi</option>
-                            <option value="kabupaten" selected>Kabupaten/Kota</option>
-                            <option value="kecamatan">Kecamatan</option>
-                            <option value="desa">Desa/Kelurahan</option>
-                          </select>
-                        </div>
-                        <div style="position:relative;">
-                          <label id="satupetaLevelLabel" class="geotani-form-label">Cari nama wilayah</label>
-                          <div style="position:relative;">
-                            <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
-                            <input type="text" id="satupetaKabSearch" placeholder="Pilih nama wilayah..." autocomplete="off" class="geotani-form-input-search" />
-                          </div>
-                          <div id="satupetaKabResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
-                          <div id="satupetaKabSelected" style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;"></div>
-                        </div>
-                      </div>
-                      <div id="satupetaInfo" style="display:none;font-size:11px;color:#475569;padding:6px 0;"></div>
-                      <div id="satupetaFeatureTable" style="display:none;"></div>
-                      <button id="satupetaToggleBtn" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;display:none;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Tampilkan Data</button>
-                      <button id="btnClearSatupeta" class="geotani-btn-reset" type="button" style="display:none;" title="Reset polygon dan pilihan wilayah" aria-label="Reset polygon dan pilihan wilayah">
-                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                        Reset Polygon
-                      </button>
-                      <button id="btnDetailSatupeta" style="margin-top:4px;display:none;width:100%;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Detail</button>
-                    </div>
-                  </details>
+
                 </div>
 
                 <div id="geotoolsTabGeoFarm" class="geotools-main-tab-panel active">
@@ -3501,8 +3509,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <!-- sheet-drag.js SEQBELUM map-core.js: map-core, hotspot,
          geopangan, attribute-table, ai-analysis, dan polygon-analysis
          semuanya mendaftarkan sheet ke window.SheetDrag saat dimuat. -->
-    <script src="assets/js/sheet-drag.js?v=20261006-minimize-at-10"></script>
-    <script src="assets/js/map-core.js?v=20261005-geotools-auth-only"></script>
+    <script src="assets/js/sheet-drag.js?v=20261006-reset-all-on-close"></script>
+    <script src="assets/js/map-core.js?v=20261006-reset-all-on-close"></script>
     <script src="assets/js/layer-loading.js"></script>
     <script src="assets/js/bnpb-hillshade.js"></script>
     <script src="assets/js/geologi-bnpb.js"></script>
@@ -3526,10 +3534,10 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/satellite-export.js"></script>
     <script src="assets/js/petadasar-export.js"></script>
 
-    <script src="assets/js/geoportal.js"></script>
+    <script src="assets/js/geoportal.js?v=20261006-search-big-catalog"></script>
     <script src="assets/js/demnas-download.js"></script>
     <script src="assets/js/geoportal-search.js"></script>
-    <script src="assets/js/sidebar.js"></script>
+    <script src="assets/js/sidebar.js?v=20261006-reset-all-on-exit"></script>
     <script src="assets/js/earthquake.js"></script>
     <script src="assets/js/attribute-table.js?v=10"></script>
     <script src="assets/js/katalog-gempa.js?v=20261006-attr-table"></script>
@@ -3545,7 +3553,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/terrarium-elevation.js"></script>
     <script src="assets/js/dem-analysis.js"></script>
     <script src="assets/js/cctv.js"></script>
-    <script src="assets/js/geotrans-mitradarat.js?v=20261005-transit-table2"></script>
+    <script src="assets/js/geotrans-mitradarat.js?v=20261006-reset-on-exit"></script>
     <script src="assets/js/detail-subtab.js"></script>
      <script src="assets/js/alat-layers.js"></script>
      <script src="assets/js/arcgis-source-manager.js"></script>
@@ -3573,7 +3581,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
   <script src="assets/js/overlay-village-search.js"></script>
   <script src="assets/js/erosi-kta.js"></script>
-  <script src="assets/js/satupeta-downloader.js"></script>
+  <script src="assets/js/satupeta-downloader.js?v=20261006-geospatial-search-ui"></script>
   <script src="assets/js/crop-health.js"></script>
   <script src="assets/js/ndvi-analysis.js"></script>
   <script src="assets/js/landcover-analysis.js"></script>

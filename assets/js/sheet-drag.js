@@ -236,6 +236,9 @@
     if (!cfg) return;
     var e = elDari(cfg);
     if (!e) return;
+    if (isOpen(id) && !window.__resetAllLayersRunning && typeof window.resetAllLayers === 'function') {
+      try { window.resetAllLayers(); } catch (err) { lapis(id, 'resetAllLayers', err); }
+    }
     kelas(cfg, cfg.openClass, false);
     kelas(cfg, cfg.minClass, false);
     setBody(cfg, cfg.bodyOpen, false);
@@ -243,6 +246,7 @@
     keTengah(cfg);
     if (e.classList) e.classList.remove('sheet-draggable', 'is-dragging');
     geser = null;
+    document.body.classList.remove('sheet-dragging');
     labelkan(cfg);
     if (cfg.onClose) { try { cfg.onClose(); } catch (err) { lapis(id, 'onClose', err); } }
     sinkronkanPeta();
@@ -397,6 +401,7 @@
       if (Math.abs(dy) < AMBANG_GESER) return;
       geser.geser = true;
       geser.sheet.classList.add('is-dragging');
+      document.body.classList.add('sheet-dragging');
     }
     yRaf = e.clientY;
     if (!rafTinggi) {
@@ -404,6 +409,10 @@
         rafTinggi = 0;
         if (!geser) return;
         geser.sheet.style.setProperty('--sheet-h', hitungTinggi(geser) + 'px');
+        /* Map and sheet are siblings, so mirror the live height on each
+           frame. invalidateSize stays deferred until release to avoid
+           recalculating Leaflet's layout for every pointer event. */
+        cerminTinggiKeMap(geser.sheet);
       });
     }
     if (e.cancelable) e.preventDefault();
@@ -424,6 +433,7 @@
     if (rafTinggi) { cancelAnimationFrame(rafTinggi); rafTinggi = 0; }
     var g = geser;
     geser = null;
+    document.body.classList.remove('sheet-dragging');
     try { if (g.sheet.releasePointerCapture && e.pointerId !== undefined) g.sheet.releasePointerCapture(e.pointerId); } catch (err) { /* tidak fatal */ }
     if (!g.geser) { g.sheet.classList.remove('is-dragging'); return; }
 

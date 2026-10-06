@@ -1422,8 +1422,9 @@ L.control.scale({
     }
   });
 
-  function resetAllLayers() {
+  function resetAllLayersImpl() {
         _layerCatalogState = {};
+        if (typeof window.clearMitraDaratLayers === 'function') window.clearMitraDaratLayers();
         if (typeof window.clearArcGISRestLayers === 'function') window.clearArcGISRestLayers();
         // 1. Matikan layer jalan & angin (checkbox-driven)
         const toggles = [
@@ -1835,6 +1836,12 @@ L.control.scale({
   }
   window.__geoportalPrintCtrl = new PrintMapControl();
 
+  function resetAllLayers() {
+    if (window.__resetAllLayersRunning) return;
+    window.__resetAllLayersRunning = true;
+    try { resetAllLayersImpl(); }
+    finally { window.__resetAllLayersRunning = false; }
+  }
   document.getElementById('resetLayersBtn').addEventListener('click', resetAllLayers);
   window.resetAllLayers = resetAllLayers;
   window.getLayerCatalogData = function () { return LAYER_CATALOG_DATA; };
@@ -2541,6 +2548,9 @@ L.control.scale({
       var tabContent = document.getElementById('tab-geotools');
       var sheet = document.getElementById('geotools-sheet');
       if (!body || !tabContent || !sheet) return;
+      if (typeof window.clearMitraDaratLayers === 'function') {
+        try { window.clearMitraDaratLayers(); } catch (e) { /* penutupan sheet tetap berjalan */ }
+      }
       if (typeof window.clearGeopanganLayers === 'function') {
         try { window.clearGeopanganLayers(); } catch (e) { /* lapis lain tetap jalan */ }
       }

@@ -1163,6 +1163,27 @@
       }
     });
 
+    // Input pencarian sudah ada di GeoPortal Hub, tetapi sebelumnya tidak
+    // pernah memanggil plugin search sehingga katalog tampak kosong.
+    const searchInput = document.getElementById('geoportalSearchInput');
+    if (searchInput && !searchInput.dataset.geoportalSearchBound) {
+      searchInput.dataset.geoportalSearchBound = '1';
+      let searchTimer = 0;
+      searchInput.addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        const query = this.value.trim();
+        searchTimer = setTimeout(function () {
+          const tree = $(container).jstree(true);
+          if (!tree) return;
+          if (query) tree.search(query);
+          else tree.clear_search();
+        }, 180);
+      });
+    }
+    if (searchInput && searchInput.value.trim()) {
+      $(container).jstree(true).search(searchInput.value.trim());
+    }
+
     window.__geoportalTreeReady = true;
     setTimeout(updateGeoportalServerBadges, 600);
     setTimeout(updateGeoportalServerBadges, 2500);

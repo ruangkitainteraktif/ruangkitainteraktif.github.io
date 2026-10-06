@@ -659,11 +659,26 @@
   function populateBigLayers() {
     var sel = document.getElementById('satupetaInputLayer');
     if (!sel) return Promise.resolve();
+    var status = document.getElementById('satupetaCatalogStatus');
+    if (status) status.textContent = 'Memuat katalog dari SatuPeta BIG...';
+    var loadedCount = 0;
+    var failedFolders = [];
     return Promise.all(
-      BIG_FOLDERS.map(function (folder) {
+      BIG_FOLDERS.map(function (folder, index) {
         return fetch(BIG_SERVICE_BASE + folder + '/MapServer?f=json')
-          .then(function (r) { return r.json(); })
-          .catch(function () { return null; });
+          .then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          })
+          .then(function (meta) {
+            if (meta && meta.error) throw new Error(meta.error.message || 'Layanan tidak tersedia');
+            return meta;
+          })
+          .catch(function (err) {
+            failedFolders.push(BIG_FOLDER_LABELS[BIG_FOLDERS[index]] || BIG_FOLDERS[index]);
+            console.warn('[SatupetaDownloader] Katalog BIG gagal dimuat:', BIG_FOLDERS[index], err);
+            return null;
+          });
       })
     ).then(function (results) {
       results.forEach(function (meta, i) {
@@ -679,11 +694,19 @@
           opt.value = bigOptionValue(folder, layer.id);
           opt.textContent = layer.name || ('Layer ' + layer.id);
           og.appendChild(opt);
+          loadedCount++;
         });
         if (og.children.length) sel.appendChild(og);
       });
       var layerSearch = document.getElementById('satupetaLayerSearch');
       if (layerSearch) filterLayerOptions(layerSearch.value);
+      window.__satupetaBigLayerCount = loadedCount;
+      if (status) {
+        status.textContent = loadedCount
+          ? loadedCount + ' layer BIG tersedia' + (failedFolders.length ? '; gagal memuat: ' + failedFolders.join(', ') : '.')
+          : 'Katalog BIG belum bisa dimuat. Periksa koneksi atau coba muat ulang.';
+        window.__satupetaCatalogMessage = status.textContent;
+      }
     });
   }
 
@@ -691,18 +714,21 @@
     var sel = document.getElementById('satupetaInputLayer');
     if (!sel) return;
     var q = String(query || '').trim().toLowerCase();
+    var visibleCount = 0;
     var i;
     var opts = sel.querySelectorAll('option');
     for (i = 0; i < opts.length; i++) {
       var opt = opts[i];
       if (opt.selected) {
         opt.hidden = false;
+        visibleCount++;
         continue;
       }
       var text = (opt.textContent || '').toLowerCase();
       var val = (opt.value || '').toLowerCase();
       var match = !q || text.indexOf(q) !== -1 || val.indexOf(q) !== -1;
       opt.hidden = !match;
+      if (match) visibleCount++;
     }
     var groups = sel.querySelectorAll('optgroup');
     for (i = 0; i < groups.length; i++) {
@@ -712,6 +738,13 @@
         if (!og.options[j].hidden) { any = true; break; }
       }
       og.hidden = !any;
+    }
+    var status = document.getElementById('satupetaCatalogStatus');
+    if (status) {
+      if (q) status.textContent = visibleCount
+        ? visibleCount + ' pilihan cocok. Pilih layer dari daftar.'
+        : 'Layer tidak ditemukan. Coba kata kunci lain.';
+      else if (window.__satupetaCatalogMessage) status.textContent = window.__satupetaCatalogMessage;
     }
   }
 
@@ -1259,8 +1292,15 @@
       }
 
       return fetch(url, { signal: signal })
-        .then(function (r) { return r.json(); })
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status + ' dari SatuPeta BIG');
+          return r.json();
+        })
         .then(function (data) {
+          if (data && data.error) {
+            var detail = data.error.message || 'Permintaan layer BIG ditolak';
+            throw new Error(detail);
+          }
           if (data.features) all = all.concat(data.features);
           if (info) {
             info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> Mengambil data... ' + all.length + ' fitur</div>';
@@ -1520,7 +1560,7 @@
 
   function hideToggleButton() {
     var btn = document.getElementById('satupetaToggleBtn');
-    if (btn) btn.style.display = 'none';
+    if (btn) btn.style.display = '';
   }
 
   function clearSelection() {
@@ -1753,6 +1793,15 @@
     if (!window.map) return;
     if (state.loading) return;
 
+    if (!state.selectedBoundary && !state.pendingBoundaryKode) {
+      var prompt = document.getElementById('satupetaInfo');
+      if (prompt) {
+        prompt.style.display = 'block';
+        prompt.textContent = 'Pilih wilayah terlebih dahulu untuk menampilkan data.';
+      }
+      return;
+    }
+
     if (!state.selectedBoundary && state.pendingBoundaryKode) {
       setBoundaryLoadingInfo('Memuat batas wilayah...');
       state.loading = true;
@@ -1945,7 +1994,7 @@
       .catch(function (err) {
         state.loading = false;
         if (err.name === 'AbortError') return;
-        if (info) info.innerHTML = 'Gagal memuat data. Coba lagi.';
+        if (info) info.innerHTML = 'Gagal memuat data dari SatuPeta BIG. Coba lagi.<small style="display:block;margin-top:4px;color:#b91c1c;">' + esc(err.message || 'Periksa koneksi ke layanan BIG.') + '</small>';
         console.error('SatupetaDownloader:', err);
       });
   }

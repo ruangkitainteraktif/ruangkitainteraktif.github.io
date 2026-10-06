@@ -8286,6 +8286,9 @@
         align-self: center;
         transition: height .3s ease;
       }
+      /* During a finger resize, keep the map edge aligned with the sheet
+         instead of letting the normal open/close easing trail behind. */
+      body.sheet-dragging #map { transition: none; }
       body.sheet-terbuka #map {
         height: calc(100dvh - var(--map-h, 50dvh) + var(--map-chrome, 0px));
         align-self: flex-start;
