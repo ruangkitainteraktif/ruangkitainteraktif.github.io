@@ -279,6 +279,8 @@
     }
     .lc-attr-btn:hover { color: #2563eb; background: rgba(37,99,235,.08); }
     .lc-attr-btn-show { display: inline-flex; }
+    .lc-fit-btn { display: inline-grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: #94a3b8; cursor: pointer; font-size: 14px; line-height: 1; }
+    .lc-fit-btn:hover { color: #0f766e; background: rgba(15,118,110,.09); }
     .lc-search {
       margin: 0 8px 6px; padding: 6px 10px 6px 28px;
       border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px;
@@ -6431,6 +6433,7 @@
     .agol-geo-patahan  { background: linear-gradient(135deg, #7f1d1d, #991b1b); }
     .agol-geo-geostruktur { background: linear-gradient(135deg, #1e3a5f, #2563eb); }
     .agol-geo-geologi  { background: linear-gradient(135deg, #065f46, #059669); }
+    .agol-geo-tanah    { background: linear-gradient(135deg, #78350f, #b7791f); }
     .agol-geo-likuifaksi { background: linear-gradient(135deg, #7c2d12, #ea580c); }
     .agol-geo-karst    { background: linear-gradient(135deg, #5b4636, #9e7462); }
     .agol-geo-gasvul   { background: linear-gradient(135deg, #581c87, #7c3aed); }
@@ -7520,9 +7523,16 @@
       border: 1px solid #2563eb;
       border-radius: 8px;
       background: rgba(37, 99, 235, .06);
-      overflow: hidden;
+      max-height: min(32vh, 280px);
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #93a8cc transparent;
     }
     .at-detail-head {
+      position: sticky;
+      top: 0;
+      z-index: 2;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -7576,6 +7586,9 @@
       white-space: pre-wrap;
     }
     .at-detail-row:nth-child(even) { background: rgba(37, 99, 235, .04); }
+    @media (max-width: 768px) {
+      .at-detail { max-height: min(28dvh, 220px); }
+    }
     /* Subjudul nama layer di dalam sheet atribut. Judul sheet sekarang seragam
        "Tabel" untuk semua layer, jadi nama layer dipindah ke sini -- kalau
        tidak, pengguna tidak tahu sedang melihat tabel layer yang mana. */
@@ -7629,6 +7642,16 @@
       padding: 12px 16px 16px; -webkit-overflow-scrolling: touch;
       scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent;
     }
+    /* Tabel tanah memakai ruang sheet yang tersedia; area tabel menjadi
+       scroller sendiri sehingga kontrol dan judul kolom tetap mudah dicapai. */
+    #attr-table-sheet.at-soil-table-mode .at-sheet-body { display: flex; flex-direction: column; overflow: hidden; }
+    #attr-table-sheet.at-soil-table-mode #at-sheet-content { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; }
+    #attr-table-sheet.at-soil-table-mode .at-layer-subtitle,
+    #attr-table-sheet.at-soil-table-mode .at-controls,
+    #attr-table-sheet.at-soil-table-mode .at-pagination { flex: 0 0 auto; }
+    #attr-table-sheet.at-soil-table-mode .at-controls { position: sticky; top: 0; z-index: 5; padding: 4px 0 8px; background: var(--bg-primary); }
+    #attr-table-sheet.at-soil-table-mode .at-table-wrap { flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; }
+    #attr-table-sheet.at-soil-table-mode .at-table th { position: sticky; top: 0; z-index: 6; }
     #attr-table-sheet .at-sheet-body::-webkit-scrollbar { width: 5px; }
     #attr-table-sheet .at-sheet-body::-webkit-scrollbar-track { background: transparent; }
     #attr-table-sheet .at-sheet-body::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }

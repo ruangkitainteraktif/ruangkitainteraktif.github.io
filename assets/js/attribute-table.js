@@ -11,9 +11,11 @@
   var _currentPage = 1;
   var _searchQuery = '';
   var _highlightMarker = null;
+  var _highlightMarkerTimer = null;
   var _highlightedFeatureLayer = null;
   var _highlightedFeatureStyle = null;
   var _wmsClickHandler = null;
+  var _wmsQueryLatLng = null;
   var _attrTableOpen = false;
   var _attrTableMinimized = false;
   var _pickerLayerId = null;
@@ -56,10 +58,19 @@
 
   /* ── Layer Registry ── */
   var ATTR_LAYER_REGISTRY = {
+    toggleJenisTanahJateng: {
+      name: 'Jenis Tanah Jawa Tengah',
+      type: 'geojson',
+      getLayer: function () { return window.getJenisTanahJatengLayer ? window.getJenisTanahJatengLayer() : null; },
+      props: ['MACAM_TANA', 'BAHAN_INDU', 'FISIOGRAFI', 'TANAH_ID', 'ID']
+    },
     toggleSignificantMarkers: {
       name: '15 Gempa M 5.0+ (BMKG)',
       type: 'vector',
       getFeatures: function () { return earthquakeSignificantData || []; },
+      getFeaturesAsync: function () {
+        return window.ensureEarthquakeData().then(function (data) { return data.significant || []; });
+      },
       props: ['Tanggal', 'Jam', 'Magnitude', 'Kedalaman', 'Wilayah', 'Potensi', 'Dirasakan', 'Coordinates'],
       getLatLng: function (item) {
         var c = (item.Coordinates || '').split(',');
@@ -70,6 +81,9 @@
       name: '15 Gempa Dirasakan (BMKG)',
       type: 'vector',
       getFeatures: function () { return earthquakeFeltData || []; },
+      getFeaturesAsync: function () {
+        return window.ensureEarthquakeData().then(function (data) { return data.felt || []; });
+      },
       props: ['Tanggal', 'Jam', 'Magnitude', 'Kedalaman', 'Wilayah', 'Potensi', 'Dirasakan', 'Coordinates'],
       getLatLng: function (item) {
         var c = (item.Coordinates || '').split(',');
@@ -920,6 +934,7 @@
   function openAttrTableForLayer(toggleId) {
     var sheet = document.getElementById('attr-table-sheet');
     if (!sheet) return;
+    sheet.classList.toggle('at-soil-table-mode', toggleId === 'toggleJenisTanahJateng');
     var config = ATTR_LAYER_REGISTRY[toggleId];
     // Support dynamic OPT pest toggles via window.OPT_ATTR_DATA
     if (!config && toggleId.indexOf('opt-') === 0 && window.OPT_ATTR_DATA && window.OPT_ATTR_DATA[toggleId]) {
@@ -991,6 +1006,7 @@
     if (!_currentLayer || !_currentLayer.config) return;
     var loadToken = ++_loadToken;
     var config = _currentLayer.config;
+    var configId = _currentLayer.id;
     var features = [];
 
     if (config.type === 'raster') {
@@ -999,6 +1015,29 @@
       renderAttrContent();
       return;
     } else if (config.type === 'vector') {
+      if (typeof config.getFeaturesAsync === 'function') {
+        var vectorContent = document.getElementById('at-sheet-content');
+        if (vectorContent) vectorContent.innerHTML = '<div class="at-loading">Memuat data BMKG…</div>';
+        config.getFeaturesAsync().then(function (rawAsync) {
+          if (loadToken !== _loadToken || !_currentLayer || _currentLayer.id !== configId) return;
+          _currentFeatures = (rawAsync || []).map(function (item) {
+            var f = {};
+            for (var k in item) {
+              if (typeof item[k] !== 'object' || item[k] == null) f[k] = item[k];
+            }
+            var ll = config.getLatLng(item);
+            if (ll && isFinite(ll[0]) && isFinite(ll[1])) f._latlng = ll;
+            return f;
+          });
+          _currentPage = 1;
+          renderAttrContent();
+        }).catch(function (error) {
+          if (loadToken !== _loadToken) return;
+          console.error('[Tabel atribut] Gagal memuat fitur asinkron:', error);
+          if (vectorContent) vectorContent.innerHTML = '<div class="at-empty">Gagal memuat data atribut. Coba lagi.</div>';
+        });
+        return;
+      }
       var raw = config.getFeatures();
       features = raw.map(function (item) {
         var f = {};
@@ -1316,17 +1355,7 @@
         var tampil = fitur;
         if (!tampil) return;
         row.classList.add('at-row-active');
-        var lat = parseFloat(row.dataset.lat);
-        var lng = parseFloat(row.dataset.lng);
-        if (fitur._layer && typeof fitur._layer.setStyle === 'function') {
-          highlightFeatureLayerOnMap(fitur._layer);
-        } else if (fitur._marker && typeof fitur._marker.setStyle === 'function') {
-          highlightFeatureLayerOnMap(fitur._marker);
-        }
-        if (isFinite(lat) && isFinite(lng)) {
-          map.flyTo([lat, lng], Math.max(map.getZoom(), 12), { duration: 0.5 });
-          if (!fitur._layer && !fitur._marker) highlightMarkerOnMap(lat, lng, row);
-        }
+        focusFeatureRowOnMap(fitur, row);
       });
     });
 
@@ -1433,6 +1462,10 @@
 
   /* ── Highlight marker on map ── */
   function highlightMarkerOnMap(lat, lng, rowEl) {
+    if (_highlightMarkerTimer) {
+      clearTimeout(_highlightMarkerTimer);
+      _highlightMarkerTimer = null;
+    }
     if (_highlightMarker) {
       map.removeLayer(_highlightMarker);
       _highlightMarker = null;
@@ -1446,8 +1479,9 @@
       className: 'at-highlight-pulse'
     }).addTo(map);
 
-    setTimeout(function () {
+    _highlightMarkerTimer = setTimeout(function () {
       if (_highlightMarker) { map.removeLayer(_highlightMarker); _highlightMarker = null; }
+      _highlightMarkerTimer = null;
     }, 3000);
 
     var content = document.getElementById('at-sheet-content');
@@ -1461,19 +1495,52 @@
       map.removeLayer(_highlightMarker);
       _highlightMarker = null;
     }
-    var keys = ['color', 'weight', 'opacity', 'fillColor', 'fillOpacity', 'dashArray', 'lineCap', 'lineJoin'];
-    var original = {};
-    keys.forEach(function (key) {
-      if (layer.options && layer.options[key] !== undefined) original[key] = layer.options[key];
-    });
-    _highlightedFeatureLayer = layer;
-    _highlightedFeatureStyle = original;
-    layer.setStyle({ color: '#f97316', weight: 4, opacity: 1, fillColor: '#f59e0b', fillOpacity: 0.55 });
-    if (layer.bringToFront) layer.bringToFront();
+    if (_highlightMarkerTimer) {
+      clearTimeout(_highlightMarkerTimer);
+      _highlightMarkerTimer = null;
+    }
+    if (layer.setStyle) {
+      var keys = ['color', 'weight', 'opacity', 'fillColor', 'fillOpacity', 'dashArray', 'lineCap', 'lineJoin'];
+      var original = {};
+      keys.forEach(function (key) {
+        if (layer.options && layer.options[key] !== undefined) original[key] = layer.options[key];
+      });
+      _highlightedFeatureLayer = layer;
+      _highlightedFeatureStyle = original;
+      layer.setStyle({ color: '#f97316', weight: 4, opacity: 1, fillColor: '#f59e0b', fillOpacity: 0.55 });
+      if (layer.bringToFront) layer.bringToFront();
+    }
     if (layer.getBounds) {
       var bounds = layer.getBounds();
-      if (bounds && bounds.isValid()) map.fitBounds(bounds, { padding: [32, 32], maxZoom: 15, animate: true });
+      if (bounds && bounds.isValid()) map.flyToBounds(bounds.pad(0.12), { padding: [32, 32], maxZoom: 15, duration: 0.75 });
     }
+  }
+
+  function focusFeatureRowOnMap(feature, row) {
+    if (!feature) return;
+    var target = feature._layer || feature._marker;
+    if (target && typeof target.setStyle === 'function' && typeof target.getBounds === 'function') {
+      highlightFeatureLayerOnMap(target);
+      if (row) row.classList.add('at-row-active');
+      return;
+    }
+    var lat = NaN;
+    var lng = NaN;
+    if (feature._latlng) {
+      if (Array.isArray(feature._latlng)) {
+        lat = parseFloat(feature._latlng[0]);
+        lng = parseFloat(feature._latlng[1]);
+      } else {
+        lat = parseFloat(feature._latlng.lat);
+        lng = parseFloat(feature._latlng.lng);
+      }
+    }
+    if (!isFinite(lat)) lat = parseFloat(row && row.dataset.lat);
+    if (!isFinite(lng)) lng = parseFloat(row && row.dataset.lng);
+    if (!isFinite(lat) || !isFinite(lng)) return;
+    clearFeatureLayerHighlight();
+    map.flyTo([lat, lng], Math.max(map.getZoom(), 13), { duration: 0.65 });
+    highlightMarkerOnMap(lat, lng, row);
   }
 
   function clearFeatureLayerHighlight() {
@@ -1519,6 +1586,7 @@
   }
 
   function fetchWmsFeatureInfo(latlng, toggleId) {
+    _wmsQueryLatLng = latlng ? { lat: latlng.lat, lng: latlng.lng } : null;
     var zoom = map.getZoom();
     var size = map.getSize();
     var point = map.latLngToContainerPoint(latlng);
@@ -1590,7 +1658,7 @@
       // Baris WMS juga diberi kelas .at-row dan data-idx supaya handler klik
       // yang sama berlaku. Sebelumnya baris ini tanpa handler sama sekali,
       // jadi klik di tabel hasil GetFeatureInfo tidak melakukan apa pun.
-      html += '<tr class="at-row" data-idx="' + i + '">';
+      html += '<tr class="at-row" data-idx="' + i + '"' + (_wmsQueryLatLng ? ' data-lat="' + _wmsQueryLatLng.lat + '" data-lng="' + _wmsQueryLatLng.lng + '"' : '') + '>';
       props.forEach(function (p) { html += '<td title="' + escAttr(attrs[p]) + '">' + escAttr(attrs[p]) + '</td>'; });
       html += '</tr>';
     });
@@ -1601,9 +1669,10 @@
     // Handler klik untuk tabel hasil WMS. openFeatureDetailByIndex() membaca
     // dari _currentFeatures; di sini sumber datanya `features`, jadi
     // _currentFeatures disetel dulu agar keduanya membaca daftar yang sama.
-    // GetFeatureInfo tidak mengembalikan geometri per fitur, jadi tidak ada
-    // flyTo -- cukup panel detailnya.
+    // GetFeatureInfo tidak mengembalikan geometri per fitur. Simpan lokasi
+    // query agar barisnya tetap bisa mengarahkan peta dan menandai titiknya.
     _currentFeatures = features;
+    if (_wmsQueryLatLng) features.forEach(function (feature) { feature._latlng = [_wmsQueryLatLng.lat, _wmsQueryLatLng.lng]; });
     content.querySelectorAll('.at-row').forEach(function (row) {
       row.addEventListener('click', function () {
         var idx = parseInt(row.dataset.idx, 10);
@@ -1611,8 +1680,10 @@
         content.querySelectorAll('.at-row-active').forEach(function (r) {
           r.classList.remove('at-row-active');
         });
-        if (!openFeatureDetailByIndex(idx)) return;
+        var feature = openFeatureDetailByIndex(idx);
+        if (!feature) return;
         row.classList.add('at-row-active');
+        focusFeatureRowOnMap(feature, row);
       });
     });
   }

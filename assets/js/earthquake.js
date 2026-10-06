@@ -4,6 +4,7 @@
     felt: 'https://data.bmkg.go.id/DataMKG/TEWS/gempadirasakan.json'
   };
   let earthquakeLoaded = false;
+  let earthquakeLoadPromise = null;
   let earthquakeLatestData = null;
   let earthquakeSignificantData = [];
   let earthquakeFeltData = [];
@@ -377,6 +378,19 @@
     }
   }
 
+  window.ensureEarthquakeData = function () {
+    function snapshot() {
+      return { latest: earthquakeLatestData, significant: earthquakeSignificantData, felt: earthquakeFeltData };
+    }
+    if (earthquakeLoaded) return Promise.resolve(snapshot());
+    if (!earthquakeLoadPromise) {
+      earthquakeLoadPromise = loadEarthquakeData().then(snapshot).finally(function () {
+        earthquakeLoadPromise = null;
+      });
+    }
+    return earthquakeLoadPromise;
+  };
+
   window.quakeResetLayers = function () {
     const sigCb = document.getElementById('toggleSignificantMarkers');
     const feltCb = document.getElementById('toggleFeltMarkers');
@@ -388,21 +402,21 @@
 
   window.toggleSignificantMarkers = async function(visible) {
     if (visible && !earthquakeLoaded) {
-      await loadEarthquakeData();
+      await window.ensureEarthquakeData();
     }
     applySignificantMarkers(visible);
   };
 
   window.toggleFeltMarkers = async function(visible) {
     if (visible && !earthquakeLoaded) {
-      await loadEarthquakeData();
+      await window.ensureEarthquakeData();
     }
     applyFeltMarkers(visible);
   };
 
   window.toggleLatestEarthquake = async function(visible) {
     if (visible && !earthquakeLoaded) {
-      await loadEarthquakeData();
+      await window.ensureEarthquakeData();
     }
     if (visible && earthquakeLatestData) {
       placeLatestEarthquakeMarker(earthquakeLatestData);
