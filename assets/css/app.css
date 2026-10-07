@@ -7639,7 +7639,7 @@
     #attr-table-sheet.at-soil-table-mode .at-layer-subtitle,
     #attr-table-sheet.at-soil-table-mode .at-controls,
     #attr-table-sheet.at-soil-table-mode .at-pagination { flex: 0 0 auto; }
-    #attr-table-sheet.at-soil-table-mode .at-controls { position: sticky; top: 0; z-index: 5; padding: 4px 0 8px; background: var(--bg-primary); }
+    #attr-table-sheet.at-soil-table-mode .at-controls { position: static; top: auto; z-index: auto; padding: 4px 0 8px; background: var(--bg-primary); }
     #attr-table-sheet.at-soil-table-mode .at-table-wrap { flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; }
     #attr-table-sheet.at-soil-table-mode .at-table th { position: sticky; top: 0; z-index: 6; }
     .at-soil-taxonomy { flex: 0 0 auto; margin: 0 0 9px; border: 1px solid var(--border-color); border-radius: 9px; background: var(--bg-secondary); color: var(--text-primary); font-size: 11px; }
@@ -8411,6 +8411,11 @@
       }
       #attr-table-sheet .at-sheet-head { padding: 4px 16px 10px; }
       #attr-table-sheet .at-sheet-body { padding: 8px 12px 20px; }
+      /* Saat sheet diperkecil, gulir isi sheet agar area tabel tidak terjepit
+         sampai tingginya nol oleh layout flex. Tabel tetap punya scroller sendiri. */
+      #attr-table-sheet.at-soil-table-mode .at-sheet-body { display: block; overflow-y: auto; }
+      #attr-table-sheet.at-soil-table-mode #at-sheet-content { display: block; min-height: 0; }
+      #attr-table-sheet.at-soil-table-mode .at-table-wrap { min-height: 120px; max-height: min(56dvh, 620px); }
       #attr-table-sheet.attr-table-sheet-minimized {
         top: auto; right: auto; bottom: 72px; left: 50%;
         width: min(260px, calc(100vw - 48px)); height: 36px;
