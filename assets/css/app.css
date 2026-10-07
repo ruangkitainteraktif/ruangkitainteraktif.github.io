@@ -10782,8 +10782,8 @@ details[open] > .gt-card-head::after {
        rapi di kiri-bawah tanpa menabrak apa pun. */
 
     @media (max-width: 768px) {
-      body.dm-sidebar-open:not(.dm-sidebar-minimized) .leaflet-draw,
-      body.dm-sidebar-open:not(.dm-sidebar-minimized) .draw-actions-wrap {
+      body.dm-sidebar-open:not(.dm-sidebar-minimized):not(.geofarm-draw-active) .leaflet-draw,
+      body.dm-sidebar-open:not(.dm-sidebar-minimized):not(.geofarm-draw-active) .draw-actions-wrap {
         display: none !important;
       }
     }

@@ -300,7 +300,13 @@ function renderAreaGeometry() {
   measureExportLayer = measurePolygon;
 }
 
-function startDraw(type) {
+function startDraw(type, source) {
+  // Sesi GeoFarm hanya boleh dimulai dari tombol Buat Polygon GeoFarm.
+  // Pemanggilan tool gambar umum selalu menghapus penanda yang mungkin
+  // tertinggal, agar polygon Draw & Measure/GeoOSS tidak masuk ke GeoFarm.
+  if (typeof window.setGeofarmDrawSession === 'function') {
+    window.setGeofarmDrawSession(source === 'geofarm' && type === 'polygon');
+  }
   if (!window.L.Draw) {
     setMeasureResult('Plugin Leaflet.draw belum dimuat.');
     return;
@@ -375,10 +381,19 @@ map.on(L.Draw.Event.CREATED, event => {
   }
 
   if (layer instanceof L.Polygon && !(layer instanceof L.Rectangle) && typeof window.registerDrawnPolygon === 'function') {
+    // Kegagalan menghitung luas tidak boleh membatalkan pendaftaran polygon
+    // GeoFarm. Simpan luas 0 sebagai fallback agar pengguna tetap bisa lanjut
+    // ke analisis dan melihat pesan/perbaikan luas secara terpisah.
+    let areaHa = 0;
     try {
-      window.registerDrawnPolygon(layer, geoArea.areaHaFromRings(layer.getLatLngs()));
+      areaHa = geoArea.areaHaFromRings(layer.getLatLngs());
     } catch (error) {
-      console.warn('[Polygon] Gagal menyiapkan analisis polygon:', error);
+      console.warn('[GeoFarm] Gagal menghitung luas polygon; polygon tetap didaftarkan:', error);
+    }
+    try {
+      window.registerDrawnPolygon(layer, areaHa);
+    } catch (error) {
+      console.warn('[GeoFarm] Gagal mendaftarkan polygon untuk analisis:', error);
     }
   }
   syncDrawChrome();

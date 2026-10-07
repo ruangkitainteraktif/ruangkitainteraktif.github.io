@@ -3596,13 +3596,13 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/detail-subtab.js"></script>
      <script src="assets/js/alat-layers.js"></script>
      <script src="assets/js/arcgis-source-manager.js"></script>
-  <script src="assets/js/alat-draw-measure.js"></script>
+  <script src="assets/js/alat-draw-measure.js?v=20261007-geofarm-register"></script>
   <!-- Cek Lokasi: butuh window.startDraw dari alat-draw-measure.js untuk
        memasang pin. init() juga memasang listener draw:created, sehingga
        setiap pin baru langsung mengisi panel hasil. -->
   <script src="assets/js/alat-cek-lokasi.js"></script>
-  <script src="assets/js/geofarm-draw.js?v=20261007-draw-actions"></script>
-<script src="assets/js/geofarm-upload.js"></script>
+  <script src="assets/js/geofarm-draw.js?v=20261007-preserve-drawn-analysis"></script>
+<script src="assets/js/geofarm-upload.js?v=20261007-geofarm-register"></script>
 <!-- Kalkulator Benih & Pupuk GeoFarm: butuh geodesic-area.js (luas poligon)
      dan alat-draw-measure.js (window.getDrawnLayers), keduanya sudah dimuat
      di atas. -->
@@ -3614,7 +3614,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 <!-- geofarm-report.js hanya Menyediakan window.setGeoFarmReportIndexSpecs(),
      jadi harus dimuat sebelum polygon-analysis.js memanggilnya. -->
 <script src="assets/js/geofarm-report.js"></script>
-<script src="assets/js/polygon-analysis.js"></script>
+<script src="assets/js/polygon-analysis.js?v=20261007-preserve-drawn-analysis"></script>
 
   <script src="assets/js/app-boot.js"></script>
 

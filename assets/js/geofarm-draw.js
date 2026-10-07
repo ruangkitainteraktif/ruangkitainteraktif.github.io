@@ -122,12 +122,19 @@
   function positionControl() {
     var m = getMap();
     if (!m) return;
-    var corner = m.getContainer().querySelector('.leaflet-bottom.leaflet-left');
-    var control = corner && corner.querySelector('.leaflet-draw');
+    var container = m.getContainer();
+    var corner = container.querySelector('.leaflet-bottom.leaflet-left');
+    var control = container.querySelector('.leaflet-draw');
     if (control) {
+      // Draw & Measure dapat menyembunyikan chrome gambar saat sheet-nya
+      // terbuka. Paksa kontrol GeoFarm tetap terlihat selama sesi aktif.
+      control.style.setProperty('display', 'block', 'important');
+      control.style.setProperty('visibility', 'visible', 'important');
+      control.style.setProperty('z-index', '1100', 'important');
       control.style.bottom = '10px';
       control.style.top = 'auto';
     }
+    if (corner) corner.style.zIndex = '1100';
   }
 
   // Di desktop .collapsed sudah memakai translateX(-100%) sehingga sidebar
@@ -152,7 +159,17 @@
     var sidebar = document.getElementById('sidebar-left');
     var sheet = document.getElementById('geotools-sheet');
     if (sheet && sheet.classList.contains('gs-sheet-open') && !sheet.classList.contains('gs-sheet-minimized')) {
-      if (typeof window.closeGeotoolsSheet === 'function') window.closeGeotoolsSheet();
+      if (typeof window.closeGeotoolsSheet === 'function') {
+        // Penutupan sheet sebagai perpindahan tampilan tidak boleh mereset
+        // polygon GeoFarm yang sudah ada (SheetDrag.close biasanya reset).
+        var wasResetting = window.__resetAllLayersRunning === true;
+        if (!wasResetting) window.__resetAllLayersRunning = true;
+        try {
+          window.closeGeotoolsSheet();
+        } finally {
+          if (!wasResetting) window.__resetAllLayersRunning = false;
+        }
+      }
     }
     if (sidebar && !sidebar.classList.contains('collapsed')) {
       if (typeof window.toggleSidebar === 'function') {
@@ -181,6 +198,10 @@
       window.setGeofarmDrawSession(false);
     }
     showGeoFarmTab();
+    // Menutup sheet GeoTools memanggil resetAllLayers(), yang membersihkan
+    // kontrol Leaflet.draw. Tutup sheet SEBELUM memasang kontrol GeoFarm;
+    // urutan sebelumnya memasang kontrol lalu langsung mencabutnya lagi.
+    hideGeoToolsSidebar();
     useSatelliteBasemap();
 
     var m = getMap();
@@ -202,7 +223,7 @@
         if (typeof window.setGeofarmDrawSession === 'function') {
           window.setGeofarmDrawSession(true);
         }
-        window.startDraw('polygon');
+        window.startDraw('polygon', 'geofarm');
       } else {
         // Tanpa startDraw tidak ada kontrol gambar, jadi tidak akan ada
         // draw:created. Jangan nyalakan penanda; kalau tidak, polygon dari
@@ -226,9 +247,9 @@
     }
 
     revealDrawChrome();
-    hideGeoToolsSidebar();
     markButtonBusy(true);
 
+    positionControl();
     setTimeout(positionControl, 120);
 
     var stop = function () {

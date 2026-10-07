@@ -75,7 +75,17 @@
       return fc;
     }
     if (name.endsWith('.geojson') || name.endsWith('.json')) {
-      return JSON.parse(await file.text());
+      const data = JSON.parse(await file.text());
+      // Terima tiga bentuk GeoJSON yang umum: FeatureCollection, satu
+      // Feature, atau geometri Polygon/MultiPolygon langsung.
+      if (data && data.type === 'FeatureCollection') return data;
+      if (data && data.type === 'Feature') {
+        return { type: 'FeatureCollection', features: [data] };
+      }
+      if (data && (data.type === 'Polygon' || data.type === 'MultiPolygon')) {
+        return { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: data }] };
+      }
+      throw new Error('GeoJSON harus berisi FeatureCollection, Feature, Polygon, atau MultiPolygon.');
     }
     if (name.endsWith('.shp')) {
       if (!shp) {
@@ -141,8 +151,13 @@
       // diimpor tetapi luasnya kosong. Panel GeoFarm akan menandainya.
       return 0;
     }
-    const ha = window.geoArea.areaHaFromGeoJSON(geometry);
-    return Number.isFinite(ha) ? ha : 0;
+    try {
+      const ha = window.geoArea.areaHaFromGeoJSON(geometry);
+      return Number.isFinite(ha) ? ha : 0;
+    } catch (error) {
+      console.warn('[GeoFarm] Gagal menghitung luas polygon unggahan:', error);
+      return 0;
+    }
   }
 
   /**

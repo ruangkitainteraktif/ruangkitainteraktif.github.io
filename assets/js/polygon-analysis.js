@@ -3024,7 +3024,18 @@
     // Sheet yang diminimalkan sudah kehilangan gs-sheet-open, jadi cukup dicek
     // satu class ini.
     if (sheet && sheet.classList.contains('gs-sheet-open')) {
-      if (typeof window.closeGeotoolsSheet === 'function') window.closeGeotoolsSheet();
+      if (typeof window.closeGeotoolsSheet === 'function') {
+        // SheetDrag.close() menjalankan resetAllLayers() secara default.
+        // Saat membuka panel analisis, reset itu menghapus polygon dan item
+        // GeoFarm tepat sebelum panel dirender.
+        var wasResetting = window.__resetAllLayersRunning === true;
+        if (!wasResetting) window.__resetAllLayersRunning = true;
+        try {
+          window.closeGeotoolsSheet();
+        } finally {
+          if (!wasResetting) window.__resetAllLayersRunning = false;
+        }
+      }
     }
     var sidebar = document.getElementById('sidebar-left');
     if (sidebar && !sidebar.classList.contains('collapsed')) {
@@ -5037,8 +5048,12 @@
 
   window.registerDrawnPolygon = function (layer, areaHa) {
     // Hanya polygon dari sesi GeoFarm yang dianalisis. Gambar & Ukur, serta
-    // tool gambar lain, tetap berfungsi tanpa memicu analisis ini.
-    if (!geofarmDrawSession) return null;
+    // tool gambar lain, tetap berfungsi tanpa memicu analisis ini. Kelas body
+    // menjadi sinyal cadangan untuk event Leaflet yang datang saat status
+    // internal sesi sedang disinkronkan.
+    const isGeoFarmActive = geofarmDrawSession ||
+      !!(document.body && document.body.classList.contains('geofarm-draw-active'));
+    if (!isGeoFarmActive) return null;
     return addPolygonItem(layer, areaHa, { source: 'draw' });
   };
 
