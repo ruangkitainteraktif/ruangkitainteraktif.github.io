@@ -3215,18 +3215,37 @@ L.control.scale({
     },
     {
       cat: 'Geologi',
-      layers: [
-        { id: 'toggleGeologiArcGISOnline', label: 'Peta Geologi Yogyakarta (ArcGIS)' },
-        { id: 'toggleJenisTanahJateng', label: 'Jenis Tanah Jawa Tengah (ArcGIS)' },
-        { id: 'toggleGeologiBNPB', label: 'Peta Geologi (BNPB)' },
-        { id: 'toggleVolcanoLayer', label: 'Gunung Api Indonesia (PVMBG)' },
-        { id: 'toggleKrbGunungApi', label: 'Kawasan Rawan Bencana Gunung Api (BIG)' },
-        { id: 'toggleKrbTitik', label: 'Gas Vulkanik Gunung Api (BIG)' },
-        { id: 'togglePetaGeologi', label: 'Peta Geologi (BIG)' },
-        { id: 'toggleGeostruktur', label: 'Geologi Geostruktur (BIG)' },
-        { id: 'togglePatahanAktif', label: 'Patahan Aktif 1:50K (BIG)' },
-        { id: 'toggleLikuifaksi', label: 'Kerentanan Likuifaksi (BIG)' },
-        { id: 'toggleKarst', label: 'Kawasan Bentang Alam Karst (BIG)' }
+      subcats: [
+        { subcat: 'Geologi', layers: [
+          { id: 'toggleGeologiArcGISOnline', label: 'Peta Geologi Yogyakarta (ArcGIS)' },
+          { id: 'toggleJenisTanahJateng', label: 'Jenis Tanah Jawa Tengah (ArcGIS)' },
+          { id: 'toggleGeologiBNPB', label: 'Peta Geologi (BNPB)' },
+          { id: 'toggleVolcanoLayer', label: 'Gunung Api Indonesia (PVMBG)' },
+          { id: 'toggleKrbGunungApi', label: 'Kawasan Rawan Bencana Gunung Api (BIG)' },
+          { id: 'toggleKrbTitik', label: 'Gas Vulkanik Gunung Api (BIG)' },
+          { id: 'togglePetaGeologi', label: 'Peta Geologi (BIG)' },
+          { id: 'toggleGeostruktur', label: 'Geologi Geostruktur (BIG)' },
+          { id: 'togglePatahanAktif', label: 'Patahan Aktif 1:50K (BIG)' },
+          { id: 'toggleLikuifaksi', label: 'Kerentanan Likuifaksi (BIG)' },
+          { id: 'toggleKarst', label: 'Kawasan Bentang Alam Karst (BIG)' }
+        ]},
+        { subcat: 'WRB', layers: [
+          { id: 'isric-soil-wrb', label: 'WRB — Kelas tanah paling mungkin' },
+          { id: 'isric-soil-bdod', label: 'Bulk density · 0–5 cm' },
+          { id: 'isric-soil-cec', label: 'Kapasitas tukar kation (CEC) · 0–5 cm' },
+          { id: 'isric-soil-cfvo', label: 'Fragmen kasar volumetrik · 0–5 cm' },
+          { id: 'isric-soil-clay', label: 'Kandungan liat · 0–5 cm' },
+          { id: 'isric-soil-nitrogen', label: 'Nitrogen · 0–5 cm' },
+          { id: 'isric-soil-phh2o', label: 'pH tanah dalam H₂O · 0–5 cm' },
+          { id: 'isric-soil-sand', label: 'Kandungan pasir · 0–5 cm' },
+          { id: 'isric-soil-silt', label: 'Kandungan debu · 0–5 cm' },
+          { id: 'isric-soil-soc', label: 'Karbon organik tanah · 0–5 cm' },
+          { id: 'isric-soil-ocs', label: 'Stok karbon organik · 0–30 cm' },
+          { id: 'isric-soil-ocd', label: 'Kerapatan karbon organik · 0–5 cm' },
+          { id: 'isric-soil-wv1500', label: 'Kadar air volumetrik · 1500 kPa · 0–5 cm' },
+          { id: 'isric-soil-wv0033', label: 'Kadar air volumetrik · 33 kPa · 0–5 cm' },
+          { id: 'isric-soil-wv0010', label: 'Kadar air volumetrik · 10 kPa · 0–5 cm' }
+        ]}
       ]
     },
     {
@@ -3640,6 +3659,7 @@ L.control.scale({
           (id === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') ||
           (id === 'toggleJenisTanahJateng' && typeof window.toggleJenisTanahJateng === 'function') ||
           (id === 'toggleGeologiArcGISOnline' && typeof window.toggleGeologiArcGISOnline === 'function') ||
+          (id.indexOf('isric-soil-') === 0 && typeof window.toggleIsricSoilLayer === 'function') ||
           (id === 'toggleHujanLayer') ||
           (id === 'toggleFsvaLayer' && typeof window.toggleFsvaLayer === 'function') ||
           id.indexOf('st2023:') === 0 ||
@@ -3737,6 +3757,9 @@ L.control.scale({
         }
         if (id === 'toggleGeologiArcGISOnline' && typeof window.toggleGeologiArcGISOnline === 'function') {
           window.toggleGeologiArcGISOnline(cb.checked);
+        }
+        if (id.indexOf('isric-soil-') === 0 && typeof window.toggleIsricSoilLayer === 'function') {
+          window.toggleIsricSoilLayer(id, cb.checked);
         }
         if (id === 'toggleProvinceBoundary' && typeof window.toggleProvinceBoundary === 'function') {
           window.toggleProvinceBoundary(cb.checked);

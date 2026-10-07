@@ -61,6 +61,7 @@ const ALLOWED_HOST_SUFFIXES = [
   "petadasar.atrbpn.go.id",
   "kspservices.big.go.id",
   "geoservices.big.go.id",
+  "maps.isric.org",
   "sig02.pertanian.go.id",
   "simontana.kehutanan.go.id",
   "gis.bnpb.go.id",

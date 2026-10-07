@@ -3140,6 +3140,12 @@
       top: 0;
       z-index: 1;
     }
+    .lc-donation-banner.sheet-donation-banner {
+      position: relative;
+      top: auto;
+      margin: 0 0 12px;
+      border-radius: 0;
+    }
     .lc-donation-text {
       font-size: 11px;
       font-weight: 700;
@@ -12025,7 +12031,8 @@ details[open] > .gt-card-head::after {
     .unified-legend-section .choropleth-legend,
     .unified-legend-section .geoportal-legend,
     .unified-legend-section .atrbpn-legend,
-    .unified-legend-section .geologi-bnpb-legend {
+    .unified-legend-section .geologi-bnpb-legend,
+    .unified-legend-section .isric-soil-legend {
       width: 100%;
       background: rgba(255,255,255,0.96) !important;
       backdrop-filter: blur(8px);
@@ -12047,7 +12054,8 @@ details[open] > .gt-card-head::after {
     .unified-legend-section .choropleth-legend-title,
     .unified-legend-section .geoportal-legend-title,
     .unified-legend-section .atrbpn-legend-title,
-    .unified-legend-section .geologi-bnpb-legend-title {
+    .unified-legend-section .geologi-bnpb-legend-title,
+    .unified-legend-section .isric-soil-legend-title {
       color: #0f172a !important;
     }
     .unified-legend-section .wind-legend-item,
@@ -12070,7 +12078,8 @@ details[open] > .gt-card-head::after {
     .unified-legend-section .ecmwf-fire-legend-source,
     .unified-legend-section .choropleth-legend-unit,
     .unified-legend-section .atrbpn-legend-source,
-    .unified-legend-section .geologi-bnpb-legend-source {
+    .unified-legend-section .geologi-bnpb-legend-source,
+    .unified-legend-section .isric-soil-legend-source {
       color: #64748b !important;
     }
     .unified-legend-section .wind-legend-bar,
@@ -12111,6 +12120,43 @@ details[open] > .gt-card-head::after {
       color: #0f172a;
       padding: 10px 12px;
       min-width: 200px;
+    }
+    .unified-legend-section .isric-soil-legend {
+      width: 280px;
+      max-width: min(280px, calc(100vw - 48px));
+      padding: 12px 14px 10px;
+      background: #fff !important;
+      border: 1px solid #d7dee8 !important;
+      border-radius: 8px !important;
+      box-shadow: 0 2px 7px rgba(31, 41, 55, .12) !important;
+      box-sizing: border-box;
+      text-align: left;
+    }
+    .unified-legend-section .isric-soil-legend-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 7px;
+      color: #1f2937 !important;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.35;
+      cursor: pointer;
+    }
+    .unified-legend-section .isric-soil-legend-image {
+      display: block;
+      max-width: 100%;
+      border-radius: 3px;
+    }
+    .unified-legend-section .isric-soil-legend-source {
+      display: block;
+      margin-top: 7px;
+      padding-top: 6px;
+      border-top: 1px solid #e5eaf0;
+      color: #64748b !important;
+      font-size: 9px;
+      line-height: 1.3;
     }
     .unified-legend-section .atrbpn-legend-title {
       font-size: 11px;

@@ -2709,6 +2709,29 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
               </div>
             </details>
 
+            <details class="geotani-lbslsd" id="geofarm-wosis-card" aria-labelledby="geofarm-wosis-title">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#127793;</span>
+                <span>
+                  <b id="geofarm-wosis-title">Profil Tanah WoSIS</b>
+                  <small>Observasi profil tanah &amp; pH air &mdash; ISRIC</small>
+                </span>
+              </summary>
+              <div class="geotani-lbslsd-body">
+                <p class="geotani-sls-desc">Cari titik profil tanah WoSIS di dalam satu kabupaten/kota. Data ini merupakan hasil pengamatan lapangan/laboratorium, bukan peta prediksi tanah; titik hanya tersedia di lokasi yang pernah disurvei.</p>
+                <div class="geotani-sls-search">
+                  <label class="geotani-form-label" for="geofarmWosisDistrictSearch">Cari kabupaten/kota</label>
+                  <input type="text" id="geofarmWosisDistrictSearch" placeholder="Ketik nama kabupaten/kota..." autocomplete="off" class="geotani-form-input-search" />
+                  <div id="geofarmWosisDistrictResults" class="geotani-sls-results" hidden></div>
+                  <div id="geofarmWosisDistrictSelected" class="geotani-sls-picked" hidden></div>
+                </div>
+                <button id="geofarm-wosis-load" class="geotani-btn-print" type="button">Tampilkan Profil Tanah</button>
+                <button id="geofarm-wosis-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;">Reset Profil Tanah</button>
+                <div id="geofarm-wosis-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                <div id="geofarm-wosis-output"></div>
+              </div>
+            </details>
+
             <details class="geotani-lbslsd" id="geotani-land-system-card" aria-labelledby="geotani-land-system-title">
               <summary class="gt-card-head">
                 <span class="gt-card-icon" aria-hidden="true">&#127758;</span>
@@ -3511,6 +3534,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
          semuanya mendaftarkan sheet ke window.SheetDrag saat dimuat. -->
     <script src="assets/js/sheet-drag.js?v=20261006-reset-all-on-close"></script>
     <script src="assets/js/map-core.js?v=20261006-reset-all-on-close"></script>
+    <script src="assets/js/isric-soil-layers.js"></script>
     <script src="assets/js/layer-loading.js"></script>
     <script src="assets/js/bnpb-hillshade.js"></script>
     <script src="assets/js/geologi-bnpb.js"></script>
@@ -3622,6 +3646,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/geotani-lbs-lsd.js"></script>
   <!-- Land System BIG: memuat paginasi nasional InaLand saat kartu digunakan. -->
   <script src="assets/js/geofarm-land-system.js?v=20261006-kabupaten"></script>
+  <script src="assets/js/geofarm-wosis.js?v=20261007-fix2"></script>
   <!-- LSD 12 Provinsi (ATR/BPN GISTARU). WAJIB setelah geotani-lbs-lsd.js:
        modul ini memakai villageMeta, clipKeDesa, dan bboxDariRings dari
        window.GeoTaniLbsLsd supaya batas desa dan hitung luasnya cuma ada
@@ -3679,6 +3704,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/sppg-district.js"></script>
   <script src="assets/js/water-need.js?v=1"></script>
   <script src="assets/js/ai-analysis.js"></script>
+  <script src="assets/js/sheet-donation-ads.js"></script>
 
 
   <script src="assets/js/population-chart.js"></script>
