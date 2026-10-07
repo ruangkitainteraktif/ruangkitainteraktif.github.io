@@ -832,6 +832,7 @@
 
   const LST_COLLECTION = 'landsat-c2-l2';
   const LST_WINDOW_DAYS = 45;
+  const LST_FALLBACK_DAYS = [90, 180];
   // Skala resmi dari raster:bands ST_B10 di STAC (USGS C2 L2).
   const LST_T_SCALE = 0.00341802;
   const LST_T_OFFSET = 149.0;
@@ -850,19 +851,32 @@
   }
 
   async function runLst(item, onStatus) {
-    const to = new Date();
-    const from = new Date(to.getTime() - LST_WINDOW_DAYS * 86400000);
-    const period = {
-      key: 'lst',
-      label: 'LST',
-      from: from.toISOString().slice(0, 10),
-      to: to.toISOString().slice(0, 10)
-    };
-
     onStatus('Mencari adegan Landsat...');
-    const scene = await stacBestScene(item.bounds, period, LST_COLLECTION);
+    let scene = null;
+    // Landsat global cloud percentage can be high even when this small field
+    // is clear. Try a longer window and, finally, no scene-level cloud filter;
+    // the per-pixel QA mask below still removes clouds over the polygon.
+    const windows = [LST_WINDOW_DAYS].concat(LST_FALLBACK_DAYS);
+    for (let i = 0; i < windows.length && !scene; i++) {
+      const days = windows[i];
+      const end = new Date();
+      const start = new Date(end.getTime() - days * 86400000);
+      const searchPeriod = {
+        from: start.toISOString().slice(0, 10),
+        to: end.toISOString().slice(0, 10)
+      };
+      onStatus(days === LST_WINDOW_DAYS
+        ? 'Mencari adegan Landsat...'
+        : 'Memperluas pencarian Landsat hingga ' + days + ' hari...');
+      scene = await stacBestScene(item.bounds, searchPeriod, LST_COLLECTION, {
+        cloudLimits: days === LST_FALLBACK_DAYS[LST_FALLBACK_DAYS.length - 1]
+          ? [TREND_CLOUD_LIMIT, TREND_CLOUD_FALLBACK, null]
+          : [TREND_CLOUD_LIMIT, TREND_CLOUD_FALLBACK]
+      });
+    }
     if (!scene) {
-      throw new Error('Tidak ada adegan Landsat dalam ' + LST_WINDOW_DAYS + ' hari terakhir untuk area ini.');
+      throw new Error('Tidak ada adegan Landsat untuk area ini dalam ' +
+        LST_FALLBACK_DAYS[LST_FALLBACK_DAYS.length - 1] + ' hari terakhir.');
     }
     if (!scene.assets.lwir11) throw new Error('Adegan Landsat ini tidak memiliki band lwir11 (ST_B10).');
     if (!scene.assets.qa_pixel) throw new Error('Adegan Landsat ini tidak memiliki band qa_pixel.');
@@ -1053,16 +1067,17 @@
     });
   }
 
-  async function stacBestScene(bounds, period, collection) {
+  async function stacBestScene(bounds, period, collection, options) {
     const collectionId = collection || PC_COLLECTION;
+    const o = options || {};
     const search = async function (cloudLimit) {
       const body = {
         collections: [collectionId],
         bbox: [bounds.west, bounds.south, bounds.east, bounds.north],
         datetime: period.from + 'T00:00:00Z/' + period.to + 'T23:59:59Z',
-        query: { 'eo:cloud_cover': { lt: cloudLimit } },
         limit: 8
       };
+      if (Number.isFinite(cloudLimit)) body.query = { 'eo:cloud_cover': { lt: cloudLimit } };
       const response = await fetch(PC_SEARCH_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1073,11 +1088,18 @@
       return (data && data.features) || [];
     };
 
-    let features = await search(TREND_CLOUD_LIMIT);
-    if (!features.length) features = await search(TREND_CLOUD_FALLBACK);
+    const cloudLimits = Array.isArray(o.cloudLimits)
+      ? o.cloudLimits
+      : [TREND_CLOUD_LIMIT, TREND_CLOUD_FALLBACK];
+    let features = [];
+    for (let i = 0; i < cloudLimits.length && !features.length; i++) {
+      features = await search(cloudLimits[i]);
+    }
     if (!features.length) return null;
     features.sort(function (a, b) {
-      return (a.properties['eo:cloud_cover'] || 0) - (b.properties['eo:cloud_cover'] || 0);
+      const ca = Number.isFinite(a.properties['eo:cloud_cover']) ? a.properties['eo:cloud_cover'] : Infinity;
+      const cb = Number.isFinite(b.properties['eo:cloud_cover']) ? b.properties['eo:cloud_cover'] : Infinity;
+      return ca - cb;
     });
     const best = features[0];
     const cloud = best.properties['eo:cloud_cover'];
