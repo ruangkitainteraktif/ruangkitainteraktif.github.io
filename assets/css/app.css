@@ -7638,6 +7638,16 @@
     #attr-table-sheet.at-soil-table-mode .at-controls { position: sticky; top: 0; z-index: 5; padding: 4px 0 8px; background: var(--bg-primary); }
     #attr-table-sheet.at-soil-table-mode .at-table-wrap { flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; }
     #attr-table-sheet.at-soil-table-mode .at-table th { position: sticky; top: 0; z-index: 6; }
+    .at-soil-taxonomy { flex: 0 0 auto; margin: 0 0 9px; border: 1px solid var(--border-color); border-radius: 9px; background: var(--bg-secondary); color: var(--text-primary); font-size: 11px; }
+    .at-soil-taxonomy summary { padding: 9px 11px; cursor: pointer; font-weight: 700; color: var(--text-primary); }
+    .at-soil-taxonomy[open] { max-height: min(34dvh, 300px); overflow: auto; }
+    .at-soil-taxonomy-note, .at-soil-taxonomy-source { margin: 0 11px 8px; color: var(--text-secondary); line-height: 1.45; }
+    .at-soil-taxonomy-source { font-size: 10px; }
+    .at-soil-taxonomy a { color: #2563eb; }
+    .at-soil-taxonomy-wrap { overflow: auto; margin: 0 8px 8px; }
+    .at-soil-taxonomy table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 10px; }
+    .at-soil-taxonomy th, .at-soil-taxonomy td { padding: 6px 7px; border: 1px solid var(--border-color); text-align: left; vertical-align: top; white-space: normal; }
+    .at-soil-taxonomy th { background: var(--bg-primary); font-weight: 700; }
     #attr-table-sheet .at-sheet-body::-webkit-scrollbar { width: 5px; }
     #attr-table-sheet .at-sheet-body::-webkit-scrollbar-track { background: transparent; }
     #attr-table-sheet .at-sheet-body::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }

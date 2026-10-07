@@ -1339,6 +1339,31 @@
       html += '</div>';
     }
 
+    if (_currentLayer && _currentLayer.id === 'toggleJenisTanahJateng') {
+      html += '<details class="at-soil-taxonomy" open>';
+      html += '<summary>Perbandingan taksonomi tanah</summary>';
+      html += '<p class="at-soil-taxonomy-note">Nama pada peta mengikuti nomenklatur klasik Indonesia (Dudal–Soepraptohardjo/Pusat Penelitian Tanah), bukan kelas USDA atau WRB secara langsung. Padanan berikut bersifat indikatif; perlu data profil dan laboratorium untuk klasifikasi resmi.</p>';
+      html += '<div class="at-soil-taxonomy-wrap"><table><thead><tr><th>Indonesia klasik (nama pada peta)</th><th>USDA Soil Taxonomy (perkiraan)</th><th>FAO/WRB (perkiraan)</th></tr></thead><tbody>';
+      var soilMappings = [
+        ['Aluvial / Glei', 'Entisols / Inceptisols', 'Fluvisols / Gleysols'],
+        ['Andosol', 'Andisols', 'Andosols'],
+        ['Grumusol', 'Vertisols', 'Vertisols'],
+        ['Latosol', 'Inceptisols / Ultisols / Oxisols', 'Cambisols / Nitisols / Ferralsols'],
+        ['Litosol', 'Entisols (Lithic)', 'Leptosols'],
+        ['Mediteran', 'Alfisols (kadang Inceptisols)', 'Luvisols'],
+        ['Regosol', 'Entisols', 'Regosols'],
+        ['Organosol', 'Histosols', 'Histosols'],
+        ['Planosol', 'beberapa Alfisols / Inceptisols', 'Planosols'],
+        ['Renzina', 'Mollisols (Rendolls)', 'Leptosols / Rendzic']
+      ];
+      soilMappings.forEach(function (row) {
+        html += '<tr><td>' + escAttr(row[0]) + '</td><td>' + escAttr(row[1]) + '</td><td>' + escAttr(row[2]) + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+      html += '<p class="at-soil-taxonomy-source">Rujukan: <a href="https://repository.pertanian.go.id/items/fe2764fe-7a1f-49ba-8828-916149d972e5/full" target="_blank" rel="noopener noreferrer">Sukarman dkk., Perkembangan dan Permasalahan Sistem Klasifikasi Tanah di Indonesia</a> · <a href="https://repository.pertanian.go.id/items/fe953d9a-006a-48e1-bf6d-ac050bc4c605" target="_blank" rel="noopener noreferrer">Petunjuk Teknis Klasifikasi Tanah Nasional</a></p>';
+      html += '</details>';
+    }
+
     content.innerHTML = html;
 
     var searchInput = document.getElementById('atSearchInput');

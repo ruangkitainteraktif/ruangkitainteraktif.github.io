@@ -171,6 +171,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
   <link rel="stylesheet" href="assets/css/app.css?v=89">
+  <link rel="stylesheet" href="assets/css/geodisaster.css?v=1">
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
   <link rel="stylesheet" href="assets/css/geotrans-mitradarat.css?v=20261006-geospatial-search-ui">
@@ -696,6 +697,7 @@
             <option value="geotoolsTabGeoPulse">GeoCuaca</option>
             <option value="geotoolsTabGeonusa">GeoNusa</option>
             <option value="geotoolsTabGeoTrans">GeoTrans</option>
+            <option value="geotoolsTabGeoDisaster">GeoDisaster</option>
           </select>
           <button class="gs-sheet-minimize" type="button" aria-label="Minimalkan" onclick="minimizeGeotoolsSheet()">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -2511,6 +2513,26 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
                 </div>
 
+                <div id="geotoolsTabGeoDisaster" class="geotools-main-tab-panel">
+                  <h4 class="gd-title">GeoDisaster · Water Risk 2026</h4>
+                  <p class="geotools-desc gd-intro">Skrining indikator risiko air tingkat provinsi dari data BIG.</p>
+                  <section class="gd-card" aria-labelledby="gd-heading">
+                    <div class="gd-card-head"><span class="gd-icon" aria-hidden="true">💧</span><div><b id="gd-heading">Analisis risiko air</b><small>Air permukaan · air tanah · topografi</small></div></div>
+                    <div class="gd-controls">
+                      <label for="gd-province-select">Pilih provinsi</label>
+                      <select id="gd-province-select"><option value="">Memuat daftar provinsi…</option></select>
+                      <button id="gd-run" type="button" disabled>Analisis Water Risk</button>
+                      <div id="gd-status" role="status" aria-live="polite">Memuat daftar provinsi…</div>
+                    </div>
+                    <div id="gd-results" hidden>
+                      <div class="gd-summary" id="gd-summary"></div>
+                      <div class="gd-chart-wrap"><canvas id="gd-chart" aria-label="Grafik indikator risiko air"></canvas></div>
+                      <div class="gd-table-wrap"><table class="gd-table"><thead><tr><th>Indikator</th><th>Statistik</th><th>Skor skrining</th><th>Cakupan / catatan</th></tr></thead><tbody id="gd-table-body"></tbody></table></div>
+                      <details class="gd-method"><summary>Metode, sumber, dan keterbatasan</summary><div id="gd-method-body"></div></details>
+                    </div>
+                  </section>
+                </div>
+
                 <div id="geotoolsTabGeoFarm" class="geotools-main-tab-panel active">
 
             <!-- ============ KARTU: GeoFarm Analisis ============
@@ -3724,6 +3746,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
      header CORS. -->
 <script src="assets/js/geotani-geooss.js"></script>
   <script src="assets/js/sawah-dilindungi.js"></script>
+  <script src="assets/js/geodisaster.js?v=5"></script>
   <script src="assets/js/fasilitas-umum.js"></script>
   <script src="assets/js/unified-search.js"></script>
   <script src="assets/js/choropleth.js"></script>

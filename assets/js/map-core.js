@@ -3697,6 +3697,12 @@ L.control.scale({
         }
         if (id === 'toggleJenisTanahJateng' && typeof window.toggleJenisTanahJateng === 'function') {
           window.toggleJenisTanahJateng(cb.checked);
+          if (cb.checked && typeof window.openJenisTanahJatengTable === 'function') {
+            window.openJenisTanahJatengTable();
+          }
+          if (cb.checked && typeof window.flyToJenisTanahJateng === 'function') {
+            window.flyToJenisTanahJateng();
+          }
         }
         if (id === 'toggleGeologiBNPB' && typeof window.toggleGeologiBNPB === 'function') {
           window.toggleGeologiBNPB(cb.checked);
