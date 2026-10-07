@@ -1,3 +1,13 @@
+  function closeGeoportalHubOnInitialLoad() {
+    const hub = document.getElementById('geoportalHubCard');
+    if (hub) hub.open = false;
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', closeGeoportalHubOnInitialLoad, { once: true });
+  } else {
+    closeGeoportalHubOnInitialLoad();
+  }
+
   // Turunkan URL WFS dari URL WMS (geoserver.jatimprov.go.id/geoserver/wms -> /geoserver/wfs;
   // endpoint /ows langsung bisa dipakai untuk WMS & WFS).
   function wfsUrlFromWmsUrl(wmsUrl) {
@@ -424,6 +434,17 @@
       container.appendChild(card);
     });
   }
+
+  // Dipakai katalog tematik khusus GeoPortal agar popup mengikuti template
+  // detail properti GeoPortal yang sama dengan hasil klik layer WMS.
+  window.showGeoportalFeatureDetails = function (title, properties, latlng) {
+    const coordsEl = document.getElementById('geoportalModalCoords');
+    if (coordsEl && latlng) coordsEl.textContent = `(${latlng.lng.toFixed(5)}, ${latlng.lat.toFixed(5)})`;
+    const titleEl = document.getElementById('geoportalModalTitle');
+    if (titleEl) titleEl.textContent = title || 'Detail Layer';
+    openGeoportalModal();
+    renderGeoportalDetails([{ layerName: title || 'GeoPortal', properties: properties || {} }]);
+  };
 
   function buildGeoportalFeatureInfoParams(layerName, latlng, wmsUrl = GEOPORTAL_WMS_URL, crs) {
     const resolvedName = resolveGeoportalLayerName(layerName);

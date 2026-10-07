@@ -2813,46 +2813,6 @@ L.control.scale({
       ]
     },
     {
-      cat: 'BIG',
-      subcats: (function () {
-        var g = (typeof window.getFuCatalogGroups === 'function')
-          ? window.getFuCatalogGroups()
-          : { main: [], ctsrt: [], fu: [], digital: [] };
-        var main = g.main && g.main.length ? g.main : [
-          { id: 'toggleFuPadang', label: 'Foto Udara Padang 0715 (BIG)' },
-          { id: 'toggleFuKendari', label: 'Foto Udara Kendari 2024 (BIG)' },
-          { id: 'toggleFuBitung', label: 'Foto Udara Bitung 2024 (BIG)' },
-          { id: 'toggleFuMakassar', label: 'Foto Udara Makassar 2024 (BIG)' },
-          { id: 'toggleFuPlanetScope', label: 'Basemap PlanetScope Des 2025 (BIG)' }
-        ];
-        return [
-          { subcat: 'Utama', layers: main },
-          { subcat: 'Citra CTSRT', layers: g.ctsrt || [] },
-          { subcat: 'Arsip Foto Udara', layers: g.fu || [] },
-          { subcat: 'Peta Digital', layers: g.digital || [] }
-        ];
-      })()
-    },
-    {
-      cat: 'ATRBPN',
-      subcats: [
-        { subcat: 'Tile Populer', layers: [
-          { id: 'toggleBumiPersilLayer', label: 'Persil Tanah (ATRBPN)' },
-          { id: 'toggleRtrwTmsLayer', label: 'RTRW Kabupaten/Kota' },
-          { id: 'toggleLsdTmsLayer', label: 'Lahan Sawah Dilindungi (LSD)' },
-          { id: 'toggleLbsTmsLayer', label: 'Lahan Baku Sawah (LBS)' },
-          { id: 'toggleDiTmsLayer', label: 'Daerah Irigasi' },
-          { id: 'toggleSaluranIrTmsLayer', label: 'Saluran Irigasi' }
-        ]},
-        { subcat: 'Sawah', layers: [
-          { id: 'atrbpn-wms-lsd-umum', label: 'Lahan Sawah Dilindungi' },
-          { id: 'atrbpn-wms-lahanbakusawah-new-sawah', label: 'Lahan Baku Sawah 2024' },
-          { id: 'atrbpn-wms-lsd-12-provinsi-sawah', label: 'LSD 12 Provinsi' },
-          { id: 'atrbpn-wms-lsd-8-provinsi-sawah', label: 'LSD 8 Provinsi' }
-        ]}
-      ]
-    },
-    {
       /* Jaringan bus TransJakarta dan Trans Jogja. Masing-masing punya
        * modul dan panel kendali sendiri. */
       cat: 'Transportasi',
@@ -3045,61 +3005,6 @@ L.control.scale({
           ]}
         ]
       },
-      {
-        cat: 'Sensus Pertanian 2023',
-      subcats: [
-        { subcat: 'Batas Administrasi', layers: [
-          { id: 'st2023:batas_desa', label: 'Batas Desa' },
-          { id: 'st2023:batas_kecamatan', label: 'Batas Kecamatan' },
-          { id: 'st2023:batas_kabupaten', label: 'Batas Kabupaten' },
-          { id: 'st2023:batas_provinsi', label: 'Batas Provinsi' }
-        ]},
-        { subcat: 'Dasymetric UTP', layers: [
-          { id: 'st2023:dasymetric_utp', label: 'Dasymetric UTP (Dasar)' },
-          { id: 'st2023:dasymetric_utp_tp', label: 'Dasymetric UTP Tanaman Pangan' },
-          { id: 'st2023:dasymetric_utp_horti', label: 'Dasymetric UTP Hortikultura' },
-          { id: 'st2023:dasymetric_utp_holti', label: 'Dasymetric UTP Holtikultura' },
-          { id: 'st2023:dasymetric_utp_hutan', label: 'Dasymetric UTP Hutan' },
-          { id: 'st2023:dasymetric_utp_ikan', label: 'Dasymetric UTP Perikanan' },
-          { id: 'st2023:dasymetric_utp_kebun', label: 'Dasymetric UTP Perkebunan' },
-          { id: 'st2023:dasymetric_utp_milenial', label: 'Dasymetric UTP Petani Milenial' },
-          { id: 'st2023:dasymetric_utp_ternak', label: 'Dasymetric UTP Peternakan' },
-          { id: 'st2023:dasymetric_utp_urban', label: 'Dasymetric UTP Urban' }
-        ]},
-        { subcat: 'Geotagging', layers: [
-          { id: 'st2023:geotagging', label: 'Geotagging (Semua)' },
-          { id: 'st2023:geotagging_tanaman_pangan', label: 'Geotagging Tanaman Pangan' },
-          { id: 'st2023:geotagging_hortikultura', label: 'Geotagging Hortikultura' },
-          { id: 'st2023:geotagging_kebun', label: 'Geotagging Perkebunan' },
-          { id: 'st2023:geotagging_hutan', label: 'Geotagging Hutan' },
-          { id: 'st2023:geotagging_ikan', label: 'Geotagging Perikanan' },
-          { id: 'st2023:geotagging_ternak', label: 'Geotagging Peternakan' }
-        ]},
-        { subcat: 'Infrastruktur & Lainnya', layers: [
-          { id: 'st2023:infrastruktur_pertanian', label: 'Infrastruktur Pertanian' },
-          { id: 'st2023:gurem_lahan_vw', label: 'Gurem Lahan' }
-        ]},
-        { subcat: 'UTP IHK 01-17', layers: [
-          { id: 'st2023:utp_ihk_01', label: 'UTP IHK 01' },
-          { id: 'st2023:utp_ihk_02', label: 'UTP IHK 02' },
-          { id: 'st2023:utp_ihk_03', label: 'UTP IHK 03' },
-          { id: 'st2023:utp_ihk_04', label: 'UTP IHK 04' },
-          { id: 'st2023:utp_ihk_05', label: 'UTP IHK 05' },
-          { id: 'st2023:utp_ihk_06', label: 'UTP IHK 06' },
-          { id: 'st2023:utp_ihk_07', label: 'UTP IHK 07' },
-          { id: 'st2023:utp_ihk_08', label: 'UTP IHK 08' },
-          { id: 'st2023:utp_ihk_09', label: 'UTP IHK 09' },
-          { id: 'st2023:utp_ihk_10', label: 'UTP IHK 10' },
-          { id: 'st2023:utp_ihk_11', label: 'UTP IHK 11' },
-          { id: 'st2023:utp_ihk_12', label: 'UTP IHK 12' },
-          { id: 'st2023:utp_ihk_13', label: 'UTP IHK 13' },
-          { id: 'st2023:utp_ihk_14', label: 'UTP IHK 14' },
-          { id: 'st2023:utp_ihk_15', label: 'UTP IHK 15' },
-          { id: 'st2023:utp_ihk_16', label: 'UTP IHK 16' },
-          { id: 'st2023:utp_ihk_17', label: 'UTP IHK 17' }
-        ]}
-      ]
-    },
     {
       cat: 'Gempa & Bencana',
       layers: [
@@ -3249,6 +3154,27 @@ L.control.scale({
       ]
     },
     {
+      cat: 'BIG',
+      subcats: (function () {
+        var g = (typeof window.getFuCatalogGroups === 'function')
+          ? window.getFuCatalogGroups()
+          : { main: [], ctsrt: [], fu: [], digital: [] };
+        var main = g.main && g.main.length ? g.main : [
+          { id: 'toggleFuPadang', label: 'Foto Udara Padang 0715 (BIG)' },
+          { id: 'toggleFuKendari', label: 'Foto Udara Kendari 2024 (BIG)' },
+          { id: 'toggleFuBitung', label: 'Foto Udara Bitung 2024 (BIG)' },
+          { id: 'toggleFuMakassar', label: 'Foto Udara Makassar 2024 (BIG)' },
+          { id: 'toggleFuPlanetScope', label: 'Basemap PlanetScope Des 2025 (BIG)' }
+        ];
+        return [
+          { subcat: 'Utama', layers: main },
+          { subcat: 'Citra CTSRT', layers: g.ctsrt || [] },
+          { subcat: 'Arsip Foto Udara', layers: g.fu || [] },
+          { subcat: 'Peta Digital', layers: g.digital || [] }
+        ];
+      })()
+    },
+    {
       cat: 'Terrain & Lainnya',
       layers: [
         { id: 'toggleDemnasOverlay', label: 'Terrain Overlay (SRTM)' },
@@ -3294,6 +3220,26 @@ L.control.scale({
     savePinnedLayers();
   }
   loadPinnedLayers();
+  var removedCatalogLayerIds = [
+    'toggleBumiPersilLayer', 'toggleRtrwTmsLayer', 'toggleLsdTmsLayer',
+    'toggleLbsTmsLayer', 'toggleDiTmsLayer', 'toggleSaluranIrTmsLayer',
+    'atrbpn-wms-lsd-umum', 'atrbpn-wms-lahanbakusawah-new-sawah',
+    'atrbpn-wms-lsd-12-provinsi-sawah', 'atrbpn-wms-lsd-8-provinsi-sawah',
+    'st2023:batas_desa', 'st2023:batas_kecamatan', 'st2023:batas_kabupaten', 'st2023:batas_provinsi',
+    'st2023:dasymetric_utp', 'st2023:dasymetric_utp_tp', 'st2023:dasymetric_utp_horti',
+    'st2023:dasymetric_utp_holti', 'st2023:dasymetric_utp_hutan', 'st2023:dasymetric_utp_ikan',
+    'st2023:dasymetric_utp_kebun', 'st2023:dasymetric_utp_milenial', 'st2023:dasymetric_utp_ternak',
+    'st2023:dasymetric_utp_urban', 'st2023:geotagging', 'st2023:geotagging_tanaman_pangan',
+    'st2023:geotagging_hortikultura', 'st2023:geotagging_kebun', 'st2023:geotagging_hutan',
+    'st2023:geotagging_ikan', 'st2023:geotagging_ternak', 'st2023:infrastruktur_pertanian',
+    'st2023:gurem_lahan_vw', 'st2023:utp_ihk_01', 'st2023:utp_ihk_02', 'st2023:utp_ihk_03',
+    'st2023:utp_ihk_04', 'st2023:utp_ihk_05', 'st2023:utp_ihk_06', 'st2023:utp_ihk_07',
+    'st2023:utp_ihk_08', 'st2023:utp_ihk_09', 'st2023:utp_ihk_10', 'st2023:utp_ihk_11',
+    'st2023:utp_ihk_12', 'st2023:utp_ihk_13', 'st2023:utp_ihk_14', 'st2023:utp_ihk_15',
+    'st2023:utp_ihk_16', 'st2023:utp_ihk_17'
+  ];
+  _pinnedLayers = _pinnedLayers.filter(function (id) { return removedCatalogLayerIds.indexOf(id) === -1; });
+  savePinnedLayers();
   // Peta Dasar selalu tampil sebagai pin pertama pada katalog layer.
   var _petadasarPinIndex = _pinnedLayers.indexOf('petadasar-bpn');
   if (_petadasarPinIndex >= 0) _pinnedLayers.splice(_petadasarPinIndex, 1);

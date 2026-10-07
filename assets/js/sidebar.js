@@ -229,7 +229,7 @@
        * memanggilnya langsung. */
       if (typeof window.geopanganAutoLoad === 'function') window.geopanganAutoLoad();
     }
-    if (tabId === 'geotoolsTabGeoWatch') {
+    if (tabId === 'geotoolsTabGeoTrans') {
       if (typeof window.loadCctvData === 'function') {
         window.loadCctvData().then(function () {
           if (typeof window.renderCctvList === 'function') window.renderCctvList();
@@ -237,9 +237,9 @@
           console.warn('GeoWatch CCTV load failed on tab activation:', err);
         });
       }
-    }
-    if (tabId === 'geotoolsTabGeoTrans' && typeof window.loadMitraDarat === 'function') {
-      window.loadMitraDarat().catch(function () {});
+      if (typeof window.loadMitraDarat === 'function') {
+        window.loadMitraDarat().catch(function () {});
+      }
     }
     if (typeof map !== 'undefined' && map) setTimeout(function () { map.invalidateSize(); }, 200);
   }

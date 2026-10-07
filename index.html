@@ -115,7 +115,7 @@
       "Citra Satelit BMKG - GK-2A IR, Water Vapor, Rainfall",
       "Citra Satelit - MODIS Terra/Aqua, VIIRS NOAA-20/21/SNPP, OCI PACE True Color, Sentinel-1 RTC, Sentinel-2",
       "Data Statistik Indonesia - 84.503 Desa/Kelurahan, 7.432 Kecamatan, 541 Kabupaten/Kota, 38 Provinsi dari BIG RBI edisi Juni 2026",
-      "Peta Interaktif - Basemap vektor & satelit, layer catalog 55+ layer per 9 kategori, pencarian wilayah, geolokasi GPS",
+      "Peta Interaktif - Basemap vektor & satelit, katalog layer tematik, pencarian wilayah, geolokasi GPS",
       "Cetak Peta - Export PDF dengan preview, auto overlay legenda, koordinat, dan skala peta",
       "Gambar & Ukur - Titik, garis, poligon, rectangle, circle + ukur jarak & luas, export GeoJSON",
       "GeoTools - Import SHP, GeoJSON, GPX, Timeline, KMZ, animasi GPX dan export video",
@@ -249,7 +249,7 @@
               <div class="welcome-feature-icon icon-geoid">🗺️</div>
               <div class="welcome-feature-info">
                 <div class="welcome-feature-name">Peta Interaktif</div>
-                <div class="welcome-feature-desc">Basemap vektor & satelit, layer catalog 55+ layer per 9 kategori, pencarian wilayah, geolokasi GPS, dan reverse geocode otomatis.</div>
+                <div class="welcome-feature-desc">Basemap vektor & satelit, katalog layer tematik, pencarian wilayah, geolokasi GPS, dan reverse geocode otomatis.</div>
               </div>
             </div>
             <!-- Gambar & Ukur -->
@@ -684,7 +684,6 @@
             <option value="geotoolsTabDemnas">GeoRaster</option>
             <option value="geotoolsTabGeoPulse">GeoCuaca</option>
             <option value="geotoolsTabGeonusa">GeoNusa</option>
-            <option value="geotoolsTabGeoWatch">GeoWatch</option>
             <option value="geotoolsTabGeoTrans">GeoTrans</option>
           </select>
           <button class="gs-sheet-minimize" type="button" aria-label="Minimalkan" onclick="minimizeGeotoolsSheet()">
@@ -1064,8 +1063,8 @@
         <div id="tab-cctv" class="tab-content">
           <div style="text-align:center; padding:40px 20px;">
             <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#94a3b8" stroke-width="1.5" style="margin-bottom:12px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            <p class="geotools-desc">GeoWatch sekarang ada di tab <b>GeoTools</b>.</p>
-             <button onclick="openTab(null, 'tab-geotools'); setTimeout(function(){ var dd = document.querySelector('.geotools-dropdown'); if(dd){ dd.value='geotoolsTabGeoWatch'; dd.dispatchEvent(new Event('change')); } }, 200);" style="padding:8px 16px; font-size:12px; font-weight:600; color:#fff; background:#0891b2; border:none; border-radius:6px; cursor:pointer;">Buka GeoTools → GeoWatch</button>
+            <p class="geotools-desc">Pencarian CCTV sekarang ada di tab <b>GeoTools → GeoTrans</b>.</p>
+             <button onclick="openTab(null, 'tab-geotools'); setTimeout(function(){ var dd = document.querySelector('.geotools-dropdown'); if(dd){ dd.value='geotoolsTabGeoTrans'; dd.dispatchEvent(new Event('change')); } }, 200);" style="padding:8px 16px; font-size:12px; font-weight:600; color:#fff; background:#0891b2; border:none; border-radius:6px; cursor:pointer;">Buka GeoTools → GeoTrans</button>
           </div>
         </div>
 
@@ -1463,24 +1462,9 @@
      .cctv-card, .cctv-card-header, dan .cctv-card-body dipakai bersama
      dengan panel GeoPulse; gayanya tetap, hanya pemakaian di sini yang
      hilang. -->
-          <!-- Panel: GeoWatch
-               September 2026: kartu .cctv-card + .cctv-card-header (pita biru
-               gradien) diganti <details> yang mengikuti .gt-card-head, sama seperti
-               kartu GeoFarm dan GeoTani, dan mulai terlipat. Panel ini satu-satunya
-               di GeoTools yang belum ikut template itu.
-
-               Handle .cctv-sheet-handle yang memanggil toggleCctvSheet() ikut
-               dihapus: aturannya display:none di semua viewport, jadi tidak pernah
-               bisa diklik. toggleCctvSheet() di cctv.js dihapus karena tidak ada
-               pemanggilnya lagi.
-
-               .cctv-search-body dipertahankan pada pembungkus isian, sehingga gaya
-               input dan select tidak berubah. -->
-          <div id="geotoolsTabGeoWatch" class="geotools-main-tab-panel">
-      <h4 style="font-size:15px; margin-bottom:4px;">CCTV Analysis</h4>
-      <p class="geotools-desc" style="margin-bottom:12px;">Klik pencarian untuk melihat lokasi cctv.</p>
-      <div id="cctv-search-sheet">
-
+          <!-- Kartu pencarian CCTV GeoWatch dikelompokkan di tab GeoTrans. -->
+          <div id="geotoolsTabGeoTrans" class="geotools-main-tab-panel">
+            <div id="cctv-search-sheet">
               <details class="geowatch-cctv" aria-labelledby="geowatchCctvTitle">
                 <summary class="gt-card-head">
                   <span class="gt-card-icon" aria-hidden="true">&#128249;</span>
@@ -1499,17 +1483,12 @@
                       <option value="">Pilih wilayah</option>
                     </select>
                   </div>
-                  <div id="cctvStatus" class="cctv-message">Buka tab CCTV untuk memuat daftar.</div>
+                  <div id="cctvStatus" class="cctv-message">Buka GeoTrans untuk memuat daftar CCTV.</div>
                   <div id="cctvResults" class="cctv-results"></div>
                   <button id="geowatchResetLayersBtn" class="geopangan-btn geopangan-reset-btn geotools-reset-layer-btn" type="button" title="Reset layer CCTV dan jalan GeoWatch" aria-label="Reset layer GeoWatch">Reset Layer GeoWatch</button>
                 </div>
               </details>
             </div>
-          </div>
-
-
-          <!-- Panel mandiri GeoTrans: operator, rute, dan halte angkutan umum. -->
-          <div id="geotoolsTabGeoTrans" class="geotools-main-tab-panel">
             <details class="geotrans-card" aria-labelledby="geotransPageTitle">
               <summary class="gt-card-head">
                 <span class="gt-card-icon" aria-hidden="true">
@@ -2339,7 +2318,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                   <h4 style="font-size:15px; margin-bottom:4px;">GeoPortal Hub</h4>
                   <p class="geotools-desc" style="margin-bottom:20px;">Pilih wilayah untuk ditampilkan di peta</p>
 
-                  <details class="geoportal-card" aria-labelledby="geoportalHubTitle">
+                  <details class="geoportal-card" id="geoportalHubCard" aria-labelledby="geoportalHubTitle">
                     <summary class="gt-card-head">
                       <span class="gt-card-icon" aria-hidden="true">📂</span>
                       <span>
@@ -2357,6 +2336,41 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                         </div>
                       </div>
                       <div id="geoportalLayerList"></div>
+                    </div>
+                  </details>
+
+                  <details class="geotani-kta-card geojogja-card" id="geojogja-card" aria-labelledby="geojogja-title">
+                    <summary class="gt-card-head">
+                      <span class="gt-card-icon" aria-hidden="true">&#127759;</span>
+                      <span>
+                        <b id="geojogja-title">GeoJogja</b>
+                        <small>Pilih layer tematik dari Geoportal DIY</small>
+                      </span>
+                    </summary>
+                    <div class="geojogja-body">
+                      <label class="geojogja-layer-label" for="geojogjaLayerSelect">Layer GeoJogja</label>
+                      <select id="geojogjaLayerSelect" class="geotani-form-select" aria-label="Pilih layer GeoJogja">
+                        <option value="soil">Jenis Tanah</option>
+                        <option value="landuse">Tata Guna Lahan</option>
+                        <option value="lsd">Lahan Sawah Dilindungi</option>
+                        <option value="rdtrYia">Pola Ruang RDTR YIA 2022</option>
+                      </select>
+                      <div class="geojogja-toolbar">
+                        <button id="geojogjaLoadBtn" class="geotools-btn geotools-btn--green" type="button">Tampilkan layer &amp; tabel</button>
+                        <button id="geojogjaHideBtn" class="geotools-btn" type="button" hidden>Sembunyikan layer</button>
+                      </div>
+                      <p id="geojogjaStatus" class="geojogja-status" role="status">Sumber: Geoportal DIY · Jenis tanah</p>
+                      <div id="geojogjaTableWrap" class="geojogja-table-wrap" hidden>
+                        <table class="geojogja-table">
+                          <thead><tr><th>No.</th><th>Jenis tanah</th><th>Tekstur</th><th>Infiltrasi</th><th>Luas</th></tr></thead>
+                          <tbody id="geojogjaTableBody"></tbody>
+                        </table>
+                      </div>
+                      <div id="geojogjaPagination" class="geojogja-pagination" hidden>
+                        <button id="geojogjaPrevPage" class="geotools-btn" type="button">Sebelumnya</button>
+                        <span id="geojogjaPageInfo" aria-live="polite"></span>
+                        <button id="geojogjaNextPage" class="geotools-btn" type="button">Berikutnya</button>
+                      </div>
                     </div>
                   </details>
 
@@ -3559,6 +3573,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/petadasar-export.js"></script>
 
     <script src="assets/js/geoportal.js?v=20261006-search-big-catalog"></script>
+    <script src="assets/js/geojogja.js?v=20261007"></script>
     <script src="assets/js/demnas-download.js"></script>
     <script src="assets/js/geoportal-search.js"></script>
     <script src="assets/js/sidebar.js?v=20261006-reset-all-on-exit"></script>
