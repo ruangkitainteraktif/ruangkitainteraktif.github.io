@@ -1867,6 +1867,134 @@
     { label: 'Jenuh', min: 178, max: 256, rgb: [116, 173, 209] }
   ];
 
+  /* SoilGrids WCS: median surface predictions sampled and masked to a drawn
+     polygon. The existing SoilGrids WMS layers are visual overlays only. */
+  const SOILGRIDS_WCS_BASE = 'https://maps.isric.org/mapserv';
+  const SOILGRIDS_CRS_4326 = 'http://www.opengis.net/def/crs/EPSG/0/4326';
+  const SOILGRIDS_PROPERTIES = [
+    { key: 'phh2o', label: 'pH tanah (H₂O)', unit: 'pH', factor: 10 },
+    { key: 'soc', label: 'Karbon organik tanah', unit: 'g/kg', factor: 10 },
+    { key: 'nitrogen', label: 'Nitrogen total', unit: 'g/kg', factor: 100 },
+    { key: 'clay', label: 'Liat', unit: '%', factor: 10 },
+    { key: 'sand', label: 'Pasir', unit: '%', factor: 10 },
+    { key: 'silt', label: 'Debu', unit: '%', factor: 10 },
+    { key: 'cec', label: 'Kapasitas tukar kation (CEC)', unit: 'cmol(+)/kg', factor: 10 },
+    { key: 'bdod', label: 'Bulk density', unit: 'kg/dm³', factor: 100 },
+    { key: 'cfvo', label: 'Fragmen kasar', unit: '%', factor: 10 },
+    { key: 'wv0010', label: 'Kadar air pada 10 kPa', unit: '% vol.', factor: 10 },
+    { key: 'wv0033', label: 'Kadar air pada 33 kPa', unit: '% vol.', factor: 10 },
+    { key: 'wv1500', label: 'Kadar air pada 1500 kPa', unit: '% vol.', factor: 10 }
+  ];
+
+  function soilGridsCoverageUrl(property, bounds) {
+    const params = new URLSearchParams({
+      map: '/map/' + property.key + '.map',
+      SERVICE: 'WCS', VERSION: '2.0.1', REQUEST: 'GetCoverage',
+      COVERAGEID: property.key + '_0-5cm_Q0.5',
+      FORMAT: 'GEOTIFF_INT16',
+      SUBSETTINGCRS: SOILGRIDS_CRS_4326,
+      OUTPUTCRS: SOILGRIDS_CRS_4326
+    });
+    params.append('SUBSET', 'X(' + bounds.west + ',' + bounds.east + ')');
+    params.append('SUBSET', 'Y(' + bounds.south + ',' + bounds.north + ')');
+    return SOILGRIDS_WCS_BASE + '?' + params.toString();
+  }
+
+  async function fetchSoilGridsRaster(url) {
+    if (typeof window.geoidFetchWithProxy === 'function') {
+      return window.geoidFetchWithProxy(url, FETCH_TIMEOUT);
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(function () { controller.abort(); }, FETCH_TIMEOUT);
+    try {
+      return await fetch(url, { signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function runSoilGrids(item, onStatus) {
+    if (!window.GeoTIFF || typeof window.GeoTIFF.fromBlob !== 'function') {
+      throw new Error('Library GeoTIFF belum termuat.');
+    }
+    const results = [];
+    let insideCount = 0;
+    for (let p = 0; p < SOILGRIDS_PROPERTIES.length; p++) {
+      const property = SOILGRIDS_PROPERTIES[p];
+      onStatus('SoilGrids ' + (p + 1) + '/' + SOILGRIDS_PROPERTIES.length + ' · ' + property.label + '…');
+      try {
+      const url = soilGridsCoverageUrl(property, item.bounds);
+      const response = await fetchSoilGridsRaster(url);
+      if (!response.ok) throw new Error(property.label + ': HTTP ' + response.status);
+      const blob = await response.blob();
+      if (!blob.size) throw new Error(property.label + ': raster kosong.');
+      const tiff = await window.GeoTIFF.fromBlob(blob);
+      const image = await tiff.getImage();
+      const rasters = await image.readRasters();
+      if (!rasters || !rasters.length) throw new Error(property.label + ': raster tidak berisi band.');
+      const width = image.getWidth();
+      const height = image.getHeight();
+      const bbox = image.getBoundingBox();
+      const geo = Array.isArray(bbox) && bbox.length === 4 && Number.isFinite(bbox[0]) && Number.isFinite(bbox[2]) && bbox[2] > bbox[0]
+        ? { minX: bbox[0], minY: bbox[1], maxX: bbox[2], maxY: bbox[3] }
+        : { minX: item.bounds.west, minY: item.bounds.south, maxX: item.bounds.east, maxY: item.bounds.north };
+      const mask = rasterizeMask(item.rings, { width: width, height: height, geo: geo });
+      const values = [];
+      const rasterValues = rasters[0];
+      const noData = typeof image.getGDALNoData === 'function' ? image.getGDALNoData() : null;
+      let inside = 0;
+      for (let i = 0; i < mask.length; i++) {
+        if (!mask[i]) continue;
+        inside++;
+        const raw = Number(rasterValues[i]);
+        if (!Number.isFinite(raw) || (noData !== null && raw === noData) || raw <= -32000) continue;
+        values.push(raw / property.factor);
+      }
+      insideCount = Math.max(insideCount, inside);
+      if (!values.length) {
+        results.push({ property: property, count: 0, mean: NaN, min: NaN, max: NaN, p10: NaN, median: NaN, p90: NaN });
+        continue;
+      }
+      values.sort(function (a, b) { return a - b; });
+      const sum = values.reduce(function (total, value) { return total + value; }, 0);
+      results.push({
+        property: property, count: values.length, mean: sum / values.length,
+        min: values[0], max: values[values.length - 1],
+        p10: soilPercentile(values, 10), median: soilPercentile(values, 50), p90: soilPercentile(values, 90)
+      });
+      } catch (error) {
+        results.push({ property: property, count: 0, error: error && error.message ? error.message : 'Layanan tidak tersedia.' });
+      }
+    }
+    if (!results.some(function (row) { return row.count; })) {
+      const failure = results.filter(function (row) { return row.error; })[0];
+      throw new Error(failure
+        ? 'Layanan SoilGrids gagal (' + failure.property.label + '): ' + failure.error
+        : 'Tidak ada piksel SoilGrids valid di dalam polygon. Coba polygon yang lebih luas.');
+    }
+    item.soilGrids = { results: results, inside: insideCount, size: '±250 m/piksel', depth: '0–5 cm', quantile: 'Q0.50' };
+    return item.soilGrids;
+  }
+
+  function soilGridsBlockHtml(item) {
+    if (item.soilGridsError) return '<div class="pa-block pa-block-error">' + escapeHtml(item.soilGridsError) + '</div>';
+    if (!item.soilGrids) return '<div class="pa-block pa-block-muted">Belum ada hasil SoilGrids. Nilai akan dihitung untuk piksel yang masuk ke polygon.</div>';
+    const rows = item.soilGrids.results.map(function (row) {
+      if (row.error) return '<tr><th>' + escapeHtml(row.property.label) + '</th><td colspan="4">Gagal mengambil data: ' + escapeHtml(row.error) + '</td></tr>';
+      if (!row.count) return '<tr><th>' + escapeHtml(row.property.label) + '</th><td colspan="4">Tidak ada piksel valid</td></tr>';
+      return '<tr><th>' + escapeHtml(row.property.label) + '</th><td>' + fmt(row.mean, 2) + ' ' + escapeHtml(row.property.unit) + '</td><td>' + fmt(row.min, 2) + '–' + fmt(row.max, 2) + '</td><td>' + fmt(row.p10, 2) + ' / ' + fmt(row.median, 2) + ' / ' + fmt(row.p90, 2) + '</td><td>' + row.count.toLocaleString('id-ID') + '</td></tr>';
+    }).join('');
+    return '<div class="pa-sg-table-wrap"><table class="pa-sg-table"><thead><tr><th>Parameter</th><th>Rata-rata</th><th>Rentang</th><th>Sebaran piksel P10 / median / P90</th><th>Piksel</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+      '<div class="pa-meta">Prediksi median ' + escapeHtml(item.soilGrids.quantile) + ' · kedalaman ' + escapeHtml(item.soilGrids.depth) + ' · resolusi sumber ' + escapeHtml(item.soilGrids.size) + ' · ' + item.soilGrids.inside.toLocaleString('id-ID') + ' piksel di dalam polygon.</div>';
+  }
+
+  function soilGridsCaveatHtml() {
+    return '<div class="pa-sg-caveat"><b>Interpretasi &amp; keterbatasan</b><br>' +
+      'SoilGrids adalah prediksi model global berbasis profil tanah dan covariate lingkungan, bukan hasil uji laboratorium di petak ini. Resolusi 250 m membuat piksel dapat mencampur kondisi beberapa lahan; polygon kecil bisa hanya mencakup sedikit piksel. Kedalaman properti di sini 0–5 cm, sehingga tidak mewakili seluruh zona akar. Laporan memakai median prediksi Q0.50; P10/P90 di tabel menunjukkan sebaran piksel di polygon, bukan interval ketidakpastian model. Akurasi berbeda menurut properti dan wilayah; gunakan sebagai screening awal, lalu validasi dengan sampel tanah setempat. ' +
+      '<a href="https://docs.isric.org/globaldata/soilgrids/SoilGrids_faqs_01.html" target="_blank" rel="noopener noreferrer">Metode &amp; akurasi ISRIC</a> · ' +
+      '<a href="https://docs.isric.org/globaldata/soilgrids/SoilGrids_faqs_04.html" target="_blank" rel="noopener noreferrer">Batas penggunaan lokal</a></div>';
+  }
+
   function soilFindBin(value) {
     for (let i = 0; i < SOIL_HIST_BINS.length; i++) {
       if (value >= SOIL_HIST_BINS[i].min && value < SOIL_HIST_BINS[i].max) return SOIL_HIST_BINS[i];
@@ -3826,8 +3954,22 @@
         '</div>' +
       '</div>' +
       '<div class="pa-section' + (isSectionCollapsed(item, 'soil') ? ' is-collapsed' : '') + '">' +
-        sectionHeadHtml(item, 'soil', 'Kelembapan Tanah') +
+        sectionHeadHtml(item, 'soil', 'Karakteristik Tanah') +
         '<div class="pa-section-body">' +
+        (item.soilBusy ? '<div class="pa-block pa-block-muted"><span class="pa-spin"></span>' + escapeHtml(item.busy || 'Mengambil data kelembapan tanah…') + '</div>' : '') +
+        soilBlockHtml(item) +
+        (item.soilWeeklyBusy ? '<div class="pa-block pa-block-muted"><span class="pa-spin"></span>' + escapeHtml(item.busy || 'Mengambil data kelembapan tanah mingguan…') + '</div>' : '') +
+        soilWeeklyBlockHtml(item) +
+        (item.soilYearlyBusy ? '<div class="pa-block pa-block-muted"><span class="pa-spin"></span>' + escapeHtml(item.busy || 'Mengambil data kelembapan tanah tahunan…') + '</div>' : '') +
+        soilYearlyBlockHtml(item) +
+        '<div class="pa-sg-subsection"><h4>Karakteristik tanah · SoilGrids</h4>' +
+        soilGridsCaveatHtml() +
+        '<button class="pa-btn pa-btn-ghost" type="button" data-pa-action="soilgrids" data-pa-id="' + item.id + '"' +
+          (item.soilGridsBusy ? ' disabled' : '') + '>' +
+          (item.soilGridsBusy ? 'Mengambil SoilGrids…' : (item.soilGrids ? 'Perbarui analisis SoilGrids' : 'Analisis polygon dengan SoilGrids')) + '</button>' +
+        (item.soilGridsBusy ? '<div class="pa-block pa-block-muted"><span class="pa-spin"></span>' + escapeHtml(item.soilGridsProgress || 'Mengambil prediksi tanah…') + '</div>' : '') +
+        soilGridsBlockHtml(item) +
+        '</div>' +
         '<div class="pa-btn-row">' +
           '<button class="pa-btn pa-btn-ghost" type="button" data-pa-action="soil-weekly" data-pa-id="' + item.id + '"' +
             (item.soilWeeklyBusy ? ' disabled' : '') + '>' +
@@ -3841,12 +3983,6 @@
             (item.soilYearlyBusy ? ' disabled' : '') + '>' +
             (item.soilYearlyBusy ? 'Memuat…' : 'Analisis SOIL_yearly') + '</button>' +
         '</div>' +
-        (item.soilBusy ? '<div class="pa-block pa-block-muted"><span class="pa-spin"></span>' + escapeHtml(item.busy || 'Mengambil data kelembapan tanah…') + '</div>' : '') +
-        soilBlockHtml(item) +
-        (item.soilWeeklyBusy ? '<div class="pa-block pa-block-muted"><span class="pa-spin"></span>' + escapeHtml(item.busy || 'Mengambil data kelembapan tanah mingguan…') + '</div>' : '') +
-        soilWeeklyBlockHtml(item) +
-        (item.soilYearlyBusy ? '<div class="pa-block pa-block-muted"><span class="pa-spin"></span>' + escapeHtml(item.busy || 'Mengambil data kelembapan tanah tahunan…') + '</div>' : '') +
-        soilYearlyBlockHtml(item) +
         '</div>' +
       '</div>' +
       '</div>';
@@ -4317,6 +4453,10 @@
     item.soilYearly = null;
     item.soilYearlyError = null;
     item.soilYearlyBusy = false;
+    item.soilGrids = null;
+    item.soilGridsError = null;
+    item.soilGridsBusy = false;
+    item.soilGridsProgress = null;
     item.manualResult = null;
     item.manualError = null;
 
@@ -4575,6 +4715,29 @@
           item.soilYearlyError = error && error.message ? error.message : 'Gagal memuat data kelembapan tanah tahunan.';
           render();
         });
+      return;
+    }
+
+    if (action === 'soilgrids') {
+      if (item.soilGridsBusy) return;
+      item.soilGridsBusy = true;
+      item.soilGridsError = null;
+      item.soilGridsProgress = 'Menyiapkan permintaan SoilGrids…';
+      render();
+      runSoilGrids(item, function (text) {
+        item.soilGridsProgress = text;
+        render();
+      }).then(function () {
+        item.soilGridsBusy = false;
+        item.soilGridsProgress = null;
+        render();
+      }).catch(function (error) {
+        item.soilGridsBusy = false;
+        item.soilGridsProgress = null;
+        item.soilGrids = null;
+        item.soilGridsError = error && error.message ? error.message : 'Gagal menganalisis SoilGrids.';
+        render();
+      });
       return;
     }
 
@@ -4999,6 +5162,10 @@
       airError: null,
       airBusy: false,
       airTanamanId: 'padi',
+      soilGrids: null,
+      soilGridsError: null,
+      soilGridsBusy: false,
+      soilGridsProgress: null,
       /* Dua mode analisis. 'auto' memakai jalur lama apa adanya (ArcGIS
          exportImage, adegan terbaru, tiga index beruntun) dan jadi default
          supaya tidak ada yang berubah bagi pengguna yang sudah biasa.

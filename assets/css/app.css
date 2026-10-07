@@ -322,6 +322,33 @@
       border-radius: 16px;
       box-shadow: 0 4px 16px rgba(0,0,0,.08), 0 12px 40px rgba(0,0,0,.06);
     }
+    .geonusa-unified-toggle {
+      display: flex; align-items: center; justify-content: center; flex: 0 0 28px;
+      width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%;
+      background: rgba(20,184,166,.11); color: #0f766e; cursor: pointer;
+      transition: background .15s, transform .15s;
+    }
+    .geonusa-unified-toggle:hover, .geonusa-unified-toggle[aria-expanded="true"] { background: rgba(20,184,166,.24); transform: scale(1.08); }
+    .geonusa-unified-panel {
+      display: grid; gap: 9px; width: 100%; box-sizing: border-box; margin-top: 6px; padding: 14px;
+      max-height: min(72vh, 520px); overflow: auto; background: rgba(255,255,255,.96);
+      backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid rgba(255,255,255,.7); border-radius: 16px;
+      box-shadow: 0 8px 28px rgba(0,0,0,.16); scrollbar-width: thin;
+    }
+    .geonusa-unified-panel[hidden] { display: none; }
+    .geonusa-unified-heading { display: grid; gap: 3px; margin-bottom: 2px; }
+    .geonusa-unified-heading strong { font-size: 13px; color: #0f172a; }
+    .geonusa-unified-heading span { min-height: 14px; color: #64748b; font-size: 11px; }
+    .geonusa-unified-panel label { display: grid; gap: 4px; color: #475569; font-size: 11px; font-weight: 600; }
+    .geonusa-unified-panel select {
+      width: 100%; min-height: 38px; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 9px;
+      background: #fff; color: #0f172a; font: 12px 'Google Sans','Segoe UI',sans-serif;
+    }
+    .geonusa-unified-panel select:disabled { color: #94a3b8; background: #f8fafc; }
+    .geonusa-search-btn { min-height: 38px; border: 0; border-radius: 9px; background: #0f766e; color: #fff; font: 600 12px 'Google Sans','Segoe UI',sans-serif; cursor: pointer; }
+    .geonusa-search-btn:hover:not(:disabled) { background: #115e59; }
+    .geonusa-search-btn:disabled { background: #cbd5e1; color: #64748b; cursor: not-allowed; }
     .unified-ac-group { padding: 6px 0; }
     .unified-ac-group + .unified-ac-group { border-top: 1px solid rgba(0,0,0,.06); }
     .unified-ac-label {
@@ -13765,6 +13792,19 @@ details[open] > .gt-card-head::after {
   padding: 4px 6px;
 }
 .pa-soil-row-detail { grid-template-columns: 40px repeat(6, 1fr); font-size: 9px; }
+.pa-sg-subsection { display: grid; gap: 7px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-color); }
+.pa-sg-subsection h4 { margin: 0; color: var(--text-primary); font-size: 11px; }
+.pa-sg-caveat { padding: 8px; border: 1px solid rgba(217,119,6,.25); border-radius: 8px; background: rgba(245,158,11,.07); color: var(--text-secondary); font-size: 10px; line-height: 1.5; }
+.pa-sg-caveat b { color: var(--text-primary); }
+.pa-sg-caveat a { color: #2563eb; text-decoration: underline; }
+.pa-sg-table-wrap { max-width: 100%; overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px; }
+.pa-sg-table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 9.5px; }
+.pa-sg-table th, .pa-sg-table td { padding: 6px 7px; border-bottom: 1px solid var(--border-color); text-align: right; white-space: nowrap; }
+.pa-sg-table th:first-child, .pa-sg-table td:first-child { text-align: left; }
+.pa-sg-table thead th { background: var(--bg-secondary); color: var(--text-secondary); font-size: 9px; }
+.pa-sg-table tbody th { color: var(--text-primary); font-weight: 600; }
+.pa-sg-table tbody td { color: var(--text-secondary); }
+.pa-sg-table tbody tr:last-child th, .pa-sg-table tbody tr:last-child td { border-bottom: 0; }
 .pa-soil-band { font-weight: 700; color: var(--text-primary); }
 .pa-soil-stat { color: var(--text-secondary); }
 

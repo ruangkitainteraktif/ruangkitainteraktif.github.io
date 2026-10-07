@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=87">
+  <link rel="stylesheet" href="assets/css/app.css?v=89">
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
   <link rel="stylesheet" href="assets/css/geotrans-mitradarat.css?v=20261006-geospatial-search-ui">
@@ -435,6 +435,9 @@
         <button type="button" id="resetLayersBtn" class="reset-layers-search-btn" title="Reset semua layer" style="display:none">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
         </button>
+        <button type="button" id="geonusaUnifiedToggle" class="geonusa-unified-toggle" title="GeoNusa Hub · pencarian batas desa BIG" aria-label="Buka GeoNusa Hub" aria-expanded="false" aria-controls="geonusaUnifiedPanel">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+        </button>
         <button type="button" id="aiAnalysisBtn" class="ai-trigger-btn" title="AI Geospatial Analysis (Beta)">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/><polyline points="2 15.5 12 8.5 22 15.5"/><line x1="12" y1="2" x2="12" y2="8.5"/></svg>
         </button>
@@ -443,6 +446,14 @@
         </button>
       </div>
       <div id="unifiedSearchResults" class="unified-search-results"></div>
+      <section id="geonusaUnifiedPanel" class="geonusa-unified-panel" aria-label="Pencarian batas administrasi BIG" hidden>
+        <div class="geonusa-unified-heading"><strong>Telusuri batas administrasi</strong><span id="geonusaUnifiedStatus" role="status" aria-live="polite">Pilih provinsi untuk memulai.</span></div>
+        <label>Provinsi<select id="geonusaProvince" disabled><option value="">Memuat provinsi…</option></select></label>
+        <label>Kabupaten/Kota<select id="geonusaKabupaten" disabled><option value="">Pilih provinsi dahulu</option></select></label>
+        <label>Kecamatan<select id="geonusaKecamatan" disabled><option value="">Pilih kabupaten/kota dahulu</option></select></label>
+        <label>Desa/Kelurahan<select id="geonusaDesa" disabled><option value="">Pilih kecamatan dahulu</option></select></label>
+        <button type="button" id="geonusaSearchBtn" class="geonusa-search-btn" disabled>Cari polygon</button>
+      </section>
       <div id="layerCatalogDropdown" class="layer-catalog-dropdown"></div>
     </div>
 
@@ -679,7 +690,7 @@
         <div class="gs-sheet-actions">
           <select class="geotools-dropdown" onchange="openGeotoolsMainTab(this)">
             <option value="geotoolsTabGeoportal">GeoPortal</option>
-            <option value="geotoolsTabGeoOss">GeoOSS</option>
+            <option value="geotoolsTabGeoOss" hidden>GeoOSS</option>
             <option value="geotoolsTabGeoFarm" selected>GeoFarm</option>
             <option value="geotoolsTabDemnas">GeoRaster</option>
             <option value="geotoolsTabGeoPulse">GeoCuaca</option>
@@ -2624,7 +2635,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                         <dd>Mirip NDVI, tapi lebih peka untuk membedakan tanaman yang sudah rapat dedaulnya.</dd>
                         <dt>LST</dt>
                         <dd>Suhu permukaan lahan. Berguna untuk melihat petak yang terasa lebih panas dari sekitarnya, misalnya yang lebih kering.</dd>
-                        <dt>Kelembapan Tanah</dt>
+                        <dt>Karakteristik Tanah</dt>
                       <dd>Menunjukkan seberapa basah tanah di beberapa kedalaman. Bukan ukuran langsung, jadi lebih baik dibaca sebagai gambaran umum.</dd>
                       </dl>
                     </li>
@@ -3642,7 +3653,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 <!-- geofarm-report.js hanya Menyediakan window.setGeoFarmReportIndexSpecs(),
      jadi harus dimuat sebelum polygon-analysis.js memanggilnya. -->
 <script src="assets/js/geofarm-report.js"></script>
-<script src="assets/js/polygon-analysis.js?v=20261007-preserve-drawn-analysis"></script>
+<script src="assets/js/polygon-analysis.js?v=20261007-soilgrids-analysis-soil-heading"></script>
 
   <script src="assets/js/app-boot.js"></script>
 
@@ -3655,6 +3666,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/dukcapil-population.js"></script>
   <script src="assets/data/kode_wilayah.js"></script>
   <script src="assets/js/geoid-wilayah.js"></script>
+  <script src="assets/js/geonusa-unified.js?v=20261007-local-search"></script>
   <script src="assets/js/geofarm-rekomendasi-pupuk.js"></script>
   <script src="assets/js/weather-data.js"></script>
   <script src="assets/js/weather-bmkg.js"></script>
