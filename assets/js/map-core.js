@@ -3091,6 +3091,10 @@ L.control.scale({
           { id: 'toggleSpei6m', label: 'SPEI 6 Bulan' },
           { id: 'toggleSpei9m', label: 'SPEI 9 Bulan' },
           { id: 'toggleSpei12m', label: 'SPEI 12 Bulan' }
+        ]},
+        { subcat: 'Data Iklim BMKG', layers: [
+          { id: 'toggleBmkgCurahHujan', label: 'Curah Hujan (BMKG)' },
+          { id: 'toggleBmkgHariHujan', label: 'Hari Hujan (BMKG)' }
         ]}
       ]
     },
@@ -3132,7 +3136,8 @@ L.control.scale({
           { id: 'toggleGeostruktur', label: 'Geologi Geostruktur (BIG)' },
           { id: 'togglePatahanAktif', label: 'Patahan Aktif 1:50K (BIG)' },
           { id: 'toggleLikuifaksi', label: 'Kerentanan Likuifaksi (BIG)' },
-          { id: 'toggleKarst', label: 'Kawasan Bentang Alam Karst (BIG)' }
+          { id: 'toggleKarst', label: 'Kawasan Bentang Alam Karst (BIG)' },
+          { id: 'toggleBouguerBMKG', label: 'Anomali Bouguer Indonesia (BMKG)' }
         ]},
         { subcat: 'WRB', layers: [
           { id: 'isric-soil-wrb', label: 'WRB — Kelas tanah paling mungkin' },
@@ -3601,6 +3606,9 @@ L.control.scale({
           (id === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') ||
           (id === 'toggleJenisTanahJateng' && typeof window.toggleJenisTanahJateng === 'function') ||
           (id === 'toggleGeologiArcGISOnline' && typeof window.toggleGeologiArcGISOnline === 'function') ||
+          (id === 'toggleBouguerBMKG' && typeof window.toggleBouguerBMKG === 'function') ||
+          (id === 'toggleBmkgCurahHujan' && typeof window.toggleBmkgCurahHujan === 'function') ||
+          (id === 'toggleBmkgHariHujan' && typeof window.toggleBmkgHariHujan === 'function') ||
           (id.indexOf('isric-soil-') === 0 && typeof window.toggleIsricSoilLayer === 'function') ||
           (id === 'toggleHujanLayer') ||
           (id === 'toggleFsvaLayer' && typeof window.toggleFsvaLayer === 'function') ||
@@ -3705,6 +3713,15 @@ L.control.scale({
         }
         if (id === 'toggleGeologiArcGISOnline' && typeof window.toggleGeologiArcGISOnline === 'function') {
           window.toggleGeologiArcGISOnline(cb.checked);
+        }
+        if (id === 'toggleBouguerBMKG' && typeof window.toggleBouguerBMKG === 'function') {
+          window.toggleBouguerBMKG(cb.checked);
+        }
+        if (id === 'toggleBmkgCurahHujan' && typeof window.toggleBmkgCurahHujan === 'function') {
+          window.toggleBmkgCurahHujan(cb.checked);
+        }
+        if (id === 'toggleBmkgHariHujan' && typeof window.toggleBmkgHariHujan === 'function') {
+          window.toggleBmkgHariHujan(cb.checked);
         }
         if (id.indexOf('isric-soil-') === 0 && typeof window.toggleIsricSoilLayer === 'function') {
           window.toggleIsricSoilLayer(id, cb.checked);
