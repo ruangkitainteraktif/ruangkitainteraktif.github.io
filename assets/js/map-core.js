@@ -3444,14 +3444,10 @@ L.control.scale({
         }
         return isOn;
       }).length;
-      /* Tidak ada kategori yang terbuka secara default -- termasuk Basemap,
-         yang sebelumnya selalu terbuka. Katalog ini punya sebelas kategori dan
-         sebagian berisi puluhan layer, jadi membukanya sekaligus membuat
-         daftar panjang yang menutupi peta. Layer Dipin tetap terbuka karena
-         isinya pendek dan itu isi yang paling sering dipakai.
-         Ketetapan ini tidak merusak pencarian: handler kotak cari tetap
-         membuka kategori yang punya hasil cocok. */
-      html += '<div class="lc-category" data-ci="' + ci + '">';
+      /* Katalog utama menampilkan kategori dalam keadaan terbuka saat dibuka.
+         Grup Layer Dipin tetap terpisah; kategori ini sebelumnya selalu
+         tertutup sehingga layer tampak hilang bagi pengguna. */
+      html += '<div class="lc-category open" data-ci="' + ci + '">';
       html += '<button class="lc-cat-header" type="button">';
       html += '<svg class="lc-cat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
       html += '<span class="lc-cat-title">' + cat.cat + '</span>';
