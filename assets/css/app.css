@@ -12220,6 +12220,19 @@ details[open] > .gt-card-head::after {
       font-size: 9px;
       line-height: 1.3;
     }
+    .isric-wrb-popup { min-width: 220px; max-width: 310px; color: #1f2937; font: 12px/1.45 system-ui, sans-serif; }
+    .isric-wrb-popup > strong { display: block; margin-bottom: 7px; color: #166534; font-size: 13px; }
+    .isric-wrb-main-class { margin-bottom: 7px; font-weight: 700; }
+    .isric-wrb-popup table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .isric-wrb-popup th, .isric-wrb-popup td { padding: 4px 6px; border: 1px solid #e2e8f0; text-align: left; }
+    .isric-wrb-popup th { background: #f1f5f9; }
+    .isric-wrb-popup small { display: block; margin-top: 7px; color: #64748b; font-size: 10px; }
+    .isric-wrb-coordinate-form { margin-top: 9px; padding-top: 8px; border-top: 1px solid #e5eaf0; }
+    .isric-wrb-coordinate-form > label { display: block; margin-bottom: 5px; color: #334155; font-size: 10px; font-weight: 700; }
+    .isric-wrb-coordinate-fields { display: grid; grid-template-columns: 1fr 1fr auto; gap: 4px; }
+    .isric-wrb-coordinate-fields input { width: 100%; min-width: 0; box-sizing: border-box; padding: 5px 6px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 10px; }
+    .isric-wrb-coordinate-fields button { padding: 5px 8px; border: 0; border-radius: 5px; background: #15803d; color: #fff; font-size: 10px; font-weight: 700; cursor: pointer; }
+    .isric-wrb-coordinate-form > small { margin-top: 4px; }
     .unified-legend-section .atrbpn-legend-title {
       font-size: 11px;
       font-weight: 700;

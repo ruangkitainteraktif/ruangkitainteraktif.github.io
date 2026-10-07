@@ -22,6 +22,83 @@
   };
   var active = {};
   var selectedKey = null;
+  var identifyMap = null;
+  var identifyHandler = null;
+  var identifyRequestId = 0;
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+    });
+  }
+
+  function formatProbability(value) {
+    var number = Number(value);
+    if (!isFinite(number)) return escapeHtml(value);
+    return (number <= 1 ? number * 100 : number).toFixed(1) + '%';
+  }
+
+  function renderClassification(data, latlng) {
+    var className = data && (data.wrb_class_name || data.class_name || data.name);
+    var probabilities = data && (data.wrb_class_probability || data.probabilities || data.classes);
+    var html = '<div class="isric-wrb-popup"><strong>SoilGrids · Kelas WRB</strong>';
+    if (className) html += '<div class="isric-wrb-main-class">Kelas paling mungkin: ' + escapeHtml(className) + '</div>';
+    if (Array.isArray(probabilities) && probabilities.length) {
+      html += '<table><thead><tr><th>Kelas tanah</th><th>Probabilitas</th></tr></thead><tbody>';
+      probabilities.slice(0, 5).forEach(function (item, index) {
+        var label = item && typeof item === 'object'
+          ? (item.class_name || item.wrb_class_name || item.name || item.class || item.label || ('Kelas ' + (index + 1)))
+          : (typeof item === 'string' ? item : ('Kelas ' + (index + 1)));
+        var probability = item && typeof item === 'object'
+          ? (item.probability != null ? item.probability : (item.probability_percent != null ? item.probability_percent : item.value))
+          : (typeof item === 'number' ? item : null);
+        html += '<tr><td>' + escapeHtml(label) + '</td><td>' + (probability == null ? '—' : formatProbability(probability)) + '</td></tr>';
+      });
+      html += '</tbody></table>';
+    }
+    if (!className && !Array.isArray(probabilities)) {
+      html += '<div>Data kelas tanah tidak tersedia pada titik ini.</div>';
+    }
+    html += '<small>' + Number(latlng.lat).toFixed(5) + ', ' + Number(latlng.lng).toFixed(5) + ' · SoilGrids 250 m · ISRIC</small></div>';
+    return html;
+  }
+
+  function identifyWrb(event) {
+    if (selectedKey !== 'wrb' || !event || !event.latlng) return;
+    var map = window.map;
+    var L = window.L;
+    if (!map || !L) return;
+    var requestId = ++identifyRequestId;
+    var popup = L.popup({ maxWidth: 340, className: 'isric-wrb-leaflet-popup' })
+      .setLatLng(event.latlng)
+      .setContent('<div class="isric-wrb-popup"><strong>SoilGrids · Kelas WRB</strong><div>Memuat informasi kelas tanah…</div></div>')
+      .openOn(map);
+    var url = new URL('https://rest.isric.org/soilgrids/v2.0/classification/query');
+    url.search = new URLSearchParams({ lon: event.latlng.lng, lat: event.latlng.lat, number_classes: 5 }).toString();
+    fetch(url.toString(), { headers: { Accept: 'application/json' } }).then(function (response) {
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      return response.json();
+    }).then(function (data) {
+      if (requestId !== identifyRequestId || selectedKey !== 'wrb' || !map.hasLayer(popup)) return;
+      popup.setContent(renderClassification(data, event.latlng));
+    }).catch(function (error) {
+      if (requestId !== identifyRequestId || selectedKey !== 'wrb') return;
+      console.warn('[SoilGrids WRB] Gagal mengambil data titik:', error);
+      popup.setContent('<div class="isric-wrb-popup"><strong>SoilGrids · Kelas WRB</strong><div>Informasi titik tidak dapat dimuat. Coba klik kembali beberapa saat lagi.</div><small>Data identifikasi berasal dari API SoilGrids ISRIC.</small></div>');
+    });
+  }
+
+  function setWrbIdentifyEnabled(enabled) {
+    var map = window.map;
+    if (identifyMap && identifyHandler) identifyMap.off('click', identifyHandler);
+    identifyMap = null;
+    identifyHandler = null;
+    identifyRequestId++;
+    if (!enabled || !map) return;
+    identifyMap = map;
+    identifyHandler = identifyWrb;
+    identifyMap.on('click', identifyHandler);
+  }
 
   function updateLegend(key) {
     var def = DEFINITIONS[key];
@@ -52,6 +129,27 @@
       image.style.cssText = 'display:block;width:auto;height:230px;max-width:100%;object-fit:contain;margin:2px 0 0;background:#fff;border-radius:4px';
     }
     div.appendChild(image);
+    if (key === 'wrb') {
+      var coordinateForm = document.createElement('form');
+      coordinateForm.className = 'isric-wrb-coordinate-form';
+      coordinateForm.innerHTML = '<label>Identifikasi berdasarkan koordinat</label><div class="isric-wrb-coordinate-fields"><input name="lat" type="number" step="any" min="-90" max="90" placeholder="Latitude" aria-label="Latitude" required><input name="lon" type="number" step="any" min="-180" max="180" placeholder="Longitude" aria-label="Longitude" required><button type="submit">Cari</button></div><small>Format desimal, contoh: -6.20, 106.82</small>';
+      coordinateForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        var lat = Number(coordinateForm.elements.lat.value);
+        var lon = Number(coordinateForm.elements.lon.value);
+        if (!isFinite(lat) || !isFinite(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+          if (window.showToast) window.showToast('Koordinat tidak valid. Periksa latitude dan longitude.', 'error');
+          return;
+        }
+        var map = window.map;
+        var L = window.L;
+        if (!map || !L) return;
+        var coordinate = L.latLng(lat, lon);
+        map.setView(coordinate, Math.max(map.getZoom(), 8));
+        identifyWrb({ latlng: coordinate });
+      });
+      div.appendChild(coordinateForm);
+    }
     var source = document.createElement('small');
     source.className = 'isric-soil-legend-source';
     source.textContent = 'Sumber: SoilGrids · ISRIC';
@@ -91,11 +189,13 @@
       if (!map.hasLayer(active[key])) active[key].addTo(map);
       selectedKey = key;
       updateLegend(key);
+      setWrbIdentifyEnabled(key === 'wrb');
     } else if (active[key] && map.hasLayer(active[key])) {
       map.removeLayer(active[key]);
       if (selectedKey === key) {
         selectedKey = null;
         updateLegend(null);
+        setWrbIdentifyEnabled(false);
       }
     }
   };
