@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=86">
+  <link rel="stylesheet" href="assets/css/app.css?v=87">
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
   <link rel="stylesheet" href="assets/css/geotrans-mitradarat.css?v=20261006-geospatial-search-ui">
@@ -859,34 +859,34 @@
 
         <div class="dm-sidebar-section-title">Draw</div>
         <div class="dm-sidebar-grid">
-          <div class="dm-sidebar-option" onclick="startDraw('marker'); closeDrawSidebar()">
+          <div class="dm-sidebar-option" onclick="closeDrawSidebar(); startDraw('marker')">
             <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
             <span class="dm-sidebar-option-label">Point</span>
           </div>
-          <div class="dm-sidebar-option" onclick="startDraw('polyline'); closeDrawSidebar()">
+          <div class="dm-sidebar-option" onclick="closeDrawSidebar(); startDraw('polyline')">
             <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z" transform="rotate(-45 12 12)"/></svg></div>
             <span class="dm-sidebar-option-label">Line</span>
           </div>
-          <div class="dm-sidebar-option" onclick="startDraw('polygon'); closeDrawSidebar()">
+          <div class="dm-sidebar-option" onclick="closeDrawSidebar(); startDraw('polygon')">
             <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l-8 5v10l8 5 8-5V7z"/></svg></div>
             <span class="dm-sidebar-option-label">Polygon</span>
           </div>
-          <div class="dm-sidebar-option" onclick="startDraw('rectangle'); closeDrawSidebar()">
+          <div class="dm-sidebar-option" onclick="closeDrawSidebar(); startDraw('rectangle')">
             <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/></svg></div>
             <span class="dm-sidebar-option-label">Rectangle</span>
           </div>
-          <div class="dm-sidebar-option" onclick="startDraw('circle'); closeDrawSidebar()">
+          <div class="dm-sidebar-option" onclick="closeDrawSidebar(); startDraw('circle')">
             <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg></div>
             <span class="dm-sidebar-option-label">Circle</span>
           </div>
         </div>
         <div class="dm-sidebar-section-title">Measure</div>
         <div class="dm-sidebar-grid">
-          <div class="dm-sidebar-option" onclick="startMeasure('distance'); closeDrawSidebar()">
+          <div class="dm-sidebar-option" onclick="closeDrawSidebar(); startMeasure('distance')">
             <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20"/><path d="M6 8v8"/><path d="M18 8v8"/></svg></div>
             <span class="dm-sidebar-option-label">Distance</span>
           </div>
-          <div class="dm-sidebar-option" onclick="startMeasure('area'); closeDrawSidebar()">
+          <div class="dm-sidebar-option" onclick="closeDrawSidebar(); startMeasure('area')">
             <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l-8 5v10l8 5 8-5V7z"/><path d="M12 22V12"/><path d="M4 7l8 5 8-5"/></svg></div>
             <span class="dm-sidebar-option-label">Area</span>
           </div>
@@ -3601,7 +3601,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
        memasang pin. init() juga memasang listener draw:created, sehingga
        setiap pin baru langsung mengisi panel hasil. -->
   <script src="assets/js/alat-cek-lokasi.js"></script>
-  <script src="assets/js/geofarm-draw.js"></script>
+  <script src="assets/js/geofarm-draw.js?v=20261007-draw-actions"></script>
 <script src="assets/js/geofarm-upload.js"></script>
 <!-- Kalkulator Benih & Pupuk GeoFarm: butuh geodesic-area.js (luas poligon)
      dan alat-draw-measure.js (window.getDrawnLayers), keduanya sudah dimuat

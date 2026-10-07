@@ -14891,11 +14891,11 @@ details[open] > .gt-card-head::after {
 
 /* Selama sesi menggambar GeoFarm, hanya kontrol gambar yang dimunculkan;
    tombol ekspor SHP/GeoJSON disembunyikan supaya tidak salah klik. */
-body.geofarm-draw-active .leaflet-draw {
+body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw {
   display: block !important;
 }
-body.geofarm-draw-active .draw-actions-wrap {
-  display: none !important;
+body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-actions-wrap {
+  display: flex !important;
 }
 
 

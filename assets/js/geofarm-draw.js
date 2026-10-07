@@ -8,7 +8,6 @@
   // gambar dicabut dari luar, DRAWSTOP tidak pernah menyala dan listener-nya
   // akan menumpuk tiap kali GeoFarm dibuka lagi.
   var pendingStop = null;
-  var stopTimer = 0;
 
   function clearPendingStop() {
     var m = getMap();
@@ -17,7 +16,6 @@
       if (m && window.L && window.L.Draw) m.off(L.Draw.Event.DRAWSTOP, pendingStop);
       pendingStop = null;
     }
-    if (stopTimer) { clearTimeout(stopTimer); stopTimer = 0; }
   }
 
   function getMap() {
@@ -178,6 +176,10 @@
   }
 
   function activate() {
+    clearPendingStop();
+    if (typeof window.setGeofarmDrawSession === 'function') {
+      window.setGeofarmDrawSession(false);
+    }
     showGeoFarmTab();
     useSatelliteBasemap();
 
@@ -188,13 +190,9 @@
     }
 
     try {
-      /* Tombol Export SHP/GeoJSON disembunyikan di sesi GeoFarm. Ekspor
-         GeoFarm punya tempat sendiri: bar di bagian bawah sheet panel,
-         yang membawa atribut analisis (lihat exportGeoFarmShapes di
-         polygon-analysis.js). Tombol di toolbar hanya mengekspor gambar &
-         pengukuran biasa, jadi disembunyikan agar tidak membingungkan. */
+      // Tampilkan draw actions bersama toolbar saat menggambar polygon GeoFarm.
       if (typeof window.setDrawHideExportActions === 'function') {
-        window.setDrawHideExportActions(true);
+        window.setDrawHideExportActions(false);
       }
       if (typeof window.startDraw === 'function') {
         // Tandai sesi GeoFarm tepat sebelum kontrol gambar dipasang. Dari titik
@@ -212,14 +210,19 @@
         if (typeof window.setGeofarmDrawSession === 'function') {
           window.setGeofarmDrawSession(false);
         }
-        revealDrawChrome();
+        throw new Error('Tool gambar tidak tersedia.');
       }
     } catch (e) {
       console.warn('[GeoFarm] Gagal mengaktifkan tool gambar polygon:', e);
+      clearPendingStop();
       if (typeof window.setGeofarmDrawSession === 'function') {
         window.setGeofarmDrawSession(false);
       }
-      revealDrawChrome();
+      if (typeof window.setDrawHideExportActions === 'function') window.setDrawHideExportActions(false);
+      if (typeof window.stopDrawSession === 'function') window.stopDrawSession();
+      document.body.classList.remove('geofarm-draw-active');
+      markButtonBusy(false);
+      return;
     }
 
     revealDrawChrome();
@@ -239,7 +242,6 @@
     pendingStop = stop;
 
     m.on(L.Draw.Event.DRAWSTOP, stop);
-    stopTimer = setTimeout(clearPendingStop, 120000);
   }
 
   window.startGeofarmPolygonDraw = function () {

@@ -351,7 +351,7 @@ map.on(L.Draw.Event.CREATED, event => {
   drawLayerGroup.addLayer(layer);
   if (layer instanceof L.Polygon) {
     try {
-      const latlngs = layer.getLatLngs()[0];
+      const latlngs = layer.getLatLngs();
       const areaM2 = geoArea.areaM2FromRings(latlngs);
       setLayerMeasureData(layer, areaMeasureData(areaM2, 'draw'));
       layer.bindPopup(`<b>Luas:</b> ${formatArea(areaM2)}`);
@@ -376,7 +376,7 @@ map.on(L.Draw.Event.CREATED, event => {
 
   if (layer instanceof L.Polygon && !(layer instanceof L.Rectangle) && typeof window.registerDrawnPolygon === 'function') {
     try {
-      window.registerDrawnPolygon(layer, geoArea.areaHaFromRings(layer.getLatLngs()[0]));
+      window.registerDrawnPolygon(layer, geoArea.areaHaFromRings(layer.getLatLngs()));
     } catch (error) {
       console.warn('[Polygon] Gagal menyiapkan analisis polygon:', error);
     }
@@ -453,7 +453,7 @@ function finishMeasure() {
     updateMeasureHud(formatDistance(distance), `${measurePoints.length} titik`, false);
     setMeasureResult(`Jarak total: <b>${formatDistance(distance)}</b>. Klik Ukur Lagi untuk mengulang.`);
   } else {
-    const areaM2 = geoArea.areaM2FromRings(measurePolygon.getLatLngs()[0]);
+    const areaM2 = geoArea.areaM2FromRings(measurePolygon.getLatLngs());
     setLayerMeasureData(measureExportLayer, areaMeasureData(areaM2, 'measure'));
     updateMeasureHud(formatArea(areaM2), `${measurePoints.length} titik`, false);
     setMeasureResult(`Luas: <b>${formatArea(areaM2)}</b>. Klik Ukur Lagi untuk mengulang.`);
@@ -492,7 +492,7 @@ function handleMeasureMapClick(event) {
   } else {
     renderAreaGeometry();
     if (measurePoints.length >= 3) {
-      const areaM2 = geoArea.areaM2FromRings(measurePolygon.getLatLngs()[0]);
+      const areaM2 = geoArea.areaM2FromRings(measurePolygon.getLatLngs());
       setLayerMeasureData(measureExportLayer, areaMeasureData(areaM2, 'measure'));
       updateMeasureHud(formatArea(areaM2), `${measurePoints.length} titik`, true);
       setMeasureResult(`Luas: <b>${formatArea(areaM2)}</b>`);
@@ -506,6 +506,10 @@ function handleMeasureMapClick(event) {
 map.on('click', handleMeasureMapClick);
 
 function clearDrawings() {
+  // Hapus item GeoFarm yang menunjuk layer sebelum group kehilangan referensinya.
+  if (typeof window.removeGeoFarmItemsByLayers === 'function' && drawLayerGroup.getLayers().length) {
+    window.removeGeoFarmItemsByLayers(L.featureGroup(drawLayerGroup.getLayers()));
+  }
   drawLayerGroup.clearLayers();
   measureLayerGroup.clearLayers();
   stopMeasureMode();
@@ -519,7 +523,7 @@ function getLayerMeasureData(layer) {
   let data = Object.assign({}, layer._measureData || {});
   try {
     if (layer instanceof L.Polygon) {
-      const latlngs = layer.getLatLngs()[0];
+      const latlngs = layer.getLatLngs();
       Object.assign(data, areaMeasureData(geoArea.areaM2FromRings(latlngs), data.source || 'draw'));
     } else if (layer instanceof L.Polyline) {
       Object.assign(data, distanceMeasureData(getMeasureDistance(layer.getLatLngs()), data.source || 'draw'));
