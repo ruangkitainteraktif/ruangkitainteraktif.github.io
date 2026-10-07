@@ -453,7 +453,10 @@
         <label>Kabupaten/Kota<select id="geonusaKabupaten" disabled><option value="">Pilih provinsi dahulu</option></select></label>
         <label>Kecamatan<select id="geonusaKecamatan" disabled><option value="">Pilih kabupaten/kota dahulu</option></select></label>
         <label>Desa/Kelurahan<select id="geonusaDesa" disabled><option value="">Pilih kecamatan dahulu</option></select></label>
-        <button type="button" id="geonusaSearchBtn" class="geonusa-search-btn" disabled>Cari polygon</button>
+        <div class="geonusa-actions">
+          <button type="button" id="geonusaSearchBtn" class="geonusa-search-btn" disabled>Cari polygon</button>
+          <button type="button" id="geonusaResetLayerBtn" class="geonusa-reset-btn">Reset layer</button>
+        </div>
       </section>
       <div id="layerCatalogDropdown" class="layer-catalog-dropdown"></div>
     </div>

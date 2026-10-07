@@ -1333,6 +1333,76 @@
     return cat ? cat + ' \u2014 ' + lbl : lbl;
   }
 
+  function _getActiveCatalogPrintLayers() {
+    if (typeof window.buildLayerCatalogIfNeeded === 'function') window.buildLayerCatalogIfNeeded();
+    const seen = new Set();
+    return Array.from(document.querySelectorAll('.lc-item input[type="checkbox"][data-layer-id]:checked'))
+      .map(function (checkbox) {
+        const id = checkbox.dataset.layerId;
+        const row = checkbox.closest('.lc-item');
+        const label = row && row.querySelector('label');
+        return { id, label: label ? label.textContent.trim() : id };
+      })
+      .filter(function (item) {
+        if (!item.id || seen.has(item.id)) return false;
+        seen.add(item.id);
+        return !!item.label;
+      });
+  }
+
+  // Include active Leaflet overlays from every app module, even when that
+  // module does not register with the Geoportal layer lists above.
+  function _getActiveMapPrintLayers(knownLabels) {
+    const result = [];
+    const seen = new Set(knownLabels || []);
+    const baseName = window.currentBasemapName || currentBasemapName || '';
+    if (!map || typeof map.eachLayer !== 'function') return result;
+    const drawn = (typeof window.getDrawnLayers === 'function' ? window.getDrawnLayers() : [])
+      .concat(typeof window.getMeasuredLayers === 'function' ? window.getMeasuredLayers() : []);
+    const drawnCount = drawn.filter(Boolean).length;
+    if (drawnCount) {
+      const label = 'Gambar dan pengukuran (' + drawnCount + ' fitur)';
+      if (!seen.has(label)) { seen.add(label); result.push({ kind: 'map', label: label }); }
+    }
+    map.eachLayer(function (layer) {
+      if (!layer || layer === map) return;
+      const options = layer.options || {};
+      const pane = options.pane || '';
+      const url = layer._url || (layer._url && layer._url.url) || '';
+      const declared = options.name || options.layerName || options.title || layer.layerName || '';
+      // The active basemap is already represented separately in the PDF.
+      if (declared && String(declared).toLowerCase() === String(baseName).toLowerCase()) return;
+      if (pane === 'tilePane' && !declared && layer instanceof L.TileLayer &&
+          (options.zIndex == null || Number(options.zIndex) <= 200)) return;
+      // Feature groups are containers; report their visible children instead.
+      if (layer instanceof L.LayerGroup && !(layer instanceof L.FeatureGroup)) return;
+      if (layer instanceof L.FeatureGroup) return;
+      if (!(layer instanceof L.Layer)) return;
+      let label = declared;
+      if (!label && options.attribution) label = String(options.attribution).replace(/<[^>]*>/g, '').trim();
+      if (!label && url) {
+        try {
+          const parsed = new URL(url, location.href);
+          label = (parsed.hostname.replace(/^www\./, '') + parsed.pathname).replace(/\/{2,}/g, '/');
+        } catch (e) { label = ''; }
+      }
+      if (!label) {
+        if (layer instanceof L.Marker) label = 'Titik peta';
+        else if (layer instanceof L.Polygon) label = 'Poligon peta';
+        else if (layer instanceof L.Polyline) label = 'Garis peta';
+        else if (layer instanceof L.Circle) label = 'Lingkaran peta';
+        else if (layer instanceof L.TileLayer) label = 'Layer raster';
+        else if (layer instanceof L.ImageOverlay) label = 'Overlay gambar';
+        else return;
+      }
+      label = String(label).replace(/\s+/g, ' ').trim();
+      if (!label || seen.has(label)) return;
+      seen.add(label);
+      result.push({ kind: 'map', label: label });
+    });
+    return result;
+  }
+
   function _calcInterval(range, targetLines) {
     const raw = range / targetLines;
     const mag = Math.pow(10, Math.floor(Math.log10(raw)));
@@ -1405,8 +1475,10 @@
   var TILE_SNAPSHOT_FORMAT = 'image/jpeg';
   var TILE_SNAPSHOT_QUALITY = 0.92;
   var TILE_SNAPSHOT_CONCURRENCY = 6;
-  var TILE_SNAPSHOT_TIMEOUT = 6000;
-  var TILE_SNAPSHOT_BUDGET = 25000;
+  // Keep export responsive when a remote tile server is slow. Successful
+  // snapshots remain cached, so repeat exports are faster still.
+  var TILE_SNAPSHOT_TIMEOUT = 3500;
+  var TILE_SNAPSHOT_BUDGET = 12000;
   var TILE_PROXY_CHAIN = [
     function (u) { return 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=' + encodeURIComponent(u); },
     function (u) { return 'https://images.weserv.nl/?url=' + encodeURIComponent(u); }
@@ -1664,7 +1736,12 @@
   async function _rasterizeVectorTiles(container) {
     var pane = container.querySelector('.leaflet-map-pane');
     if (!pane) return { restore: function () {}, failed: 0 };
-    var svgs = Array.prototype.slice.call(pane.querySelectorAll('svg'));
+    // Keep user drawn and measured geometry as live Leaflet SVG. Converting
+    // interactive SVGs to canvases can make their paths disappear in the
+    // html2canvas clone, especially after edit/measure operations.
+    var svgs = Array.prototype.slice.call(pane.querySelectorAll('svg')).filter(function (svg) {
+      return !svg.querySelector('.leaflet-interactive');
+    });
     if (svgs.length > VECTOR_RASTER_LIMIT) svgs = svgs.slice(0, VECTOR_RASTER_LIMIT);
     var originals = [];
     var failed = 0;
@@ -1787,7 +1864,11 @@
     var snap = await _snapshotTileImages(container);
     await new Promise(function (r) { setTimeout(r, 350); });
     var geoBoundary = await _addBoundaryGeoJsonLayer();
-    var vectors = await _rasterizeVectorTiles(container);
+    // PDF export intentionally omits SVG overlays. They are expensive to
+    // serialize/rasterize and have caused the map overlay capture to be flaky.
+    var vectors = opts.skipSvg
+      ? { failed: 0, restore: function () {} }
+      : await _rasterizeVectorTiles(container);
     var canvas;
     try {
       canvas = await html2canvas(container, {
@@ -1805,6 +1886,9 @@
         onclone: function (doc) {
           var c = doc.querySelector('.leaflet-container');
           if (!c) return;
+          if (opts.skipSvg) {
+            c.querySelectorAll('svg').forEach(function (svg) { svg.remove(); });
+          }
           var imgs = c.querySelectorAll('img');
           for (var i = 0; i < imgs.length; i++) {
             var img = imgs[i];
@@ -1849,6 +1933,11 @@
     getActiveGeoportalLayers().forEach(a => titleNames.push(_dispName(labelMap, categoryMap, a.layerName)));
     getActiveArcgisLayers().forEach(a => titleNames.push(_arcgisLabels[a.layerKey] || a.layerKey));
     getActiveLbsVtLayers().forEach(a => titleNames.push(_arcgisLabels[a.layerKey] || a.label));
+    const catalogLayers = _getActiveCatalogPrintLayers();
+    catalogLayers.forEach(function (item) {
+      if (titleNames.indexOf(item.label) === -1) titleNames.push(item.label);
+    });
+    _getActiveMapPrintLayers(titleNames).forEach(function (item) { titleNames.push(item.label); });
     let titleText;
     if (titleNames.length === 0) titleText = bmFriendly;
     else titleText = titleNames.slice(0, 3).join(', ') + (titleNames.length > 3 ? ` (+${titleNames.length - 3})` : '');
@@ -1904,7 +1993,9 @@
     try {
       const leafletContainer = document.querySelector('.leaflet-container');
       if (leafletContainer) {
-        const mapCanvas = await captureMapCanvas({ tileWaitMs: 6000, scale: 2 });
+        // Keep Leaflet SVG overlays in the capture. Removing SVGs here also
+        // removes drawn/imported polygons from the exported map.
+        const mapCanvas = await captureMapCanvas({ tileWaitMs: 3500, scale: 2 });
         const canvasAspect = mapCanvas.width / mapCanvas.height;
         const frameAspect = mapFrameW / mapFrameH;
         let cropX, cropY, cropW, cropH;
@@ -1967,6 +2058,14 @@
     getActiveLbsVtLayers().forEach(a => {
       legendItems.push({ kind: 'arcgis', label: _arcgisLabels[a.layerKey] || a.label });
     });
+    catalogLayers.forEach(function (item) {
+      if (!legendItems.some(function (legend) { return legend.label === item.label; })) {
+        legendItems.push({ kind: 'catalog', label: item.label });
+      }
+    });
+    _getActiveMapPrintLayers(legendItems.map(function (item) { return item.label; })).forEach(function (item) {
+      legendItems.push(item);
+    });
     await (async () => {
       const loadAll = Promise.all(legendItems.map(async it => {
         if (it.kind !== 'wms') return;
@@ -1986,9 +2085,18 @@
     getActiveGeoportalLayers().forEach(a => activeNames.push(_dispName(labelMap, categoryMap, a.layerName)));
     getActiveArcgisLayers().forEach(a => activeNames.push(_arcgisLabels[a.layerKey] || a.layerKey));
     getActiveLbsVtLayers().forEach(a => activeNames.push(_arcgisLabels[a.layerKey] || a.label));
+    catalogLayers.forEach(function (item) {
+      if (activeNames.indexOf(item.label) === -1) activeNames.push(item.label);
+    });
+    legendItems.forEach(function (item) {
+      if (item.kind !== 'basemap' && activeNames.indexOf(item.label) === -1) activeNames.push(item.label);
+    });
+    activeNames.unshift('Basemap: ' + bmFriendly);
+    legendItems.unshift({ kind: 'basemap', label: 'Basemap · ' + bmFriendly });
 
     return {
-      hiddenEls, titleText, bmFriendly, mapImg, legendItems, bmLegend, activeNames,
+      hiddenEls, titleText, bmFriendly, mapImg, legendItems, fullLegendItems: legendItems.slice(), bmLegend,
+      baseBmLegend: bmLegend, showLegend: true, includeBasemapLegend: true, activeNames,
       exportCanvas, exportBbox,
       pageW, pageH, margin, titleH, bottomStripH,
       mapFrameX, mapFrameY, mapFrameW, mapFrameH,
@@ -2025,45 +2133,41 @@
 
     const ctx = canvas.getContext('2d');
 
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, cW, cH);
-
-    ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 0.4 * s;
-    ctx.strokeRect(data.margin * s, data.margin * s, (data.pageW - data.margin * 2) * s, (data.pageH - data.margin * 2) * s);
-
-    ctx.strokeStyle = '#c8c8c8'; ctx.lineWidth = 0.2 * s;
-    ctx.beginPath();
-    ctx.moveTo(data.margin * s, (data.margin + data.titleH) * s);
-    ctx.lineTo((data.pageW - data.margin) * s, (data.margin + data.titleH) * s);
-    ctx.stroke();
-
-    ctx.fillStyle = '#1e293b'; ctx.font = 'bold 12px "Segoe UI", system-ui, sans-serif';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(data.titleText, (data.margin + 2) * s, (data.margin + data.titleH / 2) * s);
-
-    const dateFormatted = data.now.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-    ctx.fillStyle = '#64748b'; ctx.font = '7.5px "Segoe UI", system-ui, sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText(dateFormatted, (data.pageW - data.margin - 2) * s, (data.margin + 5) * s);
-    ctx.fillText('Basemap: ' + data.bmFriendly, (data.pageW - data.margin - 2) * s, (data.margin + 9) * s);
-    ctx.fillStyle = '#969696'; ctx.font = '7px "Segoe UI", system-ui, sans-serif';
-    ctx.fillText('WGS84 / EPSG:4326', (data.pageW - data.margin - 2) * s, (data.margin + 12) * s);
-    ctx.textAlign = 'left';
-
-    ctx.strokeStyle = '#374151'; ctx.lineWidth = 0.3 * s;
-    ctx.strokeRect(data.mapFrameX * s, data.mapFrameY * s, data.mapFrameW * s, data.mapFrameH * s);
-
+    let previewMapImage = null;
     if (data.mapImg) {
-      const img = new Image();
-      img.onload = function () {
-        ctx.drawImage(img, data.mapFrameX * s, data.mapFrameY * s, data.mapFrameW * s, data.mapFrameH * s);
-        _drawPreviewOverlay(ctx, data, s, cW, cH);
-      };
-      img.src = data.mapImg;
-    } else {
-      _drawPreviewOverlay(ctx, data, s, cW, cH);
+      previewMapImage = new Image();
+      previewMapImage.onload = drawPreviewPage;
+      previewMapImage.src = data.mapImg;
     }
 
+    function drawPreviewPage() {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, cW, cH);
+      ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 0.4 * s;
+      ctx.strokeRect(data.margin * s, data.margin * s, (data.pageW - data.margin * 2) * s, (data.pageH - data.margin * 2) * s);
+      ctx.strokeStyle = '#c8c8c8'; ctx.lineWidth = 0.2 * s;
+      ctx.beginPath();
+      ctx.moveTo(data.margin * s, (data.margin + data.titleH) * s);
+      ctx.lineTo((data.pageW - data.margin) * s, (data.margin + data.titleH) * s);
+      ctx.stroke();
+      ctx.fillStyle = '#1e293b'; ctx.font = 'bold 12px "Segoe UI", system-ui, sans-serif';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(data.titleText, (data.margin + 2) * s, (data.margin + data.titleH / 2) * s, (data.pageW - data.margin * 2 - 85) * s);
+      const dateFormatted = data.now.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+      ctx.fillStyle = '#64748b'; ctx.font = '7.5px "Segoe UI", system-ui, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(dateFormatted, (data.pageW - data.margin - 2) * s, (data.margin + 5) * s);
+      ctx.fillText('Basemap: ' + data.bmFriendly, (data.pageW - data.margin - 2) * s, (data.margin + 9) * s);
+      ctx.fillStyle = '#969696'; ctx.font = '7px "Segoe UI", system-ui, sans-serif';
+      ctx.fillText('WGS84 / EPSG:4326', (data.pageW - data.margin - 2) * s, (data.margin + 12) * s);
+      ctx.textAlign = 'left';
+      ctx.strokeStyle = '#374151'; ctx.lineWidth = 0.3 * s;
+      ctx.strokeRect(data.mapFrameX * s, data.mapFrameY * s, data.mapFrameW * s, data.mapFrameH * s);
+      if (previewMapImage && previewMapImage.complete && previewMapImage.naturalWidth) {
+        ctx.drawImage(previewMapImage, data.mapFrameX * s, data.mapFrameY * s, data.mapFrameW * s, data.mapFrameH * s);
+      }
+      _drawPreviewOverlay(ctx, data, s, cW, cH);
+    }
     actions.querySelector('.print-preview-cancel').addEventListener('click', function () {
       overlay.remove();
       data.exportCanvas = null;
@@ -2076,6 +2180,11 @@
       data.exportCanvas = null;
       generatePDF(data);
     });
+
+    // Wire the controls before the first canvas render so a rendering error
+    // cannot leave a visible preview with inert buttons.
+    try { drawPreviewPage(); }
+    catch (error) { console.error('[PrintGeoportal] Gagal merender preview:', error); }
   }
 
   /* ── Global Export TIF — viewport langsung, tanpa alur cetak ── */
@@ -2349,6 +2458,7 @@
     ctx.fillText('SKALA', sbLX * s, (sbBY + 3) * s);
     py = sbBY + 8;
 
+    if (data.showLegend !== false) {
     py += 4;
     ctx.strokeStyle = '#c8c8c8'; ctx.lineWidth = 0.2 * s;
     ctx.beginPath(); ctx.moveTo((panelX + 4) * s, py * s); ctx.lineTo((panelX + panelW - 4) * s, py * s); ctx.stroke();
@@ -2435,6 +2545,7 @@
         }
         py += imgH + 2;
       });
+    }
     }
 
     canvas.style.display = 'block';
@@ -2561,6 +2672,7 @@
       pdf.text('SKALA', sbLX, sbBY + 3);
       py = sbBY + 8;
 
+      if (data.showLegend !== false) {
       py += 4;
       pdf.setDrawColor(200, 200, 200); pdf.setLineWidth(0.2);
       pdf.line(panelX + 4, py, panelX + panelW - 4, py);
@@ -2628,9 +2740,11 @@
           py += imgH + 2;
         });
       }
+      }
 
       const dateStr = `${String(now.getDate()).padStart(2, '0')}${String(now.getMonth() + 1).padStart(2, '0')}${now.getFullYear()}`;
-      pdf.save(`ruangkita-${currentBasemapName || 'peta'}-${dateStr}.pdf`);
+      const safeTitle = String(data.titleText || 'peta').replace(/[^a-z0-9-_]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 64) || 'peta';
+      pdf.save(`ruangkita-${safeTitle}-${dateStr}.pdf`);
     } catch (err) {
       console.error('[PrintGeoportal] Gagal membuat PDF:', err);
       showPrintError(err && err.message ? err.message : String(err));

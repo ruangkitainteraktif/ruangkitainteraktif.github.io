@@ -117,6 +117,9 @@ window.addToDrawLayerGroup = function (layer) {
 window.getDrawnLayers = function () {
   return drawLayerGroup.getLayers();
 };
+window.getMeasuredLayers = function () {
+  return measureExportLayer ? [measureExportLayer] : [];
+};
 
 (function observeDrawSidebar() {
   const sidebar = document.getElementById('drawSidebar');

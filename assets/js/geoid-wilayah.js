@@ -813,6 +813,19 @@ function clearGeoidChildBoundaries() {
   geoidChildBoundaryLayer = null;
 }
 
+window.resetGeoidBoundaryLayer = function () {
+  geoidBoundaryRequestId++;
+  if (window.map) {
+    if (geoidBoundaryLayer && window.map.hasLayer(geoidBoundaryLayer)) window.map.removeLayer(geoidBoundaryLayer);
+    if (geoidPointMarker && window.map.hasLayer(geoidPointMarker)) window.map.removeLayer(geoidPointMarker);
+    window.map.closePopup();
+  }
+  geoidBoundaryLayer = null;
+  geoidPointMarker = null;
+  geoidBoundaryRawData = null;
+  clearGeoidChildBoundaries();
+};
+
 
 function getActiveBoundaryKode() {
   return window._lastGeotaniLocation?.kode

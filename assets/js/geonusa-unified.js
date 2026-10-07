@@ -16,7 +16,14 @@
     const searchResults = document.getElementById('unifiedSearchResults');
     const searchInput = document.getElementById('unifiedSearchInput');
     const searchBtn = document.getElementById('geonusaSearchBtn');
+    const resetLayerBtn = document.getElementById('geonusaResetLayerBtn');
     if (!toggle || !panel || !status || !searchBtn) return;
+
+    if (resetLayerBtn) resetLayerBtn.addEventListener('click', () => {
+      if (typeof window.resetGeoidBoundaryLayer === 'function') window.resetGeoidBoundaryLayer();
+      if (searchInput) searchInput.value = '';
+      setStatus('Layer batas wilayah direset.');
+    });
 
     const selects = LEVELS.map(level => document.getElementById(level.id));
     let wilayahPromise;
