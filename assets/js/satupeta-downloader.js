@@ -514,6 +514,8 @@
     SUMBER_DAYA_ALAM_DAN_LINGKUNGAN: { 3: 1, 9: 1, 36: 1, 43: 1, 59: 1 }
   };
   var PAGE_SIZE = 1000;
+  var bigLayersLoaded = false;
+  var bigLayersPromise = null;
 
   function currentSource() {
     var sel = document.getElementById('satupetaInputLayer');
@@ -657,13 +659,15 @@
   }
 
   function populateBigLayers() {
+    if (bigLayersLoaded) return Promise.resolve();
+    if (bigLayersPromise) return bigLayersPromise;
     var sel = document.getElementById('satupetaInputLayer');
     if (!sel) return Promise.resolve();
     var status = document.getElementById('satupetaCatalogStatus');
     if (status) status.textContent = 'Memuat katalog dari SatuPeta BIG...';
     var loadedCount = 0;
     var failedFolders = [];
-    return Promise.all(
+    bigLayersPromise = Promise.all(
       BIG_FOLDERS.map(function (folder, index) {
         return fetch(BIG_SERVICE_BASE + folder + '/MapServer?f=json')
           .then(function (r) {
@@ -681,6 +685,7 @@
           });
       })
     ).then(function (results) {
+      bigLayersLoaded = true;
       results.forEach(function (meta, i) {
         if (!meta || !meta.layers) return;
         var folder = BIG_FOLDERS[i];
@@ -698,8 +703,6 @@
         });
         if (og.children.length) sel.appendChild(og);
       });
-      var layerSearch = document.getElementById('satupetaLayerSearch');
-      if (layerSearch) filterLayerOptions(layerSearch.value);
       window.__satupetaBigLayerCount = loadedCount;
       if (status) {
         status.textContent = loadedCount
@@ -708,44 +711,7 @@
         window.__satupetaCatalogMessage = status.textContent;
       }
     });
-  }
-
-  function filterLayerOptions(query) {
-    var sel = document.getElementById('satupetaInputLayer');
-    if (!sel) return;
-    var q = String(query || '').trim().toLowerCase();
-    var visibleCount = 0;
-    var i;
-    var opts = sel.querySelectorAll('option');
-    for (i = 0; i < opts.length; i++) {
-      var opt = opts[i];
-      if (opt.selected) {
-        opt.hidden = false;
-        visibleCount++;
-        continue;
-      }
-      var text = (opt.textContent || '').toLowerCase();
-      var val = (opt.value || '').toLowerCase();
-      var match = !q || text.indexOf(q) !== -1 || val.indexOf(q) !== -1;
-      opt.hidden = !match;
-      if (match) visibleCount++;
-    }
-    var groups = sel.querySelectorAll('optgroup');
-    for (i = 0; i < groups.length; i++) {
-      var og = groups[i];
-      var any = false;
-      for (var j = 0; j < og.options.length; j++) {
-        if (!og.options[j].hidden) { any = true; break; }
-      }
-      og.hidden = !any;
-    }
-    var status = document.getElementById('satupetaCatalogStatus');
-    if (status) {
-      if (q) status.textContent = visibleCount
-        ? visibleCount + ' pilihan cocok. Pilih layer dari daftar.'
-        : 'Layer tidak ditemukan. Coba kata kunci lain.';
-      else if (window.__satupetaCatalogMessage) status.textContent = window.__satupetaCatalogMessage;
-    }
+    return bigLayersPromise;
   }
 
   var COLORS = {
@@ -792,6 +758,7 @@
     pendingBoundaryNama: null,
     pendingFeature: null,
     outlineLayer: null,
+    selectedTableFeatureIndex: null,
     clipped: [],
     loading: false,
     fetchAbort: null
@@ -1573,6 +1540,7 @@
     state.loading = false;
     state.selectedFeature = null;
     state.selectedBoundary = null;
+    state.selectedTableFeatureIndex = null;
     state.pendingBoundaryKode = null;
     state.pendingBoundaryNama = null;
     state.pendingFeature = null;
@@ -1652,7 +1620,9 @@
       html += '<th>' + (gk === 'line' ? 'Panjang (Clip)' : gk === 'point' ? 'Titik' : 'Luas (Clip)') + '</th></tr></thead><tbody>';
       slice.forEach(function (f, i) {
         var p = f.properties || {};
-        html += '<tr><td class="at-td-no">' + (start + i + 1) + '</td>';
+        var featureIndex = start + i;
+        html += '<tr class="satupeta-feature-row' + (state.selectedTableFeatureIndex === featureIndex ? ' is-selected' : '') + '" data-feature-index="' + featureIndex + '" tabindex="0" role="button" aria-label="Sorot fitur ' + (featureIndex + 1) + ' dan arahkan peta ke poligon">';
+        html += '<td class="at-td-no">' + (featureIndex + 1) + '</td>';
         fields.forEach(function (fd) {
           var v = cellVal(f, fd);
           html += '<td title="' + v.replace(/"/g, '&quot;') + '">' + v + '</td>';
@@ -1683,8 +1653,66 @@
           render();
         });
       });
+      wrap.querySelectorAll('.satupeta-feature-row').forEach(function (row) {
+        function activateRow() {
+          focusFeatureOnMap(Number(row.getAttribute('data-feature-index')));
+        }
+        row.addEventListener('click', activateRow);
+        row.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            activateRow();
+          }
+        });
+      });
     }
     render();
+  }
+
+  function focusFeatureOnMap(index) {
+    var feature = state.clipped[index];
+    if (!feature || !state.layer || !window.map) return;
+    state.selectedTableFeatureIndex = index;
+    var selectedLayer = null;
+    var layerIndex = 0;
+    var src = currentSource();
+    var isLine = src.geomKind === 'line';
+    var isPoint = src.geomKind === 'point';
+    state.layer.eachLayer(function (featureLayer) {
+      var current = state.clipped[layerIndex++];
+      var active = layerIndex - 1 === index;
+      if (active) selectedLayer = featureLayer;
+      if (!featureLayer.setStyle) return;
+      if (active) {
+        featureLayer.setStyle({ color: '#f97316', weight: isLine ? 5 : 3.5, opacity: 1, fillColor: '#fb923c', fillOpacity: 0.72 });
+      } else {
+        var color = getColor(resolveName(src, current && current.properties[src.nameField]), src);
+        featureLayer.setStyle(isLine
+          ? { color: color, weight: 1.6, opacity: 0.9 }
+          : { color: color, weight: isPoint ? 1 : 1.2, opacity: 0.9, fillColor: color, fillOpacity: isPoint ? 0.75 : 0.35 });
+      }
+      if (featureLayer.setRadius && isPoint) featureLayer.setRadius(active ? 9 : 5);
+    });
+    if (selectedLayer && selectedLayer.bringToFront) selectedLayer.bringToFront();
+    var table = document.getElementById('satupetaFeatureTable');
+    if (table) {
+      table.querySelectorAll('.satupeta-feature-row.is-selected').forEach(function (row) { row.classList.remove('is-selected'); });
+      var selectedRow = table.querySelector('[data-feature-index="' + index + '"]');
+      if (selectedRow) selectedRow.classList.add('is-selected');
+    }
+    if (!selectedLayer) return;
+    if (isPoint && selectedLayer.getLatLng) {
+      window.map.flyTo(selectedLayer.getLatLng(), Math.max(window.map.getZoom(), 14), { duration: 0.7 });
+      return;
+    }
+    var bounds = selectedLayer.getBounds && selectedLayer.getBounds();
+    if (bounds && bounds.isValid()) {
+      if (window.SheetDrag && typeof window.SheetDrag.flyToBoundsInVisibleMap === 'function') {
+        window.SheetDrag.flyToBoundsInVisibleMap(bounds.pad(0.12), { maxZoom: 16, duration: 0.7 });
+      } else {
+        window.map.flyToBounds(bounds.pad(0.12), { maxZoom: 16, duration: 0.7 });
+      }
+    }
   }
 
   function isLineGeom(gj) {
@@ -1859,6 +1887,7 @@
       state.layer = null;
     }
     state.clipped = [];
+    state.selectedTableFeatureIndex = null;
     clearFeatureTable();
 
     var ctrl = new AbortController();
@@ -2074,6 +2103,7 @@
       state.layer = null;
     }
     state.clipped = [];
+    state.selectedTableFeatureIndex = null;
     clearFeatureTable();
     state.loading = false;
     state.selectedFeature = null;
@@ -2082,6 +2112,7 @@
 
   /* ---- Level mode change ---- */
   var LEVEL_TEXT = {
+    indonesia: { label: 'Cakupan nasional', ph: 'Seluruh Indonesia' },
     provinsi: { label: 'Cari nama provinsi', ph: 'Ketik nama provinsi...' },
     kabupaten: { label: 'Cari nama kabupaten', ph: 'Ketik nama kabupaten...' },
     kecamatan: { label: 'Cari nama kecamatan', ph: 'Ketik nama kecamatan...' },
@@ -2116,11 +2147,49 @@
     if (sel) state.level = sel.value;
     applyLevelLabels();
     clearSelection();
+    var wilayahPicker = document.getElementById('satupetaWilayahPicker');
+    if (wilayahPicker) wilayahPicker.style.display = state.level === 'indonesia' ? 'none' : '';
+    if (state.level === 'indonesia') {
+      selectAllIndonesia();
+      return;
+    }
     var layerSel = document.getElementById('satupetaInputLayer');
     if (layerSel && LEVEL_BY_DUK[layerSel.value]) {
       var next = DUK_BY_LEVEL[state.level];
       if (next && layerSel.value !== next) layerSel.value = next;
     }
+  }
+
+  function selectAllIndonesia() {
+    setBoundaryLoadingInfo('Menyiapkan batas Seluruh Indonesia…');
+    loadProvGeo().then(function (data) {
+      if (state.level !== 'indonesia') return;
+      var polygons = [];
+      (data.features || []).forEach(function (feature) {
+        var geometry = feature.geometry;
+        if (!geometry) return;
+        if (geometry.type === 'Polygon') polygons.push(geometry.coordinates);
+        else if (geometry.type === 'MultiPolygon') polygons = polygons.concat(geometry.coordinates);
+      });
+      if (!polygons.length) throw new Error('Batas provinsi untuk seluruh Indonesia tidak tersedia.');
+      var boundary = {
+        type: 'Feature',
+        properties: { nama: 'Seluruh Indonesia', kode: 'ID' },
+        geometry: { type: 'MultiPolygon', coordinates: polygons }
+      };
+      state.pendingBoundaryKode = null;
+      state.pendingBoundaryNama = 'Seluruh Indonesia';
+      state.pendingFeature = null;
+      state.selectedFeature = { properties: boundary.properties, geometry: boundary.geometry };
+      state.selectedBoundary = boundary;
+      updateSelectedLabel('Seluruh Indonesia', 'semua data');
+      drawSelOutline(boundary);
+      showToggleButton();
+      var info = document.getElementById('satupetaInfo');
+      if (info) info.style.display = 'none';
+    }).catch(function (error) {
+      if (state.level === 'indonesia') setBoundaryErrorInfo(error.message || 'Gagal memuat batas Seluruh Indonesia.');
+    });
   }
 
   /* ---- Init ---- */
@@ -2156,17 +2225,12 @@
       levelSel.addEventListener('change', onLevelChange);
     }
 
-    var layerSearch = document.getElementById('satupetaLayerSearch');
-    if (layerSearch) {
-      layerSearch.addEventListener('input', function () {
-        filterLayerOptions(this.value);
+    var geospatialCard = document.getElementById('geotani-geospasial-card');
+    if (geospatialCard) {
+      geospatialCard.addEventListener('toggle', function () {
+        if (geospatialCard.open) populateBigLayers();
       });
-      layerSearch.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-          this.value = '';
-          filterLayerOptions('');
-        }
-      });
+      if (geospatialCard.open) populateBigLayers();
     }
 
     var layerSel = document.getElementById('satupetaInputLayer');
@@ -2186,7 +2250,6 @@
     loadKab();
     loadDesa();
     loadProvGeo();
-    populateBigLayers();
 
     var origOpenGeotani = window.openGeotaniAnalysisTab;
     window.openGeotaniAnalysisTab = function (tabId) {

@@ -25,6 +25,84 @@
   var identifyMap = null;
   var identifyHandler = null;
   var identifyRequestId = 0;
+  var wrbClipGeometry = null;
+
+  function createClippedWrbLayer(map, L) {
+    var GridLayer = L.GridLayer.extend({
+      createTile: function (coords, done) {
+        var tile = document.createElement('canvas');
+        var size = this.getTileSize();
+        tile.width = size.x;
+        tile.height = size.y;
+        var context = tile.getContext('2d');
+        var tileNW = map.unproject(L.point(coords.x * size.x, coords.y * size.y), coords.z);
+        var tileSE = map.unproject(L.point((coords.x + 1) * size.x, (coords.y + 1) * size.y), coords.z);
+        var nw = map.options.crs.project(tileNW);
+        var se = map.options.crs.project(tileSE);
+        var params = new URLSearchParams({
+          SERVICE: 'WMS', VERSION: '1.1.1', REQUEST: 'GetMap', LAYERS: 'MostProbable',
+          STYLES: '', FORMAT: 'image/png', TRANSPARENT: 'TRUE', SRS: 'EPSG:3857',
+          WIDTH: String(size.x), HEIGHT: String(size.y),
+          BBOX: [nw.x, se.y, se.x, nw.y].join(',')
+        });
+        var image = new Image();
+        image.onload = function () {
+          try {
+            context.save();
+            context.beginPath();
+            var geometry = wrbClipGeometry;
+            var polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
+            polygons.forEach(function (polygon) {
+              polygon.forEach(function (ring) {
+                ring.forEach(function (point, index) {
+                  var projected = map.project([point[1], point[0]], coords.z);
+                  var x = projected.x - coords.x * size.x;
+                  var y = projected.y - coords.y * size.y;
+                  if (index === 0) context.moveTo(x, y); else context.lineTo(x, y);
+                });
+                context.closePath();
+              });
+            });
+            context.clip('evenodd');
+            context.drawImage(image, 0, 0, size.x, size.y);
+            context.restore();
+            done(null, tile);
+          } catch (error) { done(error, tile); }
+        };
+        image.onerror = function () { done(new Error('Tile WRB gagal dimuat.'), tile); };
+        image.src = BASE_URL + 'wrb?' + params.toString();
+        return tile;
+      }
+    });
+    var clipBounds = L.geoJSON(wrbClipGeometry).getBounds();
+    var clipped = new GridLayer({ tileSize: 256, opacity: 0.75, bounds: clipBounds, attribution: 'SoilGrids © ISRIC' });
+    clipped._isricClipped = true;
+    return clipped;
+  }
+
+  function makeLayer(key, map, L) {
+    if (key === 'wrb' && wrbClipGeometry) return createClippedWrbLayer(map, L);
+    var definition = DEFINITIONS[key];
+    return L.tileLayer.wms(BASE_URL + definition.service, {
+      layers: definition.layer,
+      format: 'image/png',
+      transparent: true,
+      version: '1.3.0',
+      crs: L.CRS.EPSG4326,
+      opacity: 0.75,
+      attribution: 'SoilGrids © ISRIC'
+    });
+  }
+
+  window.setIsricSoilWrbClipGeometry = function (geometry) {
+    wrbClipGeometry = geometry && (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') ? geometry : null;
+    var map = window.map;
+    var L = window.L;
+    if (!map || !L || selectedKey !== 'wrb' || !active.wrb || !map.hasLayer(active.wrb)) return;
+    map.removeLayer(active.wrb);
+    active.wrb = makeLayer('wrb', map, L);
+    active.wrb.addTo(map);
+  };
 
   function escapeHtml(value) {
     return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
@@ -167,6 +245,7 @@
     if (!definition || !map || !L) return;
 
     if (visible) {
+      if (key !== 'wrb') wrbClipGeometry = null;
       Object.keys(active).forEach(function (otherKey) {
         if (otherKey !== key && map.hasLayer(active[otherKey])) {
           map.removeLayer(active[otherKey]);
@@ -175,8 +254,12 @@
           }
         }
       });
+      if (key === 'wrb' && active[key] && active[key]._isricClipped !== !!wrbClipGeometry) {
+        if (map.hasLayer(active[key])) map.removeLayer(active[key]);
+        active[key] = null;
+      }
       if (!active[key]) {
-        active[key] = L.tileLayer.wms(BASE_URL + definition.service, {
+        active[key] = key === 'wrb' && wrbClipGeometry ? createClippedWrbLayer(map, L) : L.tileLayer.wms(BASE_URL + definition.service, {
           layers: definition.layer,
           format: 'image/png',
           transparent: true,

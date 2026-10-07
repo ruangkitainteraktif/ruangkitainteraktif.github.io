@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=89">
+  <link rel="stylesheet" href="assets/css/app.css?v=98">
   <link rel="stylesheet" href="assets/css/geodisaster.css?v=1">
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
@@ -2355,6 +2355,68 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     </div>
                   </details>
 
+                  <details class="geotani-kta-card" id="geotani-geospasial-card" aria-labelledby="geotani-geospasial-title">
+                    <summary class="gt-card-head">
+                      <span class="gt-card-icon" aria-hidden="true">&#128506;</span>
+                      <span>
+                        <b id="geotani-geospasial-title">Geospasial Indonesia</b>
+                        <small>Katalog SatuPeta BIG dan sumber resmi lain</small>
+                      </span>
+                    </summary>
+                    <div style="display:grid;gap:10px;">
+                      <div class="satupeta-layer-picker">
+                        <label class="geotani-form-label" for="satupetaInputLayer">Layer data</label>
+                        <select id="satupetaInputLayer" class="geotani-form-select" aria-describedby="satupetaCatalogStatus">
+                          <option value="lsd-50k" selected>LSD 50K (BIG)</option>
+                          <option value="lbs-50k">LBS 50K (BIG)</option>
+                          <option value="likuifaksi-big">Kerentanan Likuifaksi (BIG)</option>
+                          <option value="geostruktur-big">Geologi Geostruktur (BIG)</option>
+                          <option value="erosi-big">Peta Rawan Erosi (BIG)</option>
+                          <option value="penggunaan10k">Penggunaan Tanah 10K (SatuPeta)</option>
+                          <option value="geologi-bnpb">Peta Geologi (BNPB)</option>
+                          <option value="kh-esdm">Kawasan Hutan (ESDM)</option>
+                          <option value="kh-kemenhut">Kawasan Hutan (Kemenhut)</option>
+                          <optgroup label="Kependudukan (Dukcapil)">
+                            <option value="duk-prop">Penduduk Provinsi (Dukcapil)</option>
+                            <option value="duk-kab">Penduduk Kabupaten (Dukcapil)</option>
+                            <option value="duk-kec">Penduduk Kecamatan (Dukcapil)</option>
+                            <option value="duk-kel">Penduduk Desa (Dukcapil)</option>
+                          </optgroup>
+                        </select>
+                        <small id="satupetaCatalogStatus" class="satupeta-catalog-status" role="status" aria-live="polite">Katalog BIG dimuat saat kartu ini dibuka.</small>
+                      </div>
+                      <div style="display:grid;gap:10px;">
+                        <div>
+                          <label class="geotani-form-label">Level</label>
+                          <select id="satupetaLevelMode" class="geotani-form-select">
+                            <option value="indonesia">Seluruh Indonesia / semua data</option>
+                            <option value="provinsi">Provinsi</option>
+                            <option value="kabupaten" selected>Kabupaten/Kota</option>
+                            <option value="kecamatan">Kecamatan</option>
+                            <option value="desa">Desa/Kelurahan</option>
+                          </select>
+                        </div>
+                        <div id="satupetaWilayahPicker" style="position:relative;">
+                          <label id="satupetaLevelLabel" class="geotani-form-label">Cari nama wilayah</label>
+                          <div style="position:relative;">
+                            <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
+                            <input type="text" id="satupetaKabSearch" placeholder="Pilih nama wilayah..." autocomplete="off" class="geotani-form-input-search" />
+                          </div>
+                          <div id="satupetaKabResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
+                          <div id="satupetaKabSelected" style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;"></div>
+                        </div>
+                      </div>
+                      <div id="satupetaInfo" style="display:none;font-size:11px;color:#475569;padding:6px 0;"></div>
+                      <div id="satupetaFeatureTable" style="display:none;"></div>
+                      <button id="satupetaToggleBtn" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Tampilkan Data</button>
+                      <button id="btnClearSatupeta" class="geotani-btn-reset" type="button" style="display:none;" title="Reset polygon dan pilihan wilayah" aria-label="Reset polygon dan pilihan wilayah">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        Reset Polygon
+                      </button>
+                      <button id="btnDetailSatupeta" style="margin-top:4px;display:none;width:100%;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Detail</button>
+                    </div>
+                  </details>
+
                   <details class="geotani-kta-card geojogja-card" id="geojogja-card" aria-labelledby="geojogja-title">
                     <summary class="gt-card-head">
                       <span class="gt-card-icon" aria-hidden="true">&#127759;</span>
@@ -2414,73 +2476,6 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                         <button id="geojakarta-clear" class="geotools-btn" type="button" disabled>Hapus batas dari peta</button>
                       </div>
                       <p id="geojakarta-status" class="geojakarta-status" role="status" aria-live="polite">Sumber: Batas Administrasi DKI Jakarta · RT</p>
-                    </div>
-                  </details>
-
-                  <details class="geotani-kta-card" id="geotani-geospasial-card" aria-labelledby="geotani-geospasial-title">
-                    <summary class="gt-card-head">
-                      <span class="gt-card-icon" aria-hidden="true">&#128506;</span>
-                      <span>
-                        <b id="geotani-geospasial-title">Geospasial Indonesia</b>
-                        <small>Katalog SatuPeta BIG dan sumber resmi lain</small>
-                      </span>
-                    </summary>
-                    <div style="display:grid;gap:10px;">
-                      <div class="satupeta-layer-picker">
-                        <label class="geotani-form-label" for="satupetaLayerSearch">Cari layer</label>
-                        <div class="satupeta-layer-search-wrap">
-                          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
-                          <input type="search" id="satupetaLayerSearch" class="geotani-form-input-search" placeholder="Contoh: penggunaan tanah" autocomplete="off" aria-label="Cari layer BIG SatuPeta" />
-                        </div>
-                        <small class="satupeta-layer-hint">Cari berdasarkan nama layer. Pilih hasil pada daftar di bawah.</small>
-                        <label class="geotani-form-label" for="satupetaInputLayer">Layer data</label>
-                        <select id="satupetaInputLayer" class="geotani-form-select" aria-describedby="satupetaCatalogStatus">
-                          <option value="lsd-50k" selected>LSD 50K (BIG)</option>
-                          <option value="lbs-50k">LBS 50K (BIG)</option>
-                          <option value="likuifaksi-big">Kerentanan Likuifaksi (BIG)</option>
-                          <option value="geostruktur-big">Geologi Geostruktur (BIG)</option>
-                          <option value="erosi-big">Peta Rawan Erosi (BIG)</option>
-                          <option value="penggunaan10k">Penggunaan Tanah 10K (SatuPeta)</option>
-                          <option value="geologi-bnpb">Peta Geologi (BNPB)</option>
-                          <option value="kh-esdm">Kawasan Hutan (ESDM)</option>
-                          <option value="kh-kemenhut">Kawasan Hutan (Kemenhut)</option>
-                          <optgroup label="Kependudukan (Dukcapil)">
-                            <option value="duk-prop">Penduduk Provinsi (Dukcapil)</option>
-                            <option value="duk-kab">Penduduk Kabupaten (Dukcapil)</option>
-                            <option value="duk-kec">Penduduk Kecamatan (Dukcapil)</option>
-                            <option value="duk-kel">Penduduk Desa (Dukcapil)</option>
-                          </optgroup>
-                        </select>
-                        <small id="satupetaCatalogStatus" class="satupeta-catalog-status" role="status" aria-live="polite">Memuat katalog layer BIG SatuPeta...</small>
-                      </div>
-                      <div style="display:grid;gap:10px;">
-                        <div>
-                          <label class="geotani-form-label">Level</label>
-                          <select id="satupetaLevelMode" class="geotani-form-select">
-                            <option value="provinsi">Provinsi</option>
-                            <option value="kabupaten" selected>Kabupaten/Kota</option>
-                            <option value="kecamatan">Kecamatan</option>
-                            <option value="desa">Desa/Kelurahan</option>
-                          </select>
-                        </div>
-                        <div style="position:relative;">
-                          <label id="satupetaLevelLabel" class="geotani-form-label">Cari nama wilayah</label>
-                          <div style="position:relative;">
-                            <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#90a4ae;pointer-events:none;">🔍</span>
-                            <input type="text" id="satupetaKabSearch" placeholder="Pilih nama wilayah..." autocomplete="off" class="geotani-form-input-search" />
-                          </div>
-                          <div id="satupetaKabResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:9999;max-height:200px;overflow-y:auto;background:#fff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 4px 4px;box-shadow:0 4px 12px rgba(0,0,0,.12);"></div>
-                          <div id="satupetaKabSelected" style="display:none;margin-top:4px;padding:4px 8px;font-size:10px;color:#0879bf;background:#e3f2fd;border-radius:4px;"></div>
-                        </div>
-                      </div>
-                      <div id="satupetaInfo" style="display:none;font-size:11px;color:#475569;padding:6px 0;"></div>
-                      <div id="satupetaFeatureTable" style="display:none;"></div>
-                      <button id="satupetaToggleBtn" style="margin-top:6px;padding:9px 14px;font-size:11px;font-weight:600;color:#fff;background:#16a34a;border:none;border-radius:4px;cursor:pointer;transition:all .15s;width:100%;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Tampilkan Data</button>
-                      <button id="btnClearSatupeta" class="geotani-btn-reset" type="button" style="display:none;" title="Reset polygon dan pilihan wilayah" aria-label="Reset polygon dan pilihan wilayah">
-                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                        Reset Polygon
-                      </button>
-                      <button id="btnDetailSatupeta" style="margin-top:4px;display:none;width:100%;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Detail</button>
                     </div>
                   </details>
 
@@ -2686,43 +2681,33 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
               </div>
             </details>
 
-            <details class="geofarm-ref gf-dasimetri-card" id="geofarmPetaDasimetri" aria-labelledby="gfDasimetriTitle">
+            <details class="geotani-lbslsd" id="geofarm-wosis-card" aria-labelledby="geofarm-wosis-title">
               <summary class="gt-card-head">
-                <span class="gt-card-icon" aria-hidden="true">&#127806;</span>
-                <span><b id="gfDasimetriTitle">Peta Dasimetrik Padi</b><small>Statistik BPS pada polygon sawah BIG</small></span>
+                <span class="gt-card-icon" aria-hidden="true">&#127793;</span>
+                <span>
+                  <b id="geofarm-wosis-title">Jenis Tanah (HWSD v2.01)</b>
+                  <small>Harmonized World Soil Database &mdash; FAO</small>
+                </span>
               </summary>
-              <div class="geofarm-ref-body gf-dasimetri-body">
-                <p class="gf-dasimetri-desc">Pilih provinsi dan kabupaten/kota untuk mengambil polygon Lahan Baku Sawah BIG. Statistik BPS ditampilkan hanya di dalam polygon sawah dan alokasi tiap polygon dihitung secara proporsional terhadap luas.</p>
-                <div class="gf-dasimetri-controls">
-                  <label for="gfDasimetriProvince">Provinsi</label>
-                  <select id="gfDasimetriProvince"><option value="33">Jawa Tengah</option></select>
-                  <label for="gfDasimetriDistrict">Kabupaten/kota</label>
-                  <select id="gfDasimetriDistrict"><option value="">Memuat batas kabupaten…</option></select>
-                  <label for="gfDasimetriMetric">Indikator</label>
-                  <select id="gfDasimetriMetric">
-                    <option value="harvest">Luas panen (ha)</option>
-                    <option value="production">Produksi (ton GKG)</option>
-                    <option value="yield">Produktivitas (kuintal/ha)</option>
-                  </select>
-                  <button id="gfDasimetriLoad" type="button">Tampilkan peta</button>
-                  <button id="gfDasimetriReset" type="button" disabled>Reset</button>
+              <div class="geotani-lbslsd-body">
+                <p class="geotani-sls-desc">Pilih kabupaten/kota untuk menampilkan peta satuan tanah HWSD v2.01 yang dipotong mengikuti batas wilayah. Klik peta untuk melihat atribut kelompok tanah dan karakteristik satuannya.</p>
+                <div class="geotani-sls-search">
+                  <label class="geotani-form-label" for="geofarmWosisDistrictSearch">Cari kabupaten/kota</label>
+                  <input type="text" id="geofarmWosisDistrictSearch" placeholder="Ketik nama kabupaten/kota..." autocomplete="off" class="geotani-form-input-search" />
+                  <div id="geofarmWosisDistrictResults" class="geotani-sls-results" hidden></div>
+                  <div id="geofarmWosisDistrictSelected" class="geotani-sls-picked" hidden></div>
                 </div>
-                <p id="gfDasimetriStatus" class="geofarm-ref-status" role="status" aria-live="polite">Sumber statistik: BPS, tahun 2025.</p>
-                <div id="gfDasimetriSummary" class="gf-dasimetri-summary" hidden></div>
-                <div id="gfDasimetriLegend" class="gf-dasimetri-legend" hidden></div>
-                <section id="gfDasimetriAnalysis" class="gf-dasimetri-analysis" hidden aria-live="polite">
-                  <h4 id="gfDasimetriAnalysisTitle">Analisis polygon sawah</h4>
-                  <div class="gf-dasimetri-chart-wrap"><canvas id="gfDasimetriChart" aria-label="Grafik total luas sawah menurut kelas ukuran polygon"></canvas></div>
-                  <h5>Ringkasan kelas luas polygon</h5>
-                  <div class="gf-dasimetri-table-wrap"><table class="gf-dasimetri-table"><thead><tr><th>Kelas luas</th><th>Jumlah polygon</th><th>Total luas</th><th>Porsi luas</th></tr></thead><tbody id="gfDasimetriClassBody"></tbody></table></div>
-                  <div class="gf-dasimetri-detail-head"><h5>Rincian polygon sawah</h5><input id="gfDasimetriSearch" type="search" placeholder="Cari ID, nama, kabupaten..." aria-label="Cari polygon sawah"></div>
-                  <div class="gf-dasimetri-table-wrap gf-dasimetri-detail-wrap"><table class="gf-dasimetri-table"><thead><tr><th>No.</th><th>ID BIG</th><th>Kategori</th><th>Kabupaten</th><th>Luas hasil potong (ha)</th><th>Nilai alokasi estimasi</th></tr></thead><tbody id="gfDasimetriDetailBody"></tbody></table></div>
-                  <div class="gf-dasimetri-pagination"><span id="gfDasimetriDetailCount"></span><div><button id="gfDasimetriPrev" type="button" disabled>Sebelumnya</button><button id="gfDasimetriNext" type="button" disabled>Berikutnya</button></div></div>
-                  <p class="gf-dasimetri-method">Grafik merangkum luas geometri LBS hasil potong per kelas ukuran. Estimasi luas panen atau produksi pada baris polygon dialokasikan menurut porsi luas polygon terhadap total LBS kabupaten.</p>
-                </section>
-                <p id="gfDasimetriSource" class="gf-dasimetri-source">Statistik: BPS tahun 2025. Geometri: <a href="https://geoportal.big.go.id/" target="_blank" rel="noopener noreferrer">BIG Satu Peta, LBS MapServer layer 36</a>. Nilai yang dialokasikan ke polygon adalah estimasi berbobot luas dari total kabupaten, bukan pengukuran hasil panen per petak.</p>
+                <button id="geofarm-wosis-load" class="geotani-btn-print" type="button">Tampilkan Peta Tanah</button>
+                <button id="geofarm-wosis-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;">Reset Polygon</button>
+                <div id="geofarm-wrb-legend" class="geofarm-wrb-legend" hidden>
+                  <strong>Legenda jenis tanah HWSD v2.01</strong>
+                </div>
+                <div id="geofarm-wosis-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                <div id="geofarm-wosis-output"></div>
               </div>
             </details>
+
+            
 
             <details class="geotani-lbslsd" id="geotani-tutupan-card" aria-labelledby="geotani-tutupan-title">
               <summary class="gt-card-head">
@@ -2786,29 +2771,6 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
               </div>
             </details>
 
-            <details class="geotani-lbslsd" id="geofarm-wosis-card" aria-labelledby="geofarm-wosis-title">
-              <summary class="gt-card-head">
-                <span class="gt-card-icon" aria-hidden="true">&#127793;</span>
-                <span>
-                  <b id="geofarm-wosis-title">Profil Tanah WoSIS</b>
-                  <small>Observasi profil tanah &amp; pH air &mdash; ISRIC</small>
-                </span>
-              </summary>
-              <div class="geotani-lbslsd-body">
-                <p class="geotani-sls-desc">Cari titik profil tanah WoSIS di dalam satu kabupaten/kota. Data ini merupakan hasil pengamatan lapangan/laboratorium, bukan peta prediksi tanah; titik hanya tersedia di lokasi yang pernah disurvei.</p>
-                <div class="geotani-sls-search">
-                  <label class="geotani-form-label" for="geofarmWosisDistrictSearch">Cari kabupaten/kota</label>
-                  <input type="text" id="geofarmWosisDistrictSearch" placeholder="Ketik nama kabupaten/kota..." autocomplete="off" class="geotani-form-input-search" />
-                  <div id="geofarmWosisDistrictResults" class="geotani-sls-results" hidden></div>
-                  <div id="geofarmWosisDistrictSelected" class="geotani-sls-picked" hidden></div>
-                </div>
-                <button id="geofarm-wosis-load" class="geotani-btn-print" type="button">Tampilkan Profil Tanah</button>
-                <button id="geofarm-wosis-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;">Reset Profil Tanah</button>
-                <div id="geofarm-wosis-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
-                <div id="geofarm-wosis-output"></div>
-              </div>
-            </details>
-
             <details class="geotani-lbslsd" id="geotani-land-system-card" aria-labelledby="geotani-land-system-title">
               <summary class="gt-card-head">
                 <span class="gt-card-icon" aria-hidden="true">&#127758;</span>
@@ -2838,7 +2800,45 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
               </div>
             </details>
 
-            <details class="geotani-lbslsd" id="geotani-lsd12-card" aria-labelledby="geotani-lsd12-title">
+            <details class="geofarm-ref gf-dasimetri-card" id="geofarmPetaDasimetri" aria-labelledby="gfDasimetriTitle">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#127806;</span>
+                <span><b id="gfDasimetriTitle">Peta Dasimetrik Padi</b><small>Statistik BPS pada polygon sawah BIG</small></span>
+              </summary>
+              <div class="geofarm-ref-body gf-dasimetri-body">
+                <p class="gf-dasimetri-desc">Pilih provinsi dan kabupaten/kota untuk mengambil polygon Lahan Baku Sawah BIG. Statistik BPS ditampilkan hanya di dalam polygon sawah dan alokasi tiap polygon dihitung secara proporsional terhadap luas.</p>
+                <div class="gf-dasimetri-controls">
+                  <label for="gfDasimetriProvince">Provinsi</label>
+                  <select id="gfDasimetriProvince"><option value="33">Jawa Tengah</option></select>
+                  <label for="gfDasimetriDistrict">Kabupaten/kota</label>
+                  <select id="gfDasimetriDistrict"><option value="">Memuat batas kabupaten…</option></select>
+                  <label for="gfDasimetriMetric">Indikator</label>
+                  <select id="gfDasimetriMetric">
+                    <option value="harvest">Luas panen (ha)</option>
+                    <option value="production">Produksi (ton GKG)</option>
+                    <option value="yield">Produktivitas (kuintal/ha)</option>
+                  </select>
+                  <button id="gfDasimetriLoad" type="button">Tampilkan peta</button>
+                  <button id="gfDasimetriReset" type="button" disabled>Reset</button>
+                </div>
+                <p id="gfDasimetriStatus" class="geofarm-ref-status" role="status" aria-live="polite">Sumber statistik: BPS, tahun 2025.</p>
+                <div id="gfDasimetriSummary" class="gf-dasimetri-summary" hidden></div>
+                <div id="gfDasimetriLegend" class="gf-dasimetri-legend" hidden></div>
+                <section id="gfDasimetriAnalysis" class="gf-dasimetri-analysis" hidden aria-live="polite">
+                  <h4 id="gfDasimetriAnalysisTitle">Analisis polygon sawah</h4>
+                  <div class="gf-dasimetri-chart-wrap"><canvas id="gfDasimetriChart" aria-label="Grafik total luas sawah menurut kelas ukuran polygon"></canvas></div>
+                  <h5>Ringkasan kelas luas polygon</h5>
+                  <div class="gf-dasimetri-table-wrap"><table class="gf-dasimetri-table"><thead><tr><th>Kelas luas</th><th>Jumlah polygon</th><th>Total luas</th><th>Porsi luas</th></tr></thead><tbody id="gfDasimetriClassBody"></tbody></table></div>
+                  <div class="gf-dasimetri-detail-head"><h5>Rincian polygon sawah</h5><input id="gfDasimetriSearch" type="search" placeholder="Cari ID, nama, kabupaten..." aria-label="Cari polygon sawah"></div>
+                  <div class="gf-dasimetri-table-wrap gf-dasimetri-detail-wrap"><table class="gf-dasimetri-table"><thead><tr><th>No.</th><th>ID BIG</th><th>Kategori</th><th>Kabupaten</th><th>Luas hasil potong (ha)</th><th>Nilai alokasi estimasi</th></tr></thead><tbody id="gfDasimetriDetailBody"></tbody></table></div>
+                  <div class="gf-dasimetri-pagination"><span id="gfDasimetriDetailCount"></span><div><button id="gfDasimetriPrev" type="button" disabled>Sebelumnya</button><button id="gfDasimetriNext" type="button" disabled>Berikutnya</button></div></div>
+                  <p class="gf-dasimetri-method">Grafik merangkum luas geometri LBS hasil potong per kelas ukuran. Estimasi luas panen atau produksi pada baris polygon dialokasikan menurut porsi luas polygon terhadap total LBS kabupaten.</p>
+                </section>
+                <p id="gfDasimetriSource" class="gf-dasimetri-source">Statistik: BPS tahun 2025. Geometri: <a href="https://geoportal.big.go.id/" target="_blank" rel="noopener noreferrer">BIG Satu Peta, LBS MapServer layer 36</a>. Nilai yang dialokasikan ke polygon adalah estimasi berbobot luas dari total kabupaten, bukan pengukuran hasil panen per petak.</p>
+              </div>
+            </details>
+
+            <details class="geotani-lbslsd" id="geotani-lsd12-card" aria-labelledby="geotani-lsd12-title" hidden>
               <summary class="gt-card-head">
                 <span class="gt-card-icon" aria-hidden="true">&#128510;</span>
                 <span>
@@ -3610,8 +3610,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
          geopangan, attribute-table, ai-analysis, dan polygon-analysis
          semuanya mendaftarkan sheet ke window.SheetDrag saat dimuat. -->
     <script src="assets/js/sheet-drag.js?v=20261006-reset-all-on-close"></script>
-    <script src="assets/js/map-core.js?v=20261006-reset-all-on-close"></script>
-    <script src="assets/js/isric-soil-layers.js"></script>
+    <script src="assets/js/map-core.js?v=20261007-autopin-core-layers"></script>
+    <script src="assets/js/isric-soil-layers.js?v=20261007-wrb-clip"></script>
     <script src="assets/js/layer-loading.js"></script>
     <script src="assets/js/bnpb-hillshade.js"></script>
     <script src="assets/js/geologi-bnpb.js"></script>
@@ -3644,7 +3644,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/geoportal-search.js"></script>
     <script src="assets/js/sidebar.js?v=20261006-reset-all-on-exit"></script>
     <script src="assets/js/earthquake.js"></script>
-    <script src="assets/js/attribute-table.js?v=10"></script>
+    <script src="assets/js/attribute-table.js?v=13-hwsd-hidden-table"></script>
     <script src="assets/js/katalog-gempa.js?v=20261006-attr-table"></script>
     <script src="assets/js/sensor-seismic.js"></script>
     <script src="assets/js/sensor-global.js"></script>
@@ -3686,7 +3686,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
   <script src="assets/js/overlay-village-search.js"></script>
   <script src="assets/js/erosi-kta.js"></script>
-  <script src="assets/js/satupeta-downloader.js?v=20261006-geospatial-search-ui"></script>
+  <script src="assets/js/satupeta-downloader.js?v=20261007-national-all-click-table"></script>
   <script src="assets/js/crop-health.js"></script>
   <script src="assets/js/ndvi-analysis.js"></script>
   <script src="assets/js/landcover-analysis.js"></script>
@@ -3728,7 +3728,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/geotani-lbs-lsd.js"></script>
   <!-- Land System BIG: memuat paginasi nasional InaLand saat kartu digunakan. -->
   <script src="assets/js/geofarm-land-system.js?v=20261006-kabupaten"></script>
-  <script src="assets/js/geofarm-wosis.js?v=20261007-fix2"></script>
+  <script src="assets/js/geofarm-wosis.js?v=20261007-hwsd-district"></script>
   <!-- LSD 12 Provinsi (ATR/BPN GISTARU). WAJIB setelah geotani-lbs-lsd.js:
        modul ini memakai villageMeta, clipKeDesa, dan bboxDariRings dari
        window.GeoTaniLbsLsd supaya batas desa dan hitung luasnya cuma ada
@@ -3774,6 +3774,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/krb-titik.js"></script>
   <script src="assets/js/peta-geologi.js"></script>
   <script src="assets/js/jenis-tanah-jateng.js?v=20261006-flycenter"></script>
+  <script src="assets/js/hwsd-indonesia.js?v=20261007-hwsd-district-clip"></script>
   <script src="assets/js/transjakarta-layer.js"></script>
   <script src="assets/js/transjogja-layer.js"></script>
   <script src="assets/js/geostruktur.js"></script>

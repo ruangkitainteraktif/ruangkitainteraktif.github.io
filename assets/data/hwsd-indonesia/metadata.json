@@ -1,0 +1,16 @@
+{
+  "name": "HWSD v2.01 — Indonesia",
+  "source": "FAO Harmonized World Soil Database v2.0, revision 2.01 (2023)",
+  "resolution": "30 arc-second (~1 km)",
+  "extent": [
+    95.0104,
+    -11.0035,
+    141.0198,
+    6.0763
+  ],
+  "minZoom": 4,
+  "maxZoom": 8,
+  "attribution": "FAO HWSD v2.01; batas klip: BPS Provinsi Indonesia",
+  "dataLicense": "CC BY 4.0",
+  "units": 105
+}

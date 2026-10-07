@@ -3140,6 +3140,7 @@ L.control.scale({
           { id: 'toggleBouguerBMKG', label: 'Anomali Bouguer Indonesia (BMKG)' }
         ]},
         { subcat: 'WRB', layers: [
+          { id: 'toggleHwsdIndonesia', label: 'Jenis Tanah Indonesia (HWSD v2.01)' },
           { id: 'isric-soil-wrb', label: 'WRB — Kelas tanah paling mungkin' },
           { id: 'isric-soil-bdod', label: 'Bulk density · 0–5 cm' },
           { id: 'isric-soil-cec', label: 'Kapasitas tukar kation (CEC) · 0–5 cm' },
@@ -3198,7 +3199,7 @@ L.control.scale({
   var _layerCatalogOpen = false;
   var _layerCatalogState = {};
   var _pinnedLayers = [];
-  var PINNED_MAX = 5;
+  var PINNED_MAX = 10;
   var _pinStorageKey = 'ruangkita-pinned-layers';
 
   function loadPinnedLayers() {
@@ -3245,11 +3246,20 @@ L.control.scale({
   ];
   _pinnedLayers = _pinnedLayers.filter(function (id) { return removedCatalogLayerIds.indexOf(id) === -1; });
   savePinnedLayers();
-  // Peta Dasar selalu tampil sebagai pin pertama pada katalog layer.
-  var _petadasarPinIndex = _pinnedLayers.indexOf('petadasar-bpn');
-  if (_petadasarPinIndex >= 0) _pinnedLayers.splice(_petadasarPinIndex, 1);
-  _pinnedLayers.unshift('petadasar-bpn');
-  if (_pinnedLayers.length > PINNED_MAX) _pinnedLayers.pop();
+  // Layer utama selalu diprioritaskan dalam pin bawaan katalog.
+  var _defaultPinnedLayers = [
+    'petadasar-bpn',
+    'toggleHwsdIndonesia',
+    'toggleFsvaLayer',
+    'toggleFaultLayerNew',
+    'toggleTransjakarta',
+    'toggleBouguerBMKG'
+  ];
+  _defaultPinnedLayers.forEach(function (id) {
+    var idx = _pinnedLayers.indexOf(id);
+    if (idx >= 0) _pinnedLayers.splice(idx, 1);
+  });
+  _pinnedLayers = _defaultPinnedLayers.concat(_pinnedLayers).slice(0, PINNED_MAX);
   savePinnedLayers();
 
   function toggleLayerCatalog() {
@@ -3510,9 +3520,11 @@ L.control.scale({
           html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
           html += '<label for="lc_' + l.id + '">' + l.label + '</label>';
           html += '<div class="lc-item-actions">';
-          html += '<button type="button" class="lc-attr-btn' + ((isChecked || l.id === 'toggleJenisTanahJateng' || l.id === 'toggleGeologiArcGISOnline') ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
-          html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
-          html += '</button>';
+          if (l.id !== 'toggleHwsdIndonesia') {
+            html += '<button type="button" class="lc-attr-btn' + ((isChecked || l.id === 'toggleJenisTanahJateng' || l.id === 'toggleGeologiArcGISOnline') ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
+            html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
+            html += '</button>';
+          }
           if (l.id === 'toggleJenisTanahJateng') html += '<button type="button" class="lc-fit-btn" data-layer-id="' + l.id + '" title="Arahkan peta ke seluruh Jawa Tengah" aria-label="Arahkan peta ke seluruh Jawa Tengah"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13 13 3M5 3h8v8"/></svg></button>';
           if (l.id === 'toggleGeologiArcGISOnline') html += '<button type="button" class="lc-fit-btn" data-layer-id="' + l.id + '" title="Arahkan peta ke seluruh data geologi" aria-label="Arahkan peta ke seluruh data geologi"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13 13 3M5 3h8v8"/></svg></button>';
           var pinned2 = isPinnedLayer(l.id);
@@ -3605,6 +3617,7 @@ L.control.scale({
           (id === 'toggleNonTollRoad' && typeof window.toggleNonTollRoadLayer === 'function') ||
           (id === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') ||
           (id === 'toggleJenisTanahJateng' && typeof window.toggleJenisTanahJateng === 'function') ||
+          (id === 'toggleHwsdIndonesia' && typeof window.toggleHwsdIndonesia === 'function') ||
           (id === 'toggleGeologiArcGISOnline' && typeof window.toggleGeologiArcGISOnline === 'function') ||
           (id === 'toggleBouguerBMKG' && typeof window.toggleBouguerBMKG === 'function') ||
           (id === 'toggleBmkgCurahHujan' && typeof window.toggleBmkgCurahHujan === 'function') ||
@@ -3707,6 +3720,9 @@ L.control.scale({
           if (cb.checked && typeof window.flyToJenisTanahJateng === 'function') {
             window.flyToJenisTanahJateng();
           }
+        }
+        if (id === 'toggleHwsdIndonesia' && typeof window.toggleHwsdIndonesia === 'function') {
+          window.toggleHwsdIndonesia(cb.checked);
         }
         if (id === 'toggleGeologiBNPB' && typeof window.toggleGeologiBNPB === 'function') {
           window.toggleGeologiBNPB(cb.checked);
