@@ -2374,6 +2374,33 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     </div>
                   </details>
 
+                  <details class="geotani-kta-card geojakarta-card" id="geojakarta-card" aria-labelledby="geojakarta-title">
+                    <summary class="gt-card-head">
+                      <span class="gt-card-icon" aria-hidden="true">&#127961;</span>
+                      <span>
+                        <b id="geojakarta-title">GeoJakarta</b>
+                        <small>Cari batas administrasi hingga tingkat RT</small>
+                      </span>
+                    </summary>
+                    <div class="geojakarta-body">
+                      <p class="geojakarta-desc">Pilih wilayah berurutan. Batas RT terpilih akan ditampilkan pada peta.</p>
+                      <label class="geojakarta-label" for="geojakarta-kota">Kota/Kabupaten</label>
+                      <select id="geojakarta-kota" class="geotani-form-select" aria-label="Pilih kota atau kabupaten Jakarta" disabled><option value="">Memuat kota/kabupaten…</option></select>
+                      <label class="geojakarta-label" for="geojakarta-kecamatan">Kecamatan</label>
+                      <select id="geojakarta-kecamatan" class="geotani-form-select" aria-label="Pilih kecamatan" disabled><option value="">Pilih kota/kabupaten dahulu</option></select>
+                      <label class="geojakarta-label" for="geojakarta-kelurahan">Kelurahan</label>
+                      <select id="geojakarta-kelurahan" class="geotani-form-select" aria-label="Pilih kelurahan" disabled><option value="">Pilih kecamatan dahulu</option></select>
+                      <label class="geojakarta-label" for="geojakarta-rw">RW</label>
+                      <select id="geojakarta-rw" class="geotani-form-select" aria-label="Pilih RW" disabled><option value="">Pilih kelurahan dahulu</option></select>
+                      <label class="geojakarta-label" for="geojakarta-rt">RT</label>
+                      <select id="geojakarta-rt" class="geotani-form-select" aria-label="Pilih RT" disabled><option value="">Pilih RW dahulu</option></select>
+                      <div class="geojakarta-actions">
+                        <button id="geojakarta-clear" class="geotools-btn" type="button" disabled>Hapus batas dari peta</button>
+                      </div>
+                      <p id="geojakarta-status" class="geojakarta-status" role="status" aria-live="polite">Sumber: Batas Administrasi DKI Jakarta · RT</p>
+                    </div>
+                  </details>
+
                   <details class="geotani-kta-card" id="geotani-geospasial-card" aria-labelledby="geotani-geospasial-title">
                     <summary class="gt-card-head">
                       <span class="gt-card-icon" aria-hidden="true">&#128506;</span>
@@ -3574,6 +3601,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
     <script src="assets/js/geoportal.js?v=20261006-search-big-catalog"></script>
     <script src="assets/js/geojogja.js?v=20261007"></script>
+    <script src="assets/js/geojakarta.js?v=20261007-rt-search"></script>
     <script src="assets/js/demnas-download.js"></script>
     <script src="assets/js/geoportal-search.js"></script>
     <script src="assets/js/sidebar.js?v=20261006-reset-all-on-exit"></script>

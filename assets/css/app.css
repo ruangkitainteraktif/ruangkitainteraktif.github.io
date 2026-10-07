@@ -3308,6 +3308,15 @@
     .geojogja-pagination .geotools-btn { width: auto; min-width: 96px; height: 34px; padding: 0 10px; border-radius: 8px; font-size: 11px; flex: 0 0 auto; }
     .geojogja-pagination span { color: var(--text-secondary); font-size: 11px; text-align: center; }
 
+    #geojakarta-card { margin-top: 10px; }
+    #geojakarta-card > .geojakarta-body { display: grid; gap: 7px; min-width: 0; }
+    .geojakarta-desc, .geojakarta-status { margin: 0; color: var(--text-secondary); font-size: 10.5px; line-height: 1.45; }
+    .geojakarta-label { margin-top: 2px; color: var(--text-primary); font-size: 10.5px; font-weight: 700; }
+    .geojakarta-actions { display: flex; justify-content: flex-end; margin-top: 2px; }
+    .geojakarta-actions .geotools-btn { width: auto; min-height: 32px; padding: 0 10px; font-size: 10.5px; }
+    .geojakarta-status.is-error { color: #b91c1c; }
+    .geojakarta-status.is-busy { color: #0369a1; }
+
     /* Dua kartu yang terlihat di panel GeoPortal (SLS dan Geospasial)
        disamakan bentuknya dengan GeoPortal Hub: satu kontainer kartu yang
        rapi, tanpa inner box tambahan, dan body yang dimulai tepat di bawah
