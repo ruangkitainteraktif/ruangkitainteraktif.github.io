@@ -157,6 +157,14 @@
     return alatLayers[alatLayers.length - 1];
   }
   window.addAlatGeoJSONLayer = addAlatLayer;
+  window.removeAlatGeoJSONLayer = function (item) {
+    const index = alatLayers.indexOf(item);
+    if (index < 0) return false;
+    if (map.hasLayer(item.layer)) map.removeLayer(item.layer);
+    alatLayers.splice(index, 1);
+    renderAlatLayerList();
+    return true;
+  };
 
   function isEsriFeatureSet(obj) {
     return !!obj && typeof obj === 'object' &&

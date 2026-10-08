@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=20261008-draw-measure-map-collapsed">
+  <link rel="stylesheet" href="assets/css/app.css?v=20261008-gp-arcgis-parameters">
   <link rel="stylesheet" href="assets/css/geodisaster.css?v=1">
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
@@ -881,8 +881,8 @@
               <div style="font-size:10px;line-height:1.55;color:#334155;margin-top:7px;">
                 <ol style="margin:0;padding-left:17px;">
                   <li>Aktifkan layer vektor dari Katalog Layer, lalu pilih operasi.</li>
-                  <li>Pilih layer sumber. Untuk Clip, cari batas administrasi, pilih hasil, lalu tekan <b>Gunakan batas ini</b>.</li>
-                  <li>Tekan <b>Jalankan geoprocessing</b>. Hasil tampil sebagai layer baru.</li>
+                  <li>Isi parameter input tiap operasi: Clip memakai <b>Input Features</b>/<b>Clip Features</b>; Intersect, Union, dan Merge menerima beberapa input.</li>
+                  <li>Atur jarak/dissolve/field bila tersedia, isi nama output, lalu jalankan. Hasil tampil sebagai layer baru.</li>
                   <li>Gunakan tombol mata untuk menyembunyikan/menampilkan hasil, atau unduh GeoJSON.</li>
                 </ol>
                 <p style="margin:7px 0 0;"><b>Clip</b> memotong; <b>Buffer</b> membuat zona jarak (meter); <b>Intersect</b> mengambil irisan; <b>Union</b> menyatukan area; <b>Merge</b> menggabungkan fitur sejenis; <b>Dissolve</b> menggabungkan poligon menurut atribut.</p>
@@ -896,12 +896,13 @@
                 <button class="geotools-btn gp-action-btn" type="button" onclick="document.getElementById('gpGeoJSONInput').click()">Upload GeoJSON</button>
                 <input id="gpGeoJSONInput" type="file" accept=".geojson,.json,application/geo+json,application/json" hidden onchange="importGeoprocessingGeoJSON(this.files)">
                 <button class="geotools-btn gp-action-btn" type="button" onclick="startGeoprocessingPolygonDraw()">Gambar polygon</button>
+                <button class="geotools-btn gp-action-btn" type="button" onclick="resetGeoprocessingSources()">Reset layer sumber</button>
               </div>
               <div id="gpImportStatus" role="status" aria-live="polite" style="font-size:10px;margin-top:6px;color:#64748b;"></div>
             </details>
             <label class="geotani-form-label" for="gpOperation">Operasi</label>
             <select class="geotani-form-input" id="gpOperation" onchange="updateGeoprocessingForm()">
-              <option value="clip">Clip — potong dengan batas poligon</option><option value="buffer">Buffer — zona jarak</option>
+              <option value="buffer" selected>Buffer — zona jarak</option><option value="clip">Clip — potong dengan batas poligon</option>
               <option value="intersect">Intersect — irisan dua layer</option><option value="union">Union — gabungkan area poligon</option>
               <option value="merge">Merge — gabungkan fitur sejenis</option><option value="dissolve">Dissolve — gabungkan menurut atribut</option>
             </select>
@@ -3718,8 +3719,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/cctv.js"></script>
     <script src="assets/js/geotrans-mitradarat.js?v=20261006-reset-on-exit"></script>
     <script src="assets/js/detail-subtab.js"></script>
-     <script src="assets/js/alat-layers.js"></script>
-     <script src="assets/js/geoprocessing.js?v=20261008-upload-draw-inputs"></script>
+     <script src="assets/js/alat-layers.js?v=20261008-geoprocessing-result-actions"></script>
+     <script src="assets/js/geoprocessing.js?v=20261008-gp-source-reset"></script>
      <script src="assets/js/arcgis-source-manager.js"></script>
   <script src="assets/js/alat-draw-measure.js?v=20261007-geofarm-register"></script>
   <!-- Cek Lokasi: butuh window.startDraw dari alat-draw-measure.js untuk

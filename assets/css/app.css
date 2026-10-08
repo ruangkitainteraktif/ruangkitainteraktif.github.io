@@ -9940,6 +9940,29 @@ details[open] > .gt-card-head::after {
     .gp-result-actions {
       display: flex; flex-direction: column; gap: 6px; margin-top: 8px;
     }
+    .gp-layer-checklist {
+      display: grid;
+      gap: 2px;
+      max-height: 180px;
+      margin: 4px 0 10px;
+      padding: 5px 7px;
+      overflow: auto;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      background: var(--bg-card, #fff);
+    }
+    .gp-layer-checklist label {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      padding: 4px 2px;
+      color: var(--text-primary, #334155);
+      font-size: 11px;
+      line-height: 1.35;
+      cursor: pointer;
+    }
+    .gp-layer-checklist input { flex: 0 0 auto; margin: 1px 0 0; }
+    .gp-merge-source-option { display: flex; align-items: center; gap: 7px; margin: 8px 0; color: var(--text-secondary, #475569); font-size: 11px; }
 
     .arcgis-source-action-btn {
       min-height: 32px;

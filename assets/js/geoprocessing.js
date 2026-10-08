@@ -19,6 +19,8 @@
   let latestOutput = null;
   let latestOutputLayer = null;
   let latestOutputVisible = true;
+  const geoprocessingLayers = new Set();
+  const geoprocessingSourceLayers = new Set();
   const status = (message, error) => {
     const el = document.getElementById('gpStatus');
     if (el) { el.textContent = message; el.style.color = error ? '#b91c1c' : '#475569'; }
@@ -27,29 +29,84 @@
     const candidates = getLayers().filter(layer => !polygonOnly || layer.geojson.features.some(f => f.geometry && /Polygon/.test(f.geometry.type)));
     return `<label class="geotani-form-label" for="${id}">${label}</label><select class="geotani-form-input" id="${id}"><option value="">Pilih layer…</option>${candidates.map(layer => `<option value="${layer.id}">${esc(layer.name)} (${layer.geojson.features.length} fitur)</option>`).join('')}</select>`;
   }
+  function checklist(id, label, polygonOnly) {
+    return `<label class="geotani-form-label">${label}</label><div class="gp-layer-checklist" id="${id}" data-polygon-only="${polygonOnly ? 'true' : 'false'}"></div>`;
+  }
+  function populateChecklist(id) {
+    const box = document.getElementById(id);
+    if (!box) return;
+    const selected = new Set([...box.querySelectorAll('input:checked')].map(input => input.value));
+    const polygonOnly = box.dataset.polygonOnly === 'true';
+    const candidates = getLayers().filter(layer => !polygonOnly || layer.geojson.features.some(feature => feature.geometry && /Polygon/.test(feature.geometry.type)));
+    box.innerHTML = candidates.map(layer => `<label><input type="checkbox" value="${esc(layer.id)}"${selected.has(String(layer.id)) ? ' checked' : ''}> <span>${esc(layer.name)} (${layer.geojson.features.length} fitur)</span></label>`).join('') || '<small>Belum ada layer yang sesuai.</small>';
+  }
+  const selectedLayers = id => [...document.querySelectorAll(`#${id} input:checked`)].map(input => getLayers().find(layer => String(layer.id) === input.value)).filter(Boolean);
+  const outputField = (label, placeholder) => `<label class="geotani-form-label" for="gpOutputName">${label}</label><input class="geotani-form-input" id="gpOutputName" type="text" placeholder="${placeholder}" required>`;
+  function requireOutputName() {
+    const name = String(document.getElementById('gpOutputName')?.value || '').trim();
+    if (!name) throw new Error('Isi nama output terlebih dahulu.');
+    return name;
+  }
   window.updateGeoprocessingForm = function () {
     const op = document.getElementById('gpOperation').value;
     let html = '';
-    if (op === 'clip') html = select('gpInput', 'Layer yang dipotong', false)
-      + '<label class="geotani-form-label" for="gpBoundaryMode">Sumber batas polygon</label><select class="geotani-form-input" id="gpBoundaryMode" onchange="changeGeoprocessingBoundaryMode()"><option value="admin">Batas administrasi (provinsi–desa)</option><option value="layer">Polygon dari layer, upload, atau hasil gambar</option></select>'
+    if (op === 'clip') html = select('gpInput', 'Input Features', false)
+      + '<label class="geotani-form-label" for="gpBoundaryMode">Sumber Clip Features</label><select class="geotani-form-input" id="gpBoundaryMode" onchange="changeGeoprocessingBoundaryMode()"><option value="admin">Cari batas administrasi (provinsi–desa)</option><option value="layer">Pilih polygon dari layer</option></select>'
       + '<div id="gpAdminBoundaryTools"><label class="geotani-form-label" for="gpBoundaryLevel">Tingkat batas wilayah</label><select class="geotani-form-input" id="gpBoundaryLevel" onchange="changeGeoprocessingBoundaryLevel()"><option value="1">Provinsi</option><option value="2">Kabupaten/Kota</option><option value="3">Kecamatan</option><option value="4">Desa/Kelurahan</option></select>'
       + '<label class="geotani-form-label" for="gpBoundaryQuery">Cari batas wilayah</label><input class="geotani-form-input" id="gpBoundaryQuery" type="search" placeholder="Ketik kode atau nama wilayah"><button class="geotools-btn gp-action-btn" type="button" onclick="searchGeoprocessingBoundaries()" style="margin-top:6px;">Cari wilayah</button><select class="geotani-form-input" id="gpBoundaryResults" size="4" style="margin-top:6px;"><option value="">Ketik nama/kode lalu cari</option></select><button class="geotools-btn gp-action-btn" type="button" onclick="loadGeoprocessingBoundary()" style="margin-top:6px;">Gunakan batas ini</button><div id="gpBoundaryStatus" role="status" aria-live="polite" style="font-size:10px;margin-top:5px;color:#64748b;"></div></div>'
-      + '<div id="gpLayerBoundaryTools" hidden>' + select('gpClipBoundaryLayer', 'Layer polygon batas', true) + '<button class="geotools-btn gp-action-btn" type="button" onclick="useGeoprocessingLayerBoundary()" style="margin-top:6px;">Gunakan polygon layer</button><div id="gpLayerBoundaryStatus" role="status" aria-live="polite" style="font-size:10px;margin-top:5px;color:#64748b;"></div></div>';
-    if (op === 'buffer') html = select('gpInput', 'Layer sumber', false) + '<label class="geotani-form-label" for="gpDistance">Jarak buffer (meter)</label><input class="geotani-form-input" id="gpDistance" type="number" min="0.1" step="any" value="500">';
-    if (op === 'intersect' || op === 'union') html = select('gpInput', 'Layer pertama (poligon)', true) + select('gpOverlay', 'Layer kedua (poligon)', true);
-    if (op === 'merge') html = '<p style="font-size:11px;color:#64748b">Pilih dua atau lebih layer bergeometri sejenis.</p><div id="gpMergeLayers"></div>';
-    if (op === 'dissolve') html = select('gpInput', 'Layer poligon', true) + '<label class="geotani-form-label" for="gpField">Kelompok atribut</label><select class="geotani-form-input" id="gpField"><option value="">Gabungkan semua fitur</option></select>';
+      + '<div id="gpLayerBoundaryTools" hidden>' + select('gpClipBoundaryLayer', 'Clip Features layer', true).replace('<select class="geotani-form-input" id="gpClipBoundaryLayer">', '<select class="geotani-form-input" id="gpClipBoundaryLayer" onchange="useGeoprocessingLayerBoundary()">') + '<div id="gpLayerBoundaryStatus" role="status" aria-live="polite" style="font-size:10px;margin-top:5px;color:#64748b;">Pilih layer polygon sebagai Clip Features.</div></div>'
+      + outputField('Output Feature Class', 'Nama layer hasil');
+    if (op === 'buffer') html = select('gpInput', 'Input Features', false)
+      + outputField('Output Feature Class', 'Nama layer hasil')
+      + '<label class="geotani-form-label" for="gpBufferDistanceMode">Distance [value or field]</label><select class="geotani-form-input" id="gpBufferDistanceMode"><option value="value">Value</option><option value="field">Field</option></select>'
+      + '<div id="gpBufferDistanceValue" style="display:grid;grid-template-columns:1fr 112px;gap:6px;"><input class="geotani-form-input" id="gpDistance" type="number" min="0.1" step="any" value="500"><select class="geotani-form-input" id="gpDistanceUnit" aria-label="Satuan jarak"><option value="meters">Meters</option><option value="kilometers">Kilometers</option><option value="feet">Feet</option><option value="miles">Miles</option></select></div>'
+      + '<div id="gpBufferDistanceField" hidden>' + select('gpDistanceField', 'Distance field', false) + '</div>'
+      + '<label class="geotani-form-label" for="gpBufferDissolve">Dissolve Type</label><select class="geotani-form-input" id="gpBufferDissolve"><option value="none">None</option><option value="all">Dissolve all output features</option></select>';
+    if (op === 'intersect') html = checklist('gpIntersectLayers', 'Input Features (pilih minimal dua)', true)
+      + outputField('Output Feature Class', 'Nama layer hasil')
+      + '<label class="geotani-form-label" for="gpIntersectAttributes">Attributes To Join</label><select class="geotani-form-input" id="gpIntersectAttributes"><option value="all">All attributes</option><option value="no-fid">All attributes except feature IDs</option><option value="fid">Only feature IDs</option></select>';
+    if (op === 'union') html = checklist('gpUnionLayers', 'Input Features (polygon)', true)
+      + outputField('Output Feature Class', 'Nama layer hasil')
+      + '<label class="geotani-form-label" for="gpUnionAttributes">Attributes To Join</label><select class="geotani-form-input" id="gpUnionAttributes"><option value="all">All attributes</option><option value="no-fid">All attributes except feature IDs</option><option value="fid">Only feature IDs</option></select>';
+    if (op === 'merge') html = checklist('gpMergeLayers', 'Input Datasets (pilih minimal dua)', false)
+      + outputField('Output Dataset', 'Nama dataset hasil')
+      + '<label class="geotani-form-label" for="gpMergeFieldMode">Field Matching Mode</label><select class="geotani-form-input" id="gpMergeFieldMode"><option value="all">Automatically generate fields consolidated from all inputs</option><option value="first">Use the schema of the first dataset only</option></select>'
+      + '<label class="gp-merge-source-option"><input id="gpMergeSourceInfo" type="checkbox"> Add source information to output</label>';
+    if (op === 'dissolve') html = select('gpInput', 'Input Features', true)
+      + outputField('Output Feature Class', 'Nama layer hasil')
+      + '<label class="geotani-form-label" for="gpFields">Dissolve Fields (opsional, pilih satu atau lebih)</label><select class="geotani-form-input" id="gpFields" multiple size="4"></select><small style="display:block;margin-top:4px;color:#64748b;font-size:10px;">Kosongkan untuk menggabungkan semua fitur.</small>';
     layerFields.innerHTML = html;
-    if (op === 'merge') {
-      const box = document.getElementById('gpMergeLayers');
-      box.innerHTML = getLayers().map(layer => `<label style="display:flex;gap:8px;align-items:center;padding:5px;font-size:12px"><input type="checkbox" value="${layer.id}"> ${esc(layer.name)} (${layer.geojson.features.length})</label>`).join('') || '<small>Belum ada layer GeoJSON. Muat layer terlebih dahulu.</small>';
-    }
-    const input = document.getElementById('gpInput'), field = document.getElementById('gpField');
+    ['gpIntersectLayers', 'gpUnionLayers', 'gpMergeLayers'].forEach(populateChecklist);
+    const input = document.getElementById('gpInput'), field = document.getElementById('gpFields');
     if (input && field) input.addEventListener('change', () => {
       const layer = getLayers().find(item => String(item.id) === input.value);
       const keys = layer && layer.geojson.features.find(f => f.properties)?.properties ? Object.keys(layer.geojson.features.find(f => f.properties).properties) : [];
-      field.innerHTML = '<option value="">Gabungkan semua fitur</option>' + keys.map(key => `<option value="${esc(key)}">${esc(key)}</option>`).join('');
+      field.innerHTML = keys.map(key => `<option value="${esc(key)}">${esc(key)}</option>`).join('');
     });
+    if (op === 'buffer') {
+      const mode = document.getElementById('gpBufferDistanceMode');
+      const valueBox = document.getElementById('gpBufferDistanceValue');
+      const fieldBox = document.getElementById('gpBufferDistanceField');
+      const fieldSelect = document.getElementById('gpDistanceField');
+      const updateDistanceMode = () => {
+        const useField = mode.value === 'field';
+        valueBox.hidden = useField;
+        fieldBox.hidden = !useField;
+      };
+      mode.addEventListener('change', updateDistanceMode);
+      const fillDistanceFields = () => {
+        const layer = getLayers().find(item => String(item.id) === input?.value);
+        const props = layer?.geojson.features.find(feature => feature.properties)?.properties || {};
+        const numericFields = Object.keys(props).filter(key => layer.geojson.features.some(feature => {
+          const value = feature.properties && feature.properties[key];
+          return value !== '' && value != null && Number.isFinite(Number(value));
+        }));
+        fieldSelect.innerHTML = numericFields.map(key => `<option value="${esc(key)}">${esc(key)}</option>`).join('') || '<option value="">Tidak ada field numerik</option>';
+      };
+      input?.addEventListener('change', fillDistanceFields);
+      updateDistanceMode();
+      fillDistanceFields();
+    }
     if (op === 'clip') {
       if (document.getElementById('gpBoundaryMode')?.value === 'admin') window.searchGeoprocessingBoundaries();
       document.getElementById('gpBoundaryQuery')?.addEventListener('input', window.searchGeoprocessingBoundaries);
@@ -152,10 +209,29 @@
   function registerImportedLayer(name, type, geojson) {
     if (!geojson || !Array.isArray(geojson.features) || !geojson.features.length) throw new Error('File tidak memiliki fitur GeoJSON.');
     const item = window.addAlatGeoJSONLayer(name, type, geojson);
+    geoprocessingSourceLayers.add(item);
+    if (geojson.features.some(feature => feature.geometry && /Polygon/.test(feature.geometry.type))) geoprocessingLayers.add(item);
     importStatus(`${name} dimuat (${geojson.features.length} fitur). Layer siap dipilih pada operasi.`, false);
     window.refreshGeoprocessingLayerChoices();
     return item;
   }
+  window.resetGeoprocessingSources = function () {
+    let removed = 0;
+    Array.from(geoprocessingSourceLayers).forEach(item => {
+      if (typeof window.removeAlatGeoJSONLayer === 'function' && window.removeAlatGeoJSONLayer(item)) removed++;
+      geoprocessingLayers.delete(item);
+      geoprocessingSourceLayers.delete(item);
+    });
+    if (document.getElementById('gpBoundaryMode')?.value === 'layer') {
+      selectedBoundary = null;
+      const boundaryLayer = document.getElementById('gpClipBoundaryLayer');
+      const boundaryInfo = document.getElementById('gpLayerBoundaryStatus');
+      if (boundaryLayer) boundaryLayer.value = '';
+      if (boundaryInfo) boundaryInfo.textContent = 'Layer sumber direset. Pilih Clip Features baru.';
+    }
+    window.refreshGeoprocessingLayerChoices();
+    importStatus(removed ? `${removed} layer sumber dihapus dari peta.` : 'Tidak ada layer sumber untuk direset.', false);
+  };
   window.importGeoprocessingGeoJSON = async function (files) {
     try {
       const file = files && files[0];
@@ -253,8 +329,9 @@
   }
   function renderOutputActions() {
     const host = document.getElementById('gpResultActions');
-    if (!host || !latestOutput || !latestOutputLayer) return;
+    if (!host) return;
     host.replaceChildren();
+    if (!latestOutput || !latestOutputLayer) return;
     const visibility = document.createElement('button');
     visibility.type = 'button';
     visibility.className = 'geotools-btn gp-action-btn';
@@ -281,7 +358,34 @@
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     });
-    host.append(visibility, download);
+    const repeat = document.createElement('button');
+    repeat.type = 'button';
+    repeat.className = 'geotools-btn gp-action-btn';
+    repeat.textContent = 'Ulangi geoprocessing';
+    repeat.addEventListener('click', run);
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'geotools-btn gp-action-btn';
+    remove.textContent = 'Hapus semua polygon';
+    remove.addEventListener('click', () => {
+      let removed = 0;
+      Array.from(geoprocessingLayers).forEach(item => {
+        const hasPolygon = item && item.geojson && Array.isArray(item.geojson.features)
+          && item.geojson.features.some(feature => feature.geometry && /Polygon/.test(feature.geometry.type));
+        if (!hasPolygon) return;
+        if (typeof window.removeAlatGeoJSONLayer === 'function' && window.removeAlatGeoJSONLayer(item)) removed++;
+        geoprocessingLayers.delete(item);
+        if (item === latestOutputLayer) {
+          latestOutput = null;
+          latestOutputLayer = null;
+          latestOutputVisible = false;
+        }
+      });
+      renderOutputActions();
+      status(removed ? `${removed} layer polygon Geoprocessing telah dihapus.` : 'Tidak ada polygon Geoprocessing untuk dihapus.', false);
+      if (typeof window.refreshGeoprocessingLayerChoices === 'function') window.refreshGeoprocessingLayerChoices();
+    });
+    host.append(visibility, download, repeat, remove);
   }
   function unionFeatures(features) {
     const parts = [];
@@ -309,7 +413,9 @@
       let result = [], name = '', type = 'GeoJSON';
       if (op === 'clip') {
         const input = get('gpInput');
-        if (!input || !selectedBoundary) throw new Error('Pilih layer sumber dan muat batas wilayah terlebih dahulu.');
+        if (!input || !selectedBoundary) throw new Error('Pilih Input Features dan Clip Features terlebih dahulu.');
+        name = String(document.getElementById('gpOutputName')?.value || '').trim();
+        if (!name) throw new Error('Isi nama Output Feature Class terlebih dahulu.');
         const masks = Array.isArray(selectedBoundary) ? selectedBoundary : [selectedBoundary];
         if (!masks.length) throw new Error('Layer batas tidak memiliki poligon.');
         input.geojson.features.forEach(feature => {
@@ -326,61 +432,134 @@
             result.push(...lineResults);
           }
         });
-        name = `${input.name}_clip`;
       } else if (op === 'buffer') {
-        const input = get('gpInput'), distance = Number(document.getElementById('gpDistance').value);
-        if (!input || !Number.isFinite(distance) || distance <= 0) throw new Error('Pilih layer dan masukkan jarak buffer positif.');
-        result = input.geojson.features.map(f => f.geometry ? turf.buffer(f, distance, { units: 'meters' }) : null).filter(Boolean);
-        name = `${input.name}_buffer_${distance}m`;
+        const input = get('gpInput');
+        if (!input) throw new Error('Pilih Input Features terlebih dahulu.');
+        name = requireOutputName();
+        const useField = document.getElementById('gpBufferDistanceMode')?.value === 'field';
+        const distance = Number(document.getElementById('gpDistance')?.value);
+        const distanceField = document.getElementById('gpDistanceField')?.value;
+        if (useField && !distanceField) throw new Error('Pilih field numerik untuk Distance.');
+        if (!useField && (!Number.isFinite(distance) || distance <= 0)) throw new Error('Masukkan jarak buffer positif.');
+        const unit = document.getElementById('gpDistanceUnit')?.value || 'meters';
+        const metersPerUnit = { meters: 1, kilometers: 1000, feet: 0.3048, miles: 1609.344 }[unit] || 1;
+        result = input.geojson.features.map(feature => {
+          if (!feature.geometry) return null;
+          const featureDistance = useField ? Number(feature.properties && feature.properties[distanceField]) : distance;
+          if (!Number.isFinite(featureDistance) || featureDistance <= 0) {
+            throw new Error(useField ? `Nilai pada field “${distanceField}” harus berupa angka positif.` : 'Masukkan jarak buffer positif.');
+          }
+          return turf.buffer(feature, featureDistance * metersPerUnit, { units: 'meters' });
+        }).filter(Boolean);
+        if (document.getElementById('gpBufferDissolve')?.value === 'all') {
+          result = unionFeatures(result).map(feature => ({ ...feature, properties: {} }));
+        }
       } else if (op === 'intersect') {
-        const a = get('gpInput'), b = get('gpOverlay');
-        if (!a || !b) throw new Error('Pilih kedua layer terlebih dahulu.');
-        polygonFeatures(a).forEach(left => polygonFeatures(b).forEach(right => {
-          const out = intersectPolygon(left, right);
-          if (out) { out.properties = { ...(left.properties || {}), ...(right.properties || {}) }; result.push(out); }
+        const inputs = selectedLayers('gpIntersectLayers');
+        if (inputs.length < 2) throw new Error('Pilih minimal dua Input Features.');
+        name = requireOutputName();
+        const attributeMode = document.getElementById('gpIntersectAttributes')?.value || 'all';
+        const fidName = layer => 'FID_' + layer.name.replace(/[^a-z0-9_]+/gi, '_');
+        let intersections = polygonFeatures(inputs[0]).map((feature, featureIndex) => ({
+          feature: { ...feature, properties: {} },
+          attributes: attributeMode === 'fid' ? { [fidName(inputs[0])]: feature.id ?? feature.properties?.OBJECTID ?? featureIndex }
+            : { ...(feature.properties || {}) },
+          ids: { [fidName(inputs[0])]: feature.id ?? feature.properties?.OBJECTID ?? featureIndex }
         }));
-        name = `${a.name}_${b.name}_intersect`;
+        for (let index = 1; index < inputs.length && intersections.length; index++) {
+          const next = [];
+          const overlays = polygonFeatures(inputs[index]);
+          intersections.forEach(left => overlays.forEach((right, featureIndex) => {
+            const out = intersectPolygon(left.feature, right);
+            if (out) {
+              const idField = fidName(inputs[index]);
+              const id = right.id ?? right.properties?.OBJECTID ?? featureIndex;
+              const ids = { ...left.ids, [idField]: id };
+              const attributes = attributeMode === 'fid' ? ids : {
+                ...left.attributes,
+                ...(right.properties || {})
+              };
+              next.push({ feature: out, attributes, ids });
+            }
+          }));
+          intersections = next;
+        }
+        result = intersections.map(item => {
+          if (attributeMode === 'no-fid') {
+            item.attributes = Object.fromEntries(Object.entries(item.attributes).filter(([key]) => !/^(FID(?:_|$)|OBJECTID$)/i.test(key)));
+          }
+          item.feature.properties = item.attributes;
+          return item.feature;
+        });
       } else if (op === 'union') {
-        const a = get('gpInput'), b = get('gpOverlay');
-        if (!a || !b) throw new Error('Pilih kedua layer terlebih dahulu.');
-        const all = [...polygonFeatures(a), ...polygonFeatures(b)];
+        const inputs = selectedLayers('gpUnionLayers');
+        if (inputs.length < 2) throw new Error('Pilih minimal dua Input Features.');
+        name = requireOutputName();
+        const all = inputs.flatMap(polygonFeatures);
         if (!all.length) throw new Error('Tidak ditemukan poligon.');
-        result = unionFeatures(all).map(merged => ({ ...merged, properties: {} }));
-        name = `${a.name}_${b.name}_union`;
+        const attributeMode = document.getElementById('gpUnionAttributes')?.value || 'all';
+        result = unionFeatures(all).map(merged => {
+          let properties = { ...(merged.properties || {}) };
+          if (attributeMode === 'no-fid') {
+            properties = Object.fromEntries(Object.entries(properties).filter(([key]) => !/^(FID(?:_|$)|OBJECTID$)/i.test(key)));
+          } else if (attributeMode === 'fid') {
+            properties = Object.fromEntries(inputs.map(layer => {
+              const index = polygonFeatures(layer).findIndex(feature => turf.booleanIntersects(feature, merged));
+              const id = index < 0 ? -1 : (polygonFeatures(layer)[index].id ?? polygonFeatures(layer)[index].properties?.OBJECTID ?? index);
+              return ['FID_' + layer.name.replace(/[^a-z0-9_]+/gi, '_'), id];
+            }));
+          }
+          return { ...merged, properties };
+        });
       } else if (op === 'merge') {
-        const ids = [...document.querySelectorAll('#gpMergeLayers input:checked')].map(input => input.value);
-        const selected = layers.filter(layer => ids.includes(String(layer.id)));
+        const selected = selectedLayers('gpMergeLayers');
         if (selected.length < 2) throw new Error('Pilih minimal dua layer.');
+        name = requireOutputName();
         const family = g => g && (/Point/.test(g.type) ? 'point' : /Line/.test(g.type) ? 'line' : /Polygon/.test(g.type) ? 'polygon' : 'other');
         const types = new Set(selected.flatMap(layer => layer.geojson.features.map(f => family(f.geometry))));
         if (types.size !== 1 || types.has('other')) throw new Error('Merge hanya bisa untuk tipe geometri yang sama.');
-        result = selected.flatMap(layer => layer.geojson.features);
-        name = selected.map(layer => layer.name).join('_') + '_merge';
+        const addSource = document.getElementById('gpMergeSourceInfo')?.checked;
+        const firstSchema = new Set(selected[0].geojson.features.find(feature => feature.properties)?.properties
+          ? Object.keys(selected[0].geojson.features.find(feature => feature.properties).properties)
+          : []);
+        const useFirstSchema = document.getElementById('gpMergeFieldMode')?.value === 'first';
+        result = selected.flatMap(layer => layer.geojson.features.map(feature => ({
+          ...feature,
+          properties: {
+            ...Object.fromEntries(Object.entries(feature.properties || {}).filter(([key]) => !useFirstSchema || firstSchema.has(key))),
+            ...(addSource ? { MERGE_SRC: layer.name } : {})
+          }
+        })));
       } else if (op === 'dissolve') {
         const input = get('gpInput');
         if (!input) throw new Error('Pilih layer poligon.');
-        const key = document.getElementById('gpField').value;
+        name = requireOutputName();
+        const keys = [...(document.getElementById('gpFields')?.selectedOptions || [])].map(option => option.value);
         const groups = new Map();
         polygonFeatures(input).forEach(feature => {
-          const value = key ? feature.properties?.[key] : 'Semua fitur';
-          if (key && value == null) return;
-          const groupKey = String(value ?? '');
-          if (!groups.has(groupKey)) groups.set(groupKey, { value, features: [] });
+          const values = keys.map(key => feature.properties?.[key]);
+          const groupKey = keys.length ? JSON.stringify(values) : 'all';
+          if (!groups.has(groupKey)) groups.set(groupKey, { values, features: [] });
           groups.get(groupKey).features.push(feature);
         });
         groups.forEach(group => unionFeatures(group.features).forEach(dissolved => {
-          dissolved.properties = key ? { [key]: group.value } : {};
+          dissolved.properties = Object.fromEntries(keys.map((key, index) => [key, group.values[index]]));
           result.push(dissolved);
         }));
-        name = `${input.name}_dissolve`;
       }
       if (!result.length) throw new Error('Operasi tidak menghasilkan fitur. Periksa geometri dan cakupan layer.');
       const output = { type: 'FeatureCollection', features: result };
       if (typeof window.addAlatGeoJSONLayer !== 'function') throw new Error('Penyimpanan layer hasil tidak tersedia.');
+      if (latestOutputLayer && typeof window.removeAlatGeoJSONLayer === 'function') {
+        window.removeAlatGeoJSONLayer(latestOutputLayer);
+        geoprocessingLayers.delete(latestOutputLayer);
+      }
       latestOutputLayer = window.addAlatGeoJSONLayer(name, type, output);
+      if (result.some(feature => feature.geometry && /Polygon/.test(feature.geometry.type))) geoprocessingLayers.add(latestOutputLayer);
       latestOutput = output;
       latestOutputVisible = true;
       renderOutputActions();
+      if (typeof window.refreshGeoprocessingLayerChoices === 'function') window.refreshGeoprocessingLayerChoices();
       status(`Selesai: ${result.length} fitur ditambahkan sebagai layer “${name}”. Gunakan tombol mata untuk mengatur tampilannya atau unduh GeoJSON.`, false);
     } catch (error) { status(error.message || 'Geoprocessing gagal.', true); }
   }
@@ -396,11 +575,10 @@
       control.innerHTML = '<option value="">Pilih layer…</option>' + candidates.map(layer => `<option value="${esc(layer.id)}">${esc(layer.name)} (${layer.geojson.features.length} fitur)</option>`).join('');
       if (candidates.some(layer => String(layer.id) === previous)) control.value = previous;
     });
-    const mergeBox = document.getElementById('gpMergeLayers');
-    if (mergeBox) {
-      const checked = new Set([...mergeBox.querySelectorAll('input:checked')].map(input => input.value));
-      mergeBox.innerHTML = layers.map(layer => `<label style="display:flex;gap:8px;align-items:center;padding:5px;font-size:12px"><input type="checkbox" value="${esc(layer.id)}"${checked.has(String(layer.id)) ? ' checked' : ''}> ${esc(layer.name)} (${layer.geojson.features.length})</label>`).join('') || '<small>Belum ada layer vektor yang aktif di katalog layer.</small>';
+    if (document.getElementById('gpBoundaryMode')?.value === 'layer') {
+      window.useGeoprocessingLayerBoundary();
     }
+    ['gpIntersectLayers', 'gpUnionLayers', 'gpMergeLayers'].forEach(populateChecklist);
   };
   const card = document.querySelector('.gp-tools-card');
   if (card) card.addEventListener('toggle', () => { if (card.open) window.updateGeoprocessingForm(); });
