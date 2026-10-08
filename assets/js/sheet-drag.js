@@ -236,10 +236,6 @@
     if (!cfg) return;
     var e = elDari(cfg);
     if (!e) return;
-    // Menutup panel legenda hanya menutup panel; layer peta tidak berubah.
-    if (id !== 'lg' && isOpen(id) && !window.__resetAllLayersRunning && typeof window.resetAllLayers === 'function') {
-      try { window.resetAllLayers(); } catch (err) { lapis(id, 'resetAllLayers', err); }
-    }
     kelas(cfg, cfg.openClass, false);
     kelas(cfg, cfg.minClass, false);
     setBody(cfg, cfg.bodyOpen, false);
@@ -296,6 +292,32 @@
     return false;
   }
 
+  /* Susun chip minimize dan pindahkan ke atas sheet yang sedang aktif.
+     Sebelumnya semua panel memakai bottom tetap yang sama, sehingga chip
+     lama tertumpuk atau tertutup saat sheet baru dibuka. */
+  function aturPosisiChipMinim() {
+    var chips = [];
+    var activeTop = Infinity;
+    for (var i = 0; i < URUT.length; i++) {
+      var id = URUT[i];
+      var sheet = elDari(DAFTAR[id]);
+      if (!sheet) continue;
+      if (isOpen(id) && isMinimized(id)) chips.push(sheet);
+      else sheet.style.removeProperty('bottom');
+      if (isOpen(id) && !isMinimized(id) && mobile()) {
+        activeTop = Math.min(activeTop, sheet.getBoundingClientRect().top);
+      }
+    }
+
+    chips.forEach(function (chip, index) {
+      var bottom = mobile() ? 72 : 68;
+      if (mobile() && activeTop !== Infinity) {
+        bottom = Math.max(bottom, window.innerHeight - activeTop + 8);
+      }
+      chip.style.setProperty('bottom', (bottom + index * 44) + 'px', 'important');
+    });
+  }
+
   /* Dipanggil setiap kali state sheet berubah. Selain menyalakan kelas
      body, menjadwalkan map.invalidateSize() setelah transisi area peta
      selesai: tinggi di mobile dan lebar di desktop sama-sama berubah. */
@@ -331,9 +353,11 @@
 
   function sinkronkanPeta() {
     document.body.classList.toggle('sheet-terbuka', adaYangTerbuka());
+    aturPosisiChipMinim();
     ukurChromeAtas();
     clearTimeout(_timerSinkron);
     _timerSinkron = setTimeout(function () {
+      aturPosisiChipMinim();
       var m = window.map;
       if (m && typeof m.invalidateSize === 'function') {
         m.invalidateSize({ pan: false });

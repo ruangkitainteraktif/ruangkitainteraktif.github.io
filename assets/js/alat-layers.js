@@ -93,6 +93,36 @@
   }
 
   window.renderAlatLayerList = renderAlatLayerList;
+  window.getAlatGeoJSONLayers = () => {
+    const layers = alatLayers.map(item => ({ id: 'alat-' + item.id, name: item.name, type: item.type, geojson: item.geojson, leafletLayer: item.layer }));
+    const known = new Set(layers.map(item => item.leafletLayer));
+    if (typeof map !== 'undefined' && map && typeof map.eachLayer === 'function') {
+      map.eachLayer(layer => {
+        if (known.has(layer) || typeof layer.toGeoJSON !== 'function') return;
+        try {
+          const data = layer.toGeoJSON();
+          const features = data && data.type === 'FeatureCollection' ? data.features : data && data.type === 'Feature' ? [data] : [];
+          if (!features.some(feature => feature.geometry && /Point|Line|Polygon/.test(feature.geometry.type))) return;
+          const id = 'map-' + (L.stamp ? L.stamp(layer) : layers.length);
+          const props = features.find(feature => feature.properties && (feature.properties.name || feature.properties.NAMOBJ));
+          const name = layer.options?.name || layer._name || (props && (props.properties.name || props.properties.NAMOBJ)) || 'Layer peta ' + (layers.length + 1);
+          layers.push({ id, name, type: 'Layer proyek', geojson: { type: 'FeatureCollection', features }, leafletLayer: layer });
+          known.add(layer);
+        } catch (_) { /* layer peta yang tidak bisa dikonversi dilewati */ }
+      });
+    }
+    if (window.ArcGISRestSourceManager && typeof window.ArcGISRestSourceManager.getActive === 'function') {
+      Object.values(window.ArcGISRestSourceManager.getActive()).forEach(record => {
+        const data = record.descriptor && record.descriptor.featureData;
+        if (!data || known.has(record.layer)) return;
+        const features = data.features || [];
+        if (!features.length) return;
+        layers.push({ id: 'arcgis-' + record.descriptor.key, name: record.descriptor.name, type: 'ArcGIS Feature Layer', geojson: { type: 'FeatureCollection', features }, leafletLayer: record.layer });
+        known.add(record.layer);
+      });
+    }
+    return layers;
+  };
 
   function addAlatLayer(name, type, geojson) {
     const layer = L.geoJSON(geojson, {
@@ -124,7 +154,9 @@
     map.flyToBounds(layer.getBounds().pad(0.1), { maxZoom: 15, duration: 0.8 });
     renderAlatLayerList();
     setAlatStatus(`✅ ${name} dimuat: ${geojson.features.length} fitur ditampilkan.`);
+    return alatLayers[alatLayers.length - 1];
   }
+  window.addAlatGeoJSONLayer = addAlatLayer;
 
   function isEsriFeatureSet(obj) {
     return !!obj && typeof obj === 'object' &&

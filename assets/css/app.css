@@ -3210,6 +3210,53 @@
     }
     .lc-donation-paypal:hover { background: #001c64; transform: translateY(-1px); }
 
+    .lc-sponsored-ad {
+      position: relative;
+      margin: 0 8px 10px;
+      padding: 10px;
+      overflow: hidden;
+      border: 1px solid #dbeafe;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 55%, #f5f3ff 100%);
+      box-shadow: 0 4px 14px rgba(30, 64, 175, .08);
+    }
+    .lc-sponsored-ad.sheet-sponsored-ad {
+      margin: 0 12px 20px;
+      padding: 0;
+      overflow: visible;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+    .sheet-sponsored-ad .lc-sponsored-copy { display: none; }
+    .lc-ad-close {
+      position: absolute;
+      z-index: 5;
+      top: 2px;
+      right: 2px;
+      display: grid;
+      width: 22px;
+      height: 22px;
+      place-items: center;
+      padding: 0;
+      border: 1px solid rgba(148,163,184,.45);
+      border-radius: 50%;
+      background: rgba(255,255,255,.92);
+      color: #334155;
+      font: 700 17px/1 Arial, sans-serif;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(15,23,42,.2);
+    }
+    .lc-ad-close:hover { background: #e2e8f0; color: #0f172a; }
+    .lc-sponsored-copy { display: grid; grid-template-columns: auto 1fr; gap: 3px 7px; align-items: center; margin-bottom: 8px; }
+    .lc-sponsored-tag { padding: 2px 5px; border-radius: 4px; background: #dbeafe; color: #1d4ed8; font-size: 8px; font-weight: 800; letter-spacing: .06em; }
+    .lc-sponsored-title { color: #172554; font-size: 11px; font-weight: 750; }
+    .lc-sponsored-caption { grid-column: 2; color: #64748b; font-size: 9px; }
+    .lc-ad-viewport { position: relative; width: 100%; overflow: hidden; }
+    .lc-ad-frame { position: absolute; top: 0; left: 0; width: 100%; height: 90px; transform-origin: top left; overflow: hidden; }
+    .lc-ad-frame iframe { display: block; width: 100% !important; height: 90px; max-width: 100% !important; border: 0; }
+
     /* Geotools sidebar donation banner */
     .gt-donation-banner {
       display: flex;
@@ -7199,6 +7246,7 @@
       text-transform: uppercase; letter-spacing: .05em;
       margin: 12px 0 8px; padding-left: 2px;
     }
+    .dm-cek-lokasi > .dm-sidebar-section-title { font-size: 13px; }
     .dm-sidebar-section-title:first-child { margin-top: 0; }
     .dm-sidebar-grid {
       display: grid; grid-template-columns: repeat(2, 1fr);
@@ -9078,6 +9126,30 @@
   border: 1px solid var(--border-color); border-radius: 12px;
   background: var(--bg-secondary); box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
 }
+.dm-cek-lokasi > summary { cursor: pointer; list-style: none; }
+.dm-cek-lokasi > summary::-webkit-details-marker { display: none; }
+.dm-cek-lokasi > summary::after { content: '+'; float: right; color: var(--text-muted); font-weight: 700; }
+.dm-cek-lokasi[open] > summary::after { content: '−'; }
+.dm-tool-group {
+  margin: 12px 0;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-card, #fff);
+  overflow: hidden;
+}
+.dm-tool-group > summary {
+  margin: 0;
+  padding: 11px 12px;
+  color: var(--text-primary, #1e293b);
+  font-size: 13px;
+  cursor: pointer;
+  list-style: none;
+}
+.dm-tool-group > summary::-webkit-details-marker { display: none; }
+.dm-tool-group > summary::after { content: '+'; float: right; color: var(--text-muted); font-weight: 700; }
+.dm-tool-group[open] > summary::after { content: '−'; }
+.dm-tool-group-content { padding: 0 12px 8px; }
+.dm-tool-group-content .dm-sidebar-grid { margin-bottom: 0; }
 .dm-cek-lokasi-desc {
   margin: 0 0 10px; font-size: 11px; line-height: 1.5;
   color: var(--text-secondary);
@@ -9859,6 +9931,14 @@ details[open] > .gt-card-head::after {
     }
     .geotools-btn--orange:hover { 
       box-shadow: 0 4px 16px rgba(249,115,22,.35); 
+    }
+    .gp-tools-card .geotools-btn,
+    .gp-action-btn {
+      width: 100%; height: 38px; min-height: 38px; padding: 0 12px;
+      border-radius: 6px; font-size: 11px; line-height: 1.2;
+    }
+    .gp-result-actions {
+      display: flex; flex-direction: column; gap: 6px; margin-top: 8px;
     }
 
     .arcgis-source-action-btn {

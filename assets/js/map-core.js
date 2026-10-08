@@ -3371,6 +3371,10 @@ L.control.scale({
   };
 
   function buildLayerCatalog(container) {
+    /* Pertahankan slot iklan agar provider tidak dimuat ulang saat katalog
+       dirender kembali setelah layer/pin berubah. */
+    var sponsoredAd = container.querySelector('.lc-sponsored-ad');
+    if (sponsoredAd && sponsoredAd.parentNode) sponsoredAd.parentNode.removeChild(sponsoredAd);
     var html = '<div class="lc-donation-banner">' +
       '<div class="lc-donation-text">Dukung RuangKita</div>' +
       '<div class="lc-donation-btns">' +
@@ -3590,6 +3594,59 @@ L.control.scale({
       html += '</div></div>';
     });
     container.innerHTML = html;
+
+    if (!sponsoredAd && container.dataset.sponsoredAdDismissed !== 'true') {
+      sponsoredAd = document.createElement('section');
+      sponsoredAd.className = 'lc-sponsored-ad';
+      sponsoredAd.setAttribute('aria-label', 'Iklan');
+      sponsoredAd.innerHTML = '<button class="lc-ad-close" type="button" aria-label="Tutup iklan" title="Tutup iklan">&times;</button><div class="lc-sponsored-copy"><span class="lc-sponsored-tag">IKLAN</span><span class="lc-sponsored-title">Temukan sesuatu yang menarik</span></div><div class="lc-ad-viewport"><div class="lc-ad-frame"></div></div>';
+      sponsoredAd.querySelector('.lc-ad-close').addEventListener('click', function (event) {
+        event.stopPropagation();
+        container.dataset.sponsoredAdDismissed = 'true';
+        if (sponsoredAd._resizeObserver) sponsoredAd._resizeObserver.disconnect();
+        sponsoredAd.remove();
+      });
+    }
+    var donationBanner = container.querySelector('.lc-donation-banner');
+    if (sponsoredAd && donationBanner) donationBanner.insertAdjacentElement('afterend', sponsoredAd);
+    if (sponsoredAd) {
+      var adViewport = sponsoredAd.querySelector('.lc-ad-viewport');
+      var activeFormat = sponsoredAd._activeAdFormat || null;
+      function fitCatalogAd() {
+      var availableWidth = adViewport.clientWidth;
+      if (availableWidth <= 0) return;
+      var format = availableWidth < 390
+        ? { key: '126b894c6f9b5f5e3acca47557d0c389', width: 320, height: 50 }
+        : availableWidth < 600
+          ? { key: 'caa684f2f6524c34b84e0218547de5e4', width: 468, height: 60 }
+          : { key: '07e86776906aabd9b6e8d43b1c3c1096', width: 728, height: 90 };
+      var adFrame = sponsoredAd.querySelector('.lc-ad-frame');
+      adFrame.style.width = availableWidth + 'px';
+      if (activeFormat && activeFormat.key === format.key) return;
+      activeFormat = format;
+      sponsoredAd._activeAdFormat = format;
+      adFrame.style.height = format.height + 'px';
+      adFrame.style.transform = 'none';
+      adViewport.style.height = format.height + 'px';
+      var iframe = document.createElement('iframe');
+      iframe.title = 'Iklan sponsor';
+      iframe.width = format.width;
+      iframe.height = format.height;
+      iframe.loading = 'lazy';
+      iframe.scrolling = 'no';
+      iframe.frameBorder = '0';
+      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+      iframe.style.width = '100%';
+      iframe.style.height = format.height + 'px';
+      iframe.srcdoc = '<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0"><script>var atOptions={key:"' + format.key + '",format:"iframe",height:' + format.height + ',width:' + format.width + ',params:{}};</script><script src="https://www.highrevenueformat.com/' + format.key + '/invoke.js"></script></body></html>';
+      adFrame.replaceChildren(iframe);
+      }
+      fitCatalogAd();
+      if (window.ResizeObserver && !sponsoredAd._resizeObserver) {
+        sponsoredAd._resizeObserver = new ResizeObserver(fitCatalogAd);
+        sponsoredAd._resizeObserver.observe(adViewport);
+      }
+    }
 
     var clearAllBtn = document.getElementById('lcClearAll');
     if (clearAllBtn) {

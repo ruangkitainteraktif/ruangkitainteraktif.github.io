@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=104">
+  <link rel="stylesheet" href="assets/css/app.css?v=20261008-draw-measure-map-collapsed">
   <link rel="stylesheet" href="assets/css/geodisaster.css?v=1">
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
@@ -850,8 +850,8 @@
 
              ID-nya dmCekLokasi, bukan alat-tab-lokasi: awalan "alat-tab-"
              sudah tidak benar karena ini bukan subtab GeoData lagi. -->
-        <div id="dmCekLokasi" class="dm-cek-lokasi">
-          <div class="dm-sidebar-section-title">Cek Lokasi</div>
+        <details id="dmCekLokasi" class="dm-cek-lokasi">
+          <summary class="dm-sidebar-section-title">Cek Lokasi</summary>
           <p class="dm-cek-lokasi-desc">
             Ketik koordinat untuk melihat kecamatan, kabupaten, dan provinsinya.
           </p>
@@ -871,9 +871,50 @@
                menampilkannya. -->
           <button id="geolokasiSalin" class="dm-cek-lokasi-btn dm-cek-lokasi-btn--green"
                   type="button" style="display:none;margin-top:8px;">Salin Koordinat</button>
-        </div>
+        </details>
 
-        <div class="dm-sidebar-section-title">Draw</div>
+        <details class="gp-tools-card" style="margin:12px 0;padding:0 0 12px;border:1px solid #dbe3eb;border-radius:10px;background:var(--bg-card,#fff);">
+          <summary style="padding:11px 12px;cursor:pointer;font-size:13px;font-weight:700;color:var(--text-primary,#1e293b);">Geoprocessing <small style="display:block;margin-top:3px;font-size:10px;font-weight:500;color:var(--text-muted,#64748b);">Clip · Buffer · Intersect · Union · Merge · Dissolve</small></summary>
+          <div style="padding:0 12px;">
+            <details class="gp-guide" style="margin:0 0 10px;padding:8px 9px;border:1px solid #dbeafe;border-radius:8px;background:#eff6ff;">
+              <summary style="cursor:pointer;font-size:11px;font-weight:700;color:#1e40af;">Panduan singkat</summary>
+              <div style="font-size:10px;line-height:1.55;color:#334155;margin-top:7px;">
+                <ol style="margin:0;padding-left:17px;">
+                  <li>Aktifkan layer vektor dari Katalog Layer, lalu pilih operasi.</li>
+                  <li>Pilih layer sumber. Untuk Clip, cari batas administrasi, pilih hasil, lalu tekan <b>Gunakan batas ini</b>.</li>
+                  <li>Tekan <b>Jalankan geoprocessing</b>. Hasil tampil sebagai layer baru.</li>
+                  <li>Gunakan tombol mata untuk menyembunyikan/menampilkan hasil, atau unduh GeoJSON.</li>
+                </ol>
+                <p style="margin:7px 0 0;"><b>Clip</b> memotong; <b>Buffer</b> membuat zona jarak (meter); <b>Intersect</b> mengambil irisan; <b>Union</b> menyatukan area; <b>Merge</b> menggabungkan fitur sejenis; <b>Dissolve</b> menggabungkan poligon menurut atribut.</p>
+              </div>
+            </details>
+            <details class="gp-guide" style="margin:0 0 10px;padding:8px 9px;border:1px solid #cbd5e1;border-radius:8px;background:var(--bg-secondary,#f8fafc);">
+              <summary style="cursor:pointer;font-size:11px;font-weight:700;color:var(--text-primary,#334155);">Tambahkan sumber data</summary>
+              <div style="display:grid;gap:6px;margin-top:8px;">
+                <button class="geotools-btn gp-action-btn" type="button" onclick="document.getElementById('gpShpInput').click()">Upload SHP / ZIP</button>
+                <input id="gpShpInput" type="file" accept=".shp,.dbf,.shx,.prj,.zip" multiple hidden onchange="importGeoprocessingSHP(this.files)">
+                <button class="geotools-btn gp-action-btn" type="button" onclick="document.getElementById('gpGeoJSONInput').click()">Upload GeoJSON</button>
+                <input id="gpGeoJSONInput" type="file" accept=".geojson,.json,application/geo+json,application/json" hidden onchange="importGeoprocessingGeoJSON(this.files)">
+                <button class="geotools-btn gp-action-btn" type="button" onclick="startGeoprocessingPolygonDraw()">Gambar polygon</button>
+              </div>
+              <div id="gpImportStatus" role="status" aria-live="polite" style="font-size:10px;margin-top:6px;color:#64748b;"></div>
+            </details>
+            <label class="geotani-form-label" for="gpOperation">Operasi</label>
+            <select class="geotani-form-input" id="gpOperation" onchange="updateGeoprocessingForm()">
+              <option value="clip">Clip — potong dengan batas poligon</option><option value="buffer">Buffer — zona jarak</option>
+              <option value="intersect">Intersect — irisan dua layer</option><option value="union">Union — gabungkan area poligon</option>
+              <option value="merge">Merge — gabungkan fitur sejenis</option><option value="dissolve">Dissolve — gabungkan menurut atribut</option>
+            </select>
+            <div id="gpLayerFields"></div>
+            <div id="gpStatus" role="status" aria-live="polite" style="font-size:11px;margin:10px 0;color:#64748b;"></div>
+            <button class="geotools-btn gp-action-btn" type="button" onclick="runGeoprocessing()">Jalankan geoprocessing</button>
+            <div id="gpResultActions" class="gp-result-actions"></div>
+          </div>
+        </details>
+
+        <details class="dm-tool-group">
+          <summary class="dm-sidebar-section-title">Draw</summary>
+          <div class="dm-tool-group-content">
         <div class="dm-sidebar-grid">
           <div class="dm-sidebar-option" onclick="closeDrawSidebar(); startDraw('marker')">
             <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
@@ -896,7 +937,11 @@
             <span class="dm-sidebar-option-label">Circle</span>
           </div>
         </div>
-        <div class="dm-sidebar-section-title">Measure</div>
+          </div>
+        </details>
+        <details class="dm-tool-group">
+          <summary class="dm-sidebar-section-title">Measure</summary>
+          <div class="dm-tool-group-content">
         <div class="dm-sidebar-grid">
           <div class="dm-sidebar-option" onclick="closeDrawSidebar(); startMeasure('distance')">
             <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20"/><path d="M6 8v8"/><path d="M18 8v8"/></svg></div>
@@ -907,7 +952,11 @@
             <span class="dm-sidebar-option-label">Area</span>
           </div>
         </div>
-        <div class="dm-sidebar-section-title">Peta</div>
+          </div>
+        </details>
+        <details class="dm-tool-group">
+          <summary class="dm-sidebar-section-title">Peta</summary>
+          <div class="dm-tool-group-content">
         <div class="dm-sidebar-grid">
           <div class="dm-sidebar-option" onclick="window.printGeoportalMap && printGeoportalMap();">
             <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M9 18h6"/></svg></div>
@@ -926,6 +975,8 @@
             <span class="dm-sidebar-option-label">Lokasi Saya</span>
           </div>
         </div>
+          </div>
+        </details>
       </div>
      </div>
 
@@ -3613,8 +3664,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <!-- sheet-drag.js SEQBELUM map-core.js: map-core, hotspot,
          geopangan, attribute-table, ai-analysis, dan polygon-analysis
          semuanya mendaftarkan sheet ke window.SheetDrag saat dimuat. -->
-    <script src="assets/js/sheet-drag.js?v=20261008-mobile-map-center"></script>
-    <script src="assets/js/map-core.js?v=20261008-unbounded-map"></script>
+    <script src="assets/js/sheet-drag.js?v=20261008-close-without-reset"></script>
+    <script src="assets/js/map-core.js?v=20261008-ad-close-buttons"></script>
     <script src="assets/js/isric-soil-layers.js?v=20261007-wrb-clip"></script>
     <script src="assets/js/isee-global-soils.js?v=20261008-soil-context-layers"></script>
     <script src="assets/js/layer-loading.js"></script>
@@ -3668,6 +3719,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/geotrans-mitradarat.js?v=20261006-reset-on-exit"></script>
     <script src="assets/js/detail-subtab.js"></script>
      <script src="assets/js/alat-layers.js"></script>
+     <script src="assets/js/geoprocessing.js?v=20261008-upload-draw-inputs"></script>
      <script src="assets/js/arcgis-source-manager.js"></script>
   <script src="assets/js/alat-draw-measure.js?v=20261007-geofarm-register"></script>
   <!-- Cek Lokasi: butuh window.startDraw dari alat-draw-measure.js untuk
@@ -3795,7 +3847,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/sppg-district.js"></script>
   <script src="assets/js/water-need.js?v=1"></script>
   <script src="assets/js/ai-analysis.js"></script>
-  <script src="assets/js/sheet-donation-ads.js"></script>
+  <script src="assets/js/sheet-donation-ads.js?v=20261008-ad-close-buttons"></script>
 
 
   <script src="assets/js/population-chart.js"></script>
