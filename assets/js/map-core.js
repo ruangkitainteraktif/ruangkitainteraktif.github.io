@@ -4,20 +4,13 @@
   }
 
   // 1. Inisialisasi Peta
-  // Batasi navigasi dan hasil flyTo agar tetap berada di sekitar wilayah Indonesia.
-  const INDONESIA_BOUNDS = L.latLngBounds(
-    L.latLng(-13.5, 91),
-    L.latLng(8.5, 144.5)
-  );
   const INITIAL_CENTER = [-7.2575, 112.7521]; // Kota Surabaya
   const INITIAL_ZOOM = 13;
   const map = L.map('map', {
     zoomControl: false,
     preferCanvas: true,
     maxZoom: 22,
-    minZoom: 3,
-    maxBounds: INDONESIA_BOUNDS,
-    maxBoundsViscosity: 1.0
+    minZoom: 3
   }).setView(INITIAL_CENTER, INITIAL_ZOOM);
   window.map = map;
 
