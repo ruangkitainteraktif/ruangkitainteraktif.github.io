@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=100">
+  <link rel="stylesheet" href="assets/css/app.css?v=104">
   <link rel="stylesheet" href="assets/css/geodisaster.css?v=1">
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
@@ -3614,14 +3614,16 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
          geopangan, attribute-table, ai-analysis, dan polygon-analysis
          semuanya mendaftarkan sheet ke window.SheetDrag saat dimuat. -->
     <script src="assets/js/sheet-drag.js?v=20261006-reset-all-on-close"></script>
-    <script src="assets/js/map-core.js?v=20261007-autopin-core-layers"></script>
+    <script src="assets/js/map-core.js?v=20261008-surabaya-view"></script>
     <script src="assets/js/isric-soil-layers.js?v=20261007-wrb-clip"></script>
+    <script src="assets/js/isee-global-soils.js?v=20261008-soil-context-layers"></script>
     <script src="assets/js/layer-loading.js"></script>
     <script src="assets/js/bnpb-hillshade.js"></script>
     <script src="assets/js/geologi-bnpb.js"></script>
     <script src="assets/js/geologi-arcgis-online.js?v=20261006-flycenter"></script>
     <script src="assets/js/bouguer-bmkg.js"></script>
     <script src="assets/js/bmkg-curah-hujan-layer.js"></script>
+    <script src="assets/js/bmkg-normal-hujan.js"></script>
     <script src="assets/js/province-boundary-vector.js"></script>
     <script src="assets/js/chlorophyll-par-overlay.js"></script>
 
@@ -3634,6 +3636,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/par-time-slider.js"></script>
     <script src="assets/js/aerosol-so2-slider.js"></script>
     <script src="assets/js/sentinel2-time-slider.js"></script>
+    <script src="assets/js/landsat-time-slider.js?v=20261008"></script>
     <script src="assets/js/eox-s2cloudless-slider.js"></script>
     <script src="assets/js/bmkg-himawari-slider.js"></script>
     <script src="assets/js/gsmap-time-slider.js"></script>
@@ -3641,14 +3644,14 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/satellite-export.js"></script>
     <script src="assets/js/petadasar-export.js"></script>
 
-    <script src="assets/js/geoportal.js?v=20261008-dynamic-print-legends"></script>
+    <script src="assets/js/geoportal.js?v=20261008-sidebar-print-layout"></script>
     <script src="assets/js/geojogja.js?v=20261007"></script>
     <script src="assets/js/geojakarta.js?v=20261007-rt-search"></script>
     <script src="assets/js/demnas-download.js"></script>
     <script src="assets/js/geoportal-search.js"></script>
     <script src="assets/js/sidebar.js?v=20261006-reset-all-on-exit"></script>
     <script src="assets/js/earthquake.js"></script>
-    <script src="assets/js/attribute-table.js?v=13-hwsd-hidden-table"></script>
+    <script src="assets/js/attribute-table.js?v=14-isee-boundary-select"></script>
     <script src="assets/js/katalog-gempa.js?v=20261006-attr-table"></script>
     <script src="assets/js/sensor-seismic.js"></script>
     <script src="assets/js/sensor-global.js"></script>
@@ -3684,7 +3687,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 <!-- geofarm-report.js hanya Menyediakan window.setGeoFarmReportIndexSpecs(),
      jadi harus dimuat sebelum polygon-analysis.js memanggilnya. -->
 <script src="assets/js/geofarm-report.js"></script>
-<script src="assets/js/polygon-analysis.js?v=20261007-soilgrids-analysis-soil-heading"></script>
+<script src="assets/js/polygon-analysis.js?v=20261008-landsat-lst"></script>
 
   <script src="assets/js/app-boot.js"></script>
 

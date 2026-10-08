@@ -4,10 +4,21 @@
   }
 
   // 1. Inisialisasi Peta
-  // Pusat awal: Kota Surabaya, level zoom detail perkotaan
-  const INITIAL_CENTER = [-7.2575, 112.7521]; // Surabaya
+  // Batasi navigasi dan hasil flyTo agar tetap berada di sekitar wilayah Indonesia.
+  const INDONESIA_BOUNDS = L.latLngBounds(
+    L.latLng(-13.5, 91),
+    L.latLng(8.5, 144.5)
+  );
+  const INITIAL_CENTER = [-7.2575, 112.7521]; // Kota Surabaya
   const INITIAL_ZOOM = 13;
-  const map = L.map('map', { zoomControl: false, preferCanvas: true, maxZoom: 22, minZoom: 4 }).setView(INITIAL_CENTER, INITIAL_ZOOM);
+  const map = L.map('map', {
+    zoomControl: false,
+    preferCanvas: true,
+    maxZoom: 22,
+    minZoom: 3,
+    maxBounds: INDONESIA_BOUNDS,
+    maxBoundsViscosity: 1.0
+  }).setView(INITIAL_CENTER, INITIAL_ZOOM);
   window.map = map;
 
   // Close all other popups when a new popup opens (prevent popup stacking)
@@ -48,6 +59,21 @@ L.control.scale({
       maxZoom: 22,
       minZoom: 14,
       attribution: 'ATR/BPN'
+    }),
+    'landsat-agriculture': L.esri.imageMapLayer({
+      url: 'https://landsat2.arcgis.com/arcgis/rest/services/Landsat/MS/ImageServer',
+      renderingRule: { rasterFunction: 'Agriculture with DRA' },
+      mosaicRule: {
+        mosaicMethod: 'esriMosaicAttribute',
+        sortField: 'Best',
+        sortValue: '0',
+        mosaicOperation: 'MT_FIRST'
+      },
+      format: 'jpgpng',
+      opacity: 1,
+      minZoom: 5,
+      maxZoom: 19,
+      attribution: 'Esri, USGS, NASA'
     }),
     'esri-dark-gray': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
@@ -1053,6 +1079,7 @@ L.control.scale({
     'esri-satellite': 'Esri Satellite',
     'google-satellite-kh': 'Google Satellite',
     'petadasar-bpn': 'Peta Dasar ATR/BPN',
+    'landsat-agriculture': 'Landsat Agriculture',
     'modis-terra': 'MODIS Terra',
     'modis-aqua': 'MODIS Aqua',
     'viirs-noaa20': 'VIIRS NOAA-20',
@@ -1432,7 +1459,7 @@ L.control.scale({
           'toggleTransjogja',
           'toggleTollRoad', 'toggleNonTollRoad', 'toggleNationalRoad',
           'toggleWindAnim', 'toggleWindRgb', 'toggleRhRgb', 'toggleTp24Rgb',
-          'togglePm25Rgb', 'toggleHthRgb',
+          'togglePm25Rgb', 'toggleHthRgb', 'toggleBmkgNormalHujan',
           'toggleMaritimeAngin', 'toggleMaritimeGelombang', 'toggleMaritimeSwell', 'toggleMaritimeWindSea',
            'toggleGhrsstSstAnomali',
           'toggleSawahDilindungi', 'toggleSawahNasional50k',
@@ -2782,6 +2809,7 @@ L.control.scale({
             { id: 'esri-satellite', label: 'Esri Satellite' },
             { id: 'google-satellite-kh', label: 'Google Satellite' },
             { id: 'petadasar-bpn', label: 'Peta Dasar ATR/BPN' },
+            { id: 'landsat-agriculture', label: 'Landsat Agriculture' },
             { id: 'bmkg-himawari', label: 'Himawari-9 IR (BMKG)' },
             { id: 'bmkg-himawari-nc', label: 'Himawari-9 Natural Color (BMKG)' },
             { id: 'bmkg-himawari-wv', label: 'Himawari-9 Water Vapor (BMKG)' },
@@ -3094,7 +3122,9 @@ L.control.scale({
         ]},
         { subcat: 'Data Iklim BMKG', layers: [
           { id: 'toggleBmkgCurahHujan', label: 'Curah Hujan (BMKG)' },
-          { id: 'toggleBmkgHariHujan', label: 'Hari Hujan (BMKG)' }
+          { id: 'toggleBmkgHariHujan', label: 'Hari Hujan (BMKG)' },
+          { id: 'toggleBmkgNormalHujan', label: 'Normal Curah Hujan Bulanan (BMKG)' },
+          { id: 'bmkgLightningLink', label: 'Monitoring Sambaran Petir Real-time (BMKG)', href: 'https://lightning.bmkg.go.id/map/monitoring' }
         ]}
       ]
     },
@@ -3138,6 +3168,13 @@ L.control.scale({
           { id: 'toggleLikuifaksi', label: 'Kerentanan Likuifaksi (BIG)' },
           { id: 'toggleKarst', label: 'Kawasan Bentang Alam Karst (BIG)' },
           { id: 'toggleBouguerBMKG', label: 'Anomali Bouguer Indonesia (BMKG)' }
+        ]},
+        { subcat: 'Soil Explorer Global (ISee / Purdue)', layers: [
+          { id: 'isee-soil-orders', label: 'Soil Orders Global' },
+          { id: 'isee-soil-moisture', label: 'Soil Moisture Regimes Global' },
+          { id: 'isee-soil-hillshade', label: 'Hillshade Global' },
+          { id: 'isee-soil-boundaries', label: 'Batas Administrasi Global' },
+          { id: 'isee-soil-labels', label: 'Label Administrasi Global' }
         ]},
         { subcat: 'WRB', layers: [
           { id: 'toggleHwsdIndonesia', label: 'Jenis Tanah Indonesia (HWSD v2.01)' },
@@ -3196,6 +3233,15 @@ L.control.scale({
     }
   ];
 
+  (function placeGeologyAfterBasemap() {
+    var geologyIndex = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Geologi'; });
+    var basemapIndex = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Basemap'; });
+    if (geologyIndex < 0 || basemapIndex < 0 || geologyIndex === basemapIndex + 1) return;
+    var geologyCategory = LAYER_CATALOG_DATA.splice(geologyIndex, 1)[0];
+    basemapIndex = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Basemap'; });
+    LAYER_CATALOG_DATA.splice(basemapIndex + 1, 0, geologyCategory);
+  })();
+
   var _layerCatalogOpen = false;
   var _layerCatalogState = {};
   var _pinnedLayers = [];
@@ -3249,6 +3295,7 @@ L.control.scale({
   // Layer utama selalu diprioritaskan dalam pin bawaan katalog.
   var _defaultPinnedLayers = [
     'petadasar-bpn',
+    'isee-soil-orders',
     'toggleHwsdIndonesia',
     'toggleFsvaLayer',
     'toggleFaultLayerNew',
@@ -3396,9 +3443,11 @@ L.control.scale({
             html += '<input type="checkbox" id="lc_pin_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
             html += '<label for="lc_pin_' + l.id + '">' + l.label + '</label>';
             html += '<div class="lc-item-actions">';
-            html += '<button type="button" class="lc-attr-btn' + (isChecked ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
-            html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
-            html += '</button>';
+            if (l.id !== 'toggleBmkgNormalHujan' && (l.id.indexOf('isee-soil-') !== 0 || l.id === 'isee-soil-boundaries')) {
+              html += '<button type="button" class="lc-attr-btn' + ((isChecked || l.id === 'isee-soil-boundaries') ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
+              html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
+              html += '</button>';
+            }
             html += '<button type="button" class="lc-pin-btn lc-pin-btn-active" data-layer-id="' + l.id + '" title="Hapus Pin">' + pinIconFilled + '</button>';
             html += '</div></div>';
           }
@@ -3492,6 +3541,10 @@ L.control.scale({
         cat.subcats.forEach(function(sc) {
           html += '<div class="lc-subcat-header">' + sc.subcat + '</div>';
           (sc.layers || []).forEach(function(l) {
+            if (l.href) {
+              html += '<div class="lc-item"><a href="' + l.href + '" target="_blank" rel="noopener noreferrer" style="padding:8px 10px;color:#2563eb;font-size:12px;font-weight:600;text-decoration:none;">' + l.label + ' ↗</a></div>';
+              return;
+            }
             var el = findLayerById(l.id);
             var isChecked = el ? el.checked : (_layerCatalogState[l.id] || false);
             if (l.id === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') {
@@ -3501,12 +3554,21 @@ L.control.scale({
             html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
             html += '<label for="lc_' + l.id + '">' + l.label + '</label>';
             html += '<div class="lc-item-actions">';
-            html += '<button type="button" class="lc-attr-btn' + (isChecked ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
-            html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
-            html += '</button>';
+            if (l.id !== 'toggleBmkgNormalHujan' && (l.id.indexOf('isee-soil-') !== 0 || l.id === 'isee-soil-boundaries')) {
+              html += '<button type="button" class="lc-attr-btn' + ((isChecked || l.id === 'isee-soil-boundaries') ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
+              html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
+              html += '</button>';
+            }
             var pinned = isPinnedLayer(l.id);
             html += '<button type="button" class="lc-pin-btn' + (pinned ? ' lc-pin-btn-active' : '') + '" data-layer-id="' + l.id + '" title="' + (pinned ? 'Hapus Pin' : 'Pin Layer') + '">' + (pinned ? pinIconFilled : pinIconOutline) + '</button>';
             html += '</div></div>';
+            if (l.id === 'toggleBmkgNormalHujan') {
+              var selectedMonth = Number(window._bmkgNormalHujanMonth || 0);
+              var monthLabels = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+              html += '<div style="padding:2px 10px 10px 30px;"><label for="bmkgNormalHujanMonth" style="display:block;font-size:11px;margin-bottom:4px;">Pilih bulan</label><select id="bmkgNormalHujanMonth" style="width:100%;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;color:#334155;font-size:12px;">';
+              monthLabels.forEach(function(month, index) { html += '<option value="' + index + '"' + (selectedMonth === index ? ' selected' : '') + '>' + month + '</option>'; });
+              html += '</select><small style="display:block;margin-top:4px;color:#64748b;">Rata-rata klimatologis 30 tahun · BMKG</small></div>';
+            }
           });
         });
       } else {
@@ -3520,8 +3582,8 @@ L.control.scale({
           html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
           html += '<label for="lc_' + l.id + '">' + l.label + '</label>';
           html += '<div class="lc-item-actions">';
-          if (l.id !== 'toggleHwsdIndonesia') {
-            html += '<button type="button" class="lc-attr-btn' + ((isChecked || l.id === 'toggleJenisTanahJateng' || l.id === 'toggleGeologiArcGISOnline') ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
+          if (l.id !== 'toggleHwsdIndonesia' && (l.id.indexOf('isee-soil-') !== 0 || l.id === 'isee-soil-boundaries')) {
+            html += '<button type="button" class="lc-attr-btn' + ((isChecked || l.id === 'toggleJenisTanahJateng' || l.id === 'toggleGeologiArcGISOnline' || l.id === 'isee-soil-boundaries') ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
             html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
             html += '</button>';
           }
@@ -3622,7 +3684,9 @@ L.control.scale({
           (id === 'toggleBouguerBMKG' && typeof window.toggleBouguerBMKG === 'function') ||
           (id === 'toggleBmkgCurahHujan' && typeof window.toggleBmkgCurahHujan === 'function') ||
           (id === 'toggleBmkgHariHujan' && typeof window.toggleBmkgHariHujan === 'function') ||
+          (id === 'toggleBmkgNormalHujan' && typeof window.toggleBmkgNormalHujan === 'function') ||
           (id.indexOf('isric-soil-') === 0 && typeof window.toggleIsricSoilLayer === 'function') ||
+          (id.indexOf('isee-soil-') === 0 && typeof window.toggleIseeSoilLayer === 'function') ||
           (id === 'toggleHujanLayer') ||
           (id === 'toggleFsvaLayer' && typeof window.toggleFsvaLayer === 'function') ||
           id.indexOf('st2023:') === 0 ||
@@ -3739,8 +3803,14 @@ L.control.scale({
         if (id === 'toggleBmkgHariHujan' && typeof window.toggleBmkgHariHujan === 'function') {
           window.toggleBmkgHariHujan(cb.checked);
         }
+        if (id === 'toggleBmkgNormalHujan' && typeof window.toggleBmkgNormalHujan === 'function') {
+          window.toggleBmkgNormalHujan(cb.checked);
+        }
         if (id.indexOf('isric-soil-') === 0 && typeof window.toggleIsricSoilLayer === 'function') {
           window.toggleIsricSoilLayer(id, cb.checked);
+        }
+        if (id.indexOf('isee-soil-') === 0 && typeof window.toggleIseeSoilLayer === 'function') {
+          window.toggleIseeSoilLayer(id, cb.checked);
         }
         if (id === 'toggleProvinceBoundary' && typeof window.toggleProvinceBoundary === 'function') {
           window.toggleProvinceBoundary(cb.checked);

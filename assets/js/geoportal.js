@@ -2053,11 +2053,10 @@
     await new Promise(r => setTimeout(r, 400));
 
     const pageW = 297, pageH = 210, margin = 8;
-    const titleH = 14, bottomStripH = 14;
     const mapFrameX = margin;
-    const mapFrameY = margin + titleH + 2;
-    const mapFrameW = 185;
-    const mapFrameH = pageH - margin * 2 - titleH - 2 - bottomStripH;
+    const mapFrameY = margin;
+    const mapFrameW = 205;
+    const mapFrameH = pageH - margin * 2;
     const panelX = mapFrameX + mapFrameW + 4;
     const panelW = pageW - panelX - margin;
     const panelH = mapFrameH;
@@ -2182,7 +2181,7 @@
       hiddenEls, titleText, bmFriendly, mapImg, legendItems, fullLegendItems: legendItems.slice(), bmLegend,
       baseBmLegend: bmLegend, showLegend: true, includeBasemapLegend: true, activeNames,
       exportCanvas, exportBbox,
-      pageW, pageH, margin, titleH, bottomStripH,
+      pageW, pageH, margin,
       mapFrameX, mapFrameY, mapFrameW, mapFrameH,
       panelX, panelW, panelH, mCX, mCY,
       latMin, latMax, lonMin, lonMax, now: new Date()
@@ -2195,6 +2194,7 @@
     const cW = data.pageW * SCALE;
     const cH = data.pageH * SCALE;
     const s = SCALE;
+    data.mapView = data.mapView || { scale: 1, dx: 0, dy: 0 };
 
     const overlay = document.createElement('div');
     overlay.className = 'print-preview-overlay';
@@ -2207,10 +2207,22 @@
     canvas.width = cW; canvas.height = cH;
     container.appendChild(canvas);
 
+    const controls = document.createElement('div');
+    controls.className = 'print-preview-controls';
+    controls.innerHTML = '<label class="print-preview-title">Judul peta<input type="text" maxlength="120" aria-label="Judul peta"></label>' +
+      '<div class="print-preview-map-tools"><span class="print-preview-control-label">Atur posisi peta</span>' +
+      '<div class="print-preview-tool-row"><button type="button" data-pan="up" aria-label="Geser peta ke atas">▲</button></div>' +
+      '<div class="print-preview-tool-row"><button type="button" data-pan="left" aria-label="Geser peta ke kiri">◀</button>' +
+      '<button type="button" data-zoom="out" aria-label="Perkecil peta">−</button><span class="print-preview-zoom">100%</span>' +
+      '<button type="button" data-zoom="in" aria-label="Perbesar peta">+</button><button type="button" data-pan="right" aria-label="Geser peta ke kanan">▶</button></div>' +
+      '<div class="print-preview-tool-row"><button type="button" data-pan="down" aria-label="Geser peta ke bawah">▼</button></div></div>';
+    controls.querySelector('input').value = data.titleText || '';
+
     const actions = document.createElement('div');
     actions.className = 'print-preview-actions';
     actions.innerHTML = '<button class="print-preview-cancel">\u2715 Batal</button><button class="print-preview-confirm">\uD83D\uDCBB Cetak PDF</button>';
     overlay.appendChild(container);
+    overlay.appendChild(controls);
     overlay.appendChild(actions);
     const spinnerEarly = overlay.querySelector('.print-preview-spinner');
     if (spinnerEarly) spinnerEarly.style.display = 'none';
@@ -2229,29 +2241,47 @@
       ctx.fillRect(0, 0, cW, cH);
       ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 0.4 * s;
       ctx.strokeRect(data.margin * s, data.margin * s, (data.pageW - data.margin * 2) * s, (data.pageH - data.margin * 2) * s);
-      ctx.strokeStyle = '#c8c8c8'; ctx.lineWidth = 0.2 * s;
-      ctx.beginPath();
-      ctx.moveTo(data.margin * s, (data.margin + data.titleH) * s);
-      ctx.lineTo((data.pageW - data.margin) * s, (data.margin + data.titleH) * s);
-      ctx.stroke();
-      ctx.fillStyle = '#1e293b'; ctx.font = 'bold 12px "Segoe UI", system-ui, sans-serif';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(data.titleText, (data.margin + 2) * s, (data.margin + data.titleH / 2) * s, (data.pageW - data.margin * 2 - 85) * s);
-      const dateFormatted = data.now.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-      ctx.fillStyle = '#64748b'; ctx.font = '7.5px "Segoe UI", system-ui, sans-serif';
-      ctx.textAlign = 'right';
-      ctx.fillText(dateFormatted, (data.pageW - data.margin - 2) * s, (data.margin + 5) * s);
-      ctx.fillText('Basemap: ' + data.bmFriendly, (data.pageW - data.margin - 2) * s, (data.margin + 9) * s);
-      ctx.fillStyle = '#969696'; ctx.font = '7px "Segoe UI", system-ui, sans-serif';
-      ctx.fillText('WGS84 / EPSG:4326', (data.pageW - data.margin - 2) * s, (data.margin + 12) * s);
-      ctx.textAlign = 'left';
       ctx.strokeStyle = '#374151'; ctx.lineWidth = 0.3 * s;
       ctx.strokeRect(data.mapFrameX * s, data.mapFrameY * s, data.mapFrameW * s, data.mapFrameH * s);
       if (previewMapImage && previewMapImage.complete && previewMapImage.naturalWidth) {
-        ctx.drawImage(previewMapImage, data.mapFrameX * s, data.mapFrameY * s, data.mapFrameW * s, data.mapFrameH * s);
+        const view = data.mapView;
+        ctx.save();
+        ctx.beginPath(); ctx.rect(data.mapFrameX * s, data.mapFrameY * s, data.mapFrameW * s, data.mapFrameH * s); ctx.clip();
+        const drawW = data.mapFrameW * view.scale, drawH = data.mapFrameH * view.scale;
+        const drawX = data.mapFrameX + (data.mapFrameW - drawW) / 2 + view.dx * data.mapFrameW;
+        const drawY = data.mapFrameY + (data.mapFrameH - drawH) / 2 + view.dy * data.mapFrameH;
+        ctx.drawImage(previewMapImage, drawX * s, drawY * s, drawW * s, drawH * s);
+        ctx.restore();
       }
       _drawPreviewOverlay(ctx, data, s, cW, cH);
     }
+    function refreshMapControls() {
+      const view = data.mapView, maxPan = (view.scale - 1) / 2;
+      controls.querySelector('.print-preview-zoom').textContent = Math.round(view.scale * 100) + '%';
+      controls.querySelectorAll('[data-pan]').forEach(button => {
+        const dir = button.dataset.pan;
+        const blocked = maxPan < 0.001 || (dir === 'left' && view.dx <= -maxPan + 0.001) || (dir === 'right' && view.dx >= maxPan - 0.001) || (dir === 'up' && view.dy <= -maxPan + 0.001) || (dir === 'down' && view.dy >= maxPan - 0.001);
+        button.disabled = blocked;
+      });
+      controls.querySelector('[data-zoom="out"]').disabled = view.scale <= 1;
+    }
+    controls.querySelector('input').addEventListener('input', function () { data.titleText = this.value.trim(); drawPreviewPage(); });
+    controls.querySelectorAll('[data-zoom]').forEach(button => button.addEventListener('click', function () {
+      data.mapView.scale = Math.max(1, Math.min(3, data.mapView.scale * (this.dataset.zoom === 'in' ? 1.2 : 1 / 1.2)));
+      const maxPan = (data.mapView.scale - 1) / 2;
+      data.mapView.dx = Math.max(-maxPan, Math.min(maxPan, data.mapView.dx));
+      data.mapView.dy = Math.max(-maxPan, Math.min(maxPan, data.mapView.dy));
+      refreshMapControls(); drawPreviewPage();
+    }));
+    controls.querySelectorAll('[data-pan]').forEach(button => button.addEventListener('click', function () {
+      const step = 0.06, maxPan = (data.mapView.scale - 1) / 2;
+      if (this.dataset.pan === 'left') data.mapView.dx = Math.max(-maxPan, data.mapView.dx - step);
+      if (this.dataset.pan === 'right') data.mapView.dx = Math.min(maxPan, data.mapView.dx + step);
+      if (this.dataset.pan === 'up') data.mapView.dy = Math.max(-maxPan, data.mapView.dy - step);
+      if (this.dataset.pan === 'down') data.mapView.dy = Math.min(maxPan, data.mapView.dy + step);
+      refreshMapControls(); drawPreviewPage();
+    }));
+    refreshMapControls();
     actions.querySelector('.print-preview-cancel').addEventListener('click', function () {
       overlay.remove();
       data.exportCanvas = null;
@@ -2573,21 +2603,56 @@
   }
   window.exportViewportGeoTiff = exportViewportGeoTiff;
 
+  function _drawRuangKitaWatermarkCanvas(ctx, centerX, centerY, s) {
+    ctx.save();
+    ctx.globalAlpha = 0.38;
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold ' + (19 * s) + 'px Arial, sans-serif';
+    ctx.fillText('PREVIEW', centerX * s, (centerY - 6) * s);
+    ctx.font = 'bold ' + (15 * s) + 'px Arial, sans-serif';
+    ctx.fillText('RUANGKITA', centerX * s, (centerY + 8) * s);
+    ctx.restore();
+  }
+
+  function _drawRuangKitaWatermarkPdf(pdf, centerX, centerY) {
+    var hasOpacity = false;
+    try {
+      pdf.setGState(new pdf.GState({ opacity: 0.38 }));
+      hasOpacity = true;
+    } catch (e) {}
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(42);
+    pdf.text('PREVIEW', centerX, centerY - 2, { align: 'center' });
+    pdf.setFontSize(32);
+    pdf.text('RUANGKITA', centerX, centerY + 10, { align: 'center' });
+    if (hasOpacity) {
+      try { pdf.setGState(new pdf.GState({ opacity: 1 })); } catch (e) {}
+    }
+  }
+
+  function _getPrintViewBounds(data) {
+    const view = data.mapView || { scale: 1, dx: 0, dy: 0 };
+    const scale = Math.max(1, view.scale || 1);
+    const u0 = 0.5 - 0.5 / scale - (view.dx || 0) / scale;
+    const v0 = 0.5 - 0.5 / scale - (view.dy || 0) / scale;
+    const lonRange = data.lonMax - data.lonMin, latRange = data.latMax - data.latMin;
+    return {
+      lonMin: data.lonMin + u0 * lonRange, lonMax: data.lonMin + (u0 + 1 / scale) * lonRange,
+      latMax: data.latMax - v0 * latRange, latMin: data.latMax - (v0 + 1 / scale) * latRange
+    };
+  }
+
   function _drawPreviewOverlay(ctx, data, s, cW, cH) {
+    const viewBounds = _getPrintViewBounds(data);
     const { mapFrameX, mapFrameY, mapFrameW, mapFrameH, panelX, panelW, panelH,
-      margin, pageW, titleH, mCX, mCY, latMin, latMax, lonMin, lonMax, legendItems, bmLegend, activeNames } = data;
+      margin, pageW, mCX, mCY, legendItems, bmLegend, activeNames } = data;
+    const { latMin, latMax, lonMin, lonMax } = viewBounds;
 
     ctx.strokeStyle = '#374151'; ctx.lineWidth = 0.3 * s;
     ctx.strokeRect(mapFrameX * s, mapFrameY * s, mapFrameW * s, mapFrameH * s);
-
-    ctx.save(); ctx.globalAlpha = 0.6; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = 'bold 28px "Segoe UI", system-ui, sans-serif';
-    ctx.fillText('PREVIEW', mCX * s, (mCY - 9) * s);
-    ctx.font = 'bold 22px "Segoe UI", system-ui, sans-serif';
-    ctx.fillText('RUANGKITA PRO', mCX * s, (mCY + 1) * s);
-    ctx.font = '9px "Segoe UI", system-ui, sans-serif';
-    ctx.fillText('ruangkita.net', mCX * s, (mCY + 11) * s);
-    ctx.restore();
 
     const latRange = latMax - latMin, lonRange = lonMax - lonMin;
     const latInterval = _calcInterval(latRange, 6), lonInterval = _calcInterval(lonRange, 8);
@@ -2612,21 +2677,39 @@
     }
     ctx.setLineDash([]);
 
+    _drawRuangKitaWatermarkCanvas(ctx, mapFrameX + mapFrameW / 2, mapFrameY + mapFrameH / 2, s);
+
     ctx.strokeStyle = '#c8c8c8'; ctx.lineWidth = 0.2 * s;
     ctx.beginPath(); ctx.moveTo(panelX * s, mapFrameY * s); ctx.lineTo(panelX * s, (mapFrameY + panelH) * s); ctx.stroke();
 
-    let py = mapFrameY + 4;
-    ctx.fillStyle = '#1e293b'; ctx.font = 'bold 9px "Segoe UI", system-ui, sans-serif';
+    let py = mapFrameY + 5;
+    ctx.fillStyle = '#1e293b'; ctx.font = 'bold 10px "Segoe UI", system-ui, sans-serif';
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     const headTitle = data.titleText || 'LAYER AKTIF';
-    ctx.fillText(headTitle, (panelX + 4) * s, py * s);
-    py += 6;
+    const titleMaxWidth = (panelW - 8) * s;
+    const titleWords = headTitle.split(/\s+/);
+    let titleLine = '';
+    titleWords.forEach(function (word) {
+      const candidate = titleLine ? titleLine + ' ' + word : word;
+      if (titleLine && ctx.measureText(candidate).width > titleMaxWidth) {
+        ctx.fillText(titleLine, (panelX + 4) * s, py * s);
+        py += 4.5;
+        titleLine = word;
+      } else titleLine = candidate;
+    });
+    if (titleLine) { ctx.fillText(titleLine, (panelX + 4) * s, py * s); py += 4.5; }
+    ctx.fillStyle = '#64748b'; ctx.font = '6.5px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText(data.now.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }), (panelX + 4) * s, py * s); py += 3.5;
+    ctx.fillText('Basemap: ' + data.bmFriendly, (panelX + 4) * s, py * s); py += 3.5;
+    ctx.fillStyle = '#969696'; ctx.font = '6px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText('WGS84 / EPSG:4326', (panelX + 4) * s, py * s);
+    py += 3;
     ctx.strokeStyle = '#c8c8c8'; ctx.lineWidth = 0.2 * s;
     ctx.beginPath(); ctx.moveTo((panelX + 4) * s, py * s); ctx.lineTo((panelX + panelW - 4) * s, py * s); ctx.stroke();
-    py += 4;
+    py += 3;
 
-    const sLatMin = (data.latMin != null) ? data.latMin : latMin;
-    const sLatMax = (data.latMax != null) ? data.latMax : latMax;
+    const sLatMin = latMin;
+    const sLatMax = latMax;
     const centerLatS = (sLatMin + sLatMax) / 2;
     const mPerDegS = 111132.92 - 559.82 * Math.cos(2 * centerLatS * Math.PI / 180);
     const mPerPxS = ((sLatMax - sLatMin) * mPerDegS) / mapFrameH;
@@ -2786,47 +2869,35 @@
     try {
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-      const { pageW, pageH, margin, titleH, bottomStripH,
+      const viewBounds = _getPrintViewBounds(data);
+      const { latMin, latMax, lonMin, lonMax } = viewBounds;
+      const { pageW, pageH, margin,
         mapFrameX, mapFrameY, mapFrameW, mapFrameH,
         panelX, panelW, panelH, mCX, mCY,
-        latMin, latMax, lonMin, lonMax, now } = data;
+        now } = data;
 
       pdf.setDrawColor(30, 41, 59); pdf.setLineWidth(0.4);
       pdf.rect(margin, margin, pageW - margin * 2, pageH - margin * 2);
-      pdf.setDrawColor(200, 200, 200); pdf.setLineWidth(0.2);
-      pdf.line(margin, margin + titleH, pageW - margin, margin + titleH);
-
-      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(12); pdf.setTextColor(30, 41, 59);
-      pdf.text(data.titleText, margin + 2, margin + titleH / 2, { baseline: 'middle' });
-      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7.5); pdf.setTextColor(100, 116, 139);
-      const dateFormatted = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-      pdf.text(dateFormatted, pageW - margin - 2, margin + 5, { align: 'right' });
-      pdf.text('Basemap: ' + data.bmFriendly, pageW - margin - 2, margin + 9, { align: 'right' });
-      pdf.setFontSize(7); pdf.setTextColor(150, 150, 150);
-      pdf.text('WGS84 / EPSG:4326', pageW - margin - 2, margin + 12, { align: 'right' });
 
       pdf.setDrawColor(55, 65, 81); pdf.setLineWidth(0.3);
       pdf.rect(mapFrameX, mapFrameY, mapFrameW, mapFrameH);
 
       if (data.mapImg) {
-        pdf.addImage(data.mapImg, 'JPEG', mapFrameX, mapFrameY, mapFrameW, mapFrameH);
+        const view = data.mapView || { scale: 1, dx: 0, dy: 0 };
+        if (view.scale > 1 || view.dx || view.dy) {
+          const image = new Image();
+          await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject; image.src = data.mapImg; });
+          const cropCanvas = document.createElement('canvas');
+          cropCanvas.width = image.naturalWidth; cropCanvas.height = image.naturalHeight;
+          const cropCtx = cropCanvas.getContext('2d');
+          const drawW = cropCanvas.width * view.scale, drawH = cropCanvas.height * view.scale;
+          cropCtx.drawImage(image, (cropCanvas.width - drawW) / 2 + view.dx * cropCanvas.width, (cropCanvas.height - drawH) / 2 + view.dy * cropCanvas.height, drawW, drawH);
+          pdf.addImage(cropCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', mapFrameX, mapFrameY, mapFrameW, mapFrameH);
+        } else pdf.addImage(data.mapImg, 'JPEG', mapFrameX, mapFrameY, mapFrameW, mapFrameH);
       }
 
       pdf.setDrawColor(55, 65, 81); pdf.setLineWidth(0.3);
       pdf.rect(mapFrameX, mapFrameY, mapFrameW, mapFrameH, 'S');
-
-      try {
-        pdf.saveGraphicsState();
-        if (typeof pdf.GState === 'function') pdf.setGState(new pdf.GState({ opacity: 0.6 }));
-        pdf.setTextColor(255, 255, 255);
-        pdf.setFont('helvetica', 'bold'); pdf.setFontSize(28);
-        pdf.text('PREVIEW', mCX, mCY - 9, { align: 'center', baseline: 'middle' });
-        pdf.setFontSize(22);
-        pdf.text('RUANGKITA PRO', mCX, mCY + 1, { align: 'center', baseline: 'middle' });
-        pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9);
-        pdf.text('ruangkita.net', mCX, mCY + 11, { align: 'center', baseline: 'middle' });
-        pdf.restoreGraphicsState();
-      } catch (e) {}
 
       const latRange = latMax - latMin, lonRange = lonMax - lonMin;
       const latInterval = _calcInterval(latRange, 6), lonInterval = _calcInterval(lonRange, 8);
@@ -2847,19 +2918,28 @@
         pdf.text(lon.toFixed(lonInterval < 0.1 ? 2 : 1) + '\u00B0', px, mapFrameY + mapFrameH + 3.5, { align: 'center' });
       }
 
+      _drawRuangKitaWatermarkPdf(pdf, mapFrameX + mapFrameW / 2, mapFrameY + mapFrameH / 2);
+
       pdf.setDrawColor(200, 200, 200); pdf.setLineWidth(0.2);
       pdf.line(panelX, mapFrameY, panelX, mapFrameY + panelH);
       const headTitle = data.titleText || 'LAYER AKTIF';
-      let py = mapFrameY + 4;
-      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9); pdf.setTextColor(30, 41, 59);
-      pdf.text(headTitle, panelX + 4, py, { maxWidth: panelW - 8 });
-      py += 6;
+      let py = mapFrameY + 5;
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(10); pdf.setTextColor(30, 41, 59);
+      const titleLines = pdf.splitTextToSize(headTitle, panelW - 8);
+      pdf.text(titleLines, panelX + 4, py);
+      py += titleLines.length * 4.5;
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(6.5); pdf.setTextColor(100, 116, 139);
+      const dateFormatted = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+      pdf.text(dateFormatted, panelX + 4, py); py += 3.5;
+      pdf.text('Basemap: ' + data.bmFriendly, panelX + 4, py); py += 3.5;
+      pdf.setFontSize(6); pdf.setTextColor(150, 150, 150);
+      pdf.text('WGS84 / EPSG:4326', panelX + 4, py); py += 3;
       pdf.setDrawColor(200, 200, 200); pdf.setLineWidth(0.2);
       pdf.line(panelX + 4, py, panelX + panelW - 4, py);
-      py += 4;
+      py += 3;
 
-      const sLatMin = (data.latMin != null) ? data.latMin : latMin;
-      const sLatMax = (data.latMax != null) ? data.latMax : latMax;
+      const sLatMin = latMin;
+      const sLatMax = latMax;
       const centerLatS = (sLatMin + sLatMax) / 2;
       const mPerDegS = 111132.92 - 559.82 * Math.cos(2 * centerLatS * Math.PI / 180);
       const mPerPxS = ((sLatMax - sLatMin) * mPerDegS) / mapFrameH;
@@ -3005,7 +3085,7 @@
     document.body.appendChild(vig);
     _printVignette = vig;
 
-    // Rectangle frame — aspect ratio matches map frame in PDF (185:164)
+    // Rectangle frame — aspect ratio matches the map frame in the PDF (205:194).
     const frame = document.createElement('div');
     frame.className = 'print-area-frame';
     document.body.appendChild(frame);

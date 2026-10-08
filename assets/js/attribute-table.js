@@ -14,6 +14,7 @@
   var _highlightMarkerTimer = null;
   var _highlightedFeatureLayer = null;
   var _highlightedFeatureStyle = null;
+  var _highlightedFeatureTemporary = false;
   var _wmsClickHandler = null;
   var _wmsQueryLatLng = null;
   var _attrTableOpen = false;
@@ -85,6 +86,13 @@
   }
 
   var ATTR_LAYER_REGISTRY = {
+    'isee-soil-boundaries': {
+      name: 'Batas Administrasi Global (ISee)',
+      type: 'arcgis',
+      url: 'https://mapsweb.lib.purdue.edu/arcgis/rest/services/Isee/WLD_Admin_Boundaries/MapServer/3/query',
+      outFields: ['name', 'featurecla', 'adm0_left', 'adm0_right', 'type', 'scalerank'],
+      props: ['name', 'featurecla', 'adm0_left', 'adm0_right', 'type', 'scalerank']
+    },
     toggleJenisTanahJateng: {
       name: 'Jenis Tanah Jawa Tengah',
       type: 'geojson',
@@ -1113,6 +1121,7 @@
           var f = {};
           for (var k in a) { if (a[k] !== null && a[k] !== undefined) f[k] = a[k]; }
           if (feat.geometry) {
+            f._arcGeometry = feat.geometry;
             var ll = null;
             if (feat.geometry.x != null && feat.geometry.y != null) ll = [feat.geometry.y, feat.geometry.x];
             else if (feat.geometry.paths && feat.geometry.paths[0] && feat.geometry.paths[0][0]) { var p = feat.geometry.paths[0][0]; ll = [p[1], p[0]]; }
@@ -1296,6 +1305,9 @@
     // judul sheet seragam "Tabel" dan nama layer pindah ke sini, supaya tidak
     // ada informasi yang hilang saat panel ini dipakai bersama semua layer.
     html += atLayerSubtitle(_currentLayer && _currentLayer.config ? _currentLayer.config.name : '');
+    if (_currentLayer && _currentLayer.id === 'isee-soil-boundaries') {
+      html += '<div class="at-info-bar">Klik baris untuk mengarahkan peta dan menyorot geometri batas.</div>';
+    }
 
     html += '<div class="at-controls">';
     html += '<input type="text" class="at-search" id="atSearchInput" placeholder="Cari fitur..." value="' + escAttr(_searchQuery) + '" />';
@@ -1408,7 +1420,7 @@
     if (rowEl) rowEl.classList.add('at-row-active');
   }
 
-  function highlightFeatureLayerOnMap(layer) {
+  function highlightFeatureLayerOnMap(layer, isTemporary) {
     clearFeatureLayerHighlight();
     if (_highlightMarker) {
       map.removeLayer(_highlightMarker);
@@ -1418,6 +1430,7 @@
       clearTimeout(_highlightMarkerTimer);
       _highlightMarkerTimer = null;
     }
+    if (isTemporary && layer && typeof layer.addTo === 'function') layer.addTo(map);
     if (layer.setStyle) {
       var keys = ['color', 'weight', 'opacity', 'fillColor', 'fillOpacity', 'dashArray', 'lineCap', 'lineJoin'];
       var original = {};
@@ -1426,6 +1439,7 @@
       });
       _highlightedFeatureLayer = layer;
       _highlightedFeatureStyle = original;
+      _highlightedFeatureTemporary = !!isTemporary;
       layer.setStyle({ color: '#f97316', weight: 4, opacity: 1, fillColor: '#f59e0b', fillOpacity: 0.55 });
       if (layer.bringToFront) layer.bringToFront();
     }
@@ -1437,6 +1451,24 @@
 
   function focusFeatureRowOnMap(feature, row) {
     if (!feature) return;
+    if (feature._arcGeometry && window.L) {
+      var geometry = feature._arcGeometry;
+      var geometryLayer = null;
+      if (Array.isArray(geometry.paths)) {
+        geometryLayer = window.L.polyline(geometry.paths.map(function (path) {
+          return path.map(function (point) { return [point[1], point[0]]; });
+        }));
+      } else if (Array.isArray(geometry.rings)) {
+        geometryLayer = window.L.polygon(geometry.rings.map(function (ring) {
+          return ring.map(function (point) { return [point[1], point[0]]; });
+        }));
+      }
+      if (geometryLayer) {
+        highlightFeatureLayerOnMap(geometryLayer, true);
+        if (row) row.classList.add('at-row-active');
+        return;
+      }
+    }
     var target = feature._layer || feature._marker;
     if (target && typeof target.setStyle === 'function' && typeof target.getBounds === 'function') {
       highlightFeatureLayerOnMap(target);
@@ -1463,11 +1495,14 @@
   }
 
   function clearFeatureLayerHighlight() {
-    if (_highlightedFeatureLayer && _highlightedFeatureLayer.setStyle && _highlightedFeatureStyle) {
+    if (_highlightedFeatureTemporary && _highlightedFeatureLayer && map.hasLayer(_highlightedFeatureLayer)) {
+      map.removeLayer(_highlightedFeatureLayer);
+    } else if (_highlightedFeatureLayer && _highlightedFeatureLayer.setStyle && _highlightedFeatureStyle) {
       _highlightedFeatureLayer.setStyle(_highlightedFeatureStyle);
     }
     _highlightedFeatureLayer = null;
     _highlightedFeatureStyle = null;
+    _highlightedFeatureTemporary = false;
   }
 
   /* ── Highlight row from map click ── */

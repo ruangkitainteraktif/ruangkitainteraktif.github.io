@@ -3,6 +3,7 @@
   'use strict';
 
   const EXPORT_IMAGE_URL = 'https://sentinel.arcgis.com/arcgis/rest/services/Sentinel2/ImageServer/exportImage';
+  const LANDSAT_IMAGE_URL = 'https://landsat2.arcgis.com/arcgis/rest/services/Landsat/MS/ImageServer/exportImage';
   const NDVI_RULE = { rasterFunction: 'NDVI Raw' };
   const M_PER_DEG = 111320;
   const TARGET_RES_M = 10;
@@ -464,11 +465,11 @@
     });
   }
 
-  function pickSize(bounds) {
+  function pickSizeAtResolution(bounds, resolutionM) {
     const wDeg = Math.abs(bounds.east - bounds.west);
     const hDeg = Math.abs(bounds.north - bounds.south);
-    let w = Math.round((wDeg * M_PER_DEG) / TARGET_RES_M);
-    let h = Math.round((hDeg * M_PER_DEG) / TARGET_RES_M);
+    let w = Math.round((wDeg * M_PER_DEG) / resolutionM);
+    let h = Math.round((hDeg * M_PER_DEG) / resolutionM);
     const longest = Math.max(w, h) || 1;
     if (longest > MAX_PX) {
       const scale = MAX_PX / longest;
@@ -479,6 +480,10 @@
       w: Math.max(MIN_PX, Math.min(MAX_PX, w)),
       h: Math.max(MIN_PX, Math.min(MAX_PX, h))
     };
+  }
+
+  function pickSize(bounds) {
+    return pickSizeAtResolution(bounds, TARGET_RES_M);
   }
 
   /* ── NDVI: exportImage GeoTIFF -> statistik + gambar ter-clip ── */
@@ -815,100 +820,88 @@
     }
   }
 
-  /* ── LST (suhu permukaan tanah): Landsat Collection 2 Level-2 ──
-     Sentinel-2 tidak punya band termal, jadi LST diambil dari landsat-c2-l2
-     di Planetary Computer.
-
-     Catatan penting:
-     - 'cdist' itu produk Cloud Distance (satuan km), BUKAN suhu permukaan.
-     - Asset lwir11 (ST_B10.TIF) SUDAH berisi suhu permukaan dalam Kelvin.
-       Landsat C2 L2 science product dihitung sendiri oleh USGS; cukup
-       diterapkan skala 0.00341802 * DN + 149.0 lalu dikurangi 273.15.
-       Jadi algoritma surface temperature tidak perlu diimplementasikan ulang
-       di sini.
-     - revisit Landsat 8-16 hari, jadi tanggal akuisisi LST hampir pasti
-       berbeda dari tanggal Sentinel-2 untuk NDMI/NDRE/NDWI. Tanggalnya
-       ditampilkan di kartu agar tidak menyesatkan. */
-
-  const LST_COLLECTION = 'landsat-c2-l2';
-  const LST_WINDOW_DAYS = 45;
-  const LST_FALLBACK_DAYS = [90, 180];
-  // Skala resmi dari raster:bands ST_B10 di STAC (USGS C2 L2).
-  const LST_T_SCALE = 0.00341802;
-  const LST_T_OFFSET = 149.0;
-  // qa_pixel: bit 0 fill, 1 dilated cloud, 2 cirrus, 3 cloud, 4 cloud shadow.
-  const LST_QA_CLEAR_MASK = 0x1f;
-
-  /** DN -> suhu permukaan (Celsius). */
-  function landsatSurfaceTemp(bandT) {
-    const kelvin = bandT * LST_T_SCALE + LST_T_OFFSET;
-    if (!(kelvin > 0)) return NaN;
-    return kelvin - 273.15;
-  }
-
-  function landsatQaClear(qa) {
-    return (qa & LST_QA_CLEAR_MASK) === 0;
-  }
+  /* ── LST: raster function suhu Celsius dari Landsat ImageServer ── */
+  const LST_RENDERING_RULE = { rasterFunction: 'Band 10 Surface Temperature in Celsius' };
+  const LST_MOSAIC_RULE = {
+    mosaicMethod: 'esriMosaicAttribute',
+    sortField: 'Best',
+    sortValue: '0',
+    mosaicOperation: 'MT_FIRST'
+  };
 
   async function runLst(item, onStatus) {
-    onStatus('Mencari adegan Landsat...');
-    let scene = null;
-    // Landsat global cloud percentage can be high even when this small field
-    // is clear. Try a longer window and, finally, no scene-level cloud filter;
-    // the per-pixel QA mask below still removes clouds over the polygon.
-    const windows = [LST_WINDOW_DAYS].concat(LST_FALLBACK_DAYS);
-    for (let i = 0; i < windows.length && !scene; i++) {
-      const days = windows[i];
-      const end = new Date();
-      const start = new Date(end.getTime() - days * 86400000);
-      const searchPeriod = {
-        from: start.toISOString().slice(0, 10),
-        to: end.toISOString().slice(0, 10)
-      };
-      onStatus(days === LST_WINDOW_DAYS
-        ? 'Mencari adegan Landsat...'
-        : 'Memperluas pencarian Landsat hingga ' + days + ' hari...');
-      scene = await stacBestScene(item.bounds, searchPeriod, LST_COLLECTION, {
-        cloudLimits: days === LST_FALLBACK_DAYS[LST_FALLBACK_DAYS.length - 1]
-          ? [TREND_CLOUD_LIMIT, TREND_CLOUD_FALLBACK, null]
-          : [TREND_CLOUD_LIMIT, TREND_CLOUD_FALLBACK]
-      });
+    if (!window.GeoTIFF || typeof window.GeoTIFF.fromBlob !== 'function') {
+      throw new Error('Library geotiff.js belum termuat.');
     }
-    if (!scene) {
-      throw new Error('Tidak ada adegan Landsat untuk area ini dalam ' +
-        LST_FALLBACK_DAYS[LST_FALLBACK_DAYS.length - 1] + ' hari terakhir.');
-    }
-    if (!scene.assets.lwir11) throw new Error('Adegan Landsat ini tidak memiliki band lwir11 (ST_B10).');
-    if (!scene.assets.qa_pixel) throw new Error('Adegan Landsat ini tidak memiliki band qa_pixel.');
-
     onStatus('Mengunduh suhu permukaan Landsat...');
-    const tempHref = await signCogUrl(scene.assets.lwir11.href);
-    const qaHref = await signCogUrl(scene.assets.qa_pixel.href);
-    onStatus('Membaca piksel suhu...');
-    const temp = await readCogWindowMasked(tempHref, item.bounds, item.rings);
-    onStatus('Membaca mask kualitas...');
-    const qa = await readCogWindow(qaHref, item.bounds);
+    const size = pickSizeAtResolution(item.bounds, 30);
+    const params = new URLSearchParams({
+      bbox: [item.bounds.west, item.bounds.south, item.bounds.east, item.bounds.north]
+        .map(function (value) { return value.toFixed(7); }).join(','),
+      bboxSR: '4326',
+      imageSR: '4326',
+      size: size.w + ',' + size.h,
+      format: 'tiff',
+      pixelType: 'F32',
+      renderingRule: JSON.stringify(LST_RENDERING_RULE),
+      mosaicRule: JSON.stringify(LST_MOSAIC_RULE),
+      f: 'image'
+    });
 
-    onStatus('Menghitung statistik suhu...');
-    const total = Math.min(temp.values.length, qa.length);
+    // Jika slider Landsat sedang memilih tahun tertentu, analisis mengikuti
+    // rentang yang sama. Tanpa pilihan waktu, ImageServer memakai mosaik Best.
+    const mapLayer = typeof baseTileLayers !== 'undefined' && baseTileLayers['landsat-agriculture'];
+    if (mapLayer && typeof mapLayer.getTimeRange === 'function') {
+      const timeRange = mapLayer.getTimeRange();
+      if (timeRange && timeRange[0] instanceof Date && timeRange[1] instanceof Date) {
+        params.set('time', timeRange[0].getTime() + ',' + timeRange[1].getTime());
+      }
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(function () { controller.abort(); }, FETCH_TIMEOUT);
+    let blob;
+    try {
+      const response = await fetch(LANDSAT_IMAGE_URL + '?' + params.toString(), { signal: controller.signal });
+      if (!response.ok) throw new Error('Server Landsat menolak permintaan (HTTP ' + response.status + ').');
+      blob = await response.blob();
+    } finally {
+      clearTimeout(timer);
+    }
+    if (/json/i.test(blob.type || '')) {
+      let responseJson = {};
+      try { responseJson = JSON.parse(await blob.text()); } catch (error) {}
+      throw new Error(responseJson.error && responseJson.error.message
+        ? 'ArcGIS Landsat: ' + responseJson.error.message
+        : 'Server Landsat tidak mengembalikan GeoTIFF.');
+    }
+
+    onStatus('Membaca piksel suhu Landsat...');
+    const raster = await readIndexPixels(blob, item.bounds);
+    const mask = rasterizeMask(item.rings, raster);
+    const values = raster.rasters[0];
     const buckets = LST_BANDS.map(function (band) { return { band: band, count: 0 }; });
     let count = 0, inside = 0, sum = 0, min = Infinity, max = -Infinity;
-    for (let i = 0; i < total; i++) {
-      if (!temp.mask[i]) continue;
+    for (let i = 0; i < mask.length; i++) {
+      if (!mask[i]) continue;
       inside++;
-      if (!landsatQaClear(qa[i])) continue;
-      const st = landsatSurfaceTemp(temp.values[i]);
-      // Di luar rentang ini berarti nodata atau piksel yang tidak bermakna.
-      if (!Number.isFinite(st) || st < -90 || st > 80) continue;
+      const temperature = values[i];
+      if (!Number.isFinite(temperature) || temperature < -90 || temperature > 80) continue;
       count++;
-      sum += st;
-      if (st < min) min = st;
-      if (st > max) max = st;
-      const found = findBand(st, LST_BANDS);
+      sum += temperature;
+      if (temperature < min) min = temperature;
+      if (temperature > max) max = temperature;
+      const found = findBand(temperature, LST_BANDS);
       for (let b = 0; b < buckets.length; b++) if (buckets[b].band === found) buckets[b].count++;
     }
-    if (!count) throw new Error('Tidak ada piksel suhu permukaan yang valid (semua tertutup awan atau badan air).');
+    if (!count) throw new Error('Tidak ada piksel suhu permukaan Landsat yang valid di dalam polygon.');
 
+    const activeTimeRange = mapLayer && typeof mapLayer.getTimeRange === 'function'
+      ? mapLayer.getTimeRange() : null;
+    let dateLabel = 'Mosaik terbaik';
+    if (activeTimeRange && activeTimeRange[0] instanceof Date && activeTimeRange[1] instanceof Date) {
+      dateLabel = 'Filter tahun ' + activeTimeRange[0].getUTCFullYear() + ' (tanggal scene dapat bervariasi)';
+    }
     item.lst = {
       count: count,
       inside: inside,
@@ -917,9 +910,9 @@
       min: min,
       max: max,
       bands: buckets,
-      date: String(scene.datetime || '').slice(0, 10),
-      platform: scene.platform || '-',
-      cloud: Number.isFinite(scene.cloud) ? scene.cloud : NaN
+      date: dateLabel,
+      platform: 'Landsat ImageServer (Esri, USGS, NASA)',
+      cloud: NaN
     };
     item.lstError = null;
     return item.lst;
@@ -3632,17 +3625,17 @@
       '</div>' +
       '<div class="pa-dist">' + rows + '</div>' +
       (s.coverage < 90
-        ? '<div class="pa-warn">Cakupan piksel valid ' + s.coverage.toFixed(0) + '% — sebagian area tertutup awan atau air.</div>'
+        ? '<div class="pa-warn">Cakupan piksel suhu valid ' + s.coverage.toFixed(0) + '% — sebagian area tidak memiliki nilai suhu yang dapat dihitung.</div>'
         : '') +
-      '<div class="pa-warn">Tanggal pengambilan LST berbeda dari citra Sentinel-2 di atas. Satelit ini melewati lokasi yang sama setiap 8-16 hari, ' +
-        'jadi kondisi lahan yang dibandingkan tidak selalu sama.</div>' +
+      '<div class="pa-warn">LST berasal dari mosaik Landsat. Tanggal citra dapat berbeda antar piksel dan tidak selalu sama dengan citra Sentinel-2. ' +
+        'Mosaik Best tidak menjamin semua piksel bebas awan.</div>' +
       '<details class="pa-details">' +
         '<summary class="pa-summary">Sumber &amp; tanggal citra</summary>' +
         '<div class="pa-block">' +
           metaRow('Satelit', escapeHtml(s.platform || '-')) +
           metaRow('Tanggal ambil', escapeHtml(s.date || '-')) +
           metaRow('Resolusi', '30 m/piksel') +
-          metaRow('Tutupan awan', fmt(s.cloud, 0) + '%') +
+          metaRow('Kualitas', 'Mosaik Best; awan dapat memengaruhi sebagian piksel') +
           metaRow('Piksel terbaca', s.count.toLocaleString('id-ID') + ' dari ' + (s.inside || 0).toLocaleString('id-ID')) +
         '</div>' +
       '</details>' +
