@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=98">
+  <link rel="stylesheet" href="assets/css/app.css?v=100">
   <link rel="stylesheet" href="assets/css/geodisaster.css?v=1">
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
@@ -832,7 +832,7 @@
       <div class="dm-sidebar-head">
         <span class="dm-sidebar-title" onclick="if(document.querySelector('.dm-sidebar').classList.contains('dm-sidebar-minimized')) restoreDrawSidebar()">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          Gambar & Ukur
+          Alat
         </span>
         <div class="dm-sidebar-actions">
           <button class="dm-sidebar-minimize" type="button" aria-label="Minimalkan" onclick="minimizeDrawSidebar()">
@@ -909,13 +909,17 @@
         </div>
         <div class="dm-sidebar-section-title">Peta</div>
         <div class="dm-sidebar-grid">
-          <div class="dm-sidebar-option" onclick="window.printGeoportalMap && printGeoportalMap(); closeDrawSidebar();">
+          <div class="dm-sidebar-option" onclick="window.printGeoportalMap && printGeoportalMap();">
             <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/><path d="M9 18h6"/></svg></div>
             <span class="dm-sidebar-option-label">Export PDF</span>
           </div>
-          <div class="dm-sidebar-option" onclick="window.exportViewportGeoTiff && exportViewportGeoTiff(this); closeDrawSidebar();">
+          <div class="dm-sidebar-option" onclick="window.exportViewportGeoTiff && exportViewportGeoTiff(this);">
             <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
             <span class="dm-sidebar-option-label">Export TIF</span>
+          </div>
+          <div class="dm-sidebar-option" onclick="window.exportMapScreenshotJpeg && exportMapScreenshotJpeg(this)">
+            <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M7 5l1.5-2h7L17 5"/></svg></div>
+            <span class="dm-sidebar-option-label">Simpan JPEG</span>
           </div>
           <div class="dm-sidebar-option" onclick="document.querySelector('.leaflet-control-locate a')?.click(); closeDrawSidebar();">
             <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg></div>
@@ -3637,7 +3641,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/satellite-export.js"></script>
     <script src="assets/js/petadasar-export.js"></script>
 
-    <script src="assets/js/geoportal.js?v=20261006-search-big-catalog"></script>
+    <script src="assets/js/geoportal.js?v=20261008-dynamic-print-legends"></script>
     <script src="assets/js/geojogja.js?v=20261007"></script>
     <script src="assets/js/geojakarta.js?v=20261007-rt-search"></script>
     <script src="assets/js/demnas-download.js"></script>
@@ -3774,7 +3778,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/krb-titik.js"></script>
   <script src="assets/js/peta-geologi.js"></script>
   <script src="assets/js/jenis-tanah-jateng.js?v=20261006-flycenter"></script>
-  <script src="assets/js/hwsd-indonesia.js?v=20261007-hwsd-district-clip"></script>
+  <script src="assets/js/hwsd-indonesia.js?v=20261008-hwsd-print-legend"></script>
   <script src="assets/js/transjakarta-layer.js"></script>
   <script src="assets/js/transjogja-layer.js"></script>
   <script src="assets/js/geostruktur.js"></script>

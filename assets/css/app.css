@@ -14708,6 +14708,17 @@ details[open] > .gt-card-head::after {
   margin-top: 10px;
 }
 
+/* Keep the PDF crop guide centered over the visible map when a desktop sheet
+   reduces the map width. The crop keeps the same 185:164 print-template ratio. */
+@media (min-width: 769px) {
+  body.sheet-terbuka .print-area-frame,
+  body.sheet-terbuka .print-area-buttons,
+  body.sheet-terbuka .print-instruction {
+    left: calc((100vw - var(--desktop-sheet-width, 30vw)) / 2);
+    transition: left .3s ease;
+  }
+}
+
 .geofarm-kalk {
   padding: 0;
   overflow: hidden;
@@ -15724,7 +15735,8 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   }
 
   body.sheet-terbuka .unified-search,
-  body.sheet-terbuka .quick-layer-bar {
+  body.sheet-terbuka .quick-layer-bar,
+  body.sheet-terbuka .petadasar-export-block {
     left: calc((100vw - var(--desktop-sheet-width, 30vw)) / 2);
     transition: left .3s ease;
   }

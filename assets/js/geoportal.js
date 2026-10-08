@@ -1403,6 +1403,61 @@
     return result;
   }
 
+  function _getVisibleHwsdPrintLegendItems() {
+    var tiles = document.querySelectorAll('canvas[data-hwsd-district-tile]');
+    var byColor = window.hwsdIndonesiaByColor || {};
+    var legend = window.hwsdIndonesiaLegend || [];
+    var classes = new Map();
+    tiles.forEach(function (tile) {
+      var bounds = tile.getBoundingClientRect();
+      if (!bounds.width || !bounds.height || bounds.right <= 0 || bounds.bottom <= 0 || bounds.left >= innerWidth || bounds.top >= innerHeight) return;
+      try {
+        var pixels = tile.getContext('2d').getImageData(0, 0, tile.width, tile.height).data;
+        // A stride of 4 samples the clipped raster efficiently. It finds
+        // visible soil classes while keeping PDF preparation lightweight.
+        for (var i = 0; i < pixels.length; i += 4 * 4) {
+          if (pixels[i + 3] < 80) continue;
+          var color = '#' + [pixels[i], pixels[i + 1], pixels[i + 2]].map(function (v) { return v.toString(16).padStart(2, '0'); }).join('');
+          var row = byColor[color];
+          if (!row) continue;
+          var code = String(row['Kode WRB'] || '').toUpperCase();
+          var item = legend.find(function (candidate) { return String(candidate.code || '').toUpperCase() === code; });
+          var label = item ? item.label : (row['Kelas WRB'] || code);
+          if (label && !classes.has(label)) classes.set(label, { kind: 'swatch', label: label, color: item ? item.color : color });
+        }
+      } catch (e) { /* Tile tidak dapat dibaca: cetak legenda layer umum saja. */ }
+    });
+    if (!classes.size) return [];
+    return [{ kind: 'section', label: 'HWSD v2.01 · Kelompok tanah WRB' }].concat(Array.from(classes.values()));
+  }
+
+  function _getActiveUnifiedPrintLegendItems(knownLabels) {
+    var seen = new Set(knownLabels || []);
+    var result = [];
+    document.querySelectorAll('.unified-legend-section').forEach(function (section) {
+      if (section.dataset.legendId === 'hwsd-indonesia') return;
+      var titleNode = section.querySelector('.geoportal-legend-title, [class$="-legend-title"], strong');
+      var title = titleNode ? titleNode.textContent.replace(/[▾⌄]/g, '').trim() : '';
+      var rows = section.querySelectorAll('.geoportal-legend-item, .hwsd-id-legend-row, [class$="-legend-row"]');
+      var addedRow = false;
+      rows.forEach(function (row) {
+        var labelNode = row.querySelector('.geoportal-legend-label, .hwsd-id-legend-row span, span:last-child');
+        var label = (labelNode ? labelNode.textContent : row.textContent).replace(/[▾⌄]/g, '').trim();
+        if (!label || seen.has(label)) return;
+        var swatch = row.querySelector('.geoportal-legend-swatch, i, [style*="background"]');
+        var color = swatch ? (swatch.style.backgroundColor || getComputedStyle(swatch).backgroundColor) : '';
+        seen.add(label);
+        result.push({ kind: 'swatch', label: label, color: color && color !== 'rgba(0, 0, 0, 0)' ? color : '#64748b' });
+        addedRow = true;
+      });
+      if (!addedRow && title && !seen.has(title)) {
+        seen.add(title);
+        result.push({ kind: 'map', label: title });
+      }
+    });
+    return result;
+  }
+
   function _calcInterval(range, targetLines) {
     const raw = range / targetLines;
     const mag = Math.pow(10, Math.floor(Math.log10(raw)));
@@ -1411,6 +1466,13 @@
     if (norm <= 3.5) return 2 * mag;
     if (norm <= 7.5) return 5 * mag;
     return 10 * mag;
+  }
+
+  function _printLegendColor(color) {
+    var hex = String(color || '').match(/^#([0-9a-f]{6})$/i);
+    if (hex) return [parseInt(hex[1].slice(0, 2), 16), parseInt(hex[1].slice(2, 4), 16), parseInt(hex[1].slice(4, 6), 16)];
+    var rgb = String(color || '').match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    return rgb ? [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])] : [100, 116, 139];
   }
 
   async function _loadLegendGraphic(url) {
@@ -1496,7 +1558,7 @@
   }
 
   var _snapshotCanvas = null;
-  function _drawToDataUrl(source, w, h) {
+  function _drawToDataUrl(source, w, h, format) {
     if (!source || !w || !h) return null;
     if (!_snapshotCanvas) _snapshotCanvas = document.createElement('canvas');
     if (_snapshotCanvas.width !== w) _snapshotCanvas.width = w;
@@ -1505,7 +1567,16 @@
     if (!ctx) return null;
     ctx.clearRect(0, 0, w, h);
     ctx.drawImage(source, 0, 0, w, h);
-    return _snapshotCanvas.toDataURL(TILE_SNAPSHOT_FORMAT, TILE_SNAPSHOT_QUALITY);
+    format = format || TILE_SNAPSHOT_FORMAT;
+    return format === 'image/jpeg'
+      ? _snapshotCanvas.toDataURL(format, TILE_SNAPSHOT_QUALITY)
+      : _snapshotCanvas.toDataURL(format);
+  }
+
+  function _snapshotFormatForSrc(src) {
+    // PNG/WebP/GIF tiles may contain transparent pixels. JPEG snapshots turn
+    // those pixels black, which makes clipped overlays cover the basemap.
+    return /\.(?:png|webp|gif)(?:[?#]|$)/i.test(src || '') ? 'image/png' : TILE_SNAPSHOT_FORMAT;
   }
 
   var TILE_SNAPSHOT_CACHE_MAX = 400;
@@ -1583,7 +1654,7 @@
     for (var d = 0; d < direct.length; d++) {
       var url = null;
       try {
-        url = _drawToDataUrl(direct[d].img, direct[d].img.naturalWidth, direct[d].img.naturalHeight);
+        url = _drawToDataUrl(direct[d].img, direct[d].img.naturalWidth, direct[d].img.naturalHeight, _snapshotFormatForSrc(direct[d].src));
       } catch (e) {
         url = null;
       }
@@ -1612,7 +1683,7 @@
         var dataUrl = null;
         if (bitmap) {
           try {
-            dataUrl = _drawToDataUrl(bitmap, bitmap.width, bitmap.height);
+            dataUrl = _drawToDataUrl(bitmap, bitmap.width, bitmap.height, _snapshotFormatForSrc(src));
           } catch (e) {
             dataUrl = null;
           }
@@ -1859,6 +1930,13 @@
     opts = opts || {};
     var container = document.querySelector('.leaflet-container');
     if (!container) throw new Error('Peta tidak siap');
+    // HWSD district clipping and some catalog overlays are native Leaflet
+    // canvas tiles. Keep those on html2canvas so their complete rendered tile
+    // (including destination-in polygon masks) is captured as one surface.
+    // The direct renderer is faster for image/SVG-only maps.
+    if (opts.fastRenderer && !container.querySelector('.leaflet-pane canvas.leaflet-tile')) {
+      return _renderMapJpegCanvas(container);
+    }
     map.invalidateSize();
     await _waitTilesReady(opts.tileWaitMs || 6000);
     var snap = await _snapshotTileImages(container);
@@ -1995,7 +2073,7 @@
       if (leafletContainer) {
         // Keep Leaflet SVG overlays in the capture. Removing SVGs here also
         // removes drawn/imported polygons from the exported map.
-        const mapCanvas = await captureMapCanvas({ tileWaitMs: 3500, scale: 2 });
+        const mapCanvas = await captureMapCanvas({ fastRenderer: true });
         const canvasAspect = mapCanvas.width / mapCanvas.height;
         const frameAspect = mapFrameW / mapFrameH;
         let cropX, cropY, cropW, cropH;
@@ -2064,6 +2142,12 @@
       }
     });
     _getActiveMapPrintLayers(legendItems.map(function (item) { return item.label; })).forEach(function (item) {
+      legendItems.push(item);
+    });
+    _getActiveUnifiedPrintLegendItems(legendItems.map(function (item) { return item.label; })).forEach(function (item) {
+      legendItems.push(item);
+    });
+    _getVisibleHwsdPrintLegendItems().forEach(function (item) {
       legendItems.push(item);
     });
     await (async () => {
@@ -2239,8 +2323,144 @@
     if (cls.indexOf('time-slider') !== -1 || cls.indexOf('-ts-') !== -1) return true;
     if (cls.indexOf('unified-slider') !== -1 || cls.indexOf('unified-legend') !== -1) return true;
     if (cls.indexOf('print-area') !== -1) return true;
+    if (/\b(dm-sidebar|lg-sidebar|pa-panel|sheet|gs-sheet|geodata-sheet|attr-table-sheet|ais-sheet|hs-sheet|gp-sheet)\b/.test(cls)) return true;
     return false;
   }
+
+  async function _renderMapJpegCanvas(container) {
+    map.invalidateSize();
+    await _waitTilesReady(3500);
+    // HWSD district clips are rendered by Leaflet as canvas tiles, so image-only
+    // readiness checks can finish while those polygon tiles are still painting.
+    var tileWaitStarted = Date.now();
+    while (Date.now() - tileWaitStarted < 4500) {
+      var pendingTile = Array.from(container.querySelectorAll('.leaflet-tile')).some(function (tile) {
+        var box = tile.getBoundingClientRect();
+        if (!box.width || !box.height || box.right <= 0 || box.bottom <= 0 || box.left >= innerWidth || box.top >= innerHeight) return false;
+        return !tile.classList.contains('leaflet-tile-loaded') || (tile.tagName === 'IMG' && !tile.complete);
+      });
+      if (!pendingTile) break;
+      await new Promise(function (resolve) { setTimeout(resolve, 80); });
+    }
+    var snap = await _snapshotTileImages(container);
+    var rect = container.getBoundingClientRect();
+    var scale = 2;
+    var canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(rect.width * scale));
+    canvas.height = Math.max(1, Math.round(rect.height * scale));
+    var ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.fillStyle = '#e8e8e8';
+    ctx.fillRect(0, 0, rect.width, rect.height);
+
+    // Draw every visual primitive in Leaflet panes, not only basemap tiles.
+    // Catalog and Geoportal Hub overlays can be raster tiles, SVG vectors,
+    // canvas grids, or marker images; DOM order preserves their stacking.
+    var nodes = container.querySelectorAll('.leaflet-tile, .leaflet-pane img, .leaflet-pane canvas, .leaflet-pane svg, .leaflet-pane .leaflet-marker-icon');
+    var drawSvg = async function (svg, box) {
+      try {
+        var clone = svg.cloneNode(true);
+        if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        // Percentage-sized Leaflet SVGs lose their CSS viewport when loaded as
+        // standalone data images. Give the clone explicit raster dimensions.
+        var svgWidth = svg.clientWidth || Math.round(box.width);
+        var svgHeight = svg.clientHeight || Math.round(box.height);
+        clone.setAttribute('width', String(svgWidth));
+        clone.setAttribute('height', String(svgHeight));
+        if (!clone.getAttribute('viewBox')) clone.setAttribute('viewBox', '0 0 ' + svgWidth + ' ' + svgHeight);
+        var sourceNodes = [svg].concat(Array.from(svg.querySelectorAll('*')));
+        var cloneNodes = [clone].concat(Array.from(clone.querySelectorAll('*')));
+        var styleProps = ['fill', 'fill-opacity', 'fill-rule', 'stroke', 'stroke-width', 'stroke-opacity', 'stroke-linecap', 'stroke-linejoin', 'opacity', 'visibility'];
+        sourceNodes.forEach(function (sourceNode, index) {
+          var computed = getComputedStyle(sourceNode);
+          var inline = styleProps.map(function (prop) { return prop + ':' + computed.getPropertyValue(prop); }).join(';');
+          cloneNodes[index].setAttribute('style', (cloneNodes[index].getAttribute('style') || '') + ';' + inline);
+        });
+        var data = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(clone));
+        var image = new Image();
+        await new Promise(function (resolve, reject) {
+          image.onload = resolve;
+          image.onerror = reject;
+          image.src = data;
+        });
+        ctx.drawImage(image, box.left - rect.left, box.top - rect.top, box.width, box.height);
+      } catch (e) { /* SVG eksternal yang gagal diraster dilewati. */ }
+    };
+
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (_isExportIgnoredEl(node)) continue;
+      var box = node.getBoundingClientRect();
+      if (!box.width || !box.height || box.right <= rect.left || box.left >= rect.right || box.bottom <= rect.top || box.top >= rect.bottom) continue;
+      var opacity = 1;
+      for (var parent = node; parent && parent !== container; parent = parent.parentElement) {
+        var ownOpacity = parseFloat(getComputedStyle(parent).opacity);
+        if (Number.isFinite(ownOpacity)) opacity *= ownOpacity;
+      }
+      ctx.globalAlpha = opacity;
+      if (node.tagName.toLowerCase() === 'svg') {
+        await drawSvg(node, box);
+        continue;
+      }
+      var source = node;
+      if (node.tagName.toLowerCase() === 'img') {
+        var src = node.getAttribute('src') || '';
+        var snapshot = snap.map[src];
+        if (snapshot) {
+          source = new Image();
+          source.src = snapshot;
+          try { await source.decode(); } catch (e) { continue; }
+        } else {
+          if (!node.complete || !node.naturalWidth || !_imgIsOriginSafe(node, src)) continue;
+        }
+      }
+      try { ctx.drawImage(source, box.left - rect.left, box.top - rect.top, box.width, box.height); } catch (e) {}
+    }
+    ctx.globalAlpha = 1;
+    return canvas;
+  }
+
+  async function exportMapScreenshotJpeg(btn) {
+    var original = btn && btn.innerHTML;
+    var hiddenEls = [];
+    if (!document.querySelector('.leaflet-container') || !window.map) {
+      showPrintError('Simpan JPEG: peta belum siap.');
+      return;
+    }
+    if (btn) { btn.style.pointerEvents = 'none'; btn.setAttribute('aria-disabled', 'true'); }
+    showPrintLoading('Sedang menyiapkan JPEG…');
+    try {
+      _hideExportUi(hiddenEls);
+      map.invalidateSize();
+      await new Promise(function (resolve) { setTimeout(resolve, 250); });
+      var container = document.querySelector('.leaflet-container');
+      var canvas = await captureMapCanvas({ fastRenderer: true });
+      var blob = await new Promise(function (resolve, reject) {
+        canvas.toBlob(function (result) { result ? resolve(result) : reject(new Error('Gagal membuat gambar JPEG')); }, 'image/jpeg', 0.92);
+      });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      var d = new Date();
+      var pad = function (n) { return String(n).padStart(2, '0'); };
+      a.download = 'peta-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '-z' + map.getZoom() + '.jpg';
+      a.href = url;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    } catch (err) {
+      console.error('[SimpanJPEG]', err);
+      showPrintError('Simpan JPEG: ' + (err && err.message ? err.message : String(err)));
+    } finally {
+      while (hiddenEls.length) {
+        try { hiddenEls.pop()(); } catch (e) {}
+      }
+      hidePrintLoading();
+      try { map.invalidateSize(); } catch (e) {}
+      if (btn) { btn.style.pointerEvents = ''; btn.removeAttribute('aria-disabled'); if (original != null) btn.innerHTML = original; }
+    }
+  }
+  window.exportMapScreenshotJpeg = exportMapScreenshotJpeg;
 
   async function exportViewportGeoTiff(btn) {
     const orig = btn && btn.innerHTML;
@@ -2269,7 +2489,6 @@
     if (typeof window.GeoTIFF === 'undefined' || typeof window.GeoTIFF.writeArrayBuffer !== 'function') {
       return fail('GeoTIFF.js belum termuat');
     }
-    if (typeof html2canvas !== 'function') return fail('html2canvas belum termuat');
     const leafletContainer = document.querySelector('.leaflet-container');
     if (!leafletContainer || !window.map) return fail('Peta tidak siap');
     if (btn) { btn.disabled = true; btn.textContent = '…'; }
@@ -2281,8 +2500,7 @@
       await new Promise(function (r) { setTimeout(r, 400); });
 
       const mapCanvas = await captureMapCanvas({
-        tileWaitMs: 8000, scale: 2,
-        ignoreElements: _isExportIgnoredEl
+        fastRenderer: true
       });
       const EX_MAX = 4096;
       let canvas = mapCanvas;
@@ -2510,6 +2728,7 @@
     } else if (legendItems.length > 0) {
       const MM_PER_PX = 25.4 / 96;
       legendItems.forEach(it => {
+        const isSection = it.kind === 'section';
         const hasImg = it.kind === 'wms' && it.img;
         let imgW, imgH;
         if (hasImg) {
@@ -2517,19 +2736,25 @@
           const maxW = panelW - 12, maxH = 16;
           if (imgW > maxW) { imgH *= maxW / imgW; imgW = maxW; }
           if (imgH > maxH) { imgW *= maxH / imgH; imgH = maxH; }
-        } else { imgW = 6; imgH = 4.4; }
+        } else if (it.kind === 'swatch') { imgW = 4; imgH = 2.8; }
+        else if (isSection) { imgW = 0; imgH = 0; }
+        else { imgW = 6; imgH = 4.4; }
         const txtLines = [it.label];
-        const rowH = txtLines.length * 3 + 1.5 + imgH + 2;
+        const rowH = isSection ? 5 : (txtLines.length * 3 + 1.5 + imgH + 2);
         if (py + rowH > mapFrameY + panelH - 3) return;
-        ctx.fillStyle = '#374151'; ctx.font = '6.5px "Segoe UI", system-ui, sans-serif';
+        ctx.fillStyle = '#374151'; ctx.font = (isSection ? 'bold ' : '') + '6.5px "Segoe UI", system-ui, sans-serif';
         ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
         txtLines.forEach(ln => { ctx.fillText(ln, (panelX + 4) * s, (py + 2.5) * s); py += 3; });
+        if (isSection) { py += 2; return; }
         py += 1.5;
         if (hasImg) {
           try {
             const li = new Image(); li.src = it.img;
             if (li.complete) ctx.drawImage(li, (panelX + 4) * s, py * s, imgW * s, imgH * s);
           } catch (e) {}
+        } else if (it.kind === 'swatch') {
+          ctx.fillStyle = it.color || '#64748b';
+          ctx.fillRect((panelX + 4) * s, (py + 0.3) * s, imgW * s, (imgH - 0.6) * s);
         } else if (it.kind === 'point') {
           ctx.fillStyle = '#e74c3c'; ctx.beginPath();
           ctx.arc((panelX + 6) * s, (py + 2.2) * s, 1.8 * s, 0, Math.PI * 2); ctx.fill();
@@ -2720,6 +2945,7 @@
       } else if (data.legendItems.length > 0) {
         const MM_PER_PX = 25.4 / 96;
         data.legendItems.forEach(it => {
+          const isSection = it.kind === 'section';
           const txtLines = pdf.splitTextToSize(it.label, panelW - 10);
           const hasImg = it.kind === 'wms' && it.img;
           let imgW, imgH;
@@ -2728,13 +2954,17 @@
             const maxW = panelW - 12, maxH = 16;
             if (imgW > maxW) { imgH *= maxW / imgW; imgW = maxW; }
             if (imgH > maxH) { imgW *= maxH / imgH; imgH = maxH; }
-          } else { imgW = 6; imgH = 4.4; }
-          const rowH = txtLines.length * 3 + 1.5 + imgH + 2;
+          } else if (it.kind === 'swatch') { imgW = 4; imgH = 2.8; }
+          else if (isSection) { imgW = 0; imgH = 0; }
+          else { imgW = 6; imgH = 4.4; }
+          const rowH = isSection ? 5 : (txtLines.length * 3 + 1.5 + imgH + 2);
           if (py + rowH > mapFrameY + panelH - 3) return;
-          pdf.setFont('helvetica', 'normal'); pdf.setFontSize(6.5); pdf.setTextColor(55, 65, 81);
+          pdf.setFont('helvetica', isSection ? 'bold' : 'normal'); pdf.setFontSize(6.5); pdf.setTextColor(55, 65, 81);
           txtLines.forEach(ln => { pdf.text(ln, panelX + 4, py + 2.5); py += 3; });
+          if (isSection) { py += 2; return; }
           py += 1.5;
           if (hasImg) { try { pdf.addImage(it.img, 'PNG', panelX + 4, py, imgW, imgH); } catch (e) {} }
+          else if (it.kind === 'swatch') { const color = _printLegendColor(it.color); pdf.setFillColor(color[0], color[1], color[2]); pdf.rect(panelX + 4, py + 0.3, imgW, imgH - 0.6, 'F'); }
           else if (it.kind === 'point') { pdf.setFillColor(231, 76, 60); pdf.circle(panelX + 6, py + 2.2, 1.8, 'F'); }
           else { pdf.setFillColor(100, 116, 139); pdf.roundedRect(panelX + 4, py + 0.3, 6, imgH - 0.6, 0.8, 0.8, 'F'); }
           py += imgH + 2;
@@ -2761,7 +2991,6 @@
   let _printVignette = null;
   let _printInstruction = null;
   let _printAreaBtn = null;
-
   function _removePrintDrawUI() {
     if (_printFrame) { _printFrame.remove(); _printFrame = null; }
     if (_printVignette) { _printVignette.remove(); _printVignette = null; }

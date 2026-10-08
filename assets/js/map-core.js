@@ -1148,7 +1148,7 @@ L.control.scale({
     header: '.dm-sidebar-head',
     minButton: '.dm-sidebar-minimize',
     labelMin: 'Minimalkan',
-    labelOpen: 'Perluas Gambar & Ukur'
+    labelOpen: 'Perluas Alat'
   });
 
   function openDrawSidebar() { if (window.SheetDrag) window.SheetDrag.buka('dm'); }
@@ -1853,7 +1853,7 @@ L.control.scale({
      * yang sama, dan GeoData adalah tab yang paling sering dipakai, jadi
      * dua tombol ini sebaiknya bersebelahan di barisan FAB. */
     createGeoDataFAB();
-    moveToFAB('.draw-fab-wrap', 'Gambar & Ukur');
+    moveToFAB('.draw-fab-wrap', 'Alat');
     createAttrTableFAB();
     createLegendFAB();
 

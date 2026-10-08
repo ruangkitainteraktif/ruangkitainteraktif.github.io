@@ -33,6 +33,7 @@
       rows = parts[0];
       legend = parts[1];
       metadata = parts[2];
+      window.hwsdIndonesiaLegend = legend;
       var byColor = Object.create(null);
       rows.forEach(function (row) { byColor[String(row._color || '').toLowerCase()] = row; });
       window.hwsdIndonesiaRows = rows;
@@ -65,6 +66,7 @@
       createTile: function (coords, done) {
         var canvas = document.createElement('canvas');
         canvas.width = canvas.height = 256;
+        canvas.dataset.hwsdDistrictTile = 'true';
         var ctx = canvas.getContext('2d');
         var sourceZoom = Math.max(metadata.minZoom, Math.min(coords.z, metadata.maxZoom));
         var scale = Math.pow(2, coords.z - sourceZoom);
