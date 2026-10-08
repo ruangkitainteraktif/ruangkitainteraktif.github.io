@@ -853,24 +853,53 @@
         <details id="dmCekLokasi" class="dm-cek-lokasi">
           <summary class="dm-sidebar-section-title">Cek Lokasi</summary>
           <p class="dm-cek-lokasi-desc">
-            Ketik koordinat untuk melihat kecamatan, kabupaten, dan provinsinya.
+            Masukkan koordinat latitude, longitude untuk melihat wilayah.
           </p>
           <label class="dm-cek-lokasi-label" for="geolokasiInput">Koordinat (latitude, longitude)</label>
           <input type="text" id="geolokasiInput" class="dm-cek-lokasi-input"
                  placeholder="-7.470000, 112.650000"
                  inputmode="decimal" autocomplete="off" />
           <div class="geolokasi-tombol">
-            <button id="geolokasiCek" class="dm-cek-lokasi-btn" type="button">Cek Lokasi</button>
             <button id="geolokasiPin" class="dm-cek-lokasi-btn dm-cek-lokasi-btn--orange" type="button"
-                    title="Pasang pin di peta, lalu klik titik yang ingin dicek">Pasang Pin</button>
+                    title="Pasang pin di peta, lalu klik titik yang ingin dicek">Pin</button>
+            <button id="geolokasiCek" class="dm-cek-lokasi-btn" type="button">Cek</button>
+            <button id="dmLocateMe" class="dm-cek-lokasi-btn" type="button"
+                    onclick="document.querySelector('.leaflet-control-locate a')?.click(); closeDrawSidebar();">Lokasi Saya</button>
           </div>
           <div id="geolokasiStatus" class="dm-cek-lokasi-status" role="status" aria-live="polite"></div>
           <div id="geolokasiHasil"></div>
           <!-- Tombol Salin sengaja disembunyikan sampai ada hasil. Menampilkan
                tombol yang belum bisa dipakai lebih buruk daripada tidak
                menampilkannya. -->
-          <button id="geolokasiSalin" class="dm-cek-lokasi-btn dm-cek-lokasi-btn--green"
+        <button id="geolokasiSalin" class="dm-cek-lokasi-btn dm-cek-lokasi-btn--green"
                   type="button" style="display:none;margin-top:8px;">Salin Koordinat</button>
+        </details>
+
+        <details id="dmKoordinatConverter" class="dm-tool-group dm-koordinat-converter">
+          <summary class="dm-sidebar-section-title">Konverter Koordinat</summary>
+          <div class="dm-tool-group-content">
+          <p class="dm-cek-lokasi-desc">Pilih format input dan hasil. Datum yang dipakai adalah WGS84.</p>
+          <div class="dm-koordinat-fields dm-koordinat-selects">
+            <label for="dmCoordInputFormat">Format input
+              <select id="dmCoordInputFormat"><option value="dd">DD — Derajat desimal</option><option value="dms">DMS — Derajat, menit, detik</option><option value="dmm">DMM — Derajat, menit desimal</option><option value="utm">UTM — Universal Transverse Mercator</option></select>
+            </label>
+            <label for="dmCoordFormat">Format hasil
+              <select id="dmCoordFormat"><option value="dd">DD — Derajat desimal</option><option value="dms">DMS — Derajat, menit, detik</option><option value="dmm">DMM — Derajat, menit desimal</option><option value="utm">UTM — Universal Transverse Mercator</option></select>
+            </label>
+            <label for="dmCoordDatum">Datum
+              <select id="dmCoordDatum"><option value="WGS84">WGS84</option></select>
+            </label>
+          </div>
+          <label class="dm-cek-lokasi-label" for="dmCoordInput">Koordinat sumber</label>
+          <input type="text" id="dmCoordInput" class="dm-cek-lokasi-input" placeholder="-7.470000, 112.650000" inputmode="decimal" autocomplete="off" />
+          <button id="dmCoordConvert" class="dm-cek-lokasi-btn" type="button" style="width:100%;margin-top:8px;">Konversi</button>
+          <div id="dmCoordStatus" class="dm-cek-lokasi-status" role="status" aria-live="polite"></div>
+          <div id="dmCoordResults" class="dm-coord-results" aria-live="polite"></div>
+          <div class="dm-koordinat-actions">
+            <button id="dmCoordCopy" class="dm-cek-lokasi-btn dm-cek-lokasi-btn--green" type="button" disabled>Salin hasil</button>
+            <button id="dmCoordShare" class="dm-cek-lokasi-btn" type="button" disabled>Bagikan</button>
+          </div>
+          </div>
         </details>
 
         <details class="gp-tools-card" style="margin:12px 0;padding:0 0 12px;border:1px solid #dbe3eb;border-radius:10px;background:var(--bg-card,#fff);">
@@ -956,7 +985,7 @@
           </div>
         </details>
         <details class="dm-tool-group">
-          <summary class="dm-sidebar-section-title">Peta</summary>
+          <summary class="dm-sidebar-section-title">EXPORT</summary>
           <div class="dm-tool-group-content">
         <div class="dm-sidebar-grid">
           <div class="dm-sidebar-option" onclick="window.printGeoportalMap && printGeoportalMap();">
@@ -970,10 +999,6 @@
           <div class="dm-sidebar-option" onclick="window.exportMapScreenshotJpeg && exportMapScreenshotJpeg(this)">
             <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M7 5l1.5-2h7L17 5"/></svg></div>
             <span class="dm-sidebar-option-label">Simpan JPEG</span>
-          </div>
-          <div class="dm-sidebar-option" onclick="document.querySelector('.leaflet-control-locate a')?.click(); closeDrawSidebar();">
-            <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg></div>
-            <span class="dm-sidebar-option-label">Lokasi Saya</span>
           </div>
         </div>
           </div>
@@ -3726,7 +3751,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <!-- Cek Lokasi: butuh window.startDraw dari alat-draw-measure.js untuk
        memasang pin. init() juga memasang listener draw:created, sehingga
        setiap pin baru langsung mengisi panel hasil. -->
-  <script src="assets/js/alat-cek-lokasi.js"></script>
+  <script src="assets/js/alat-cek-lokasi.js?v=20261008-arcgis-geocode"></script>
+  <script src="assets/js/alat-konverter-koordinat.js"></script>
   <script src="assets/js/geofarm-draw.js?v=20261007-preserve-drawn-analysis"></script>
 <script src="assets/js/geofarm-upload.js?v=20261007-geofarm-register"></script>
 <!-- Kalkulator Benih & Pupuk GeoFarm: butuh geodesic-area.js (luas poligon)

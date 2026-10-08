@@ -564,50 +564,41 @@
       tampilkanPesan('<div class="geolokasi-kecil geolokasi-kecil--wajar">'
         + esc(masuk.catatan) + '</div>');
     }
-    if (el.status) el.status.textContent = 'Mencari wilayah...';
+    if (el.status) el.status.textContent = 'Mencari alamat dengan ArcGIS...';
     if (el.btn) el.btn.disabled = true;
-
-    cariWilayah(masuk.lat, masuk.lng).then(function (s) {
+    if (el.salin) el.salin.style.display = 'none';
+    var url = 'https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode?f=pjson&featureTypes=&location='
+      + encodeURIComponent(masuk.lng + ',' + masuk.lat);
+    fetch(url).then(function (response) {
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      return response.json();
+    }).then(function (data) {
       if (token !== cekToken) return;
       if (el.btn) el.btn.disabled = false;
-      if (s.jaringan) {
-        tampilkanPesan('<div class="geolokasi-galat">Tidak dapat membaca wilayah dari server ATR/BPN. '
-          + 'Koordinat di atas tetap benar.<br>'
-          + '<span class="geolokasi-kecil">' + esc(s.pesan) + '</span></div>');
+      if (data && data.error) throw new Error(data.error.message || 'ArcGIS menolak permintaan');
+      var address = data && data.address;
+      if (!address || !(address.Match_addr || address.LongLabel)) {
+        tampilkanPesan('<div class="geolokasi-galat">Alamat tidak ditemukan untuk koordinat ini.</div>');
         if (el.status) el.status.textContent = '';
         return;
       }
-      if (s.kosong) {
-        tampilkanPesan('<div class="geolokasi-galat">Titik ini di luar wilayah Indonesia, '
-          + 'sehingga tidak ada batas wilayah yang bisa dibaca.</div>');
-        if (el.status) el.status.textContent = '';
-        return;
-      }
-      if (!s.wilayah) {
-        tampilkanPesan('<div class="geolokasi-galat">Batas wilayah ditemukan, '
-          + 'tetapi tidak memuat nama kecamatan, kabupaten, atau provinsi.</div>');
-        if (el.status) el.status.textContent = '';
-        return;
-      }
-      if (el.status) el.status.textContent = '';
-
-      /* Dua tahap, bukan satu. Tiga baris pertama sudah diketahui saat ini;
-         menunggu BIG membuat layar kosong selama 8 detik setiap kali BIG
-         lambat, padahal hampir semua yang dibutuhkan pengguna sudah ada.
-         s.desa masih null, jadi baris Desa akan tampil "memeriksa dulu". */
-      tampilkanPesan(hasilHtml(s, masuk.lat, masuk.lng));
-      /* Tombol Salin baru muncul setelah ada koordinat yang benar. */
+      var h = '<div class="geolokasi-hasil"><div class="geolokasi-koordinat"><b>' + esc(teksKoordinat(masuk.lat, masuk.lng)) + '</b></div>';
+      h += '<table class="geolokasi-tabel"><tbody>';
+      h += '<tr><th>Alamat</th><td>' + esc(address.Match_addr || address.LongLabel) + '</td></tr>';
+      if (address.City) h += '<tr><th>Kota</th><td>' + esc(address.City) + '</td></tr>';
+      if (address.Subregion) h += '<tr><th>Kabupaten</th><td>' + esc(address.Subregion) + '</td></tr>';
+      if (address.Region) h += '<tr><th>Provinsi / wilayah</th><td>' + esc(address.Region) + '</td></tr>';
+      if (address.Country) h += '<tr><th>Negara</th><td>' + esc(address.Country) + '</td></tr>';
+      h += '</tbody></table></div>';
+      tampilkanPesan(h);
       if (el.salin) el.salin.style.display = '';
-
-      if (el.status) el.status.textContent = 'Memeriksa batas desa di BIG...';
-      return cariDesa(masuk.lat, masuk.lng).then(function (d) {
-        /* Dicek ulang: pengguna bisa sudah mengetik koordinat lain, atau
-           menekan reset, selama BIG menjawab. */
-        if (token !== cekToken) return;
-        s.desa = d;
-        if (el.status) el.status.textContent = '';
-        if (el.out) tampilkanPesan(hasilHtml(s, masuk.lat, masuk.lng));
-      });
+      if (el.status) el.status.textContent = '';
+    }).catch(function (error) {
+      if (token !== cekToken) return;
+      if (el.btn) el.btn.disabled = false;
+      tampilkanPesan('<div class="geolokasi-galat">Tidak dapat mengambil alamat dari ArcGIS.<br>'
+        + '<span class="geolokasi-kecil">' + esc((error && error.message) || 'Periksa koneksi lalu coba lagi.') + '</span></div>');
+      if (el.status) el.status.textContent = '';
     });
   }
 

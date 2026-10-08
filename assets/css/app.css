@@ -8208,6 +8208,12 @@
         transform: translateY(100%);
       }
       .dm-sidebar.dm-sidebar-open { transform: translateY(0); visibility: visible; }
+      /* Samakan jarak handle resize dan judul dengan template bottom sheet
+         GeoTools/GeoData: handle 8px + pill 4px + ruang 6px, lalu header 4px. */
+      .dm-sidebar > .sheet-drag-handle,
+      .lg-sidebar > .sheet-drag-handle { padding: 8px 0 6px; }
+      .dm-sidebar .dm-sidebar-head,
+      .lg-sidebar .lg-sidebar-head { padding: 4px 16px 10px; }
       .dm-sidebar.dm-sidebar-minimized {
         top: auto; right: auto; bottom: 72px; left: 50%;
         width: min(260px, calc(100vw - 48px)); height: 36px;
@@ -16101,3 +16107,20 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   [data-theme="dark"] .tj-route-compare tr.is-selected td { background: #164e63; color: #cffafe; }
   [data-theme="dark"] .tj-route-compare td small { color: #67e8f9; }
 }
+
+/* Konverter koordinat pada sheet Alat */
+.dm-koordinat-converter { margin: 12px 0; }
+.dm-koordinat-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 9px; }
+.dm-koordinat-selects { grid-template-columns: 1fr; }
+.dm-koordinat-fields label { display: grid; gap: 4px; color: var(--text-secondary, #64748b); font-size: 10px; font-weight: 650; }
+.dm-koordinat-fields input { box-sizing: border-box; width: 100%; min-width: 0; padding: 8px; border: 1px solid var(--border-color, #cbd5e1); border-radius: 7px; background: var(--bg-input, #fff); color: var(--text-primary, #1e293b); font: inherit; font-size: 12px; }
+.dm-koordinat-fields input:focus { outline: 2px solid rgba(8, 145, 178, .22); border-color: #0891b2; }
+.dm-coord-results { display: grid; gap: 5px; margin-top: 9px; }
+.dm-coord-result { display: grid; gap: 3px; padding: 7px 8px; border: 1px solid var(--border-color, #e2e8f0); border-radius: 7px; background: var(--bg-secondary, #f8fafc); }
+.dm-coord-result span { color: var(--text-muted, #64748b); font-size: 9px; }
+.dm-coord-result strong { color: var(--text-primary, #1e293b); font-size: 10px; overflow-wrap: anywhere; }
+.dm-koordinat-actions { display: flex; gap: 7px; margin-top: 8px; }
+.dm-koordinat-actions button { flex: 1; }
+.dm-koordinat-actions button:disabled { opacity: .5; cursor: not-allowed; }
+.dm-koordinat-fields select { box-sizing: border-box; width: 100%; min-width: 0; padding: 8px; border: 1px solid var(--border-color, #cbd5e1); border-radius: 7px; background: var(--bg-input, #fff); color: var(--text-primary, #1e293b); font: inherit; font-size: 10px; }
+.dm-koordinat-fields select:focus { outline: 2px solid rgba(8, 145, 178, .22); border-color: #0891b2; }
