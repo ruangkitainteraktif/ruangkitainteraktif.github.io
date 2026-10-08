@@ -236,7 +236,8 @@
     if (!cfg) return;
     var e = elDari(cfg);
     if (!e) return;
-    if (isOpen(id) && !window.__resetAllLayersRunning && typeof window.resetAllLayers === 'function') {
+    // Menutup panel legenda hanya menutup panel; layer peta tidak berubah.
+    if (id !== 'lg' && isOpen(id) && !window.__resetAllLayersRunning && typeof window.resetAllLayers === 'function') {
       try { window.resetAllLayers(); } catch (err) { lapis(id, 'resetAllLayers', err); }
     }
     kelas(cfg, cfg.openClass, false);
@@ -299,13 +300,45 @@
      body, menjadwalkan map.invalidateSize() setelah transisi area peta
      selesai: tinggi di mobile dan lebar di desktop sama-sama berubah. */
   var _timerSinkron = 0;
+  var _mobileSheetPanY = 0;
+  function sinkronkanPusatPetaMobile(m) {
+    var targetPanY = 0;
+    if (mobile()) {
+      var mapEl = document.getElementById('map');
+      if (mapEl) {
+        var mapRect = mapEl.getBoundingClientRect();
+        var activeSheet = null;
+        for (var i = 0; i < URUT.length; i++) {
+          var id = URUT[i];
+          if (!isOpen(id) || isMinimized(id)) continue;
+          var sheetEl = elDari(DAFTAR[id]);
+          if (sheetEl && (!activeSheet || sheetEl.getBoundingClientRect().top < activeSheet.getBoundingClientRect().top)) activeSheet = sheetEl;
+        }
+        if (activeSheet) {
+          var sheetTop = activeSheet.getBoundingClientRect().top;
+          var chrome = parseFloat(getComputedStyle(mapEl).getPropertyValue('--map-chrome')) || 0;
+          var targetCenterY = (mapRect.top + chrome + sheetTop) / 2;
+          targetPanY = mapRect.top + mapRect.height / 2 - targetCenterY;
+        }
+      }
+    }
+    var delta = targetPanY - _mobileSheetPanY;
+    if (Math.abs(delta) > 1 && m && typeof m.panBy === 'function') {
+      m.panBy([0, delta], { animate: false });
+    }
+    _mobileSheetPanY = targetPanY;
+  }
+
   function sinkronkanPeta() {
     document.body.classList.toggle('sheet-terbuka', adaYangTerbuka());
     ukurChromeAtas();
     clearTimeout(_timerSinkron);
     _timerSinkron = setTimeout(function () {
       var m = window.map;
-      if (m && typeof m.invalidateSize === 'function') m.invalidateSize({ pan: false });
+      if (m && typeof m.invalidateSize === 'function') {
+        m.invalidateSize({ pan: false });
+        sinkronkanPusatPetaMobile(m);
+      }
     }, 340);
   }
 
