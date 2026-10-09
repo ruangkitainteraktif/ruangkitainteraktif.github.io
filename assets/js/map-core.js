@@ -2778,11 +2778,11 @@ L.control.scale({
 
   var LAYER_CATALOG_DATA = [
     {
-      cat: 'Basemap',
+      cat: 'Peta Dasar',
       type: 'basemap',
       groups: [
         {
-          group: 'Vektor',
+          group: 'Peta jalan & referensi',
           layers: [
             { id: 'google-maps', label: 'Google Maps' },
             { id: 'osm', label: 'Open Street Map' },
@@ -2797,7 +2797,7 @@ L.control.scale({
           ]
         },
         {
-          group: 'Satelit',
+          group: 'Citra satelit',
           layers: [
             { id: 'esri-satellite', label: 'Esri Satellite' },
             { id: 'google-satellite-kh', label: 'Google Satellite' },
@@ -2843,26 +2843,26 @@ L.control.scale({
       ]
     },
     {
-      cat: 'Ketahanan Pangan',
+      cat: 'Pertanian & Ketahanan Pangan',
       subcats: [
-        { subcat: 'Badan Pangan', layers: [
+        { subcat: 'Kerawanan pangan', layers: [
           { id: 'toggleFsvaLayer', label: 'FSVA 2025 (Badan Pangan)' }
         ]},
-        { subcat: 'KSA BPS', layers: [
+        { subcat: 'Statistik lahan sawah (BPS)', layers: [
           { id: 'bps-lbs-2024', label: 'LBS Nasional 2024' }
         ]},
-        { subcat: 'KSP BIG', layers: [
+        { subcat: 'Lahan sawah dilindungi', layers: [
           { id: 'toggleSawahDilindungi', label: 'LSD 50K' },
           { id: 'toggleSawahNasional50k', label: 'LBS 50K' }
         ]},
-        { subcat: 'KEMENTAN', layers: [
+        { subcat: 'Kawasan tanaman pangan', layers: [
           { id: 'arcgis-sawah-2023', label: 'LBS 2023' },
           { id: 'arcgis-sawah-2019', label: 'LBS 2019' },
           { id: 'arcgis-kawasan-padi', label: 'Kawasan Padi (KEMENTAN)' },
           { id: 'arcgis-kawasan-jagung', label: 'Kawasan Jagung (KEMENTAN)' },
           { id: 'arcgis-kawasan-kedelai', label: 'Kawasan Kedelai (KEMENTAN)' }
         ]},
-        { subcat: 'Market & SPPG', layers: [
+        { subcat: 'Pasar dan layanan pangan', layers: [
           { id: 'toggleSebaranPasar', label: 'Sebaran Pasar Indonesia' },
           { id: 'toggleSppgSebaranLayer', label: 'Sebaran SPPG Indonesia' },
           { id: 'toggleSppgDistrictLayer', label: 'SPPG per Kabupaten/Kota' },
@@ -3027,7 +3027,7 @@ L.control.scale({
         ]
       },
     {
-      cat: 'Gempa & Bencana',
+      cat: 'Bencana & Risiko',
       layers: [
         { id: 'toggleLatestEarthquake', label: 'Gempa Terbaru (BMKG)' },
         { id: 'toggleSignificantMarkers', label: '15 Gempa M 5.0+ (BMKG)' },
@@ -3048,7 +3048,7 @@ L.control.scale({
       ]
     },
     {
-      cat: 'Lingkungan',
+      cat: 'Lingkungan & Laut',
       subcats: [
         { subcat: 'Laut', layers: [
           { id: 'toggleChlorophyllOverlay', label: 'Chlorophyll-a Laut (NASA)' },
@@ -3072,9 +3072,9 @@ L.control.scale({
       ]
     },
     {
-      cat: 'Meteorologi',
+      cat: 'Cuaca, Iklim & Kualitas Udara',
       subcats: [
-        { subcat: 'Prediksi Cuaca', layers: [
+        { subcat: 'Prakiraan cuaca dan kondisi laut', layers: [
           { id: 'toggleWindRgb', label: 'Wind Speed and Direction (GFS)' },
           { id: 'toggleRhRgb', label: 'Relative Humidity (GFS)' },
           { id: 'toggleTp24Rgb', label: 'Total Precipitation 24 Jam (GFS)' },
@@ -3099,21 +3099,21 @@ L.control.scale({
           { id: 'toggleOpenaqPm10', label: 'PM10 (OpenAQ)' },
           { id: 'toggleOpenaqPm1', label: 'PM1 (OpenAQ)' }
         ]},
-        { subcat: 'SPI (Kekeringan)', layers: [
+        { subcat: 'Indeks kekeringan SPI (curah hujan)', layers: [
           { id: 'toggleSpi1m', label: 'SPI 1 Bulan' },
           { id: 'toggleSpi3m', label: 'SPI 3 Bulan' },
           { id: 'toggleSpi6m', label: 'SPI 6 Bulan' },
           { id: 'toggleSpi9m', label: 'SPI 9 Bulan' },
           { id: 'toggleSpi12m', label: 'SPI 12 Bulan' }
         ]},
-        { subcat: 'SPEI (Kekeringan)', layers: [
+        { subcat: 'Indeks kekeringan SPEI (curah hujan dan suhu)', layers: [
           { id: 'toggleSpei1m', label: 'SPEI 1 Bulan' },
           { id: 'toggleSpei3m', label: 'SPEI 3 Bulan' },
           { id: 'toggleSpei6m', label: 'SPEI 6 Bulan' },
           { id: 'toggleSpei9m', label: 'SPEI 9 Bulan' },
           { id: 'toggleSpei12m', label: 'SPEI 12 Bulan' }
         ]},
-        { subcat: 'Data Iklim BMKG', layers: [
+        { subcat: 'Pengamatan iklim BMKG', layers: [
           { id: 'toggleBmkgCurahHujan', label: 'Curah Hujan (BMKG)' },
           { id: 'toggleBmkgHariHujan', label: 'Hari Hujan (BMKG)' },
           { id: 'toggleBmkgNormalHujan', label: 'Normal Curah Hujan Bulanan (BMKG)' },
@@ -3122,7 +3122,7 @@ L.control.scale({
       ]
     },
     {
-      cat: 'Kehutanan',
+      cat: 'Hutan, Lahan & Konservasi',
       layers: [
         { id: 'toggleConcessionsLayer', label: 'Konsesi (GFW)' },
         { id: 'toggleProtectedLayer', label: 'Kawasan Konservasi (WDPA)' },
@@ -3146,7 +3146,7 @@ L.control.scale({
       ]
     },
     {
-      cat: 'Geologi',
+      cat: 'Geologi & Tanah',
       subcats: [
         { subcat: 'Geologi', layers: [
           { id: 'toggleGeologiArcGISOnline', label: 'Peta Geologi Yogyakarta (ArcGIS)' },
@@ -3162,14 +3162,14 @@ L.control.scale({
           { id: 'toggleKarst', label: 'Kawasan Bentang Alam Karst (BIG)' },
           { id: 'toggleBouguerBMKG', label: 'Anomali Bouguer Indonesia (BMKG)' }
         ]},
-        { subcat: 'Soil Explorer Global (ISee / Purdue)', layers: [
+        { subcat: 'Peta tanah global (ISee / Purdue)', layers: [
           { id: 'isee-soil-orders', label: 'Soil Orders Global' },
           { id: 'isee-soil-moisture', label: 'Soil Moisture Regimes Global' },
           { id: 'isee-soil-hillshade', label: 'Hillshade Global' },
           { id: 'isee-soil-boundaries', label: 'Batas Administrasi Global' },
           { id: 'isee-soil-labels', label: 'Label Administrasi Global' }
         ]},
-        { subcat: 'WRB', layers: [
+        { subcat: 'Jenis dan sifat tanah (WRB / ISRIC)', layers: [
           { id: 'toggleHwsdIndonesia', label: 'Jenis Tanah Indonesia (HWSD v2.01)' },
           { id: 'isric-soil-wrb', label: 'WRB — Kelas tanah paling mungkin' },
           { id: 'isric-soil-bdod', label: 'Bulk density · 0–5 cm' },
@@ -3190,7 +3190,7 @@ L.control.scale({
       ]
     },
     {
-      cat: 'BIG',
+      cat: 'Citra Udara & Peta BIG',
       subcats: (function () {
         var g = (typeof window.getFuCatalogGroups === 'function')
           ? window.getFuCatalogGroups()
@@ -3211,11 +3211,11 @@ L.control.scale({
       })()
     },
     {
-      cat: 'Terrain & Lainnya',
+      cat: 'Elevasi & Tutupan Lahan',
       layers: [
-        { id: 'toggleDemnasOverlay', label: 'Terrain Overlay (SRTM)' },
-        { id: 'toggleHillshade', label: 'Hillshade' },
-        { id: 'toggleBatnas', label: 'Batnas (Batimetri)' },
+        { id: 'toggleDemnasOverlay', label: 'Ketinggian permukaan (DEMNAS / SRTM)' },
+        { id: 'toggleHillshade', label: 'Relief permukaan (hillshade)' },
+        { id: 'toggleBatnas', label: 'Kedalaman laut (BATNAS)' },
         { id: 'toggleProvinceBoundary', label: 'Batas Provinsi (PBF)' },
         { id: 'toggleBmkgTimezone', label: 'Batas Wilayah Waktu (BMKG)' },
         { id: 'toggleBpsTutupanLahan', label: 'Peta Tutupan Lahan 100m (KSA BPS)' },
@@ -3226,13 +3226,67 @@ L.control.scale({
     }
   ];
 
+  /* Pisahkan citra penginderaan jauh dari peta dasar. Kelompok tema ini
+     mengikuti pengelompokan GIS yang umum; ID layer tetap dipertahankan. */
+  (function organizeImageryLayers() {
+    var basemap = LAYER_CATALOG_DATA.find(function (category) { return category.type === 'basemap'; });
+    var imagery = [];
+    if (basemap && basemap.groups) {
+      var satelliteIndex = basemap.groups.findIndex(function (group) { return group.group === 'Citra satelit'; });
+      if (satelliteIndex >= 0) imagery.push({ subcat: 'Citra satelit dan sensor pengamatan bumi', layers: basemap.groups.splice(satelliteIndex, 1)[0].layers });
+    }
+    var bigIndex = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Citra Udara & Peta BIG'; });
+    if (bigIndex >= 0) {
+      var big = LAYER_CATALOG_DATA[bigIndex];
+      (big.subcats || []).forEach(function (group) {
+        if (group.layers && group.layers.length) imagery.push({ subcat: group.subcat === 'Arsip Foto Udara' ? 'Foto udara dan arsip' : group.subcat, layers: group.layers });
+      });
+      LAYER_CATALOG_DATA.splice(bigIndex, 1);
+    }
+    if (imagery.length) {
+      var baseIndex = LAYER_CATALOG_DATA.indexOf(basemap);
+      LAYER_CATALOG_DATA.splice(baseIndex + 1, 0, { cat: 'Citra Satelit & Foto Udara', subcats: imagery });
+    }
+
+    var terrain = LAYER_CATALOG_DATA.find(function (category) { return category.cat === 'Elevasi & Tutupan Lahan'; });
+    var boundaries = [];
+    var roads = [];
+    if (terrain && terrain.layers) {
+      terrain.layers = terrain.layers.filter(function (layer) {
+        if (layer.id === 'toggleProvinceBoundary' || layer.id === 'toggleBmkgTimezone') { boundaries.push(layer); return false; }
+        if (layer.id === 'toggleTollRoad' || layer.id === 'toggleNationalRoad') { roads.push(layer); return false; }
+        return true;
+      });
+    }
+    var transport = LAYER_CATALOG_DATA.find(function (category) { return category.cat === 'Transportasi'; });
+    if (transport && roads.length) transport.layers = transport.layers.concat(roads);
+    if (boundaries.length) {
+      var imageryPosition = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Citra Satelit & Foto Udara'; });
+      LAYER_CATALOG_DATA.splice(imageryPosition + 1, 0, { cat: 'Batas & Referensi Wilayah', layers: boundaries });
+    }
+  })();
+
+  var LAYER_CATALOG_DESCRIPTIONS = {
+    'Peta Dasar': 'Peta untuk orientasi dan mencari lokasi. Pilih satu sebagai latar peta.',
+    'Citra Satelit & Foto Udara': 'Gambar permukaan bumi dari satelit atau pesawat untuk melihat kondisi dan perubahan wilayah.',
+    'Batas & Referensi Wilayah': 'Batas administrasi dan pembagian wilayah yang membantu menemukan lokasi atau membandingkan data antarwilayah.',
+    'Geologi & Tanah': 'Informasi batuan, struktur bumi, jenis tanah, dan sifat tanah.',
+    'Transportasi': 'Jaringan jalan dan rute transportasi umum.',
+    'Pertanian & Ketahanan Pangan': 'Lahan pertanian, komoditas, serta organisme pengganggu tanaman (OPT), yaitu hama dan penyakit tanaman, juga kondisi dan layanan pangan.',
+    'Bencana & Risiko': 'Kejadian bencana, sumber bahaya, pemantauan, dan informasi kesiapsiagaan.',
+    'Lingkungan & Laut': 'Ekosistem, kondisi perairan, dan indikator kualitas lingkungan.',
+    'Cuaca, Iklim & Kualitas Udara': 'Prakiraan dan pengamatan cuaca, pola iklim, kekeringan, serta polutan udara.',
+    'Hutan, Lahan & Konservasi': 'Kawasan hutan, lahan gambut, perkebunan, dan kawasan lindung.',
+    'Elevasi & Tutupan Lahan': 'Ketinggian dan bentuk permukaan bumi, kedalaman laut, serta jenis tutupan lahan.'
+  };
+
   (function placeGeologyAfterBasemap() {
-    var geologyIndex = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Geologi'; });
-    var basemapIndex = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Basemap'; });
-    if (geologyIndex < 0 || basemapIndex < 0 || geologyIndex === basemapIndex + 1) return;
+    var geologyIndex = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Geologi & Tanah'; });
+    var imageryIndex = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Citra Satelit & Foto Udara'; });
+    if (geologyIndex < 0 || imageryIndex < 0 || geologyIndex === imageryIndex + 1) return;
     var geologyCategory = LAYER_CATALOG_DATA.splice(geologyIndex, 1)[0];
-    basemapIndex = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Basemap'; });
-    LAYER_CATALOG_DATA.splice(basemapIndex + 1, 0, geologyCategory);
+    imageryIndex = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Citra Satelit & Foto Udara'; });
+    LAYER_CATALOG_DATA.splice(imageryIndex + 1, 0, geologyCategory);
   })();
 
   var _layerCatalogOpen = false;
@@ -3519,6 +3573,9 @@ L.control.scale({
       }
       html += '</button>';
       html += '<div class="lc-items">';
+      if (LAYER_CATALOG_DESCRIPTIONS[cat.cat]) {
+        html += '<p class="lc-category-description">' + LAYER_CATALOG_DESCRIPTIONS[cat.cat] + '</p>';
+      }
       if (cat.type === 'basemap' && cat.groups) {
         cat.groups.forEach(function(grp) {
           html += '<div class="lc-basemap-group">' + grp.group + '</div>';
@@ -3615,19 +3672,17 @@ L.control.scale({
       function fitCatalogAd() {
       var availableWidth = adViewport.clientWidth;
       if (availableWidth <= 0) return;
-      var format = availableWidth < 390
-        ? { key: '126b894c6f9b5f5e3acca47557d0c389', width: 320, height: 50 }
-        : availableWidth < 600
-          ? { key: 'caa684f2f6524c34b84e0218547de5e4', width: 468, height: 60 }
-          : { key: '07e86776906aabd9b6e8d43b1c3c1096', width: 728, height: 90 };
+      var format = { key: '07e86776906aabd9b6e8d43b1c3c1096', width: 728, height: 90 };
       var adFrame = sponsoredAd.querySelector('.lc-ad-frame');
-      adFrame.style.width = availableWidth + 'px';
+      var scale = Math.min(1, availableWidth / format.width);
+      adFrame.style.width = format.width + 'px';
+      adFrame.style.height = format.height + 'px';
+      adFrame.style.transform = 'scale(' + scale + ')';
+      adFrame.style.transformOrigin = 'top left';
+      adViewport.style.height = (format.height * scale) + 'px';
       if (activeFormat && activeFormat.key === format.key) return;
       activeFormat = format;
       sponsoredAd._activeAdFormat = format;
-      adFrame.style.height = format.height + 'px';
-      adFrame.style.transform = 'none';
-      adViewport.style.height = format.height + 'px';
       var iframe = document.createElement('iframe');
       iframe.title = 'Iklan sponsor';
       iframe.width = format.width;
@@ -3636,7 +3691,8 @@ L.control.scale({
       iframe.scrolling = 'no';
       iframe.frameBorder = '0';
       iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-      iframe.style.width = '100%';
+      iframe.style.width = format.width + 'px';
+      iframe.style.maxWidth = 'none';
       iframe.style.height = format.height + 'px';
       iframe.srcdoc = '<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0"><script>var atOptions={key:"' + format.key + '",format:"iframe",height:' + format.height + ',width:' + format.width + ',params:{}};</script><script src="https://www.highrevenueformat.com/' + format.key + '/invoke.js"></script></body></html>';
       adFrame.replaceChildren(iframe);

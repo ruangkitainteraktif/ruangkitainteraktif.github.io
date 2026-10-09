@@ -60,17 +60,15 @@
     function fitAd() {
       var availableWidth = viewport.clientWidth;
       if (availableWidth <= 0) return;
-      var format = availableWidth < 390
-        ? { key: '126b894c6f9b5f5e3acca47557d0c389', width: 320, height: 50 }
-        : availableWidth < 600
-          ? { key: 'caa684f2f6524c34b84e0218547de5e4', width: 468, height: 60 }
-          : { key: '07e86776906aabd9b6e8d43b1c3c1096', width: 728, height: 90 };
-      frame.style.width = availableWidth + 'px';
+      var format = { key: '07e86776906aabd9b6e8d43b1c3c1096', width: 728, height: 90 };
+      var scale = Math.min(1, availableWidth / format.width);
+      frame.style.width = format.width + 'px';
+      frame.style.height = format.height + 'px';
+      frame.style.transform = 'scale(' + scale + ')';
+      frame.style.transformOrigin = 'top left';
+      viewport.style.height = (format.height * scale) + 'px';
       if (activeFormat && activeFormat.key === format.key) return;
       activeFormat = format;
-      frame.style.height = format.height + 'px';
-      frame.style.transform = 'none';
-      viewport.style.height = format.height + 'px';
       var iframe = document.createElement('iframe');
       iframe.title = 'Iklan sponsor';
       iframe.width = format.width;
@@ -79,7 +77,8 @@
       iframe.scrolling = 'no';
       iframe.frameBorder = '0';
       iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-      iframe.style.width = '100%';
+      iframe.style.width = format.width + 'px';
+      iframe.style.maxWidth = 'none';
       iframe.style.height = format.height + 'px';
       iframe.srcdoc = '<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0"><script>var atOptions={key:"' + format.key + '",format:"iframe",height:' + format.height + ',width:' + format.width + ',params:{}};</script><script src="https://www.highrevenueformat.com/' + format.key + '/invoke.js"></script></body></html>';
       frame.replaceChildren(iframe);

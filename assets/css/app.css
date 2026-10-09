@@ -239,6 +239,10 @@
     }
     .lc-items { display: none; padding: 2px 0 4px; }
     .lc-category.open .lc-items { display: block; }
+    .lc-category-description {
+      margin: 0 8px 6px 28px; color: #64748b; font-size: 10px;
+      line-height: 1.45;
+    }
     .lc-item {
       display: flex; align-items: center; gap: 8px;
       padding: 5px 8px 5px 28px; border-radius: 6px; cursor: pointer;
@@ -3255,7 +3259,7 @@
     .lc-sponsored-caption { grid-column: 2; color: #64748b; font-size: 9px; }
     .lc-ad-viewport { position: relative; width: 100%; overflow: hidden; }
     .lc-ad-frame { position: absolute; top: 0; left: 0; width: 100%; height: 90px; transform-origin: top left; overflow: hidden; }
-    .lc-ad-frame iframe { display: block; width: 100% !important; height: 90px; max-width: 100% !important; border: 0; }
+    .lc-ad-frame iframe { display: block; width: 728px !important; height: 90px; max-width: none !important; border: 0; }
 
     /* Geotools sidebar donation banner */
     .gt-donation-banner {
