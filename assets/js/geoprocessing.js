@@ -5,9 +5,13 @@
   const toolCard = document.querySelector('.gp-tools-card');
   const toolBody = document.querySelector('.dm-sidebar-body');
   if (toolCard) {
-    const title = toolCard.querySelector('summary');
-    if (title && title.firstChild) title.firstChild.textContent = 'GEOPROCESSING ';
-    toolCard.style.margin = '0 0 12px';
+    /* Dua baris lama dihapus, dua-duanya sudah tidak berlaku sejak kartu ini
+       memakai template .gt-card-head:
+         - menulis 'GEOPROCESSING ' ke child pertama summary. Child pertama
+           kini spasi sebelum .gt-card-icon, jadi teks itu akan muncul di
+           luar ikon. Judulnya pun sengaja dibiarkan title case supaya sama
+           dengan lima kartu sheet ini yang lain.
+         - margin inline '0 0 12px', yang menimpa .dm-card. */
     if (toolBody) toolBody.prepend(toolCard);
   }
   const esc = value => String(value).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
