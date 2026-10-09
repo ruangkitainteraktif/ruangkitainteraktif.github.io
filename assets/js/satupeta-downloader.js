@@ -742,6 +742,8 @@
     'Rawa': '#00cec9'
   };
   var DEFAULT_COLOR = '#3498db';
+  var NATIONAL_PAGE_SIZE = 100;
+  var nationalObjectIdCache = Object.create(null);
 
   var state = {
     level: 'kabupaten',
@@ -760,6 +762,8 @@
     outlineLayer: null,
     selectedTableFeatureIndex: null,
     clipped: [],
+    nationalObjectIds: null,
+    nationalPage: 0,
     loading: false,
     fetchAbort: null
   };
@@ -1235,10 +1239,48 @@
     try { return turf.rewind(gj); } catch (e) { return gj; }
   }
 
+  function fetchNationalObjectIds(signal) {
+    var src = currentSource();
+    var cacheKey = src.query;
+    if (nationalObjectIdCache[cacheKey]) return Promise.resolve(nationalObjectIdCache[cacheKey]);
+    var url = src.query + '?where=1%3D1&returnIdsOnly=true&f=json';
+    return fetch(url, { signal: signal }).then(function (response) {
+      if (!response.ok) throw new Error('HTTP ' + response.status + ' dari SatuPeta BIG');
+      return response.json();
+    }).then(function (data) {
+      if (data && data.error) throw new Error(data.error.message || 'Gagal mengambil daftar ID fitur dari BIG.');
+      var ids = (data.objectIds || []).slice().sort(function (a, b) { return Number(a) - Number(b); });
+      nationalObjectIdCache[cacheKey] = ids;
+      return ids;
+    });
+  }
+
+  function fetchNationalFeaturePage(ids, page, signal) {
+    var pageIds = ids.slice(page * NATIONAL_PAGE_SIZE, (page + 1) * NATIONAL_PAGE_SIZE);
+    if (!pageIds.length) return Promise.resolve([]);
+    var params = new URLSearchParams({
+      objectIds: pageIds.join(','),
+      outFields: '*',
+      returnGeometry: 'true',
+      outSR: '4326',
+      f: 'json'
+    });
+    return fetch(currentSource().query + '?' + params.toString(), { signal: signal }).then(function (response) {
+      if (!response.ok) throw new Error('HTTP ' + response.status + ' dari SatuPeta BIG');
+      return response.json();
+    }).then(function (data) {
+      if (data && data.error) throw new Error(data.error.message || 'Gagal mengambil halaman fitur dari BIG.');
+      return data.features || [];
+    });
+  }
+
   /* ---- Fetch pages with spatial filter ---- */
   function fetchPagesWithBBox(bbox, signal) {
+    var spatialParams = '';
     var minX = bbox[0], minY = bbox[1], maxX = bbox[2], maxY = bbox[3];
     var envelopeJson = JSON.stringify({ xmin: minX, ymin: minY, xmax: maxX, ymax: maxY, spatialReference: { wkid: 4326 } });
+    spatialParams = '&geometry=' + encodeURIComponent(envelopeJson)
+      + '&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&inSR=4326';
     var offset = 0;
     var all = [];
 
@@ -1247,10 +1289,7 @@
     var loop = function () {
       var url = currentSource().query
         + '?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326'
-        + '&geometry=' + encodeURIComponent(envelopeJson)
-        + '&geometryType=esriGeometryEnvelope'
-        + '&spatialRel=esriSpatialRelIntersects'
-        + '&inSR=4326'
+        + spatialParams
         + '&resultOffset=' + offset + '&resultRecordCount=' + PAGE_SIZE
         + '&f=json';
 
@@ -1590,9 +1629,15 @@
     if (!feats || !feats.length) { clearFeatureTable(); return; }
 
     var fields = src.tableFields || [];
-    var pageSize = 50;
+    var nationalMode = state.level === 'indonesia';
+    var pageSize = nationalMode ? Math.max(feats.length, 1) : 50;
     var page = 1;
-    var totalPages = Math.max(1, Math.ceil(feats.length / pageSize));
+    var query = '';
+    var selectedCategory = '';
+    var categoryKey = src.nameField;
+    var categories = Array.from(new Set(feats.map(function (feature) {
+      return resolveName(src, getFieldVal(feature.properties || {}, categoryKey)) || 'Lainnya';
+    }))).sort(function (a, b) { return a.localeCompare(b, 'id'); });
 
     function cellVal(f, fd) {
       var p = f.properties || {};
@@ -1607,34 +1652,65 @@
       return esc(String(v));
     }
 
+    function filteredFeatures() {
+      var needle = query.trim().toLocaleLowerCase('id');
+      return feats.map(function (feature, index) { return { feature: feature, index: index }; }).filter(function (item) {
+        var props = item.feature.properties || {};
+        var category = resolveName(src, getFieldVal(props, categoryKey)) || 'Lainnya';
+        if (selectedCategory && category !== selectedCategory) return false;
+        if (!needle) return true;
+        return fields.some(function (field) {
+          var value = getFieldVal(props, field.key);
+          return value != null && String(value).toLocaleLowerCase('id').includes(needle);
+        }) || category.toLocaleLowerCase('id').includes(needle);
+      });
+    }
+
     function render() {
+      var visibleFeatures = filteredFeatures();
+      var totalPages = Math.max(1, Math.ceil(visibleFeatures.length / pageSize));
+      page = Math.min(page, totalPages);
       var start = (page - 1) * pageSize;
-      var slice = feats.slice(start, start + pageSize);
+      var slice = visibleFeatures.slice(start, start + pageSize);
       var html = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0 4px;">'
         + '<strong style="font-size:11px;color:var(--text-primary);">Tabel Feature — ' + esc(src.label) + '</strong>'
-        + '<span style="font-size:10px;color:var(--text-tertiary);">' + feats.length + ' baris</span></div>';
+        + '<span style="font-size:10px;color:var(--text-tertiary);">' + visibleFeatures.length + ' dari ' + feats.length + ' fitur</span></div>'
+        + '<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(130px,.8fr);gap:6px;margin:6px 0;">'
+        + '<input type="search" class="satupeta-feature-search" value="' + esc(query) + '" placeholder="Cari feature..." aria-label="Cari feature" style="min-width:0;padding:7px 9px;border:1px solid var(--border-color);border-radius:6px;background:var(--bg-primary);color:var(--text-primary);font-size:11px;">'
+        + '<select class="satupeta-feature-category" aria-label="Filter kategori" style="min-width:0;padding:7px 9px;border:1px solid var(--border-color);border-radius:6px;background:var(--bg-primary);color:var(--text-primary);font-size:11px;"><option value="">Semua kategori</option>';
+      categories.forEach(function (category) {
+        html += '<option value="' + esc(category) + '"' + (selectedCategory === category ? ' selected' : '') + '>' + esc(category) + '</option>';
+      });
+      html += '</select></div>';
       html += '<div class="at-table-wrap" style="width:100%;max-width:100%;min-width:0;max-height:220px;margin:0;overflow-x:auto;overflow-y:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border-color);border-radius:6px;">';
       html += '<table class="at-table"><thead><tr><th class="at-th-no">No</th>';
       fields.forEach(function (fd) { html += '<th>' + esc(fd.label) + '</th>'; });
       var gk = currentSource().geomKind;
-      html += '<th>' + (gk === 'line' ? 'Panjang (Clip)' : gk === 'point' ? 'Titik' : 'Luas (Clip)') + '</th></tr></thead><tbody>';
-      slice.forEach(function (f, i) {
+      if (!nationalMode) html += '<th>' + (gk === 'line' ? 'Panjang (Clip)' : gk === 'point' ? 'Titik' : 'Luas (Clip)') + '</th>';
+      html += '</tr></thead><tbody>';
+      slice.forEach(function (item) {
+        var f = item.feature;
         var p = f.properties || {};
-        var featureIndex = start + i;
+        var featureIndex = item.index;
         html += '<tr class="satupeta-feature-row' + (state.selectedTableFeatureIndex === featureIndex ? ' is-selected' : '') + '" data-feature-index="' + featureIndex + '" tabindex="0" role="button" aria-label="Sorot fitur ' + (featureIndex + 1) + ' dan arahkan peta ke poligon">';
         html += '<td class="at-td-no">' + (featureIndex + 1) + '</td>';
         fields.forEach(function (fd) {
           var v = cellVal(f, fd);
           html += '<td title="' + v.replace(/"/g, '&quot;') + '">' + v + '</td>';
         });
-        if (gk === 'point') {
-          html += '<td>-</td></tr>';
-        } else if (p._panjang_km != null && p._area_ha == null) {
-          html += '<td>' + esc(String(p._panjang_km)) + ' km</td></tr>';
+        if (!nationalMode) {
+          if (gk === 'point') {
+            html += '<td>-</td></tr>';
+          } else if (p._panjang_km != null && p._area_ha == null) {
+            html += '<td>' + esc(String(p._panjang_km)) + ' km</td></tr>';
+          } else {
+            html += '<td>' + (p._area_ha ? esc(String(p._area_ha)) + ' ha' : '-') + '</td></tr>';
+          }
         } else {
-          html += '<td>' + (p._area_ha ? esc(String(p._area_ha)) + ' ha' : '-') + '</td></tr>';
+          html += '</tr>';
         }
       });
+      if (!slice.length) html += '<tr><td colspan="' + (fields.length + (nationalMode ? 1 : 2)) + '" style="padding:12px;text-align:center;color:var(--text-tertiary);">Tidak ada feature yang cocok.</td></tr>';
       html += '</tbody></table></div>';
       if (totalPages > 1) {
         html += '<div class="at-pagination">'
@@ -1643,14 +1719,50 @@
           + '<button class="at-page-btn" type="button" data-ft-page="next"' + (page >= totalPages ? ' disabled' : '') + '>Next &rsaquo;</button>'
           + '</div>';
       }
+      if (nationalMode && state.nationalObjectIds && state.nationalObjectIds.length) {
+        var nationalPages = Math.ceil(state.nationalObjectIds.length / NATIONAL_PAGE_SIZE);
+        var firstNational = state.nationalPage * NATIONAL_PAGE_SIZE + 1;
+        var lastNational = Math.min((state.nationalPage + 1) * NATIONAL_PAGE_SIZE, state.nationalObjectIds.length);
+        html += '<div class="at-pagination satupeta-national-pagination">'
+          + '<button class="at-page-btn" type="button" data-national-page="prev"' + (state.nationalPage <= 0 ? ' disabled' : '') + '>‹ Sebelumnya</button>'
+          + '<span style="font-size:10px;color:var(--text-tertiary);">' + firstNational + '–' + lastNational + ' dari ' + state.nationalObjectIds.length.toLocaleString('id-ID') + ' · ' + (state.nationalPage + 1) + '/' + nationalPages + '</span>'
+          + '<button class="at-page-btn" type="button" data-national-page="next"' + (state.nationalPage >= nationalPages - 1 ? ' disabled' : '') + '>Berikutnya ›</button>'
+          + '</div>';
+      }
       wrap.innerHTML = html;
       wrap.style.display = 'block';
+      var searchInput = wrap.querySelector('.satupeta-feature-search');
+      searchInput.addEventListener('input', function () {
+        query = searchInput.value;
+        page = 1;
+        render();
+        var nextInput = wrap.querySelector('.satupeta-feature-search');
+        nextInput.focus();
+        nextInput.setSelectionRange(query.length, query.length);
+      });
+      wrap.querySelector('.satupeta-feature-category').addEventListener('change', function (event) {
+        selectedCategory = event.target.value;
+        page = 1;
+        render();
+      });
       wrap.querySelectorAll('[data-ft-page]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           if (btn.getAttribute('data-ft-page') === 'prev' && page > 1) page--;
           else if (btn.getAttribute('data-ft-page') === 'next' && page < totalPages) page++;
           else return;
           render();
+        });
+      });
+      wrap.querySelectorAll('[data-national-page]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var delta = btn.getAttribute('data-national-page') === 'next' ? 1 : -1;
+          var nextPage = state.nationalPage + delta;
+          if (nextPage < 0 || nextPage >= Math.ceil(state.nationalObjectIds.length / NATIONAL_PAGE_SIZE)) return;
+          state.nationalPage = nextPage;
+          var info = document.getElementById('satupetaInfo');
+          if (info) info.style.display = 'block';
+          state.loading = true;
+          runFetchAndDisplay(info, false);
         });
       });
       wrap.querySelectorAll('.satupeta-feature-row').forEach(function (row) {
@@ -1821,7 +1933,8 @@
     if (!window.map) return;
     if (state.loading) return;
 
-    if (!state.selectedBoundary && !state.pendingBoundaryKode) {
+    var nationalMode = state.level === 'indonesia';
+    if (!nationalMode && !state.selectedBoundary && !state.pendingBoundaryKode) {
       var prompt = document.getElementById('satupetaInfo');
       if (prompt) {
         prompt.style.display = 'block';
@@ -1830,7 +1943,7 @@
       return;
     }
 
-    if (!state.selectedBoundary && state.pendingBoundaryKode) {
+    if (!nationalMode && !state.selectedBoundary && state.pendingBoundaryKode) {
       setBoundaryLoadingInfo('Memuat batas wilayah...');
       state.loading = true;
       var retryKode = state.pendingBoundaryKode;
@@ -1853,7 +1966,7 @@
       return;
     }
 
-    if (!state.selectedBoundary) return;
+    if (!nationalMode && !state.selectedBoundary) return;
     state.loading = true;
 
     var info = document.getElementById('satupetaInfo');
@@ -1871,15 +1984,17 @@
       });
   }
 
-  function runFetchAndDisplay(info) {
-    if (!state.selectedBoundary || !window.map) {
+  function runFetchAndDisplay(info, fitNationalPage) {
+    var nationalMode = state.level === 'indonesia';
+    if ((!nationalMode && !state.selectedBoundary) || !window.map) {
       state.loading = false;
       return;
     }
 
     if (info) {
       info.style.display = 'block';
-      info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> ' + esc(currentSource().loadingMessage || 'Memuat data...') + '</div>';
+      var pageMessage = nationalMode ? ' · halaman ' + (state.nationalPage + 1) : '';
+      info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> ' + esc(currentSource().loadingMessage || 'Memuat data...') + esc(pageMessage) + '</div>';
     }
 
     if (state.layer) {
@@ -1893,25 +2008,41 @@
     var ctrl = new AbortController();
     state.fetchAbort = ctrl;
 
-    var boundaryBbox = turf.bbox(state.selectedBoundary);
-    var props = state.selectedFeature.properties;
-    var clipBoundary = rewindSafe(state.selectedBoundary);
+    var boundaryBbox = nationalMode ? null : turf.bbox(state.selectedBoundary);
+    var clipBoundary = nationalMode ? null : rewindSafe(state.selectedBoundary);
     var isLineSrc = currentSource().geomKind === 'line';
+    var isPointSrc = currentSource().geomKind === 'point';
 
-    fetchPagesWithBBox(boundaryBbox, ctrl.signal)
+    var pageRequest;
+    if (nationalMode) {
+      pageRequest = fetchNationalObjectIds(ctrl.signal).then(function (ids) {
+        state.nationalObjectIds = ids;
+        if (!ids.length) return [];
+        state.nationalPage = Math.max(0, Math.min(state.nationalPage, Math.ceil(ids.length / NATIONAL_PAGE_SIZE) - 1));
+        return fetchNationalFeaturePage(ids, state.nationalPage, ctrl.signal);
+      });
+    } else {
+      state.nationalObjectIds = null;
+      state.nationalPage = 0;
+      pageRequest = fetchPagesWithBBox(boundaryBbox, ctrl.signal);
+    }
+
+    pageRequest
       .then(function (features) {
-        var totalFetched = features.length;
         var clipped = [];
-        var skipped = 0;
         features.forEach(function (f) {
           var gj = attrToGeoJSON(f);
-          if (!gj) { skipped++; return; }
+          if (!gj) return;
+          if (nationalMode) {
+            clipped.push(gj);
+            return;
+          }
           if (!isLineGeom(gj)) gj = rewindSafe(gj);
 
           try {
             var intersection = clipFeatureToBoundary(gj, clipBoundary);
             if (intersection && intersection.geometry) {
-              if (isSliverClip(intersection, gj, clipBoundary)) { skipped++; return; }
+              if (isSliverClip(intersection, gj, clipBoundary)) return;
               var p = gj.properties || {};
               var m = measureClip(intersection);
               if (m.ha != null) p._area_ha = m.ha;
@@ -1922,7 +2053,7 @@
                 geometry: intersection.geometry
               });
             }
-          } catch (e) { skipped++; }
+          } catch (e) {}
         });
 
         state.clipped = clipped;
@@ -1934,47 +2065,7 @@
           return;
         }
 
-        var types = {};
-        var src = currentSource();
-        var nameField = src.nameField;
-        clipped.forEach(function (f) {
-          var name = resolveName(src, f.properties[nameField]) || 'Lainnya';
-          if (!types[name]) types[name] = 0;
-          types[name]++;
-        });
-        var typeList = Object.keys(types).sort(function (a, b) { return types[b] - types[a]; });
-        var typeHtml = typeList.map(function (t) {
-          var color = getColor(t, src);
-          return '<span style="display:inline-flex;align-items:center;gap:4px;margin:2px 0;font-size:10px;">'
-            + '<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' + color + ';flex-shrink:0;"></span>'
-            + esc(t) + ' <strong>' + types[t] + '</strong></span>';
-        }).join('');
-
-        var areaTotal = clipped.reduce(function (s, f) { return s + parseFloat(f.properties._area_ha || 0); }, 0);
-        var lenTotal = clipped.reduce(function (s, f) { return s + parseFloat(f.properties._panjang_km || 0); }, 0);
-        var labelName = props.nmkab || props.nama || props.kode || '-';
-        var labelSub = props.nmprov || props.kode || '';
-        var isPointSrc = currentSource().geomKind === 'point';
-        var geomWord = isLineSrc ? 'garis' : (isPointSrc ? 'titik' : 'polygon');
-        var unitHtml = isLineSrc
-          ? 'Panjang: <strong>' + lenTotal.toFixed(2) + ' km</strong>'
-          : (isPointSrc
-              ? 'Jumlah: <strong>' + clipped.length + ' titik</strong>'
-              : 'Luas: <strong>' + areaTotal.toFixed(2) + ' ha</strong>');
-
-        /* Blok info ini tidak lagi memuat tombol x di kanan. Aksi tutup layer
-           disediakan satu tombol saja, di bawah "Tampilkan Data"
-           (#btnClearSatupeta), supaya tidak ada dua tombol untuk aksi yang sama
-           dan judul wilayah tidak tergeser oleh tombol. */
-        var detailHtml = '<div>'
-          + '<div style="font-weight:700;font-size:12px;">' + esc(labelName) + (labelSub ? ', ' + esc(labelSub) : '') + '</div>'
-          + '<div style="font-size:10px;color:#64748b;margin-top:2px;">'
-          + 'API: <strong>' + totalFetched + '</strong> feature &middot; Di dalam wilayah: <strong>' + clipped.length + '</strong> ' + geomWord + ' &middot; ' + unitHtml
-          + (skipped > 0 ? ' &middot; Skip: ' + skipped : '')
-          + '</div></div>'
-          + '<div style="display:flex;flex-wrap:wrap;gap:2px 10px;margin-top:6px;padding-top:6px;border-top:1px solid #f0f0f0;">' + typeHtml + '</div>';
-
-        if (info) info.innerHTML = detailHtml;
+        if (info) info.style.display = 'none';
         renderFeatureTable();
         emitDisplayReady();
 
@@ -2017,8 +2108,12 @@
         layer.bringToFront();
         if (state.outlineLayer) state.outlineLayer.bringToFront();
 
-        var bbox4326 = [boundaryBbox[0], boundaryBbox[1], boundaryBbox[2], boundaryBbox[3]];
-        window.map.fitBounds([[bbox4326[1], bbox4326[0]], [bbox4326[3], bbox4326[2]]], { padding: [40, 40] });
+        if (boundaryBbox) {
+          window.map.fitBounds([[boundaryBbox[1], boundaryBbox[0]], [boundaryBbox[3], boundaryBbox[2]]], { padding: [40, 40] });
+        } else if (fitNationalPage !== false && state.nationalPage === 0) {
+          var dataBounds = layer.getBounds();
+          if (dataBounds && dataBounds.isValid()) window.map.fitBounds(dataBounds, { padding: [40, 40] });
+        }
       })
       .catch(function (err) {
         state.loading = false;
@@ -2048,12 +2143,14 @@
         : formatLuas(areaRaw);
       html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Luas</span><span class="agol-popup-field-value">' + areaTxt + '</span></div>';
     }
-    if (src.geomKind === 'point') {
-      html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Titik</span><span class="agol-popup-field-value">Ada di wilayah</span></div>';
-    } else if (p._panjang_km != null && p._area_ha == null) {
-      html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Panjang (Clip)</span><span class="agol-popup-field-value">' + esc(String(p._panjang_km)) + ' km</span></div>';
-    } else {
-      html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Luas (Clip)</span><span class="agol-popup-field-value">' + (p._area_ha ? p._area_ha + ' ha' : '-') + '</span></div>';
+    if (state.level !== 'indonesia') {
+      if (src.geomKind === 'point') {
+        html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Titik</span><span class="agol-popup-field-value">Ada di wilayah</span></div>';
+      } else if (p._panjang_km != null && p._area_ha == null) {
+        html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Panjang (Clip)</span><span class="agol-popup-field-value">' + esc(String(p._panjang_km)) + ' km</span></div>';
+      } else {
+        html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Luas (Clip)</span><span class="agol-popup-field-value">' + (p._area_ha ? p._area_ha + ' ha' : '-') + '</span></div>';
+      }
     }
     if (src.dateField && p[src.dateField]) {
       html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Tanggal</span><span class="agol-popup-field-value">' + formatDate(p[src.dateField]) + '</span></div>';
@@ -2161,35 +2258,17 @@
   }
 
   function selectAllIndonesia() {
-    setBoundaryLoadingInfo('Menyiapkan batas Seluruh Indonesia…');
-    loadProvGeo().then(function (data) {
-      if (state.level !== 'indonesia') return;
-      var polygons = [];
-      (data.features || []).forEach(function (feature) {
-        var geometry = feature.geometry;
-        if (!geometry) return;
-        if (geometry.type === 'Polygon') polygons.push(geometry.coordinates);
-        else if (geometry.type === 'MultiPolygon') polygons = polygons.concat(geometry.coordinates);
-      });
-      if (!polygons.length) throw new Error('Batas provinsi untuk seluruh Indonesia tidak tersedia.');
-      var boundary = {
-        type: 'Feature',
-        properties: { nama: 'Seluruh Indonesia', kode: 'ID' },
-        geometry: { type: 'MultiPolygon', coordinates: polygons }
-      };
-      state.pendingBoundaryKode = null;
-      state.pendingBoundaryNama = 'Seluruh Indonesia';
-      state.pendingFeature = null;
-      state.selectedFeature = { properties: boundary.properties, geometry: boundary.geometry };
-      state.selectedBoundary = boundary;
-      updateSelectedLabel('Seluruh Indonesia', 'semua data');
-      drawSelOutline(boundary);
-      showToggleButton();
-      var info = document.getElementById('satupetaInfo');
-      if (info) info.style.display = 'none';
-    }).catch(function (error) {
-      if (state.level === 'indonesia') setBoundaryErrorInfo(error.message || 'Gagal memuat batas Seluruh Indonesia.');
-    });
+    state.nationalPage = 0;
+    state.pendingBoundaryKode = null;
+    state.pendingBoundaryNama = 'Seluruh Indonesia';
+    state.pendingFeature = null;
+    state.selectedFeature = { properties: { nama: 'Seluruh Indonesia', kode: 'ID' } };
+    state.selectedBoundary = null;
+    clearSelOutline();
+    updateSelectedLabel('Seluruh Indonesia', 'semua data');
+    showToggleButton();
+    var info = document.getElementById('satupetaInfo');
+    if (info) info.style.display = 'none';
   }
 
   /* ---- Init ---- */
@@ -2236,6 +2315,7 @@
     var layerSel = document.getElementById('satupetaInputLayer');
     if (layerSel) {
       layerSel.addEventListener('change', function () {
+        state.nationalPage = 0;
         var wantLevel = LEVEL_BY_DUK[layerSel.value];
         if (wantLevel && state.level !== wantLevel) {
           state.level = wantLevel;
@@ -2243,7 +2323,7 @@
           if (levelSel) levelSel.value = wantLevel;
           applyLevelLabels();
         }
-        if (state.selectedBoundary) fetchAndDisplay();
+        if (state.selectedBoundary || state.level === 'indonesia') fetchAndDisplay();
       });
     }
 
