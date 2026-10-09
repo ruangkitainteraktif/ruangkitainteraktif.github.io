@@ -3,7 +3,8 @@
   function initGeoportalSearch() {
     const input = document.getElementById('geoportalSearchInput');
     const container = document.getElementById('geoportalLayerList');
-    if (!input || !container) return;
+    if (!input || !container || input.dataset.geoportalSearchBound) return;
+    input.dataset.geoportalSearchBound = '1';
 
     let searchTimeout = null;
 
@@ -12,8 +13,7 @@
       const query = this.value.trim();
       searchTimeout = setTimeout(function () {
         try {
-          const tree = $(container).jstree(true);
-          if (tree) tree.search(query);
+          if (typeof window.searchGeoportalLocal === 'function') window.searchGeoportalLocal(query);
         } catch (e) {}
       }, 200);
     });
@@ -22,8 +22,7 @@
       if (e.key === 'Escape') {
         this.value = '';
         try {
-          const tree = $(container).jstree(true);
-          if (tree) tree.search('');
+          if (typeof window.searchGeoportalLocal === 'function') window.searchGeoportalLocal('');
         } catch (e) {}
       }
     });

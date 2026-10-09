@@ -1107,27 +1107,6 @@
 
   var GEOPORTAL_LAYER_DATA = [];
 
-  function buildSubtreeFolder(layer, wmsUrl, catTitle, catId) {
-    const children = (layer.children || []).map(child => {
-      const realName = child.id;
-      const nodeId = `${catId}::${layer.id}::${realName}`;
-      GEOPORTAL_LAYER_DATA.push({ id: realName, label: child.label, category: catTitle, wmsUrl });
-      geoportalNodeIndex.set(`${wmsUrl}::${realName}`, nodeId);
-      return {
-        id: nodeId,
-        text: child.label,
-        li_attr: { 'data-level': '2', 'data-wms-url': wmsUrl, 'data-layer-name': realName }
-      };
-    });
-    return {
-      id: `${catId}::${layer.id}`,
-      text: layer.label,
-      children: children,
-      state: { opened: false },
-      li_attr: { 'data-level': '1' }
-    };
-  }
-
   function buildGeoportalTree(layersConfig) {
     const container = document.getElementById('geoportalLayerList');
     if (!container) return;
@@ -1135,46 +1114,97 @@
     GEOPORTAL_LAYER_DATA = [];
     geoportalNodeIndex.clear();
 
-    const treeData = layersConfig.categories.map(cat => {
+    // Index metadata locally, but do not create thousands of jsTree nodes at startup.
+    const categoryById = new Map();
+    const folderById = new Map();
+    const categoryNodes = [];
+    layersConfig.categories.forEach(cat => {
       const wmsUrl = layersConfig.sources[cat.source]?.wmsUrl || GEOPORTAL_WMS_URL;
-      var totalCount = 0;
-      var children;
-      if (cat.layers.length && cat.layers[0].type === 'folder') {
-        children = cat.layers.map(layer => {
-          totalCount += (layer.children || []).length;
-          return buildSubtreeFolder(layer, wmsUrl, cat.title, cat.id);
+      categoryById.set(cat.id, { cat, wmsUrl });
+      let totalCount = 0;
+      const folders = cat.layers.length && cat.layers[0].type === 'folder';
+      if (folders) {
+        cat.layers.forEach(folder => {
+          folderById.set(`${cat.id}::${folder.id}`, { cat, folder, wmsUrl });
+          totalCount += (folder.children || []).length;
+          (folder.children || []).forEach(child => {
+            const nodeId = `${cat.id}::${folder.id}::${child.id}`;
+            GEOPORTAL_LAYER_DATA.push({ id: child.id, label: child.label, category: cat.title, wmsUrl });
+            geoportalNodeIndex.set(`${wmsUrl}::${child.id}`, nodeId);
+          });
         });
       } else {
-        children = cat.layers.map(layer => {
-          if (layer.type === 'arcgis') {
-            // Layer ArcGIS REST: id sudah unik, tidak diprefix.
-            GEOPORTAL_LAYER_DATA.push({ id: layer.id, label: layer.label, category: cat.title, wmsUrl });
-            return {
-              id: layer.id,
-              text: layer.label,
-              li_attr: { 'data-level': '1', 'data-wms-url': wmsUrl }
-            };
-          }
-          const realName = layer.id;
-          const nodeId = `${cat.id}::${realName}`;
-          GEOPORTAL_LAYER_DATA.push({ id: realName, label: layer.label, category: cat.title, wmsUrl });
-          geoportalNodeIndex.set(`${wmsUrl}::${realName}`, nodeId);
-          return {
-            id: nodeId,
-            text: layer.label,
-            li_attr: { 'data-level': '1', 'data-wms-url': wmsUrl, 'data-layer-name': realName }
-          };
+        totalCount = cat.layers.length;
+        cat.layers.forEach(layer => {
+          GEOPORTAL_LAYER_DATA.push({ id: layer.id, label: layer.label, category: cat.title, wmsUrl });
+          if (layer.type !== 'arcgis') geoportalNodeIndex.set(`${wmsUrl}::${layer.id}`, `${cat.id}::${layer.id}`);
         });
-        totalCount = children.length;
       }
-      return {
+      categoryNodes.push({
         id: cat.id,
         text: cat.title + ' <span class="layer-count-badge">' + totalCount + '</span>',
-        children: children,
-        state: { opened: false },
+        children: true,
         li_attr: { 'data-level': '0', 'data-wms-url': wmsUrl }
-      };
+      });
     });
+
+    function layerNode(cat, layer, wmsUrl, folderId) {
+      const isArcgis = layer.type === 'arcgis';
+      const nodeId = isArcgis ? layer.id : (folderId ? `${cat.id}::${folderId}::${layer.id}` : `${cat.id}::${layer.id}`);
+      return {
+        id: nodeId,
+        text: layer.label,
+        li_attr: { 'data-level': folderId ? '2' : '1', 'data-wms-url': wmsUrl, 'data-layer-name': isArcgis ? '' : layer.id }
+      };
+    }
+
+    function getChildren(nodeId) {
+      if (nodeId === '#') return categoryNodes;
+      const categoryEntry = categoryById.get(nodeId);
+      if (categoryEntry) {
+        const { cat, wmsUrl } = categoryEntry;
+        if (cat.layers.length && cat.layers[0].type === 'folder') {
+          return cat.layers.map(folder => ({
+            id: `${cat.id}::${folder.id}`,
+            text: folder.label,
+            children: true,
+            li_attr: { 'data-level': '1', 'data-wms-url': wmsUrl }
+          }));
+        }
+        return cat.layers.map(layer => layerNode(cat, layer, wmsUrl));
+      }
+      const folderEntry = folderById.get(nodeId);
+      if (folderEntry) return (folderEntry.folder.children || []).map(layer => layerNode(folderEntry.cat, layer, folderEntry.wmsUrl, folderEntry.folder.id));
+      return [];
+    }
+
+    function makeSearchTree(query) {
+      const needle = query.toLocaleLowerCase();
+      const results = [];
+      layersConfig.categories.forEach(cat => {
+        const { wmsUrl } = categoryById.get(cat.id);
+        const categoryMatch = cat.title.toLocaleLowerCase().includes(needle);
+        const grouped = cat.layers.length && cat.layers[0].type === 'folder';
+        let children = [];
+        if (grouped) {
+          children = cat.layers.map(folder => {
+            const hits = (folder.children || []).filter(layer => categoryMatch || `${layer.label} ${layer.id}`.toLocaleLowerCase().includes(needle));
+            return hits.length ? { id: `${cat.id}::${folder.id}`, text: folder.label, state: { opened: true }, children: hits.map(layer => layerNode(cat, layer, wmsUrl, folder.id)) } : null;
+          }).filter(Boolean);
+        } else {
+          children = cat.layers.filter(layer => categoryMatch || `${layer.label} ${layer.id}`.toLocaleLowerCase().includes(needle)).map(layer => layerNode(cat, layer, wmsUrl));
+        }
+        if (children.length) results.push({ id: cat.id, text: cat.title, children, state: { opened: true }, li_attr: { 'data-level': '0', 'data-wms-url': wmsUrl } });
+      });
+      return results;
+    }
+
+    let searchQuery = '';
+    window.searchGeoportalLocal = function (query) {
+      searchQuery = String(query || '').trim();
+      const tree = $(container).jstree(true);
+      if (tree) tree.refresh();
+    };
 
     if (window.__geoportalTreeReady) {
       try { $(container).jstree('destroy'); } catch (e) {}
@@ -1182,7 +1212,9 @@
 
     $(container).jstree({
       core: {
-        data: treeData,
+        data: function (node, callback) {
+          callback(searchQuery ? (node.id === '#' ? makeSearchTree(searchQuery) : []) : getChildren(node.id));
+        },
         themes: { dots: true, icons: true },
         check_callback: true,
         animation: 120
@@ -1214,13 +1246,12 @@
         searchTimer = setTimeout(function () {
           const tree = $(container).jstree(true);
           if (!tree) return;
-          if (query) tree.search(query);
-          else tree.clear_search();
+          window.searchGeoportalLocal(query);
         }, 180);
       });
     }
     if (searchInput && searchInput.value.trim()) {
-      $(container).jstree(true).search(searchInput.value.trim());
+      window.searchGeoportalLocal(searchInput.value.trim());
     }
 
     window.__geoportalTreeReady = true;
@@ -1271,10 +1302,6 @@
     .then(cfg => {
       window.__geoportalLayersConfig = cfg;
       buildGeoportalTree(cfg);
-      if (typeof window.registerGeoportalCatalogLayers === 'function') {
-        window.registerGeoportalCatalogLayers(GEOPORTAL_LAYER_DATA);
-      }
-      Object.values(cfg.sources).forEach(s => loadGeoportalCaps(s.wmsUrl).catch(() => {}));
     })
     .catch(err => console.error('[Geoportal] Gagal memuat geoportal-layers.json:', err));
 

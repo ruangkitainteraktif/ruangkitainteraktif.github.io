@@ -3577,7 +3577,7 @@ L.control.scale({
        kecuali Layer Dipin, dan grup ini ikut tertutup supaya aturannya
        seragam. Yang aktif tetap kelihatan lewat badge jumlah di header. */
     if (activeLayers.length > 0) {
-      html += '<div class="lc-category lc-active-group">';
+      html += '<div class="lc-category lc-active-group open">';
       html += '<div class="lc-active-header">';
       html += '<button class="lc-cat-header lc-active-header-btn" type="button">';
       html += '<svg class="lc-cat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
@@ -3610,10 +3610,8 @@ L.control.scale({
         }
         return isOn;
       }).length;
-      /* Katalog utama menampilkan kategori dalam keadaan terbuka saat dibuka.
-         Grup Layer Dipin tetap terpisah; kategori ini sebelumnya selalu
-         tertutup sehingga layer tampak hilang bagi pengguna. */
-      html += '<div class="lc-category' + (cat.geoportalSource ? '' : ' open') + '" data-ci="' + ci + '">';
+      /* Semua kategori mulai tertutup agar katalog lebih ringan dirender. */
+      html += '<div class="lc-category" data-ci="' + ci + '">';
       html += '<button class="lc-cat-header" type="button">';
       html += '<svg class="lc-cat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
       html += '<span class="lc-cat-title">' + cat.cat + '</span>';
