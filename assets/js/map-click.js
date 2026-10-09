@@ -3,7 +3,7 @@
     if (document.getElementById('tab-cuaca')?.classList.contains('active') === true) return true;
     var geotoolsTab = document.getElementById('tab-geotools');
     if (geotoolsTab && geotoolsTab.classList.contains('active')) {
-      var geoPulsePanel = document.getElementById('geotoolsTabGeoPulse');
+      var geoPulsePanel = document.getElementById('geotoolsTabGeoDisaster');
       if (geoPulsePanel && geoPulsePanel.classList.contains('active')) {
         var infoCuacaPanel = document.getElementById('gempa-subtab-infocuaca');
         if (infoCuacaPanel && infoCuacaPanel.classList.contains('active')) return true;

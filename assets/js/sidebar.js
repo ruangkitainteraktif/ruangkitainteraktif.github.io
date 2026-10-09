@@ -214,10 +214,10 @@
     for (var j = 0; j < panels.length; j++) panels[j].classList.remove('active');
     var target = document.getElementById(tabId);
     if (target) target.classList.add('active');
-    if (tabId === 'geotoolsTabDemnas' && window.DemnasDownload && typeof window.DemnasDownload.load === 'function') {
+    if (tabId === 'geotoolsTabGeoportal' && window.DemnasDownload && typeof window.DemnasDownload.load === 'function') {
       window.DemnasDownload.load().catch(function () {});
     }
-    if (tabId === 'geotoolsTabGeoPulse') {
+    if (tabId === 'geotoolsTabGeoDisaster') {
       var gempaPanel = document.getElementById('gempa-subtab-gempa');
       if (gempaPanel && gempaPanel.classList.contains('active') && typeof loadEarthquakeData === 'function') loadEarthquakeData();
     }
@@ -229,7 +229,7 @@
        * memanggilnya langsung. */
       if (typeof window.geopanganAutoLoad === 'function') window.geopanganAutoLoad();
     }
-    if (tabId === 'geotoolsTabGeoTrans') {
+    if (tabId === 'geotoolsTabGeonusa') {
       if (typeof window.loadCctvData === 'function') {
         window.loadCctvData().then(function () {
           if (typeof window.renderCctvList === 'function') window.renderCctvList();

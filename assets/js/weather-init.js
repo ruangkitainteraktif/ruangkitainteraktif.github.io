@@ -22,7 +22,7 @@
   window.closeWelcomeModal = closeWelcomeModal;
 
   window.resetGeoPulseLayers = function () {
-    var panel = document.getElementById('geotoolsTabGeoPulse');
+    var panel = document.getElementById('geotoolsTabGeoDisaster');
     if (!panel) return;
 
     var airVisualIds = {

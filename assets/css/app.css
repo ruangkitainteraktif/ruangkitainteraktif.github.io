@@ -6548,7 +6548,7 @@
        tombol hasil pencarian (class="cctv-card cctv-result-item"). Yang
        dihapus hanya .cctv-sheet-handle, yang tidak lagi ada di markup. */
     #cctv-search-sheet { margin-top: 10px; }
-    #geotoolsTabGeoTrans #cctv-search-sheet { margin-top: 12px; }
+    #geotoolsTabGeonusa #cctv-search-sheet { margin-top: 12px; }
 
     /* ── Hotspot Sidebar (Desktop: kanan) ── */
     #hotspot-sheet {
@@ -6952,6 +6952,7 @@
     [data-theme="dark"] :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-head { border-bottom-color: var(--border-color); }
     /* ── GeoTools Bottom Sheet (Desktop) ── */
     #geotools-sheet {
+      --desktop-sheet-width: 37vw;
       position: fixed; top: 120px; right: 12px; bottom: 12px;
       width: min(380px, calc(100vw - 106px));
       border-radius: 16px; z-index: 1100;

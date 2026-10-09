@@ -3,7 +3,7 @@
 
   const DATA_URL = 'assets/data/mitradarat.json';
   const MARKER_LIMIT = 5000;
-  const panel = document.getElementById('geotoolsTabGeoTrans');
+  const panel = document.getElementById('geotoolsTabGeonusa');
   const searchInput = document.getElementById('geotransSearch');
   const categorySelect = document.getElementById('geotransCategory');
   const operatorSelect = document.getElementById('geotransOperator');
