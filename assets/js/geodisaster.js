@@ -4,7 +4,6 @@
   var KODE_URL = 'assets/data/kode_wilayah.json';
   var LOCAL_PROVINCE_BOUNDARY_URL = 'assets/data/bps/geojson/provinsi.geojson';
   var SDA_URL = 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer';
-  var DEM_SAMPLES_URL = 'https://geoservices.big.go.id/raster/rest/services/DEMNAS/DEM_Indonesia/ImageServer/getSamples';
   var provinces = [];
   var analysisRequest = 0;
   var chart = null;
@@ -153,27 +152,24 @@
   }
 
   async function demStats(boundary) {
-    var points = terrainPoints(boundary).map(function (feature) { return feature.geometry.coordinates; });
-    var geometry = JSON.stringify({ points: points, spatialReference: { wkid: 4326 } });
-    var params = { geometry: geometry, geometryType: 'esriGeometryMultipoint',
-      sampleCount: String(points.length), returnFirstValueOnly: 'false', interpolation: 'RSP_BilinearInterpolation',
-      outFields: '*', f: 'json' };
-    var response = await fetch(paramsUrl(DEM_SAMPLES_URL, params));
-    if (!response.ok) throw new Error('DEMNAS merespons HTTP ' + response.status + '.');
-    var data = await response.json();
-    if (data.error) throw new Error(data.error.message || 'Sampel DEMNAS gagal.');
-    var values = (data.samples || []).map(function (sample) {
-      var props = sample.attributes || sample.properties || {};
-      var raw = sample.value != null ? sample.value : (props.RASTERVALU != null ? props.RASTERVALU : (props.PixelValue != null ? props.PixelValue : props.value));
-      if (Array.isArray(raw)) raw = raw[0];
-      return number(raw);
-    }).filter(function (value) { return value != null && value > -100 && value < 9000; }).sort(function (a, b) { return a - b; });
-    if (!values.length) throw new Error('DEMNAS tidak mengembalikan nilai elevasi untuk wilayah ini.');
+    if (typeof window.fetchTerrariumElevations !== 'function') throw new Error('Sumber elevasi global belum tersedia.');
+    var pointFeatures = terrainPoints(boundary);
+    var points = pointFeatures.map(function (feature) {
+      return { lat: feature.geometry.coordinates[1], lng: feature.geometry.coordinates[0] };
+    });
+    var sample = await window.fetchTerrariumElevations(points, bboxOf(boundary), function (_, message) {
+      status('Mengambil elevasi global: ' + message);
+    });
+    var values = sample.results.map(function (item) { return number(item.elev); })
+      .filter(function (value) { return value != null && value > -100 && value < 9000; })
+      .sort(function (a, b) { return a - b; });
+    if (!values.length) throw new Error('Sumber elevasi global tidak mengembalikan nilai untuk wilayah ini.');
     var below = values.filter(function (value) { return value <= 10; }).length;
     var sum = values.reduce(function (a, b) { return a + b; }, 0);
     return { count: values.length, mean: sum / values.length, min: values[0], max: values[values.length - 1],
       p10: values[Math.floor((values.length - 1) * .10)], p90: values[Math.floor((values.length - 1) * .90)],
-      lowlandPct: below / values.length * 100 };
+      lowlandPct: below / values.length * 100, coverage: sample.coverage,
+      resolutionM: sample.resolutionM, source: 'AWS Terrain Tiles (Terrarium)' };
   }
 
   function scoreClass(score) {
@@ -201,8 +197,19 @@
   function render(result) {
     var summary = $('gd-summary');
     var risk = result.risk;
+    var scoreValue = risk.score == null ? 0 : Math.max(0, Math.min(100, Math.round(risk.score)));
+    var scoreText = risk.score == null ? '—' : fmt(risk.score, 0);
+    var scoreDescription = risk.score == null ? 'Data terbatas' : risk.className.toUpperCase() + ', skor ' + fmt(risk.score, 0) + ' dari 100';
     summary.innerHTML = '<div><strong>' + esc(result.name) + '</strong><small>Indeks komposit skrining tingkat provinsi · kelengkapan bobot ' + fmt(risk.completeness, 0) + '% · batas: ' + esc(result.boundary.properties.source) + '</small></div>' +
-      '<span class="gd-score" data-level="' + esc(risk.className) + '">' + (risk.score == null ? 'Data terbatas' : esc(risk.className.toUpperCase()) + ' · ' + fmt(risk.score, 0)) + '</span>';
+      '<div class="gd-score-gauge" data-level="' + esc(risk.className) + '" style="--gd-score-angle:' + (scoreValue * 3.6) + 'deg" role="img" aria-label="' + esc(scoreDescription) + '"><span class="gd-score-value">' + esc(scoreText) + '</span><span class="gd-score-label">' + (risk.score == null ? 'TERBATAS' : esc(risk.className.toUpperCase())) + '</span></div>';
+    var previousGuide = summary.nextElementSibling;
+    if (previousGuide && previousGuide.classList.contains('gd-reading-guide')) previousGuide.remove();
+    summary.insertAdjacentHTML('afterend', '<div class="gd-reading-guide"><strong>Cara membaca hasil</strong><ul>' +
+      '<li><b>Skor 0–100:</b> makin tinggi angkanya, makin kuat indikasi risiko menurut indikator yang dianalisis.</li>' +
+      '<li><b>Rendah, sedang, tinggi:</b> kategori ringkas dari skor; bukan kepastian akan terjadi bencana.</li>' +
+      '<li><b>Kelengkapan bobot:</b> menunjukkan berapa bagian indikator yang berhasil dihitung. 100% berarti semua indikator tersedia untuk perhitungan, bukan jaminan data lapangan lengkap atau akurat.</li>' +
+      '<li><b>Batas wilayah:</b> menunjukkan polygon provinsi yang dipakai untuk merangkum data.</li>' +
+      '</ul></div>');
     var rows = '';
     rows += row('Neraca air BIG', result.surface.deficitPct == null ? 'Tidak ada kelas defisit/surplus terbaca' : fmt(result.surface.deficitPct, 1) + '% area overlay defisit', risk.components[0].score,
       fmt(result.surface.coveragePct, 1) + '% wilayah · ' + result.surface.featureCount + ' poligon');
@@ -210,17 +217,46 @@
       fmt(result.groundwater.featureCount, 0) + ' unit cekungan');
     rows += row('Infrastruktur air tanah BIG', fmt(result.wells.count, 0) + ' titik sumur/infrastruktur', null,
       result.wells.withDischarge ? fmt(result.wells.dischargeTotal, 2) + ' m³/detik tercatat' : 'Debit tidak tercatat');
-    rows += row('Elevasi DEMNAS', 'Rerata ' + fmt(result.terrain.mean, 1) + ' m · P10–P90 ' + fmt(result.terrain.p10, 1) + '–' + fmt(result.terrain.p90, 1) + ' m', risk.components[2].score,
-      fmt(result.terrain.lowlandPct, 1) + '% sampel ≤10 m · n=' + result.terrain.count);
+    rows += row('Elevasi global (Terrarium)', 'Rerata ' + fmt(result.terrain.mean, 1) + ' m · P10–P90 ' + fmt(result.terrain.p10, 1) + '–' + fmt(result.terrain.p90, 1) + ' m', risk.components[2].score,
+      fmt(result.terrain.lowlandPct, 1) + '% sampel ≤10 m · n=' + result.terrain.count + (result.terrain.resolutionM ? ' · ~' + fmt(result.terrain.resolutionM, 0) + ' m/piksel' : ''));
     $('gd-table-body').innerHTML = rows;
     $('gd-results').hidden = false;
     renderChart(risk);
     renderMethod(result);
+    var mapLayerToggle = $('gd-map-layer-toggle');
     if (window.map && window.L) {
       if (provinceLayer) window.map.removeLayer(provinceLayer);
-      provinceLayer = window.L.geoJSON(result.boundary, { style: { color: '#0f766e', weight: 2, fillColor: '#2dd4bf', fillOpacity: .08 } }).addTo(window.map);
+      var colors = { rendah: '#059669', sedang: '#d97706', tinggi: '#dc2626', terbatas: '#64748b' };
+      var color = colors[risk.className] || colors.terbatas;
+      var scoreLabel = risk.score == null ? 'Data terbatas' : risk.className.toUpperCase() + ' · ' + fmt(risk.score, 0) + '/100';
+      provinceLayer = window.L.geoJSON(result.boundary, {
+        style: { color: color, weight: 2.5, fillColor: color, fillOpacity: .24 },
+        onEachFeature: function (_, layer) {
+          layer.bindPopup('<strong>Water Risk Analysis</strong><br>' + esc(result.name) + '<br>Risiko: ' + esc(scoreLabel) + '<br>Kelengkapan data: ' + fmt(risk.completeness, 0) + '%');
+        }
+      });
+      if (mapLayerToggle) {
+        mapLayerToggle.checked = true;
+        mapLayerToggle.disabled = false;
+      }
+      provinceLayer.addTo(window.map);
       window.map.fitBounds(provinceLayer.getBounds(), { padding: [28, 28], maxZoom: 8 });
+      $('gd-reset-polygon').disabled = false;
     }
+  }
+
+  function resetPolygon() {
+    if (provinceLayer && window.map && window.map.hasLayer(provinceLayer)) window.map.removeLayer(provinceLayer);
+    provinceLayer = null;
+    $('gd-map-layer-toggle').checked = false;
+    $('gd-map-layer-toggle').disabled = true;
+    $('gd-reset-polygon').disabled = true;
+  }
+
+  function toggleMapLayer(event) {
+    if (!provinceLayer || !window.map) return;
+    if (event.currentTarget.checked) provinceLayer.addTo(window.map);
+    else if (window.map.hasLayer(provinceLayer)) window.map.removeLayer(provinceLayer);
   }
 
   function renderChart(risk) {
@@ -241,13 +277,13 @@
 
   function renderMethod(result) {
     $('gd-method-body').innerHTML =
-      '<p><b>Indeks Water Risk 2026</b> adalah skrining spasial heuristik, bukan prakiraan atau penilaian resmi. Skor 0–100 dibentuk dari neraca air defisit (50%), proporsi wilayah di luar cekungan air tanah terpetakan (30%), dan proporsi sampel DEMNAS pada elevasi ≤10 m (20%). Kelas: 0–33 rendah, 34–66 sedang, 67–100 tinggi. Bobot dihitung ulang hanya dari indikator yang tersedia; kelengkapan menunjukkan bobot data yang berhasil didapat.</p>' +
+      '<p><b>Water Risk Analysis</b> adalah skrining spasial heuristik, bukan prakiraan atau penilaian resmi. Skor 0–100 dibentuk dari neraca air defisit (50%), proporsi wilayah di luar cekungan air tanah terpetakan (30%), dan proporsi sampel elevasi global pada elevasi ≤10 m (20%). Kelas: 0–33 rendah, 34–66 sedang, 67–100 tinggi. Bobot dihitung ulang hanya dari indikator yang tersedia; kelengkapan menunjukkan bobot data yang berhasil didapat.</p>' +
       '<p><b>Air permukaan:</b> kelas defisit/surplus dan geometri Peta Ketersediaan Air BIG, skala 1:250.000, sumber studi Ditjen SDA 2016. Skor memakai luas potongan polygon yang terklasifikasi, bukan volume air atau kondisi real-time.</p>' +
       '<p><b>Air tanah:</b> cakupan Cekungan Air Tanah BIG skala 1:250.000 dan titik infrastruktur Peta Air Tanah. Cekungan terpetakan tidak membuktikan debit, mutu, atau keberlanjutan akuifer; jumlah titik sumur juga bukan inventaris lengkap.</p>' +
-      '<p><b>Topografi:</b> DEMNAS BIG disampel merata pada grid adaptif (maksimum 150 titik). Ambang 10 m hanya proxy keterpaparan dataran rendah; bukan peta banjir, pasang, atau genangan. Rerata dan rentang elevasi adalah statistik sampel, bukan seluruh sel DEM.</p>' +
+      '<p><b>Topografi:</b> elevasi global AWS Terrain Tiles (format Terrarium) disampel pada grid adaptif, maksimum 150 titik. Resolusi efektif mengikuti zoom tile dan berbeda antarwilayah. Ambang 10 m hanya proxy keterpaparan dataran rendah; bukan peta banjir, pasang, atau genangan. Rerata dan rentang elevasi adalah statistik sampel, bukan seluruh sel DEM.</p>' +
       '<p><b>Batas wilayah:</b> analisis memakai ' + esc(result.boundary.properties.source) + ' untuk polygon provinsi. Batas diambil lokal; modul ini tidak meminta layanan batas administrasi BIG saat runtime.</p>' +
       '<p><b>Batas analisis:</b> hasil bergantung pada ketersediaan layanan BIG dan skala/kemutakhiran masing-masing sumber. Data neraca air yang dipakai beracuan studi 2016, sehingga skor tidak mewakili ketersediaan air tahun 2026 secara real-time.</p>' +
-      '<p>Sumber: <a href="https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/layers" target="_blank" rel="noopener">BIG SatuPeta · Sumber Daya Alam dan Lingkungan</a> · <a href="https://geoservices.big.go.id/raster/rest/services/DEMNAS/DEM_Indonesia/ImageServer" target="_blank" rel="noopener">DEMNAS BIG</a> · batas provinsi dari GeoJSON lokal BPS.</p>';
+      '<p>Sumber: <a href="https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/layers" target="_blank" rel="noopener">BIG SatuPeta · Sumber Daya Alam dan Lingkungan</a> · <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener">AWS Terrain Tiles (elevasi Terrarium global)</a> · batas provinsi dari GeoJSON lokal BPS.</p>';
   }
 
   function populateProvinces() {
@@ -285,7 +321,7 @@
     try {
       var boundary = await loadLocalProvinceBoundary(selected);
       var bbox = bboxOf(boundary);
-      status('Menganalisis overlay SatuPeta BIG dan mengambil sampel DEMNAS…');
+      status('Menganalisis overlay SatuPeta BIG dan mengambil sampel elevasi global…');
       var tasks = await Promise.allSettled([
         querySda(2, bbox, 'kls_nrcair,nrc_air,kls_ipa,kls_ktrs,nm_inf,luas_km2,thn_dat', 3000),
         querySda(42, bbox, 'namobj', 3000),
@@ -302,7 +338,7 @@
       var surfaceFeatures = get(0, 'Neraca air');
       var basinFeatures = get(1, 'Cekungan air tanah');
       var wellFeatures = get(2, 'Infrastruktur air tanah');
-      var terrain = get(3, 'DEMNAS');
+      var terrain = get(3, 'Elevasi global');
       var surface = overlayStats(boundary, surfaceFeatures, 'surface');
       var groundwaterOverlay = overlayStats(boundary, basinFeatures, 'groundwater');
       var groundwater = { coveragePct: groundwaterOverlay.coveredArea > 0 ? groundwaterOverlay.coveragePct : null,
@@ -330,6 +366,8 @@
       status(this.value ? 'Provinsi dipilih. Jalankan analisis untuk memuat data.' : 'Pilih provinsi.');
     });
     $('gd-run').addEventListener('click', run);
+    $('gd-map-layer-toggle').addEventListener('change', toggleMapLayer);
+    $('gd-reset-polygon').addEventListener('click', resetPolygon);
     initialize();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind, { once: true });

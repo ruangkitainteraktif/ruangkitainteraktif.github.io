@@ -168,7 +168,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
   <link rel="stylesheet" href="assets/css/app.css?v=20261009-geotrans-moved-to-geonusa">
-  <link rel="stylesheet" href="assets/css/geodisaster.css?v=2">
+  <link rel="stylesheet" href="assets/css/geodisaster.css?v=5">
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
   <link rel="stylesheet" href="assets/css/geotrans-mitradarat.css?v=20261006-geospatial-search-ui">
@@ -2308,6 +2308,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                       <label for="gd-province-select">Pilih provinsi</label>
                       <select id="gd-province-select"><option value="">Memuat daftar provinsiÃ¢â‚¬Â¦</option></select>
                       <button id="gd-run" type="button" disabled>Analisis Water Risk</button>
+                      <label class="gd-map-toggle"><input id="gd-map-layer-toggle" type="checkbox" disabled><span>Tampilkan hasil Water Risk di peta</span></label>
+                      <button id="gd-reset-polygon" type="button" disabled>Reset Polygon</button>
                       <div id="gd-status" role="status" aria-live="polite">Memuat daftar provinsiÃ¢â‚¬Â¦</div>
                     </div>
                     <div id="gd-results" hidden>
@@ -3809,7 +3811,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
      header CORS. -->
 <script src="assets/js/geotani-geooss.js"></script>
   <script src="assets/js/sawah-dilindungi.js"></script>
-  <script src="assets/js/geodisaster.js?v=5"></script>
+  <script src="assets/js/geodisaster.js?v=9"></script>
   <script src="assets/js/fasilitas-umum.js"></script>
   <script src="assets/js/unified-search.js"></script>
   <script src="assets/js/choropleth.js"></script>
