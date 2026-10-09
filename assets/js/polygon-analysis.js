@@ -3267,13 +3267,22 @@
   });
 
   function openPanel(expand) {
-    var dd = document.querySelector('.geotools-dropdown');
-    if (dd) {
-      dd.value = 'geotoolsTabGeoFarm';
-      dd.dispatchEvent(new Event('change'));
-    }
-    if (typeof window.openTab === 'function') {
-      window.openTab(null, 'tab-geotools');
+    // Pergantian kategori GeoTools maupun tab utama biasanya menjalankan
+    // resetAllLayers(). Saat membuka daftar GeoFarm, reset itu akan menghapus
+    // layer gambar dan item yang justru sedang diminta untuk ditampilkan.
+    var wasResetting = window.__resetAllLayersRunning === true;
+    window.__resetAllLayersRunning = true;
+    try {
+      var dd = document.querySelector('.geotools-dropdown');
+      if (dd) {
+        dd.value = 'geotoolsTabGeoFarm';
+        dd.dispatchEvent(new Event('change'));
+      }
+      if (typeof window.openTab === 'function') {
+        window.openTab(null, 'tab-geotools');
+      }
+    } finally {
+      if (!wasResetting) window.__resetAllLayersRunning = false;
     }
     keepSatelliteBasemap();
     hideGeotoolsSidebar();
@@ -5180,8 +5189,8 @@
    * berwarna di peta; menjalankannya diam-diam akan mengubah peta di belakang
    * layar tanpa user meminta apa pun.
    *
-   * Sheet analisisnya juga tidak dibuka di sini. Pemanggilnya tombol
-   * "Buka Analisis" di tab GeoTools (#geofarmOpenAnalysisBtn).
+   * Panel tidak dibuka otomatis; tombol Buka Analisis ditampilkan setelah
+   * polygon terdaftar, dan analisis raster dijalankan manual per kartu.
    */
   function addPolygonItem(layer, areaHa, opts) {
     if (!layer || !layer.getLatLngs) return null;

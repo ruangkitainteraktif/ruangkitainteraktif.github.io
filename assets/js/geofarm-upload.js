@@ -363,6 +363,24 @@
       try { window.setBaseMap('google-satellite-kh'); } catch (e) { /* abaikan */ }
     }
 
+    // Upload dari sidebar membuat sidebar diciutkan di atas. Pastikan tombol
+    // Buka Analisis tetap terlihat di GeoTools sheet, tanpa membuka panel
+    // analisis secara otomatis.
+    var wasResetting = window.__resetAllLayersRunning === true;
+    window.__resetAllLayersRunning = true;
+    try {
+      if (typeof window.openGeotoolsSheet === 'function') window.openGeotoolsSheet();
+      var geotoolsTab = document.querySelector('.geotools-dropdown');
+      if (geotoolsTab && geotoolsTab.value !== 'geotoolsTabGeoFarm') {
+        geotoolsTab.value = 'geotoolsTabGeoFarm';
+        geotoolsTab.dispatchEvent(new Event('change'));
+      }
+    } catch (e) {
+      console.warn('[GeoFarm] Gagal menampilkan tombol Buka Analisis:', e);
+    } finally {
+      if (!wasResetting) window.__resetAllLayersRunning = false;
+    }
+
     /* Peta diperlebar dulu: sidebar yang baru ditutup masih men-placeholder
        ruang, jadi invalidateSize ditunda. Gerakkan layar dilakukan setelah
        itu supaya tidak ada kedipan. */

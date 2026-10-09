@@ -14492,7 +14492,7 @@ details[open] > .gt-card-head::after {
    Warnanya hijau, berbeda dari dua tombol di atasnya: biru untuk "Buat
    Polygon", amber untuk "Unggah Polygon". Tiga warna itu menandai kelompok
    aksi yang berbeda, jadi urutannya terbaca sebagai langkah. */
-#geotoolsTabGeoFarm .geofarm-open-analysis-btn {
+.geofarm-open-analysis-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14512,16 +14512,16 @@ details[open] > .gt-card-head::after {
   box-shadow: 0 2px 8px rgba(22, 163, 74, .25);
   transition: background .2s, box-shadow .2s, transform .2s;
 }
-#geotoolsTabGeoFarm .geofarm-open-analysis-btn:hover {
+.geofarm-open-analysis-btn:hover {
   background: linear-gradient(135deg, #15803d, #166534);
   box-shadow: 0 4px 12px rgba(22, 163, 74, .35);
   transform: translateY(-1px);
 }
-#geotoolsTabGeoFarm .geofarm-open-analysis-btn:focus-visible {
+.geofarm-open-analysis-btn:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-#geotoolsTabGeoFarm .geofarm-open-analysis-btn[hidden] { display: none; }
+.geofarm-open-analysis-btn[hidden] { display: none !important; }
 .geofarm-open-analysis-label { white-space: nowrap; }
 /* Kedua badge mengikuti gaya .pa-count yang sudah ada, tapi kontrasnya
    dibalik karena latar tombol sudah hijau. */

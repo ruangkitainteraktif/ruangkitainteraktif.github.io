@@ -36,12 +36,9 @@
   }
 
   /**
-   * Mengembalikan GeoTools ke tab GeoFarm setelah sesi gambar selesai.
-   *
-   * Sheet analisis tidak muncul otomatis setelah polygon dibuat, jadi
-   * tombol "Buka Analisis" di tab ini adalah satu-satunya jalan membukanya.
-   * Tanpa langkah ini user selesai menggambar lalu dibiarkan menatap peta
-   * kosong tanpa petunjuk ke mana harus pergi.
+   * Mengembalikan GeoTools ke tab GeoFarm setelah sesi gambar selesai,
+   * supaya tombol Buka Analisis yang baru muncul dapat dijangkau. Panelnya
+   * sendiri tetap dibuka manual oleh pengguna.
    *
    * Dua hal yang harus dilakukan, dan urutannya penting:
    * 1. Buka #geotools-sheet. Hook onOpen-nya memindahkan isi #tab-geotools
@@ -256,8 +253,8 @@
       clearPendingStop();
       endGeofarmDrawSession();
       markButtonBusy(false);
-      // Kembalikan sheet GeoTools ke tab GeoFarm. Sheet analisis tidak
-      // dibuka otomatis; tombol "Buka Analisis" di tab itu yang memanggilnya.
+      // Kembalikan sheet GeoTools ke tab GeoFarm agar tombol Buka Analisis
+      // terlihat. Panel analisis tidak dibuka otomatis.
       returnToGeoFarmTab();
     };
     pendingStop = stop;
