@@ -1,4 +1,4 @@
-/* Reuse the Layer Catalog donation banner across application sheets. */
+/* Add the RUANGKITA donation card to application sheets. */
 (function () {
   'use strict';
 
@@ -21,20 +21,25 @@
     banner.className = 'lc-donation-banner sheet-donation-banner';
 
     var message = document.createElement('div');
-    message.className = 'lc-donation-text';
-    message.textContent = 'Dukung RuangKita';
-    banner.appendChild(message);
+    message.className = 'lc-donation-copy';
+    message.innerHTML = '<span class="lc-donation-eyebrow">DUKUNG PETA INDONESIA</span><strong class="lc-donation-text">Bantu RUANGKITA terus berkembang</strong><span class="lc-donation-note">Donasi Anda membantu biaya server, data, dan fitur baru.</span>';
+    var mark = document.createElement('span');
+    mark.className = 'lc-donation-mark';
+    mark.setAttribute('aria-hidden', 'true');
+    mark.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg>';
+    banner.append(mark, message);
 
     var buttons = document.createElement('div');
     buttons.className = 'lc-donation-btns';
     [
-      { label: 'Saweria', href: 'https://saweria.co/maspannn', className: 'lc-donation-saweria' },
+      { label: 'Donasi', href: 'https://saweria.co/maspannn', className: 'lc-donation-saweria' },
       { label: 'PayPal', href: 'https://www.paypal.com/paypalme/panjidanutirto', className: 'lc-donation-paypal' }
     ].forEach(function (item) {
       var link = document.createElement('a');
       link.href = item.href;
       link.target = '_blank';
-      link.rel = 'noopener';
+      link.rel = 'noopener noreferrer';
+      if (item.label === 'PayPal') link.setAttribute('aria-label', 'Donasi melalui PayPal');
       link.className = 'lc-donation-btn ' + item.className;
       link.textContent = item.label;
       buttons.appendChild(link);
@@ -43,74 +48,13 @@
     return banner;
   }
 
-  function createSponsoredAd(sheet) {
-    var ad = document.createElement('section');
-    ad.className = 'lc-sponsored-ad sheet-sponsored-ad';
-    ad.setAttribute('aria-label', 'Iklan');
-    ad.innerHTML = '<button class="lc-ad-close" type="button" aria-label="Tutup iklan" title="Tutup iklan">&times;</button><div class="lc-sponsored-copy"><span class="lc-sponsored-tag">IKLAN</span><span class="lc-sponsored-title">Temukan sesuatu yang menarik</span></div><div class="lc-ad-viewport"><div class="lc-ad-frame"></div></div>';
-    ad.querySelector('.lc-ad-close').addEventListener('click', function (event) {
-      event.stopPropagation();
-      sheet.dataset.sponsoredAdDismissed = 'true';
-      if (ad._resizeObserver) ad._resizeObserver.disconnect();
-      ad.remove();
-    });
-    var frame = ad.querySelector('.lc-ad-frame');
-    var viewport = ad.querySelector('.lc-ad-viewport');
-    var activeFormat = null;
-    function fitAd() {
-      var availableWidth = viewport.clientWidth;
-      if (availableWidth <= 0) return;
-      var format = { key: '07e86776906aabd9b6e8d43b1c3c1096', width: 728, height: 90 };
-      var scale = Math.min(1, availableWidth / format.width);
-      frame.style.width = format.width + 'px';
-      frame.style.height = format.height + 'px';
-      frame.style.transform = 'scale(' + scale + ')';
-      frame.style.transformOrigin = 'top left';
-      viewport.style.height = (format.height * scale) + 'px';
-      if (activeFormat && activeFormat.key === format.key) return;
-      activeFormat = format;
-      var iframe = document.createElement('iframe');
-      iframe.title = 'Iklan sponsor';
-      iframe.width = format.width;
-      iframe.height = format.height;
-      iframe.loading = 'lazy';
-      iframe.scrolling = 'no';
-      iframe.frameBorder = '0';
-      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-      iframe.style.width = format.width + 'px';
-      iframe.style.maxWidth = 'none';
-      iframe.style.height = format.height + 'px';
-      iframe.srcdoc = '<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0"><script>var atOptions={key:"' + format.key + '",format:"iframe",height:' + format.height + ',width:' + format.width + ',params:{}};</script><script src="https://www.highrevenueformat.com/' + format.key + '/invoke.js"></script></body></html>';
-      frame.replaceChildren(iframe);
-    }
-    fitAd();
-    if (window.ResizeObserver) {
-      ad._resizeObserver = new ResizeObserver(fitAd);
-      ad._resizeObserver.observe(viewport);
-    } else {
-      window.addEventListener('resize', fitAd, { passive: true });
-    }
-    return ad;
-  }
-
   function addDonationBanners() {
     SHEET_CONTENTS.forEach(function (selector) {
       document.querySelectorAll(selector).forEach(function (content) {
-        var sheet = content.parentElement;
-        var banner = sheet.querySelector(':scope > .sheet-donation-banner');
+        var banner = content.querySelector(':scope > .sheet-donation-banner');
         if (!banner) {
           banner = createDonationBanner();
-          var header = Array.prototype.find.call(sheet.children, function (child) {
-            return /(?:^|\s)(?:[\w-]*-head|pa-head)(?:\s|$)/.test(child.className || '');
-          });
-          if (header) header.insertAdjacentElement('afterend', banner);
-          else content.insertBefore(banner, content.firstChild);
-        }
-        banner.style.margin = '0 0 12px';
-        var ad = sheet.querySelector(':scope > .sheet-sponsored-ad');
-        if (!ad && sheet.dataset.sponsoredAdDismissed !== 'true') {
-          ad = createSponsoredAd(sheet);
-          banner.insertAdjacentElement('afterend', ad);
+          content.insertBefore(banner, content.firstChild);
         }
       });
     });

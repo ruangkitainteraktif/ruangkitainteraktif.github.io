@@ -3291,6 +3291,7 @@ L.control.scale({
 
   var _layerCatalogOpen = false;
   var _layerCatalogState = {};
+  var _geoportalCatalogIds = Object.create(null);
   var _pinnedLayers = [];
   var PINNED_MAX = 10;
   var _pinStorageKey = 'ruangkita-pinned-layers';
@@ -3407,7 +3408,10 @@ L.control.scale({
   function syncLayerCatalogState() {
     document.querySelectorAll('.lc-item input[type="checkbox"]').forEach(function(cb) {
       var el = findLayerById(cb.dataset.layerId);
-      if (el) {
+      if (cb.dataset.geoportalKey && typeof window.isGeoportalCatalogLayerActive === 'function') {
+        cb.checked = window.isGeoportalCatalogLayerActive(cb.dataset.geoportalKey);
+        _layerCatalogState[cb.dataset.layerId] = cb.checked;
+      } else if (el) {
         cb.checked = el.checked;
       } else if (cb.dataset.layerId === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') {
         cb.checked = isHujanLayerActive();
@@ -3424,16 +3428,63 @@ L.control.scale({
     });
   };
 
+  window.registerGeoportalCatalogLayers = function (sourceLayers) {
+    LAYER_CATALOG_DATA = LAYER_CATALOG_DATA.filter(function (category) { return !category.geoportalSource; });
+    _geoportalCatalogIds = Object.create(null);
+    var sources = Object.create(null);
+    (sourceLayers || []).forEach(function (sourceLayer, index) {
+      var url = sourceLayer.wmsUrl || '';
+      if (!url) return;
+      if (!sources[url]) sources[url] = { groups: Object.create(null), order: [] };
+      var source = sources[url];
+      var groupName = sourceLayer.category || 'Layer lainnya';
+      if (!source.groups[groupName]) { source.groups[groupName] = []; source.order.push(groupName); }
+      var key = url + '::' + sourceLayer.id;
+      var id = 'geoportal-hub-' + index;
+      _geoportalCatalogIds[key] = id;
+      if (typeof window.isGeoportalCatalogLayerActive === 'function') {
+        _layerCatalogState[id] = window.isGeoportalCatalogLayerActive(key);
+      }
+      source.groups[groupName].push({ id: id, label: sourceLayer.label || sourceLayer.id, geoportalKey: key });
+    });
+    Object.keys(sources).forEach(function (url) {
+      var source = sources[url];
+      var category = {
+        cat: source.order[0] || 'GeoPortal',
+        geoportalSource: true
+      };
+      if (source.order.length === 1) {
+        category.layers = source.groups[source.order[0]];
+      } else {
+        category.subcats = source.order.map(function (name) { return { subcat: name, layers: source.groups[name] }; });
+      }
+      LAYER_CATALOG_DATA.push(category);
+    });
+    var dropdown = document.getElementById('layerCatalogDropdown');
+    if (dropdown && dropdown.dataset.built) buildLayerCatalog(dropdown);
+  };
+
+  window.setGeoportalCatalogLayerState = function (key, checked) {
+    var id = _geoportalCatalogIds[key];
+    if (!id) return;
+    _layerCatalogState[id] = !!checked;
+    document.querySelectorAll('.lc-item input[type="checkbox"]').forEach(function (checkbox) {
+      if (checkbox.dataset.layerId === id) {
+        checkbox.checked = !!checked;
+        updateCatCount(checkbox.closest('.lc-category'));
+      }
+    });
+    var dropdown = document.getElementById('layerCatalogDropdown');
+    if (dropdown) delete dropdown.dataset.built;
+  };
+
   function buildLayerCatalog(container) {
-    /* Pertahankan slot iklan agar provider tidak dimuat ulang saat katalog
-       dirender kembali setelah layer/pin berubah. */
-    var sponsoredAd = container.querySelector('.lc-sponsored-ad');
-    if (sponsoredAd && sponsoredAd.parentNode) sponsoredAd.parentNode.removeChild(sponsoredAd);
     var html = '<div class="lc-donation-banner">' +
-      '<div class="lc-donation-text">Dukung RuangKita</div>' +
+      '<div class="lc-donation-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg></div>' +
+      '<div class="lc-donation-copy"><span class="lc-donation-eyebrow">DUKUNG PETA INDONESIA</span><strong class="lc-donation-text">Bantu RUANGKITA terus berkembang</strong><span class="lc-donation-note">Donasi Anda membantu biaya server, data, dan fitur baru.</span></div>' +
       '<div class="lc-donation-btns">' +
-        '<a href="https://saweria.co/maspannn" target="_blank" rel="noopener" class="lc-donation-btn lc-donation-saweria">Saweria</a>' +
-        '<a href="https://www.paypal.com/paypalme/panjidanutirto" target="_blank" rel="noopener" class="lc-donation-btn lc-donation-paypal">PayPal</a>' +
+        '<a href="https://saweria.co/maspannn" target="_blank" rel="noopener noreferrer" class="lc-donation-btn lc-donation-saweria">Donasi</a>' +
+        '<a href="https://www.paypal.com/paypalme/panjidanutirto" target="_blank" rel="noopener noreferrer" class="lc-donation-btn lc-donation-paypal" aria-label="Donasi melalui PayPal">PayPal</a>' +
       '</div>' +
     '</div>';
 
@@ -3491,7 +3542,7 @@ L.control.scale({
             var isChecked = el ? el.checked : (_layerCatalogState[l.id] || false);
             if (l.id === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') isChecked = isHujanLayerActive();
             html += '<div class="lc-item lc-item-pinned">';
-            html += '<input type="checkbox" id="lc_pin_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
+            html += '<input type="checkbox" id="lc_pin_' + l.id + '" data-layer-id="' + l.id + '"' + (l.geoportalKey ? ' data-geoportal-key="' + l.geoportalKey + '"' : '') + (isChecked ? ' checked' : '') + ' />';
             html += '<label for="lc_pin_' + l.id + '">' + l.label + '</label>';
             html += '<div class="lc-item-actions">';
             if (l.id !== 'toggleBmkgNormalHujan' && (l.id.indexOf('isee-soil-') !== 0 || l.id === 'isee-soil-boundaries')) {
@@ -3562,7 +3613,7 @@ L.control.scale({
       /* Katalog utama menampilkan kategori dalam keadaan terbuka saat dibuka.
          Grup Layer Dipin tetap terpisah; kategori ini sebelumnya selalu
          tertutup sehingga layer tampak hilang bagi pengguna. */
-      html += '<div class="lc-category open" data-ci="' + ci + '">';
+      html += '<div class="lc-category' + (cat.geoportalSource ? '' : ' open') + '" data-ci="' + ci + '">';
       html += '<button class="lc-cat-header" type="button">';
       html += '<svg class="lc-cat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
       html += '<span class="lc-cat-title">' + cat.cat + '</span>';
@@ -3605,7 +3656,7 @@ L.control.scale({
               isChecked = isHujanLayerActive();
             }
             html += '<div class="lc-item">';
-            html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
+            html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (l.geoportalKey ? ' data-geoportal-key="' + l.geoportalKey + '"' : '') + (isChecked ? ' checked' : '') + ' />';
             html += '<label for="lc_' + l.id + '">' + l.label + '</label>';
             html += '<div class="lc-item-actions">';
             if (l.id !== 'toggleBmkgNormalHujan' && (l.id.indexOf('isee-soil-') !== 0 || l.id === 'isee-soil-boundaries')) {
@@ -3633,7 +3684,7 @@ L.control.scale({
             isChecked = isHujanLayerActive();
           }
           html += '<div class="lc-item">';
-          html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (isChecked ? ' checked' : '') + ' />';
+          html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (l.geoportalKey ? ' data-geoportal-key="' + l.geoportalKey + '"' : '') + (isChecked ? ' checked' : '') + ' />';
           html += '<label for="lc_' + l.id + '">' + l.label + '</label>';
           html += '<div class="lc-item-actions">';
           if (l.id !== 'toggleHwsdIndonesia' && (l.id.indexOf('isee-soil-') !== 0 || l.id === 'isee-soil-boundaries')) {
@@ -3651,58 +3702,6 @@ L.control.scale({
       html += '</div></div>';
     });
     container.innerHTML = html;
-
-    if (!sponsoredAd && container.dataset.sponsoredAdDismissed !== 'true') {
-      sponsoredAd = document.createElement('section');
-      sponsoredAd.className = 'lc-sponsored-ad';
-      sponsoredAd.setAttribute('aria-label', 'Iklan');
-      sponsoredAd.innerHTML = '<button class="lc-ad-close" type="button" aria-label="Tutup iklan" title="Tutup iklan">&times;</button><div class="lc-sponsored-copy"><span class="lc-sponsored-tag">IKLAN</span><span class="lc-sponsored-title">Temukan sesuatu yang menarik</span></div><div class="lc-ad-viewport"><div class="lc-ad-frame"></div></div>';
-      sponsoredAd.querySelector('.lc-ad-close').addEventListener('click', function (event) {
-        event.stopPropagation();
-        container.dataset.sponsoredAdDismissed = 'true';
-        if (sponsoredAd._resizeObserver) sponsoredAd._resizeObserver.disconnect();
-        sponsoredAd.remove();
-      });
-    }
-    var donationBanner = container.querySelector('.lc-donation-banner');
-    if (sponsoredAd && donationBanner) donationBanner.insertAdjacentElement('afterend', sponsoredAd);
-    if (sponsoredAd) {
-      var adViewport = sponsoredAd.querySelector('.lc-ad-viewport');
-      var activeFormat = sponsoredAd._activeAdFormat || null;
-      function fitCatalogAd() {
-      var availableWidth = adViewport.clientWidth;
-      if (availableWidth <= 0) return;
-      var format = { key: '07e86776906aabd9b6e8d43b1c3c1096', width: 728, height: 90 };
-      var adFrame = sponsoredAd.querySelector('.lc-ad-frame');
-      var scale = Math.min(1, availableWidth / format.width);
-      adFrame.style.width = format.width + 'px';
-      adFrame.style.height = format.height + 'px';
-      adFrame.style.transform = 'scale(' + scale + ')';
-      adFrame.style.transformOrigin = 'top left';
-      adViewport.style.height = (format.height * scale) + 'px';
-      if (activeFormat && activeFormat.key === format.key) return;
-      activeFormat = format;
-      sponsoredAd._activeAdFormat = format;
-      var iframe = document.createElement('iframe');
-      iframe.title = 'Iklan sponsor';
-      iframe.width = format.width;
-      iframe.height = format.height;
-      iframe.loading = 'lazy';
-      iframe.scrolling = 'no';
-      iframe.frameBorder = '0';
-      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-      iframe.style.width = format.width + 'px';
-      iframe.style.maxWidth = 'none';
-      iframe.style.height = format.height + 'px';
-      iframe.srcdoc = '<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0"><script>var atOptions={key:"' + format.key + '",format:"iframe",height:' + format.height + ',width:' + format.width + ',params:{}};</script><script src="https://www.highrevenueformat.com/' + format.key + '/invoke.js"></script></body></html>';
-      adFrame.replaceChildren(iframe);
-      }
-      fitCatalogAd();
-      if (window.ResizeObserver && !sponsoredAd._resizeObserver) {
-        sponsoredAd._resizeObserver = new ResizeObserver(fitCatalogAd);
-        sponsoredAd._resizeObserver.observe(adViewport);
-      }
-    }
 
     var clearAllBtn = document.getElementById('lcClearAll');
     if (clearAllBtn) {
@@ -3770,7 +3769,7 @@ L.control.scale({
     container.querySelectorAll('.lc-item input[type="checkbox"]').forEach(function(cb) {
       cb.addEventListener('change', function() {
         var id = cb.dataset.layerId;
-        var hasWindowToggle =
+        var hasWindowToggle = !!cb.dataset.geoportalKey ||
           (id === 'toggleSignificantMarkers' && typeof window.toggleSignificantMarkers === 'function') ||
           (id === 'toggleFeltMarkers' && typeof window.toggleFeltMarkers === 'function') ||
           (id === 'toggleLatestEarthquake' && typeof window.toggleLatestEarthquake === 'function') ||
@@ -3839,6 +3838,9 @@ L.control.scale({
         }
         if (id === 'toggleLatestEarthquake' && typeof window.toggleLatestEarthquake === 'function') {
           window.toggleLatestEarthquake(cb.checked);
+        }
+        if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'function') {
+          window.toggleGeoportalCatalogLayer(cb.dataset.geoportalKey, cb.checked);
         }
         if (id === 'toggleSebaranPasar' && typeof window.toggleSebaranPasar === 'function') {
           window.toggleSebaranPasar(cb.checked);

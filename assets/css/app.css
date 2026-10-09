@@ -3161,149 +3161,74 @@
     }
     .app-banner-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.2); background: #f0fdfa; }
 
-    /* Layer Catalog donation banner */
+    /* Donation card used in the layer catalog and application sheets. */
     .lc-donation-banner {
-      display: flex;
+      position: static;
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) auto;
       align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin: 0 0 6px;
-      padding: 8px 10px;
-      border-radius: 16px 16px 0 0;
-      background: linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #14b8a6 100%);
-      position: sticky;
-      top: 0;
-      z-index: 1;
+      gap: 9px;
+      margin: 10px 8px 10px;
+      padding: 11px;
+      border: 1px solid #b7e4d1;
+      border-radius: 13px;
+      background: linear-gradient(125deg, #ecfdf5 0%, #f0fdfa 58%, #eff6ff 100%);
+      box-shadow: 0 5px 16px rgba(15, 118, 110, .10);
     }
     .lc-donation-banner.sheet-donation-banner {
-      position: relative;
+      position: static;
       top: auto;
-      margin: 0 0 12px;
-      border-radius: 0;
-    }
-    .lc-donation-text {
-      font-size: 11px;
-      font-weight: 700;
-      color: #fff;
-      white-space: nowrap;
-    }
-    .lc-donation-btns {
-      display: flex;
-      gap: 4px;
-      flex-shrink: 0;
-    }
-    .lc-donation-btn {
-      display: inline-flex;
-      align-items: center;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 10px;
-      font-weight: 700;
-      text-decoration: none;
-      cursor: pointer;
-      transition: all .15s;
-    }
-    .lc-donation-saweria {
-      background: #fff;
-      color: #0d9488;
-    }
-    .lc-donation-saweria:hover { background: #f0fdfa; transform: translateY(-1px); }
-    .lc-donation-paypal {
-      background: #003087;
-      color: #fff;
-    }
-    .lc-donation-paypal:hover { background: #001c64; transform: translateY(-1px); }
-
-    .lc-sponsored-ad {
-      position: relative;
-      margin: 0 8px 10px;
-      padding: 10px;
-      overflow: hidden;
-      border: 1px solid #dbeafe;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 55%, #f5f3ff 100%);
-      box-shadow: 0 4px 14px rgba(30, 64, 175, .08);
-    }
-    .lc-sponsored-ad.sheet-sponsored-ad {
-      margin: 0 12px 20px;
-      padding: 0;
-      overflow: visible;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
+      grid-template-columns: 38px minmax(0, 1fr) 58px;
+      margin: 10px 0;
+      padding: 12px 13px;
+      border-color: var(--border-color);
+      border-radius: 10px;
+      background: var(--bg-card);
       box-shadow: none;
     }
-    .sheet-sponsored-ad .lc-sponsored-copy { display: none; }
-    .lc-ad-close {
-      position: absolute;
-      z-index: 5;
-      top: 2px;
-      right: 2px;
+    .lc-donation-mark {
       display: grid;
-      width: 22px;
-      height: 22px;
+      width: 34px;
+      height: 34px;
       place-items: center;
-      padding: 0;
-      border: 1px solid rgba(148,163,184,.45);
-      border-radius: 50%;
-      background: rgba(255,255,255,.92);
-      color: #334155;
-      font: 700 17px/1 Arial, sans-serif;
-      cursor: pointer;
-      box-shadow: 0 1px 4px rgba(15,23,42,.2);
+      border-radius: 11px;
+      background: #d1fae5;
+      color: #047857;
     }
-    .lc-ad-close:hover { background: #e2e8f0; color: #0f172a; }
-    .lc-sponsored-copy { display: grid; grid-template-columns: auto 1fr; gap: 3px 7px; align-items: center; margin-bottom: 8px; }
-    .lc-sponsored-tag { padding: 2px 5px; border-radius: 4px; background: #dbeafe; color: #1d4ed8; font-size: 8px; font-weight: 800; letter-spacing: .06em; }
-    .lc-sponsored-title { color: #172554; font-size: 11px; font-weight: 750; }
-    .lc-sponsored-caption { grid-column: 2; color: #64748b; font-size: 9px; }
-    .lc-ad-viewport { position: relative; width: 100%; overflow: hidden; }
-    .lc-ad-frame { position: absolute; top: 0; left: 0; width: 100%; height: 90px; transform-origin: top left; overflow: hidden; }
-    .lc-ad-frame iframe { display: block; width: 728px !important; height: 90px; max-width: none !important; border: 0; }
-
-    /* Geotools sidebar donation banner */
-    .gt-donation-banner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin: 8px 0 6px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #14b8a6 100%);
-    }
-    .gt-donation-text {
-      font-size: 11px;
-      font-weight: 700;
-      color: #fff;
-      white-space: nowrap;
-    }
-    .gt-donation-btns {
-      display: flex;
-      gap: 4px;
-      flex-shrink: 0;
-    }
-    .gt-donation-btn {
+    .sheet-donation-banner .lc-donation-mark { width: 38px; height: 38px; }
+    .lc-donation-mark svg { width: 18px; height: 18px; }
+    .lc-donation-copy { display: grid; min-width: 0; gap: 2px; }
+    .lc-donation-eyebrow { color: #047857; font-size: 8px; font-weight: 800; letter-spacing: .09em; }
+    .lc-donation-text { color: #123b32; font-size: 11px; font-weight: 800; line-height: 1.3; }
+    .lc-donation-note { color: #526b65; font-size: 9px; line-height: 1.35; }
+    .lc-donation-btns { display: flex; align-items: center; gap: 5px; }
+    .lc-donation-btn {
       display: inline-flex;
+      min-height: 26px;
       align-items: center;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 10px;
-      font-weight: 700;
+      justify-content: center;
+      padding: 0 8px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      font-size: 9px;
+      font-weight: 800;
       text-decoration: none;
-      cursor: pointer;
-      transition: all .15s;
+      white-space: nowrap;
+      transition: transform .15s, box-shadow .15s, background .15s;
     }
-    .gt-donation-saweria {
-      background: #fff;
-      color: #0d9488;
-    }
-    .gt-donation-saweria:hover { background: #f0fdfa; transform: translateY(-1px); }
-    .gt-donation-paypal {
-      background: #003087;
-      color: #fff;
-    }
-    .gt-donation-paypal:hover { background: #001c64; transform: translateY(-1px); }
+    .lc-donation-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(15, 23, 42, .13); }
+    .lc-donation-saweria { background: #047857; color: #fff; }
+    .lc-donation-saweria:hover { background: #065f46; }
+    .lc-donation-paypal { border-color: #cbd5e1; background: #fff; color: #174ea6; }
+    .lc-donation-paypal:hover { background: #eff6ff; }
+    .sheet-donation-banner .lc-donation-btns { grid-column: 3; flex-direction: column; align-items: stretch; justify-content: center; gap: 4px; margin-top: 0; }
+    .sheet-donation-banner .lc-donation-btn { flex: 0 0 auto; min-height: 26px; width: 58px; padding: 0 5px; }
+    [data-theme="dark"] .lc-donation-banner { border-color: #24554b; background: linear-gradient(125deg, #102c27, #12312e 58%, #17283b); }
+    [data-theme="dark"] .lc-donation-mark { background: #164e3e; color: #a7f3d0; }
+    [data-theme="dark"] .lc-donation-eyebrow { color: #6ee7b7; }
+    [data-theme="dark"] .lc-donation-text { color: #ecfdf5; }
+    [data-theme="dark"] .lc-donation-note { color: #b5c9c2; }
+    [data-theme="dark"] .lc-donation-paypal { border-color: #37516b; background: #17283b; color: #bfdbfe; }
 
     .tab-content { display: none; }
     .tab-content h4 {

@@ -338,6 +338,24 @@
     scheduleRenderGeoportalLegend();
   }
 
+  window.isGeoportalCatalogLayerActive = function (key) {
+    const separator = key.lastIndexOf('::');
+    if (separator < 0) return false;
+    return isGeoportalCheckboxActive(key.slice(separator + 2), key.slice(0, separator));
+  };
+
+  window.toggleGeoportalCatalogLayer = function (key, visible) {
+    const nodeId = geoportalNodeIndex.get(key);
+    const tree = $('#geoportalLayerList').jstree(true);
+    if (tree && nodeId && tree.get_node(nodeId)) {
+      if (visible) tree.check_node(nodeId);
+      else tree.uncheck_node(nodeId);
+      return;
+    }
+    const separator = key.lastIndexOf('::');
+    if (separator >= 0) toggleGeoportalLayer(key.slice(separator + 2), visible, key.slice(0, separator));
+  };
+
   function getActiveGeoportalLayers() {
     return [...geoportalLayers.entries()]
       .filter(([, layer]) => map.hasLayer(layer))
@@ -1225,6 +1243,9 @@
       } else {
         toggleGeoportalLayer(layerName, true, wmsUrl);
       }
+      if (typeof window.setGeoportalCatalogLayerState === 'function') {
+        window.setGeoportalCatalogLayerState(wmsUrl + '::' + layerName, true);
+      }
     });
 
     $(container).on('uncheck_node.jstree', function (e, data) {
@@ -1239,6 +1260,9 @@
       } else {
         toggleGeoportalLayer(layerName, false, wmsUrl);
       }
+      if (typeof window.setGeoportalCatalogLayerState === 'function') {
+        window.setGeoportalCatalogLayerState(wmsUrl + '::' + layerName, false);
+      }
     });
   }
 
@@ -1247,6 +1271,9 @@
     .then(cfg => {
       window.__geoportalLayersConfig = cfg;
       buildGeoportalTree(cfg);
+      if (typeof window.registerGeoportalCatalogLayers === 'function') {
+        window.registerGeoportalCatalogLayers(GEOPORTAL_LAYER_DATA);
+      }
       Object.values(cfg.sources).forEach(s => loadGeoportalCaps(s.wmsUrl).catch(() => {}));
     })
     .catch(err => console.error('[Geoportal] Gagal memuat geoportal-layers.json:', err));
