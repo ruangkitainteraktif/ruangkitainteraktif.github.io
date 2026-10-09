@@ -36,7 +36,8 @@ L.control.scale({
       attribution: 'Mas Pannn'
     }),
     'esri-satellite': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 19,
+      maxNativeZoom: 19,
+      maxZoom: 22,
       attribution: 'Mas Pannn'
     }),
     'petadasar-bpn': L.TileLayer.wmsCached('https://petadasar.meritech.cloud/wms', {
@@ -106,119 +107,139 @@ L.control.scale({
     }),
     'google-satellite-kh': L.tileLayer('https://khms{s}.google.com/kh/v=1015?x={x}&y={y}&z={z}', {
       subdomains: ['0', '1', '2', '3'],
-      maxZoom: 20,
+      maxNativeZoom: 20,
+      maxZoom: 22,
       attribution: 'Google'
     }),
     'modis-terra': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/{Time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', {
-      maxZoom: 12,
+      maxNativeZoom: 12,
+      maxZoom: 22,
       minZoom: 0,
       attribution: 'NASA GIBS',
       Time: new Date().toISOString().slice(0, 10)
     }),
     'modis-aqua': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Aqua_CorrectedReflectance_TrueColor/default/{Time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', {
-      maxZoom: 12,
+      maxNativeZoom: 12,
+      maxZoom: 22,
       minZoom: 0,
       attribution: 'NASA GIBS',
       Time: new Date().toISOString().slice(0, 10)
     }),
     'viirs-noaa20': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/{Time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpeg', {
-      maxZoom: 9,
+      maxNativeZoom: 9,
+      maxZoom: 22,
       minZoom: 0,
       Time: (function () { var d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })(),
       attribution: 'NASA GIBS'
     }),
     'viirs-noaa21': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA21_CorrectedReflectance_TrueColor/default/{Time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpeg', {
-      maxZoom: 9,
+      maxNativeZoom: 9,
+      maxZoom: 22,
       minZoom: 0,
       Time: (function () { var d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })(),
       attribution: 'NASA GIBS'
     }),
     'viirs-snpp': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/{Time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpeg', {
-      maxZoom: 9,
+      maxNativeZoom: 9,
+      maxZoom: 22,
       minZoom: 0,
       Time: (function () { var d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })(),
       attribution: 'NASA GIBS'
     }),
     'oci-pace': L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/OCI_PACE_True_Color/default/{Time}/GoogleMapsCompatible_Level7/{z}/{y}/{x}.jpeg', {
-      maxZoom: 7,
+      maxNativeZoom: 7,
+      maxZoom: 22,
       minZoom: 0,
       Time: (function () { var d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })(),
       attribution: 'NASA GIBS'
     }),
     'bmkg-himawari': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=EH&baserun=', {
-      maxZoom: 10,
+      maxNativeZoom: 10,
+      maxZoom: 22,
       minZoom: 3,
       tms: true,
       attribution: 'BMKG Himawari-9'
     }),
     'bmkg-himawari-nc': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=NC&baserun=', {
-      maxZoom: 10,
+      maxNativeZoom: 10,
+      maxZoom: 22,
       minZoom: 3,
       tms: true,
       attribution: 'BMKG Himawari-9 Natural Color'
     }),
     'bmkg-himawari-wv': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=WV&baserun=', {
-      maxZoom: 10,
+      maxNativeZoom: 10,
+      maxZoom: 22,
       minZoom: 3,
       tms: true,
       attribution: 'BMKG Himawari-9 Water Vapor'
     }),
     'bmkg-himawari-rp': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=RP&baserun=', {
-      maxZoom: 10,
+      maxNativeZoom: 10,
+      maxZoom: 22,
       minZoom: 3,
       tms: true,
       attribution: 'BMKG Himawari-9 Rainfall'
     }),
     'bmkg-himawari-sw': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=SW&baserun=', {
-      maxZoom: 10,
+      maxNativeZoom: 10,
+      maxZoom: 22,
       minZoom: 3,
       tms: true,
       attribution: 'BMKG Himawari-9 Shortwave IR'
     }),
     'bmkg-himawari-sm': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=SM&baserun=', {
-      maxZoom: 10,
+      maxNativeZoom: 10,
+      maxZoom: 22,
       minZoom: 3,
       tms: true,
       attribution: 'BMKG Himawari-9 SST'
     }),
     'bmkg-himawari-va': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=VA&baserun=', {
-      maxZoom: 10,
+      maxNativeZoom: 10,
+      maxZoom: 22,
       minZoom: 3,
       tms: true,
       attribution: 'BMKG Himawari-9 Volcanic Ash'
     }),
     'bmkg-himawari-vs': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9&param=VS&baserun=', {
-      maxZoom: 10,
+      maxNativeZoom: 10,
+      maxZoom: 22,
       minZoom: 3,
       tms: true,
       attribution: 'BMKG Himawari-9 Visible'
     }),
     'bmkg-himawari-fd': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9fd&param=EH&baserun=', {
-      maxZoom: 10,
+      maxNativeZoom: 10,
+      maxZoom: 22,
       minZoom: 3,
       tms: true,
       attribution: 'BMKG Himawari-9 FD'
     }),
     'bmkg-himawari-hires': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=himawari9hires&param=VS&baserun=', {
-      maxZoom: 10,
+      maxNativeZoom: 10,
+      maxZoom: 22,
       minZoom: 3,
       tms: true,
       attribution: 'BMKG Himawari-9 Hi-Res'
     }),
     'bmkg-gk2a': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=gk2a&param=EH&baserun=', {
-      maxZoom: 10,
+      maxNativeZoom: 10,
+      maxZoom: 22,
       minZoom: 3,
       tms: true,
       attribution: 'BMKG GK-2A IR'
     }),
     'bmkg-gk2a-wv': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=gk2a&param=WV&baserun=', {
-      maxZoom: 10,
+      maxNativeZoom: 10,
+      maxZoom: 22,
       minZoom: 3,
       tms: true,
       attribution: 'BMKG GK-2A Water Vapor'
     }),
     'bmkg-gk2a-rp': L.tileLayer('https://satellite.bmkg.go.id/api22/tile/{z}/{x}/{y}.png?tiletype=himawari9&modelname=gk2a&param=RP&baserun=', {
-      maxZoom: 10,
+      maxNativeZoom: 10,
+      maxZoom: 22,
       minZoom: 3,
       tms: true,
       attribution: 'BMKG GK-2A Rainfall'
@@ -234,22 +255,26 @@ L.control.scale({
       attribution: 'NOAA NNVL GOES IR'
     }),
     'sentinel2': L.tileLayer('https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg', {
-      maxZoom: 13,
+      maxNativeZoom: 13,
+      maxZoom: 22,
       minZoom: 0,
       attribution: 'Sentinel-2 cloudless by EOX'
     }),
     'eox-s2cloudless-2024': L.tileLayer('https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/{z}/{y}/{x}.jpeg', {
-      maxZoom: 14,
+      maxNativeZoom: 14,
+      maxZoom: 22,
       minZoom: 0,
       attribution: 'EOX - Sentinel-2 cloudless 2024'
     }),
     'eox-blackmarble': L.tileLayer('https://tiles.maps.eox.at/wmts/1.0.0/blackmarble_3857/default/g/{z}/{y}/{x}.jpg', {
-      maxZoom: 12,
+      maxNativeZoom: 12,
+      maxZoom: 22,
       minZoom: 0,
       attribution: 'NASA Black Marble - EOX'
     }),
     'eox-terrain-light': L.tileLayer('https://tiles.maps.eox.at/wmts/1.0.0/terrain-light_3857/default/g/{z}/{y}/{x}.jpg', {
-      maxZoom: 12,
+      maxNativeZoom: 12,
+      maxZoom: 22,
       minZoom: 0,
       attribution: 'EOX Terrain Light'
     })
@@ -3226,26 +3251,16 @@ L.control.scale({
     }
   ];
 
-  /* Pisahkan citra penginderaan jauh dari peta dasar. Kelompok tema ini
-     mengikuti pengelompokan GIS yang umum; ID layer tetap dipertahankan. */
+  /* Citra satelit dan sensor pengamatan bumi tetap berada di Peta Dasar
+     agar dapat dipilih sebagai basemap. Foto udara BIG dikelompokkan terpisah. */
   (function organizeImageryLayers() {
-    var basemap = LAYER_CATALOG_DATA.find(function (category) { return category.type === 'basemap'; });
-    var imagery = [];
-    if (basemap && basemap.groups) {
-      var satelliteIndex = basemap.groups.findIndex(function (group) { return group.group === 'Citra satelit'; });
-      if (satelliteIndex >= 0) imagery.push({ subcat: 'Citra satelit dan sensor pengamatan bumi', layers: basemap.groups.splice(satelliteIndex, 1)[0].layers });
-    }
     var bigIndex = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Citra Udara & Peta BIG'; });
     if (bigIndex >= 0) {
       var big = LAYER_CATALOG_DATA[bigIndex];
+      big.cat = 'Foto Udara & Peta BIG';
       (big.subcats || []).forEach(function (group) {
-        if (group.layers && group.layers.length) imagery.push({ subcat: group.subcat === 'Arsip Foto Udara' ? 'Foto udara dan arsip' : group.subcat, layers: group.layers });
+        if (group.subcat === 'Arsip Foto Udara') group.subcat = 'Foto udara dan arsip';
       });
-      LAYER_CATALOG_DATA.splice(bigIndex, 1);
-    }
-    if (imagery.length) {
-      var baseIndex = LAYER_CATALOG_DATA.indexOf(basemap);
-      LAYER_CATALOG_DATA.splice(baseIndex + 1, 0, { cat: 'Citra Satelit & Foto Udara', subcats: imagery });
     }
 
     var terrain = LAYER_CATALOG_DATA.find(function (category) { return category.cat === 'Elevasi & Tutupan Lahan'; });
@@ -3261,14 +3276,14 @@ L.control.scale({
     var transport = LAYER_CATALOG_DATA.find(function (category) { return category.cat === 'Transportasi'; });
     if (transport && roads.length) transport.layers = transport.layers.concat(roads);
     if (boundaries.length) {
-      var imageryPosition = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Citra Satelit & Foto Udara'; });
-      LAYER_CATALOG_DATA.splice(imageryPosition + 1, 0, { cat: 'Batas & Referensi Wilayah', layers: boundaries });
+      var bigPosition = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Foto Udara & Peta BIG'; });
+      LAYER_CATALOG_DATA.splice(bigPosition + 1, 0, { cat: 'Batas & Referensi Wilayah', layers: boundaries });
     }
   })();
 
   var LAYER_CATALOG_DESCRIPTIONS = {
     'Peta Dasar': 'Peta untuk orientasi dan mencari lokasi. Pilih satu sebagai latar peta.',
-    'Citra Satelit & Foto Udara': 'Gambar permukaan bumi dari satelit atau pesawat untuk melihat kondisi dan perubahan wilayah.',
+    'Foto Udara & Peta BIG': 'Foto udara dan produk peta BIG untuk melihat detail kondisi wilayah.',
     'Batas & Referensi Wilayah': 'Batas administrasi dan pembagian wilayah yang membantu menemukan lokasi atau membandingkan data antarwilayah.',
     'Geologi & Tanah': 'Informasi batuan, struktur bumi, jenis tanah, dan sifat tanah.',
     'Transportasi': 'Jaringan jalan dan rute transportasi umum.',
@@ -3282,11 +3297,11 @@ L.control.scale({
 
   (function placeGeologyAfterBasemap() {
     var geologyIndex = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Geologi & Tanah'; });
-    var imageryIndex = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Citra Satelit & Foto Udara'; });
-    if (geologyIndex < 0 || imageryIndex < 0 || geologyIndex === imageryIndex + 1) return;
+    var basemapIndex = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Peta Dasar'; });
+    if (geologyIndex < 0 || basemapIndex < 0 || geologyIndex === basemapIndex + 1) return;
     var geologyCategory = LAYER_CATALOG_DATA.splice(geologyIndex, 1)[0];
-    imageryIndex = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Citra Satelit & Foto Udara'; });
-    LAYER_CATALOG_DATA.splice(imageryIndex + 1, 0, geologyCategory);
+    basemapIndex = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Peta Dasar'; });
+    LAYER_CATALOG_DATA.splice(basemapIndex + 1, 0, geologyCategory);
   })();
 
   var _layerCatalogOpen = false;
@@ -3742,7 +3757,7 @@ L.control.scale({
 
     container.querySelectorAll('.lc-item[data-basemap-id]').forEach(function(item) {
       item.addEventListener('click', function(e) {
-        if (e.target.tagName === 'INPUT') return;
+        if (e.target.closest('input, label, button')) return;
         var radio = item.querySelector('input[type="radio"]');
         if (radio && !radio.checked) radio.click();
       });
@@ -3751,8 +3766,13 @@ L.control.scale({
     container.querySelectorAll('input[name="lc-basemap"]').forEach(function(radio) {
       radio.addEventListener('change', function() {
         var bmId = radio.dataset.basemapId;
+        var categoryIndex = radio.closest('.lc-category') && radio.closest('.lc-category').dataset.ci;
         setBaseMap(bmId);
         buildLayerCatalog(container);
+        if (categoryIndex != null) {
+          var restoredCategory = container.querySelector('.lc-category[data-ci="' + categoryIndex + '"]');
+          if (restoredCategory) restoredCategory.classList.add('open');
+        }
       });
     });
 
@@ -4037,15 +4057,19 @@ L.control.scale({
     var searchInput = container.querySelector('.lc-search');
     if (searchInput) {
       searchInput.addEventListener('input', function() {
-        var q = searchInput.value.toLowerCase();
+        var q = searchInput.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
         container.querySelectorAll('.lc-item').forEach(function(item) {
-          var text = item.querySelector('label').textContent.toLowerCase();
+          var label = item.querySelector('label');
+          var text = (label ? label.textContent : item.textContent).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
           item.style.display = text.indexOf(q) !== -1 ? '' : 'none';
         });
         container.querySelectorAll('.lc-category').forEach(function(cat) {
-          var visible = cat.querySelectorAll('.lc-item[style=""], .lc-item:not([style])');
-          cat.style.display = visible.length === 0 && q ? 'none' : '';
+          var hasVisibleItem = Array.prototype.some.call(cat.querySelectorAll('.lc-item'), function(item) {
+            return item.style.display !== 'none';
+          });
+          cat.style.display = hasVisibleItem || !q ? '' : 'none';
           if (q) cat.classList.add('open');
+          else if (!cat.classList.contains('lc-pinned-group') && !cat.classList.contains('lc-active-group')) cat.classList.remove('open');
         });
       });
     }

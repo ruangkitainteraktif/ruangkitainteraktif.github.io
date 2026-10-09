@@ -2412,6 +2412,11 @@
     }).join('');
   }
 
+  function localDateInputValue() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
   function airBlockHtml(item) {
     if (item.airError) {
       return '<div class="pa-block pa-block-error">' + escapeHtml(item.airError) + '</div>';
@@ -2428,11 +2433,30 @@
     const et0 = item.air.rerataEt0Harian;
 
     let html = '';
+    if (item.air.neraca) {
+      const balance = item.air.neraca;
+      const maxBar = Math.max.apply(null, balance.days.map(function (d) { return Math.max(d.etc || 0, d.effectiveRain || 0); }).concat([1]));
+      const daily = balance.days.map(function (d) {
+        const etcWidth = Math.max(0, Math.min(100, (d.etc || 0) / maxBar * 100));
+        const rainWidth = Math.max(0, Math.min(100, (d.effectiveRain || 0) / maxBar * 100));
+        return '<div class="pa-wi-day"><div class="pa-wi-day-head"><span>' + escapeHtml(d.date) + '</span><span>Hari tanam ' + (d.cropAge < 0 ? 'belum tanam' : d.cropAge + 1) + ' · Kc ' + fmt(d.kc, 2) + '</span></div>' +
+          '<div class="pa-wi-bars"><span class="pa-wi-bar pa-wi-etc" style="width:' + etcWidth + '%" title="ETc ' + fmt(d.etc, 1) + ' mm"></span><span class="pa-wi-bar pa-wi-rain" style="width:' + rainWidth + '%" title="Hujan efektif ' + fmt(d.effectiveRain, 1) + ' mm"></span></div>' +
+          '<div class="pa-wi-day-values"><span>ETc ' + fmt(d.etc, 1) + ' mm</span><span>Hujan ' + fmt(d.rain, 1) + ' mm · efektif ' + fmt(d.effectiveRain, 1) + '</span><b>' + (d.gap == null ? '—' : 'Gap ' + fmt(d.gap, 1) + ' mm') + '</b></div></div>';
+      }).join('');
+      const gapM3 = balance.totals.gap * item.areaHa * 10;
+      html += '<div class="pa-wi-card"><div class="pa-wi-title">Neraca indikatif ' + balance.completeDays + ' hari</div>' +
+        '<div class="pa-wi-metrics"><div><b>' + fmt(balance.totals.etc, 1) + ' mm</b><small>kebutuhan tanaman (ETc)</small></div><div><b>' + fmt(balance.totals.rain, 1) + ' mm</b><small>prakiraan hujan</small></div><div><b>' + fmt(balance.totals.gap, 1) + ' mm</b><small>gap harian indikatif</small></div></div>' +
+        '<div class="pa-air-row"><span>Gap pada luas petak (' + fmt(item.areaHa, 2) + ' ha)</span><b>±' + fmt(gapM3, 0) + ' m³</b></div>' +
+        '<div class="pa-wi-legend"><span><i class="pa-wi-etc"></i> ETc tanaman</span><span><i class="pa-wi-rain"></i> Hujan efektif (' + fmt(balance.rainEffectivePct, 0) + '%)</span></div>' +
+        '<details class="pa-details"><summary class="pa-summary">Rincian harian</summary><div class="pa-wi-days">' + daily + '</div></details>' +
+        '<div class="pa-block pa-block-muted"><b>Makna angka.</b> Gap menjumlahkan selisih harian max(ETc − hujan efektif, 0); ini bukan rekomendasi volume penyiraman. Belum menghitung simpanan air zona akar, limpasan, drainase, genangan, atau efisiensi irigasi.</div>' +
+        '<div class="pa-air-src">ETc = ET₀ × Kc tahap tanaman · Sumber cuaca: ' + escapeHtml(balance.source) + ' pada centroid polygon.</div></div>';
+    }
     html += '<div class="pa-block">';
     html += '<div class="pa-air-hero">';
     html += '<div class="pa-air-hero-val">' + fmt(m3, 0) + ' m<sup>3</sup></div>';
-    html += '<div class="pa-air-hero-lab">kebutuhan ' + escapeHtml(t.nama) +
-      ' untuk satu musim<br>' + fmt(etc.etcTotal, 0) + ' mm &times; ' + fmt(luas, 2) + ' ha</div>';
+    html += '<div class="pa-air-hero-lab">ETc indikatif ' + escapeHtml(t.nama) +
+      ' untuk satu siklus contoh<br>' + fmt(etc.etcTotal, 0) + ' mm &times; ' + fmt(luas, 2) + ' ha</div>';
     html += '</div>';
     html += '<div class="pa-air-row"><span>ET0 saat ini</span><span>' + fmt(et0, 2) + ' mm/hari</span></div>';
     html += '<div class="pa-air-row"><span>Durasi musim</span><span>' + etc.totalHari + ' hari</span></div>';
@@ -2465,10 +2489,7 @@
       html += '<div class="pa-block pa-block-muted">' + escapeHtml(t.catatan) + '</div>';
     }
 
-    html += '<div class="pa-block pa-block-muted"><b>Batas modul ini.</b> Angka di atas adalah ' +
-      'kebutuhan air tanaman (ETc), yaitu air yang keluar lewat transpirasi dan evaporasi. ' +
-      'Belum dikurangi hujan, dan belum memperhitungkan air yang tertahan di tanah. ' +
-      'Karena itu angka ini <b>bukan</b> volume air yang harus disiram.</div>';
+    html += '<div class="pa-block pa-block-muted"><b>Estimasi siklus contoh.</b> Nilai ini memakai ET₀ rata-rata prakiraan saat ini untuk seluruh durasi tanaman. Gunakan neraca 16 hari di atas untuk konteks cuaca dekat; keduanya bukan volume air yang harus disiram.</div>';
 
     html += '<div class="pa-block pa-block-muted">Estimasi satu musim memakai ET0 rata-rata ' +
       (window.WaterNeed.FORECAST_DAYS || 16) + ' hari ke depan, dengan asumsi cuaca sekarang ' +
@@ -2506,12 +2527,11 @@
     // state ciut dan urutan section.
     return '<div class="pa-section pa-section-air' +
       (isSectionCollapsed(item, 'air') ? ' is-collapsed' : '') + '">' +
-      sectionHeadHtml(item, 'air', 'Kebutuhan Air Tanaman') +
+      sectionHeadHtml(item, 'air', 'Water Intelligence') +
       '<div class="pa-section-body">' +
       /* Catatan memakai .pa-note, kelas yang sama dengan catatan di section
          NDVI, Indeks Spektral, dan Topografi. */
-      '<div class="pa-note">Terpisah dari analisis citra. Butuh luas petak ' +
-      'dan titik tengahnya saja, tidak memakai citra satelit.</div>' +
+      '<div class="pa-note">Neraca indikatif 16 hari menggabungkan ET₀, Kc menurut umur tanaman, dan prakiraan hujan di titik tengah petak. Pilih tanggal tanam agar tahap tanaman mengikuti kalender.</div>' +
       /* Baris tanaman: label di atas, select penuh di bawahnya. Pola ini
          mengikuti komponen form ArcGIS -- bukan label-inline yang sempit,
          karena select berisi nama tanaman yang panjang ("Kelapa Sawit"). */
@@ -2523,6 +2543,8 @@
       '</select>' +
       ICON_CHEVRON +
       '</div>' +
+      '<div class="pa-air-field"><label class="pa-air-label" for="pa-air-date-' + item.id + '">Tanggal tanam / mulai fase</label><input id="pa-air-date-' + item.id + '" class="pa-air-select" type="date" data-pa-air-date data-pa-id="' + item.id + '" value="' + escapeHtml(item.airSowingDate || localDateInputValue()) + '"></div>' +
+      '<div class="pa-air-field"><label class="pa-air-label" for="pa-air-rain-' + item.id + '">Porsi hujan yang diasumsikan efektif <b data-pa-air-rain-label>' + fmt(item.airRainEffectivePct == null ? 70 : item.airRainEffectivePct, 0) + '%</b></label><input id="pa-air-rain-' + item.id + '" class="pa-wi-range" type="range" min="50" max="90" step="5" data-pa-air-rain data-pa-id="' + item.id + '" value="' + (item.airRainEffectivePct == null ? 70 : item.airRainEffectivePct) + '"><small class="pa-wi-hint">Atur sebagai skenario 50–90%; bukan pengukuran hujan efektif di petak.</small></div>' +
       '</div>' +
       /* Tombol-primary gaya ArcGIS: ikon, label pendek, state terlihat.
          Teksnya "Hitung" saja -- isi panel sudah menjelaskan apa yang dihitung,
@@ -2530,7 +2552,7 @@
       '<button class="pa-air-calc" type="button" data-pa-action="air" data-pa-id="' + item.id + '"' +
       (item.airBusy ? ' disabled' : '') + '>' +
       (item.airBusy ? ICON_SPIN + '<span>Menghitung…</span>'
-        : ICON_CALC + '<span>Hitung</span>') +
+        : ICON_CALC + '<span>Analisis Water Intelligence</span>') +
       '</button>' +
       (item.airBusy ? '<div class="pa-block pa-block-muted"><span class="pa-spin"></span>' +
       escapeHtml(item.busy || 'Mengambil ET0 dari Open-Meteo…') + '</div>' : '') +
@@ -2580,12 +2602,21 @@
       return;
     }
 
+    const sowingInput = document.getElementById('pa-air-date-' + item.id);
+    const rainInput = document.getElementById('pa-air-rain-' + item.id);
+    if (sowingInput) item.airSowingDate = sowingInput.value;
+    if (rainInput) item.airRainEffectivePct = Number(rainInput.value);
+    if (!item.airSowingDate) item.airSowingDate = localDateInputValue();
+
     item.airBusy = true;
     item.airError = null;
-    item.busy = 'Mengambil ET0 dari Open-Meteo…';
+    item.busy = 'Mengambil ET0 dan hujan harian dari Open-Meteo…';
     render();
 
-    return window.WaterNeed.ongkosHitung(c.lat, c.lng, item.airTanamanId)
+    return window.WaterNeed.ongkosHitung(c.lat, c.lng, item.airTanamanId, {
+      sowingDate: item.airSowingDate,
+      effectiveRainPct: item.airRainEffectivePct == null ? 70 : item.airRainEffectivePct
+    })
       .then(function (hasil) {
         item.air = hasil;
         item.airLat = c.lat;
@@ -2662,6 +2693,29 @@
         item.airError = null;
         render();
       }
+      return;
+    }
+
+    const sowingDate = target.closest('[data-pa-air-date]');
+    if (sowingDate) {
+      const item = itemById(sowingDate.getAttribute('data-pa-id'));
+      if (!item) return;
+      item.airSowingDate = sowingDate.value;
+      item.air = null;
+      item.airError = null;
+      render();
+      return;
+    }
+    const rainFraction = target.closest('[data-pa-air-rain]');
+    if (rainFraction) {
+      const item = itemById(rainFraction.getAttribute('data-pa-id'));
+      if (!item) return;
+      item.airRainEffectivePct = Number(rainFraction.value);
+      const label = rainFraction.parentElement.querySelector('[data-pa-air-rain-label]');
+      if (label) label.textContent = item.airRainEffectivePct + '%';
+      item.air = null;
+      item.airError = null;
+      render();
       return;
     }
 
@@ -5177,6 +5231,8 @@
       airError: null,
       airBusy: false,
       airTanamanId: 'padi',
+      airSowingDate: null,
+      airRainEffectivePct: 70,
       soilGrids: null,
       soilGridsError: null,
       soilGridsBusy: false,

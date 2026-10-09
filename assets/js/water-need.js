@@ -1,18 +1,13 @@
 /* ==========================================================================
-   Kebutuhan Air Tanaman (ETc = ET0 x Kc)
+   Water Intelligence (ETc = ET0 x Kc + hujan prakiraan)
    --------------------------------------------------------------------------
-   Cakupan VERSI 1 -- HANYA kebutuhan air tanaman:
-
-       ETc = ET0 x Kc
-
-   Yang TIDAK termasuk, dan ditulis terbuka di UI:
-     - curah hujan efektif   -> butuh data pola (huruf Q, c) -> bukan (b)
-     - TAW / kapasitas air tanah -> butuh SoilGrids, tidak terjangkau
-     - efisiensi irigasi dan jadwal -> butuh (c)
+   Menghasilkan neraca indikatif 16 hari dari ETc menurut umur tanaman dan
+   porsi hujan efektif yang dipilih pengguna. Ini bukan jadwal irigasi: belum
+   memodelkan simpanan zona akar, limpasan, drainase, genangan, atau efisiensi.
 
    ET0 diambil dari Open-Meteo (gratis, tanpa API key):
      - Archive API : rerata bulanan 5 tahun -> "musim normal"
-     - Forecast API: harian 16 hari       -> kebutuhan terdekat
+     - Forecast API: harian 16 hari       -> ET0 dan hujan untuk neraca dekat
 
    Mengikuti pola assets/js/dem-analysis.js: satu titik per polygon (bujur,
    lintang) -> 2 request per polygon, disimpan di window.__airEt0Cache.
@@ -122,7 +117,7 @@
   function hitungEt0Harian(lat, lng) {
     var url = 'https://api.open-meteo.com/v1/forecast'
       + '?latitude=' + lat.toFixed(4) + '&longitude=' + lng.toFixed(4)
-      + '&daily=et0_fao_evapotranspiration&forecast_days=' + FORECAST_DAYS
+      + '&daily=et0_fao_evapotranspiration,precipitation_sum&forecast_days=' + FORECAST_DAYS
       + '&timezone=Asia/Jakarta';
     return fetch(url)
       .then(function (r) {
@@ -137,8 +132,9 @@
       .then(function (j) {
         var d = j && j.daily && j.daily.et0_fao_evapotranspiration;
         var t = j && j.daily && j.daily.time;
-        if (!d || !t || d.length !== t.length) throw new Error('Data ET0 harian kosong dari Open-Meteo.');
-        return { ok: true, tanggal: t, et0: d, sumber: 'Open-Meteo Forecast, ' + FORECAST_DAYS + ' hari' };
+        var rain = j && j.daily && j.daily.precipitation_sum;
+        if (!d || !rain || !t || d.length !== t.length || rain.length !== t.length) throw new Error('Data ET0 atau hujan harian kosong dari Open-Meteo.');
+        return { ok: true, tanggal: t, et0: d, hujan: rain, sumber: 'Open-Meteo Forecast, ' + FORECAST_DAYS + ' hari' };
       });
   }
 
@@ -160,6 +156,47 @@
       return s;
     });
     return { totalHari: totalHari, etcTotal: etcTotal, perTahap: perTahap };
+  }
+
+  function hitungNeracaHarian(tanaman, harian, tanggalTanam, hujanEfektifPct) {
+    var start = Date.parse(tanggalTanam + 'T00:00:00');
+    if (!Number.isFinite(start)) throw new Error('Tanggal tanam tidak valid.');
+    var eff = Math.max(0, Math.min(100, Number(hujanEfektifPct))) / 100;
+    var hari = tanaman.hari;
+    var awal = hari[0], pengembangan = hari[1], tengah = hari[2], akhir = hari[3];
+    var totalUmur = awal + pengembangan + tengah + akhir;
+    var days = harian.tanggal.map(function (date, i) {
+      var cropAge = Math.floor((Date.parse(date + 'T00:00:00') - start) / 86400000);
+      var kc = 0;
+      if (cropAge >= 0) {
+        if (cropAge < awal) kc = tanaman.kc[0];
+        else if (cropAge < awal + pengembangan) {
+          var p = (cropAge - awal + 1) / Math.max(1, pengembangan);
+          kc = tanaman.kc[0] + (tanaman.kc[1] - tanaman.kc[0]) * p;
+        } else if (cropAge < awal + pengembangan + tengah) kc = tanaman.kc[1];
+        else if (cropAge < totalUmur) {
+          var q = (cropAge - awal - pengembangan - tengah + 1) / Math.max(1, akhir);
+          kc = tanaman.kc[1] + (tanaman.kc[2] - tanaman.kc[1]) * q;
+        } else kc = tanaman.kc[2];
+      }
+      var et0 = harian.et0[i] == null ? NaN : Number(harian.et0[i]);
+      var rain = harian.hujan[i] == null ? NaN : Number(harian.hujan[i]);
+      var etc = Number.isFinite(et0) ? et0 * kc : null;
+      var effectiveRain = Number.isFinite(rain) ? rain * eff : null;
+      var gap = etc == null || effectiveRain == null ? null : Math.max(0, etc - effectiveRain);
+      return { date: date, cropAge: cropAge, kc: kc, et0: Number.isFinite(et0) ? et0 : null,
+        rain: Number.isFinite(rain) ? rain : null, etc: etc, effectiveRain: effectiveRain, gap: gap };
+    });
+    var valid = days.filter(function (day) { return day.etc != null && day.effectiveRain != null; });
+    var totals = valid.reduce(function (sum, day) {
+      sum.etc += day.etc;
+      sum.rain += day.rain;
+      sum.effectiveRain += day.effectiveRain;
+      sum.gap += day.gap;
+      return sum;
+    }, { etc: 0, rain: 0, effectiveRain: 0, gap: 0 });
+    return { days: days, totals: totals, rainEffectivePct: eff * 100, plantingDate: tanggalTanam,
+      source: harian.sumber, completeDays: valid.length };
   }
 
   function fmtAngka(v) {
@@ -188,8 +225,9 @@
     daftarTanaman: function () { return TANAMAN; },
     BULAN: BULAN,
     FORECAST_DAYS: FORECAST_DAYS,
-    ongkosHitung: function (lat, lng, tanamanId) {
+    ongkosHitung: function (lat, lng, tanamanId, options) {
       var t = TANAMAN.filter(function (x) { return x.id === tanamanId; })[0] || TANAMAN[0];
+      options = options || {};
       return Promise.all([hitungEt0Bulanan(lat, lng), hitungEt0Harian(lat, lng)])
         .then(function (r) {
           var bulanan = r[0];
@@ -207,11 +245,13 @@
             bulanan: bulanan,
             harian: harian,
             rerataEt0Harian: rerataEt0Harian,
-            etc: hitungEtc(t, rerataEt0Harian)
+            etc: hitungEtc(t, rerataEt0Harian),
+            neraca: options.sowingDate ? hitungNeracaHarian(t, harian, options.sowingDate, options.effectiveRainPct == null ? 70 : options.effectiveRainPct) : null
           };
         });
     },
     _hitungEtc: hitungEtc,
+    _hitungNeracaHarian: hitungNeracaHarian,
     _tabelTahapHtml: tabelTahapHtml,
     _fmtAngka: fmtAngka,
     _escapeHtml: escapeHtml

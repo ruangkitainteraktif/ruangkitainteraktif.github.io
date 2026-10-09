@@ -14344,6 +14344,28 @@ details[open] > .gt-card-head::after {
   color: var(--text-secondary);
   line-height: 1.4;
 }
+.pa-wi-range { display: block; width: 100%; accent-color: var(--accent); }
+.pa-wi-hint { display: block; margin-top: 3px; color: var(--text-muted); font-size: 9px; line-height: 1.35; }
+.pa-wi-card { margin: 8px 0; padding: 8px; border: 1px solid var(--border-color); border-radius: 9px; background: var(--bg-card); }
+.pa-wi-title { margin-bottom: 7px; color: var(--text-primary); font-size: 11px; font-weight: 700; }
+.pa-wi-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; margin-bottom: 7px; }
+.pa-wi-metrics > div { min-width: 0; padding: 6px 5px; border-radius: 6px; background: var(--bg-card-hover); }
+.pa-wi-metrics b, .pa-wi-metrics small { display: block; }
+.pa-wi-metrics b { overflow: hidden; color: var(--text-primary); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.pa-wi-metrics small { margin-top: 2px; color: var(--text-secondary); font-size: 8px; line-height: 1.25; }
+.pa-wi-legend { display: flex; flex-wrap: wrap; gap: 10px; margin: 5px 1px 8px; color: var(--text-secondary); font-size: 9px; }
+.pa-wi-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.pa-wi-legend i { display: inline-block; width: 10px; height: 7px; border-radius: 2px; }
+.pa-wi-etc { background: #2563eb; }
+.pa-wi-rain { background: #14b8a6; }
+.pa-wi-days { max-height: 300px; overflow: auto; }
+.pa-wi-day { padding: 6px 0; border-top: 1px solid var(--border-color); }
+.pa-wi-day-head, .pa-wi-day-values { display: flex; justify-content: space-between; gap: 6px; color: var(--text-secondary); font-size: 8px; }
+.pa-wi-day-head span:first-child { color: var(--text-primary); font-weight: 600; }
+.pa-wi-bars { display: flex; flex-direction: column; gap: 2px; width: 100%; margin: 4px 0; }
+.pa-wi-bar { display: block; min-width: 1px; height: 4px; border-radius: 3px; }
+.pa-wi-day-values { flex-wrap: wrap; }
+.pa-wi-day-values b { color: var(--text-primary); }
 .pa-soil-stat b { color: var(--text-primary); font-weight: 600; }
 
 .pa-cbar { margin-top: 6px; margin-bottom: 10px; }
