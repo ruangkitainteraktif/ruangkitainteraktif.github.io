@@ -4,6 +4,11 @@
   var KODE_URL = 'assets/data/kode_wilayah.json';
   var LOCAL_PROVINCE_BOUNDARY_URL = 'assets/data/bps/geojson/provinsi.geojson';
   var SDA_URL = 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer';
+  var SPI_URL = 'https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/SPI_recent/FeatureServer';
+  var SPEI_URL = 'https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/SPEI_v1_recent/FeatureServer';
+  var CLIMATE_PAGE_SIZE = 1000;
+  var CLIMATE_MAX_FEATURES = 15000;
+  var MIN_COVERAGE_FOR_SCORE = 70;
   var provinces = [];
   var analysisRequest = 0;
   var chart = null;
@@ -69,9 +74,9 @@
 
   async function requestGeoJSON(url, params) {
     var response = await fetch(paramsUrl(url, params));
-    if (!response.ok) throw new Error('Layanan BIG merespons HTTP ' + response.status + '.');
+    if (!response.ok) throw new Error('Layanan data merespons HTTP ' + response.status + '.');
     var data = await response.json();
-    if (data.error) throw new Error(data.error.message || 'Layanan BIG mengembalikan kesalahan.');
+    if (data.error) throw new Error(data.error.message || 'Layanan data mengembalikan kesalahan.');
     return data.features || [];
   }
 
@@ -121,8 +126,59 @@
     });
     var classArea = deficit + surplus;
     return { districtArea: area, coveredArea: covered, coveragePct: area ? Math.min(100, covered / area * 100) : 0,
+      classifiedCoveragePct: area ? Math.min(100, classArea / area * 100) : 0,
       deficitArea: deficit, surplusArea: surplus, deficitPct: classArea ? deficit / classArea * 100 : null,
       classes: classes, featureCount: features.length };
+  }
+
+  async function queryClimateIndex(base, layerId, bbox) {
+    var features = [];
+    var offset = 0;
+    while (offset < CLIMATE_MAX_FEATURES) {
+      var page = await requestGeoJSON(base + '/' + layerId + '/query', {
+        where: '1=1', geometry: bboxGeometry(bbox), geometryType: 'esriGeometryEnvelope',
+        inSR: 4326, spatialRel: 'esriSpatialRelIntersects', outFields: 'OBJECTID,gridcode,Rec_Date',
+        returnGeometry: true, outSR: 4326, f: 'geojson', resultOffset: offset,
+        resultRecordCount: CLIMATE_PAGE_SIZE, orderByFields: 'OBJECTID'
+      });
+      features = features.concat(page);
+      if (page.length < CLIMATE_PAGE_SIZE) break;
+      offset += page.length;
+    }
+    if (offset >= CLIMATE_MAX_FEATURES) throw new Error('Grid melebihi batas pemrosesan ' + CLIMATE_MAX_FEATURES + ' fitur; indikator dikeluarkan agar cakupan tidak menyesatkan.');
+    return features;
+  }
+
+  function climateIndexStats(boundary, features) {
+    var districtArea = window.turf.area(boundary);
+    var mappedArea = 0;
+    var dryArea = 0;
+    var weightedSeverity = 0;
+    var latestDate = null;
+    var featureCount = 0;
+    (features || []).forEach(function (feature) {
+      if (!feature.geometry || !/Polygon/.test(feature.geometry.type)) return;
+      var clippedArea = intersectArea(boundary, feature);
+      if (!clippedArea) return;
+      var props = feature.properties || {};
+      var category = number(field(props, 'gridcode'));
+      if (category == null) return;
+      mappedArea += clippedArea;
+      featureCount++;
+      var severity = category <= -3 ? 100 : (category === -2 ? 67 : (category === -1 ? 33 : 0));
+      if (category < 0) dryArea += clippedArea;
+      weightedSeverity += clippedArea * severity;
+      var rawDate = field(props, 'Rec_Date');
+      var parsedDate = rawDate == null ? NaN : (typeof rawDate === 'number' || /^\d+$/.test(String(rawDate)) ? Number(rawDate) : Date.parse(rawDate));
+      if (Number.isFinite(parsedDate) && (!latestDate || parsedDate > latestDate.value)) {
+        latestDate = { value: parsedDate, label: new Date(parsedDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) };
+      }
+    });
+    var coveragePct = districtArea ? Math.min(100, mappedArea / districtArea * 100) : 0;
+    var score = mappedArea ? weightedSeverity / mappedArea : null;
+    if (coveragePct < MIN_COVERAGE_FOR_SCORE) score = null;
+    return { score: score, coveragePct: coveragePct, dryAreaPct: mappedArea ? dryArea / mappedArea * 100 : null,
+      latestDate: latestDate ? latestDate.label : null, count: featureCount, mappedArea: mappedArea };
   }
 
   function pointStats(boundary, features) {
@@ -176,11 +232,13 @@
     if (score == null || !Number.isFinite(score)) return 'terbatas';
     return score <= 33 ? 'rendah' : (score <= 66 ? 'sedang' : 'tinggi');
   }
-  function makeScores(surface, groundwater, terrain) {
+  function makeScores(surface, climate) {
     var components = [
-      { key: 'surface', label: 'Air permukaan / neraca air', score: surface.deficitPct, weight: .5 },
-      { key: 'groundwater', label: 'Air tanah / cakupan cekungan', score: groundwater.coveragePct == null ? null : 100 - groundwater.coveragePct, weight: .3 },
-      { key: 'terrain', label: 'Topografi / elevasi rendah ≤10 m', score: terrain.lowlandPct, weight: .2 }
+      { key: 'surface', label: 'Neraca air BIG (defisit)', score: surface.classifiedCoveragePct >= MIN_COVERAGE_FOR_SCORE ? surface.deficitPct : null, weight: .2 },
+      { key: 'spi3', label: 'SPI 3 bulan', score: climate.spi3.score, weight: .2 },
+      { key: 'spi6', label: 'SPI 6 bulan', score: climate.spi6.score, weight: .2 },
+      { key: 'spei3', label: 'SPEI 3 bulan', score: climate.spei3.score, weight: .2 },
+      { key: 'spei6', label: 'SPEI 6 bulan', score: climate.spei6.score, weight: .2 }
     ];
     var available = components.filter(function (item) { return Number.isFinite(item.score); });
     var weightTotal = available.reduce(function (sum, item) { return sum + item.weight; }, 0);
@@ -194,30 +252,41 @@
   function row(label, stat, score, coverage) {
     return '<tr><td>' + esc(label) + '</td><td>' + stat + '</td><td>' + (score == null ? '—' : fmt(score, 0) + '/100') + '</td><td>' + coverage + '</td></tr>';
   }
+  function climateRow(label, stats, component) {
+    var reading = stats.score == null ? 'Tidak masuk skor (cakupan < ' + MIN_COVERAGE_FOR_SCORE + '%)' : 'Keparahan rata-rata ' + fmt(stats.score, 0) + '/100 · ' + fmt(stats.dryAreaPct, 1) + '% area terpetakan kering';
+    var coverage = fmt(stats.coveragePct, 1) + '% wilayah · ' + stats.count + ' grid' + (stats.latestDate ? ' · data ' + stats.latestDate : '');
+    return row(label, reading, component.score, coverage);
+  }
   function render(result) {
     var summary = $('gd-summary');
     var risk = result.risk;
     var scoreValue = risk.score == null ? 0 : Math.max(0, Math.min(100, Math.round(risk.score)));
     var scoreText = risk.score == null ? '—' : fmt(risk.score, 0);
     var scoreDescription = risk.score == null ? 'Data terbatas' : risk.className.toUpperCase() + ', skor ' + fmt(risk.score, 0) + ' dari 100';
-    summary.innerHTML = '<div><strong>' + esc(result.name) + '</strong><small>Indeks komposit skrining tingkat provinsi · kelengkapan bobot ' + fmt(risk.completeness, 0) + '% · batas: ' + esc(result.boundary.properties.source) + '</small></div>' +
+    summary.innerHTML = '<div><strong>' + esc(result.name) + '</strong><small>Indeks skrining kekeringan tingkat provinsi · kelengkapan bobot ' + fmt(risk.completeness, 0) + '% · batas: ' + esc(result.boundary.properties.source) + '</small></div>' +
       '<div class="gd-score-gauge" data-level="' + esc(risk.className) + '" style="--gd-score-angle:' + (scoreValue * 3.6) + 'deg" role="img" aria-label="' + esc(scoreDescription) + '"><span class="gd-score-value">' + esc(scoreText) + '</span><span class="gd-score-label">' + (risk.score == null ? 'TERBATAS' : esc(risk.className.toUpperCase())) + '</span></div>';
     var previousGuide = summary.nextElementSibling;
     if (previousGuide && previousGuide.classList.contains('gd-reading-guide')) previousGuide.remove();
     summary.insertAdjacentHTML('afterend', '<div class="gd-reading-guide"><strong>Cara membaca hasil</strong><ul>' +
       '<li><b>Skor 0–100:</b> makin tinggi angkanya, makin kuat indikasi risiko menurut indikator yang dianalisis.</li>' +
+      '<li><b>Indeks kekeringan/defisit air:</b> merangkum anomali hujan dan neraca air. Indeks ini bukan indeks banjir atau prediksi kejadian.</li>' +
       '<li><b>Rendah, sedang, tinggi:</b> kategori ringkas dari skor; bukan kepastian akan terjadi bencana.</li>' +
       '<li><b>Kelengkapan bobot:</b> menunjukkan berapa bagian indikator yang berhasil dihitung. 100% berarti semua indikator tersedia untuk perhitungan, bukan jaminan data lapangan lengkap atau akurat.</li>' +
+      '<li><b>Cakupan grid:</b> indikator iklim dengan cakupan wilayah di bawah 70% dikeluarkan dari skor; tanggal menunjukkan pembaruan grid terbaru yang beririsan.</li>' +
       '<li><b>Batas wilayah:</b> menunjukkan polygon provinsi yang dipakai untuk merangkum data.</li>' +
       '</ul></div>');
     var rows = '';
     rows += row('Neraca air BIG', result.surface.deficitPct == null ? 'Tidak ada kelas defisit/surplus terbaca' : fmt(result.surface.deficitPct, 1) + '% area overlay defisit', risk.components[0].score,
       fmt(result.surface.coveragePct, 1) + '% wilayah · ' + result.surface.featureCount + ' poligon');
-    rows += row('Cekungan air tanah BIG', result.groundwater.coveragePct == null ? 'Tidak ada geometri cekungan' : fmt(result.groundwater.coveragePct, 1) + '% cakupan', risk.components[1].score,
+    rows += climateRow('SPI · 3 bulan', result.climate.spi3, risk.components[1]);
+    rows += climateRow('SPI · 6 bulan', result.climate.spi6, risk.components[2]);
+    rows += climateRow('SPEI · 3 bulan', result.climate.spei3, risk.components[3]);
+    rows += climateRow('SPEI · 6 bulan', result.climate.spei6, risk.components[4]);
+    rows += row('Cekungan air tanah BIG · konteks', result.groundwater.coveragePct == null ? 'Tidak ada geometri cekungan' : fmt(result.groundwater.coveragePct, 1) + '% cakupan', null,
       fmt(result.groundwater.featureCount, 0) + ' unit cekungan');
     rows += row('Infrastruktur air tanah BIG', fmt(result.wells.count, 0) + ' titik sumur/infrastruktur', null,
       result.wells.withDischarge ? fmt(result.wells.dischargeTotal, 2) + ' m³/detik tercatat' : 'Debit tidak tercatat');
-    rows += row('Elevasi global (Terrarium)', 'Rerata ' + fmt(result.terrain.mean, 1) + ' m · P10–P90 ' + fmt(result.terrain.p10, 1) + '–' + fmt(result.terrain.p90, 1) + ' m', risk.components[2].score,
+    rows += row('Elevasi global · konteks', 'Rerata ' + fmt(result.terrain.mean, 1) + ' m · P10–P90 ' + fmt(result.terrain.p10, 1) + '–' + fmt(result.terrain.p90, 1) + ' m', null,
       fmt(result.terrain.lowlandPct, 1) + '% sampel ≤10 m · n=' + result.terrain.count + (result.terrain.resolutionM ? ' · ~' + fmt(result.terrain.resolutionM, 0) + ' m/piksel' : ''));
     $('gd-table-body').innerHTML = rows;
     $('gd-results').hidden = false;
@@ -232,7 +301,7 @@
       provinceLayer = window.L.geoJSON(result.boundary, {
         style: { color: color, weight: 2.5, fillColor: color, fillOpacity: .24 },
         onEachFeature: function (_, layer) {
-          layer.bindPopup('<strong>Water Risk Analysis</strong><br>' + esc(result.name) + '<br>Risiko: ' + esc(scoreLabel) + '<br>Kelengkapan data: ' + fmt(risk.completeness, 0) + '%');
+          layer.bindPopup('<strong>Indeks Kekeringan · Water Risk</strong><br>' + esc(result.name) + '<br>Skor: ' + esc(scoreLabel) + '<br>Kelengkapan data: ' + fmt(risk.completeness, 0) + '%');
         }
       });
       if (mapLayerToggle) {
@@ -267,7 +336,7 @@
       type: 'bar',
       data: { labels: risk.components.map(function (item) { return item.label; }),
         datasets: [{ label: 'Skor risiko proxy (0–100)', data: risk.components.map(function (item) { return item.score; }),
-          backgroundColor: ['#f97316', '#8b5cf6', '#06b6d4'], borderRadius: 7, borderSkipped: false, barThickness: 22 }] },
+          backgroundColor: ['#f97316', '#b45309', '#d97706', '#7c3aed', '#8b5cf6'], borderRadius: 7, borderSkipped: false, barThickness: 22 }] },
       options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: { duration: 450 },
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (ctx) { return ctx.raw == null ? 'Data tidak tersedia' : ' ' + Number(ctx.raw).toLocaleString('id-ID', { maximumFractionDigits: 1 }) + '/100'; } } } },
         scales: { x: { min: 0, max: 100, grid: { color: '#edf2f7' }, ticks: { stepSize: 20, font: { size: 9 } } },
@@ -277,13 +346,14 @@
 
   function renderMethod(result) {
     $('gd-method-body').innerHTML =
-      '<p><b>Water Risk Analysis</b> adalah skrining spasial heuristik, bukan prakiraan atau penilaian resmi. Skor 0–100 dibentuk dari neraca air defisit (50%), proporsi wilayah di luar cekungan air tanah terpetakan (30%), dan proporsi sampel elevasi global pada elevasi ≤10 m (20%). Kelas: 0–33 rendah, 34–66 sedang, 67–100 tinggi. Bobot dihitung ulang hanya dari indikator yang tersedia; kelengkapan menunjukkan bobot data yang berhasil didapat.</p>' +
-      '<p><b>Air permukaan:</b> kelas defisit/surplus dan geometri Peta Ketersediaan Air BIG, skala 1:250.000, sumber studi Ditjen SDA 2016. Skor memakai luas potongan polygon yang terklasifikasi, bukan volume air atau kondisi real-time.</p>' +
-      '<p><b>Air tanah:</b> cakupan Cekungan Air Tanah BIG skala 1:250.000 dan titik infrastruktur Peta Air Tanah. Cekungan terpetakan tidak membuktikan debit, mutu, atau keberlanjutan akuifer; jumlah titik sumur juga bukan inventaris lengkap.</p>' +
+      '<p><b>Water Risk Analysis</b> adalah skrining indikatif kekeringan dan defisit air, bukan prakiraan atau penilaian resmi. Skor 0–100 menggabungkan lima indikator dengan bobot sama: neraca air BIG, SPI 3/6 bulan, dan SPEI 3/6 bulan. Bobot dihitung ulang dari indikator yang tersedia. Indikator dengan cakupan polygon/grid di bawah 70% dikeluarkan; kelengkapan menunjukkan bagian bobot yang tersisa.</p>' +
+      '<p><b>SPI dan SPEI:</b> grid terbaru dari layanan ArcGIS, diringkas berdasarkan luas irisan provinsi. Kelas negatif dihitung sebagai kondisi kering; kelas yang lebih ekstrem mendapat nilai keparahan lebih tinggi. SPI menggambarkan anomali presipitasi, sedangkan SPEI juga memperhitungkan evapotranspirasi potensial. Tanggal terbaru dan cakupan grid ditampilkan per indikator.</p>' +
+      '<p><b>Air permukaan:</b> kelas defisit/surplus dan geometri Peta Ketersediaan Air BIG, skala 1:250.000, sumber studi Ditjen SDA 2016. Skor memakai luas polygon terklasifikasi, bukan volume air atau kondisi real-time.</p>' +
+      '<p><b>Air tanah:</b> cakupan Cekungan Air Tanah BIG skala 1:250.000 dan titik infrastruktur Peta Air Tanah hanya ditampilkan sebagai konteks. Cekungan terpetakan tidak membuktikan debit, mutu, atau keberlanjutan akuifer; jumlah titik sumur juga bukan inventaris lengkap.</p>' +
       '<p><b>Topografi:</b> elevasi global AWS Terrain Tiles (format Terrarium) disampel pada grid adaptif, maksimum 150 titik. Resolusi efektif mengikuti zoom tile dan berbeda antarwilayah. Ambang 10 m hanya proxy keterpaparan dataran rendah; bukan peta banjir, pasang, atau genangan. Rerata dan rentang elevasi adalah statistik sampel, bukan seluruh sel DEM.</p>' +
       '<p><b>Batas wilayah:</b> analisis memakai ' + esc(result.boundary.properties.source) + ' untuk polygon provinsi. Batas diambil lokal; modul ini tidak meminta layanan batas administrasi BIG saat runtime.</p>' +
-      '<p><b>Batas analisis:</b> hasil bergantung pada ketersediaan layanan BIG dan skala/kemutakhiran masing-masing sumber. Data neraca air yang dipakai beracuan studi 2016, sehingga skor tidak mewakili ketersediaan air tahun 2026 secara real-time.</p>' +
-      '<p>Sumber: <a href="https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/layers" target="_blank" rel="noopener">BIG SatuPeta · Sumber Daya Alam dan Lingkungan</a> · <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener">AWS Terrain Tiles (elevasi Terrarium global)</a> · batas provinsi dari GeoJSON lokal BPS.</p>';
+      '<p><b>Batas analisis:</b> kelas dan bobot ini merupakan proxy skrining yang belum divalidasi terhadap catatan kekeringan, debit, atau kebutuhan air lokal. Grid iklim dan overlay dapat memiliki skala, periode, dan resolusi berbeda; indeks tidak mewakili ketersediaan air aktual atau kondisi real-time. Elevasi dan air tanah tidak masuk ke skor kekeringan.</p>' +
+      '<p>Sumber: <a href="https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/layers" target="_blank" rel="noopener">BIG SatuPeta · Sumber Daya Alam dan Lingkungan</a> · <a href="https://staklim-jatim.bmkg.go.id/index.php/profil/meteorologi/list-of-all-tags/monitoring-kekeringan-di-indonesia-dengan-metode-spi" target="_blank" rel="noopener">BMKG · pemantauan kekeringan SPI</a> · <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener">AWS Terrain Tiles (elevasi Terrarium global)</a> · batas provinsi dari GeoJSON lokal BPS.</p>';
   }
 
   function populateProvinces() {
@@ -321,12 +391,16 @@
     try {
       var boundary = await loadLocalProvinceBoundary(selected);
       var bbox = bboxOf(boundary);
-      status('Menganalisis overlay SatuPeta BIG dan mengambil sampel elevasi global…');
+      status('Mengambil neraca air, grid SPI/SPEI, overlay air tanah, dan sampel elevasi…');
       var tasks = await Promise.allSettled([
         querySda(2, bbox, 'kls_nrcair,nrc_air,kls_ipa,kls_ktrs,nm_inf,luas_km2,thn_dat', 3000),
         querySda(42, bbox, 'namobj', 3000),
         querySda(1, bbox, 'kd_inf,nm_inf,nm_sumur,dbt_air_baku,dbt_pom,kdlm_at,thn_dat', 3000),
-        demStats(boundary)
+        demStats(boundary),
+        queryClimateIndex(SPI_URL, 1, bbox),
+        queryClimateIndex(SPI_URL, 2, bbox),
+        queryClimateIndex(SPEI_URL, 1, bbox),
+        queryClimateIndex(SPEI_URL, 2, bbox)
       ]);
       if (runId !== analysisRequest) return;
       var issues = [];
@@ -339,15 +413,21 @@
       var basinFeatures = get(1, 'Cekungan air tanah');
       var wellFeatures = get(2, 'Infrastruktur air tanah');
       var terrain = get(3, 'Elevasi global');
+      var climate = {
+        spi3: climateIndexStats(boundary, get(4, 'SPI 3 bulan')),
+        spi6: climateIndexStats(boundary, get(5, 'SPI 6 bulan')),
+        spei3: climateIndexStats(boundary, get(6, 'SPEI 3 bulan')),
+        spei6: climateIndexStats(boundary, get(7, 'SPEI 6 bulan'))
+      };
       var surface = overlayStats(boundary, surfaceFeatures, 'surface');
       var groundwaterOverlay = overlayStats(boundary, basinFeatures, 'groundwater');
       var groundwater = { coveragePct: groundwaterOverlay.coveredArea > 0 ? groundwaterOverlay.coveragePct : null,
         featureCount: basinFeatures.length, overlayArea: groundwaterOverlay.coveredArea };
       var wells = pointStats(boundary, wellFeatures);
       if (!terrain) terrain = { mean: null, min: null, max: null, p10: null, p90: null, lowlandPct: null, count: 0 };
-      var risk = makeScores(surface, groundwater, terrain);
+      var risk = makeScores(surface, climate);
       var result = { name: selected.nama, boundary: boundary, surface: surface,
-        groundwater: groundwater, wells: wells, terrain: terrain, risk: risk, issues: issues };
+        groundwater: groundwater, wells: wells, terrain: terrain, climate: climate, risk: risk, issues: issues };
       render(result);
       if (issues.length) status('Hasil parsial. ' + issues.join(' · '), true);
       else status('Analisis selesai · skrining tingkat provinsi.');
