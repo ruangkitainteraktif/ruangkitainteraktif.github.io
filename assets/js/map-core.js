@@ -3741,19 +3741,21 @@ L.control.scale({
         });
       }
       html += '</div></div>';
+      /* Sisipkan unit feed setelah kategori awal Transportasi supaya iklan
+         muncul di tengah katalog, tetapi tidak mendahului daftar layer. */
+      if (ci === 1) {
+        html += '<div class="lc-adsense lc-feed-adsense" aria-label="Iklan">' +
+          '<ins class="adsbygoogle" style="display:block"' +
+          ' data-ad-format="fluid"' +
+          ' data-ad-layout-key="-fb+5w+4e-db+86"' +
+          ' data-ad-client="ca-pub-7501816933195235"' +
+          ' data-ad-slot="5975101505"></ins>' +
+          '</div>';
+      }
     });
-    /* Slot AdSense katalog diletakkan setelah seluruh kategori agar tidak
-       memisahkan banner donasi dari kontrol pencarian dan daftar layer. */
-    html += '<div class="lc-adsense">' +
-      '<!-- Ruang Kita -->' +
-      '<ins class="adsbygoogle" style="display:block"' +
-      ' data-ad-client="ca-pub-7501816933195235"' +
-      ' data-ad-slot="1306506445"' +
-      ' data-ad-format="horizontal"' +
-      ' data-full-width-responsive="true"></ins>' +
-      '</div>';
 
     container.innerHTML = html;
+    container.classList.remove('lc-search-active');
     dorongSlotIklan(container);
 
     var clearAllBtn = document.getElementById('lcClearAll');
@@ -4098,6 +4100,7 @@ L.control.scale({
     if (searchInput) {
       searchInput.addEventListener('input', function() {
         var q = searchInput.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+        container.classList.toggle('lc-search-active', !!q);
         container.querySelectorAll('.lc-item').forEach(function(item) {
           var label = item.querySelector('label');
           var text = (label ? label.textContent : item.textContent).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
