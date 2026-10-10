@@ -3497,43 +3497,6 @@ L.control.scale({
     if (dropdown) delete dropdown.dataset.built;
   };
 
-  /* <script> yang disuntik lewat innerHTML tidak pernah dieksekusi
-     browser, jadi push AdSense dijalankan sebagai kode biasa. Amankan:
-     bila skrip AdSense belum atau gagal dimuat, array-nya dibuat sendiri
-     persis seperti pola resmi AdSense dan tidak ada error yang bocor. */
-  function dorongSlotIklan(akar) {
-    if (!akar) return;
-    var slot = Array.prototype.find.call(akar.querySelectorAll('.lc-adsense'), function (unit) {
-      return unit.dataset.requested !== 'true' && unit.querySelector('.adsbygoogle');
-    });
-    if (!slot) return;
-    if (!('IntersectionObserver' in window)) { slot.dataset.requested = 'true'; dorongSekarang(); return; }
-    /* Dropdown katalog masih display:none saat dibangun lewat
-       buildLayerCatalogIfNeeded() pada boot, dan <ins> yang didorong saat
-       tersembunyi tidak pernah diisi ulang AdSense. Ditunda sampai
-       dropdown benar-benar terbuka. */
-    var io = new IntersectionObserver(function (entries) {
-      for (var i = 0; i < entries.length; i++) {
-        if (!entries[i].isIntersecting) continue;
-        io.disconnect();
-        if (slot.dataset.requested === 'true') return;
-        slot.dataset.requested = 'true';
-        dorongSekarang();
-        return;
-      }
-    });
-    io.observe(slot);
-  }
-
-  function dorongSekarang() {
-    try {
-      window.adsbygoogle = window.adsbygoogle || [];
-      window.adsbygoogle.push({});
-    } catch (e) { /* slot gagal diisi, biarkan */ }
-  }
-
-  var _pinnedAdUnit = null;
-
   function buildLayerCatalog(container) {
     var html = '<div class="lc-donation-banner">' +
       '<div class="lc-donation-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg></div>' +
@@ -3610,7 +3573,6 @@ L.control.scale({
           }
         });
         html += '</div></div>';
-        html += '<div class="lc-pinned-ad-placeholder"></div>';
       }
 
       var activeLayers = [];
@@ -3754,38 +3716,10 @@ L.control.scale({
         });
       }
       html += '</div></div>';
-      /* Sisipkan unit feed setelah kategori awal Transportasi supaya iklan
-         muncul di tengah katalog, tetapi tidak mendahului daftar layer. */
-      if (ci === 1) {
-        html += '<div class="lc-adsense lc-feed-adsense" aria-label="Iklan">' +
-          '<ins class="adsbygoogle" style="display:block"' +
-          ' data-ad-format="fluid"' +
-          ' data-ad-layout-key="-fb+5w+4e-db+86"' +
-          ' data-ad-client="ca-pub-7501816933195235"' +
-          ' data-ad-slot="5975101505"></ins>' +
-          '</div>';
-      }
     });
 
-    if (_pinnedAdUnit && _pinnedAdUnit.parentNode) _pinnedAdUnit.parentNode.removeChild(_pinnedAdUnit);
     container.innerHTML = html;
-    var pinnedAdPlaceholder = container.querySelector('.lc-pinned-ad-placeholder');
-    if (pinnedAdPlaceholder) {
-      if (!_pinnedAdUnit) {
-        _pinnedAdUnit = document.createElement('div');
-        _pinnedAdUnit.className = 'lc-adsense lc-pinned-adsense';
-        _pinnedAdUnit.setAttribute('aria-label', 'Iklan');
-        _pinnedAdUnit.innerHTML = '<!-- Ruang Kita -->' +
-          '<ins class="adsbygoogle" style="display:block"' +
-          ' data-ad-client="ca-pub-7501816933195235"' +
-          ' data-ad-slot="1306506445"' +
-          ' data-ad-format="auto"' +
-          ' data-full-width-responsive="true"></ins>';
-      }
-      pinnedAdPlaceholder.replaceWith(_pinnedAdUnit);
-    }
     container.classList.remove('lc-search-active');
-    dorongSlotIklan(container);
 
     var clearAllBtn = document.getElementById('lcClearAll');
     if (clearAllBtn) {
