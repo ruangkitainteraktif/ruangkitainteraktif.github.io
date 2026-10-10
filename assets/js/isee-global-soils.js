@@ -18,6 +18,7 @@
   var moistureLegendEntries = [];
   var temperatureLegendRequest = null;
   var temperatureLegendEntries = [];
+  var temperatureLegendId = 'isee-global-soil-temperature';
   var legendId = 'isee-global-soil-orders';
   var identifyMap = null;
   var identifyHandler = null;
@@ -227,6 +228,71 @@
     });
   }
 
+  function renderTemperatureLegend(map) {
+    if (!window.addUnifiedLegend) return;
+    var box = document.createElement('div');
+    box.className = 'isee-soil-legend';
+    var heading = document.createElement('strong');
+    heading.textContent = DEFINITIONS.temperature.label;
+    box.appendChild(heading);
+    var list = document.createElement('div');
+    list.className = 'isee-soil-legend-items';
+    box.appendChild(list);
+    if (temperatureLegendEntries.length) {
+      temperatureLegendEntries.forEach(function (item) {
+        var row = document.createElement('div'); row.className = 'isee-soil-legend-row';
+        if (item.imageData) {
+          var image = document.createElement('img');
+          image.alt = ''; image.src = 'data:' + (item.contentType || 'image/png') + ';base64,' + item.imageData;
+          row.appendChild(image);
+        }
+        var label = document.createElement('span');
+        label.textContent = item.label || item.values && item.values.join(', ') || 'Kelas tanah';
+        row.appendChild(label); list.appendChild(row);
+      });
+    } else {
+      var loading = document.createElement('small');
+      loading.className = 'isee-soil-legend-note';
+      loading.textContent = 'Memuat kelas legenda dari ArcGIS…';
+      box.appendChild(loading);
+    }
+    var source = document.createElement('small');
+    source.className = 'isee-soil-legend-source';
+    source.textContent = 'Sumber: Soil Temperature Regimes · USDA NRCS / ISee Network / Purdue University.';
+    box.appendChild(source);
+    window.addUnifiedLegend(temperatureLegendId, window.createLegendWithToggle ? window.createLegendWithToggle(box) : box);
+
+    if (!temperatureLegendRequest) {
+      temperatureLegendRequest = jsonp(ROOT + DEFINITIONS.temperature.service + '/MapServer/legend?f=json').then(function (data) {
+        var item = data && Array.isArray(data.layers) && (data.layers.find(function (entry) { return Number(entry.layerId) === 0; }) || data.layers[0]);
+        temperatureLegendEntries = item && Array.isArray(item.legend) ? item.legend : [];
+      }).catch(function (error) {
+        console.warn('[ISee Soil] Legenda soil temperature tidak dapat dimuat:', error);
+      });
+    }
+    temperatureLegendRequest.then(function () {
+      if (map.hasLayer(layers.temperature)) renderTemperatureLegendWithoutFetch();
+    });
+  }
+
+  function renderTemperatureLegendWithoutFetch() {
+    if (!window.addUnifiedLegend) return;
+    var box = document.createElement('div');
+    box.className = 'isee-soil-legend';
+    var heading = document.createElement('strong'); heading.textContent = DEFINITIONS.temperature.label; box.appendChild(heading);
+    var list = document.createElement('div'); list.className = 'isee-soil-legend-items'; box.appendChild(list);
+    temperatureLegendEntries.forEach(function (item) {
+      var row = document.createElement('div'); row.className = 'isee-soil-legend-row';
+      if (item.imageData) {
+        var image = document.createElement('img'); image.alt = ''; image.src = 'data:' + (item.contentType || 'image/png') + ';base64,' + item.imageData; row.appendChild(image);
+      }
+      var label = document.createElement('span'); label.textContent = item.label || item.values && item.values.join(', ') || 'Kelas tanah'; row.appendChild(label); list.appendChild(row);
+    });
+    var source = document.createElement('small'); source.className = 'isee-soil-legend-source';
+    source.textContent = 'Sumber: Soil Temperature Regimes · USDA NRCS / ISee Network / Purdue University.'; box.appendChild(source);
+    window.addUnifiedLegend(temperatureLegendId, window.createLegendWithToggle ? window.createLegendWithToggle(box) : box);
+  }
+
   function setLayerVisible(key, visible, map, L) {
     var definition = DEFINITIONS[key];
     if (!definition) return;
@@ -248,14 +314,14 @@
         }).catch(function (error) { console.warn('[ISee Soil] Legenda soil moisture tidak dapat dimuat:', error); });
       }
       if (key === 'temperature' && !temperatureLegendRequest) {
-        temperatureLegendRequest = jsonp(ROOT + definition.service + '/MapServer/legend?f=json').then(function (data) {
-          var item = data && Array.isArray(data.layers) && (data.layers.find(function (entry) { return Number(entry.layerId) === 0; }) || data.layers[0]);
-          temperatureLegendEntries = item && Array.isArray(item.legend) ? item.legend : [];
-        }).catch(function (error) { console.warn('[ISee Soil] Legenda soil temperature tidak dapat dimuat:', error); });
+        renderTemperatureLegend(map);
+      } else if (key === 'temperature') {
+        renderTemperatureLegendWithoutFetch();
       }
     } else {
       if (map.hasLayer(layers[key])) map.removeLayer(layers[key]);
       if (key === 'orders' && window.removeUnifiedLegend) window.removeUnifiedLegend(legendId);
+      if (key === 'temperature' && window.removeUnifiedLegend) window.removeUnifiedLegend(temperatureLegendId);
     }
   }
 
