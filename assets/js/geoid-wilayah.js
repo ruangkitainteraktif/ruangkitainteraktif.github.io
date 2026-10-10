@@ -731,14 +731,10 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
               </div>` : ''}
              </div>
              <div style="padding:8px 14px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8;text-align:center;">Sumber: BIG RBI (Rupa Bumi Indonesia) Edisi Juni 2026</div>
-             <!-- flex-wrap wajib: ketiga tombol totalnya ±336px sedangkan popup
-                  lebar maksimal 320px, jadi tanpa wrap baris ini meluber.
-                  Ungu #6366f1 diambil dari gradien brand sheet Tanya Ruang
-                  (#a855f7 -> #6366f1) supaya tombolnya terbaca sebagai satu
-                  kelompok dengan AI, bukan aksi biasa yang lain. -->
+             <!-- flex-wrap keeps actions inside narrow popups. -->
              <div style="padding:10px 14px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
                 <button type="button" onclick="showDukcapilDetail('${escapeGeoidHtml(kode)}')" style="border:0;background:#2563eb;color:#fff;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;">Data Penduduk</button>
-                <button type="button" onclick="downloadBoundaryGeoJSON('${escapeGeoidHtml(kode)}')" style="border:0;background:#059669;color:#fff;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;">Download GeoJSON</button>
+                <button type="button" onclick="downloadBoundarySHP('${escapeGeoidHtml(kode)}')" style="border:0;background:#059669;color:#fff;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;">Export SHP</button>
                 <button type="button" onclick="tanyaRuangWilayah('${escapeGeoidHtml(kode)}')" style="border:0;background:#6366f1;color:#fff;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;">Tanya Ruang</button>
                 ${options.source === 'unified-search' ? '<button type="button" onclick="resetGeoidBoundaryLayer()" style="border:0;background:#ef4444;color:#fff;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;">Reset Layer</button>' : ''}
               </div>
@@ -893,8 +889,17 @@ function boundaryPathToGeoJSON(path, properties) {
   };
 }
 
-async function downloadBoundarySHP() {
-  const activeKode = getActiveBoundaryKode();
+async function downloadBoundarySHP(requestedKode, googleAuthorized) {
+  if (!googleAuthorized) {
+    if (typeof window.RKRequireGoogleLogin !== 'function') {
+      alert('Login Google belum siap. Muat ulang halaman lalu coba kembali.');
+      return;
+    }
+    window.RKRequireGoogleLogin(() => downloadBoundarySHP(requestedKode, true));
+    return;
+  }
+
+  const activeKode = requestedKode || getActiveBoundaryKode();
   if (!activeKode) {
     alert('Tidak ada data batas wilayah untuk diunduh.');
     return;

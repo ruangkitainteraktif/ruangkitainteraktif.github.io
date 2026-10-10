@@ -15,6 +15,67 @@
     if (typeof stopMeasureMode === 'function') stopMeasureMode();
   }
 
+  function shpSafeProperties(properties) {
+    const safe = {};
+    Object.keys(properties || {}).forEach((key) => {
+      const base = String(key || 'field').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 10) || 'field';
+      let field = base;
+      let suffix = 1;
+      while (Object.prototype.hasOwnProperty.call(safe, field)) {
+        const tail = String(suffix++);
+        field = base.slice(0, 10 - tail.length) + tail;
+      }
+      const value = properties[key];
+      safe[field] = value == null || (typeof value === 'number' && !Number.isFinite(value)) ? ''
+        : typeof value === 'boolean' ? (value ? 1 : 0)
+          : typeof value === 'object' ? JSON.stringify(value) : value;
+    });
+    return safe;
+  }
+
+  async function exportGeoServerShapefile(item) {
+    const writer = window.shpwrite || (typeof shpwrite !== 'undefined' ? shpwrite : null);
+    if (!writer || typeof writer.zip !== 'function') return { ok: false, message: 'Modul pembuat SHP belum siap. Muat ulang halaman lalu coba kembali.' };
+    try {
+      const features = (item.geojson && item.geojson.features || []).filter((feature) =>
+        feature && feature.geometry && feature.geometry.type && Array.isArray(feature.geometry.coordinates));
+      if (!features.length) return { ok: false, message: 'Layer tidak memiliki fitur geometri yang bisa diekspor.' };
+      const types = {};
+      features.forEach((feature) => {
+        const type = feature.geometry.type;
+        if (type === 'Point' || type === 'MultiPoint') types.point = 'points';
+        else if (type === 'LineString' || type === 'MultiLineString') types.polyline = 'lines';
+        else if (type === 'Polygon' || type === 'MultiPolygon') types.polygon = 'polygons';
+      });
+      if (!Object.keys(types).length) return { ok: false, message: 'Jenis geometri layer ini belum didukung oleh format SHP.' };
+      const fileName = item.name.replace(/[^a-z0-9_-]+/gi, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'layer_geoserver';
+      const collection = {
+        type: 'FeatureCollection',
+        features: features.map((feature) => Object.assign({}, feature, { properties: shpSafeProperties(feature.properties) }))
+      };
+      const zipData = await writer.zip(collection, {
+        folder: fileName,
+        filename: fileName,
+        outputType: 'blob',
+        types,
+        prj: 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
+      });
+      const blob = zipData instanceof Blob ? zipData : new Blob([zipData], { type: 'application/zip' });
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = fileName + '.zip';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+      const partial = item.geojson.truncated ? ' (ekspor berisi sebagian fitur yang berhasil dimuat)' : '';
+      return { ok: true, message: features.length.toLocaleString('id-ID') + ' fitur diekspor ke ' + fileName + '.zip' + partial + '.' };
+    } catch (error) {
+      return { ok: false, message: 'Gagal mengekspor SHP: ' + (error && error.message ? error.message : String(error)) };
+    }
+  }
+
   function createAlatLayerCard(item) {
     const card = document.createElement('div');
     card.className = 'alat-layer-card';
@@ -47,6 +108,28 @@
       renderAlatLayerList();
     });
     btns.append(toggle, remove);
+    if (item.type === 'GeoServer WFS') {
+      const exportButton = document.createElement('button');
+      exportButton.type = 'button';
+      exportButton.className = 'alat-export-btn';
+      exportButton.textContent = 'Export SHP';
+      exportButton.title = 'Unduh fitur GeoServer sebagai shapefile ZIP';
+      exportButton.addEventListener('click', () => {
+        if (typeof window.RKRequireGoogleLogin !== 'function') {
+          setAlatStatus('Login Google belum siap. Muat ulang halaman lalu coba kembali.', true);
+          return;
+        }
+        window.RKRequireGoogleLogin(async () => {
+          exportButton.disabled = true;
+          exportButton.textContent = 'Menyiapkan SHP…';
+          const result = await exportGeoServerShapefile(item);
+          setAlatStatus(result.message, !result.ok);
+          exportButton.disabled = false;
+          exportButton.textContent = 'Export SHP';
+        });
+      });
+      btns.append(exportButton);
+    }
     card.append(name, meta, btns);
     return card;
   }

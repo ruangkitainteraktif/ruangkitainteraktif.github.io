@@ -4199,10 +4199,10 @@
       opacity: 1;
       stroke: #fff;
     }
-    /* Jumlah tombol subtab GeoData adalah 6: SHP, GeoJSON, GPX, KMZ,
-       ArcGIS REST, Timeline.
+    /* Jumlah tombol subtab GeoData adalah 7: SHP, GeoJSON, GPX, KMZ,
+       ArcGIS REST, GeoServer, Timeline.
      
-       Kolomnya dikunci 3, jadi enam tombol selalu jadi 2 baris penuh.
+       Kolomnya dikunci 3 agar tombol tetap mudah disentuh pada sheet sempit.
      
        Sebelumnya `repeat(auto-fit, minmax(112px, 1fr))`. Di sheet GeoTools
        (380px, padding 12/16px → konten ~348px) auto-fit hanya menghasilkan
@@ -4211,12 +4211,8 @@
        padahal separuh isinya adalah form ArcGIS REST yang harus tetap muat
        tanpa menggulir.
      
-       Komentar lama di blok ini menyebut "Jumlah subtab GeoData sekarang 7,
-       bukan 6". Itu keliru: jumlahnya 6 sejak subtab ArcGIS REST
-       ditambahkan, dan sudah 6 sejak GeoData dipisah jadi sheet sendiri.
-     
-       min-height diturunkan dari 72px ke 60px dan padding diperkecil supaya
-       dua baris ini tidak memakan tinggi sheet. */
+       min-height diturunkan dari 72px ke 60px dan padding diperkecil untuk
+       menjaga tinggi navigasi tetap ringkas. */
     .geotools-upload-tabs {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -10192,6 +10188,11 @@ details[open] > .gt-card-head::after {
       font-size: 10px;
     }
     .arcgis-source-toolbar > span { flex: 1; }
+    .geoserver-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 8px; }
+    .geoserver-actions .arcgis-source-action-btn { width: 100%; }
+    #geoserverCancelBtn[hidden] { display: none; }
+    #geoserverStatus { margin: 8px 0 0; line-height: 1.45; overflow-wrap: anywhere; }
+    #geoserverStatus[hidden] { display: none; }
     .arcgis-layer-tree {
       max-height: 25vh;
       overflow: auto;

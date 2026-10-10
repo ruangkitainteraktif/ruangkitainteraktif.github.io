@@ -3431,6 +3431,10 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="7" rx="1"/><rect x="3" y="14" width="18" height="7" rx="1"/><path d="M7 6.5h.01M7 17.5h.01M11 6.5h6M11 17.5h6"/></svg>
                  <span>ArcGIS REST</span>
                </button>
+               <button class="geoid-subtab-btn" data-subtab="alat-tab-geoserver" onclick="openGeoidSubtab(this)">
+                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg>
+                 <span>GeoServer</span>
+               </button>
               <button class="geoid-subtab-btn" data-subtab="alat-tab-timeline" onclick="openGeoidSubtab(this)">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
                 <span>Timeline</span>
@@ -3603,6 +3607,30 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     <button id="arcgisCountBtn" class="geotools-btn arcgis-source-action-btn" type="button" style="width:100%;margin-top:8px;" disabled title="Hitung jumlah fitur layer terpilih tanpa mengunduh geometri">Hitung jumlah fitur (opsional)</button>
                     <button id="arcgisAddSelectedBtn" class="geotools-btn geotools-btn--green arcgis-source-action-btn" type="button" style="width:100%;margin-top:8px;" disabled>Tambahkan layer ke peta</button>
                   </div>
+               </div>
+             </div>
+
+             <div id="alat-tab-geoserver" class="geoid-subtab-panel">
+               <div class="alat-card">
+                 <div class="alat-card-head">
+                   <span class="gt-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg></span>
+                   <span><b>Tambahkan data dari GeoServer</b><small>Telusuri workspace, pilih layer WFS, lalu muat ke peta.</small></span>
+                 </div>
+                 <div class="alat-card-body">
+                   <label class="geotani-form-label" for="geoserverSourceUrl">Alamat GeoServer</label>
+                   <input id="geoserverSourceUrl" class="geotani-form-input" type="url" value="" placeholder="Masukkan URL GeoServer, lalu cari workspace dan layer" autocomplete="off" />
+                   <div class="geoserver-actions">
+                     <button id="geoserverDiscoverBtn" class="geotools-btn arcgis-source-action-btn" type="button">Cari workspace dan layer</button>
+                     <button id="geoserverCancelBtn" class="geotools-btn geotools-btn--orange arcgis-source-action-btn" type="button" hidden>Batalkan pencarian</button>
+                   </div>
+                   <div id="geoserverStatus" class="cctv-message" role="status" aria-live="polite" hidden></div>
+                   <div class="arcgis-source-toolbar"><span id="geoserverSelectionCount">Belum ada layer dipilih</span></div>
+                   <div id="geoserverLayerTree" class="arcgis-layer-tree" aria-live="polite"><div class="arcgis-tree-empty">Masukkan URL GeoServer lalu cari workspace.</div></div>
+                   <button id="geoserverCountBtn" class="geotools-btn arcgis-source-action-btn" type="button" style="width:100%;margin-top:8px;" disabled>Hitung jumlah fitur (opsional)</button>
+                   <button id="geoserverAddBtn" class="geotools-btn geotools-btn--green arcgis-source-action-btn" type="button" style="width:100%;margin-top:8px;" disabled>Tambahkan layer ke peta</button>
+                   <div id="geoserverAttributeStatus" class="arcgis-attribute-status" style="margin-top:12px;"></div>
+                   <div id="geoserverAttributeTable" class="arcgis-attribute-table"></div>
+                 </div>
                </div>
              </div>
 
@@ -3811,6 +3839,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
      <script src="assets/js/alat-layers.js?v=20261010-shp-google-gate"></script>
      <script src="assets/js/geoprocessing.js?v=20261010-village-boundary-fallbacks"></script>
      <script src="assets/js/arcgis-source-manager.js?v=20261010-arcgis-shp-export"></script>
+     <script src="assets/js/geoserver-source-manager.js?v=20261010-geoserver-wfs"></script>
   <script src="assets/js/alat-draw-measure.js?v=20261009-remove-draw-layer"></script>
   <!-- Cek Lokasi: butuh window.startDraw dari alat-draw-measure.js untuk
        memasang pin. init() juga memasang listener draw:created, sehingga
@@ -3842,7 +3871,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/landcover-analysis.js"></script>
   <script src="assets/js/dukcapil-population.js"></script>
   <script src="assets/data/kode_wilayah.js"></script>
-  <script src="assets/js/geoid-wilayah.js?v=20261010-village-boundary-fallbacks"></script>
+    <script src="assets/js/geoid-wilayah.js?v=20261010-boundary-shp-popup-google"></script>
   <script src="assets/js/geonusa-unified.js?v=20261007-local-search"></script>
   <script src="assets/js/geofarm-rekomendasi-pupuk.js"></script>
   <script src="assets/js/weather-data.js"></script>
