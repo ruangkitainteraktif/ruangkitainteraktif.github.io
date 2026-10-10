@@ -5582,7 +5582,7 @@ var pestisida = [
     },
     {
         "no": 939,
-        "merekdagang": "FEROMON-EXI RB (umum) Z-9-tetra decenol (Z-9-tetra decenol) : 10 �g/karet Z-F-9-12- tetradekadienil asetat (Z-F-9-12- tetradecadienyl acetate) : 90 �g/karet Atraktan berbentuk perangkap.",
+        "merekdagang": "FEROMON-EXI RB (umum) Z-9-tetra decenol (Z-9-tetra decenol) : 10 µg/karet Z-F-9-12- tetradekadienil asetat (Z-F-9-12- tetradecadienyl acetate) : 90 µg/karet Atraktan berbentuk perangkap.",
         "carapemakaian": "Bawang : ulat grayak Spodoptera exigua (Perangkap : 12 - 24 perangkap/0,25 ha)",
         "perusahaan": "CV Nusagri (info) Izin: Tetap 03 September 2023 RI. 01070120134573"
     },

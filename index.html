@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -11,6 +11,12 @@
   'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
   })(window,document,'script','dataLayer','GTM-PFK9VJVD');</script>
   <!-- End Google Tag Manager -->
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7501816933195235"
+     crossorigin="anonymous"></script>
+  <script async custom-element="amp-auto-ads"
+        src="https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js">
+  </script>
 
   <!-- ==================== FAVICON ==================== -->
   <link rel="icon" type="image/png" href="assets/img/favicon.jpg">
@@ -167,7 +173,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=20261009-geofarm-analysis-entrypoint">
+  <link rel="stylesheet" href="assets/css/app.css?v=20261010-geoportal-card-spacing">
   <link rel="stylesheet" href="assets/css/geodisaster.css?v=5">
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
@@ -203,6 +209,10 @@
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PFK9VJVD"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
+
+  <amp-auto-ads type="adsense"
+        data-ad-client="ca-pub-7501816933195235">
+  </amp-auto-ads>
 
   <div id="app-container">
     <div id="appLoadingOverlay" class="app-loading-overlay" role="status" aria-live="polite">
@@ -753,7 +763,9 @@
           <button class="at-sheet-close" type="button" aria-label="Tutup" onclick="closeAttrTableSheet()">&#10005;</button>
         </div>
       </div>
-      <div class="at-sheet-body" id="at-sheet-content"></div>
+      <div class="at-sheet-body">
+        <div id="at-sheet-content"></div>
+      </div>
     </div>
 
     <!-- AI GEOSPATIAL ANALYSIS SHEET -->
@@ -867,6 +879,8 @@
             <button id="geolokasiCek" class="dm-cek-lokasi-btn" type="button">Cek</button>
             <button id="dmLocateMe" class="dm-cek-lokasi-btn" type="button"
                     onclick="document.querySelector('.leaflet-control-locate a')?.click(); closeDrawSidebar();">Lokasi Saya</button>
+            <button id="geolokasiReset" class="dm-cek-lokasi-btn dm-cek-lokasi-btn--reset" type="button"
+                    title="Hapus pin di peta, kosongkan input, dan bersihkan hasil">Reset</button>
           </div>
           <div id="geolokasiStatus" class="dm-cek-lokasi-status" role="status" aria-live="polite"></div>
           <div id="geolokasiHasil"></div>
@@ -2511,7 +2525,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
                   <details class="geoportal-card" id="geoportalHubCard" aria-labelledby="geoportalHubTitle">
                     <summary class="gt-card-head">
-                      <span class="gt-card-icon" aria-hidden="true">&#128506;</span>
+                      <span class="gt-card-icon" aria-hidden="true">&#127760;</span>
                       <span>
                         <b id="geoportalHubTitle">GeoPortal Hub</b>
                         <small>Pilih wilayah untuk ditampilkan di peta</small>
@@ -3666,10 +3680,16 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
     <!-- PANEL DETAIL ADMINISTRASI -->
     <div id="detail-panel" class="hidden">
+      <div class="detail-sheet-handle" aria-hidden="true"></div>
       <div class="panel-header">
         <h3>Detail Administrasi <small id="clicked-coords"
-            style="font-size: 10px; color: #e0e0e0; font-weight: normal;">(Klik Peta)</small></h3>
-        <button class="close-panel-btn" onclick="toggleDetailPanel(false)">&#10005;</button>
+            style="font-size: 10px; color: var(--text-tertiary); font-weight: normal;">(Klik Peta)</small></h3>
+        <div class="detail-panel-actions">
+          <button id="detailPanelResizeBtn" class="detail-panel-resize-btn" type="button" aria-label="Ciutkan panel detail administrasi" title="Ciutkan panel">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>
+          </button>
+          <button class="close-panel-btn" type="button" aria-label="Tutup panel detail administrasi" title="Tutup" onclick="toggleDetailPanel(false)">&#10005;</button>
+        </div>
       </div>
 
       <div class="panel-body">
@@ -3719,7 +3739,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
          geopangan, attribute-table, ai-analysis, dan polygon-analysis
          semuanya mendaftarkan sheet ke window.SheetDrag saat dimuat. -->
     <script src="assets/js/sheet-drag.js?v=20261008-close-without-reset"></script>
-    <script src="assets/js/map-core.js?v=20261009-basemap-category-fix"></script>
+    <script src="assets/js/map-core.js?v=20261010-layer-catalog-content-fix"></script>
     <script src="assets/js/isric-soil-layers.js?v=20261007-wrb-clip"></script>
     <script src="assets/js/isee-global-soils.js?v=20261008-soil-context-layers"></script>
     <script src="assets/js/layer-loading.js"></script>
@@ -3754,7 +3774,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/geojakarta.js?v=20261007-rt-search"></script>
     <script src="assets/js/demnas-download.js"></script>
     <script src="assets/js/geoportal-search.js"></script>
-    <script src="assets/js/sidebar.js?v=20261006-reset-all-on-exit"></script>
+    <script src="assets/js/sidebar.js?v=20261010-detail-panel-resize-template"></script>
     <script src="assets/js/earthquake.js"></script>
     <script src="assets/js/attribute-table.js?v=14-isee-boundary-select"></script>
     <script src="assets/js/katalog-gempa.js?v=20261006-attr-table"></script>
@@ -3775,11 +3795,11 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
      <script src="assets/js/alat-layers.js?v=20261008-geoprocessing-result-actions"></script>
      <script src="assets/js/geoprocessing.js?v=20261008-gp-source-reset"></script>
      <script src="assets/js/arcgis-source-manager.js"></script>
-  <script src="assets/js/alat-draw-measure.js?v=20261007-geofarm-register"></script>
+  <script src="assets/js/alat-draw-measure.js?v=20261009-remove-draw-layer"></script>
   <!-- Cek Lokasi: butuh window.startDraw dari alat-draw-measure.js untuk
        memasang pin. init() juga memasang listener draw:created, sehingga
        setiap pin baru langsung mengisi panel hasil. -->
-  <script src="assets/js/alat-cek-lokasi.js?v=20261008-arcgis-geocode"></script>
+  <script src="assets/js/alat-cek-lokasi.js?v=20261009-cek-lokasi-pin-reset"></script>
   <script src="assets/js/alat-konverter-koordinat.js"></script>
 <script src="assets/js/geofarm-draw.js?v=20261009-geofarm-analysis-entrypoint"></script>
 <script src="assets/js/geofarm-upload.js?v=20261009-geofarm-analysis-entrypoint"></script>
@@ -3806,7 +3826,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/landcover-analysis.js"></script>
   <script src="assets/js/dukcapil-population.js"></script>
   <script src="assets/data/kode_wilayah.js"></script>
-  <script src="assets/js/geoid-wilayah.js"></script>
+  <script src="assets/js/geoid-wilayah.js?v=20261010-unified-search-reset-popup"></script>
   <script src="assets/js/geonusa-unified.js?v=20261007-local-search"></script>
   <script src="assets/js/geofarm-rekomendasi-pupuk.js"></script>
   <script src="assets/js/weather-data.js"></script>
@@ -3867,7 +3887,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/sawah-dilindungi.js"></script>
   <script src="assets/js/geodisaster.js?v=10"></script>
   <script src="assets/js/fasilitas-umum.js"></script>
-  <script src="assets/js/unified-search.js"></script>
+    <script src="assets/js/unified-search.js?v=20261010-reset-polygon-popup"></script>
   <script src="assets/js/choropleth.js"></script>
   <script src="assets/js/hotspot.js"></script>
   <script src="assets/js/kawasan-hutan.js"></script>
@@ -3902,7 +3922,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/sppg-district.js"></script>
   <script src="assets/js/water-need.js?v=2"></script>
   <script src="assets/js/ai-analysis.js"></script>
-  <script src="assets/js/sheet-donation-ads.js?v=20261009-donation-card-sheet-scroll-alignment"></script>
+  <script src="assets/js/sheet-donation-ads.js?v=20261010-geotools-inline-ads"></script>
 
 
   <script src="assets/js/population-chart.js"></script>

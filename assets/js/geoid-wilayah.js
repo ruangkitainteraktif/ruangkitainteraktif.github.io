@@ -717,6 +717,7 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
                 <button type="button" onclick="showDukcapilDetail('${escapeGeoidHtml(kode)}')" style="border:0;background:#2563eb;color:#fff;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;">Data Penduduk</button>
                 <button type="button" onclick="downloadBoundaryGeoJSON('${escapeGeoidHtml(kode)}')" style="border:0;background:#059669;color:#fff;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;">Download GeoJSON</button>
                 <button type="button" onclick="tanyaRuangWilayah('${escapeGeoidHtml(kode)}')" style="border:0;background:#6366f1;color:#fff;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;">Tanya Ruang</button>
+                ${options.source === 'unified-search' ? '<button type="button" onclick="resetGeoidBoundaryLayer()" style="border:0;background:#ef4444;color:#fff;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;">Reset Layer</button>' : ''}
               </div>
              </div>
            </div>

@@ -3493,6 +3493,35 @@ L.control.scale({
     if (dropdown) delete dropdown.dataset.built;
   };
 
+  /* <script> yang disuntik lewat innerHTML tidak pernah dieksekusi
+     browser, jadi push AdSense dijalankan sebagai kode biasa. Amankan:
+     bila skrip AdSense belum atau gagal dimuat, array-nya dibuat sendiri
+     persis seperti pola resmi AdSense dan tidak ada error yang bocor. */
+  function dorongSlotIklan(akar) {
+    if (!akar || !akar.querySelector('.lc-adsense .adsbygoogle')) return;
+    if (!('IntersectionObserver' in window)) { dorongSekarang(); return; }
+    /* Dropdown katalog masih display:none saat dibangun lewat
+       buildLayerCatalogIfNeeded() pada boot, dan <ins> yang didorong saat
+       tersembunyi tidak pernah diisi ulang AdSense. Ditunda sampai
+       dropdown benar-benar terbuka. */
+    var io = new IntersectionObserver(function (entries) {
+      for (var i = 0; i < entries.length; i++) {
+        if (!entries[i].isIntersecting) continue;
+        io.disconnect();
+        dorongSekarang();
+        return;
+      }
+    });
+    io.observe(akar.querySelector('.lc-adsense'));
+  }
+
+  function dorongSekarang() {
+    try {
+      window.adsbygoogle = window.adsbygoogle || [];
+      window.adsbygoogle.push({});
+    } catch (e) { /* slot gagal diisi, biarkan */ }
+  }
+
   function buildLayerCatalog(container) {
     var html = '<div class="lc-donation-banner">' +
       '<div class="lc-donation-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg></div>' +
@@ -3502,6 +3531,16 @@ L.control.scale({
         '<a href="https://www.paypal.com/paypalme/panjidanutirto" target="_blank" rel="noopener noreferrer" class="lc-donation-btn lc-donation-paypal" aria-label="Donasi melalui PayPal">PayPal</a>' +
       '</div>' +
     '</div>';
+    /* Slot AdSense persis di bawah kartu donasi. Loader-nya sudah ada di
+       <head> index.html, jadi di sini hanya unitnya. */
+    html += '<div class="lc-adsense">' +
+      '<!-- Ruang Kita -->' +
+      '<ins class="adsbygoogle" style="display:block"' +
+      ' data-ad-client="ca-pub-7501816933195235"' +
+      ' data-ad-slot="1306506445"' +
+      ' data-ad-format="horizontal"' +
+      ' data-full-width-responsive="true"></ins>' +
+      '</div>';
 
     /* Kotak cari tepat di bawah banner donasi, sebelum grup Layer Dipin.
        Sebelumnya ia diletakkan di antara grup "Layer Aktif" dan daftar
@@ -3715,6 +3754,7 @@ L.control.scale({
       html += '</div></div>';
     });
     container.innerHTML = html;
+    dorongSlotIklan(container);
 
     var clearAllBtn = document.getElementById('lcClearAll');
     if (clearAllBtn) {

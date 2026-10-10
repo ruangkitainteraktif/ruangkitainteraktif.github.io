@@ -209,7 +209,10 @@
     .layer-catalog-btn.active { background: #2563eb; color: #fff; }
     /* ── Layer Catalog Dropdown ── */
     .layer-catalog-dropdown {
-      display: none; margin-top: 6px; max-height: 420px; overflow-y: auto;
+      display: none; box-sizing: border-box; width: 100%;
+      height: min(60vh, calc(100vh - 76px));
+      height: min(60dvh, calc(100dvh - 76px));
+      margin-top: 6px; overflow-y: auto; overscroll-behavior: contain;
       background: rgba(255,255,255,.92);
       backdrop-filter: blur(24px) saturate(180%);
       -webkit-backdrop-filter: blur(24px) saturate(180%);
@@ -3186,7 +3189,7 @@
       position: static;
       top: auto;
       grid-template-columns: 38px minmax(0, 1fr) 58px;
-      margin: 10px 0;
+      margin: 6px 0 2px;
       padding: 12px 13px;
       border-color: var(--border-color);
       border-radius: 10px;
@@ -3228,6 +3231,8 @@
     .lc-donation-saweria:hover { background: #065f46; }
     .lc-donation-paypal { border-color: #cbd5e1; background: #fff; color: #174ea6; }
     .lc-donation-paypal:hover { background: #eff6ff; }
+    .lc-donation-banner:not(.sheet-donation-banner) .lc-donation-btns { grid-column: 3; flex-direction: column; align-items: stretch; justify-content: center; gap: 4px; }
+    .lc-donation-banner:not(.sheet-donation-banner) .lc-donation-btn { flex: 0 0 auto; min-height: 26px; width: 58px; padding: 0 5px; }
     .sheet-donation-banner .lc-donation-btns { grid-column: 3; flex-direction: column; align-items: stretch; justify-content: center; gap: 4px; margin-top: 0; }
     .sheet-donation-banner .lc-donation-btn { flex: 0 0 auto; min-height: 26px; width: 58px; padding: 0 5px; }
     [data-theme="dark"] .lc-donation-banner { border-color: #24554b; background: linear-gradient(125deg, #102c27, #12312e 58%, #17283b); }
@@ -3236,6 +3241,17 @@
     [data-theme="dark"] .lc-donation-text { color: #ecfdf5; }
     [data-theme="dark"] .lc-donation-note { color: #b5c9c2; }
     [data-theme="dark"] .lc-donation-paypal { border-color: #37516b; background: #17283b; color: #bfdbfe; }
+    /* Slot AdSense di bawah kartu donasi, pada katalog layer dan semua
+       sheet. Jaraknya diatur lewat pembungkus, bukan lewat <ins>, karena
+       AdSense datang tanpa gaya margin sendiri. Saat slot belum terisi
+       status unfilled akan menyembunyikan slot supaya tidak menyisakan
+       ruang kosong ketika tidak ada iklan yang tersedia. */
+    .lc-adsense { margin: 0 8px 6px; }
+    .lc-adsense.sheet-adsense { margin: 0 0 6px; }
+    /* Format horizontal menjaga slot tetap pendek di katalog dan sheet. */
+    .lc-adsense .adsbygoogle { display: block; height: 90px; }
+    .lc-adsense .adsbygoogle[data-ad-status="unfilled"] { display: none !important; }
+    [data-theme="dark"] .lc-adsense .adsbygoogle { background: transparent; }
 
     .tab-content { display: none; }
     .tab-content h4 {
@@ -3888,25 +3904,44 @@
       position: fixed;
       top: 0;
       right: 0;
-      width: 360px;
+      width: var(--desktop-sheet-width, 30vw);
+      max-width: 50vw;
       height: 100vh;
       height: 100dvh;
+      box-sizing: border-box;
       background: var(--bg-primary);
       border-left: 1px solid var(--border-color);
-      box-shadow: -4px 0 15px rgba(0,0,0,0.1);
+      box-shadow: var(--shadow-sheet);
       z-index: 1001;
       display: flex;
       flex-direction: column;
-      overflow: visible;
-      transition: transform 0.3s ease;
+      overflow: hidden;
+      transition: transform .3s ease, visibility .3s;
       color: var(--text-primary);
     }
+    .detail-sheet-handle { display: none; }
 
     /* Status Panel Detail Tersembunyi (Desktop) */
     #detail-panel.hidden {
       transform: translateX(100%);
       pointer-events: none;
     }
+
+    #detail-panel.detail-panel-minimized {
+      top: auto;
+      right: auto;
+      bottom: 68px;
+      left: 50%;
+      width: min(300px, calc(100vw - 24px));
+      max-width: calc(100vw - 24px);
+      height: 52px;
+      border-radius: 14px;
+      transform: translateX(-50%);
+    }
+    #detail-panel.detail-panel-minimized .detail-sheet-handle,
+    #detail-panel.detail-panel-minimized .panel-body { display: none; }
+    #detail-panel.detail-panel-minimized .panel-header { min-height: 50px; padding: 8px 12px; border-bottom: 0; }
+    #detail-panel.detail-panel-minimized #clicked-coords { display: none; }
 
     /* Tombol detail panel disembunyikan; panel diakses via popup Dukcapil. */
     body .detail-panel-btn {
@@ -3940,34 +3975,61 @@
     }
 
     .panel-header {
-      padding: 12px 15px;
-      background: #0078d4;
-      color: white;
+      min-height: 52px;
+      box-sizing: border-box;
+      padding: 10px 16px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-color);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
     .panel-header h3 {
+      margin: 0;
       font-size: 13px;
       font-weight: 600;
     }
 
     /* Tombol Tutup/Sembunyikan Panel Detail */
     .close-panel-btn {
-      background: transparent;
-      border: none;
-      color: white;
+      display: grid;
+      flex: 0 0 28px;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      background: var(--bg-tertiary);
+      border: 0;
+      color: var(--text-tertiary);
       font-size: 16px;
       cursor: pointer;
-      padding: 2px 6px;
-      border-radius: 4px;
+      padding: 0;
+      border-radius: 50%;
       transition: background 0.2s;
     }
 
     .close-panel-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
+      background: var(--bg-card-hover);
     }
+
+    .detail-panel-actions { display: flex; align-items: center; gap: 6px; }
+    .detail-panel-resize-btn {
+      display: grid;
+      flex: 0 0 28px;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: var(--bg-tertiary);
+      color: var(--text-tertiary);
+      cursor: pointer;
+    }
+    .detail-panel-resize-btn:hover { background: var(--bg-card-hover); }
+    .detail-panel-resize-btn:focus-visible,
+    .close-panel-btn:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+    #detail-panel.detail-panel-minimized .detail-panel-resize-btn { background: var(--accent); color: var(--text-inverse); }
 
     .panel-body {
       padding: 12px;
@@ -4597,18 +4659,32 @@
       #detail-panel {
         position: fixed;
         top: auto;
-        bottom: -140%;
+        bottom: -100%;
         left: 0;
         right: 0;
         width: 100%;
-        height: 50vh;
-        height: 50dvh;
-        max-height: 50vh;
-        max-height: 50dvh;
+        max-width: none;
+        height: var(--sheet-h, 50vh);
+        height: var(--sheet-h, 50dvh);
+        max-height: 90vh;
+        max-height: 90dvh;
         border-radius: 16px 16px 0 0;
         z-index: 1100;
-        transition: bottom 0.3s ease-in-out;
-        margin-bottom: -10px;
+        border: 1px solid var(--border-color);
+        border-bottom: 0;
+        box-shadow: 0 -6px 24px rgba(15, 23, 42, .18);
+        transition: bottom .3s ease-in-out;
+        margin-bottom: 0;
+      }
+
+      #detail-panel .detail-sheet-handle {
+        display: block;
+        width: 36px;
+        height: 4px;
+        margin: 8px auto 6px;
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: var(--border-color);
       }
 
       #detail-panel .panel-body {
@@ -4626,8 +4702,22 @@
 
       #detail-panel.active {
         display: flex !important;
-        bottom: 10px;
+        bottom: 0;
         pointer-events: auto;
+      }
+
+      #detail-panel.active.detail-panel-minimized {
+        top: auto;
+        right: auto;
+        bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+        left: 50%;
+        width: min(300px, calc(100vw - 24px));
+        max-width: calc(100vw - 24px);
+        height: 52px;
+        max-height: 52px;
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        transform: translateX(-50%);
       }
 
       #modal-backdrop.active {
@@ -7852,7 +7942,7 @@
       .tj-routing-eyebrow { color: #0e7490; font-size: 9px; font-weight: 800; letter-spacing: .1em; }
       .tj-routing-head h3 { margin: 2px 0 0; color: #0f172a; font-size: 16px; line-height: 1.2; }
       .tj-routing-close { width: 28px; height: 28px; border: 0; border-radius: 50%; background: #f1f5f9; color: #64748b; font-size: 20px; line-height: 1; cursor: pointer; }
-      .tj-routing-minimize { display: grid; width: 30px; height: 28px; margin-left: auto; place-items: center; border: 0; border-radius: 8px; background: #f1f5f9; color: #475569; cursor: pointer; }
+      .tj-routing-minimize { display: grid; flex: 0 0 28px; width: 28px; height: 28px; margin-left: auto; place-items: center; border: 0; border-radius: 50%; background: #f1f5f9; color: #475569; cursor: pointer; }
       .tj-routing-panel.is-minimized { height: auto; max-height: none; overflow: hidden; padding: 12px 16px; }
       .tj-routing-panel.is-minimized .tj-routing-fields,
       .tj-routing-panel.is-minimized .tj-routing-note,
@@ -7930,8 +8020,8 @@
         left: 0;
         z-index: 1100;
         width: 100%;
-        height: var(--sheet-h, 52vh);
-        height: var(--sheet-h, 52dvh);
+        height: var(--sheet-h, 50vh);
+        height: var(--sheet-h, 50dvh);
         flex-direction: column;
         overflow: hidden;
         visibility: hidden;
@@ -9124,6 +9214,17 @@
   border-left: 3px solid var(--accent); border-radius: 4px;
 }
 [data-theme="dark"] .dm-cek-lokasi-btn { color: #06202a; }
+/* Reset sengaja berdiri di barisnya sendiri. Empat tombol sejajar membuat
+   "Lokasi Saya" terpotong di sheet desktop yang lebarnya dibatasi 380px,
+   dan tiga tombol di atasnya tetap tidak berubah tampilannya. Warnanya
+   netral supaya tidak terbaca sebagai aksi utama seperti tombol Cek. */
+.geolokasi-tombol .dm-cek-lokasi-btn--reset {
+  flex: 1 1 100%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+[data-theme="dark"] .geolokasi-tombol .dm-cek-lokasi-btn--reset { color: var(--text-primary); }
 
 .geolokasi-tombol { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .geolokasi-hasil { margin-top: 8px; }
@@ -15956,6 +16057,18 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
     height: auto;
     max-height: none;
     padding: 12px 16px;
+    border-radius: 16px;
+  }
+
+  .tj-routing-panel.is-minimized .tj-routing-fields,
+  .tj-routing-panel.is-minimized .tj-routing-note,
+  .tj-routing-panel.is-minimized .tj-routing-result,
+  .tj-routing-panel.is-minimized .tj-routing-actions { display: none; }
+  .tj-routing-panel.is-minimized .tj-routing-head {
+    position: static;
+    margin: -12px -16px 8px;
+    padding: 10px 12px;
+    border-radius: 16px 16px 0 0;
   }
 
   .tj-routing-head {
@@ -15979,7 +16092,9 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   .tj-routing-eyebrow { color: #0e7490; font-size: 9px; font-weight: 800; letter-spacing: .1em; }
   .tj-routing-head h3 { margin: 2px 0 0; color: #0f172a; font-size: 16px; line-height: 1.2; }
   .tj-routing-close { flex: 0 0 28px; width: 28px; height: 28px; border: 0; border-radius: 50%; background: #f1f5f9; color: #64748b; font-size: 20px; line-height: 1; cursor: pointer; }
-  .tj-routing-minimize { display: grid; flex: 0 0 30px; width: 30px; height: 28px; margin-left: auto; place-items: center; border: 0; border-radius: 8px; background: #f1f5f9; color: #475569; cursor: pointer; }
+  .tj-routing-minimize { display: grid; flex: 0 0 28px; width: 28px; height: 28px; margin-left: auto; place-items: center; border: 0; border-radius: 50%; background: #f1f5f9; color: #475569; cursor: pointer; }
+  .tj-routing-minimize:hover { background: #e2e8f0; color: #334155; }
+  .tj-routing-minimize:focus-visible { outline: 2px solid #0891b2; outline-offset: 2px; }
   .tj-routing-corridor { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border: 1px solid #bae6fd; border-radius: 11px; background: #f0f9ff; }
   .tj-routing-corridor b, .tj-routing-corridor small { display: block; }
   .tj-routing-corridor b { color: #0f172a; font-size: 12px; }
@@ -16080,3 +16195,9 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
 .dm-koordinat-actions button:disabled { opacity: .5; cursor: not-allowed; }
 .dm-koordinat-fields select { box-sizing: border-box; width: 100%; min-width: 0; padding: 8px; border: 1px solid var(--border-color, #cbd5e1); border-radius: 7px; background: var(--bg-input, #fff); color: var(--text-primary, #1e293b); font: inherit; font-size: 10px; }
 .dm-koordinat-fields select:focus { outline: 2px solid rgba(8, 145, 178, .22); border-color: #0891b2; }
+
+/* Keep a clear gap between the DEMNAS downloader and GeoPortal Hub cards. */
+#geotoolsTabGeoportal > .georaster-card + .geoportal-card {
+  margin-top: 12px;
+}
+

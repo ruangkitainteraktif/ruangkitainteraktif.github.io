@@ -49,6 +49,8 @@
     } else {
       if (show === true || (show === null && panel.classList.contains('hidden'))) {
         panel.classList.remove('hidden');
+        panel.classList.remove('detail-panel-minimized');
+        setDetailPanelResizeButton(false);
         if (btn) btn.classList.add('active');
         if (typeof showChoropleth === 'function') showChoropleth('jumlah');
       } else {
@@ -58,11 +60,36 @@
     }
   }
 
+  function toggleDetailPanelMinimize() {
+    const panel = document.getElementById('detail-panel');
+    if (!panel) return;
+    const minimized = panel.classList.toggle('detail-panel-minimized');
+    setDetailPanelResizeButton(minimized);
+    if (window.innerWidth <= 768) {
+      const backdrop = document.getElementById('modal-backdrop');
+      if (backdrop) backdrop.classList.toggle('active', !minimized);
+    }
+  }
+
+  function setDetailPanelResizeButton(minimized) {
+    const button = document.getElementById('detailPanelResizeBtn');
+    if (!button) return;
+    button.setAttribute('aria-label', minimized ? 'Pulihkan panel detail administrasi' : 'Ciutkan panel detail administrasi');
+    button.setAttribute('title', minimized ? 'Pulihkan panel' : 'Ciutkan panel');
+    button.innerHTML = minimized
+      ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>'
+      : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>';
+  }
+  const detailPanelResizeBtn = document.getElementById('detailPanelResizeBtn');
+  if (detailPanelResizeBtn) detailPanelResizeBtn.addEventListener('click', toggleDetailPanelMinimize);
+
   function openAdminModal() {
     if (window.innerWidth <= 768) {
       adminModalOpenedAt = Date.now();
       const panel = document.getElementById('detail-panel');
       panel.classList.remove('hidden');
+      panel.classList.remove('detail-panel-minimized');
+      setDetailPanelResizeButton(false);
       panel.classList.add('active');
       document.getElementById('modal-backdrop').classList.add('active');
     }
@@ -72,6 +99,8 @@
     const panel = document.getElementById('detail-panel');
     panel.classList.add('hidden');
     panel.classList.remove('active');
+    panel.classList.remove('detail-panel-minimized');
+    setDetailPanelResizeButton(false);
     document.getElementById('modal-backdrop').classList.remove('active');
   }
 

@@ -103,6 +103,17 @@ window.addToDrawLayerGroup = function (layer) {
   return true;
 };
 
+/* Melepaskan satu layer dari feature group gambar. Dipakai alur Pin pada
+   Cek Lokasi: alat gambar hanya dipakai untuk memilih titik, lalu pin
+   yang tampil dipindahkan ke modul cek lokasi supaya tidak ada dua pin di
+   titik yang sama dan tombol Reset bisa membersihkannya sekaligus. */
+window.removeDrawLayer = function (layer) {
+  if (!layer || !drawLayerGroup.hasLayer(layer)) return false;
+  drawLayerGroup.removeLayer(layer);
+  syncDrawChrome();
+  return true;
+};
+
 /* Pembaca feature group gambar, untuk tools di luar Gambar & Ukur yang
    butuh tahu polygon mana yang ada: GeoFarm Kalkulator Benih memakai ini
    untuk mengisi luas dari poligon terakhir. Dipakai karena
@@ -530,6 +541,13 @@ function clearDrawings() {
   }
   drawLayerGroup.clearLayers();
   measureLayerGroup.clearLayers();
+  /* Pin Cek Lokasi dibuat di layerGroup milik modulnya sendiri, jadi tidak
+     ikut kehilangan apa pun saat drawLayerGroup dikosongkan di atas. "Hapus
+     Gambar" tetap berarti membersihkan peta, karena itu pinnya ikut
+     dilepas di sini. */
+  if (window.GeoLokasi && typeof window.GeoLokasi.hapusMarker === 'function') {
+    window.GeoLokasi.hapusMarker();
+  }
   stopMeasureMode();
   removeDrawControl();
   setMeasureResult('Semua gambar dan ukuran dihapus.');

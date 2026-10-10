@@ -246,7 +246,7 @@
      Yang punya titik DAN koma ("5.652,64"), titik pasti ribuan.
 
      Satuan juga tidak seragam: 843 baris m2, 146 baris Ha, dan 1 baris
-     "m�" (mojibake). Konversi ke satuan sama dilakukan di sini supaya
+     "m²" (mojibake). Konversi ke satuan sama dilakukan di sini supaya
      penjumlahan tidak menjumlahkan m2 dengan Ha, yang akan menghasilkan
      angka 10.000 kali lebih besar dari yang benar tanpa error sama sekali.
 

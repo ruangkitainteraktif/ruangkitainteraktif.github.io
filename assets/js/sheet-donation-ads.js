@@ -56,14 +56,94 @@
           banner = createDonationBanner();
           content.insertBefore(banner, content.firstChild);
         }
+        /* Unit AdSense menempel tepat di bawah banner donasi. Dipasang
+           terpisah dari banner supaya keduanya bisa gagal tanpa saling
+           menggugurkan, dan hanya sekali -- handler resize di bawah
+           dipanggil berulang kali. */
+        var ad = content.querySelector(':scope > .sheet-adsense');
+        if (!ad) {
+          ad = createAdUnit();
+          content.insertBefore(ad, banner.nextSibling);
+          dorongSlotIklan(ad);
+        }
       });
     });
   }
 
+  /* Unit tambahan disisipkan setelah kartu pertama pada tiap tab. Anchor
+     berada di dalam konten tab, jadi slot ikut berpindah ke sheet GeoTools. */
+  function addGeoToolsInlineAds() {
+    var placements = [
+      { tab: 'geotoolsTabGeonusa', anchor: ':scope > .geonusa-card', key: 'geonusa' },
+      { tab: 'geotoolsTabGeoportal', anchor: ':scope > .geotani-kta-card', key: 'geoportal' },
+      { tab: 'geotoolsTabGeoFarm', anchor: ':scope > .geofarm-card', key: 'geofarm' },
+      { tab: 'geotoolsTabGeoDisaster', anchor: '#weather-card-sekarang', key: 'geodisaster' }
+    ];
+    placements.forEach(function (placement) {
+      var tab = document.getElementById(placement.tab);
+      if (!tab || tab.querySelector('.geotools-inline-adsense--' + placement.key)) return;
+      var card = tab.querySelector(placement.anchor);
+      if (!card) return;
+      var ad = createAdUnit();
+      ad.classList.add('geotools-inline-adsense', 'geotools-inline-adsense--' + placement.key);
+      card.insertAdjacentElement('afterend', ad);
+      dorongSlotIklan(ad);
+    });
+  }
+
+  /* Unit AdSense. Loader skripnya sudah ada di <head> index.html, jadi di
+     sini hanya unitnya, sesuai potongan yang diberikan AdSense. */
+  function createAdUnit() {
+    var wrap = document.createElement('div');
+    wrap.className = 'lc-adsense sheet-adsense';
+    wrap.innerHTML = '<!-- Ruang Kita -->' +
+      '<ins class="adsbygoogle" style="display:block"' +
+      ' data-ad-client="ca-pub-7501816933195235"' +
+      ' data-ad-slot="1306506445"' +
+      ' data-ad-format="horizontal"' +
+      ' data-full-width-responsive="true"></ins>';
+    return wrap;
+  }
+
+  /* <script> yang disuntik lewat innerHTML tidak pernah dieksekusi
+     browser, jadi push AdSense dijalankan sebagai kode biasa.
+
+     Push-nya ditunda sampai sheet benar-benar terlihat. Seluruh sheet
+     masih tersembunyi saat halaman dimuat, dan <ins> yang didorong dalam
+     keadaan tersembunyi diisi tinggi nol oleh AdSense lalu tidak pernah
+     dirender ulang -- slotnya jadi kosong terus meski sheet dibuka. */
+  function dorongSlotIklan(ad) {
+    if (!('IntersectionObserver' in window)) { dorongSekarang(ad); return; }
+    var io = new IntersectionObserver(function (entries) {
+      for (var i = 0; i < entries.length; i++) {
+        if (!entries[i].isIntersecting) continue;
+        io.disconnect();
+        dorongSekarang(ad);
+        return;
+      }
+    }, { rootMargin: '100px' });
+    io.observe(ad);
+  }
+
+  /* Sekali per unit. AdSense menghitung tiap push sebagai permintaan
+     tayang, jadi push kedua pada <ins> yang sama hanya membuang kuota. */
+  function dorongSekarang(ad) {
+    if (ad.dataset.terdorong === '1') return;
+    ad.dataset.terdorong = '1';
+    try {
+      window.adsbygoogle = window.adsbygoogle || [];
+      window.adsbygoogle.push({});
+    } catch (e) { /* slot gagal diisi, biarkan */ }
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', addDonationBanners, { once: true });
+    document.addEventListener('DOMContentLoaded', function () {
+      addDonationBanners();
+      addGeoToolsInlineAds();
+    }, { once: true });
   } else {
     addDonationBanners();
+    addGeoToolsInlineAds();
   }
   window.addEventListener('resize', addDonationBanners, { passive: true });
 })();

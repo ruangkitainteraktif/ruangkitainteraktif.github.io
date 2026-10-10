@@ -220,7 +220,7 @@
       if (typeof window.resetAllLayers === 'function') { try { window.resetAllLayers(); } catch (e) {} }
       let layer = null;
       try {
-        layer = await showGeoidBoundary(item.kode);
+        layer = await showGeoidBoundary(item.kode, undefined, { source: 'unified-search' });
       } catch (e) {
         console.warn('[UnifiedSearch] showGeoidBoundary failed:', e);
       }

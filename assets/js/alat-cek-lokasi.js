@@ -424,10 +424,12 @@
   /* ── antarmuka ─────────────────────────────────────────────────────── */
 
   var el = {};
-  /* Id marker yang dibuat oleh modul ini. Dipakai untuk memasang ulang
-     panel hasil setiap kali pin baru dibuat, sehingga koordinat lama tidak
-     pernah tertinggal di layar setelah peta dipindahkan. */
-  var markerLokasi = null;
+  /* Layer pin milik modul ini. Pin dibuat sendiri, bukan lewat alat
+     gambar, supaya menekan Cek selalu langsung menunjukkan titiknya di
+     peta dan tombol Reset bisa membersihkannya tanpa menghapus polygon
+     atau garis milik alat Gambar & Ukur. Pola layerGroup per modul juga
+     dipakai alat-konverter-koordinat.js. */
+  var lokasiLayer = null;
 
   function esc(v) {
     if (v == null) return '-';
@@ -564,6 +566,7 @@
       tampilkanPesan('<div class="geolokasi-kecil geolokasi-kecil--wajar">'
         + esc(masuk.catatan) + '</div>');
     }
+    tampilkanMarker(masuk.lat, masuk.lng);
     if (el.status) el.status.textContent = 'Mencari alamat dengan ArcGIS...';
     if (el.btn) el.btn.disabled = true;
     if (el.salin) el.salin.style.display = 'none';
@@ -585,8 +588,8 @@
       var h = '<div class="geolokasi-hasil"><div class="geolokasi-koordinat"><b>' + esc(teksKoordinat(masuk.lat, masuk.lng)) + '</b></div>';
       h += '<table class="geolokasi-tabel"><tbody>';
       h += '<tr><th>Alamat</th><td>' + esc(address.Match_addr || address.LongLabel) + '</td></tr>';
-      if (address.City) h += '<tr><th>Kota</th><td>' + esc(address.City) + '</td></tr>';
-      if (address.Subregion) h += '<tr><th>Kabupaten</th><td>' + esc(address.Subregion) + '</td></tr>';
+      if (address.City) h += '<tr><th>Kecamatan</th><td>' + esc(address.City) + '</td></tr>';
+      if (address.Subregion) h += '<tr><th>Kabupaten / Kota</th><td>' + esc(address.Subregion) + '</td></tr>';
       if (address.Region) h += '<tr><th>Provinsi / wilayah</th><td>' + esc(address.Region) + '</td></tr>';
       if (address.Country) h += '<tr><th>Negara</th><td>' + esc(address.Country) + '</td></tr>';
       h += '</tbody></table></div>';
@@ -610,9 +613,48 @@
     if (el.salin) el.salin.style.display = 'none';
   }
 
+  /* Pin hasil Cek, dipasang begitu koordinat terbaca -- tidak menunggu
+     ArcGIS, supaya titiknya tetap muncul walau alamat gagal diambil.
+     Peta digeser hanya kalau titiknya di luar layar, supaya pemeriksaan
+     berulang di sekitar titik yang sama tidak membuat peta melompat. */
+  function tampilkanMarker(lat, lng) {
+    if (!window.map || !window.L || typeof window.L.marker !== 'function') return;
+    var pos = [lat, lng];
+    if (!lokasiLayer) lokasiLayer = window.L.layerGroup().addTo(window.map);
+    else lokasiLayer.clearLayers();
+    window.L.marker(pos, { title: 'Titik cek lokasi', alt: 'Lokasi yang dicek' })
+      .bindPopup('<b>' + esc(teksKoordinat(lat, lng)) + '</b>')
+      .addTo(lokasiLayer);
+    var terlihat = false;
+    try { terlihat = window.map.getBounds().contains(pos); } catch (e) { terlihat = false; }
+    if (terlihat) return;
+    if (typeof window.map.flyTo === 'function') {
+      window.map.flyTo(pos, Math.max(window.map.getZoom(), 13), { duration: 0.8 });
+    } else {
+      window.map.setView(pos, Math.max(window.map.getZoom(), 13));
+    }
+  }
+
+  function hapusMarker() {
+    if (lokasiLayer) lokasiLayer.clearLayers();
+  }
+
+  /* Reset: pin di peta, isi input, dan panel hasil dibersihkan sekaligus.
+     cekToken ikut dinaikkan supaya respons ArcGIS atau BIG yang masih
+     dalam perjalanan tidak mengisi ulang panel sesudah direset, dan tombol
+     Cek dinyalakan lagi karena reset bisa terjadi di tengah permintaan. */
+  function reset() {
+    cekToken++;
+    hapusMarker();
+    if (el.input) el.input.value = '';
+    kosongkan();
+    if (el.btn) el.btn.disabled = false;
+    if (el.status) el.status.textContent = 'Pin di peta dan hasil dibersihkan.';
+  }
+
   /* Pasang listener draw:created, tepat satu kali.
-     Penanda disimpan di objek map, BUKAN di elemen DOM, karena init()
-     dipanggil berulang kali oleh loop boot -- penanda di elemen akan
+     Flag pengikatannya disimpan di objek map, BUKAN di elemen DOM, karena
+     init() dipanggil berulang kali oleh loop boot -- flag di elemen akan
      membiarkan listener menumpuk. Flag sengaja tidak pernah dihapus:
      kalau dihapus, listener lama menggantung dan tetap dipanggil. */
   function pasangPendengar() {
@@ -622,11 +664,16 @@
 
     window.map.on('draw:created', function (ev) {
       var layer = ev && ev.layer;
-      /* Hanya marker. Polygon, garis, dan lingkaran milik alat gambar dan
-         GeoOSS, dan ikut memicu event yang sama. */
-      if (!layer || typeof layer.getLatLng !== 'function') return;
+      /* Hanya marker asli. Polygon dan garis memakai getLatLngs, tapi
+         lingkaran memakai getLatLng persis seperti marker. Tanpa instanceof
+         ini, lingkaran yang digambar ikut dianggap pin -- dan setelah pin
+         diserahkan ke modul ini, lingkaran pengguna justru ikut terhapus. */
+      if (!layer || !window.L || !(layer instanceof window.L.Marker)) return;
       var p = layer.getLatLng();
-      markerLokasi = layer;
+      /* Serahkan pin ke modul ini: alat gambar hanya dipakai untuk memilih
+         titik. Kalau layernya dibiarkan, ada dua pin di titik yang sama dan
+         Reset hanya membersihkan salah satunya. */
+      if (typeof window.removeDrawLayer === 'function') window.removeDrawLayer(layer);
       /* Isi input lalu cek, supaya koordinat yang ditampilkan sama dengan
          yang ada di pin, dan bisa langsung disalin tanpa diketik ulang. */
       if (el.input) el.input.value = teksKoordinat(p.lat, p.lng);
@@ -635,9 +682,10 @@
     });
   }
 
-  /* Pin: pakai mode marker bawaan alat gambar. Popup koordinat sudah
-     dipasang di alat-draw-measure.js, jadi di sini tidak perlu membuat
-     marker sendiri -- dan pin ikut bisa dihapus dari alat gambar. */
+  /* Pin: memakai mode marker bawaan alat gambar sekadar untuk memilih
+     titik. Pin yang jadi milik panel ini dipasang sendiri oleh cek();
+     marker hasil alat gambar dilepas lewat removeDrawLayer() agar tidak
+     ada dua pin di titik yang sama. */
   function pasangPin() {
     if (typeof window.startDraw === 'function') {
       pasangPendengar();
@@ -660,6 +708,7 @@
       input: document.getElementById('geolokasiInput'),
       btn: document.getElementById('geolokasiCek'),
       pin: document.getElementById('geolokasiPin'),
+      reset: document.getElementById('geolokasiReset'),
       salin: document.getElementById('geolokasiSalin'),
       out: document.getElementById('geolokasiHasil'),
       status: document.getElementById('geolokasiStatus')
@@ -670,6 +719,7 @@
 
     if (el.btn) el.btn.addEventListener('click', cek);
     if (el.pin) el.pin.addEventListener('click', pasangPin);
+    if (el.reset) el.reset.addEventListener('click', reset);
     /* Listener pin dipasang di sini juga, bukan hanya saat tombol diklik:
        GeoOSS dan modul lain bisa memasang pin, dan panel hasil harus ikut
        terisi apa pun siapa yang memulainya. */
@@ -705,6 +755,7 @@
     sudutDMS: sudutDMS,
     bersihkanNilai: bersih,
     kosongkan: kosongkan,
+    hapusMarker: hapusMarker,
     pasangPin: pasangPin,
     salin: salin
   };
