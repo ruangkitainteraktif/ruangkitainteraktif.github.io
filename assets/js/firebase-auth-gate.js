@@ -41,6 +41,13 @@ let authMode = 'login';
 let accountButton;
 let returnFocus = null;
 let resumeInProgress = false;
+let pendingGoogleAction = null;
+
+function isGoogleUser(user) {
+  return !!(user && Array.isArray(user.providerData) && user.providerData.some(function (providerInfo) {
+    return providerInfo.providerId === 'google.com';
+  }));
+}
 
 function safeSessionGet(key) {
   try { return sessionStorage.getItem(key); } catch (error) { return null; }
@@ -111,6 +118,18 @@ function aturMode(mode) {
 function selesaikanLogin(user) {
   currentUser = user;
   renderAccountButton(user);
+  if (pendingGoogleAction) {
+    if (!isGoogleUser(user)) {
+      if (statusEl) statusEl.textContent = 'Fitur Export SHP memerlukan akun Google. Pilih tombol Google untuk melanjutkan.';
+      return;
+    }
+    const action = pendingGoogleAction;
+    pendingGoogleAction = null;
+    tutupDialog(false);
+    resumePendingFab();
+    window.setTimeout(function () { action(user); }, 0);
+    return;
+  }
   tutupDialog(false);
   resumePendingFab();
 }
@@ -175,7 +194,10 @@ function tutupDialog(hapusPending) {
   if (!dialog) return;
   dialog.hidden = true;
   document.body.classList.remove('rk-auth-open');
-  if (hapusPending) safeSessionRemove(PENDING_KEY);
+  if (hapusPending) {
+    safeSessionRemove(PENDING_KEY);
+    pendingGoogleAction = null;
+  }
   if (returnFocus && returnFocus.isConnected) returnFocus.focus();
 }
 
@@ -317,6 +339,17 @@ function tahanKlikFab(event) {
 
 document.addEventListener('click', tahanKlikFab, true);
 window.RKGoogleAuthGate = true;
+window.RKRequireGoogleLogin = function (action) {
+  if (typeof action !== 'function') return false;
+  if (isGoogleUser(currentUser)) {
+    action(currentUser);
+    return true;
+  }
+  pendingGoogleAction = action;
+  bukaDialog();
+  if (currentUser && statusEl) statusEl.textContent = 'Fitur Export SHP memerlukan akun Google. Pilih tombol Google untuk melanjutkan.';
+  return false;
+};
 
 if (window.__rkAuthPendingFab) {
   const pendingFabId = window.__rkAuthPendingFab;
@@ -339,7 +372,11 @@ onAuthStateChanged(auth, function (user) {
   authReady = true;
   if (signInButton) signInButton.disabled = false;
   if (emailButton) emailButton.disabled = false;
-  if (statusEl && dialog && !dialog.hidden) statusEl.textContent = '';
+  if (statusEl && dialog && !dialog.hidden) {
+    statusEl.textContent = pendingGoogleAction && user && !isGoogleUser(user)
+      ? 'Fitur Export SHP memerlukan akun Google. Pilih tombol Google untuk melanjutkan.'
+      : '';
+  }
   if (user) {
     tungguMenuFab(user);
     resumePendingFab();

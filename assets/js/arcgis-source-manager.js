@@ -1168,6 +1168,78 @@
     if (done) console.log('[ArcGIS] hitung fitur:', summaries);
   }
 
+  function shpProperties(properties) {
+    var result = {};
+    Object.keys(properties || {}).forEach(function (key) {
+      var base = String(key || 'field').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 10) || 'field';
+      var name = base;
+      var suffix = 1;
+      while (Object.prototype.hasOwnProperty.call(result, name)) {
+        var tail = String(suffix++);
+        name = base.slice(0, 10 - tail.length) + tail;
+      }
+      var value = properties[key];
+      if (value == null || (typeof value === 'number' && !Number.isFinite(value))) value = '';
+      else if (typeof value === 'boolean') value = value ? 1 : 0;
+      else if (typeof value === 'object') value = JSON.stringify(value);
+      result[name] = value;
+    });
+    return result;
+  }
+
+  async function exportShapefile(key) {
+    var record = state.active[key];
+    var descriptor = record && record.descriptor;
+    if (!descriptor) return { ok: false, message: 'Layer ArcGIS tidak ditemukan.' };
+    if (!descriptor.layerId) return { ok: false, message: 'Sublayer tidak memiliki ID untuk diekspor.' };
+    var writer = window.shpwrite || (typeof shpwrite !== 'undefined' ? shpwrite : null);
+    if (!writer || typeof writer.zip !== 'function') return { ok: false, message: 'Modul pembuat SHP belum siap. Muat ulang halaman lalu coba kembali.' };
+
+    try {
+      var data = descriptor.featureData || await fetchFeatureGeoJson(descriptor);
+      var features = (data && data.features || []).filter(function (feature) {
+        return feature && feature.geometry && feature.geometry.type && Array.isArray(feature.geometry.coordinates);
+      });
+      if (!features.length) return { ok: false, message: 'Layer tidak memiliki fitur geometri yang bisa diekspor.' };
+      var types = {};
+      features.forEach(function (feature) {
+        var type = feature.geometry.type;
+        if (type === 'Point' || type === 'MultiPoint') types.point = 'points';
+        else if (type === 'LineString' || type === 'MultiLineString') types.polyline = 'lines';
+        else if (type === 'Polygon' || type === 'MultiPolygon') types.polygon = 'polygons';
+      });
+      if (!Object.keys(types).length) return { ok: false, message: 'Jenis geometri layer ini belum didukung oleh format SHP.' };
+
+      var fileName = descriptor.name.replace(/[^a-z0-9_-]+/gi, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'layer_arcgis';
+      var collection = {
+        type: 'FeatureCollection',
+        features: features.map(function (feature) {
+          return Object.assign({}, feature, { properties: shpProperties(feature.properties) });
+        })
+      };
+      var zipData = await writer.zip(collection, {
+        folder: fileName,
+        filename: fileName,
+        outputType: 'blob',
+        types: types,
+        prj: 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
+      });
+      var blob = zipData instanceof Blob ? zipData : new Blob([zipData], { type: 'application/zip' });
+      var objectUrl = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = fileName + '.zip';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(function () { URL.revokeObjectURL(objectUrl); }, 1000);
+      var partial = data && data.paginationWarning ? ' (data mungkin belum lengkap: server tidak mendukung pagination)' : '';
+      return { ok: true, message: features.length.toLocaleString('id-ID') + ' fitur diekspor ke ' + fileName + '.zip' + partial + '.' };
+    } catch (error) {
+      return { ok: false, message: 'Gagal mengekspor SHP: ' + (error && error.message ? error.message : String(error)) };
+    }
+  }
+
   async function addSelected() {
     var tree = getElement('arcgisLayerTree');
     if (!tree) return;
@@ -1269,6 +1341,7 @@
     discover: discover,
     addSelected: addSelected,
     countSelected: countSelected,
+    exportShapefile: exportShapefile,
     remove: removeLayer,
     clear: clearDynamicLayers,
     getActive: function () { return state.active; }

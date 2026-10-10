@@ -10337,6 +10337,8 @@ details[open] > .gt-card-head::after {
       font-size: 11px;
       color: var(--text-secondary);
     }
+    #alatStatus { margin-top: 10px; }
+    #alatStatus:empty { display: none; }
     /* Layer Dimuat, Tabel Atribut, dan Animasi Track memakai cangkang
        .alat-card dan pita .alat-card-head di blok "KARTU SHEET ALAT".
        Yang tersisa di sini hanya isi modulnya. */
@@ -10506,6 +10508,9 @@ details[open] > .gt-card-head::after {
       background: var(--bg-primary); color: var(--text-secondary); cursor: pointer; font-size: 10px; transition: all .15s;
     }
     .alat-layer-card-btns button:hover { background: var(--bg-card-hover); border-color: var(--accent); color: var(--accent); }
+    .alat-layer-card-btns .alat-export-btn { grid-column: 1 / -1; color: var(--accent); border-color: var(--border-color); }
+    .alat-layer-card-btns .alat-export-btn:hover { border-color: var(--accent); }
+    .alat-layer-card-btns button:disabled { opacity: .65; cursor: wait; }
     .alat-layer-card-btns .alat-remove-btn { color: var(--accent-danger); border-color: var(--border-color); }
     .alat-layer-card-btns .alat-remove-btn:hover { background: var(--bg-card-hover); border-color: var(--accent-danger); color: var(--accent-danger); }
     .alat-btn-clear {

@@ -76,7 +76,32 @@
     remove.addEventListener('click', () => {
       if (window.ArcGISRestSourceManager) window.ArcGISRestSourceManager.remove(record.descriptor.key);
     });
-    btns.append(toggle, remove);
+    const exportButton = document.createElement('button');
+    exportButton.type = 'button';
+    exportButton.className = 'alat-export-btn';
+    exportButton.textContent = 'Export SHP';
+    exportButton.title = 'Unduh fitur layer ini sebagai shapefile ZIP';
+    exportButton.addEventListener('click', () => {
+      const manager = window.ArcGISRestSourceManager;
+      if (!manager || typeof manager.exportShapefile !== 'function') {
+        setAlatStatus('Fitur ekspor SHP belum siap.', true);
+        return;
+      }
+      const runExport = async () => {
+        exportButton.disabled = true;
+        exportButton.textContent = 'Menyiapkan SHP…';
+        const result = await manager.exportShapefile(record.descriptor.key);
+        exportButton.disabled = false;
+        exportButton.textContent = 'Export SHP';
+        setAlatStatus(result.message, !result.ok);
+      };
+      if (typeof window.RKRequireGoogleLogin !== 'function') {
+        setAlatStatus('Login Google belum siap. Muat ulang halaman lalu coba kembali.', true);
+        return;
+      }
+      window.RKRequireGoogleLogin(runExport);
+    });
+    btns.append(toggle, remove, exportButton);
     card.append(name, meta, btns);
     return card;
   }
