@@ -176,7 +176,7 @@
   <link rel="stylesheet" href="assets/css/app.css?v=20261010-loaded-layer-card-actions">
   <link rel="stylesheet" href="assets/css/geodisaster.css?v=5">
 
-  <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
+  <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261010-press-pages2-7">
   <link rel="stylesheet" href="assets/css/geotrans-mitradarat.css?v=20261010-geotrans-card-spacing">
   <script>
     (function () {
@@ -3228,23 +3228,17 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
               <details class="geofarm-ref gf-ebook" aria-labelledby="gfEbookTitle">
                 <summary class="gt-card-head">
                   <span class="gt-card-icon" aria-hidden="true">&#128214;</span>
-                  <span><b id="gfEbookTitle">E-Book Pertanian</b><small>Katalog publikasi BRMP dalam pembaca PDF</small></span>
+                  <span><b id="gfEbookTitle">E-Book Pertanian</b><small>Katalog Pertanian Press dalam pembaca PDF</small></span>
                 </summary>
                 <div class="gf-ebook-content">
-                <div class="gf-ebook-grid">
-                  <article class="gf-ebook-card gf-ebook-cover-soil">
-                    <div class="gf-ebook-cover" aria-hidden="true"><i></i></div>
-                    <div class="gf-ebook-info"><span class="gf-ebook-tag">PUBLIKASI BRMP</span><h4>Publikasi Tanah &amp; Pupuk</h4><p>Buka dokumen teknis pertanian dari Balai Pengujian Standar Instrumen Tanah dan Pupuk.</p>
-                      <button class="gf-ebook-open" type="button" data-ebook-open data-title="Publikasi Tanah &amp; Pupuk" data-url="https://tanahpupuk.brmp.pertanian.go.id/storage/assets/uploads/publikasi/cPx4NdBdqxfTT9HYns8glyJ4JexdNWQ2bCvJ0ulQ.pdf">Baca publikasi <span aria-hidden="true">&#8594;</span></button>
-                    </div>
-                  </article>
-                  <article class="gf-ebook-card gf-ebook-cover-horti">
-                    <div class="gf-ebook-cover" aria-hidden="true"><i></i></div>
-                    <div class="gf-ebook-info"><span class="gf-ebook-tag">HORTIKULTURA · 2024</span><h4>Rekomendasi Pupuk N, P, dan K untuk Tanaman Hortikultura per Kabupaten · Edisi 2</h4><p>Acuan pemupukan komoditas hortikultura per kabupaten. 227 halaman.</p>
-                      <button class="gf-ebook-open" type="button" data-ebook-open data-title="Rekomendasi Pupuk N, P, dan K untuk Tanaman Hortikultura per Kabupaten · Edisi 2" data-url="https://tanahpupuk.brmp.pertanian.go.id/storage/assets/uploads/publikasi/qsCwH5PadpgkOMNX2JW84ah9pYvtIQEvLTBAKTwH.pdf">Baca publikasi <span aria-hidden="true">&#8594;</span></button>
-                    </div>
-                  </article>
-                </div>
+                <section class="gf-press-catalog" aria-labelledby="gfPressTitle">
+                  <div class="gf-press-heading"><div><h4 id="gfPressTitle">Katalog Pertanian Press</h4><p id="gfPressStatus">Halaman 2 · 25 judul. PDF dibuka di pembaca GeoFarm bila tersedia.</p></div>
+                    <input type="search" id="gfPressSearch" aria-label="Cari buku Pertanian Press" placeholder="Cari judul buku…" autocomplete="off" />
+                  </div>
+                  <div class="gf-press-list" id="gfPressList" aria-live="polite"></div>
+                  <nav class="gf-press-pagination" id="gfPressPagination" aria-label="Halaman katalog e-book"></nav>
+                  <p class="gf-press-source">Sumber: <a id="gfPressSource" href="https://epublikasi.pertanian.go.id/pertanianpress/catalog/page/2" target="_blank" rel="noopener noreferrer">Pertanian Press</a>. Beberapa judul hanya menyediakan halaman detail katalog.</p>
+                </section>
                 </div>
               </details>
               <dialog class="gf-reader" id="gfEbookReader" aria-labelledby="gfReaderTitle">
@@ -3831,7 +3825,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 <!-- Referensi Pertanian: kartu <details> yang mengambil data dengan fetch()
      saat dibuka (termasuk transkripsi lokal varietas perkebunan). -->
 <script src="assets/js/geofarm-referensi.js?v=20261004-varietas2"></script>
-<script src="assets/js/geofarm-ebook.js?v=20261004"></script>
+<script src="assets/js/geofarm-ebook.js?v=20261010-press-pagination-icons"></script>
 <!-- geofarm-report.js hanya Menyediakan window.setGeoFarmReportIndexSpecs(),
      jadi harus dimuat sebelum polygon-analysis.js memanggilnya. -->
 <script src="assets/js/geofarm-report.js"></script>
