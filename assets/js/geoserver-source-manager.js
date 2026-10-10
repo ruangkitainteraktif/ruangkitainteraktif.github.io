@@ -220,6 +220,23 @@
     url.searchParams.set('srsName', 'EPSG:4326');
     return url.toString();
   }
+  function parseFeatureCount(responseText) {
+    try {
+      var json = JSON.parse(responseText);
+      var candidate = json.numberMatched != null ? json.numberMatched : json.totalFeatures;
+      if (candidate == null) candidate = json.numberOfFeatures;
+      if (candidate != null && candidate !== 'unknown' && Number.isFinite(Number(candidate))) return Number(candidate);
+    } catch (_) { /* respons WFS hits umumnya XML */ }
+    var xml = new DOMParser().parseFromString(responseText, 'application/xml');
+    if (xml.getElementsByTagName('parsererror').length) return null;
+    var root = xml.documentElement;
+    var attributes = ['numberMatched', 'numberOfFeatures', 'numberOfRecordsMatched'];
+    for (var i = 0; i < attributes.length; i++) {
+      var candidateXml = root.getAttribute(attributes[i]);
+      if (candidateXml && candidateXml !== 'unknown' && Number.isFinite(Number(candidateXml))) return Number(candidateXml);
+    }
+    return null;
+  }
   async function getFeaturePage(base, layerName, offset, version) {
     var text = await fetchText(featureUrl(base, layerName, offset, version));
     var data;
@@ -367,26 +384,21 @@
         var layer = selected[i];
         setStatus('Menghitung fitur ' + layer.name + ' (' + (i + 1) + '/' + selected.length + ')…');
         var total = null;
+        var zeroReported = false;
         var rootBase = normalizeOwsUrl(el('geoserverSourceUrl').value);
-        var bases = [workspaceOwsUrl(rootBase, layer.name), rootBase];
-        for (var baseIndex = 0; baseIndex < bases.length && total == null; baseIndex++) for (var versionIndex = 0; versionIndex < 3 && total == null; versionIndex++) {
-          var version = ['1.0.0', '2.0.0', '1.1.0'][versionIndex];
-          var url = new URL(featureUrl(bases[baseIndex], layer.name, 0, version));
-          url.searchParams.set('resultType', 'hits');
+        var bases = [rootBase, workspaceOwsUrl(rootBase, layer.name)];
+        for (var baseIndex = 0; baseIndex < bases.length && !(total > 0); baseIndex++) for (var versionIndex = 0; versionIndex < 3 && !(total > 0); versionIndex++) {
+          var version = ['2.0.0', '1.1.0', '1.0.0'][versionIndex];
           try {
+            var url = new URL(featureUrl(bases[baseIndex], layer.name, 0, version));
+            url.searchParams.set('resultType', 'hits');
             var responseText = await fetchText(url.toString());
-            try {
-              var json = JSON.parse(responseText);
-              var candidate = json.numberMatched != null ? json.numberMatched : json.totalFeatures;
-              if (candidate != null && candidate !== 'unknown' && Number.isFinite(Number(candidate))) total = Number(candidate);
-            } catch (_) {
-              var xml = new DOMParser().parseFromString(responseText, 'application/xml');
-              var root = xml.documentElement;
-              var candidateXml = root.getAttribute('numberMatched') || root.getAttribute('numberOfFeatures') || root.getAttribute('numberOfRecordsMatched');
-              if (candidateXml && candidateXml !== 'unknown' && Number.isFinite(Number(candidateXml))) total = Number(candidateXml);
-            }
+            var candidate = parseFeatureCount(responseText);
+            if (candidate > 0) total = candidate;
+            else if (candidate === 0) zeroReported = true;
           } catch (_) { /* coba endpoint workspace atau versi WFS berikutnya */ }
         }
+        if (total == null && zeroReported) total = 0;
         summaries.push(layer.name + ': ' + (total == null ? 'server tidak mengirim hitungan' : total.toLocaleString('id-ID') + ' fitur'));
         if (total != null) state.counts[layer.name] = total;
       }
