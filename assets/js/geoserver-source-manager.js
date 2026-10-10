@@ -35,6 +35,10 @@
       cancel.disabled = !busy;
     }
     if (add) add.disabled = busy || !Object.keys(state.selected).length;
+    if (add) {
+      add.classList.toggle('is-loading', busy && label === 'add');
+      add.textContent = busy && label === 'add' ? 'Memuat layer…' : 'Tambahkan layer ke peta';
+    }
     if (count) count.disabled = busy || !Object.keys(state.selected).length;
   }
   function normalizeOwsUrl(value) {
@@ -208,7 +212,7 @@
     if (!data || !Array.isArray(data.features)) throw new Error('Respons GeoServer bukan FeatureCollection GeoJSON.');
     return data;
   }
-  async function fetchLayer(layer) {
+  async function fetchLayer(layer, onProgress) {
     var base = normalizeOwsUrl(el('geoserverSourceUrl').value);
     var version = '2.0.0';
     var data;
@@ -236,6 +240,7 @@
       features = features.concat(data.features);
       offset += data.features.length;
       page++;
+      if (typeof onProgress === 'function') onProgress(features.length);
     }
     if (page >= MAX_PAGES && data.features.length === PAGE_SIZE) truncated = true;
     return { type: 'FeatureCollection', features: features, truncated: truncated };
@@ -375,15 +380,18 @@
     for (var i = 0; i < selected.length; i++) {
       if (run !== state.run) return;
       var layer = selected[i];
-      setStatus('Mengunduh ' + layer.name + ' (' + (i + 1) + '/' + selected.length + ')…');
+      setStatus('Mengunduh layer ' + layer.name + ' (' + (i + 1) + '/' + selected.length + ')…');
       try {
-        var geojson = await fetchLayer(layer);
+        var geojson = await fetchLayer(layer, function (featureCount) {
+          if (run === state.run) setStatus('Mengunduh ' + layer.name + ': ' + featureCount.toLocaleString('id-ID') + ' fitur…');
+        });
         if (run !== state.run) return;
         if (!geojson.features.length) throw new Error('layer tidak memiliki fitur.');
         geojson.features = geojson.features.filter(function (feature) {
           return feature && feature.geometry && feature.geometry.type && feature.geometry.coordinates != null;
         });
         if (!geojson.features.length) throw new Error('fitur tidak memiliki geometri yang dapat ditampilkan di peta.');
+        setStatus('Memasang ' + layer.name + ' ke peta…');
         window.addAlatGeoJSONLayer(layer.title || layer.name, 'GeoServer WFS', geojson);
         state.loaded[layer.name] = true;
         state.featureData[layer.name] = geojson;
