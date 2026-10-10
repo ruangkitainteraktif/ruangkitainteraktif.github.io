@@ -400,6 +400,20 @@
     });
   }
 
+  function fetchBoundaryWithTimeout(url, timeoutMs) {
+    function timedFetch(target) {
+      var controller = typeof AbortController === 'function' ? new AbortController() : null;
+      var timer = controller ? setTimeout(function () { controller.abort(); }, timeoutMs || 8000) : null;
+      return fetch(target, { signal: controller ? controller.signal : undefined }).then(function (response) {
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        return response.json();
+      }).finally(function () { if (timer) clearTimeout(timer); });
+    }
+    return timedFetch(url).catch(function (primaryError) {
+      return timedFetch(PROXY_PREFIX + encodeURIComponent(url)).catch(function () { throw primaryError; });
+    });
+  }
+
   function queryUrl(options) {
     var query = [
       'where=' + encodeURIComponent(options.where || '1=1'),
@@ -661,10 +675,23 @@
       geometryPrecision: '5'
     });
     var bigUrl = config.url + '?' + query.toString();
-    return fetchWithProxy(bigUrl, 'json').then(function (data) {
+    return fetchBoundaryWithTimeout(bigUrl, 8000).then(function (data) {
       if (data && data.error) throw new Error(data.error.message || 'BIG RBI gagal');
       return boundaryFromFeatures(data && data.features, { nama: entry.nama, kode: entry.kode, level: entry.level });
     }).catch(function (bigError) {
+      if (String(entry.level) === '4' && typeof window.fetchVillageBoundaryFallback === 'function') {
+        return window.fetchVillageBoundaryFallback({
+          where: "KDEPUM='" + entry.kode.replace(/'/g, "''") + "'",
+          returnGeometry: 'true', outSR: '4326', outFields: '*', geometryPrecision: '5'
+        }).then(function (data) {
+          return boundaryFromFeatures(data && data.features, { nama: entry.nama, kode: entry.kode, level: entry.level });
+        }).catch(function () { return null; }).then(function (boundary) {
+          if (boundary) return boundary;
+          return fetchWithProxy('https://wilayah.smartartstudio.my.id/api/boundaries/' + encodeURIComponent(entry.kode), 'json')
+            .then(function (data) { return boundaryFromWilayah(data, { nama: entry.nama, kode: entry.kode, level: entry.level }); })
+            .catch(function () { throw bigError; });
+        });
+      }
       var fallbackUrl = 'https://wilayah.smartartstudio.my.id/api/boundaries/' + encodeURIComponent(entry.kode);
       return fetchWithProxy(fallbackUrl, 'json').then(function (data) {
         return boundaryFromWilayah(data, { nama: entry.nama, kode: entry.kode, level: entry.level });

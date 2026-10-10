@@ -199,10 +199,20 @@ async function fetchBigRbiCount(servicePath, where) {
   try {
     const res = await fetch(url, { method: 'POST', body: params, headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, signal: controller.signal });
     clearTimeout(timeout);
-    if (!res.ok) return 0;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
+    if (json.error) throw new Error(json.error.message || 'BIG RBI gagal');
     return json.count || 0;
-  } catch { clearTimeout(timeout); return 0; }
+  } catch {
+    clearTimeout(timeout);
+    if (/BATAS_DESAKEL_AR/i.test(servicePath) && typeof window.fetchVillageBoundaryFallback === 'function') {
+      try {
+        const fallback = await window.fetchVillageBoundaryFallback({ where: where || '1=1', returnCountOnly: 'true', returnGeometry: 'false', timeoutMs: 9000 });
+        return Number(fallback.count) || 0;
+      } catch (_) { /* gunakan nilai cadangan lokal */ }
+    }
+    return 0;
+  }
 }
 
 async function fetchBigRbiDistinctCount(servicePath, field) {
@@ -363,9 +373,16 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
     if (level === 4) {
       // Desa/Kelurahan: BIG RBI BATAS_DESAKEL_AR (84.503 polygon desa, edisi Juni 2026).
       const bigUrl = `https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH/BATAS_DESAKEL_AR/MapServer/0/query?where=KDEPUM%3D%27${encodeURIComponent(kode)}%27&f=json&returnGeometry=true&outSR=4326&outFields=KDEPUM,NAMOBJ,WADMKD,WADMKK,WADMPR,LUASWH&geometryPrecision=5`;
-      const response = await geoidFetchWithProxy(bigUrl, 15000);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const result = await response.json();
+      let result;
+      try {
+        const response = await geoidFetchWithProxy(bigUrl, 15000);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        result = await response.json();
+        if (result.error) throw new Error(result.error.message || 'BIG RBI gagal');
+      } catch (bigError) {
+        if (typeof window.fetchVillageBoundaryFallback !== 'function') throw bigError;
+        result = await window.fetchVillageBoundaryFallback({ where: `KDEPUM = '${kode}'`, returnGeometry: 'true', outSR: '4326', outFields: '*', geometryPrecision: '5' });
+      }
       features = result.features || [];
       if (!features.length) {
         // Fallback: titik BMKG bila batas desa tidak tersedia di BIG.
@@ -800,9 +817,16 @@ async function fetchChildBoundaryGeometries(level, kode) {
     } else {
       return [];
     }
-    const res = await geoidFetchWithProxy(url, 15000);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const j = await res.json();
+    let j;
+    try {
+      const res = await geoidFetchWithProxy(url, 15000);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      j = await res.json();
+      if (j.error) throw new Error(j.error.message || 'BIG RBI gagal');
+    } catch (bigError) {
+      if (level !== 3 || typeof window.fetchVillageBoundaryFallback !== 'function') throw bigError;
+      j = await window.fetchVillageBoundaryFallback({ where: `KDEPUM LIKE '${kode}.%'`, returnGeometry: 'true', outSR: '4326', outFields: '*', geometryPrecision: '5' });
+    }
     return (j.features || []).map(f => toLL(f.geometry)).filter(Boolean);
   } catch (e) {
     console.warn('Gagal mengambil batas anak:', e);
@@ -952,9 +976,16 @@ async function downloadBoundaryGeoJSON(kode) {
 
     async function queryBigRbi(serviceUrl, where, outFields) {
       const url = `${serviceUrl}/query?where=${encodeURIComponent(where)}&f=json&returnGeometry=true&outSR=4326&outFields=${outFields}&geometryPrecision=5`;
-      const response = await geoidFetchWithProxy(url, 20000);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const result = await response.json();
+      let result;
+      try {
+        const response = await geoidFetchWithProxy(url, 20000);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        result = await response.json();
+        if (result.error) throw new Error(result.error.message || 'BIG RBI gagal');
+      } catch (bigError) {
+        if (!/BATAS_DESAKEL_AR/i.test(serviceUrl) || typeof window.fetchVillageBoundaryFallback !== 'function') throw bigError;
+        result = await window.fetchVillageBoundaryFallback({ where, returnGeometry: 'true', outSR: '4326', outFields: '*', geometryPrecision: '5' });
+      }
       return (result.features || []).map(f => ({
         type: 'Feature',
         properties: f.attributes || {},

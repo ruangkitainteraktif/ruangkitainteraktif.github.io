@@ -253,7 +253,10 @@
     if (node.kind === 'leaf') return renderLeaf(node, state.leaves.length);
     var children = node.children || [];
     var leafCount = countLeaves(node);
-    var open = node.depth === 0 ? ' open' : '';
+    // The root node itself is not rendered: its direct children start at
+    // depth 1. Open those folders by default so discovered services are
+    // immediately visible after the tree is rendered.
+    var open = node.kind === 'folder' && node.depth === 1 ? ' open' : '';
     var label = node.kind === 'folder' ? 'Folder' : node.kind === 'service' ? 'Service' : 'Grup layer';
     return '<details class="arcgis-tree-group" data-tree-key="' + escapeHtml(node.url || node.key || '') + '" data-depth="' + node.depth + '"' + open + '><summary><span class="arcgis-tree-summary-title">' + escapeHtml(node.name) + '</span><span class="arcgis-tree-meta">' + escapeHtml(label) + ' · ' + leafCount + ' layer</span></summary><div class="arcgis-tree-children">' + children.map(renderNode).join('') + '</div></details>';
   }

@@ -362,6 +362,23 @@
       return { status: 'ada', nama: nama, jumlah: fitur.length, multi: fitur.length > 1 };
     }).catch(function (e) {
       berhentiTimer();
+      if (typeof window.fetchVillageBoundaryFallback === 'function') {
+        return window.fetchVillageBoundaryFallback({
+          where: '1=1', geometry: geo, geometryType: 'esriGeometryPoint', inSR: '4326',
+          spatialRel: 'esriSpatialRelIntersects', outFields: '*', returnGeometry: 'false',
+          resultRecordCount: '2', timeoutMs: BIG_TIMEOUT_MS
+        }).then(function (fallback) {
+          var features = fallback && fallback.features || [];
+          if (!features.length) return { status: 'tidak', nama: null, jumlah: 0 };
+          var attributes = features[0].attributes || {};
+          var name = bersih(attributes.WADMKD) || namaDesa(bersih(attributes.NAMA_KEL)) || namaDesa(bersih(attributes.NAMOBJ));
+          return name ? { status: 'ada', nama: name, jumlah: features.length, multi: features.length > 1 }
+            : { status: 'tidak', nama: null, jumlah: features.length };
+        }).catch(function () {
+          var pesan = e && e.name === 'AbortError' ? 'Layanan BIG tidak merespons' : ((e && e.message) || 'Tidak dapat menghubungi layanan BIG');
+          return { status: 'gagal', nama: null, pesan: pesan, jumlah: 0 };
+        });
+      }
       var pesan = e && e.name === 'AbortError'
         ? 'Server BIG tidak merespons'
         : ((e && e.message) || 'Tidak dapat menghubungi server BIG');

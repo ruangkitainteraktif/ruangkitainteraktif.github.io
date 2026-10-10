@@ -1031,6 +1031,15 @@
   function runBoundarySource(src) {
     if (src.local === 'kab') return queryLocalKabBoundary(src.kode);
     if (src.api === 'wilayah') return queryWilayahBoundary(src);
+    if (src.api === 'village-fallback' && typeof window.fetchVillageBoundaryFallback === 'function') {
+      return window.fetchVillageBoundaryFallback({ where: "KDEPUM='" + src.kode + "'", returnGeometry: 'true', outSR: '4326', outFields: '*', timeoutMs: src.timeoutMs || 9000 })
+        .then(function (data) {
+          var feature = data && data.features && data.features.find(function (item) { return item.geometry && item.geometry.rings && item.geometry.rings.length; });
+          if (!feature) return null;
+          var a = feature.attributes || {};
+          return ensureMultiPolygon({ type: 'Feature', properties: { name: a.NAMOBJ || a.WADMKD || a.NAMA_KEL || '', kode: src.kode }, geometry: esriRingsToPolygon(feature.geometry.rings) });
+        });
+    }
     return queryEsriBoundary(src);
   }
 
@@ -1099,6 +1108,7 @@
         kode: kode,
         timeoutMs: 12000
       },
+      { api: 'village-fallback', kode: kode, timeoutMs: 9000, fallback: true },
       {
         api: 'wilayah',
         kode: kode,

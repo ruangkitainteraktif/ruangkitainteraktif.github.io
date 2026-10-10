@@ -176,9 +176,21 @@
       if (info) info.textContent = 'Memuat geometri batas BIG…';
       const config = boundaryEndpoints[level];
       const url = config.url + '?' + new URLSearchParams({ where: config.field + "='" + code + "'", outFields: '*', returnGeometry: 'true', outSR: '4326', f: 'geojson', geometryPrecision: '6' });
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Layanan BIG mengembalikan HTTP ' + response.status + '.');
-      const data = await response.json();
+      let data;
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        let response;
+        try { response = await fetch(url, { signal: controller.signal }); }
+        finally { clearTimeout(timeout); }
+        if (!response.ok) throw new Error('Layanan BIG mengembalikan HTTP ' + response.status + '.');
+        data = await response.json();
+        if (data.error) throw new Error(data.error.message || 'Layanan BIG gagal.');
+      } catch (bigError) {
+        if (level !== 4 || typeof window.fetchVillageBoundaryFallback !== 'function') throw bigError;
+        data = await window.fetchVillageBoundaryFallback({ where: "KDEPUM='" + code + "'", outFields: '*', returnGeometry: 'true', outSR: '4326', geometryPrecision: '6', f: 'geojson' });
+        if (data.error) throw new Error(data.error.message || 'Layanan fallback batas desa gagal.');
+      }
       if (request !== boundaryRequest) return;
       const feature = data.features && data.features.find(item => item.geometry && /Polygon/.test(item.geometry.type));
       if (!feature) throw new Error('Geometri poligon untuk wilayah ini tidak ditemukan.');
