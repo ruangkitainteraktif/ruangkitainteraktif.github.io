@@ -12,6 +12,8 @@
     leaves: [],
     selected: new Set(),
     active: {},
+    serviceNodes: {},
+    folderNodes: {},
     attributeKey: null,
     attributeRequest: 0,
     attributePageByKey: {},
@@ -40,6 +42,14 @@
 
   function setStatus(message, isError) {
     var element = getElement('arcgisSourceStatus');
+    if (!element) return;
+    element.textContent = message || '';
+    element.style.color = isError ? '#b91c1c' : '#52728a';
+    element.style.display = message ? '' : 'none';
+  }
+
+  function setCountStatus(message, isError) {
+    var element = getElement('arcgisCountStatus');
     if (!element) return;
     element.textContent = message || '';
     element.style.color = isError ? '#b91c1c' : '#52728a';
@@ -180,6 +190,7 @@
       serviceUrl: service.url,
       layerUrl: service.url,
       layerId: '',
+      metadataError: service.metadataError || '',
       renderMode: layerRenderMode(service.type, null),
       selectable: true
     };
@@ -213,7 +224,14 @@
   }
 
   function populateService(service, metadata) {
-    var layers = metadata && Array.isArray(metadata.layers) ? metadata.layers : [];
+    // ArcGIS may expose queryable records under `tables` instead of `layers`
+    // (for example, a table-only FeatureServer). Tables also have numeric IDs
+    // and use the same /{id}/query endpoint, so include them in the tree.
+    var layers = metadata && Array.isArray(metadata.layers) ? metadata.layers.slice() : [];
+    var tables = metadata && Array.isArray(metadata.tables) ? metadata.tables : [];
+    tables.forEach(function (table) {
+      if (table && !layers.some(function (layer) { return layer && String(layer.id) === String(table.id); })) layers.push(table);
+    });
     var layerMap = {};
     layers.forEach(function (layer) {
       if (layer && layer.id !== undefined) layerMap[String(layer.id)] = layer;
@@ -230,7 +248,23 @@
   function makeServiceFromEntry(parentUrl, entry, depth) {
     var info = serviceInfo(entry);
     if (!info) return null;
-    return makeService(info.name, info.type, joinPath(parentUrl, info.name, info.type), depth);
+    var serviceName = String(info.name || '').replace(/^\/+|\/+$/g, '');
+    var serviceBase = parentUrl;
+    // Some ArcGIS folder listings return a fully qualified service name
+    // (for example "Peta_Jakarta/Jembatan") even when queried inside that
+    // folder. Match the downloader reference: resolve qualified names from
+    // the services catalog root so the current folder is not duplicated.
+    if (serviceName.indexOf('/') !== -1) {
+      var parsedParent = new URL(parentUrl);
+      var catalogMatch = parsedParent.pathname.match(/^(.*\/rest\/services)(?:\/|$)/i);
+      if (catalogMatch) {
+        parsedParent.pathname = catalogMatch[1];
+        parsedParent.search = '';
+        parsedParent.hash = '';
+        serviceBase = parsedParent.toString().replace(/\/$/, '');
+      }
+    }
+    return makeService(serviceName, info.type, joinPath(serviceBase, serviceName, info.type), depth);
   }
 
   function makeRootNode(value) {
@@ -264,14 +298,13 @@
     if (node.kind === 'leaf') return renderLeaf(node, state.leaves.length);
     var children = node.children || [];
     var leafCount = countLeaves(node);
-    // The root node itself is not rendered: its direct children start at
-    // depth 1. Open those folders by default so discovered services are
-    // immediately visible after the tree is rendered.
-    var open = node.kind === 'folder' && node.depth === 1 ? ' open' : '';
+    // Folder contents are loaded only after the user opens that folder.
+    var open = '';
     var label = node.kind === 'folder' ? 'Folder' : node.kind === 'service' ? 'Service' : 'Grup layer';
     var childMarkup = children.map(renderNode).join('');
     if (!childMarkup && node.loading) childMarkup = '<div class="arcgis-tree-loading arcgis-tree-loading--inline"><span class="arcgis-tree-spinner" aria-hidden="true"></span><span>Memuat isi ' + escapeHtml(label.toLowerCase()) + '…</span></div>';
-    return '<details class="arcgis-tree-group" data-tree-key="' + escapeHtml(node.url || node.key || '') + '" data-depth="' + node.depth + '"' + open + '><summary><span class="arcgis-tree-summary-title">' + escapeHtml(node.name) + '</span><span class="arcgis-tree-meta">' + escapeHtml(label) + ' · ' + leafCount + ' layer</span></summary><div class="arcgis-tree-children">' + childMarkup + '</div></details>';
+    else if (!childMarkup && node.kind === 'service' && !node.metadataLoaded) childMarkup = '<div class="arcgis-tree-empty">Buka service untuk memuat daftar sublayer.</div>';
+    return '<details class="arcgis-tree-group" data-tree-key="' + escapeHtml(node.url || node.key || '') + '" data-tree-kind="' + escapeHtml(node.kind) + '" data-depth="' + node.depth + '"' + open + '><summary><span class="arcgis-tree-summary-title">' + escapeHtml(node.name) + '</span><span class="arcgis-tree-meta">' + escapeHtml(label) + ' · ' + leafCount + ' layer</span></summary><div class="arcgis-tree-children">' + childMarkup + '</div></details>';
   }
 
   function renderTree() {
@@ -283,8 +316,9 @@
       if (detail.open) openKeys[detail.getAttribute('data-tree-key')] = true;
     });
     state.leaves = [];
-    if (state.root.children && state.root.children.length) {
-      tree.innerHTML = state.root.children.map(renderNode).join('');
+    var rootNodes = state.root.kind === 'service' ? [state.root] : state.root.children;
+    if (rootNodes && rootNodes.length) {
+      tree.innerHTML = rootNodes.map(renderNode).join('');
     } else if (tree.getAttribute('aria-busy') === 'true') {
       tree.innerHTML = '<div class="arcgis-tree-loading"><span class="arcgis-tree-spinner" aria-hidden="true"></span><span>Memuat folder dan layer…</span></div>';
     } else {
@@ -343,6 +377,7 @@
       } catch (error) {
         if (runId === state.run && !state.cancelled) state.errors++;
         node.loading = false;
+        delete state.visited[node.url];
         return;
       }
       if (runId !== state.run || state.cancelled) return;
@@ -352,8 +387,9 @@
           return;
         }
         state.folderCount++;
-        node.children.push(makeFolder(name, joinPath(node.url, name), item.depth + 1));
-        queue.push({ node: node.children[node.children.length - 1], depth: item.depth + 1 });
+        var folder = makeFolder(name, joinPath(node.url, name), item.depth + 1);
+        node.children.push(folder);
+        state.folderNodes[folder.url] = folder;
       });
       listFrom(data, 'services').forEach(function (entry) {
         var service = makeServiceFromEntry(node.url, entry, item.depth + 1);
@@ -364,28 +400,75 @@
         }
         state.serviceCount++;
         node.children.push(service);
-        queue.push({ node: service, depth: item.depth + 1 });
+        state.serviceNodes[service.url] = service;
       });
       node.loading = false;
+      node.childrenFetched = true;
       return;
     }
     if (node.kind === 'service') {
       if (node.type === 'MapServer' || node.type === 'FeatureServer') {
-        var serviceData;
-        try {
-          serviceData = await fetchJson(node.url);
-        } catch (error) {
-          if (runId === state.run && !state.cancelled) state.errors++;
-          node.children = [makeFallbackLeaf(node)];
-          node.loading = false;
-          return;
-        }
-        if (runId !== state.run || state.cancelled) return;
-        populateService(node, serviceData);
+        node.metadataLoaded = false;
+        node.children = [];
       } else {
         node.children = [makeFallbackLeaf(node)];
       }
       node.loading = false;
+    }
+  }
+
+  async function loadServiceMetadata(node) {
+    if (!node || node.metadataLoaded || node.metadataLoading || state.cancelled) return;
+    node.metadataLoading = true;
+    node.loading = true;
+    var runId = state.run;
+    renderTree();
+    try {
+      var metadata = await fetchJson(node.url);
+      if (runId !== state.run || state.cancelled || state.serviceNodes[node.url] !== node) return;
+      populateService(node, metadata);
+      node.metadataLoaded = true;
+    } catch (error) {
+      if (runId !== state.run || state.cancelled || state.serviceNodes[node.url] !== node) return;
+      state.errors++;
+      node.metadataError = error && error.message ? error.message : String(error);
+      node.children = [makeFallbackLeaf(node)];
+      node.metadataLoaded = true;
+      setStatus('Sublayer ' + node.name + ' gagal dibaca: ' + node.metadataError, true);
+    } finally {
+      if (runId === state.run && !state.cancelled && state.serviceNodes[node.url] === node) {
+        node.metadataLoading = false;
+        node.loading = false;
+        renderTree();
+      }
+    }
+  }
+
+  async function loadFolderContents(node) {
+    if (!node || node.childrenFetched || node.loading || state.cancelled) return;
+    if (node.depth >= MAX_DEPTH) {
+      setStatus('Batas kedalaman folder (' + MAX_DEPTH + ') tercapai.', true);
+      return;
+    }
+    node.loading = true;
+    var runId = state.run;
+    renderTree();
+    try {
+      await discoverNode({ node: node, depth: node.depth }, [], runId);
+      if (runId !== state.run || state.cancelled) return;
+      renderTree();
+      if (node.childrenFetched) {
+        setStatus('Folder ' + node.name + ' dimuat.');
+      } else {
+        setStatus('Folder ' + node.name + ' gagal dimuat. Periksa akses atau koneksi server.', true);
+      }
+    } catch (error) {
+      if (runId === state.run && !state.cancelled) {
+        node.loading = false;
+        state.errors++;
+        renderTree();
+        setStatus('Folder ' + node.name + ' gagal dimuat: ' + (error.message || String(error)), true);
+      }
     }
   }
 
@@ -398,7 +481,7 @@
         return discoverNode(item, queue, runId);
       }));
       if (runId === state.run && !state.cancelled) renderTree();
-      setProgress(state.folderCount + ' folder, ' + state.serviceCount + ' service ditemukan');
+      setProgress(state.folderCount + ' folder dan ' + state.serviceCount + ' service dimuat pada tingkat ini');
     }
   }
 
@@ -412,6 +495,8 @@
     var runId = ++state.run;
     state.cancelled = false;
     state.root = null;
+    state.serviceNodes = {};
+    state.folderNodes = {};
     state.leaves = [];
     state.selected.clear();
     state.visited = {};
@@ -429,14 +514,19 @@
     }
     try {
       state.root = makeRootNode(sourceUrl);
-      if (state.root.kind === 'service') state.serviceCount = 1;
+      if (state.root.kind === 'folder') state.folderNodes[state.root.url] = state.root;
+      if (state.root.kind === 'service') {
+        state.serviceCount = 1;
+        state.serviceNodes[state.root.url] = state.root;
+      }
       renderTree();
       await discoverAll(runId);
       if (runId !== state.run) return;
       renderTree();
       var suffix = state.truncated ? ' Discovery dihentikan oleh batas safety.' : '';
       if (state.errors) suffix += ' ' + state.errors + ' folder/service gagal dibaca.';
-      setStatus(state.serviceCount + ' service ditemukan.' + suffix, state.truncated || state.errors > 0);
+      var expandHint = state.root.kind === 'service' ? 'Buka service untuk memuat sublayer.' : 'Buka folder untuk memuat isinya.';
+      setStatus(state.folderCount + ' folder dan ' + state.serviceCount + ' service terlihat. ' + expandHint + suffix, state.truncated || state.errors > 0);
       setProgress('');
       if (tree) tree.removeAttribute('aria-busy');
     } catch (error) {
@@ -1024,7 +1114,7 @@
     if (!tree) return;
     var inputs = tree.querySelectorAll('input[data-arcgis-leaf]:checked');
     if (!inputs.length) {
-      setStatus('Pilih minimal satu layer.', true);
+      setCountStatus('Pilih minimal satu layer.', true);
       return;
     }
     var countButton = getElement('arcgisCountBtn');
@@ -1034,7 +1124,7 @@
       countButton.classList.add('is-loading');
       countButton.textContent = 'Menghitung…';
     }
-    setStatus('Menghitung jumlah fitur…');
+    setCountStatus('Menghitung jumlah fitur…');
     setProgress('0/' + inputs.length + ' layer dihitung');
     var done = 0;
     var failed = 0;
@@ -1044,9 +1134,13 @@
         var descriptor = state.leaves[Number(inputs[index].getAttribute('data-arcgis-leaf'))];
         if (!descriptor) continue;
         setProgress('Menghitung ' + (index + 1) + '/' + inputs.length + ' · ' + descriptor.name);
-        setStatus('Menghitung fitur ' + descriptor.name + '…');
+        setCountStatus('Menghitung fitur ' + descriptor.name + '…');
         try {
-          if (!descriptor.layerId) throw new Error('Service tanpa sublayer, tidak bisa dihitung');
+          if (!descriptor.layerId) {
+            throw new Error(descriptor.metadataError
+              ? 'Metadata sublayer gagal dibaca: ' + descriptor.metadataError
+              : 'Service tidak menyediakan sublayer atau tabel yang bisa dihitung.');
+          }
           var bbox = descriptor.renderMode === 'feature' ? currentBbox() : null;
           var viewportCount = await countFeatures(descriptor, bbox);
           var layerCount = viewportCount;
@@ -1070,7 +1164,7 @@
       setProgress('');
       updateSelection();
     }
-    setStatus(summaries.join(' · ') || 'Tidak ada layer dihitung.', failed > 0);
+    setCountStatus(summaries.join(' · ') || 'Tidak ada layer dihitung.', failed > 0);
     if (done) console.log('[ArcGIS] hitung fitur:', summaries);
   }
 
@@ -1138,6 +1232,20 @@
     }
     if (tree) {
       tree.addEventListener('click', function (event) {
+        var summary = event.target.closest('summary');
+        var treeDetails = summary && summary.closest('details[data-tree-kind]');
+        var treeKind = treeDetails && treeDetails.getAttribute('data-tree-kind');
+        if (treeKind === 'folder') {
+          window.setTimeout(function () {
+            if (treeDetails.open) loadFolderContents(state.folderNodes[treeDetails.getAttribute('data-tree-key')]);
+          }, 0);
+        }
+        var serviceDetails = treeKind === 'service' ? treeDetails : null;
+        if (serviceDetails) {
+          window.setTimeout(function () {
+            if (serviceDetails.open) loadServiceMetadata(state.serviceNodes[serviceDetails.getAttribute('data-tree-key')]);
+          }, 0);
+        }
         event.stopPropagation();
       });
       tree.addEventListener('change', function (event) {
