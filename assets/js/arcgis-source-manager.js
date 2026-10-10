@@ -5,6 +5,7 @@
   var MAX_DEPTH = 8;
   var MAX_FOLDERS = 2000;
   var MAX_SERVICES = 4000;
+  var DISCOVERY_CONCURRENCY = 8;
   var ATTRIBUTE_PAGE_SIZE = 100;
   var state = {
     root: null,
@@ -102,17 +103,17 @@
 
   function fetchJson(value, format) {
     var requestUrl = withJsonFormat(value, format);
-    function fetchWithTimeout(url) {
+    function fetchWithTimeout(url, timeoutMs) {
       var controller = typeof AbortController === 'function' ? new AbortController() : null;
-      var timeout = controller ? setTimeout(function () { controller.abort(); }, 20000) : null;
+      var timeout = controller ? setTimeout(function () { controller.abort(); }, timeoutMs) : null;
       return fetch(url, controller ? { signal: controller.signal } : undefined)
         .then(readJsonResponse)
         .finally(function () { if (timeout) clearTimeout(timeout); });
     }
-    return fetchWithTimeout(requestUrl).catch(function (directError) {
-      return fetchWithTimeout(PROXY_PREFIX + encodeURIComponent(requestUrl)).catch(function (proxyError) {
+    return fetchWithTimeout(requestUrl, 8000).catch(function (directError) {
+      if (directError && directError.arcgis) throw directError;
+      return fetchWithTimeout(PROXY_PREFIX + encodeURIComponent(requestUrl), 12000).catch(function (proxyError) {
         if (proxyError && proxyError.arcgis) throw proxyError;
-        if (directError && directError.arcgis) throw directError;
         throw directError && directError.message ? directError : new Error('Tidak dapat membaca service. Periksa URL, CORS, atau izin host.');
       });
     });
@@ -392,7 +393,7 @@
     var queue = [{ node: state.root, depth: 0 }];
     while (queue.length) {
       if (runId !== state.run || state.cancelled) return;
-      var batch = queue.splice(0, 4);
+      var batch = queue.splice(0, DISCOVERY_CONCURRENCY);
       await Promise.all(batch.map(function (item) {
         return discoverNode(item, queue, runId);
       }));
