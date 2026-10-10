@@ -10435,17 +10435,17 @@ details[open] > .gt-card-head::after {
       display: block; padding: 4px 10px; font-size: 11px; color: var(--text-muted); text-align: center;
     }
     .alat-layer-card {
-      display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: center;
+      display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: center;
       padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 8px;
       background: var(--bg-primary); transition: box-shadow .15s;
     }
     .alat-layer-card:hover { box-shadow: var(--shadow-card); }
     .alat-layer-card strong {
-      grid-column: 1 / -1; overflow: hidden; color: var(--text-primary);
+      grid-column: 1; grid-row: 1; min-width: 0; overflow: hidden; color: var(--text-primary);
       font-size: 11px; text-overflow: ellipsis; white-space: nowrap;
     }
-    .alat-layer-card small { color: var(--text-secondary); font-size: 9px; }
-    .alat-layer-card-btns { display: flex; gap: 4px; justify-self: end; }
+    .alat-layer-card small { grid-column: 1 / -1; grid-row: 2; color: var(--text-secondary); font-size: 9px; }
+    .alat-layer-card-btns { grid-column: 2; grid-row: 1; display: flex; gap: 4px; justify-self: end; }
     .alat-layer-card-btns button {
       display: inline-flex; align-items: center; gap: 3px;
       padding: 3px 8px; border: 1px solid var(--border-color); border-radius: 6px;

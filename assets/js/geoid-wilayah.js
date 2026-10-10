@@ -234,7 +234,13 @@ async function fetchAndUpdateGeoidCounts() {
       fetchBigRbiCount('BATAS_DESAKEL_AR/MapServer/0')
     ]);
     const fmt = n => n.toLocaleString('id-ID');
-    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = fmt(val); };
+    // Endpoint BIG kadang gagal atau menolak query lintas origin. Fungsi
+    // fetch mengembalikan 0 pada kondisi itu; jangan menimpa hitungan dari
+    // kode_wilayah.json yang sudah lebih dulu mengisi kartu.
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && Number.isFinite(val) && val > 0) el.textContent = fmt(val);
+    };
     set('geoidCountProv', prov);
     set('geoidCountKab', kab);
     set('geoidCountKec', kec);
@@ -2927,8 +2933,8 @@ window.printGeotaniPdf = async function() {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  const geoidTab = document.getElementById('tab-geoid');
-  if (geoidTab) {
+  const geonusaPanel = document.getElementById('geotoolsTabGeonusa');
+  if (geonusaPanel) {
     loadGeoidProvinces();
     setupGeoidSearch();
     buildGeoidSearchIndex();

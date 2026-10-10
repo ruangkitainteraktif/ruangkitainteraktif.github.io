@@ -363,7 +363,6 @@
       await Promise.all(batch.map(function (item) {
         return discoverNode(item, queue, runId);
       }));
-      renderTree();
       setProgress(state.folderCount + ' folder, ' + state.serviceCount + ' service ditemukan');
     }
   }
