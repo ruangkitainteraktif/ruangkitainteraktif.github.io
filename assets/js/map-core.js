@@ -2665,6 +2665,25 @@ L.control.scale({
       var host = document.getElementById('geodata-panel-host');
       if (!body || !host) return;
       while (host.firstChild) body.appendChild(host.firstChild);
+      var ad = body.querySelector('.geodata-menu-adsense');
+      if (ad && !ad.dataset.requested && 'IntersectionObserver' in window) {
+        var adObserver = new IntersectionObserver(function (entries) {
+          if (!entries.some(function (entry) { return entry.isIntersecting; })) return;
+          adObserver.disconnect();
+          ad.dataset.requested = 'true';
+          try {
+            window.adsbygoogle = window.adsbygoogle || [];
+            window.adsbygoogle.push({});
+          } catch (e) { /* slot gagal diisi, biarkan */ }
+        });
+        adObserver.observe(ad);
+      } else if (ad && !ad.dataset.requested) {
+        ad.dataset.requested = 'true';
+        try {
+          window.adsbygoogle = window.adsbygoogle || [];
+          window.adsbygoogle.push({});
+        } catch (e) { /* slot gagal diisi, biarkan */ }
+      }
     },
     onClose: function () {
       var body = document.getElementById('geodataSheetBody');
@@ -3498,8 +3517,12 @@ L.control.scale({
      bila skrip AdSense belum atau gagal dimuat, array-nya dibuat sendiri
      persis seperti pola resmi AdSense dan tidak ada error yang bocor. */
   function dorongSlotIklan(akar) {
-    if (!akar || !akar.querySelector('.lc-adsense .adsbygoogle')) return;
-    if (!('IntersectionObserver' in window)) { dorongSekarang(); return; }
+    if (!akar) return;
+    var slot = Array.prototype.find.call(akar.querySelectorAll('.lc-adsense'), function (unit) {
+      return unit.dataset.requested !== 'true' && unit.querySelector('.adsbygoogle');
+    });
+    if (!slot) return;
+    if (!('IntersectionObserver' in window)) { slot.dataset.requested = 'true'; dorongSekarang(); return; }
     /* Dropdown katalog masih display:none saat dibangun lewat
        buildLayerCatalogIfNeeded() pada boot, dan <ins> yang didorong saat
        tersembunyi tidak pernah diisi ulang AdSense. Ditunda sampai
@@ -3508,11 +3531,13 @@ L.control.scale({
       for (var i = 0; i < entries.length; i++) {
         if (!entries[i].isIntersecting) continue;
         io.disconnect();
+        if (slot.dataset.requested === 'true') return;
+        slot.dataset.requested = 'true';
         dorongSekarang();
         return;
       }
     });
-    io.observe(akar.querySelector('.lc-adsense'));
+    io.observe(slot);
   }
 
   function dorongSekarang() {
@@ -3521,6 +3546,8 @@ L.control.scale({
       window.adsbygoogle.push({});
     } catch (e) { /* slot gagal diisi, biarkan */ }
   }
+
+  var _pinnedAdUnit = null;
 
   function buildLayerCatalog(container) {
     var html = '<div class="lc-donation-banner">' +
@@ -3598,6 +3625,7 @@ L.control.scale({
           }
         });
         html += '</div></div>';
+        html += '<div class="lc-pinned-ad-placeholder"></div>';
       }
 
       var activeLayers = [];
@@ -3754,7 +3782,23 @@ L.control.scale({
       }
     });
 
+    if (_pinnedAdUnit && _pinnedAdUnit.parentNode) _pinnedAdUnit.parentNode.removeChild(_pinnedAdUnit);
     container.innerHTML = html;
+    var pinnedAdPlaceholder = container.querySelector('.lc-pinned-ad-placeholder');
+    if (pinnedAdPlaceholder) {
+      if (!_pinnedAdUnit) {
+        _pinnedAdUnit = document.createElement('div');
+        _pinnedAdUnit.className = 'lc-adsense lc-pinned-adsense';
+        _pinnedAdUnit.setAttribute('aria-label', 'Iklan');
+        _pinnedAdUnit.innerHTML = '<!-- Ruang Kita -->' +
+          '<ins class="adsbygoogle" style="display:block"' +
+          ' data-ad-client="ca-pub-7501816933195235"' +
+          ' data-ad-slot="1306506445"' +
+          ' data-ad-format="auto"' +
+          ' data-full-width-responsive="true"></ins>';
+      }
+      pinnedAdPlaceholder.replaceWith(_pinnedAdUnit);
+    }
     container.classList.remove('lc-search-active');
     dorongSlotIklan(container);
 

@@ -25,7 +25,6 @@
   let records = [];
   let loaded = false;
   let loading = null;
-  let clearWhenLoaded = false;
   let hasFittedMap = false;
   let overviewMode = true;
   let focusedFeatureKey = null;
@@ -459,7 +458,6 @@
   }
 
   function load() {
-    clearWhenLoaded = false;
     if (loaded) { render(); return Promise.resolve(); }
     if (loading) return loading;
     status.textContent = 'Memuat data transportasi...';
@@ -475,14 +473,15 @@
       const operators = [...new Set(records.filter(item => item.kind === 'operator').map(item => item.name))].sort((a, b) => a.localeCompare(b, 'id'));
       operatorSelect.replaceChildren(new Option('Semua operator', ''), ...operators.map(value => new Option(value, value)));
       operatorSelect.value = '';
-      categorySelect.value = clearWhenLoaded ? '' : 'operator';
-      layerToggles.forEach(toggle => { toggle.checked = !clearWhenLoaded && toggle.dataset.geotransLayer === 'operator'; });
+      /* GeoNusa memuat data GeoTrans saat tab dibuka. Pemuatan data hanya
+         menyiapkan daftar; jangan otomatis menggambar layer operator ke peta. */
+      categorySelect.value = '';
+      layerToggles.forEach(toggle => { toggle.checked = false; });
       if (routeCount) routeCount.textContent = records.filter(item => item.kind === 'route').length.toLocaleString('id-ID');
       if (stopCount) stopCount.textContent = records.filter(item => item.kind === 'stop').length.toLocaleString('id-ID');
       if (operatorCount) operatorCount.textContent = operators.length.toLocaleString('id-ID');
       loaded = true;
       render();
-      clearWhenLoaded = false;
     }).catch(() => {
       status.textContent = 'Data transportasi belum bisa ditampilkan. Coba muat ulang halaman beberapa saat lagi.';
       throw new Error('Data transportasi gagal dimuat');
@@ -552,7 +551,6 @@
     overviewMode = false;
     focusedFeatureKey = null;
     layerToggles.forEach(toggle => { toggle.checked = false; });
-    if (!loaded) clearWhenLoaded = true;
     if (showAllButton) showAllButton.hidden = true;
     hideRouteDetail();
     if (loaded) render();

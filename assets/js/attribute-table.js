@@ -21,6 +21,39 @@
   var _attrTableMinimized = false;
   var _pickerLayerId = null;
   var _loadToken = 0;
+  var _tableSearchAd = null;
+
+  function placeTableSearchAd(controls) {
+    if (!controls) return;
+    if (!_tableSearchAd) {
+      _tableSearchAd = document.createElement('div');
+      _tableSearchAd.className = 'lc-adsense sheet-adsense at-search-adsense';
+      _tableSearchAd.setAttribute('aria-label', 'Iklan');
+      _tableSearchAd.innerHTML = '<!-- Ruang Kita -->' +
+        '<ins class="adsbygoogle" style="display:block"' +
+        ' data-ad-client="ca-pub-7501816933195235"' +
+        ' data-ad-slot="1306506445"' +
+        ' data-ad-format="auto"' +
+        ' data-full-width-responsive="true"></ins>';
+    }
+    controls.insertAdjacentElement('afterend', _tableSearchAd);
+    if (_tableSearchAd.dataset.terdorong === '1') return;
+    var requestAd = function () {
+      if (_tableSearchAd.dataset.terdorong === '1') return;
+      _tableSearchAd.dataset.terdorong = '1';
+      try {
+        window.adsbygoogle = window.adsbygoogle || [];
+        window.adsbygoogle.push({});
+      } catch (e) { /* slot gagal diisi, biarkan */ }
+    };
+    if (!('IntersectionObserver' in window)) { requestAd(); return; }
+    var observer = new IntersectionObserver(function (entries) {
+      if (!entries.some(function (entry) { return entry.isIntersecting; })) return;
+      observer.disconnect();
+      requestAd();
+    }, { rootMargin: '100px' });
+    observer.observe(_tableSearchAd);
+  }
 
   function pickerLayerActive(id) {
     var on = false;
@@ -1351,7 +1384,11 @@
       html += '</div>';
     }
 
+    /* Slot dipindah sementara sebelum render ulang supaya pencarian tidak
+       membuang node AdSense yang sudah pernah diminta. */
+    if (_tableSearchAd && _tableSearchAd.parentNode) _tableSearchAd.parentNode.removeChild(_tableSearchAd);
     content.innerHTML = html;
+    placeTableSearchAd(content.querySelector('.at-controls'));
 
     var searchInput = document.getElementById('atSearchInput');
     if (searchInput) {

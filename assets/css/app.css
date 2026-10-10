@@ -3196,6 +3196,9 @@
       background: var(--bg-card);
       box-shadow: none;
     }
+    #geodataSheetBody > .lc-donation-banner.sheet-donation-banner {
+      margin-bottom: 12px;
+    }
     .lc-donation-mark {
       display: grid;
       width: 34px;
@@ -3248,9 +3251,12 @@
        ruang kosong ketika tidak ada iklan yang tersedia. */
     .lc-adsense { margin: 0 8px 6px; }
     .lc-adsense.sheet-adsense { margin: 0 0 6px; }
+    .lc-adsense.at-search-adsense { margin: 0 0 10px; }
     .layer-catalog-dropdown > .lc-feed-adsense { margin: 8px 12px; }
+    .layer-catalog-dropdown > .lc-pinned-adsense { margin: 8px 12px; }
     .layer-catalog-dropdown.lc-search-active > .lc-feed-adsense { display: none; }
     .lc-adsense.geotools-inline-adsense { margin: 10px 0; }
+    .lc-adsense.geodata-menu-adsense { margin: 10px 0; }
     /* Format fluid menentukan tinggi slot mengikuti materi iklan. */
     .lc-adsense .adsbygoogle { display: block; }
     .lc-adsense .adsbygoogle[data-ad-status="unfilled"] { display: none !important; }
@@ -10097,7 +10103,45 @@ details[open] > .gt-card-head::after {
       font-size: 9.5px; font-weight: 500;
       color: var(--text-muted);
     }
-    .alat-card-body { padding: 12px 13px; }
+    .alat-card-body { display: block; padding: 12px 13px; }
+    .arcgis-flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      margin: 2px 0 10px;
+    }
+    .arcgis-flow-step--next {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+    }
+    .arcgis-flow-number {
+      display: grid;
+      flex: 0 0 22px;
+      width: 22px;
+      height: 22px;
+      place-items: center;
+      border-radius: 50%;
+      background: rgba(8, 145, 178, .12);
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .arcgis-flow-step b,
+    .arcgis-flow-step small { display: block; }
+    .arcgis-flow-step b { padding-top: 1px; color: var(--text-primary); font-size: 11px; }
+    .arcgis-flow-step small { margin-top: 2px; color: var(--text-muted); font-size: 9px; line-height: 1.45; }
+    #arcgisLayerTree:empty::after {
+      display: block;
+      padding: 12px 8px;
+      border: 1px dashed var(--border-color);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 9px;
+      line-height: 1.5;
+      text-align: center;
+      content: 'Folder dan layer akan muncul di sini setelah pencarian.';
+    }
     /* Ikon: .gt-card-icon sudah memberi kotak 20px yang sama dengan kartu
        GeoFarm. Yang hilang di sini hanya warna -- template memakai emoji
        berwarna sendiri, jadi SVG satu warna paling dekat dengan itu lewat

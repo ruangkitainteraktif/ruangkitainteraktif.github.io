@@ -173,11 +173,11 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=20261010-adsense-fluid-card-slots">
+  <link rel="stylesheet" href="assets/css/app.css?v=20261010-pinned-layers-ad">
   <link rel="stylesheet" href="assets/css/geodisaster.css?v=5">
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261004">
-  <link rel="stylesheet" href="assets/css/geotrans-mitradarat.css?v=20261006-geospatial-search-ui">
+  <link rel="stylesheet" href="assets/css/geotrans-mitradarat.css?v=20261010-geotrans-card-spacing">
   <script>
     (function () {
       document.addEventListener('click', function (event) {
@@ -1354,7 +1354,7 @@
                   <summary>Atur tampilan peta</summary>
                   <fieldset class="geotrans-layers">
                     <legend>Informasi pada peta</legend>
-                    <label><input type="checkbox" data-geotrans-layer="operator" checked><i class="geotrans-hub-key"></i> Operator</label>
+                    <label><input type="checkbox" data-geotrans-layer="operator"><i class="geotrans-hub-key"></i> Operator</label>
                     <label><input type="checkbox" data-geotrans-layer="route"><i class="geotrans-line-key"></i> Rute bus</label>
                     <label><input type="checkbox" data-geotrans-layer="stop"><i class="geotrans-stop-key"></i> Halte</label>
                   </fieldset>
@@ -3447,6 +3447,15 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                    dengan alat ukur, bukan dengan alat impor berkas. -->
             </div>
 
+            <div class="lc-adsense geodata-menu-adsense" aria-label="Iklan">
+              <ins class="adsbygoogle"
+                   style="display:block"
+                   data-ad-client="ca-pub-7501816933195235"
+                   data-ad-slot="1306506445"
+                   data-ad-format="auto"
+                   data-full-width-responsive="true"></ins>
+            </div>
+
             <!-- SHP Panel -->
             <div id="alat-tab-shp" class="geoid-subtab-panel">
               <label class="geotools-dropzone" for="shpFileInput">
@@ -3566,26 +3575,38 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                  <div class="alat-card-head">
                    <span class="gt-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="7" rx="1"/><rect x="3" y="14" width="18" height="7" rx="1"/><path d="M7 6.5h.01M7 17.5h.01M11 6.5h6M11 17.5h6"/></svg></span>
                    <span>
-                     <b>ArcGIS REST Source</b>
-                     <small>Temukan folder, service, dan layer ArcGIS lalu tambahkan ke peta.</small>
+                     <b>Tambahkan data dari ArcGIS</b>
+                     <small>Masukkan alamat layanan, pilih layer, lalu tampilkan di peta.</small>
                    </span>
                    <span class="arcgis-source-badge">PUBLIC</span>
                  </div>
                    <div class="alat-card-body">
-                    <label class="geotani-form-label" for="arcgisSourceUrl">URL ArcGIS REST</label>
-                    <input id="arcgisSourceUrl" class="geotani-form-input" type="url" value="" placeholder="Masukkan URL" autocomplete="off" />
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
-                    <button id="arcgisDiscoverBtn" class="geotools-btn arcgis-source-action-btn" type="button">Baca Folder</button>
-                    <button id="arcgisCancelBtn" class="geotools-btn geotools-btn--orange arcgis-source-action-btn" type="button" style="display:none;">Batal</button>
-                  </div>
+                    <div class="arcgis-flow-step">
+                      <span class="arcgis-flow-number" aria-hidden="true">1</span>
+                      <div><b>Masukkan alamat sumber</b><small>Gunakan URL folder atau layanan publik ArcGIS REST.</small></div>
+                    </div>
+                    <label class="geotani-form-label" for="arcgisSourceUrl">Alamat ArcGIS REST</label>
+                    <input id="arcgisSourceUrl" class="geotani-form-input" type="url" value="" placeholder="https://server/.../rest/services" autocomplete="off" />
+                    <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:8px;">
+                      <button id="arcgisDiscoverBtn" class="geotools-btn arcgis-source-action-btn" type="button">Cari folder dan layer</button>
+                      <button id="arcgisCancelBtn" class="geotools-btn geotools-btn--orange arcgis-source-action-btn" type="button" style="display:none;">Batalkan pencarian</button>
+                    </div>
                   <div id="arcgisSourceStatus" class="cctv-message" style="display:none;margin-top:10px;"></div>
                   <div id="arcgisSourceProgress" style="margin-top:6px;font-size:10px;color:#64748b;"></div>
+                    <div class="arcgis-flow-step arcgis-flow-step--next">
+                      <span class="arcgis-flow-number" aria-hidden="true">2</span>
+                      <div><b>Pilih layer yang dibutuhkan</b><small>Buka folder dengan tanda panah, lalu centang satu atau beberapa layer.</small></div>
+                    </div>
                     <div class="arcgis-source-toolbar">
                       <span id="arcgisSelectionCount">Belum ada layer dipilih</span>
                     </div>
                     <div id="arcgisLayerTree" class="arcgis-layer-tree"></div>
-                    <button id="arcgisCountBtn" class="geotools-btn arcgis-source-action-btn" type="button" style="width:100%;margin-top:8px;" disabled title="Hitung jumlah fitur layer terpilih tanpa mengunduh geometri">Hitung Feature</button>
-                    <button id="arcgisAddSelectedBtn" class="geotools-btn geotools-btn--green arcgis-source-action-btn" type="button" style="width:100%;margin-top:8px;" disabled>Tambah Layer Terpilih</button>
+                    <div class="arcgis-flow-step arcgis-flow-step--next">
+                      <span class="arcgis-flow-number" aria-hidden="true">3</span>
+                      <div><b>Tampilkan layer di peta</b><small>Hitung fitur bersifat opsional. Pilih Tambahkan untuk melanjutkan.</small></div>
+                    </div>
+                    <button id="arcgisCountBtn" class="geotools-btn arcgis-source-action-btn" type="button" style="width:100%;margin-top:8px;" disabled title="Hitung jumlah fitur layer terpilih tanpa mengunduh geometri">Hitung jumlah fitur (opsional)</button>
+                    <button id="arcgisAddSelectedBtn" class="geotools-btn geotools-btn--green arcgis-source-action-btn" type="button" style="width:100%;margin-top:8px;" disabled>Tambahkan layer ke peta</button>
                   </div>
                </div>
              </div>
@@ -3738,7 +3759,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
          geopangan, attribute-table, ai-analysis, dan polygon-analysis
          semuanya mendaftarkan sheet ke window.SheetDrag saat dimuat. -->
     <script src="assets/js/sheet-drag.js?v=20261008-close-without-reset"></script>
-    <script src="assets/js/map-core.js?v=20261010-layer-catalog-infeed-ad"></script>
+    <script src="assets/js/map-core.js?v=20261010-pinned-layers-ad"></script>
     <script src="assets/js/isric-soil-layers.js?v=20261007-wrb-clip"></script>
     <script src="assets/js/isee-global-soils.js?v=20261008-soil-context-layers"></script>
     <script src="assets/js/layer-loading.js"></script>
@@ -3775,7 +3796,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/geoportal-search.js"></script>
     <script src="assets/js/sidebar.js?v=20261010-detail-panel-resize-template"></script>
     <script src="assets/js/earthquake.js"></script>
-    <script src="assets/js/attribute-table.js?v=14-isee-boundary-select"></script>
+    <script src="assets/js/attribute-table.js?v=20261010-table-search-ad"></script>
     <script src="assets/js/katalog-gempa.js?v=20261006-attr-table"></script>
     <script src="assets/js/sensor-seismic.js"></script>
     <script src="assets/js/sensor-global.js"></script>
@@ -3789,7 +3810,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/terrarium-elevation.js"></script>
     <script src="assets/js/dem-analysis.js"></script>
     <script src="assets/js/cctv.js"></script>
-    <script src="assets/js/geotrans-mitradarat.js?v=20261006-reset-on-exit"></script>
+    <script src="assets/js/geotrans-mitradarat.js?v=20261010-geonusa-no-auto-layer"></script>
     <script src="assets/js/detail-subtab.js"></script>
      <script src="assets/js/alat-layers.js?v=20261008-geoprocessing-result-actions"></script>
      <script src="assets/js/geoprocessing.js?v=20261008-gp-source-reset"></script>
@@ -3921,7 +3942,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/sppg-district.js"></script>
   <script src="assets/js/water-need.js?v=2"></script>
   <script src="assets/js/ai-analysis.js"></script>
-  <script src="assets/js/sheet-donation-ads.js?v=20261010-adsense-fluid-card-slots"></script>
+  <script src="assets/js/sheet-donation-ads.js?v=20261010-legend-responsive-ad"></script>
 
 
   <script src="assets/js/population-chart.js"></script>

@@ -8,6 +8,7 @@
 .geotrans-card:not([open]) > .geotrans-card-body { display: none; }
 .geotrans-card-body { padding: 12px 13px; }
 .geotrans-card .gt-card-icon svg { width: 20px; height: 20px; }
+#cctv-search-sheet + .geotrans-card { margin-top: 10px; }
 .geotrans-app {
   --gtx-ink: #142b45;
   --gtx-muted: #6d7d91;
