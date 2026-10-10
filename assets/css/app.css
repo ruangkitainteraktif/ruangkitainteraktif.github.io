@@ -8208,7 +8208,11 @@
           border-radius: 999px; background: #d1d5db;
         }
         #geodata-sheet .geodata-sheet-head { padding: 4px 16px 10px; }
-        #geodata-sheet .geodata-sheet-body { padding: 8px 12px 20px; }
+        #geodata-sheet .geodata-sheet-body {
+          padding: 8px 12px 20px;
+          overscroll-behavior-y: contain;
+          touch-action: pan-y;
+        }
         #geodata-sheet.geodata-sheet-minimized {
           top: auto; right: auto; bottom: 72px; left: 50%;
           width: min(260px, calc(100vw - 48px));

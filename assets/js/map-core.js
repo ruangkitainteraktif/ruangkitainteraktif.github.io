@@ -2656,7 +2656,10 @@ L.control.scale({
     bodyOpen: 'geodata-sheet-open',
     bodyMin: 'geodata-sheet-minimized',
     handle: '.geodata-sheet-handle',
-    header: '.geodata-sheet-head',
+    /* Di mobile, hanya pill handle yang memulai drag tinggi. Seluruh header
+       jangan menjadi zona drag karena swipe/scroll di area judul dapat
+       tertangkap sebagai gestur memperbesar sheet. */
+    header: '.geodata-sheet-handle',
     minButton: '.geodata-sheet-minimize',
     labelMin: 'Minimalkan',
     labelOpen: 'Perluas GeoData',
@@ -2665,25 +2668,26 @@ L.control.scale({
       var host = document.getElementById('geodata-panel-host');
       if (!body || !host) return;
       while (host.firstChild) body.appendChild(host.firstChild);
-      var ad = body.querySelector('.geodata-menu-adsense');
-      if (ad && !ad.dataset.requested && 'IntersectionObserver' in window) {
-        var adObserver = new IntersectionObserver(function (entries) {
-          if (!entries.some(function (entry) { return entry.isIntersecting; })) return;
-          adObserver.disconnect();
+      var ads = body.querySelectorAll('.geodata-menu-adsense');
+      Array.prototype.forEach.call(ads, function (ad) {
+        if (ad.dataset.requested) return;
+        var requestAd = function () {
+          if (ad.dataset.requested) return;
           ad.dataset.requested = 'true';
           try {
             window.adsbygoogle = window.adsbygoogle || [];
             window.adsbygoogle.push({});
           } catch (e) { /* slot gagal diisi, biarkan */ }
-        });
-        adObserver.observe(ad);
-      } else if (ad && !ad.dataset.requested) {
-        ad.dataset.requested = 'true';
-        try {
-          window.adsbygoogle = window.adsbygoogle || [];
-          window.adsbygoogle.push({});
-        } catch (e) { /* slot gagal diisi, biarkan */ }
-      }
+        };
+        if ('IntersectionObserver' in window) {
+          var adObserver = new IntersectionObserver(function (entries) {
+            if (!entries.some(function (entry) { return entry.isIntersecting; })) return;
+            adObserver.disconnect();
+            requestAd();
+          });
+          adObserver.observe(ad);
+        } else requestAd();
+      });
     },
     onClose: function () {
       var body = document.getElementById('geodataSheetBody');
