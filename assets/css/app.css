@@ -8736,7 +8736,7 @@
      *     selama ini datang dari overflow:hidden kartu. Kalau overflow
      *     dilepas, radius harus dipasang langsung di kepala. ONLY di kartu
      *     ini; kartu .geopulse-card lain tetap relies on overflow:hidden. */
-    #weather-card-sekarang { overflow: visible; }
+    #weather-card-sekarang { overflow: visible; margin-top: 10px; }
     #weather-card-sekarang > .gt-card-head { border-radius: 10px 10px 0 0; }
 
     /* Jarak dua kontrol di dalam badan kartu. Nilai aslinya (margin-top 8px /
@@ -10037,6 +10037,27 @@ details[open] > .gt-card-head::after {
       border-radius: 50%;
       animation: arcgis-source-spin .7s linear infinite;
     }
+    #arcgisDiscoverBtn:disabled { cursor: wait; opacity: .78; }
+    .arcgis-tree-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 8px;
+      color: var(--text-muted);
+      font-size: 9px;
+    }
+    .arcgis-tree-loading--inline { justify-content: flex-start; min-height: 24px; padding: 4px 6px; }
+    .arcgis-tree-spinner {
+      width: 13px;
+      height: 13px;
+      flex: 0 0 13px;
+      border: 2px solid var(--border-color);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: arcgis-source-spin .7s linear infinite;
+    }
     @keyframes arcgis-source-spin { to { transform: rotate(360deg); } }
 
     /* ══ KARTU SHEET ALAT ═════════════════════════════════════════════
@@ -10340,6 +10361,29 @@ details[open] > .gt-card-head::after {
     }
     .arcgis-attribute-status:empty { display: none; }
     .arcgis-attribute-table { overflow: visible; }
+    .arcgis-attribute-tools {
+      display: grid;
+      grid-template-columns: minmax(105px, .8fr) minmax(0, 1.2fr);
+      gap: 7px;
+      margin: 0 0 8px;
+    }
+    .arcgis-attribute-tools label { display: grid; gap: 3px; min-width: 0; color: var(--text-muted); font-size: 8px; }
+    .arcgis-attribute-tools select,
+    .arcgis-attribute-tools input {
+      box-sizing: border-box;
+      width: 100%;
+      min-width: 0;
+      height: 30px;
+      padding: 5px 7px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font: inherit;
+      font-size: 9px;
+    }
+    .arcgis-attribute-tools select:focus,
+    .arcgis-attribute-tools input:focus { outline: none; border-color: var(--accent); }
     /* Tabelnya diberi kotak sendiri: badannya sudah berpadding kartu, dan
        tanpa garis batas tabel putih akan menyatu dengan kartu putih. */
     .arcgis-attribute-scroll {
@@ -10404,6 +10448,9 @@ details[open] > .gt-card-head::after {
       color: var(--text-secondary);
       text-overflow: ellipsis;
     }
+    .arcgis-attribute-table tbody tr[data-arcgis-feature-index] { cursor: pointer; }
+    .arcgis-attribute-table tbody tr[data-arcgis-feature-index]:hover,
+    .arcgis-attribute-table tbody tr[data-arcgis-feature-index]:focus { outline: none; background: var(--bg-card-hover); }
     .arcgis-attribute-empty,
     .arcgis-attribute-loading {
       display: flex;
@@ -10428,11 +10475,12 @@ details[open] > .gt-card-head::after {
     /* Daftar layer yang sudah dimuat. Badannya memakai .alat-card-body, jadi
        padding kartu (12px 13px) tidak lagi ditulis dua kali di sini. */
     .alat-layer-list {
-      display: grid; gap: 6px; max-height: 220px; overflow-y: auto;
+      display: grid; gap: 6px; min-height: 64px; max-height: 220px; overflow-y: auto;
     }
     .alat-layer-list:empty::after {
       content: 'Belum ada layer dimuat.';
-      display: block; padding: 4px 10px; font-size: 11px; color: var(--text-muted); text-align: center;
+      display: grid; place-items: center; box-sizing: border-box; width: 100%; min-height: 64px;
+      padding: 8px 10px; font-size: 11px; color: var(--text-muted); text-align: center;
     }
     .alat-layer-card {
       display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: center;
@@ -10441,11 +10489,11 @@ details[open] > .gt-card-head::after {
     }
     .alat-layer-card:hover { box-shadow: var(--shadow-card); }
     .alat-layer-card strong {
-      grid-column: 1; grid-row: 1; min-width: 0; overflow: hidden; color: var(--text-primary);
-      font-size: 11px; text-overflow: ellipsis; white-space: nowrap;
+      grid-column: 1 / -1; grid-row: 1; min-width: 0; color: var(--text-primary);
+      font-size: 11px; line-height: 1.4; white-space: normal; overflow-wrap: anywhere;
     }
-    .alat-layer-card small { grid-column: 1 / -1; grid-row: 2; color: var(--text-secondary); font-size: 9px; }
-    .alat-layer-card-btns { grid-column: 2; grid-row: 1; display: flex; gap: 4px; justify-self: end; }
+    .alat-layer-card small { grid-column: 1; grid-row: 2; align-self: center; color: var(--text-secondary); font-size: 9px; }
+    .alat-layer-card-btns { grid-column: 2; grid-row: 2; display: flex; gap: 4px; justify-self: end; }
     .alat-layer-card-btns button {
       display: inline-flex; align-items: center; gap: 3px;
       padding: 3px 8px; border: 1px solid var(--border-color); border-radius: 6px;

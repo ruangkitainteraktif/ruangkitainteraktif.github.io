@@ -52,7 +52,7 @@
     ['Diversifikasi Olahan Pala', '106'],
     ['Pedoman Teknis Pembangunan Screen House Buah', '108'],
     ['25 Teknologi Unggulan Agroklimat dan Hidrologi Pertanian', '107'],
-    ['Rekomendasi Pupuk N, P, dan K untuk Tanaman Hortikultura (per kabupaten) Buku II', '96'],
+    ['Rekomendasi Pupuk N, P, dan K untuk Tanaman Hortikultura (per kabupaten) Buku II', '96', '105', '981'],
     ['Praktik Terbaik SIMURP (Best Practice of SIMURP)', '127'],
     ['Praktik Terbaik IPDMIP (Best Practice of IPDMIP)', '126'],
     ['Kisah Sukses Petani Muda YESS Pacitan', '137'],
@@ -70,25 +70,25 @@
     ['Operasionalisasi BP: Perjalanan Menuju Swasembada Pangan', '235'],
     ['Ergonomi dan Penerapannya pada Mekanisasi Pertanian', '232'],
     ['Pedoman Budi Daya Anggur Konsumsi (Table Grape)', '213'],
-    ['Kekayaan Varietas Lokal Padi Terdaftar di Indonesia Tahun 2005–2025', '205'],
+    ['Kekayaan Varietas Lokal Padi Terdaftar di Indonesia Tahun 2005â€“2025', '205'],
     ['Pemanfaatan Burung Hantu untuk Pengendalian Tikus Sawah', '212'],
     ['Deskripsi Varietas Unggul Baru Padi 2025', '203']
-  ].map(([name, bookId]) => [name, bookId, '', '']);
+  ].map(([name, bookId, fileId = '', galleyId = '']) => [name, bookId, fileId, galleyId]);
   const pressBooksByPage = {
     2: pressBooks,
     3: pressBooksPage3,
     4: [
-      ['Budi Daya Ayam Petelur Bebas Sangkar Skala Komersial di Indonesia', '202'], ['Senarai Anggrek Hibrida', '200'], ['Buku Pedoman Pengenalan dan Pengendalian OPT Kelapa', '195'], ['Buku Pedoman Pengenalan dan Pengendalian OPT Tanaman Penyegar dan Tahunan (Kakao, Kopi, dan Jambu Mete)', '196'], ['Buku Saku Pengelolaan OPT Tanaman Tebu', '193'], ['Buku Saku Pengelolaan OPT Tanaman Lada dan Pala', ''], ['Strategi Layanan Pengembangan Usaha bagi Pemuda di Sektor Pertanian: Pengalaman Implementasi BDSP Program YESS', ''], ['Menghimpun Petani Muda ke Dalam Klaster Pertanian untuk Memperkuat Ekosistem Agribisnis', ''], ['Kisah Sukses Program YESS Membuka Akses Dunia Kerja bagi Petani Muda', '199'], ['Budi Daya Padi di Lahan Rawa', '188'], ['Peluang Berwirausaha Tani bagi Pemuda Perdesaan: Lesson Learned Program YESS', '192'], ['Perubahan Signifikan Petani Muda dalam Berwirausaha dan Bekerja di Sektor Pertanian', ''], ['Dua Dekade Perlindungan Varietas Tanaman Indonesia (2004–2025)', '185'], ['Pembelajaran Teknik Greenhouse', '184'], ['Cara Pintar Kreasi Ubi', ''], ['Akses Modal Anti Gagal untuk Brigade Pangan', ''], ['Standar Perdagangan Internasional untuk Daging Sapi (Nama, Kode, dan Batas Potongan)', '179'], ['Sekilas Pandang Sehitam Manis, True Seed of Shallot (TSS)', '180'], ['Antalogi Puisi Buah Karya Guru dan Murid SMK PP Negeri Banjarbaru “Negeri di Bawah Meja”', '178'], ['Local Champion: Gerakan Petani Muda Berbasis Komunitas', '176'], ['Young Ambassador Agriculture', '177'], ['Best Practice Of YESS Programme 2', '175'], ['A to Z Yess Programme', '174'], ['Meritrokrasi Mendukung Swasembada Pangan', ''], ['Pengembangan Investasi dan Hilirisasi Pertanian', '168']
-    ].map(([name, id]) => [name, id, '', '']),
+      ['Budi Daya Ayam Petelur Bebas Sangkar Skala Komersial di Indonesia', '202'], ['Senarai Anggrek Hibrida', '200'], ['Buku Pedoman Pengenalan dan Pengendalian OPT Kelapa', '195'], ['Buku Pedoman Pengenalan dan Pengendalian OPT Tanaman Penyegar dan Tahunan (Kakao, Kopi, dan Jambu Mete)', '196'], ['Buku Saku Pengelolaan OPT Tanaman Tebu', '193'], ['Buku Saku Pengelolaan OPT Tanaman Lada dan Pala', '194'], ['Strategi Layanan Pengembangan Usaha bagi Pemuda di Sektor Pertanian: Pengalaman Implementasi BDSP Program YESS', '197'], ['Menghimpun Petani Muda ke Dalam Klaster Pertanian untuk Memperkuat Ekosistem Agribisnis', '198'], ['Kisah Sukses Program YESS Membuka Akses Dunia Kerja bagi Petani Muda', '199'], ['Budi Daya Padi di Lahan Rawa', '188'], ['Peluang Berwirausaha Tani bagi Pemuda Perdesaan: Lesson Learned Program YESS', '192'], ['Perubahan Signifikan Petani Muda dalam Berwirausaha dan Bekerja di Sektor Pertanian', '187'], ['Dua Dekade Perlindungan Varietas Tanaman Indonesia (2004â€“2025)', '185'], ['Pembelajaran Teknik Greenhouse', '184'], ['Cara Pintar Kreasi Ubi', '183'], ['Akses Modal Anti Gagal untuk Brigade Pangan', '182'], ['Standar Perdagangan Internasional untuk Daging Sapi (Nama, Kode, dan Batas Potongan)', '179'], ['Sekilas Pandang Sehitam Manis, True Seed of Shallot (TSS)', '180'], ['Antalogi Puisi Buah Karya Guru dan Murid SMK PP Negeri Banjarbaru â€œNegeri di Bawah Mejaâ€', '178'], ['Local Champion: Gerakan Petani Muda Berbasis Komunitas', '176'], ['Young Ambassador Agriculture', '177'], ['Best Practice Of YESS Programme 2', '175'], ['A to Z Yess Programme', '174'], ['Meritrokrasi Mendukung Swasembada Pangan', '167'], ['Pengembangan Investasi dan Hilirisasi Pertanian', '168']
+    ].map(([name, id, fileId = '', galleyId = '']) => [name, id, fileId, galleyId]),
     5: [
-      ['Meritrokrasi Mendukung Swasembada Pangan', ''], ['Cetak Sawah: Jaminan Swasembada Pangan Jangka Panjang', '153'], ['Efisiensi Anggaran Untuk Peningkatan Produksi Pertanian', '158'], ['Satu Komando Pertanian Wujudkan Swasembada Pangan', ''], ['Transformasi Pertanian: dari “Mekani-Sapi” ke Mekanisasi', '155'], ['Optimasi Lahan Mendukung Swasembada Pangan Berkelanjutan', '151'], ['Strategi Pencapaian Swasembada Pangan Nasional', '156'], ['Penegakan Hukum Dan Anti Mafia Sektor Pangan', '152'], ['Pupuk Subsidi Kunci Swasembada Pangan', '157'], ['Kisah Sukses Petani Muda YESS Banyuwangi', '138'], ['Kisah Sukses Petani Muda YESS Gowa', '144'], ['Kisah Sukses Petani Muda YESS Hulu Sungai Selatan', '134'], ['Kisah Sukses Petani Muda Yess Bogor', '149'], ['Kisah Sukses Petani Muda YESS Sukabumi', '139'], ['Kisah Sukses Petani Muda YESS Banjar', '130'], ['Kisah Sukses Petani Muda YESS Bone', '145'], ['Kisah Sukses Petani Muda YESS Tanah Bumbu', ''], ['Kisah Sukses Petani Muda YESS Cianjur', '140'], ['Kisah Sukses Petani Muda YESS Tulungagung', '131'], ['Kisah Sukses Petani Muda YESS Bantaeng', ''], ['Kisah Sukses Petani Muda YESS Bulukumba', '141'], ['Kisah Sukses Petani Muda YESS Malang', '132'], ['Kisah Sukses Petani Muda YESS Tasikmalaya', ''], ['Kisah Sukses Petani Muda YESS Maros', '142'], ['Kisah Sukses Petani Muda YESS Tanah Laut', '133']
-    ].map(([name, id]) => [name, id, '', '']),
+      ['Meritrokrasi Mendukung Swasembada Pangan', '167'], ['Cetak Sawah: Jaminan Swasembada Pangan Jangka Panjang', '153'], ['Efisiensi Anggaran Untuk Peningkatan Produksi Pertanian', '158'], ['Satu Komando Pertanian Wujudkan Swasembada Pangan', '154'], ['Transformasi Pertanian: dari â€œMekani-Sapiâ€ ke Mekanisasi', '155'], ['Optimasi Lahan Mendukung Swasembada Pangan Berkelanjutan', '151'], ['Strategi Pencapaian Swasembada Pangan Nasional', '156'], ['Penegakan Hukum Dan Anti Mafia Sektor Pangan', '152'], ['Pupuk Subsidi Kunci Swasembada Pangan', '157'], ['Kisah Sukses Petani Muda YESS Banyuwangi', '138'], ['Kisah Sukses Petani Muda YESS Gowa', '144'], ['Kisah Sukses Petani Muda YESS Hulu Sungai Selatan', '134'], ['Kisah Sukses Petani Muda Yess Bogor', '149'], ['Kisah Sukses Petani Muda YESS Sukabumi', '139'], ['Kisah Sukses Petani Muda YESS Banjar', '130'], ['Kisah Sukses Petani Muda YESS Bone', '145'], ['Kisah Sukses Petani Muda YESS Tanah Bumbu', '135'], ['Kisah Sukses Petani Muda YESS Cianjur', '140'], ['Kisah Sukses Petani Muda YESS Tulungagung', '131'], ['Kisah Sukses Petani Muda YESS Bantaeng', '146'], ['Kisah Sukses Petani Muda YESS Bulukumba', '141'], ['Kisah Sukses Petani Muda YESS Malang', '132'], ['Kisah Sukses Petani Muda YESS Tasikmalaya', '147'], ['Kisah Sukses Petani Muda YESS Maros', '142'], ['Kisah Sukses Petani Muda YESS Tanah Laut', '133']
+    ].map(([name, id, fileId = '', galleyId = '']) => [name, id, fileId, galleyId]),
     6: [
-      ['Kisah Sukses Petani Muda YESS Malang', '132'], ['Kisah Sukses Petani Muda “Nanang Galuh Pertanian Kalimantan Selatan”', '129'], ['Kisah Sukses Petani Muda YESS Pasuruan', '136'], ['xxx Judul Contoh Buku', '150'], ['Menuju Laboratorium Pengujian Terstandar SNI ISO/IEC17025:2017', '104'], ['Perjalanan Merintis Penerapan Standar: Kisah Manis di Tahun Pertama BSIP', '105'], ['Kisah Sukses Petani Muda Yess', '93'], ['Best Practices Of Yess Programme', '94'], ['Teknologi Pembungaan Lengkeng', '74'], ['Kinerja dan Prospek Investasi Pertanian', '65'], ['Teknologi Hemat Air Komoditas Hortikultura', '66'], ['Budi Daya Padi Ramah Lingkungan, Menuju Pertanian Lebih Baik', '77'], ['The SYL Way: I Love My Job', '39'], ['Pengenalan dan Pengendalian OPT Kubis', '36'], ['Pengembangan Pertanian Presisi Solusi dan Jawaban Pembangunan Pertanian Ke Depan', '87'], ['Katalog Green House dan Shading House Kampung Flori', '86'], ['Solusi SYL Memenuhi Kebutuhan Pembiayaan Pertanian Melalui Optimalisasi KUR', '34'], ['Menjadikan Milenial Petani Pengusaha', '30'], ['Pengelolaan Lahan Untuk Pertanaman Kedelai di Lahan Kering Suboptimal', '26'], ['Pengukuran Stok Karbon Tanaman Buah Tahunan', '31'], ['Pengukuran Emisi Gas Rumah Kaca (GRK) Lahan Budidaya Cabai', '27'], ['Pengukuran Gas Rumah Kaca (GRK) Pada Lahan Budidaya Bawang Merah', '33'], ['Suplemen Farmakope Obat Hewan Indonesia: Sediaan Farmasetik dan Premiks', '28'], ['Profil Manggis Mendukung Ekspor', '29'], ['Metode Pengamatan Kutu Putih dan Semut Pada Tanaman Hortikultura', '22']
-    ].map(([name, id]) => [name, id, '', '']),
+      ['Kisah Sukses Petani Muda YESS Malang', '132'], ['Kisah Sukses Petani Muda â€œNanang Galuh Pertanian Kalimantan Selatanâ€', '129'], ['Kisah Sukses Petani Muda YESS Pasuruan', '136'], ['xxx Judul Contoh Buku', '150'], ['Menuju Laboratorium Pengujian Terstandar SNI ISO/IEC17025:2017', '104'], ['Perjalanan Merintis Penerapan Standar: Kisah Manis di Tahun Pertama BSIP', '105'], ['Kisah Sukses Petani Muda Yess', '93'], ['Best Practices Of Yess Programme', '94'], ['Teknologi Pembungaan Lengkeng', '74'], ['Kinerja dan Prospek Investasi Pertanian', '65'], ['Teknologi Hemat Air Komoditas Hortikultura', '66'], ['Budi Daya Padi Ramah Lingkungan, Menuju Pertanian Lebih Baik', '77'], ['The SYL Way: I Love My Job', '39'], ['Pengenalan dan Pengendalian OPT Kubis', '36'], ['Pengembangan Pertanian Presisi Solusi dan Jawaban Pembangunan Pertanian Ke Depan', '87'], ['Katalog Green House dan Shading House Kampung Flori', '86'], ['Solusi SYL Memenuhi Kebutuhan Pembiayaan Pertanian Melalui Optimalisasi KUR', '34'], ['Menjadikan Milenial Petani Pengusaha', '30'], ['Pengelolaan Lahan Untuk Pertanaman Kedelai di Lahan Kering Suboptimal', '26'], ['Pengukuran Stok Karbon Tanaman Buah Tahunan', '31'], ['Pengukuran Emisi Gas Rumah Kaca (GRK) Lahan Budidaya Cabai', '27'], ['Pengukuran Gas Rumah Kaca (GRK) Pada Lahan Budidaya Bawang Merah', '33'], ['Suplemen Farmakope Obat Hewan Indonesia: Sediaan Farmasetik dan Premiks', '28'], ['Profil Manggis Mendukung Ekspor', '29'], ['Metode Pengamatan Kutu Putih dan Semut Pada Tanaman Hortikultura', '22']
+    ].map(([name, id, fileId = '', galleyId = '']) => [name, id, fileId, galleyId]),
     7: [
       ['Karakteristik Pembeda Pada Beberapa Varietas Kedelai', '21'], ['Model Pemberdayaan Masyarakat Mendukung Daya Saing Kampung Flori', '18'], ['Riset Pengembangan Inovatif Kolaboratif: Upaya Peningkatan Kemandirian Pakan', '19'], ['Pupuk Organik: Dibuatnya Mudah, Hasil Tanam Melimpah', '46'], ['Diversifikasi Produk Olahan Pala', '47'], ['Potensi Vegetasi Perkebunan Kelapa Sawit Sebagai Pakan Ruminansia', '11'], ['Panduan Teknis Budidaya Tanaman Hias Daun Seri 2: Scindapsus', '7'], ['Rekomendasi Pupuk N,P,K untuk Tanaman Ubi Kayu Per Kabupaten', '10'], ['Buku Pedoman Budidaya Semangka', '12'], ['Untaian Pemikiran ASN Mewujudkan Pertanian Maju, Mandiri, Modern', '16'], ['Budidaya Jeruk Teknologi Bujangseta', '17'], ['Langkah SYL Mewujudkan Swasembada Beras Ditengah Tantangan yang Tidak Biasa', '4'], ['The SYL Ways: The Miracle of Hardworking', '5'], ['Panduan Teknis Budidaya Tanaman Hias Daun Seri 1: Aglaonema', '6'], ['Profil Sentra Anggur', '45'], ['Budidaya Jeruk Teknologi Sitara', '14'], ['Buku Lapang Budidaya Mangga Teknologi UHDP', '15'], ['Peluang Investasi Tanaman Pangan', '44'], ['Panduan Teknis Budidaya Mawar Potong', '42'], ['Senarai Krisan', '231']
-    ].map(([name, id]) => [name, id, '', ''])
+    ].map(([name, id, fileId = '', galleyId = '']) => [name, id, fileId, galleyId])
   };
   const pressList = document.getElementById('gfPressList');
   const pressSearch = document.getElementById('gfPressSearch');
@@ -101,7 +101,7 @@
     const query = (pressSearch?.value || '').trim().toLocaleLowerCase('id');
     const currentBooks = pressBooksByPage[pressPage] || pressBooks;
     const filtered = currentBooks.filter(([name]) => name.toLocaleLowerCase('id').includes(query));
-    if (pressStatus) pressStatus.textContent = `Halaman ${pressPage} · ${filtered.length}${query ? ` dari ${currentBooks.length} judul cocok` : ' judul'}.`;
+    if (pressStatus) pressStatus.textContent = `Halaman ${pressPage} Â· ${filtered.length}${query ? ` dari ${currentBooks.length} judul cocok` : ' judul'}.`;
     if (pressSource) pressSource.href = `https://epublikasi.pertanian.go.id/pertanianpress/catalog/page/${pressPage}`;
     pressList.replaceChildren();
     if (!filtered.length) {
@@ -122,7 +122,7 @@
       const heading = document.createElement('strong');
       heading.textContent = name;
       const source = document.createElement('small');
-      source.textContent = `Pertanian Press · halaman ${pressPage}`;
+      source.textContent = `Pertanian Press Â· halaman ${pressPage}`;
       const action = document.createElement('button');
       action.type = 'button';
       action.className = 'gf-press-open';
@@ -152,9 +152,9 @@
         });
         pressPagination.append(button);
       };
-      addPageButton('‹', Math.max(2, pressPage - 1), { disabled: pressPage === 2, ariaLabel: 'Halaman sebelumnya' });
+      addPageButton('â€¹', Math.max(2, pressPage - 1), { disabled: pressPage === 2, ariaLabel: 'Halaman sebelumnya' });
       for (let page = 2; page <= 7; page += 1) addPageButton(String(page), page, { current: pressPage === page });
-      addPageButton('›', Math.min(7, pressPage + 1), { disabled: pressPage === 7, ariaLabel: 'Halaman berikutnya' });
+      addPageButton('â€º', Math.min(7, pressPage + 1), { disabled: pressPage === 7, ariaLabel: 'Halaman berikutnya' });
     }
   };
   if (pressList) {

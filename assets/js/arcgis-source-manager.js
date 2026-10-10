@@ -14,13 +14,16 @@
     attributeKey: null,
     attributeRequest: 0,
     attributePageByKey: {},
+    attributeFilterByKey: {},
+    highlightedFeature: null,
     visited: {},
     run: 0,
     cancelled: false,
     folderCount: 0,
     serviceCount: 0,
     truncated: false,
-    errors: 0
+    errors: 0,
+    discoveryBusy: false
   };
 
   function getElement(id) {
@@ -99,8 +102,15 @@
 
   function fetchJson(value, format) {
     var requestUrl = withJsonFormat(value, format);
-    return fetch(requestUrl).then(readJsonResponse).catch(function (directError) {
-      return fetch(PROXY_PREFIX + encodeURIComponent(requestUrl)).then(readJsonResponse).catch(function (proxyError) {
+    function fetchWithTimeout(url) {
+      var controller = typeof AbortController === 'function' ? new AbortController() : null;
+      var timeout = controller ? setTimeout(function () { controller.abort(); }, 20000) : null;
+      return fetch(url, controller ? { signal: controller.signal } : undefined)
+        .then(readJsonResponse)
+        .finally(function () { if (timeout) clearTimeout(timeout); });
+    }
+    return fetchWithTimeout(requestUrl).catch(function (directError) {
+      return fetchWithTimeout(PROXY_PREFIX + encodeURIComponent(requestUrl)).catch(function (proxyError) {
         if (proxyError && proxyError.arcgis) throw proxyError;
         if (directError && directError.arcgis) throw directError;
         throw directError && directError.message ? directError : new Error('Tidak dapat membaca service. Periksa URL, CORS, atau izin host.');
@@ -258,7 +268,9 @@
     // immediately visible after the tree is rendered.
     var open = node.kind === 'folder' && node.depth === 1 ? ' open' : '';
     var label = node.kind === 'folder' ? 'Folder' : node.kind === 'service' ? 'Service' : 'Grup layer';
-    return '<details class="arcgis-tree-group" data-tree-key="' + escapeHtml(node.url || node.key || '') + '" data-depth="' + node.depth + '"' + open + '><summary><span class="arcgis-tree-summary-title">' + escapeHtml(node.name) + '</span><span class="arcgis-tree-meta">' + escapeHtml(label) + ' · ' + leafCount + ' layer</span></summary><div class="arcgis-tree-children">' + children.map(renderNode).join('') + '</div></details>';
+    var childMarkup = children.map(renderNode).join('');
+    if (!childMarkup && node.loading) childMarkup = '<div class="arcgis-tree-loading arcgis-tree-loading--inline"><span class="arcgis-tree-spinner" aria-hidden="true"></span><span>Memuat isi ' + escapeHtml(label.toLowerCase()) + '…</span></div>';
+    return '<details class="arcgis-tree-group" data-tree-key="' + escapeHtml(node.url || node.key || '') + '" data-depth="' + node.depth + '"' + open + '><summary><span class="arcgis-tree-summary-title">' + escapeHtml(node.name) + '</span><span class="arcgis-tree-meta">' + escapeHtml(label) + ' · ' + leafCount + ' layer</span></summary><div class="arcgis-tree-children">' + childMarkup + '</div></details>';
   }
 
   function renderTree() {
@@ -270,7 +282,13 @@
       if (detail.open) openKeys[detail.getAttribute('data-tree-key')] = true;
     });
     state.leaves = [];
-    tree.innerHTML = state.root.children && state.root.children.length ? state.root.children.map(renderNode).join('') : '<div class="arcgis-tree-empty">Tidak ada folder atau service ditemukan.</div>';
+    if (state.root.children && state.root.children.length) {
+      tree.innerHTML = state.root.children.map(renderNode).join('');
+    } else if (tree.getAttribute('aria-busy') === 'true') {
+      tree.innerHTML = '<div class="arcgis-tree-loading"><span class="arcgis-tree-spinner" aria-hidden="true"></span><span>Memuat folder dan layer…</span></div>';
+    } else {
+      tree.innerHTML = '<div class="arcgis-tree-empty">Tidak ada folder atau service ditemukan.</div>';
+    }
     var details = tree.querySelectorAll('details[data-tree-key]');
     Array.prototype.forEach.call(details, function (detail) {
       if (openKeys[detail.getAttribute('data-tree-key')]) detail.open = true;
@@ -286,15 +304,21 @@
     if (countElement) countElement.textContent = count ? count + ' layer dipilih' : 'Belum ada layer dipilih';
     ACTION_BUTTON_IDS.forEach(function (id) {
       var button = getElement(id);
-      if (button) button.disabled = count === 0;
+      if (button) button.disabled = state.discoveryBusy || count === 0;
     });
   }
 
   function setDiscoveryBusy(busy) {
+    state.discoveryBusy = busy;
     ['arcgisDiscoverBtn'].concat(ACTION_BUTTON_IDS).forEach(function (id) {
       var element = getElement(id);
       if (!element) return;
-      if (id === 'arcgisDiscoverBtn') element.disabled = busy;
+      if (id === 'arcgisDiscoverBtn') {
+        element.disabled = busy;
+        element.setAttribute('aria-busy', busy ? 'true' : 'false');
+        element.classList.toggle('is-loading', busy);
+        element.textContent = busy ? 'Mencari folder dan layer…' : 'Cari folder dan layer';
+      }
       else element.disabled = busy || state.selected.size === 0;
     });
     var cancelButton = getElement('arcgisCancelBtn');
@@ -302,6 +326,7 @@
       cancelButton.style.display = busy ? '' : 'none';
       cancelButton.disabled = !busy;
     }
+    updateSelection();
   }
 
   async function discoverNode(item, queue, runId) {
@@ -309,12 +334,14 @@
     var node = item.node;
     if (state.visited[node.url]) return;
     state.visited[node.url] = true;
+    node.loading = true;
     if (node.kind === 'folder') {
       var data;
       try {
         data = await fetchJson(node.url);
       } catch (error) {
         if (runId === state.run && !state.cancelled) state.errors++;
+        node.loading = false;
         return;
       }
       if (runId !== state.run || state.cancelled) return;
@@ -338,6 +365,7 @@
         node.children.push(service);
         queue.push({ node: service, depth: item.depth + 1 });
       });
+      node.loading = false;
       return;
     }
     if (node.kind === 'service') {
@@ -348,6 +376,7 @@
         } catch (error) {
           if (runId === state.run && !state.cancelled) state.errors++;
           node.children = [makeFallbackLeaf(node)];
+          node.loading = false;
           return;
         }
         if (runId !== state.run || state.cancelled) return;
@@ -355,6 +384,7 @@
       } else {
         node.children = [makeFallbackLeaf(node)];
       }
+      node.loading = false;
     }
   }
 
@@ -366,6 +396,7 @@
       await Promise.all(batch.map(function (item) {
         return discoverNode(item, queue, runId);
       }));
+      if (runId === state.run && !state.cancelled) renderTree();
       setProgress(state.folderCount + ' folder, ' + state.serviceCount + ' service ditemukan');
     }
   }
@@ -389,10 +420,16 @@
     state.errors = 0;
     setDiscoveryBusy(true);
     setStatus('Membaca folder ArcGIS REST…');
-    setProgress('Menyiapkan discovery…');
+    setProgress('Memuat struktur folder dan layer…');
+    var tree = getElement('arcgisLayerTree');
+    if (tree) {
+      tree.setAttribute('aria-busy', 'true');
+      tree.innerHTML = '<div class="arcgis-tree-loading"><span class="arcgis-tree-spinner" aria-hidden="true"></span><span>Menghubungkan ke ArcGIS REST…</span></div>';
+    }
     try {
       state.root = makeRootNode(sourceUrl);
       if (state.root.kind === 'service') state.serviceCount = 1;
+      renderTree();
       await discoverAll(runId);
       if (runId !== state.run) return;
       renderTree();
@@ -400,10 +437,15 @@
       if (state.errors) suffix += ' ' + state.errors + ' folder/service gagal dibaca.';
       setStatus(state.serviceCount + ' service ditemukan.' + suffix, state.truncated || state.errors > 0);
       setProgress('');
+      if (tree) tree.removeAttribute('aria-busy');
     } catch (error) {
       if (runId === state.run) {
         setStatus(error && error.message ? error.message : String(error), true);
         setProgress('');
+        if (tree) {
+          tree.removeAttribute('aria-busy');
+          tree.innerHTML = '<div class="arcgis-tree-empty">Pencarian gagal. Periksa URL dan coba lagi.</div>';
+        }
       }
     } finally {
       if (runId === state.run) setDiscoveryBusy(false);
@@ -416,6 +458,11 @@
     setDiscoveryBusy(false);
     setStatus('Discovery dibatalkan.');
     setProgress('');
+    var tree = getElement('arcgisLayerTree');
+    if (tree) {
+      tree.removeAttribute('aria-busy');
+      if (!state.root || !state.root.children.length) tree.innerHTML = '<div class="arcgis-tree-empty">Pencarian dibatalkan.</div>';
+    }
   }
 
   function isGeometryField(name) {
@@ -461,7 +508,7 @@
       tolerance: '5',
       mapExtent: [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()].join(','),
       imageDisplay: size.x + ',' + size.y + ',96',
-      returnGeometry: 'false',
+      returnGeometry: 'true',
       f: 'json'
     });
     return fetchJson(record.descriptor.serviceUrl + '/identify?' + params.toString()).then(function (data) {
@@ -487,6 +534,40 @@
       return { type: 'Point', coordinates: [geometry.x, geometry.y] };
     }
     return null;
+  }
+
+  function highlightArcGisFeature(parentLayer, featureLayer) {
+    if (!featureLayer || typeof featureLayer.setStyle !== 'function') return;
+    var previous = state.highlightedFeature;
+    if (previous && previous.temporary) {
+      var mapInstance = getMap();
+      if (mapInstance && mapInstance.hasLayer(previous.layer)) mapInstance.removeLayer(previous.layer);
+    } else if (previous && previous.featureLayer !== featureLayer && previous.parentLayer && typeof previous.parentLayer.resetStyle === 'function') {
+      previous.parentLayer.resetStyle(previous.featureLayer);
+    }
+    state.highlightedFeature = { parentLayer: parentLayer, featureLayer: featureLayer };
+    featureLayer.setStyle({ color: '#facc15', weight: 4, opacity: 1, fillColor: '#facc15', fillOpacity: 0.42 });
+    if (typeof featureLayer.bringToFront === 'function') featureLayer.bringToFront();
+  }
+
+  function highlightIdentifyResult(result, sourceKey) {
+    var geometry = esriGeometryToGeoJson(result && result.geometry);
+    if (!geometry) return null;
+    return highlightGeoJsonFeature({ type: 'Feature', properties: {}, geometry: geometry }, sourceKey);
+  }
+
+  function highlightGeoJsonFeature(feature, sourceKey) {
+    var mapInstance = getMap();
+    if (!feature || !feature.geometry || !mapInstance || typeof L === 'undefined' || !L.geoJSON) return null;
+    var previous = state.highlightedFeature;
+    if (previous && previous.temporary && mapInstance.hasLayer(previous.layer)) mapInstance.removeLayer(previous.layer);
+    else if (previous && previous.parentLayer && typeof previous.parentLayer.resetStyle === 'function') previous.parentLayer.resetStyle(previous.featureLayer);
+    var layer = L.geoJSON(feature, {
+      style: { color: '#facc15', weight: 4, opacity: 1, fillColor: '#facc15', fillOpacity: 0.42 }
+    }).addTo(mapInstance);
+    state.highlightedFeature = { temporary: true, layer: layer, sourceKey: sourceKey || '' };
+    if (typeof layer.bringToFront === 'function') layer.bringToFront();
+    return layer;
   }
 
   function esriFeatureSetToGeoJson(data) {
@@ -603,14 +684,18 @@
     descriptor.featureTotal = data.paginationWarning ? data.features.length : (data.total || data.features.length);
     descriptor.featureCount = data.features.length;
     descriptor.paginationWarning = data.paginationWarning || '';
-    return L.geoJSON(data, {
+    descriptor.featureLayers = [];
+    var featureLayer = L.geoJSON(data, {
       style: function () {
         return { color: '#1d4ed8', weight: 1.5, opacity: 0.9, fillColor: '#60a5fa', fillOpacity: 0.18 };
       },
       onEachFeature: function (feature, layer) {
+        descriptor.featureLayers.push(layer);
         layer.bindPopup(buildPopup(descriptor.name, feature.properties, descriptor.type), { maxWidth: 360, className: 'arcgis-leaflet-popup' });
+        layer.on('click', function () { highlightArcGisFeature(featureLayer, layer); });
       }
     });
+    return featureLayer;
   }
 
   function createDynamicLayer(descriptor) {
@@ -663,6 +748,7 @@
         identify(record, event.latlng).then(function (results) {
           if (!results.length) return;
           var result = results[0];
+          highlightIdentifyResult(result, descriptor.key);
           openPopup(event.latlng, buildPopup(result.layerName || descriptor.name, result.attributes || {}, descriptor.type));
         });
       };
@@ -684,6 +770,10 @@
     if (!record) return;
     var mapInstance = getMap();
     if (mapInstance) {
+      if (state.highlightedFeature && (state.highlightedFeature.parentLayer === record.layer || state.highlightedFeature.sourceKey === key)) {
+        if (state.highlightedFeature.temporary && mapInstance && mapInstance.hasLayer(state.highlightedFeature.layer)) mapInstance.removeLayer(state.highlightedFeature.layer);
+        state.highlightedFeature = null;
+      }
       if (record.clickHandler) mapInstance.off('click', record.clickHandler);
       if (mapInstance.hasLayer(record.layer)) mapInstance.removeLayer(record.layer);
     }
@@ -720,38 +810,59 @@
     if (!table || !record) return;
     var descriptor = record.descriptor;
     var features = attributeFeatures(record);
-    var total = descriptor.featureTotal || features.length;
+    var filter = state.attributeFilterByKey[descriptor.key] || { field: '*', query: '' };
+    state.attributeFilterByKey[descriptor.key] = filter;
+    var focusedSearch = document.activeElement && document.activeElement.classList.contains('arcgis-attribute-search');
+    var caret = focusedSearch ? document.activeElement.selectionStart : null;
+    var fields = [];
+    var fieldSet = {};
+    features.forEach(function (feature) {
+      Object.keys(feature && feature.properties || {}).forEach(function (field) {
+        if (!isGeometryField(field) && !fieldSet[field]) { fieldSet[field] = true; fields.push(field); }
+      });
+    });
+    var query = String(filter.query || '').trim().toLocaleLowerCase('id-ID');
+    var rows = features.map(function (feature, index) { return { feature: feature, index: index }; }).filter(function (row) {
+      if (!query) return true;
+      var props = row.feature && row.feature.properties || {};
+      var values = filter.field === '*' ? Object.keys(props).map(function (key) { return props[key]; }) : [props[filter.field]];
+      return values.some(function (value) { return value != null && String(value).toLocaleLowerCase('id-ID').indexOf(query) !== -1; });
+    });
+    var total = rows.length;
     var totalPages = Math.max(1, Math.ceil(total / ATTRIBUTE_PAGE_SIZE));
     var page = Number(state.attributePageByKey[descriptor.key]) || 1;
     if (page > totalPages) page = totalPages;
     if (page < 1) page = 1;
     state.attributePageByKey[descriptor.key] = page;
     var start = (page - 1) * ATTRIBUTE_PAGE_SIZE;
-    var visibleFeatures = features.slice(start, start + ATTRIBUTE_PAGE_SIZE);
-    var fields = [];
-    var fieldSet = {};
-    features.forEach(function (feature) {
-      var properties = feature && feature.properties || {};
-      Object.keys(properties).forEach(function (field) {
-        if (!fieldSet[field]) {
-          fieldSet[field] = true;
-          fields.push(field);
-        }
-      });
+    var visibleRows = rows.slice(start, start + ATTRIBUTE_PAGE_SIZE);
+    var html = '<div class="arcgis-attribute-tools"><label><span>Filter field</span><select class="arcgis-attribute-filter-field" aria-label="Pilih kolom untuk difilter"><option value="*">Semua kolom</option>';
+    fields.forEach(function (field) {
+      html += '<option value="' + escapeHtml(field) + '"' + (filter.field === field ? ' selected' : '') + '>' + escapeHtml(field) + '</option>';
     });
-    fields = fields.slice(0, 20);
+    html += '</select></label><input class="arcgis-attribute-search" type="search" value="' + escapeHtml(filter.query || '') + '" placeholder="Cari nilai atribut..." aria-label="Cari nilai atribut"></div>';
     if (!fields.length) {
-      table.innerHTML = '<div class="arcgis-attribute-empty">Tidak ada field atribut pada layer ini.</div>';
+      html += '<div class="arcgis-attribute-empty">Tidak ada field atribut pada layer ini.</div>';
+      table.innerHTML = html;
       setAttributeStatus(features.length ? 'Layer tidak memiliki field atribut.' : 'Tidak ada fitur pada layer ini.', !features.length);
+      bindAttributeFilters(table, record);
       return;
     }
-    var html = '<div class="arcgis-attribute-scroll"><table><thead><tr>';
-    fields.forEach(function (field) { html += '<th>' + escapeHtml(field) + '</th>'; });
+    if (!rows.length) {
+      html += '<div class="arcgis-attribute-empty">Tidak ada baris yang cocok dengan filter.</div>';
+      table.innerHTML = html;
+      setAttributeStatus('0 dari ' + features.length.toLocaleString('id-ID') + ' fitur cocok · ' + descriptor.name);
+      bindAttributeFilters(table, record);
+      return;
+    }
+    var visibleFields = fields.slice(0, 20);
+    html += '<div class="arcgis-attribute-scroll"><table><thead><tr>';
+    visibleFields.forEach(function (field) { html += '<th>' + escapeHtml(field) + '</th>'; });
     html += '</tr></thead><tbody>';
-    visibleFeatures.forEach(function (feature) {
-      var properties = feature && feature.properties || {};
-      html += '<tr>';
-      fields.forEach(function (field) { html += '<td title="' + escapeHtml(formatValue(properties[field])) + '">' + escapeHtml(formatValue(properties[field])) + '</td>'; });
+    visibleRows.forEach(function (row) {
+      var props = row.feature && row.feature.properties || {};
+      html += '<tr data-arcgis-feature-index="' + row.index + '" tabindex="0" title="Klik untuk menyorot fitur pada peta">';
+      visibleFields.forEach(function (field) { html += '<td title="' + escapeHtml(formatValue(props[field])) + '">' + escapeHtml(formatValue(props[field])) + '</td>'; });
       html += '</tr>';
     });
     html += '</tbody></table></div>';
@@ -763,7 +874,8 @@
       html += '</div>';
     }
     table.innerHTML = html;
-    setAttributeStatus('Menampilkan ' + (start + 1) + '–' + (start + visibleFeatures.length) + ' dari ' + total + ' fitur · ' + descriptor.name + (descriptor.paginationWarning ? ' · ' + descriptor.paginationWarning : ''));
+    setAttributeStatus('Menampilkan ' + (start + 1) + '–' + (start + visibleRows.length) + ' dari ' + total + ' fitur cocok · ' + descriptor.name + (descriptor.paginationWarning ? ' · ' + descriptor.paginationWarning : ''));
+    bindAttributeFilters(table, record);
     table.querySelectorAll('[data-arcgis-attribute-page]').forEach(function (button) {
       button.addEventListener('click', function () {
         if (button.dataset.arcgisAttributePage === 'prev' && page > 1) page--;
@@ -772,8 +884,52 @@
         renderAttributeTable(record);
       });
     });
+    table.querySelectorAll('tr[data-arcgis-feature-index]').forEach(function (row) {
+      function focusFeature() {
+        var index = Number(row.getAttribute('data-arcgis-feature-index'));
+        var featureLayer = descriptor.featureLayers && descriptor.featureLayers[index];
+        var mapInstance = getMap();
+        if (!featureLayer) {
+          var overlay = highlightGeoJsonFeature(features[index], descriptor.key);
+          if (!overlay || !mapInstance) return;
+          var overlayBounds = overlay.getBounds();
+          if (overlayBounds && overlayBounds.isValid()) mapInstance.fitBounds(overlayBounds.pad(0.1), { maxZoom: 17 });
+          return;
+        }
+        highlightArcGisFeature(record.layer, featureLayer);
+        if (mapInstance && typeof featureLayer.getBounds === 'function') {
+          var bounds = featureLayer.getBounds();
+          if (bounds && bounds.isValid()) mapInstance.fitBounds(bounds.pad(0.1), { maxZoom: 17 });
+        } else if (mapInstance && typeof featureLayer.getLatLng === 'function') {
+          mapInstance.setView(featureLayer.getLatLng(), Math.max(mapInstance.getZoom(), 15));
+        }
+        if (typeof featureLayer.openPopup === 'function') featureLayer.openPopup();
+      }
+      row.addEventListener('click', focusFeature);
+      row.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); focusFeature(); }
+      });
+    });
+    if (focusedSearch) {
+      var searchInput = table.querySelector('.arcgis-attribute-search');
+      if (searchInput) { searchInput.focus(); if (caret != null) searchInput.setSelectionRange(caret, caret); }
+    }
   }
 
+  function bindAttributeFilters(table, record) {
+    var fieldSelect = table.querySelector('.arcgis-attribute-filter-field');
+    var searchInput = table.querySelector('.arcgis-attribute-search');
+    function updateFilter() {
+      var filter = state.attributeFilterByKey[record.descriptor.key] || { field: '*', query: '' };
+      filter.field = fieldSelect ? fieldSelect.value : '*';
+      filter.query = searchInput ? searchInput.value : '';
+      state.attributeFilterByKey[record.descriptor.key] = filter;
+      state.attributePageByKey[record.descriptor.key] = 1;
+      renderAttributeTable(record);
+    }
+    if (fieldSelect) fieldSelect.addEventListener('change', updateFilter);
+    if (searchInput) searchInput.addEventListener('input', updateFilter);
+  }
   function loadAttributeTable(record) {
     if (!record || !attributeEligible(record)) return;
     var descriptor = record.descriptor;
