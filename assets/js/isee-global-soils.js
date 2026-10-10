@@ -7,6 +7,7 @@
     hillshade: { service: 'WLD_Hillshade_V2', label: 'Hillshade Global', z: 210, opacity: 0.72, attribution: 'ISee Network / Purdue University' },
     orders: { service: 'WLD_Soil_Orders', label: 'Soil Orders Global', z: 220, opacity: 0.9, attribution: 'Soil Orders: USDA NRCS / ISee Network' },
     moisture: { service: 'WLD_Soil_Moisture_Regimes', label: 'Soil Moisture Regimes Global', z: 230, opacity: 0.9, attribution: 'ISee Network / Purdue University' },
+    temperature: { service: 'WLD_Soil_Temperature_Regimes', label: 'Soil Temperature Regimes Global', z: 235, opacity: 0.9, attribution: 'Soil Temperature Regimes: USDA NRCS / ISee Network' },
     boundaries: { service: 'WLD_Admin_Boundaries', label: 'Batas Administrasi Global', z: 240, opacity: 0.9, attribution: 'ISee Network / Purdue University' },
     labels: { service: 'WLD_Admin_Labels', label: 'Label Administrasi Global', z: 250, opacity: 1, attribution: 'ISee Network / Purdue University' }
   };
@@ -15,12 +16,14 @@
   var ordersLegendEntries = [];
   var moistureLegendRequest = null;
   var moistureLegendEntries = [];
+  var temperatureLegendRequest = null;
+  var temperatureLegendEntries = [];
   var legendId = 'isee-global-soil-orders';
   var identifyMap = null;
   var identifyHandler = null;
   var identifyRequestId = 0;
   var currentPopup = null;
-  var soilThemeActive = { orders: false, moisture: false };
+  var soilThemeActive = { orders: false, moisture: false, temperature: false };
   var soilThemeSupport = ['hillshade', 'boundaries', 'labels'];
 
   function escapeHtml(value) {
@@ -72,7 +75,7 @@
   }
 
   function legendClassForValue(key, value) {
-    var entries = key === 'moisture' ? moistureLegendEntries : ordersLegendEntries;
+    var entries = key === 'moisture' ? moistureLegendEntries : key === 'temperature' ? temperatureLegendEntries : ordersLegendEntries;
     var target = String(value == null ? '' : value);
     for (var i = 0; i < entries.length; i++) {
       var values = entries[i].values || [];
@@ -92,7 +95,7 @@
         value = pixelField ? attributes[pixelField] : attributes.Value;
       }
       var classField = Object.keys(attributes).find(function (field) { return /class.?label|class.?name/i.test(field); });
-      var className = (key === 'orders' || key === 'moisture') ? (legendClassForValue(key, value) || (classField && attributes[classField])) : '';
+      var className = (key === 'orders' || key === 'moisture' || key === 'temperature') ? (legendClassForValue(key, value) || (classField && attributes[classField])) : '';
       var rows = [];
       if (className) rows.push([key === 'orders' ? 'Soil Order' : 'Kelas Tanah', className]);
       else if (value != null && value !== '') rows.push(['Nilai piksel', value]);
@@ -244,6 +247,12 @@
           moistureLegendEntries = item && Array.isArray(item.legend) ? item.legend : [];
         }).catch(function (error) { console.warn('[ISee Soil] Legenda soil moisture tidak dapat dimuat:', error); });
       }
+      if (key === 'temperature' && !temperatureLegendRequest) {
+        temperatureLegendRequest = jsonp(ROOT + definition.service + '/MapServer/legend?f=json').then(function (data) {
+          var item = data && Array.isArray(data.layers) && (data.layers.find(function (entry) { return Number(entry.layerId) === 0; }) || data.layers[0]);
+          temperatureLegendEntries = item && Array.isArray(item.legend) ? item.legend : [];
+        }).catch(function (error) { console.warn('[ISee Soil] Legenda soil temperature tidak dapat dimuat:', error); });
+      }
     } else {
       if (map.hasLayer(layers[key])) map.removeLayer(layers[key]);
       if (key === 'orders' && window.removeUnifiedLegend) window.removeUnifiedLegend(legendId);
@@ -261,17 +270,17 @@
     var map = window.map, L = window.L;
     if (!DEFINITIONS[key] || !map || !L || !L.esri || !L.esri.tiledMapLayer) return;
 
-    if (key === 'orders' || key === 'moisture') {
+    if (key === 'orders' || key === 'moisture' || key === 'temperature') {
       soilThemeActive[key] = !!visible;
       setLayerVisible(key, !!visible, map, L);
-      var showSupport = soilThemeActive.orders || soilThemeActive.moisture;
+      var showSupport = soilThemeActive.orders || soilThemeActive.moisture || soilThemeActive.temperature;
       soilThemeSupport.forEach(function (supportKey) {
         setLayerVisible(supportKey, showSupport, map, L);
         syncCatalogLayerState(supportKey, showSupport);
       });
     } else {
       // Keep shared context layers on while either soil classification is active.
-      var requiredBySoilTheme = soilThemeSupport.indexOf(key) >= 0 && (soilThemeActive.orders || soilThemeActive.moisture);
+      var requiredBySoilTheme = soilThemeSupport.indexOf(key) >= 0 && (soilThemeActive.orders || soilThemeActive.moisture || soilThemeActive.temperature);
       setLayerVisible(key, requiredBySoilTheme ? true : !!visible, map, L);
       if (requiredBySoilTheme && !visible) syncCatalogLayerState(key, true);
     }

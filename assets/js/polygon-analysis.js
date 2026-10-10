@@ -5317,6 +5317,20 @@
   window.analyzeGeoFarmItem = function (id) {
     const item = itemById(id);
     if (!item || item.analyzeBusy) return false;
+    const targetMap = window.map || window._map;
+    const bounds = item.layer && typeof item.layer.getBounds === 'function'
+      ? item.layer.getBounds()
+      : null;
+    if (targetMap && bounds && bounds.isValid && bounds.isValid()) {
+      const detailBounds = bounds.pad(0.08);
+      if (window.SheetDrag && typeof window.SheetDrag.flyToBoundsInVisibleMap === 'function') {
+        window.SheetDrag.flyToBoundsInVisibleMap(detailBounds, { maxZoom: 18, duration: 0.7 });
+      } else if (typeof targetMap.flyToBounds === 'function') {
+        targetMap.flyToBounds(detailBounds, { maxZoom: 18, duration: 0.7 });
+      } else if (typeof targetMap.fitBounds === 'function') {
+        targetMap.fitBounds(detailBounds, { maxZoom: 18 });
+      }
+    }
     item.analyzeBusy = true;
     render();
     analyzeItem(item)

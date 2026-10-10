@@ -212,7 +212,7 @@
       display: none; box-sizing: border-box; width: 100%;
       height: min(60vh, calc(100vh - 76px));
       height: min(60dvh, calc(100dvh - 76px));
-      margin-top: 6px; overflow-y: auto; overscroll-behavior: contain;
+      margin-top: 6px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
       background: rgba(255,255,255,.92);
       backdrop-filter: blur(24px) saturate(180%);
       -webkit-backdrop-filter: blur(24px) saturate(180%);
@@ -230,7 +230,7 @@
     .lc-category + .lc-category { border-top: 1px solid rgba(0,0,0,.06); margin-top: 4px; padding-top: 4px; }
     .lc-cat-header {
       display: flex; align-items: center; gap: 6px;
-      padding: 6px 8px; border: 0; background: transparent; width: 100%;
+      box-sizing: border-box; min-width: 0; padding: 6px 8px; border: 0; background: transparent; width: 100%;
       cursor: pointer; border-radius: 8px; transition: background .12s;
     }
     .lc-cat-header:hover { background: rgba(0,0,0,.04); }
@@ -255,6 +255,7 @@
     }
     .lc-item {
       display: flex; align-items: center; gap: 8px;
+      box-sizing: border-box; width: 100%; min-width: 0;
       padding: 5px 8px 5px 28px; border-radius: 6px; cursor: pointer;
       transition: background .12s;
     }
@@ -263,6 +264,7 @@
       width: 14px; height: 14px; accent-color: #2563eb; cursor: pointer; flex-shrink: 0;
     }
     .lc-item label {
+      flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere;
       font-size: 12px; color: #334155; cursor: pointer; line-height: 1.3;
     }
     .lc-basemap-group {
@@ -3189,15 +3191,12 @@
       position: static;
       top: auto;
       grid-template-columns: 38px minmax(0, 1fr) 58px;
-      margin: 6px 0 2px;
+      margin: 6px 0 12px;
       padding: 12px 13px;
       border-color: var(--border-color);
       border-radius: 10px;
       background: var(--bg-card);
       box-shadow: none;
-    }
-    #geodataSheetBody > .lc-donation-banner.sheet-donation-banner {
-      margin-bottom: 12px;
     }
     .lc-donation-mark {
       display: grid;
@@ -3252,8 +3251,12 @@
     .lc-adsense { margin: 0 8px 6px; }
     .lc-adsense.sheet-adsense { margin: 0 0 6px; }
     .lc-adsense.at-search-adsense { margin: 0 0 10px; }
-    .layer-catalog-dropdown > .lc-feed-adsense { margin: 8px 12px; }
-    .layer-catalog-dropdown > .lc-pinned-adsense { margin: 8px 12px; }
+    .layer-catalog-dropdown > .lc-feed-adsense,
+    .layer-catalog-dropdown > .lc-pinned-adsense { margin: 14px 12px; }
+    .layer-catalog-dropdown > .lc-feed-adsense,
+    .layer-catalog-dropdown > .lc-pinned-adsense { box-sizing: border-box; width: calc(100% - 24px); max-width: 100%; min-width: 0; overflow: hidden; }
+    .layer-catalog-dropdown > .lc-feed-adsense .adsbygoogle,
+    .layer-catalog-dropdown > .lc-pinned-adsense .adsbygoogle { max-width: 100%; }
     .layer-catalog-dropdown.lc-search-active > .lc-feed-adsense { display: none; }
     .lc-adsense.geotools-inline-adsense { margin: 10px 0; }
     .lc-adsense.geodata-menu-adsense { margin: 10px 0; }
@@ -12779,6 +12782,18 @@ details[open] > .gt-card-head::after {
     }
     .print-preview-title input:focus { border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56,189,248,.18); }
     .print-preview-map-tools { display: grid; justify-items: center; gap: 3px; }
+    .print-preview-legend-editor { position: relative; align-self: center; }
+    .print-preview-legend-editor summary { padding: 8px 10px; border: 1px solid rgba(148,163,184,.3); border-radius: 8px; cursor: pointer; font-weight: 700; white-space: nowrap; }
+    .print-preview-legend-list { position: absolute; top: calc(100% + 6px); right: 0; z-index: 2; width: min(340px, 80vw); max-height: 42vh; overflow: auto; padding: 6px; border: 1px solid rgba(148,163,184,.3); border-radius: 10px; background: #0f172a; box-shadow: 0 10px 28px rgba(0,0,0,.35); }
+    .print-preview-legend-actions { position: absolute; top: calc(100% + 6px); right: 0; z-index: 3; display: flex; gap: 5px; padding: 8px 8px 0; }
+    .print-preview-legend-actions button { padding: 4px 7px; border: 1px solid rgba(148,163,184,.3); border-radius: 6px; color: #e2e8f0; background: #1e293b; cursor: pointer; font: 10px 'Segoe UI', system-ui, sans-serif; }
+    .print-preview-legend-list { padding-top: 36px; }
+    .print-preview-legend-option { display: grid; grid-template-columns: 18px minmax(0,1fr) 20px 26px 26px; align-items: center; gap: 5px; padding: 4px; border-bottom: 1px solid rgba(148,163,184,.14); }
+    .print-preview-legend-option:last-child { border-bottom: 0; }
+    .print-preview-legend-option span { min-width: 0; overflow-wrap: anywhere; font-size: 11px; }
+    .print-preview-legend-order { color: #94a3b8; text-align: center; font-size: 10px !important; }
+    .print-preview-legend-option button { width: 25px; height: 24px; padding: 0; border: 1px solid rgba(148,163,184,.3); border-radius: 6px; color: #f8fafc; background: rgba(255,255,255,.08); cursor: pointer; }
+    .print-preview-legend-option button:disabled { opacity: .35; cursor: not-allowed; }
     .print-preview-control-label { font-weight: 700; margin-bottom: 2px; }
     .print-preview-tool-row { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 29px; }
     .print-preview-tool-row button {
@@ -12851,6 +12866,9 @@ details[open] > .gt-card-head::after {
       gap: 10px;
       animation: print-area-fadein .3s ease-out;
     }
+    .print-area-basemap-label { display: grid; gap: 4px; color: #e2e8f0; font: 700 10px 'Segoe UI', system-ui, sans-serif; text-shadow: 0 1px 3px rgba(0,0,0,.45); }
+    .print-area-basemap-select { min-width: 175px; max-width: 240px; padding: 9px 30px 9px 10px; border: 1px solid rgba(255,255,255,.24); border-radius: 9px; outline: none; color: #f8fafc; background: #0f172a; font: 12px 'Segoe UI', system-ui, sans-serif; }
+    .print-area-basemap-select option { color: #0f172a; background: #fff; }
     .print-area-btn {
       display: flex;
       align-items: center;
@@ -12937,6 +12955,8 @@ details[open] > .gt-card-head::after {
         justify-content: center;
         max-width: 92vw;
       }
+      .print-area-basemap-label { width: min(92vw, 280px); }
+      .print-area-basemap-select { width: 100%; max-width: none; padding: 8px 10px; }
       .print-area-btn {
         padding: 9px 16px;
         font-size: 13px;
@@ -12983,6 +13003,9 @@ details[open] > .gt-card-head::after {
       }
       .print-preview-title { min-width: 0; flex: 1; }
       .print-preview-title input { padding: 7px; }
+      .print-preview-legend-editor { flex: 0 0 auto; }
+      .print-preview-legend-editor summary { padding: 7px; font-size: 10px; }
+      .print-preview-legend-list { position: fixed; top: 64px; right: 12px; width: min(340px, calc(100vw - 24px)); max-height: 42vh; }
       .print-preview-control-label { font-size: 10px; }
       .print-preview-tool-row { gap: 3px; }
       .print-preview-tool-row button { width: 27px; height: 26px; }

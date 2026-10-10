@@ -3209,6 +3209,7 @@ L.control.scale({
         { subcat: 'Peta tanah global (ISee / Purdue)', layers: [
           { id: 'isee-soil-orders', label: 'Soil Orders Global' },
           { id: 'isee-soil-moisture', label: 'Soil Moisture Regimes Global' },
+          { id: 'isee-soil-temperature', label: 'Soil Temperature Regimes Global' },
           { id: 'isee-soil-hillshade', label: 'Hillshade Global' },
           { id: 'isee-soil-boundaries', label: 'Batas Administrasi Global' },
           { id: 'isee-soil-labels', label: 'Label Administrasi Global' }

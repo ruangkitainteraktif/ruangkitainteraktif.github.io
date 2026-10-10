@@ -2215,8 +2215,9 @@
       if (timer) clearTimeout(timer);
     })();
 
-    const satLegends = (typeof window.SATELLITE_LEGENDS !== 'undefined') ? window.SATELLITE_LEGENDS : null;
-    const bmLegend = satLegends && satLegends[currentBasemapName] ? satLegends[currentBasemapName] : null;
+    // Basemap tetap tercatat sebagai peta dasar pada metadata cetak, tetapi
+    // bagian legenda PDF hanya memuat simbol layer overlay yang aktif.
+    const bmLegend = null;
 
     const activeNames = [];
     getActiveGeoportalLayers().forEach(a => activeNames.push(_dispName(labelMap, categoryMap, a.layerName)));
@@ -2228,12 +2229,9 @@
     legendItems.forEach(function (item) {
       if (item.kind !== 'basemap' && activeNames.indexOf(item.label) === -1) activeNames.push(item.label);
     });
-    activeNames.unshift('Basemap: ' + bmFriendly);
-    legendItems.unshift({ kind: 'basemap', label: 'Basemap · ' + bmFriendly });
-
     return {
       hiddenEls, titleText, bmFriendly, mapImg, legendItems, fullLegendItems: legendItems.slice(), bmLegend,
-      baseBmLegend: bmLegend, showLegend: true, includeBasemapLegend: true, activeNames,
+      baseBmLegend: null, showLegend: true, includeBasemapLegend: false, activeNames,
       exportCanvas, exportBbox,
       pageW, pageH, margin,
       mapFrameX, mapFrameY, mapFrameW, mapFrameH,
@@ -2269,8 +2267,44 @@
       '<div class="print-preview-tool-row"><button type="button" data-pan="left" aria-label="Geser peta ke kiri">◀</button>' +
       '<button type="button" data-zoom="out" aria-label="Perkecil peta">−</button><span class="print-preview-zoom">100%</span>' +
       '<button type="button" data-zoom="in" aria-label="Perbesar peta">+</button><button type="button" data-pan="right" aria-label="Geser peta ke kanan">▶</button></div>' +
-      '<div class="print-preview-tool-row"><button type="button" data-pan="down" aria-label="Geser peta ke bawah">▼</button></div></div>';
+      '<div class="print-preview-tool-row"><button type="button" data-pan="down" aria-label="Geser peta ke bawah">▼</button></div></div>' +
+      '<details class="print-preview-legend-editor"><summary>Atur legenda</summary><div class="print-preview-legend-actions"><button type="button" data-legend-select="all">Pilih semua</button><button type="button" data-legend-select="none">Kosongkan</button></div><div class="print-preview-legend-list"></div></details>';
     controls.querySelector('input').value = data.titleText || '';
+
+    const legendOptions = (data.legendItems || []).map(function (item) { return { item: item, enabled: true }; });
+    const legendList = controls.querySelector('.print-preview-legend-list');
+    const legendSummary = controls.querySelector('.print-preview-legend-editor summary');
+    function refreshLegendOptions() {
+      legendList.textContent = '';
+      const enabledCount = legendOptions.filter(function (option) { return option.enabled; }).length;
+      legendSummary.textContent = 'Atur legenda (' + enabledCount + '/' + legendOptions.length + ')';
+      legendOptions.forEach(function (option, index) {
+        const row = document.createElement('div'); row.className = 'print-preview-legend-option';
+        const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = option.enabled;
+        checkbox.setAttribute('aria-label', 'Tampilkan legenda ' + option.item.label);
+        const label = document.createElement('span'); label.textContent = option.item.label;
+        const order = document.createElement('span'); order.className = 'print-preview-legend-order'; order.textContent = String(index + 1);
+        const up = document.createElement('button'); up.type = 'button'; up.textContent = '↑'; up.disabled = index === 0; up.setAttribute('aria-label', 'Pindahkan ke atas');
+        const down = document.createElement('button'); down.type = 'button'; down.textContent = '↓'; down.disabled = index === legendOptions.length - 1; down.setAttribute('aria-label', 'Pindahkan ke bawah');
+        checkbox.addEventListener('change', function () { option.enabled = checkbox.checked; syncLegendSelection(); });
+        up.addEventListener('click', function () { if (index > 0) { legendOptions.splice(index - 1, 0, legendOptions.splice(index, 1)[0]); syncLegendSelection(); } });
+        down.addEventListener('click', function () { if (index < legendOptions.length - 1) { legendOptions.splice(index + 1, 0, legendOptions.splice(index, 1)[0]); syncLegendSelection(); } });
+        row.append(checkbox, label, order, up, down); legendList.appendChild(row);
+      });
+    }
+    function syncLegendSelection() {
+      data.legendItems = legendOptions.filter(function (option) { return option.enabled; }).map(function (option) { return option.item; });
+      data.fullLegendItems = data.legendItems.slice();
+      refreshLegendOptions();
+      drawPreviewPage();
+    }
+    controls.querySelectorAll('[data-legend-select]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        legendOptions.forEach(function (option) { option.enabled = button.dataset.legendSelect === 'all'; });
+        syncLegendSelection();
+      });
+    });
+    refreshLegendOptions();
 
     const actions = document.createElement('div');
     actions.className = 'print-preview-actions';
@@ -3125,6 +3159,7 @@
   let _printVignette = null;
   let _printInstruction = null;
   let _printAreaBtn = null;
+  let _printBasemapChoice = null;
   function _removePrintDrawUI() {
     if (_printFrame) { _printFrame.remove(); _printFrame = null; }
     if (_printVignette) { _printVignette.remove(); _printVignette = null; }
@@ -3157,6 +3192,28 @@
     const wrap = document.createElement('div');
     wrap.className = 'print-area-buttons';
 
+    const basemapLabel = document.createElement('label');
+    basemapLabel.className = 'print-area-basemap-label';
+    basemapLabel.textContent = 'Basemap PDF';
+    const basemapSelect = document.createElement('select');
+    basemapSelect.className = 'print-area-basemap-select';
+    basemapSelect.setAttribute('aria-label', 'Pilih basemap untuk PDF');
+    const basemapLabels = Object.assign({}, vectorBasemapLabels || {}, satelliteBasemapLabels || {});
+    Object.keys(basemapLabels).forEach(function (key) {
+      const option = document.createElement('option');
+      option.value = key; option.textContent = basemapLabels[key];
+      basemapSelect.appendChild(option);
+    });
+    const activeBasemap = window.currentBasemapName || currentBasemapName || 'google-maps';
+    if (!basemapLabels[activeBasemap]) {
+      const option = document.createElement('option'); option.value = activeBasemap; option.textContent = activeBasemap;
+      basemapSelect.appendChild(option);
+    }
+    basemapSelect.value = activeBasemap;
+    _printBasemapChoice = activeBasemap;
+    basemapSelect.addEventListener('change', function () { _printBasemapChoice = basemapSelect.value; });
+    basemapLabel.appendChild(basemapSelect);
+
     const printBtn = document.createElement('button');
     printBtn.className = 'print-area-btn';
     printBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v4"/><path d="M18 2v4"/><path d="M6 18v4"/><path d="M18 18v4"/><path d="M2 6h4"/><path d="M2 18h4"/><path d="M18 6h4"/><path d="M18 18h4"/></svg> Cetak Peta';
@@ -3173,6 +3230,7 @@
       _removePrintDrawUI();
     });
 
+    wrap.appendChild(basemapLabel);
     wrap.appendChild(printBtn);
     wrap.appendChild(cancelBtn);
     document.body.appendChild(wrap);
@@ -3201,7 +3259,22 @@
     if (btn) { btn.disabled = true; btn.innerHTML = window.GEOPORTAL_PRINT_SPINNER || '⏳'; }
     showPrintLoading();
     let consumed = false;
+    const originalBasemap = window.currentBasemapName || currentBasemapName;
+    const requestedBasemap = _printBasemapChoice || originalBasemap;
+    let restoreBasemap = false;
     try {
+      if (requestedBasemap && requestedBasemap !== originalBasemap && typeof window.setBaseMap === 'function') {
+        const basemapReady = new Promise(function (resolve) {
+          let settled = false;
+          const finish = function () { if (settled) return; settled = true; clearTimeout(timeoutId); resolve(); };
+          map.once('basemapchanged', function (event) { if (!event || event.basemap === requestedBasemap) finish(); });
+          const timeoutId = setTimeout(finish, 12000);
+        });
+        window.setBaseMap(requestedBasemap);
+        restoreBasemap = true;
+        await basemapReady;
+        await new Promise(function (resolve) { setTimeout(resolve, 350); });
+      }
       const prep = preparePrintData();
       prep.then(function (data) {
         if (consumed || !data) return;
@@ -3215,11 +3288,13 @@
       const data = await Promise.race([prep, timeout]);
       consumed = true;
       if (timer) clearTimeout(timer);
+      if (restoreBasemap) { window.setBaseMap(originalBasemap); restoreBasemap = false; }
       hidePrintLoading();
       if (btn) { btn.disabled = false; btn.innerHTML = window.GEOPORTAL_PRINT_ICON || '💻'; }
       renderPreviewCanvas(data);
     } catch (err) {
       consumed = true;
+      if (restoreBasemap) { try { window.setBaseMap(originalBasemap); } catch (e) {} restoreBasemap = false; }
       console.error('[PrintGeoportal] Gagal mempersiapkan data:', err);
       showPrintError(err && err.message ? err.message : String(err));
       hidePrintLoading();
