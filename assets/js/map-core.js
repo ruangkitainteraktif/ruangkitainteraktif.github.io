@@ -2668,26 +2668,6 @@ L.control.scale({
       var host = document.getElementById('geodata-panel-host');
       if (!body || !host) return;
       while (host.firstChild) body.appendChild(host.firstChild);
-      var ads = body.querySelectorAll('.geodata-menu-adsense');
-      Array.prototype.forEach.call(ads, function (ad) {
-        if (ad.dataset.requested) return;
-        var requestAd = function () {
-          if (ad.dataset.requested) return;
-          ad.dataset.requested = 'true';
-          try {
-            window.adsbygoogle = window.adsbygoogle || [];
-            window.adsbygoogle.push({});
-          } catch (e) { /* slot gagal diisi, biarkan */ }
-        };
-        if ('IntersectionObserver' in window) {
-          var adObserver = new IntersectionObserver(function (entries) {
-            if (!entries.some(function (entry) { return entry.isIntersecting; })) return;
-            adObserver.disconnect();
-            requestAd();
-          });
-          adObserver.observe(ad);
-        } else requestAd();
-      });
     },
     onClose: function () {
       var body = document.getElementById('geodataSheetBody');

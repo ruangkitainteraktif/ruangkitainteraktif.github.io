@@ -81,26 +81,6 @@
     });
   }
 
-  /* Slot responsif untuk sheet Legenda, ditempatkan setelah kartu donasi
-     dan sebelum daftar simbol peta. */
-  function addLegendAd() {
-    var body = document.getElementById('legendSidebarBody');
-    if (!body || body.querySelector('.legend-sheet-adsense')) return;
-    var ad = document.createElement('div');
-    ad.className = 'lc-adsense sheet-adsense legend-sheet-adsense';
-    ad.setAttribute('aria-label', 'Iklan');
-    ad.innerHTML = '<!-- Ruang Kita -->' +
-      '<ins class="adsbygoogle" style="display:block"' +
-      ' data-ad-client="ca-pub-7501816933195235"' +
-      ' data-ad-slot="1306506445"' +
-      ' data-ad-format="auto"' +
-      ' data-full-width-responsive="true"></ins>';
-    var donation = body.querySelector(':scope > .sheet-donation-banner');
-    if (donation) donation.insertAdjacentElement('afterend', ad);
-    else body.insertBefore(ad, body.firstChild);
-    dorongSlotIklan(ad);
-  }
-
   /* Unit fluid untuk posisi di antara kartu GeoTools. Loader AdSense hanya
      dimuat sekali di <head> index.html. */
   function createAdUnit() {
@@ -149,12 +129,10 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
       addDonationBanners();
-      addLegendAd();
       addGeoToolsInlineAds();
     }, { once: true });
   } else {
     addDonationBanners();
-    addLegendAd();
     addGeoToolsInlineAds();
   }
   window.addEventListener('resize', addDonationBanners, { passive: true });

@@ -146,8 +146,8 @@
     }
     .unified-search-inner {
       position: relative;
-      display: flex; align-items: center; gap: 8px;
-      padding: 0 50px 0 14px; height: 46px;
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 52px 0 14px; height: 46px;
       background: var(--bg-glass-light);
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
