@@ -145,8 +145,9 @@
       z-index: 1000; width: min(420px, calc(100% - 32px));
     }
     .unified-search-inner {
+      position: relative;
       display: flex; align-items: center; gap: 8px;
-      padding: 0 14px; height: 46px;
+      padding: 0 50px 0 14px; height: 46px;
       background: var(--bg-glass-light);
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -200,6 +201,7 @@
     }
     .reset-layers-search-btn:hover { background: rgba(239,68,68,.2); transform: scale(1.08); }
     .layer-catalog-btn {
+      position: absolute; top: 9px; right: 14px;
       display: flex; align-items: center; justify-content: center;
       width: 28px; height: 28px; border: 0; border-radius: 50%; flex-shrink: 0;
       background: rgba(37,99,235,.1); color: #2563eb; cursor: pointer;
@@ -3252,9 +3254,9 @@
     .lc-adsense.sheet-adsense { margin: 0 0 6px; }
     .lc-adsense.at-search-adsense { margin: 0 0 10px; }
     .layer-catalog-dropdown > .lc-feed-adsense,
-    .layer-catalog-dropdown > .lc-pinned-adsense { margin: 14px 12px; }
+    .layer-catalog-dropdown > .lc-pinned-adsense { margin: 0; }
     .layer-catalog-dropdown > .lc-feed-adsense,
-    .layer-catalog-dropdown > .lc-pinned-adsense { box-sizing: border-box; width: calc(100% - 24px); max-width: 100%; min-width: 0; overflow: hidden; }
+    .layer-catalog-dropdown > .lc-pinned-adsense { box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; overflow: hidden; }
     .layer-catalog-dropdown > .lc-feed-adsense .adsbygoogle,
     .layer-catalog-dropdown > .lc-pinned-adsense .adsbygoogle { max-width: 100%; }
     .layer-catalog-dropdown.lc-search-active > .lc-feed-adsense { display: none; }

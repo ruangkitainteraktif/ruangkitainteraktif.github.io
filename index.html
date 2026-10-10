@@ -3609,6 +3609,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     <div id="arcgisCountStatus" class="cctv-message" style="display:none;margin-top:8px;"></div>
                     <button id="arcgisCountBtn" class="geotools-btn arcgis-source-action-btn" type="button" style="width:100%;margin-top:8px;" disabled title="Hitung jumlah fitur layer terpilih tanpa mengunduh geometri">Hitung jumlah fitur (opsional)</button>
                     <button id="arcgisAddSelectedBtn" class="geotools-btn geotools-btn--green arcgis-source-action-btn" type="button" style="width:100%;margin-top:8px;" disabled>Tambahkan layer ke peta</button>
+                    <button id="arcgisExportSelectedBtn" class="geotools-btn arcgis-source-action-btn" type="button" style="width:100%;margin-top:8px;" disabled>Export SHP (login Google)</button>
                   </div>
                </div>
              </div>
@@ -3634,6 +3635,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                    <div id="geoserverLayerTree" class="arcgis-layer-tree" aria-live="polite"><div class="arcgis-tree-empty">Masukkan URL GeoServer lalu cari workspace.</div></div>
                    <button id="geoserverCountBtn" class="geotools-btn arcgis-source-action-btn" type="button" style="width:100%;margin-top:8px;" disabled>Hitung jumlah fitur (opsional)</button>
                    <button id="geoserverAddBtn" class="geotools-btn geotools-btn--green arcgis-source-action-btn" type="button" style="width:100%;margin-top:8px;" disabled>Tambahkan layer ke peta</button>
+                   <button id="geoserverExportBtn" class="geotools-btn arcgis-source-action-btn" type="button" style="width:100%;margin-top:8px;" disabled>Export SHP (login Google)</button>
                    <div id="geoserverAttributeStatus" class="arcgis-attribute-status" style="margin-top:12px;"></div>
                    <div id="geoserverAttributeTable" class="arcgis-attribute-table"></div>
                  </div>
@@ -3844,7 +3846,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/detail-subtab.js"></script>
      <script src="assets/js/alat-layers.js?v=20261010-shp-google-gate"></script>
      <script src="assets/js/geoprocessing.js?v=20261010-village-boundary-fallbacks"></script>
-     <script src="assets/js/arcgis-source-manager.js?v=20261010-arcgis-shp-export"></script>
+     <script src="assets/js/arcgis-source-manager.js?v=20261010-arcgis-shp-export-selected"></script>
      <script src="assets/js/geoserver-source-manager.js?v=20261010-geoserver-wfs"></script>
   <script src="assets/js/alat-draw-measure.js?v=20261009-remove-draw-layer"></script>
   <!-- Cek Lokasi: butuh window.startDraw dari alat-draw-measure.js untuk

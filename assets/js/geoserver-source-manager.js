@@ -26,6 +26,7 @@
     var cancel = el('geoserverCancelBtn');
     var add = el('geoserverAddBtn');
     var count = el('geoserverCountBtn');
+    var exportButton = el('geoserverExportBtn');
     if (discover) {
       discover.disabled = busy;
       discover.textContent = busy && label === 'discover' ? 'Membaca workspace…' : 'Cari workspace dan layer';
@@ -40,6 +41,11 @@
       add.textContent = busy && label === 'add' ? 'Memuat layer…' : 'Tambahkan layer ke peta';
     }
     if (count) count.disabled = busy || !Object.keys(state.selected).length;
+    if (exportButton) {
+      exportButton.disabled = busy || !Object.keys(state.selected).length;
+      exportButton.classList.toggle('is-loading', busy && label === 'export');
+      exportButton.textContent = busy && label === 'export' ? 'Mengekspor SHP…' : 'Export SHP (login Google)';
+    }
   }
   function normalizeOwsUrl(value) {
     var url = new URL(String(value || '').trim());
@@ -159,6 +165,8 @@
     if (add) add.disabled = state.busy || count === 0;
     var countButton = el('geoserverCountBtn');
     if (countButton) countButton.disabled = state.busy || count === 0;
+    var exportButton = el('geoserverExportBtn');
+    if (exportButton) exportButton.disabled = state.busy || count === 0;
   }
   async function discover() {
     var input = el('geoserverSourceUrl');
@@ -191,6 +199,15 @@
       if (run === state.run) setBusy(false);
     }
   }
+  function workspaceOwsUrl(base, layerName) {
+    var url = new URL(base);
+    var workspace = String(layerName || '').split(':')[0];
+    if (!workspace || String(layerName).indexOf(':') < 0) return url.toString();
+    var path = url.pathname.replace(/\/+$/, '').replace(/\/(ows|wfs|wms)$/i, '');
+    if (path.split('/').pop() !== workspace) path += '/' + encodeURIComponent(workspace);
+    url.pathname = path + '/ows';
+    return url.toString();
+  }
   function featureUrl(base, layerName, offset, version) {
     var url = new URL(base);
     url.searchParams.set('service', 'WFS');
@@ -198,7 +215,7 @@
     url.searchParams.set('request', 'GetFeature');
     url.searchParams.set(version === '2.0.0' ? 'typeNames' : 'typeName', layerName);
     url.searchParams.set(version === '2.0.0' ? 'count' : 'maxFeatures', String(PAGE_SIZE));
-    url.searchParams.set('startIndex', String(offset));
+    if (offset > 0) url.searchParams.set('startIndex', String(offset));
     url.searchParams.set('outputFormat', 'application/json');
     url.searchParams.set('srsName', 'EPSG:4326');
     return url.toString();
@@ -209,18 +226,33 @@
     try { data = JSON.parse(text); }
     catch (error) { throw new Error('WFS tidak mengembalikan GeoJSON. Periksa izin WFS dan outputFormat application/json.'); }
     if (data && data.exceptions) throw new Error(data.exceptions[0].text || 'GeoServer WFS mengembalikan error.');
+    if (data && data.type === 'ExceptionReport') throw new Error('GeoServer menolak permintaan GetFeature.');
     if (!data || !Array.isArray(data.features)) throw new Error('Respons GeoServer bukan FeatureCollection GeoJSON.');
     return data;
   }
   async function fetchLayer(layer, onProgress) {
-    var base = normalizeOwsUrl(el('geoserverSourceUrl').value);
-    var version = '2.0.0';
-    var data;
-    try { data = await getFeaturePage(base, layer.name, 0, version); }
-    catch (error) {
-      version = '1.1.0';
-      data = await getFeaturePage(base, layer.name, 0, version);
+    var rootBase = normalizeOwsUrl(el('geoserverSourceUrl').value);
+    var workspaceBase = workspaceOwsUrl(rootBase, layer.name);
+    var attempts = [
+      { base: workspaceBase, version: '1.0.0' },
+      { base: workspaceBase, version: '2.0.0' },
+      { base: workspaceBase, version: '1.1.0' },
+      { base: rootBase, version: '1.0.0' },
+      { base: rootBase, version: '2.0.0' },
+      { base: rootBase, version: '1.1.0' }
+    ];
+    var base = rootBase;
+    var version = '1.0.0';
+    var data, lastError;
+    for (var attempt = 0; attempt < attempts.length; attempt++) {
+      try {
+        base = attempts[attempt].base;
+        version = attempts[attempt].version;
+        data = await getFeaturePage(base, layer.name, 0, version);
+        break;
+      } catch (error) { lastError = error; }
     }
+    if (!data) throw lastError || new Error('GeoServer tidak mengembalikan GeoJSON.');
     var features = data.features.slice();
     var offset = features.length;
     var previousSignature = '';
@@ -335,9 +367,11 @@
         var layer = selected[i];
         setStatus('Menghitung fitur ' + layer.name + ' (' + (i + 1) + '/' + selected.length + ')…');
         var total = null;
-        for (var versionIndex = 0; versionIndex < 2 && total == null; versionIndex++) {
-          var version = versionIndex === 0 ? '2.0.0' : '1.1.0';
-          var url = new URL(featureUrl(normalizeOwsUrl(el('geoserverSourceUrl').value), layer.name, 0, version));
+        var rootBase = normalizeOwsUrl(el('geoserverSourceUrl').value);
+        var bases = [workspaceOwsUrl(rootBase, layer.name), rootBase];
+        for (var baseIndex = 0; baseIndex < bases.length && total == null; baseIndex++) for (var versionIndex = 0; versionIndex < 3 && total == null; versionIndex++) {
+          var version = ['1.0.0', '2.0.0', '1.1.0'][versionIndex];
+          var url = new URL(featureUrl(bases[baseIndex], layer.name, 0, version));
           url.searchParams.set('resultType', 'hits');
           try {
             var responseText = await fetchText(url.toString());
@@ -351,7 +385,7 @@
               var candidateXml = root.getAttribute('numberMatched') || root.getAttribute('numberOfFeatures') || root.getAttribute('numberOfRecordsMatched');
               if (candidateXml && candidateXml !== 'unknown' && Number.isFinite(Number(candidateXml))) total = Number(candidateXml);
             }
-          } catch (_) { /* coba versi WFS berikutnya */ }
+          } catch (_) { /* coba endpoint workspace atau versi WFS berikutnya */ }
         }
         summaries.push(layer.name + ': ' + (total == null ? 'server tidak mengirim hitungan' : total.toLocaleString('id-ID') + ' fitur'));
         if (total != null) state.counts[layer.name] = total;
@@ -362,6 +396,107 @@
       if (run === state.run) setStatus(error.message || String(error), true);
     } finally {
       if (button) button.textContent = oldText || 'Hitung fitur layer dipilih';
+      if (run === state.run) setBusy(false);
+    }
+  }
+  function shpSafeProperties(properties) {
+    var result = {};
+    Object.keys(properties || {}).forEach(function (key) {
+      var base = String(key || 'field').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 10) || 'field';
+      var field = base;
+      var suffix = 1;
+      while (Object.prototype.hasOwnProperty.call(result, field)) {
+        var tail = String(suffix++);
+        field = base.slice(0, 10 - tail.length) + tail;
+      }
+      var value = properties[key];
+      if (value == null || (typeof value === 'number' && !Number.isFinite(value))) value = '';
+      else if (typeof value === 'boolean') value = value ? 1 : 0;
+      else if (typeof value === 'object') value = JSON.stringify(value);
+      result[field] = value;
+    });
+    return result;
+  }
+  async function downloadShapefile(layer, collection) {
+    var writer = window.shpwrite || (typeof shpwrite !== 'undefined' ? shpwrite : null);
+    if (!writer || typeof writer.zip !== 'function') throw new Error('Modul pembuat SHP belum siap. Muat ulang halaman lalu coba kembali.');
+    var features = (collection.features || []).filter(function (feature) {
+      return feature && feature.geometry && feature.geometry.type && Array.isArray(feature.geometry.coordinates);
+    });
+    if (!features.length) throw new Error(layer.name + ': tidak ada fitur geometri yang dapat diekspor.');
+    var types = {};
+    features.forEach(function (feature) {
+      var type = feature.geometry.type;
+      if (type === 'Point' || type === 'MultiPoint') types.point = 'points';
+      else if (type === 'LineString' || type === 'MultiLineString') types.polyline = 'lines';
+      else if (type === 'Polygon' || type === 'MultiPolygon') types.polygon = 'polygons';
+    });
+    if (!Object.keys(types).length) throw new Error(layer.name + ': jenis geometri belum didukung format SHP.');
+    var fileName = layer.name.replace(/[^a-z0-9_-]+/gi, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'layer_geoserver';
+    var safeCollection = {
+      type: 'FeatureCollection',
+      features: features.map(function (feature) {
+        return Object.assign({}, feature, { properties: shpSafeProperties(feature.properties) });
+      })
+    };
+    var zipData = await writer.zip(safeCollection, {
+      folder: fileName,
+      filename: fileName,
+      outputType: 'blob',
+      types: types,
+      prj: 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
+    });
+    var blob = zipData instanceof Blob ? zipData : new Blob([zipData], { type: 'application/zip' });
+    var objectUrl = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = fileName + '.zip';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(function () { URL.revokeObjectURL(objectUrl); }, 1000);
+    return features.length;
+  }
+  function exportSelectedWithLogin() {
+    if (!Object.keys(state.selected).length) {
+      setStatus('Pilih minimal satu layer GeoServer untuk diekspor.', true);
+      return;
+    }
+    if (typeof window.RKRequireGoogleLogin !== 'function') {
+      setStatus('Login Google belum siap. Muat ulang halaman lalu coba kembali.', true);
+      return;
+    }
+    window.RKRequireGoogleLogin(exportSelected);
+  }
+  async function exportSelected() {
+    var selected = Object.keys(state.selected).map(function (name) { return state.selected[name]; });
+    if (!selected.length) return;
+    var run = ++state.run;
+    makeController();
+    setBusy(true, 'export');
+    var summaries = [];
+    var errors = [];
+    try {
+      for (var i = 0; i < selected.length; i++) {
+        if (run !== state.run) return;
+        var layer = selected[i];
+        setStatus('Mengunduh fitur ' + layer.name + ' untuk ekspor SHP (' + (i + 1) + '/' + selected.length + ')…');
+        await new Promise(function (resolve) { window.requestAnimationFrame(resolve); });
+        try {
+          var collection = await fetchLayer(layer, function (featureCount) {
+            if (run === state.run) setStatus('Menyiapkan ' + layer.name + ': ' + featureCount.toLocaleString('id-ID') + ' fitur diunduh…');
+          });
+          if (run !== state.run) return;
+          var exported = await downloadShapefile(layer, collection);
+          summaries.push(exported.toLocaleString('id-ID') + ' fitur diekspor ke ' + layer.name + '.zip' + (collection.truncated ? ' (sebagian fitur)' : ''));
+        } catch (error) {
+          if (run !== state.run) return;
+          errors.push(error.message || String(error));
+        }
+      }
+      var message = summaries.concat(errors).join(' · ');
+      setStatus(message || 'Tidak ada layer yang berhasil diekspor.', errors.length > 0);
+    } finally {
       if (run === state.run) setBusy(false);
     }
   }
@@ -429,6 +564,8 @@
     if (addButton) addButton.addEventListener('click', addSelected);
     var countButton = el('geoserverCountBtn');
     if (countButton) countButton.addEventListener('click', countSelected);
+    var exportButton = el('geoserverExportBtn');
+    if (exportButton) exportButton.addEventListener('click', exportSelectedWithLogin);
     if (tree) tree.addEventListener('change', function (event) {
       var input = event.target.closest('input[data-geoserver-layer]');
       if (!input) return;

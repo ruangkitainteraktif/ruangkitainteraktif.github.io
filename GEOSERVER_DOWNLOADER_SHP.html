@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1728">
+  <title>GeoServer Downloader SHP | RUANG KITA</title>
+  <style>
+    :root { color-scheme: light; }
+    body { min-height: 100vh; margin: 0; padding: 28px 14px; box-sizing: border-box; background: #f1f5f9; color: #0f172a; font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .downloader { width: min(760px, 100%); margin: 0 auto; overflow: hidden; border: 1px solid #dbe4ee; border-radius: 18px; background: #fff; box-shadow: 0 18px 50px rgba(15,23,42,.1); }
+    .hero { padding: 22px 24px; color: #fff; background: linear-gradient(130deg,#0f766e,#075985); }
+    .hero h1 { margin: 0; font-size: 21px; }
+    .hero p { margin: 7px 0 0; color: rgba(255,255,255,.82); font-size: 12px; line-height: 1.55; }
+    .body { display: grid; gap: 14px; padding: 20px 24px 24px; }
+    label { display: grid; gap: 6px; color: #475569; font-size: 11px; font-weight: 700; }
+    input[type=url], select { width: 100%; min-width: 0; height: 38px; box-sizing: border-box; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #0f172a; font: inherit; font-size: 12px; }
+    .row { display: grid; grid-template-columns: minmax(0,1fr) 130px; gap: 10px; align-items: end; }
+    button { min-height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: #0e7490; color: #fff; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+    button:hover:not(:disabled) { filter: brightness(1.06); }
+    button:disabled { cursor: not-allowed; opacity: .48; }
+    .secondary { background: #475569; }
+    .green { background: #059669; }
+    .toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .toolbar button { width: 100%; }
+    .status { min-height: 16px; color: #475569; font-size: 11px; line-height: 1.55; overflow-wrap: anywhere; }
+    .status.error { color: #b91c1c; }
+    #tree { display: block; max-height: 42vh; overflow: auto; padding: 10px; border: 1px solid #dbe4ee; border-radius: 10px; background: #f8fafc; }
+    #tree .workspace-group { display: block; min-height: 0; margin: 0 0 7px; overflow: hidden; border: 1px solid #dbe4ee; border-radius: 8px; background: #fff; }
+    #tree .workspace-group:last-child { margin-bottom: 0; }
+    #tree .workspace-summary { display: flex !important; min-height: 34px; box-sizing: border-box; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; color: #0f172a !important; cursor: pointer; font-size: 11px !important; font-weight: 750; list-style: none; }
+    #tree .workspace-summary::-webkit-details-marker { display: none; }
+    #tree .workspace-summary > span { display: block; min-width: 0; overflow-wrap: anywhere; color: #0f172a !important; }
+    #tree .workspace-summary > small { display: block; flex: 0 0 auto; color: #64748b !important; font-size: 9px !important; font-weight: 500; }
+    #tree .workspace-layers { display: block; }
+    #tree .layer-option { display: grid; grid-template-columns: 18px minmax(0,1fr); gap: 8px; align-items: start; min-height: 32px; box-sizing: border-box; padding: 8px 10px; border-top: 1px solid #eef2f7; color: #334155 !important; font-size: 10px !important; cursor: pointer; }
+    #tree .layer-option input { width: 14px; height: 14px; margin: 1px 0 0; accent-color: #0e7490; }
+    #tree .layer-option span { display: block; min-width: 0; overflow-wrap: anywhere; color: #334155 !important; }
+    #tree .layer-option strong { display: block; color: #0f172a !important; font-size: 10px !important; }
+    #tree .layer-option small { display: block; margin-top: 2px; color: #64748b !important; font-size: 8px !important; font-weight: 500; }
+    .empty { padding: 14px 10px; color: #64748b; text-align: center; font-size: 11px; }
+    .note { padding: 10px 12px; border-radius: 8px; background: #f0fdfa; color: #115e59; font-size: 10px; line-height: 1.5; }
+    .spinner { display: inline-block; width: 12px; height: 12px; margin-right: 6px; vertical-align: -2px; border: 2px solid #cbd5e1; border-top-color: #0e7490; border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 560px) { body { padding: 10px; } .hero { padding: 18px; } .body { padding: 16px; } .row { grid-template-columns: 1fr; } #tree { max-height: 46vh; } .toolbar { grid-template-columns: 1fr; } }
+  </style>
+  <script src="https://unpkg.com/@mapbox/shp-write@0.4.3/shpwrite.js"></script>
+</head>
+<body>
+  <main class="downloader">
+    <header class="hero">
+      <h1>GeoServer Downloader SHP</h1>
+      <p>Telusuri layer WFS Atlas ATR/BPN, unduh seluruh fitur dengan pagination, lalu simpan sebagai ZIP shapefile.</p>
+    </header>
+    <section class="body">
+      <div class="row">
+        <label for="sourceUrl">URL GeoServer
+          <input id="sourceUrl" type="url" value="https://atlas.atrbpn.go.id/geoserver/web/wicket/bookmarkable/org.geoserver.web.demo.MapPreviewPage?2&amp;filter=false" placeholder="Masukkan URL GeoServer atau endpoint WFS" autocomplete="url">
+        </label>
+        <button id="discoverBtn" type="button">Cari workspace dan layer</button>
+      </div>
+      <div class="row">
+        <label for="pageSize">Jumlah fitur per halaman
+          <select id="pageSize"><option value="100">100</option><option value="500">500</option><option value="1000" selected>1.000</option><option value="2000">2.000</option></select>
+        </label>
+        <button id="cancelBtn" class="secondary" type="button" hidden>Batalkan</button>
+      </div>
+      <div id="status" class="status" role="status" aria-live="polite">Masukkan URL layanan, lalu cari workspace dan layer.</div>
+      <div id="tree" class="tree"><div class="empty">Daftar layer akan muncul di sini.</div></div>
+      <div class="toolbar">
+        <button id="countBtn" class="secondary" type="button" disabled>Hitung fitur</button>
+        <button id="exportBtn" class="green" type="button" disabled>Unduh SHP</button>
+      </div>
+      <div class="note">Layer terpilih akan diekspor langsung dari WFS, tanpa ditambahkan ke peta. Jika memilih beberapa layer, tiap layer diunduh sebagai ZIP terpisah. Pastikan layanan mengizinkan WFS dan mendukung GeoJSON.</div>
+    </section>
+  </main>
+  <script>
+  (function () {
+    'use strict';
+    var PROXY_PREFIX = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=';
+    var state = { controller: null, layers: [], selected: {}, counts: {}, busy: false };
+    var source = document.getElementById('sourceUrl');
+    var tree = document.getElementById('tree');
+    var status = document.getElementById('status');
+    var discoverButton = document.getElementById('discoverBtn');
+    var cancelButton = document.getElementById('cancelBtn');
+    var exportButton = document.getElementById('exportBtn');
+    var countButton = document.getElementById('countBtn');
+
+    function say(message, error, loading) {
+      status.classList.toggle('error', !!error);
+      status.innerHTML = (loading ? '<span class="spinner" aria-hidden="true"></span>' : '') + escapeHtml(message || '');
+    }
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char];
+      });
+    }
+    function normalizeOws(value) {
+      var url = new URL(String(value || '').trim());
+      if (url.protocol !== 'https:') throw new Error('Gunakan alamat HTTPS.');
+      url.search = '';
+      url.hash = '';
+      var path = url.pathname.replace(/\/+$/, '');
+      var web = path.toLowerCase().indexOf('/web/');
+      if (web >= 0) path = path.slice(0, web);
+      if (/\/(ows|wfs|wms)$/i.test(path)) path = path.replace(/\/(ows|wfs|wms)$/i, '/ows');
+      else if (!/\/ows$/i.test(path)) path += '/ows';
+      url.pathname = path;
+      return url.toString();
+    }
+    function workspaceOws(base, layer) {
+      var url = new URL(base);
+      var workspace = String(layer.name || '').split(':')[0];
+      if (!workspace || String(layer.name).indexOf(':') < 0) return url.toString();
+      var path = url.pathname.replace(/\/+$/, '').replace(/\/(ows|wfs|wms)$/i, '');
+      if (path.split('/').pop() !== workspace) path += '/' + encodeURIComponent(workspace);
+      url.pathname = path + '/ows';
+      return url.toString();
+    }
+    async function fetchText(url, signal) {
+      async function request(target) {
+        var controller = new AbortController();
+        var abort = function () { controller.abort(); };
+        if (signal) {
+          if (signal.aborted) controller.abort();
+          else signal.addEventListener('abort', abort, { once: true });
+        }
+        var timeout = window.setTimeout(abort, 30000);
+        try {
+          var response = await fetch(target, { signal: controller.signal, headers: { Accept: 'application/json, application/xml, text/xml, */*' } });
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          return await response.text();
+        } finally {
+          window.clearTimeout(timeout);
+          if (signal) signal.removeEventListener('abort', abort);
+        }
+      }
+      try { return await request(url); }
+      catch (error) {
+        if (signal && signal.aborted) throw error;
+        return request(PROXY_PREFIX + encodeURIComponent(url));
+      }
+    }
+    function currentController() {
+      if (state.controller) state.controller.abort();
+      state.controller = new AbortController();
+      return state.controller;
+    }
+    function setBusy(busy, action) {
+      state.busy = busy;
+      discoverButton.disabled = busy;
+      discoverButton.textContent = busy && action === 'discover' ? 'Mencari layer…' : 'Cari workspace dan layer';
+      cancelButton.hidden = !busy;
+      cancelButton.disabled = !busy;
+      exportButton.disabled = busy || !Object.keys(state.selected).length;
+      exportButton.classList.toggle('is-loading', busy && action === 'export');
+      exportButton.textContent = busy && action === 'export' ? 'Menyiapkan SHP…' : 'Unduh SHP';
+      countButton.disabled = busy || !Object.keys(state.selected).length;
+      countButton.classList.toggle('is-loading', busy && action === 'count');
+      countButton.textContent = busy && action === 'count' ? 'Menghitung…' : 'Hitung fitur';
+      tree.querySelectorAll('input[data-layer]').forEach(function (input) { input.disabled = busy; });
+    }
+    function parseCapabilities(text) {
+      var xml = new DOMParser().parseFromString(text, 'application/xml');
+      if (xml.getElementsByTagName('parsererror').length) throw new Error('Respons GetCapabilities tidak valid.');
+      var exception = Array.prototype.find.call(xml.getElementsByTagName('*'), function (node) { return /ExceptionText|ServiceException/i.test((node.localName || node.nodeName).split(':').pop()); });
+      if (exception) throw new Error(exception.textContent || 'GeoServer menolak GetCapabilities.');
+      var nodes = Array.prototype.filter.call(xml.getElementsByTagName('*'), function (node) { return (node.localName || node.nodeName).split(':').pop() === 'FeatureType'; });
+      return nodes.map(function (node) {
+        var name = '', title = '';
+        Array.prototype.forEach.call(node.children, function (child) {
+          var tag = (child.localName || child.nodeName).split(':').pop();
+          if (tag === 'Name') name = String(child.textContent || '').trim();
+          if (tag === 'Title') title = String(child.textContent || '').trim();
+        });
+        if (!name) return null;
+        return { name: name, title: title || name.split(':').pop(), workspace: name.indexOf(':') >= 0 ? name.split(':')[0] : 'Lainnya' };
+      }).filter(Boolean).sort(function (a, b) { return a.workspace.localeCompare(b.workspace) || a.title.localeCompare(b.title, 'id', { numeric: true, sensitivity: 'base' }); });
+    }
+    async function discover() {
+      var controller = currentController();
+      state.layers = [];
+      state.selected = {};
+      state.counts = {};
+      syncSelection();
+      setBusy(true, 'discover');
+      tree.innerHTML = '<div class="empty"><span class="spinner" aria-hidden="true"></span>Membaca workspace dan layer WFS…</div>';
+      say('Meminta WFS GetCapabilities…', false, true);
+      try {
+        var url = new URL(normalizeOws(source.value));
+        url.searchParams.set('service', 'WFS');
+        url.searchParams.set('version', '2.0.0');
+        url.searchParams.set('request', 'GetCapabilities');
+        state.layers = parseCapabilities(await fetchText(url.toString(), controller.signal));
+        renderLayers();
+        var workspaces = new Set(state.layers.map(function (layer) { return layer.workspace; }));
+        say(state.layers.length.toLocaleString('id-ID') + ' layer WFS ditemukan dalam ' + workspaces.size + ' workspace.');
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          tree.innerHTML = '<div class="empty">Gagal membaca daftar layer.</div>';
+          say(error.message || String(error), true);
+        }
+      } finally { if (state.controller === controller) setBusy(false); }
+    }
+    function renderLayers() {
+      var openWorkspaces = {};
+      tree.querySelectorAll('.workspace-group[open]').forEach(function (group) {
+        var summary = group.querySelector('.workspace-summary > span');
+        if (summary) openWorkspaces[summary.textContent] = true;
+      });
+      var groups = {};
+      state.layers.forEach(function (layer, index) { (groups[layer.workspace] = groups[layer.workspace] || []).push({ layer: layer, index: index }); });
+      var names = Object.keys(groups);
+      if (!names.length) { tree.innerHTML = '<div class="empty">Tidak ada layer WFS yang dipublikasikan.</div>'; return; }
+      tree.innerHTML = names.map(function (workspace) {
+        var items = groups[workspace].map(function (entry) {
+          var count = Object.prototype.hasOwnProperty.call(state.counts, entry.layer.name) ? ' · ' + state.counts[entry.layer.name].toLocaleString('id-ID') + ' fitur' : '';
+          var checked = state.selected[entry.layer.name] ? ' checked' : '';
+          return '<label class="layer-option"><input type="checkbox" data-layer="' + entry.index + '"' + checked + '><span title="' + escapeHtml(entry.layer.name) + '"><strong>' + escapeHtml(entry.layer.title) + '</strong><small>' + escapeHtml(entry.layer.name + count) + '</small></span></label>';
+        }).join('');
+        return '<details class="workspace-group"' + (openWorkspaces[workspace] ? ' open' : '') + '><summary class="workspace-summary"><span>' + escapeHtml(workspace) + '</span><small>' + groups[workspace].length + ' layer</small></summary><div class="workspace-layers">' + items + '</div></details>';
+      }).join('');
+      syncSelection();
+    }
+    function syncSelection() {
+      exportButton.disabled = state.busy || !Object.keys(state.selected).length;
+      countButton.disabled = state.busy || !Object.keys(state.selected).length;
+      var count = Object.keys(state.selected).length;
+      if (count) exportButton.title = count + ' layer dipilih';
+    }
+    function featureRequest(base, layer, offset, version) {
+      var url = new URL(base);
+      url.searchParams.set('service', 'WFS');
+      url.searchParams.set('version', version);
+      url.searchParams.set('request', 'GetFeature');
+      url.searchParams.set(version === '2.0.0' ? 'typeNames' : 'typeName', layer.name);
+      url.searchParams.set(version === '2.0.0' ? 'count' : 'maxFeatures', document.getElementById('pageSize').value);
+      if (offset > 0) url.searchParams.set('startIndex', String(offset));
+      url.searchParams.set('outputFormat', 'application/json');
+      url.searchParams.set('srsName', 'EPSG:4326');
+      return url.toString();
+    }
+    async function getFeaturePage(base, layer, offset, version, signal) {
+      var text = await fetchText(featureRequest(base, layer, offset, version), signal);
+      var data;
+      try { data = JSON.parse(text); }
+      catch (_) { throw new Error('GeoServer tidak mengembalikan GeoJSON. Pastikan WFS/GeoJSON diaktifkan.'); }
+      if (data.exceptions && data.exceptions.length) throw new Error(data.exceptions[0].text || 'Permintaan WFS gagal.');
+      if (data.type === 'ExceptionReport') throw new Error('GeoServer menolak permintaan GetFeature.');
+      if (!Array.isArray(data.features)) throw new Error('Respons WFS bukan FeatureCollection GeoJSON.');
+      return data;
+    }
+    async function collectLayer(rootBase, layer, signal, onProgress) {
+      var workspaceBase = workspaceOws(rootBase, layer);
+      var attempts = [
+        { base: workspaceBase, version: '1.0.0' }, { base: workspaceBase, version: '2.0.0' }, { base: workspaceBase, version: '1.1.0' },
+        { base: rootBase, version: '1.0.0' }, { base: rootBase, version: '2.0.0' }, { base: rootBase, version: '1.1.0' }
+      ];
+      var lastError;
+      for (var i = 0; i < attempts.length; i++) {
+        try { return await collectAll(attempts[i].base, layer, attempts[i].version, signal, onProgress); }
+        catch (error) { if (signal.aborted) throw error; lastError = error; }
+      }
+      throw lastError || new Error('GeoServer tidak mengembalikan GeoJSON.');
+    }
+    async function getFeatureCount(base, layer, version, signal) {
+      var url = new URL(featureRequest(base, layer, 0, version));
+      url.searchParams.set('resultType', 'hits');
+      var text = await fetchText(url.toString(), signal);
+      try {
+        var json = JSON.parse(text);
+        var value = json.numberMatched != null ? json.numberMatched : (json.totalFeatures != null ? json.totalFeatures : json.count);
+        if (value != null && value !== 'unknown' && Number.isFinite(Number(value))) return Number(value);
+      } catch (_) {
+        var xml = new DOMParser().parseFromString(text, 'application/xml');
+        var root = xml.documentElement;
+        var valueXml = root.getAttribute('numberMatched') || root.getAttribute('numberOfFeatures') || root.getAttribute('numberOfRecordsMatched');
+        if (valueXml && valueXml !== 'unknown' && Number.isFinite(Number(valueXml))) return Number(valueXml);
+        var exception = Array.prototype.find.call(xml.getElementsByTagName('*'), function (node) { return /ExceptionText|ServiceException/i.test((node.localName || node.nodeName).split(':').pop()); });
+        if (exception) throw new Error(exception.textContent || 'WFS menolak permintaan hitung.');
+      }
+      throw new Error('Server tidak mengirim jumlah fitur untuk ' + layer.name + '.');
+    }
+    async function countSelected() {
+      var selected = Object.keys(state.selected).map(function (name) { return state.selected[name]; });
+      if (!selected.length) { say('Pilih minimal satu layer untuk dihitung.', true); return; }
+      var controller = currentController();
+      setBusy(true, 'count');
+      var messages = [], errors = [];
+      try {
+        var base = normalizeOws(source.value);
+        for (var i = 0; i < selected.length; i++) {
+          var layer = selected[i];
+          say('Menghitung fitur ' + layer.name + ' (' + (i + 1) + ' dari ' + selected.length + ')…', false, true);
+          var total = null;
+          var bases = [workspaceOws(base, layer), base];
+          for (var baseIndex = 0; baseIndex < bases.length && total == null; baseIndex++) for (var versionIndex = 0; versionIndex < 3 && total == null; versionIndex++) {
+            if (controller.signal.aborted) return;
+            try { total = await getFeatureCount(bases[baseIndex], layer, ['1.0.0', '2.0.0', '1.1.0'][versionIndex], controller.signal); }
+            catch (error) { if (controller.signal.aborted) return; if (baseIndex === bases.length - 1 && versionIndex === 2) errors.push(layer.name + ': ' + (error.message || String(error))); }
+          }
+          if (total != null) {
+            state.counts[layer.name] = total;
+            messages.push(layer.name + ': ' + total.toLocaleString('id-ID') + ' fitur');
+          }
+        }
+        renderLayers();
+        say(messages.concat(errors).join(' · ') || 'Tidak ada hasil hitung.');
+        if (errors.length) status.classList.add('error');
+      } catch (error) {
+        if (!controller.signal.aborted) say(error.message || String(error), true);
+      } finally { if (state.controller === controller) setBusy(false); }
+    }
+    async function collectAll(base, layer, version, signal, onProgress) {
+      var features = [];
+      var offset = 0;
+      var total = null;
+      var lastSignature = '';
+      var pageSize = Number(document.getElementById('pageSize').value) || 1000;
+      while (true) {
+        if (signal.aborted) throw new DOMException('Dibatalkan', 'AbortError');
+        var page = await getFeaturePage(base, layer, offset, version, signal);
+        var matched = page.numberMatched != null ? page.numberMatched : page.totalFeatures;
+        if (matched != null && matched !== 'unknown' && Number.isFinite(Number(matched))) total = Number(matched);
+        var batch = page.features;
+        if (!batch.length) {
+          if (total != null && features.length < total) throw new Error('WFS berhenti setelah ' + features.length.toLocaleString('id-ID') + ' dari ' + total.toLocaleString('id-ID') + ' fitur.');
+          break;
+        }
+        var first = batch[0].id || JSON.stringify(batch[0]).slice(0, 180);
+        var last = batch[batch.length - 1].id || JSON.stringify(batch[batch.length - 1]).slice(0, 180);
+        var signature = String(first) + '|' + String(last);
+        if (offset > 0 && signature === lastSignature) throw new Error('Server mengulang halaman WFS; pagination tidak berjalan, hentikan agar tidak mengunduh data duplikat.');
+        lastSignature = signature;
+        Array.prototype.push.apply(features, batch);
+        offset += batch.length;
+        onProgress(features.length, total);
+        if (total != null && features.length >= total) break;
+        /* Jika jumlah total tidak diketahui atau server membatasi ukuran
+           halaman, teruskan offset sampai endpoint mengembalikan 0 fitur. */
+      }
+      return { type: 'FeatureCollection', features: features, total: total };
+    }
+    function safeProperties(properties) {
+      var result = {};
+      Object.keys(properties || {}).forEach(function (key) {
+        var base = String(key || 'field').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 10) || 'field';
+        var name = base, suffix = 1;
+        while (Object.prototype.hasOwnProperty.call(result, name)) { var tail = String(suffix++); name = base.slice(0, 10 - tail.length) + tail; }
+        var value = properties[key];
+        if (value == null || (typeof value === 'number' && !Number.isFinite(value))) value = '';
+        else if (typeof value === 'boolean') value = value ? 1 : 0;
+        else if (typeof value === 'object') value = JSON.stringify(value);
+        result[name] = value;
+      });
+      return result;
+    }
+    async function saveShp(layer, collection) {
+      var writer = window.shpwrite;
+      if (!writer || typeof writer.zip !== 'function') throw new Error('Modul SHP belum siap. Muat ulang halaman.');
+      var features = collection.features.filter(function (feature) { return feature && feature.geometry && Array.isArray(feature.geometry.coordinates); });
+      if (!features.length) throw new Error('Layer tidak memiliki geometri untuk diekspor.');
+      var types = {};
+      features.forEach(function (feature) {
+        var type = feature.geometry.type;
+        if (type === 'Point' || type === 'MultiPoint') types.point = 'points';
+        else if (type === 'LineString' || type === 'MultiLineString') types.polyline = 'lines';
+        else if (type === 'Polygon' || type === 'MultiPolygon') types.polygon = 'polygons';
+      });
+      if (!Object.keys(types).length) throw new Error('Tipe geometri tidak didukung SHP.');
+      var fileName = layer.name.replace(/[^a-z0-9_-]+/gi, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'layer_geoserver';
+      var safeCollection = { type: 'FeatureCollection', features: features.map(function (feature) { return Object.assign({}, feature, { properties: safeProperties(feature.properties) }); }) };
+      var zip = await writer.zip(safeCollection, {
+        folder: fileName, filename: fileName, outputType: 'blob', types: types,
+        prj: 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
+      });
+      var blob = zip instanceof Blob ? zip : new Blob([zip], { type: 'application/zip' });
+      var objectUrl = URL.createObjectURL(blob);
+      var anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = fileName + '.zip';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(function () { URL.revokeObjectURL(objectUrl); }, 1500);
+      return features.length;
+    }
+    function exportSelected() {
+      if (!Object.keys(state.selected).length) return;
+      runExport();
+    }
+    async function runExport() {
+      var selected = Object.keys(state.selected).map(function (name) { return state.selected[name]; });
+      if (!selected.length) return;
+      var controller = currentController();
+      setBusy(true, 'export');
+      var results = [], errors = [];
+      try {
+        var base = normalizeOws(source.value);
+        for (var i = 0; i < selected.length; i++) {
+          var layer = selected[i];
+          say('Mengunduh ' + layer.name + ' (layer ' + (i + 1) + ' dari ' + selected.length + ')…', false, true);
+          var data;
+          data = await collectLayer(base, layer, controller.signal, function (loaded, total) { say(layer.name + ': ' + loaded.toLocaleString('id-ID') + (total != null ? ' dari ' + total.toLocaleString('id-ID') : '') + ' fitur diunduh…', false, true); });
+          if (controller.signal.aborted) return;
+          var count = await saveShp(layer, data);
+          results.push(count.toLocaleString('id-ID') + ' fitur diekspor ke ' + layer.name + '.zip');
+          await new Promise(function (resolve) { window.setTimeout(resolve, 350); });
+        }
+        say(results.concat(errors).join(' · ') || 'Ekspor selesai.');
+      } catch (error) {
+        if (!controller.signal.aborted) { errors.push(error.message || String(error)); say(results.concat(errors).join(' · '), true); }
+      } finally { if (state.controller === controller) setBusy(false); }
+    }
+    function cancel() {
+      if (state.controller) state.controller.abort();
+      setBusy(false);
+      say('Proses dibatalkan.');
+    }
+    discoverButton.addEventListener('click', discover);
+    cancelButton.addEventListener('click', cancel);
+    countButton.addEventListener('click', countSelected);
+    exportButton.addEventListener('click', exportSelected);
+    tree.addEventListener('change', function (event) {
+      var input = event.target.closest('input[data-layer]');
+      if (!input) return;
+      var layer = state.layers[Number(input.getAttribute('data-layer'))];
+      if (!layer) return;
+      if (input.checked) state.selected[layer.name] = layer;
+      else delete state.selected[layer.name];
+      syncSelection();
+    });
+  })();
+  </script>
+</body>
+</html>

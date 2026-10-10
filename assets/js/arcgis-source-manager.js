@@ -26,7 +26,8 @@
     serviceCount: 0,
     truncated: false,
     errors: 0,
-    discoveryBusy: false
+    discoveryBusy: false,
+    exportBusy: false
   };
 
   function getElement(id) {
@@ -331,7 +332,7 @@
     updateSelection();
   }
 
-  var ACTION_BUTTON_IDS = ['arcgisCountBtn', 'arcgisAddSelectedBtn'];
+  var ACTION_BUTTON_IDS = ['arcgisCountBtn', 'arcgisAddSelectedBtn', 'arcgisExportSelectedBtn'];
 
   function updateSelection() {
     var count = state.selected.size;
@@ -339,7 +340,11 @@
     if (countElement) countElement.textContent = count ? count + ' layer dipilih' : 'Belum ada layer dipilih';
     ACTION_BUTTON_IDS.forEach(function (id) {
       var button = getElement(id);
-      if (button) button.disabled = state.discoveryBusy || count === 0;
+      if (button) button.disabled = state.discoveryBusy || state.exportBusy || count === 0;
+    });
+    var tree = getElement('arcgisLayerTree');
+    if (tree) tree.querySelectorAll('input[data-arcgis-leaf]').forEach(function (input) {
+      input.disabled = state.discoveryBusy || state.exportBusy;
     });
   }
 
@@ -349,12 +354,12 @@
       var element = getElement(id);
       if (!element) return;
       if (id === 'arcgisDiscoverBtn') {
-        element.disabled = busy;
+        element.disabled = busy || state.exportBusy;
         element.setAttribute('aria-busy', busy ? 'true' : 'false');
         element.classList.toggle('is-loading', busy);
         element.textContent = busy ? 'Mencari folder dan layer…' : 'Cari folder dan layer';
       }
-      else element.disabled = busy || state.selected.size === 0;
+      else element.disabled = busy || state.exportBusy || state.selected.size === 0;
     });
     var cancelButton = getElement('arcgisCancelBtn');
     if (cancelButton) {
@@ -1187,16 +1192,16 @@
     return result;
   }
 
-  async function exportShapefile(key) {
+  async function exportShapefile(key, descriptorOverride, onProgress) {
     var record = state.active[key];
-    var descriptor = record && record.descriptor;
+    var descriptor = descriptorOverride || (record && record.descriptor);
     if (!descriptor) return { ok: false, message: 'Layer ArcGIS tidak ditemukan.' };
     if (!descriptor.layerId) return { ok: false, message: 'Sublayer tidak memiliki ID untuk diekspor.' };
     var writer = window.shpwrite || (typeof shpwrite !== 'undefined' ? shpwrite : null);
     if (!writer || typeof writer.zip !== 'function') return { ok: false, message: 'Modul pembuat SHP belum siap. Muat ulang halaman lalu coba kembali.' };
 
     try {
-      var data = descriptor.featureData || await fetchFeatureGeoJson(descriptor);
+      var data = descriptor.featureData || await fetchFeatureGeoJson(descriptor, onProgress);
       var features = (data && data.features || []).filter(function (feature) {
         return feature && feature.geometry && feature.geometry.type && Array.isArray(feature.geometry.coordinates);
       });
@@ -1238,6 +1243,54 @@
     } catch (error) {
       return { ok: false, message: 'Gagal mengekspor SHP: ' + (error && error.message ? error.message : String(error)) };
     }
+  }
+
+  function exportSelectedWithGoogleLogin() {
+    if (!state.selected.size) {
+      setStatus('Pilih minimal satu layer ArcGIS REST untuk diekspor.', true);
+      return;
+    }
+    if (typeof window.RKRequireGoogleLogin !== 'function') {
+      setStatus('Login Google belum siap. Muat ulang halaman lalu coba kembali.', true);
+      return;
+    }
+    window.RKRequireGoogleLogin(exportSelectedShapefiles);
+  }
+
+  async function exportSelectedShapefiles() {
+    var descriptors = state.leaves.filter(function (descriptor) { return state.selected.has(descriptor.key); });
+    if (!descriptors.length) return;
+    state.exportBusy = true;
+    updateSelection();
+    var button = getElement('arcgisExportSelectedBtn');
+    if (button) {
+      button.classList.add('is-loading');
+      button.textContent = 'Menyiapkan SHP…';
+    }
+    var summaries = [];
+    var failed = 0;
+    try {
+      for (var index = 0; index < descriptors.length; index++) {
+        var descriptor = descriptors[index];
+        setStatus('Mengunduh fitur untuk ekspor SHP ' + (index + 1) + '/' + descriptors.length + '…');
+        setProgress(descriptor.name + ': menyiapkan data…');
+        await new Promise(function (resolve) { window.requestAnimationFrame(resolve); });
+        var result = await exportShapefile(descriptor.key, descriptor, function (loaded, total) {
+          setProgress(descriptor.name + ': ' + loaded.toLocaleString('id-ID') + (total ? ' / ' + total.toLocaleString('id-ID') : '') + ' fitur diunduh');
+        });
+        if (result.ok) summaries.push(result.message);
+        else { failed++; summaries.push(descriptor.name + ': ' + result.message); }
+      }
+    } finally {
+      state.exportBusy = false;
+      if (button) {
+        button.classList.remove('is-loading');
+        button.textContent = 'Export SHP (login Google)';
+      }
+      setProgress('');
+      updateSelection();
+    }
+    setStatus(summaries.join(' · ') || 'Tidak ada layer yang berhasil diekspor.', failed > 0);
   }
 
   async function addSelected() {
@@ -1290,12 +1343,14 @@
     var cancelButton = getElement('arcgisCancelBtn');
     var addButton = getElement('arcgisAddSelectedBtn');
     var countButton = getElement('arcgisCountBtn');
+    var exportButton = getElement('arcgisExportSelectedBtn');
     var attributeSelect = getElement('arcgisAttributeLayerSelect');
     var tree = getElement('arcgisLayerTree');
     if (discoverButton) discoverButton.addEventListener('click', discover);
     if (cancelButton) cancelButton.addEventListener('click', cancelDiscovery);
     if (addButton) addButton.addEventListener('click', addSelected);
     if (countButton) countButton.addEventListener('click', countSelected);
+    if (exportButton) exportButton.addEventListener('click', exportSelectedWithGoogleLogin);
     if (attributeSelect) {
       attributeSelect.addEventListener('change', function () {
         var record = state.active[this.value];
