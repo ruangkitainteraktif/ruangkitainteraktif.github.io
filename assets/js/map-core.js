@@ -3531,17 +3531,6 @@ L.control.scale({
         '<a href="https://www.paypal.com/paypalme/panjidanutirto" target="_blank" rel="noopener noreferrer" class="lc-donation-btn lc-donation-paypal" aria-label="Donasi melalui PayPal">PayPal</a>' +
       '</div>' +
     '</div>';
-    /* Slot AdSense persis di bawah kartu donasi. Loader-nya sudah ada di
-       <head> index.html, jadi di sini hanya unitnya. */
-    html += '<div class="lc-adsense">' +
-      '<!-- Ruang Kita -->' +
-      '<ins class="adsbygoogle" style="display:block"' +
-      ' data-ad-client="ca-pub-7501816933195235"' +
-      ' data-ad-slot="1306506445"' +
-      ' data-ad-format="horizontal"' +
-      ' data-full-width-responsive="true"></ins>' +
-      '</div>';
-
     /* Kotak cari tepat di bawah banner donasi, sebelum grup Layer Dipin.
        Sebelumnya ia diletakkan di antara grup "Layer Aktif" dan daftar
        kategori, sehingga tidak terlihat tanpa menggulir -- padahal itu cara
@@ -3753,6 +3742,17 @@ L.control.scale({
       }
       html += '</div></div>';
     });
+    /* Slot AdSense katalog diletakkan setelah seluruh kategori agar tidak
+       memisahkan banner donasi dari kontrol pencarian dan daftar layer. */
+    html += '<div class="lc-adsense">' +
+      '<!-- Ruang Kita -->' +
+      '<ins class="adsbygoogle" style="display:block"' +
+      ' data-ad-client="ca-pub-7501816933195235"' +
+      ' data-ad-slot="1306506445"' +
+      ' data-ad-format="horizontal"' +
+      ' data-full-width-responsive="true"></ins>' +
+      '</div>';
+
     container.innerHTML = html;
     dorongSlotIklan(container);
 

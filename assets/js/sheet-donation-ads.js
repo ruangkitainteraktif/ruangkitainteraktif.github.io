@@ -56,16 +56,6 @@
           banner = createDonationBanner();
           content.insertBefore(banner, content.firstChild);
         }
-        /* Unit AdSense menempel tepat di bawah banner donasi. Dipasang
-           terpisah dari banner supaya keduanya bisa gagal tanpa saling
-           menggugurkan, dan hanya sekali -- handler resize di bawah
-           dipanggil berulang kali. */
-        var ad = content.querySelector(':scope > .sheet-adsense');
-        if (!ad) {
-          ad = createAdUnit();
-          content.insertBefore(ad, banner.nextSibling);
-          dorongSlotIklan(ad);
-        }
       });
     });
   }
@@ -91,17 +81,17 @@
     });
   }
 
-  /* Unit AdSense. Loader skripnya sudah ada di <head> index.html, jadi di
-     sini hanya unitnya, sesuai potongan yang diberikan AdSense. */
+  /* Unit fluid untuk posisi di antara kartu GeoTools. Loader AdSense hanya
+     dimuat sekali di <head> index.html. */
   function createAdUnit() {
     var wrap = document.createElement('div');
     wrap.className = 'lc-adsense sheet-adsense';
     wrap.innerHTML = '<!-- Ruang Kita -->' +
       '<ins class="adsbygoogle" style="display:block"' +
+      ' data-ad-format="fluid"' +
+      ' data-ad-layout-key="-fb+5w+4e-db+86"' +
       ' data-ad-client="ca-pub-7501816933195235"' +
-      ' data-ad-slot="1306506445"' +
-      ' data-ad-format="horizontal"' +
-      ' data-full-width-responsive="true"></ins>';
+      ' data-ad-slot="5975101505"></ins>';
     return wrap;
   }
 
