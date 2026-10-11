@@ -44,7 +44,7 @@
     if (exportButton) {
       exportButton.disabled = busy || !Object.keys(state.selected).length;
       exportButton.classList.toggle('is-loading', busy && label === 'export');
-      exportButton.textContent = busy && label === 'export' ? 'Mengekspor SHP…' : 'Export SHP (login Google)';
+      exportButton.textContent = busy && label === 'export' ? 'Mengekspor SHP…' : 'Export SHP';
     }
   }
   function normalizeOwsUrl(value) {

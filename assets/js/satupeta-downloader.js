@@ -1594,6 +1594,7 @@
     state.pendingBoundaryNama = null;
     state.pendingFeature = null;
     state.clipped = [];
+    syncSHPExportButton();
     var sel = document.getElementById('satupetaKabSelected');
     if (sel) sel.style.display = 'none';
     var input = document.getElementById('satupetaKabSearch');
@@ -1620,6 +1621,101 @@
       wrap.style.display = 'none';
       wrap.innerHTML = '';
     }
+  }
+
+  function syncSHPExportButton() {
+    var button = document.getElementById('satupetaExportShpBtn');
+    var status = document.getElementById('satupetaExportStatus');
+    if (!button) return;
+    var available = !state.loading && state.clipped.length > 0;
+    button.style.display = available ? '' : 'none';
+    button.disabled = !available;
+    button.classList.remove('is-loading');
+    button.textContent = 'Export SHP';
+    if (status && !available) { status.style.display = 'none'; status.textContent = ''; }
+  }
+
+  function shpSafeProperties(properties) {
+    var result = {};
+    Object.keys(properties || {}).forEach(function (key) {
+      var base = String(key || 'field').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 10) || 'field';
+      var name = base, suffix = 1;
+      while (Object.prototype.hasOwnProperty.call(result, name)) {
+        var tail = String(suffix++);
+        name = base.slice(0, 10 - tail.length) + tail;
+      }
+      var value = properties[key];
+      if (value == null || (typeof value === 'number' && !Number.isFinite(value))) value = '';
+      else if (typeof value === 'boolean') value = value ? 1 : 0;
+      else if (typeof value === 'object') value = JSON.stringify(value);
+      result[name] = value;
+    });
+    return result;
+  }
+
+  function shpFileName() {
+    var source = currentSource();
+    var region = state.pendingBoundaryNama || (state.selectedFeature && state.selectedFeature.properties && (state.selectedFeature.properties.nama || state.selectedFeature.properties.nmkab)) || 'wilayah';
+    return (String(source.label || 'geospasial_indonesia') + '_' + String(region)).toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 80) || 'geospasial_indonesia';
+  }
+
+  async function exportCurrentSHP() {
+    var button = document.getElementById('satupetaExportShpBtn');
+    var status = document.getElementById('satupetaExportStatus');
+    var writer = window.shpwrite || (typeof shpwrite !== 'undefined' ? shpwrite : null);
+    if (!state.clipped.length) return;
+    if (!writer || typeof writer.zip !== 'function') {
+      if (status) { status.style.display = 'block'; status.style.color = '#b91c1c'; status.textContent = 'Modul pembuat SHP belum siap. Muat ulang halaman.'; }
+      return;
+    }
+    if (button) { button.disabled = true; button.classList.add('is-loading'); button.textContent = 'Menyiapkan SHP…'; }
+    if (status) { status.style.display = 'block'; status.style.color = '#475569'; status.textContent = 'Membuat shapefile dari ' + state.clipped.length.toLocaleString('id-ID') + ' fitur…'; }
+    try {
+      var features = state.clipped.filter(function (feature) {
+        return feature && feature.geometry && feature.geometry.type && Array.isArray(feature.geometry.coordinates);
+      });
+      if (!features.length) throw new Error('Tidak ada geometri yang dapat diekspor.');
+      var types = {};
+      features.forEach(function (feature) {
+        var type = feature.geometry.type;
+        if (type === 'Point' || type === 'MultiPoint') types.point = 'points';
+        else if (type === 'LineString' || type === 'MultiLineString') types.polyline = 'lines';
+        else if (type === 'Polygon' || type === 'MultiPolygon') types.polygon = 'polygons';
+      });
+      if (!Object.keys(types).length) throw new Error('Tipe geometri tidak didukung format SHP.');
+      var fileName = shpFileName();
+      var collection = {
+        type: 'FeatureCollection',
+        features: features.map(function (feature) {
+          return Object.assign({}, feature, { properties: shpSafeProperties(feature.properties) });
+        })
+      };
+      var zip = await writer.zip(collection, {
+        folder: fileName, filename: fileName, outputType: 'blob', types: types,
+        prj: 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
+      });
+      var blob = zip instanceof Blob ? zip : new Blob([zip], { type: 'application/zip' });
+      var url = URL.createObjectURL(blob), link = document.createElement('a');
+      link.href = url; link.download = fileName + '.zip';
+      document.body.appendChild(link); link.click(); link.remove();
+      window.setTimeout(function () { URL.revokeObjectURL(url); }, 1200);
+      if (status) { status.style.color = '#047857'; status.textContent = features.length.toLocaleString('id-ID') + ' fitur diekspor ke ' + fileName + '.zip'; }
+    } catch (error) {
+      if (status) { status.style.color = '#b91c1c'; status.textContent = 'Gagal export SHP: ' + (error && error.message || String(error)); }
+    } finally {
+      if (button) { button.classList.remove('is-loading'); button.textContent = 'Export SHP'; button.disabled = !state.clipped.length; }
+    }
+  }
+
+  function exportCurrentSHPWithGoogleLogin() {
+    var status = document.getElementById('satupetaExportStatus');
+    if (!state.clipped.length) return;
+    if (typeof window.RKRequireGoogleLogin !== 'function') {
+      if (status) { status.style.display = 'block'; status.style.color = '#b91c1c'; status.textContent = 'Login Google belum siap. Muat ulang halaman lalu coba kembali.'; }
+      return;
+    }
+    window.RKRequireGoogleLogin(exportCurrentSHP);
   }
 
   function getFieldVal(props, key) {
@@ -1978,6 +2074,7 @@
 
     if (!nationalMode && !state.selectedBoundary) return;
     state.loading = true;
+    syncSHPExportButton();
 
     var info = document.getElementById('satupetaInfo');
     if (info) {
@@ -1989,6 +2086,7 @@
       .then(function () { runFetchAndDisplay(info); })
       .catch(function (err) {
         state.loading = false;
+        syncSHPExportButton();
         if (info) info.innerHTML = 'Gagal memuat konfigurasi layer. Coba lagi.';
         console.error('SatupetaDownloader ensureSource:', err);
       });
@@ -2012,6 +2110,7 @@
       state.layer = null;
     }
     state.clipped = [];
+    syncSHPExportButton();
     state.selectedTableFeatureIndex = null;
     clearFeatureTable();
 
@@ -2068,6 +2167,7 @@
 
         state.clipped = clipped;
         state.loading = false;
+        syncSHPExportButton();
 
         if (!clipped.length) {
           if (info) info.innerHTML = esc(currentSource().emptyMessage || 'Tidak ada fitur di wilayah ini.');
@@ -2210,6 +2310,7 @@
       state.layer = null;
     }
     state.clipped = [];
+    syncSHPExportButton();
     state.selectedTableFeatureIndex = null;
     clearFeatureTable();
     state.loading = false;
@@ -2289,6 +2390,8 @@
         fetchAndDisplay();
       });
     }
+    var shpExportButton = document.getElementById('satupetaExportShpBtn');
+    if (shpExportButton) shpExportButton.addEventListener('click', exportCurrentSHPWithGoogleLogin);
 
     var searchInput = document.getElementById('satupetaKabSearch');
     if (searchInput) {
@@ -2358,6 +2461,7 @@
     searchWilayah: searchWilayah,
     clearSelection: clearSelection,
     cleanup: cleanup,
+    exportSHP: exportCurrentSHPWithGoogleLogin,
     run: function (kode) {
       loadKab().then(function (data) {
         var feat = data.features.find(function (f) {

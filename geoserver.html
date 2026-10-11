@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b1728">
-  <title>GeoServer Downloader SHP | RUANG KITA</title>
+  <title>GeoServer Downloader | RUANG KITA</title>
   <style>
     :root { color-scheme: light; }
     body { min-height: 100vh; margin: 0; padding: 28px 14px; box-sizing: border-box; background: #f1f5f9; color: #0f172a; font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
@@ -23,6 +23,12 @@
     .green { background: #059669; }
     .toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .toolbar button { width: 100%; }
+    .controls { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+    input[type=number], input[type=text] { width: 100%; min-width: 0; height: 38px; box-sizing: border-box; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #0f172a; font: inherit; font-size: 12px; }
+    .progress-wrap { display: grid; gap: 5px; }
+    .progress-track { height: 8px; overflow: hidden; border-radius: 8px; background: #e2e8f0; }
+    .progress-bar { width: 0; height: 100%; background: #059669; transition: width .2s ease; }
+    .log { max-height: 140px; overflow: auto; padding: 9px 10px; border-radius: 8px; background: #0f172a; color: #cbd5e1; font: 10px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre-wrap; }
     .status { min-height: 16px; color: #475569; font-size: 11px; line-height: 1.55; overflow-wrap: anywhere; }
     .status.error { color: #b91c1c; }
     #tree { display: block; max-height: 42vh; overflow: auto; padding: 10px; border: 1px solid #dbe4ee; border-radius: 10px; background: #f8fafc; }
@@ -49,8 +55,8 @@
 <body>
   <main class="downloader">
     <header class="hero">
-      <h1>GeoServer Downloader SHP</h1>
-      <p>Telusuri layer WFS Atlas ATR/BPN, unduh seluruh fitur dengan pagination, lalu simpan sebagai ZIP shapefile.</p>
+      <h1>GeoServer Downloader</h1>
+      <p>Telusuri layer WFS, hitung fitur, lalu unduh sebagai ZIP shapefile atau GeoJSON bertahap.</p>
     </header>
     <section class="body">
       <div class="row">
@@ -60,25 +66,40 @@
         <button id="discoverBtn" type="button">Cari workspace dan layer</button>
       </div>
       <div class="row">
-        <label for="pageSize">Jumlah fitur per halaman
-          <select id="pageSize"><option value="100">100</option><option value="500">500</option><option value="1000" selected>1.000</option><option value="2000">2.000</option></select>
+        <label for="pageSize">Batch size / max feature
+          <input id="pageSize" type="number" min="1" max="2000" value="1000">
         </label>
         <button id="cancelBtn" class="secondary" type="button" hidden>Batalkan</button>
       </div>
+      <div class="controls">
+        <label for="delayMs">Jeda antar batch (ms)<input id="delayMs" type="number" min="0" value="600"></label>
+        <label for="filePrefix">Prefix nama file<input id="filePrefix" type="text" value="geoserver"></label>
+        <label for="startOffset">Resume dari offset<input id="startOffset" type="number" min="0" value="0"></label>
+        <label for="startBatch">Nomor batch awal<input id="startBatch" type="number" min="1" value="1"></label>
+      </div>
+      <div class="toolbar">
+        <button id="pickFolderBtn" class="secondary" type="button">Pilih folder</button>
+        <button id="loadProgressBtn" class="secondary" type="button">Muat progress</button>
+        <button id="clearProgressBtn" class="secondary" type="button">Hapus progress tersimpan</button>
+      </div>
+      <div id="folderInfo" class="status"></div>
       <div id="status" class="status" role="status" aria-live="polite">Masukkan URL layanan, lalu cari workspace dan layer.</div>
       <div id="tree" class="tree"><div class="empty">Daftar layer akan muncul di sini.</div></div>
       <div class="toolbar">
         <button id="countBtn" class="secondary" type="button" disabled>Hitung fitur</button>
         <button id="exportBtn" class="green" type="button" disabled>Unduh SHP</button>
+        <button id="geojsonBtn" type="button" disabled>Unduh GeoJSON bertahap</button>
       </div>
-      <div class="note">Layer terpilih akan diekspor langsung dari WFS, tanpa ditambahkan ke peta. Jika memilih beberapa layer, tiap layer diunduh sebagai ZIP terpisah. Pastikan layanan mengizinkan WFS dan mendukung GeoJSON.</div>
+      <div class="progress-wrap"><div class="progress-track"><div id="progressBar" class="progress-bar"></div></div><div id="progressText" class="status">0 fitur diproses</div></div>
+      <div id="downloadLog" class="log" aria-live="polite">Log unduhan akan muncul di sini.</div>
+      <div class="note"><b>Alur:</b> pilih layer → hitung fitur → atur batch/prefix → (opsional) pilih folder dan muat progress → unduh. Progress disimpan otomatis setelah setiap batch berhasil.</div>
     </section>
   </main>
   <script>
   (function () {
     'use strict';
     var PROXY_PREFIX = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=';
-    var state = { controller: null, layers: [], selected: {}, counts: {}, busy: false };
+    var state = { controller: null, layers: [], selected: {}, counts: {}, busy: false, directory: null };
     var source = document.getElementById('sourceUrl');
     var tree = document.getElementById('tree');
     var status = document.getElementById('status');
@@ -86,6 +107,10 @@
     var cancelButton = document.getElementById('cancelBtn');
     var exportButton = document.getElementById('exportBtn');
     var countButton = document.getElementById('countBtn');
+    var geojsonButton = document.getElementById('geojsonBtn');
+    var downloadLog = document.getElementById('downloadLog');
+    var progressBar = document.getElementById('progressBar');
+    var progressText = document.getElementById('progressText');
 
     function say(message, error, loading) {
       status.classList.toggle('error', !!error);
@@ -129,8 +154,21 @@
         var timeout = window.setTimeout(abort, 30000);
         try {
           var response = await fetch(target, { signal: controller.signal, headers: { Accept: 'application/json, application/xml, text/xml, */*' } });
-          if (!response.ok) throw new Error('HTTP ' + response.status);
-          return await response.text();
+          var responseText = await response.text();
+          if (!response.ok) {
+            var detail = '';
+            try {
+              var xml = new DOMParser().parseFromString(responseText, 'application/xml');
+              var exception = Array.prototype.find.call(xml.getElementsByTagName('*'), function (node) { return /ExceptionText|ServiceException/i.test((node.localName || node.nodeName).split(':').pop()); });
+              if (exception) detail = (exception.textContent || '').trim();
+              else if (responseText && responseText.charAt(0) === '{') {
+                var errorJson = JSON.parse(responseText);
+                detail = errorJson.message || errorJson.error || '';
+              }
+            } catch (_) { /* body bukan XML/JSON */ }
+            throw new Error('HTTP ' + response.status + (detail ? ': ' + detail.slice(0, 300) : ''));
+          }
+          return responseText;
         } finally {
           window.clearTimeout(timeout);
           if (signal) signal.removeEventListener('abort', abort);
@@ -156,6 +194,9 @@
       exportButton.disabled = busy || !Object.keys(state.selected).length;
       exportButton.classList.toggle('is-loading', busy && action === 'export');
       exportButton.textContent = busy && action === 'export' ? 'Menyiapkan SHP…' : 'Unduh SHP';
+      geojsonButton.disabled = busy || !Object.keys(state.selected).length;
+      geojsonButton.classList.toggle('is-loading', busy && action === 'geojson');
+      geojsonButton.textContent = busy && action === 'geojson' ? 'Mengunduh GeoJSON…' : 'Unduh GeoJSON bertahap';
       countButton.disabled = busy || !Object.keys(state.selected).length;
       countButton.classList.toggle('is-loading', busy && action === 'count');
       countButton.textContent = busy && action === 'count' ? 'Menghitung…' : 'Hitung fitur';
@@ -226,10 +267,11 @@
     function syncSelection() {
       exportButton.disabled = state.busy || !Object.keys(state.selected).length;
       countButton.disabled = state.busy || !Object.keys(state.selected).length;
+      geojsonButton.disabled = state.busy || !Object.keys(state.selected).length;
       var count = Object.keys(state.selected).length;
       if (count) exportButton.title = count + ' layer dipilih';
     }
-    function featureRequest(base, layer, offset, version) {
+    function featureRequest(base, layer, offset, version, sortBy) {
       var url = new URL(base);
       url.searchParams.set('service', 'WFS');
       url.searchParams.set('version', version);
@@ -237,19 +279,38 @@
       url.searchParams.set(version === '2.0.0' ? 'typeNames' : 'typeName', layer.name);
       url.searchParams.set(version === '2.0.0' ? 'count' : 'maxFeatures', document.getElementById('pageSize').value);
       if (offset > 0) url.searchParams.set('startIndex', String(offset));
+      if (sortBy) url.searchParams.set('sortBy', sortBy);
       url.searchParams.set('outputFormat', 'application/json');
       url.searchParams.set('srsName', 'EPSG:4326');
       return url.toString();
     }
-    async function getFeaturePage(base, layer, offset, version, signal) {
-      var text = await fetchText(featureRequest(base, layer, offset, version), signal);
+    async function getFeaturePage(base, layer, offset, version, signal, sortBy) {
+      var text = await fetchText(featureRequest(base, layer, offset, version, sortBy), signal);
       var data;
       try { data = JSON.parse(text); }
-      catch (_) { throw new Error('GeoServer tidak mengembalikan GeoJSON. Pastikan WFS/GeoJSON diaktifkan.'); }
+      catch (_) {
+        var xml = new DOMParser().parseFromString(text, 'application/xml');
+        var exception = Array.prototype.find.call(xml.getElementsByTagName('*'), function (node) { return /ExceptionText|ServiceException/i.test((node.localName || node.nodeName).split(':').pop()); });
+        if (exception) throw new Error('GeoServer WFS: ' + (exception.textContent || '').trim().slice(0, 300));
+        throw new Error('GeoServer tidak mengembalikan GeoJSON. Pastikan WFS/GeoJSON diaktifkan.');
+      }
       if (data.exceptions && data.exceptions.length) throw new Error(data.exceptions[0].text || 'Permintaan WFS gagal.');
       if (data.type === 'ExceptionReport') throw new Error('GeoServer menolak permintaan GetFeature.');
       if (!Array.isArray(data.features)) throw new Error('Respons WFS bukan FeatureCollection GeoJSON.');
       return data;
+    }
+    function getStableSortBy(features) {
+      var props = features && features.length ? features[0].properties : null;
+      if (!props || typeof props !== 'object') return '';
+      var keys = Object.keys(props).filter(function (key) {
+        return /^[A-Za-z_][A-Za-z0-9_.:-]*$/.test(key) && (props[key] == null || ['string', 'number', 'boolean'].indexOf(typeof props[key]) >= 0);
+      });
+      keys.sort(function (a, b) {
+        var aKey = /(^|_)(id|fid|gid|kode|code|no)$/i.test(a) || /^(id|fid|gid|kode|code|no)_/i.test(a);
+        var bKey = /(^|_)(id|fid|gid|kode|code|no)$/i.test(b) || /^(id|fid|gid|kode|code|no)_/i.test(b);
+        return aKey === bKey ? a.localeCompare(b) : aKey ? -1 : 1;
+      });
+      return keys.slice(0, 8).map(function (key) { return key + ' A'; }).join(',');
     }
     async function collectLayer(rootBase, layer, signal, onProgress) {
       var workspaceBase = workspaceOws(rootBase, layer);
@@ -267,19 +328,25 @@
     async function getFeatureCount(base, layer, version, signal) {
       var url = new URL(featureRequest(base, layer, 0, version));
       url.searchParams.set('resultType', 'hits');
+      // GeoServer commonly returns the WFS hits response as XML. Asking for
+      // GeoJSON here can make some versions return an empty FeatureCollection.
+      url.searchParams.delete('outputFormat');
       var text = await fetchText(url.toString(), signal);
+      var json;
       try {
-        var json = JSON.parse(text);
-        var value = json.numberMatched != null ? json.numberMatched : (json.totalFeatures != null ? json.totalFeatures : json.count);
-        if (value != null && value !== 'unknown' && Number.isFinite(Number(value))) return Number(value);
-      } catch (_) {
-        var xml = new DOMParser().parseFromString(text, 'application/xml');
-        var root = xml.documentElement;
-        var valueXml = root.getAttribute('numberMatched') || root.getAttribute('numberOfFeatures') || root.getAttribute('numberOfRecordsMatched');
-        if (valueXml && valueXml !== 'unknown' && Number.isFinite(Number(valueXml))) return Number(valueXml);
-        var exception = Array.prototype.find.call(xml.getElementsByTagName('*'), function (node) { return /ExceptionText|ServiceException/i.test((node.localName || node.nodeName).split(':').pop()); });
-        if (exception) throw new Error(exception.textContent || 'WFS menolak permintaan hitung.');
-      }
+        json = JSON.parse(text);
+        var values = [json.numberMatched, json.totalFeatures, json.numberOfFeatures, json.count];
+        for (var i = 0; i < values.length; i++) {
+          if (values[i] != null && values[i] !== 'unknown' && Number.isFinite(Number(values[i]))) return Number(values[i]);
+        }
+      } catch (_) { /* WFS 1.x and many GeoServer setups return XML. */ }
+      var xml = new DOMParser().parseFromString(text, 'application/xml');
+      if (xml.getElementsByTagName('parsererror').length) throw new Error('Respons hitung WFS tidak valid untuk ' + layer.name + '.');
+      var root = xml.documentElement;
+      var valueXml = root.getAttribute('numberMatched') || root.getAttribute('numberOfFeatures') || root.getAttribute('numberOfRecordsMatched');
+      if (valueXml != null && valueXml !== '' && valueXml !== 'unknown' && Number.isFinite(Number(valueXml))) return Number(valueXml);
+      var exception = Array.prototype.find.call(xml.getElementsByTagName('*'), function (node) { return /ExceptionText|ServiceException/i.test((node.localName || node.nodeName).split(':').pop()); });
+      if (exception) throw new Error(exception.textContent || 'WFS menolak permintaan hitung.');
       throw new Error('Server tidak mengirim jumlah fitur untuk ' + layer.name + '.');
     }
     async function countSelected() {
@@ -293,13 +360,21 @@
         for (var i = 0; i < selected.length; i++) {
           var layer = selected[i];
           say('Menghitung fitur ' + layer.name + ' (' + (i + 1) + ' dari ' + selected.length + ')…', false, true);
-          var total = null;
-          var bases = [workspaceOws(base, layer), base];
-          for (var baseIndex = 0; baseIndex < bases.length && total == null; baseIndex++) for (var versionIndex = 0; versionIndex < 3 && total == null; versionIndex++) {
+          var total = null, zeroReported = false;
+          // Samakan strategi dengan hitung pada GeoData: coba endpoint root
+          // dan setiap versi WFS sampai ada hasil positif. Beberapa endpoint
+          // mengembalikan 0 pada satu versi meski layer berisi data.
+          var bases = [base, workspaceOws(base, layer)];
+          for (var baseIndex = 0; baseIndex < bases.length && !(total > 0); baseIndex++) for (var versionIndex = 0; versionIndex < 3 && !(total > 0); versionIndex++) {
             if (controller.signal.aborted) return;
-            try { total = await getFeatureCount(bases[baseIndex], layer, ['1.0.0', '2.0.0', '1.1.0'][versionIndex], controller.signal); }
+            try {
+              var candidate = await getFeatureCount(bases[baseIndex], layer, ['2.0.0', '1.1.0', '1.0.0'][versionIndex], controller.signal);
+              if (candidate > 0) total = candidate;
+              else if (candidate === 0) zeroReported = true;
+            }
             catch (error) { if (controller.signal.aborted) return; if (baseIndex === bases.length - 1 && versionIndex === 2) errors.push(layer.name + ': ' + (error.message || String(error))); }
           }
+          if (total == null && zeroReported) total = 0;
           if (total != null) {
             state.counts[layer.name] = total;
             messages.push(layer.name + ': ' + total.toLocaleString('id-ID') + ' fitur');
@@ -413,6 +488,136 @@
         if (!controller.signal.aborted) { errors.push(error.message || String(error)); say(results.concat(errors).join(' · '), true); }
       } finally { if (state.controller === controller) setBusy(false); }
     }
+    function writeDownloadLog(message) {
+      var stamp = new Date().toLocaleTimeString('id-ID');
+      downloadLog.textContent = (downloadLog.textContent === 'Log unduhan akan muncul di sini.' ? '' : downloadLog.textContent + '\n') + '[' + stamp + '] ' + message;
+      downloadLog.scrollTop = downloadLog.scrollHeight;
+    }
+    function progressKey(layer) {
+      return 'geoserver_download_' + btoa(unescape(encodeURIComponent(normalizeOws(source.value) + '|' + layer.name + '|' + document.getElementById('filePrefix').value.trim()))).replace(/[^a-z0-9]/gi, '').slice(0, 80);
+    }
+    function saveLayerProgress(layer, offset, batch) {
+      try { localStorage.setItem(progressKey(layer), JSON.stringify({ offset: offset, batch: batch, total: state.counts[layer.name] || null, updatedAt: new Date().toISOString() })); } catch (_) { /* storage can be disabled */ }
+    }
+    async function saveGeoJsonFile(blob, fileName) {
+      if (state.directory) {
+        var permission = await state.directory.queryPermission({ mode: 'readwrite' });
+        if (permission !== 'granted' && await state.directory.requestPermission({ mode: 'readwrite' }) !== 'granted') throw new Error('Izin menulis ke folder ditolak.');
+        var handle = await state.directory.getFileHandle(fileName, { create: true });
+        var writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        return 'folder';
+      }
+      var objectUrl = URL.createObjectURL(blob), anchor = document.createElement('a');
+      anchor.href = objectUrl; anchor.download = fileName;
+      document.body.appendChild(anchor); anchor.click(); anchor.remove();
+      window.setTimeout(function (href) { URL.revokeObjectURL(href); }, 2000, objectUrl);
+      return 'browser';
+    }
+    async function runGeojsonPages() {
+      var selected = Object.keys(state.selected).map(function (name) { return state.selected[name]; });
+      if (!selected.length) return;
+      var controller = currentController();
+      setBusy(true, 'geojson');
+      var completed = [], errors = [];
+      try {
+        var base = normalizeOws(source.value);
+        var pageSize = Math.max(1, Math.min(2000, Number(document.getElementById('pageSize').value) || 1000));
+        document.getElementById('pageSize').value = pageSize;
+        var configuredOffset = Math.max(0, Number(document.getElementById('startOffset').value) || 0);
+        var configuredBatch = Math.max(1, Number(document.getElementById('startBatch').value) || 1);
+        var filePrefix = document.getElementById('filePrefix').value.trim().replace(/[^a-z0-9_-]+/gi, '_').replace(/^_+|_+$/g, '') || 'geoserver';
+        var delay = Math.max(0, Number(document.getElementById('delayMs').value) || 0);
+        var allTotal = selected.reduce(function (sum, layer) { return sum + (Number(state.counts[layer.name]) || 0); }, 0);
+        var allDone = 0;
+        writeDownloadLog('Mulai download ' + selected.length + ' layer; batch ' + pageSize + ', offset awal ' + configuredOffset + '.');
+        for (var i = 0; i < selected.length; i++) {
+          var layer = selected[i], workspaceBase = workspaceOws(base, layer);
+          var attempts = [
+            { base: workspaceBase, version: '2.0.0' }, { base: workspaceBase, version: '1.1.0' }, { base: workspaceBase, version: '1.0.0' },
+            { base: base, version: '2.0.0' }, { base: base, version: '1.1.0' }, { base: base, version: '1.0.0' }
+          ];
+          var succeeded = false, lastError;
+          for (var a = 0; a < attempts.length && !succeeded; a++) {
+            var offset = configuredOffset, part = configuredBatch, layerFiles = [], lastSignature = '', sortBy = '', reachedEnd = false;
+            try {
+              if (configuredOffset === 0) {
+                try {
+                  var saved = JSON.parse(localStorage.getItem(progressKey(layer)) || 'null');
+                  if (saved && Number(saved.offset) > 0) { offset = Number(saved.offset); part = Number(saved.batch) || Math.floor(offset / pageSize) + 1; }
+                } catch (_) { /* abaikan progress tersimpan yang rusak */ }
+              }
+              if (offset > 0) writeDownloadLog(layer.name + ' dilanjutkan dari offset ' + offset + '.');
+              while (true) {
+                if (controller.signal.aborted) return;
+                if (state.counts[layer.name] != null && offset >= Number(state.counts[layer.name])) { reachedEnd = true; break; }
+                say(layer.name + ': membaca halaman ' + part + ' dari WFS…', false, true);
+                var page = await getFeaturePage(attempts[a].base, layer, offset, attempts[a].version, controller.signal, sortBy);
+                var batch = page.features || [];
+                if (!batch.length) {
+                  if (state.counts[layer.name] != null && offset < Number(state.counts[layer.name])) throw new Error('WFS berhenti di offset ' + offset.toLocaleString('id-ID') + ' sebelum total ' + Number(state.counts[layer.name]).toLocaleString('id-ID') + '.');
+                  reachedEnd = true;
+                  break;
+                }
+                if (!sortBy) {
+                  sortBy = getStableSortBy(batch);
+                  if (!sortBy) throw new Error('Layer ini tidak memiliki atribut scalar yang dapat dipakai untuk sortBy pagination.');
+                  // Ulangi halaman pertama dengan urutan eksplisit agar seluruh
+                  // halaman memakai urutan yang sama dan tidak melompati data.
+                  page = await getFeaturePage(attempts[a].base, layer, offset, attempts[a].version, controller.signal, sortBy);
+                  batch = page.features || [];
+                  if (!batch.length) break;
+                }
+                var signature = String(batch[0].id || JSON.stringify(batch[0]).slice(0, 180)) + '|' + String(batch[batch.length - 1].id || JSON.stringify(batch[batch.length - 1]).slice(0, 180));
+                if (offset > 0 && signature === lastSignature) throw new Error('Server mengulang halaman WFS; pagination tidak didukung atau startIndex diabaikan.');
+                lastSignature = signature;
+                say(layer.name + ': menyimpan GeoJSON halaman ' + part + ' (' + offset.toLocaleString('id-ID') + '–' + (offset + batch.length).toLocaleString('id-ID') + ')…', false, true);
+                var safeName = layer.name.replace(/[^a-z0-9_-]+/gi, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'layer_geoserver';
+                var fileName = filePrefix + '_' + safeName + '_' + String(offset + 1).padStart(7, '0') + '-' + String(offset + batch.length).padStart(7, '0') + '.geojson';
+                var blob = new Blob([JSON.stringify(page)], { type: 'application/geo+json;charset=utf-8' });
+                var destination = await saveGeoJsonFile(blob, fileName);
+                layerFiles.push(fileName);
+                offset += batch.length;
+                allDone += batch.length;
+                saveLayerProgress(layer, offset, part + 1);
+                document.getElementById('startOffset').value = offset;
+                document.getElementById('startBatch').value = part + 1;
+                var pct = allTotal > 0 ? Math.min(100, allDone / allTotal * 100) : 0;
+                progressBar.style.width = pct + '%';
+                progressText.textContent = allDone.toLocaleString('id-ID') + (allTotal ? ' / ' + allTotal.toLocaleString('id-ID') + ' fitur (' + pct.toFixed(1) + '%)' : ' fitur diproses');
+                writeDownloadLog('Tersimpan ' + fileName + ' (' + batch.length + ' fitur) ke ' + destination + '.');
+                part++;
+                if (batch.length < pageSize) {
+                  if (state.counts[layer.name] != null && offset < Number(state.counts[layer.name])) throw new Error('WFS hanya mengirim sampai offset ' + offset.toLocaleString('id-ID') + ' dari total ' + Number(state.counts[layer.name]).toLocaleString('id-ID') + '.');
+                  reachedEnd = true;
+                  break;
+                }
+                if (delay) await new Promise(function (resolve) { window.setTimeout(resolve, delay); });
+              }
+              if (!layerFiles.length && !(state.counts[layer.name] != null && offset >= Number(state.counts[layer.name]))) throw new Error('Layer tidak memiliki fitur untuk diunduh.');
+              completed.push(layer.name + ': ' + layerFiles.length + ' file GeoJSON');
+              if (reachedEnd) {
+                try { localStorage.removeItem(progressKey(layer)); } catch (_) { /* abaikan */ }
+              }
+              succeeded = true;
+            } catch (error) {
+              if (controller.signal.aborted) return;
+              lastError = error;
+              writeDownloadLog('ERROR ' + layer.name + ' pada offset ' + offset + ': ' + (error.message || String(error)));
+              if (layerFiles.length) {
+                errors.push(layer.name + ': proses berhenti setelah ' + layerFiles.length + ' file (' + (error.message || String(error)) + ')');
+                succeeded = true;
+              }
+            }
+          }
+          if (!succeeded) errors.push(layer.name + ': ' + (lastError && lastError.message || 'GeoServer tidak mengembalikan GeoJSON.'));
+        }
+        say(completed.concat(errors).join(' · ') || 'Tidak ada file yang diunduh.', errors.length > 0);
+      } catch (error) {
+        if (!controller.signal.aborted) say(error.message || String(error), true);
+      } finally { if (state.controller === controller) setBusy(false); }
+    }
     function cancel() {
       if (state.controller) state.controller.abort();
       setBusy(false);
@@ -422,6 +627,33 @@
     cancelButton.addEventListener('click', cancel);
     countButton.addEventListener('click', countSelected);
     exportButton.addEventListener('click', exportSelected);
+    geojsonButton.addEventListener('click', runGeojsonPages);
+    document.getElementById('pickFolderBtn').addEventListener('click', async function () {
+      if (!window.showDirectoryPicker) { say('Browser ini belum mendukung pilih folder; file akan masuk ke folder unduhan default.', true); return; }
+      try {
+        state.directory = await window.showDirectoryPicker({ mode: 'readwrite' });
+        var permission = await state.directory.requestPermission({ mode: 'readwrite' });
+        if (permission !== 'granted') throw new Error('Izin folder ditolak.');
+        document.getElementById('folderInfo').textContent = 'Folder download: ' + state.directory.name;
+      } catch (error) { if (error.name !== 'AbortError') say(error.message || String(error), true); }
+    });
+    document.getElementById('loadProgressBtn').addEventListener('click', function () {
+      var names = Object.keys(state.selected);
+      if (!names.length) { say('Pilih layer dahulu untuk memuat progress.', true); return; }
+      try {
+        var saved = JSON.parse(localStorage.getItem(progressKey(state.selected[names[0]])) || 'null');
+        if (!saved) { say('Tidak ada progress tersimpan untuk ' + names[0] + '.'); return; }
+        document.getElementById('startOffset').value = Number(saved.offset) || 0;
+        document.getElementById('startBatch').value = Number(saved.batch) || 1;
+        writeDownloadLog('Progress dimuat: offset ' + Number(saved.offset).toLocaleString('id-ID') + ', batch ' + Number(saved.batch) + ' (' + names[0] + ').');
+      } catch (_) { say('Progress tersimpan tidak dapat dibaca.', true); }
+    });
+    document.getElementById('clearProgressBtn').addEventListener('click', function () {
+      try { Object.keys(state.selected).forEach(function (name) { localStorage.removeItem(progressKey(state.selected[name])); }); } catch (_) { /* abaikan */ }
+      document.getElementById('startOffset').value = 0;
+      document.getElementById('startBatch').value = 1;
+      writeDownloadLog('Progress layer terpilih dihapus.');
+    });
     tree.addEventListener('change', function (event) {
       var input = event.target.closest('input[data-layer]');
       if (!input) return;

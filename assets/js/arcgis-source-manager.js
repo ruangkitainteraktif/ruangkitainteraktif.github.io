@@ -1285,7 +1285,7 @@
       state.exportBusy = false;
       if (button) {
         button.classList.remove('is-loading');
-        button.textContent = 'Export SHP (login Google)';
+        button.textContent = 'Export SHP';
       }
       setProgress('');
       updateSelection();
