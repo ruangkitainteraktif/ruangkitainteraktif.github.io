@@ -2607,6 +2607,31 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     </div>
                   </details>
 
+                  <details class="geotani-kta-card geotani-sls-card" id="geotani-cek-nib-card" aria-labelledby="geotani-cek-nib-title">
+                    <summary class="gt-card-head">
+                      <span class="gt-card-icon" aria-hidden="true">&#128269;</span>
+                      <span>
+                        <b id="geotani-cek-nib-title">Cek NIB Tanah <span class="geotani-sls-badge">ATR/BPN</span></b>
+                        <small>Cari bidang tanah berdasarkan NIB &mdash; ATR/BPN GISTARU</small>
+                      </span>
+                    </summary>
+                    <div>
+                      <p class="geotani-sls-desc">Masukkan <b>NIB</b> (Nomor Induk Basic) untuk mencari bidang tanah di GISTARU. Satu NIB dapat dipakai di lebih dari satu kabupaten/kota, jadi hasil pencarian ditampilkan sebagai daftar.</p>
+                      <div class="geotani-sls-search">
+                        <label class="geotani-form-label" for="geotani-nib-input">NIB</label>
+                        <input type="text" id="geotani-nib-input" placeholder="Contoh: 00328" autocomplete="off" inputmode="numeric" class="geotani-form-input-search" />
+                      </div>
+                      <div class="nib-actions">
+                        <button id="geotani-nib-search" class="geotani-btn-print" type="button">Cari NIB</button>
+                        <button id="geotani-nib-reset" class="geotani-btn-print nib-reset-btn" type="button" disabled>Reset</button>
+                      </div>
+                      <div id="geotani-nib-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                      <div id="geotani-nib-results" class="nib-results"></div>
+                      <p class="geotani-sls-desc" style="font-size:10px;opacity:.8;margin-top:8px;">Tombol <b>Reset</b> menghapus hasil pencarian, mengosongkan isian, dan mematikan layer Persil Tanah (BHUMI maupun GISTARU) yang dinyalakan lewat Katalog Layer.</p>
+                      <p class="geotani-sls-desc" style="font-size:10px;opacity:.8;margin-top:8px;">Data berasal dari WFS GISTARU ATR/BPN dan menampilkan penggunaan, tipe hak, NIB, serta luas peta bidang. Keberadaan bidang di sini bukan bukti keaslian atau status hukum sertifikat.</p>
+                    </div>
+                  </details>
+
                   <details class="geotani-kta-card geotani-sls-card" id="geotani-sls-card" aria-labelledby="geotani-sls-title">
                     <summary class="gt-card-head">
                       <span class="gt-card-icon" aria-hidden="true">&#129517;</span>
@@ -3897,6 +3922,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <!-- SLS GeoTani: setelah geodesic-area (untuk luas) dan geoid-wilayah
        (kartu PDF membaca window._geotaniSlsData). -->
   <script src="assets/js/geotani-sls.js"></script>
+  <script src="assets/js/geotani-cek-nib.js"></script>
   <!-- LBS & LSD (BIG SatuPeta): butuh geodesic-area untuk luas, dan
        geoid-wilayah untuk seksi PDF. -->
   <script src="assets/js/geotani-lbs-lsd.js"></script>

@@ -724,7 +724,8 @@
       getLayer: function () { return window.peatlandPmtilesLayer || null; },
       props: ['name', 'type', 'status', 'provinsi', 'kabupaten', 'area_ha']
     },
-    toggleBumiPersilLayer: { name: 'Persil Tanah (ATRBPN)', type: 'raster' },
+    toggleBumiPersilLayer: { name: 'Persil Tanah (BHUMI)', type: 'raster' },
+    toggleGistaruPersilLayer: { name: 'Persil Tanah (GISTARU)', type: 'raster' },
     toggleRtrwTmsLayer: { name: 'RTRW Kabupaten/Kota', type: 'raster' },
     toggleLsdTmsLayer: { name: 'Lahan Sawah Dilindungi (LSD)', type: 'raster' },
     toggleLbsTmsLayer: { name: 'Lahan Baku Sawah (LBS)', type: 'raster' },

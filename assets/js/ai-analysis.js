@@ -99,7 +99,7 @@
       keywords: ['foto udara','citra','big','padang','aerial','penginderaan','kendari','bitung','makassar','sulawesi','orthophoto','futile','planetscope','planet','basemap']
     },
     'ATRBPN': {
-      ids: ['toggleBumiPersilLayer','toggleRtrwTmsLayer','toggleLsdTmsLayer','toggleLbsTmsLayer','toggleDiTmsLayer','toggleSaluranIrTmsLayer'],
+      ids: ['toggleBumiPersilLayer','toggleGistaruPersilLayer','toggleRtrwTmsLayer','toggleLsdTmsLayer','toggleLbsTmsLayer','toggleDiTmsLayer','toggleSaluranIrTmsLayer'],
       keywords: ['rtrw','sawah dilindungi','lahan baku sawah','atrbpn']
     },
     'Lingkungan': {
@@ -1344,8 +1344,8 @@
     var count = countActiveInCategory(ids);
     var s = '**Data Lahan & Pertanahan**\n\n';
     if (!count) {
-      var recIds = ['toggleBumiPersilLayer','toggleRtrwTmsLayer','toggleLsdTmsLayer','toggleLbsTmsLayer','toggleDiTmsLayer'];
-      var recLabels = { toggleBumiPersilLayer: 'Persil Tanah (ATRBPN)', toggleRtrwTmsLayer: 'RTRW Kab/Kota', toggleLsdTmsLayer: 'Lahan Sawah Dilindungi', toggleLbsTmsLayer: 'Lahan Baku Sawah', toggleDiTmsLayer: 'Daerah Irigasi' };
+      var recIds = ['toggleBumiPersilLayer','toggleGistaruPersilLayer','toggleRtrwTmsLayer','toggleLsdTmsLayer','toggleLbsTmsLayer','toggleDiTmsLayer'];
+      var recLabels = { toggleBumiPersilLayer: 'Persil Tanah (BHUMI)', toggleGistaruPersilLayer: 'Persil Tanah (GISTARU)', toggleRtrwTmsLayer: 'RTRW Kab/Kota', toggleLsdTmsLayer: 'Lahan Sawah Dilindungi', toggleLbsTmsLayer: 'Lahan Baku Sawah', toggleDiTmsLayer: 'Daerah Irigasi' };
       s += 'Tidak ada layer ATRBPN aktif.\n\n**Rekomendasi layer:**\n';
       s += recGrid(recIds, recLabels);
       return s;

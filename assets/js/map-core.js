@@ -1489,6 +1489,7 @@ L.control.scale({
           'toggleDemnasOverlay', 'toggleSebaranPasar', 'toggleSppgLayer', 'toggleSppgSebaranLayer', 'toggleSppgDistrictLayer',
           'toggleConcessionsLayer', 'toggleProtectedLayer', 'toggleMangroveLayer', 'togglePeatlandLayer',
           'toggleBumiPersilLayer',
+          'toggleGistaruPersilLayer',
           'toggleFsvaLayer',
           'toggleLsdTmsLayer', 'toggleLbsTmsLayer',
           'toggleDiTmsLayer', 'toggleSaluranIrTmsLayer', 'toggleRtrwTmsLayer',
@@ -1844,8 +1845,9 @@ L.control.scale({
         if (hsCb) hsCb.checked = false;
         if (btCb) btCb.checked = false;
 
-        // 10b-1. Reset Bumi Persil layer
+        // 10b-1. Reset layer persil ATR/BPN (BHUMI + GISTARU)
         if (typeof toggleBumiPersilLayer === 'function') toggleBumiPersilLayer(false);
+        if (typeof toggleGistaruPersilLayer === 'function') toggleGistaruPersilLayer(false);
 
         setBaseMap('google-maps');
         currentBasemapName = 'google-maps';
@@ -1949,53 +1951,135 @@ L.control.scale({
   const BPS_WMS_URL = 'https://geoserver.bps.go.id/ows';
   const KLATEN_WMS_URL = 'https://geoportal.klaten.go.id/geoserver/wms';
   const CIREBON_WMS_URL = 'https://geoserver.cirebonkota.go.id/geoserver/wms';
+  const BHUMI_PERSIL_WMS_URL = 'https://bhumi.atrbpn.go.id/expapi/wms?authkey=e61b8fc8-20e2-442b-8e27-da62f6e6245v';
+  const GISTARU_WMS_URL = 'https://atlas.atrbpn.go.id/geoserver/gistaru/ows';
 
-  /* ── BPN Bhumi Persil (WMTS) ── */
+  /* ── Persil tanah ATR/BPN ──
+   * Dua sumber, klasifikasi warna sama persis (delapan jenis hak):
+   *   - BHUMI  : bhumi.atrbpn.go.id/expapi, layer petabpn:PersilBerdasarkanJenisHakStroke
+   *   - GISTARU : atlas.atrbpn.go.id/geoserver/gistaru, layer gistaru:persil
+   * Keduanya hanya menerima GetMap, jadi jangan pakai library WMS yang
+   * memanggil GetCapabilities. GISTARU tidak mengirim header CORS, tetapi
+   * tile Leaflet dimuat lewat <img> sehingga tetap bisa ditampilkan tanpa
+   * proxy -- asal option crossOrigin tidak diaktifkan. */
   var bumiPersilLayer = null;
-  var bumiPersilLegendActive = false;
+  var gistaruPersilLayer = null;
+  var legendPersilShown = false;
 
-  function showBumiPersilLegend() {
-    if (bumiPersilLegendActive) return;
+  /* Warna asli hasil render BHUMI, diambil dari sampling tile. GetLegendGraphic
+   * GISTARU memakai warna yang sama pada opacity ~0,70 di atas putih, jadi
+   * kedua sumber memakai palet yang sama persis. */
+  var PERSIL_LEGEND = [
+    { color: '#FFAA00', label: 'Hak Milik' },
+    { color: '#BBB52B', label: 'Hak Guna Usaha' },
+    { color: '#A5BFDD', label: 'Hak Guna Bangunan' },
+    { color: '#389C22', label: 'Hak Pakai' },
+    { color: '#B8358C', label: 'Hak Pengelolaan' },
+    { color: '#244AA3', label: 'Hak Wakaf' },
+    { color: '#42E5F4', label: 'Tanah Adat' },
+    { color: '#686868', label: 'Belum Terdaftar' }
+  ];
+
+  function anyPersilLayerActive() {
+    return !!((bumiPersilLayer && map.hasLayer(bumiPersilLayer)) ||
+              (gistaruPersilLayer && map.hasLayer(gistaruPersilLayer)));
+  }
+
+  function showPersilLegend() {
+    if (legendPersilShown) return;
     if (typeof addUnifiedLegend !== 'function') return;
 
     var div = L.DomUtil.create('div', 'atrbpn-legend');
     L.DomEvent.disableClickPropagation(div);
 
-    div.innerHTML =
-      '<div class="atrbpn-legend-title">Persil Tanah (Bhumi Persil)</div>' +
-      '<div class="atrbpn-legend-items">' +
-        '<div class="atrbpn-legend-item">' +
-          '<span class="atrbpn-legend-dot" style="background:#8B4513;"></span>' +
-          '<span>Batas Persil Tanah</span>' +
-        '</div>' +
-      '</div>' +
-      '<div class="atrbpn-legend-source">Sumber: ATRBPN - Bhumi (bhumi.atrbpn.go.id)</div>';
+    var items = PERSIL_LEGEND.map(function (item) {
+      return '<div class="atrbpn-legend-item">' +
+        '<span class="atrbpn-legend-dot" style="background:' + item.color + ';"></span>' +
+        '<span>' + item.label + '</span>' +
+      '</div>';
+    }).join('');
 
-    addUnifiedLegend('atrbpn-bumipersil', typeof createLegendWithToggle === 'function' ? createLegendWithToggle(div) : div);
-    bumiPersilLegendActive = true;
+    div.innerHTML =
+      '<div class="atrbpn-legend-title">Legenda Persil — ATR/BPN</div>' +
+      '<div class="atrbpn-legend-items">' + items + '</div>' +
+      '<div class="atrbpn-legend-source">Sumber: ATR/BPN — BHUMI &amp; GISTARU</div>';
+
+    addUnifiedLegend('atrbpn-persil', typeof createLegendWithToggle === 'function' ? createLegendWithToggle(div) : div);
+    legendPersilShown = true;
   }
 
-  function hideBumiPersilLegend() {
-    if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend('atrbpn-bumipersil');
-    bumiPersilLegendActive = false;
+  function hidePersilLegend() {
+    if (typeof removeUnifiedLegend !== 'function') return;
+    removeUnifiedLegend('atrbpn-persil');
+    legendPersilShown = false;
+  }
+
+  /* Legenda dipakai bersama, jadi baru disembunyikan setelah TIDAK ada
+   * layer persil yang masih menyala. */
+  function refreshPersilLegend() {
+    if (anyPersilLayerActive()) showPersilLegend();
+    else hidePersilLegend();
+  }
+
+  function zoomToPersilDetail() {
+    /* Persil hanya terbaca pada zoom dekat, jadi perbesar ke level detail di
+     * titik tengah peta yang sedang dilihat. Sengaja tidak memanggil
+     * setView ke koordinat tetap supaya posisi pengguna tidak hilang. */
+    var detailZoom = Math.max(map.getZoom(), 18);
+    if (detailZoom > map.getZoom()) {
+      map.flyTo(map.getCenter(), detailZoom, { duration: 0.8 });
+    }
   }
 
   function toggleBumiPersilLayer(show) {
     if (show) {
       if (bumiPersilLayer && map.hasLayer(bumiPersilLayer)) return;
-      bumiPersilLayer = L.tileLayer('https://bhumi.atrbpn.go.id/mapproxy/wmts/bhumi_persil/localgrid_high/{z}/{x}/{y}.png', {
-        tileSize: 256,
-        attribution: 'ATRBPN - Bhumi Persil'
+      bumiPersilLayer = L.tileLayer.wms(BHUMI_PERSIL_WMS_URL, {
+        layers: 'petabpn:PersilBerdasarkanJenisHakStroke',
+        format: 'image/png',
+        transparent: true,
+        version: '1.1.1',
+        crs: L.CRS.EPSG3857,
+        attribution: 'ATR/BPN - Bhumi Persil'
       });
       bumiPersilLayer.addTo(map);
-      map.setView([-6.1944, 106.8231], 18);
-      showBumiPersilLegend();
+      zoomToPersilDetail();
+      refreshPersilLegend();
     } else {
       if (bumiPersilLayer && map.hasLayer(bumiPersilLayer)) map.removeLayer(bumiPersilLayer);
       bumiPersilLayer = null;
-      hideBumiPersilLegend();
+      refreshPersilLegend();
     }
   }
+  window.toggleBumiPersilLayer = toggleBumiPersilLayer;
+  window.isBumiPersilLayerActive = function () {
+    return !!(bumiPersilLayer && map.hasLayer(bumiPersilLayer));
+  };
+
+  function toggleGistaruPersilLayer(show) {
+    if (show) {
+      if (gistaruPersilLayer && map.hasLayer(gistaruPersilLayer)) return;
+      gistaruPersilLayer = L.tileLayer.wms(GISTARU_WMS_URL, {
+        layers: 'gistaru:persil',
+        format: 'image/png',
+        transparent: true,
+        version: '1.1.1',
+        crs: L.CRS.EPSG3857,
+        attribution: 'ATR/BPN - GISTARU'
+      });
+      gistaruPersilLayer.addTo(map);
+      zoomToPersilDetail();
+      refreshPersilLegend();
+    } else {
+      if (gistaruPersilLayer && map.hasLayer(gistaruPersilLayer)) map.removeLayer(gistaruPersilLayer);
+      gistaruPersilLayer = null;
+      refreshPersilLegend();
+    }
+  }
+  window.toggleGistaruPersilLayer = toggleGistaruPersilLayer;
+  window.isGistaruPersilLayerActive = function () {
+    return !!(gistaruPersilLayer && map.hasLayer(gistaruPersilLayer));
+  };
 
   /* ── VIIRS NOAA-20 Thermal Anomalies (NASA GIBS WMS) ── */
   var viirsNoaa20Layer = null;
@@ -3219,6 +3303,16 @@ L.control.scale({
       ]
     },
     {
+      /* Persil Tanah ATR/BPN. Layer ini sengaja hanya tersedia lewat
+       * Katalog Layer -- GeoPortal Hub memakai katalog WMS lain yang
+       * tidak memuat BHUMI. */
+      cat: 'Pertanahan & ATR/BPN',
+      layers: [
+        { id: 'toggleBumiPersilLayer', label: 'Persil Tanah (BHUMI)' },
+        { id: 'toggleGistaruPersilLayer', label: 'Persil Tanah (GISTARU)' }
+      ]
+    },
+    {
       cat: 'Citra Udara & Peta BIG',
       subcats: (function () {
         var g = (typeof window.getFuCatalogGroups === 'function')
@@ -3340,7 +3434,7 @@ L.control.scale({
   }
   loadPinnedLayers();
   var removedCatalogLayerIds = [
-    'toggleBumiPersilLayer', 'toggleRtrwTmsLayer', 'toggleLsdTmsLayer',
+    'toggleRtrwTmsLayer', 'toggleLsdTmsLayer',
     'toggleLbsTmsLayer', 'toggleDiTmsLayer', 'toggleSaluranIrTmsLayer',
     'atrbpn-wms-lsd-umum', 'atrbpn-wms-lahanbakusawah-new-sawah',
     'atrbpn-wms-lsd-12-provinsi-sawah', 'atrbpn-wms-lsd-8-provinsi-sawah',
@@ -3434,6 +3528,10 @@ L.control.scale({
         cb.checked = el.checked;
       } else if (cb.dataset.layerId === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') {
         cb.checked = isHujanLayerActive();
+      } else if (cb.dataset.layerId === 'toggleBumiPersilLayer' && typeof window.isBumiPersilLayerActive === 'function') {
+        cb.checked = window.isBumiPersilLayerActive();
+      } else if (cb.dataset.layerId === 'toggleGistaruPersilLayer' && typeof window.isGistaruPersilLayerActive === 'function') {
+        cb.checked = window.isGistaruPersilLayerActive();
       } else if (_layerCatalogState.hasOwnProperty(cb.dataset.layerId)) {
         cb.checked = _layerCatalogState[cb.dataset.layerId];
       }
@@ -3806,6 +3904,7 @@ L.control.scale({
           (id === 'toggleNationalRoad' && typeof window.toggleNationalRoadLayer === 'function') ||
           (id === 'toggleNonTollRoad' && typeof window.toggleNonTollRoadLayer === 'function') ||
           (id === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') ||
+          (id === 'toggleGistaruPersilLayer' && typeof window.toggleGistaruPersilLayer === 'function') ||
           (id === 'toggleJenisTanahJateng' && typeof window.toggleJenisTanahJateng === 'function') ||
           (id === 'toggleHwsdIndonesia' && typeof window.toggleHwsdIndonesia === 'function') ||
           (id === 'toggleGeologiArcGISOnline' && typeof window.toggleGeologiArcGISOnline === 'function') ||
@@ -3906,6 +4005,9 @@ L.control.scale({
         }
         if (id === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') {
           window.toggleBumiPersilLayer(cb.checked);
+        }
+        if (id === 'toggleGistaruPersilLayer' && typeof window.toggleGistaruPersilLayer === 'function') {
+          window.toggleGistaruPersilLayer(cb.checked);
         }
         if (id === 'toggleJenisTanahJateng' && typeof window.toggleJenisTanahJateng === 'function') {
           window.toggleJenisTanahJateng(cb.checked);

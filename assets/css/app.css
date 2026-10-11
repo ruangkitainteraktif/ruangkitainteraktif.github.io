@@ -8908,6 +8908,80 @@
   border-color: #a16207; background: #451a03; color: #fcd34d;
 }
 [data-theme="dark"] .geotani-sls-picked { color: #86efac; background: #052e16; }
+
+/* ── Cek NIB Tanah (ATR/BPN GISTARU) ──
+   Satu NIB bisa punya banyak bidang di kabupaten/kota berbeda, jadi hasilnya
+   berupa daftar kartu, bukan satu baris ringkasan. */
+.geotani-sls-status.is-error {
+  margin-top: 7px; padding: 7px 9px;
+  border: 1px solid #fca5a5; border-left: 3px solid #dc2626;
+  border-radius: 5px; background: #fef2f2; color: #991b1b;
+  font-size: 10.5px; line-height: 1.5;
+}
+[data-theme="dark"] .geotani-sls-status.is-error {
+  border-color: #7f1d1d; border-left-color: #ef4444;
+  background: #2a0b0b; color: #fecaca;
+}
+.nib-results:empty { display: none; }
+.nib-actions {
+  display: flex; gap: 8px; align-items: stretch;
+}
+.nib-actions .geotani-btn-print { flex: 1 1 0; }
+/* Reset tidak boleh terlihat seperti aksi utama, jadi dibuat lebih redup.
+   Border harus ditulis ulang karena .geotani-btn-print memakai border:none,
+   sehingga border-color sendirian tidak akan terlihat. */
+.nib-reset-btn {
+  flex: 0 0 96px !important;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  box-shadow: none;
+}
+.nib-reset-btn:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+[data-theme="dark"] .nib-reset-btn:hover:not(:disabled) {
+  border-color: #7f1d1d; color: #fca5a5;
+}
+.nib-summary {
+  margin-top: 8px; font-size: 10.5px; line-height: 1.5;
+  color: var(--text-secondary);
+}
+.nib-summary b { color: var(--text-primary); }
+.nib-result {
+  margin-top: 6px; padding: 7px 9px;
+  border: 1px solid var(--border-color); border-radius: 5px;
+  background: var(--bg-card);
+}
+.nib-result[role="button"] { cursor: pointer; }
+.nib-result[role="button"]:hover { background: var(--bg-card-hover); }
+.nib-result[role="button"]:focus-visible {
+  outline: 2px solid var(--accent-green); outline-offset: 1px;
+}
+.nib-result-head {
+  font-size: 10px; font-weight: 700; letter-spacing: .03em;
+  color: var(--text-muted); text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.nib-result-rows { margin: 0; }
+.nib-result-row {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 1px 0; font-size: 10.5px; line-height: 1.55;
+}
+.nib-result-row dt {
+  flex: 0 0 78px; margin: 0; color: var(--text-muted);
+}
+.nib-result-row dd {
+  flex: 1 1 auto; min-width: 0; margin: 0;
+  color: var(--text-primary);
+  overflow-wrap: anywhere; word-break: break-word;
+}
+.nib-result-hint {
+  margin-top: 4px; font-size: 9px; color: var(--text-muted); opacity: .8;
+}
+[data-theme="dark"] .nib-result { background: rgba(255,255,255,0.03); }
 .geotani-sls-popup-title {
   font-size: 12px; font-weight: 700; color: #166534;
   padding-bottom: 5px; margin-bottom: 5px; border-bottom: 1px solid #dcfce7;
