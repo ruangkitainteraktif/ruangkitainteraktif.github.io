@@ -3308,8 +3308,9 @@ L.control.scale({
     {
       /* Persil Tanah ATR/BPN. Layer ini sengaja hanya tersedia lewat
        * Katalog Layer -- GeoPortal Hub memakai katalog WMS lain yang
-       * tidak memuat BHUMI. */
+       * tidak memuat BHUMI. Hidden: kategori ini belum ditampilkan. */
       cat: 'Pertanahan & ATR/BPN',
+      hidden: true,
       layers: [
         { id: 'toggleBumiPersilLayer', label: 'Persil Tanah (BHUMI)' },
         { id: 'toggleGistaruPersilLayer', label: 'Persil Tanah (GISTARU)' }
@@ -3640,6 +3641,14 @@ if (cb.dataset.geoportalKey && typeof window.isGeoportalCatalogLayerActive === '
     if (dropdown) delete dropdown.dataset.built;
   };
 
+  /* Kategori bertanda `hidden` tidak dirender di Katalog Layer. Dipakai untuk
+   * menyembunyikan sebuah kategori tanpa menghapus definisinya -- toggle
+   * window.toggleBumiPersilLayer & friends tetap hidup dan masih bisa dipanggil
+   * dari modul lain. Hapus flagnya untuk mengunculkan kembali. */
+  function visibleCatalogCategories() {
+    return LAYER_CATALOG_DATA.filter(function (cat) { return !cat.hidden; });
+  }
+
   function buildLayerCatalog(container) {
     var html = '<div class="lc-donation-banner">' +
       '<div class="lc-donation-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg></div>' +
@@ -3660,7 +3669,7 @@ if (cb.dataset.geoportalKey && typeof window.isGeoportalCatalogLayerActive === '
 
       var pinnedItems = [];
       if (_pinnedLayers.length > 0) {
-        LAYER_CATALOG_DATA.forEach(function(cat) {
+        visibleCatalogCategories().forEach(function(cat) {
           var allLayers = cat.layers || [];
           if (cat.subcats) {
             cat.subcats.forEach(function(sc) { allLayers = allLayers.concat(sc.layers || []); });
@@ -3719,7 +3728,7 @@ if (cb.dataset.geoportalKey && typeof window.isGeoportalCatalogLayerActive === '
       }
 
       var activeLayers = [];
-      LAYER_CATALOG_DATA.forEach(function(cat) {
+      visibleCatalogCategories().forEach(function(cat) {
         var allLayers = cat.layers || [];
         if (cat.subcats) {
           cat.subcats.forEach(function(sc) { allLayers = allLayers.concat(sc.layers || []); });
@@ -3757,7 +3766,7 @@ if (cb.dataset.geoportalKey && typeof window.isGeoportalCatalogLayerActive === '
       html += '</div></div>';
     }
 
-    LAYER_CATALOG_DATA.forEach(function(cat, ci) {
+    visibleCatalogCategories().forEach(function(cat, ci) {
       var allLayers = cat.layers || [];
       if (cat.subcats) {
         cat.subcats.forEach(function(sc) { allLayers = allLayers.concat(sc.layers || []); });

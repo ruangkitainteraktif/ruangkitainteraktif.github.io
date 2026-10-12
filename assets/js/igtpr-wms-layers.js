@@ -33,6 +33,15 @@
   var DATA_URL = 'assets/data/igtpr-layers.json';
   var SIGNATURE = 'igtpr';
 
+  /* Kategori IGTPR disembunyikan dari Katalog Layer. Pengecekannya berhenti
+     di sini, bukan hanya menyembunyikan kategorinya nanti: daftar 788 layer
+     (52 KB) tidak perlu diunduh kalau tidak pernah ditampilkan. Ubah ke true
+     untuk mengembalikannya ke Katalog Layer.
+
+     window.toggleDynamicCatalogLayer tetap ada di bawah, jadi layer IGTPR
+     masih bisa dinyalakan dari pemanggil lain meskipun kateg disembunyikan. */
+  var TAMPILKAN_DI_KATALOG = false;
+
   var aktif = new Map();
   var legendas = new Map();
   var sudahDimuat = false;
@@ -120,6 +129,7 @@
   };
 
   window.ensureDynamicCatalogLoaded = function () {
+    if (!TAMPILKAN_DI_KATALOG) return;
     if (sudahDimuat) return;
     if (sedangMemuat) return sedangMemuat;
     if (typeof window.registerDynamicLayerCategory !== 'function') return;
