@@ -60,23 +60,99 @@
     });
   }
 
-  /* Unit tambahan disisipkan setelah kartu pertama pada tiap tab. Anchor
-     berada di dalam konten tab, jadi slot ikut berpindah ke sheet GeoTools. */
+  /* Unit fluid DI ANTARA kartu pada empat tab GeoTools, bukan hanya setelah
+     kartu pertama seperti sebelumnya.
+
+Penempatan memakai iterasi children panel, bukan selektor :scope, karena
+     indentasi HTML di index.html tidak konsisten: .georaster-card (baris 2445)
+     memakai indent 12 sedangkan saudaranya .geotani-kta-card di indent 18,
+     padahal keduanya anak langsung dari tab. Hanya panel.children yang bisa
+     dipercaya.
+
+     MAX_PER_TAB membatasi jumlah unit per tab. Tanpa batas itu GeoDisaster
+     menghasilkan sebelas iklan dalam satu layar: kartu Cuaca Sekarang, tiga
+     kartu GeoPulse, enam kartu CCTV, dan satu kartu gd. AdSense membatasi
+     jumlah iklan per halaman, jadi nilainya sengaja dibatasi dan bisa
+     dinaikkan dari satu konstanta di bawah. */
+  var GEO_TOOLS_TABS = [
+    { key: 'geonusa', id: 'geotoolsTabGeonusa', selectors: ['.geonusa-card', '.geotrans-card'] },
+    { key: 'geoportal', id: 'geotoolsTabGeoportal', selectors: ['.geotani-kta-card', '.georaster-card', '.geoportal-card'] },
+    { key: 'geofarm', id: 'geotoolsTabGeoFarm', selectors: ['.geofarm-card', '.geofarm-ref', '.geopangan-card'] },
+    { key: 'geodisaster', id: 'geotoolsTabGeoDisaster', selectors: ['.cctv-card', '.geopulse-card', '.geonusa-card'] }
+  ];
+
+  var MAX_PER_TAB = 3;
+
   function addGeoToolsInlineAds() {
-    var placements = [
-      { tab: 'geotoolsTabGeonusa', anchor: ':scope > .geonusa-card', key: 'geonusa' },
-      { tab: 'geotoolsTabGeoportal', anchor: ':scope > .geotani-kta-card', key: 'geoportal' },
-      { tab: 'geotoolsTabGeoFarm', anchor: ':scope > .geofarm-card', key: 'geofarm' },
-      { tab: 'geotoolsTabGeoDisaster', anchor: '#weather-card-sekarang', key: 'geodisaster' }
-    ];
-    placements.forEach(function (placement) {
-      var tab = document.getElementById(placement.tab);
-      if (!tab || tab.querySelector('.geotools-inline-adsense--' + placement.key)) return;
-      var card = tab.querySelector(placement.anchor);
-      if (!card) return;
+    GEO_TOOLS_TABS.forEach(function (tab) {
+      var panel = document.getElementById(tab.id);
+      if (!panel) return;
+      /* Disalin dulu: menyisipkan saat iterasi akan membuat array ikut
+         bergeser dan unit berikutnya tertunjuk pada ad yang baru dibuat. */
+      var nodes = Array.prototype.slice.call(panel.children);
+      /* Batas dihitung dari unit yang SUDAH ADA, bukan dari yang ditambahkan
+         pada panggilan ini. Kalau hanya menghitung penambahan, pemanggilan
+         kedua akan lolos lagi di bawah batas dan menyisip unit tambahan --
+         tiap pemanggilan menambah iklan baru. */
+      var placed = panel.querySelectorAll('.geotools-inline-adsense').length;
+      nodes.forEach(function (node) {
+        if (placed >= MAX_PER_TAB) return;
+        if (!node.matches) return;
+        var isCard = tab.selectors.some(function (sel) { return node.matches(sel); });
+        if (!isCard) return;
+        var next = node.nextElementSibling;
+        if (next && next.classList.contains('geotools-inline-adsense')) return;
+        var ad = createAdUnit();
+        ad.classList.add('geotools-inline-adsense', 'geotools-inline-adsense--' + tab.key);
+        node.insertAdjacentElement('afterend', ad);
+        dorongSlotIklan(ad);
+        placed++;
+      });
+    });
+  }
+
+  /* Unit di tiga sheet alat: Draw & Ukur, Tabel Atribut, dan Legenda.
+
+     Letak masing-masing dipilih karena isi sheet itu dibangun berbeda:
+
+     - Draw & Ukur (#drawSidebar .dm-sidebar-body) kartunya statis di
+       index.html, jadi unit cukup disisipkan di akhir badan.
+
+     - Tabel Atribut (#attr-table-sheet .at-sheet-body) isinya #at-sheet-content
+       yang ditulis ulang setiap kali tabel digambar ulang. Karena itu unit
+       TIDAK boleh masuk ke #at-sheet-content, cukup jadi saudara sesudahnya di
+       .at-sheet-body -- begitu isi tabel berganti, unitnya tetap ada.
+         Perhatikan sheet ini sudah punya iklan sendiri dari attribute-table.js
+(slot 1306506445) di bawah kolom pencarian; yang ditambah di sini
+        menempati posisi berbeda, yaitu dasar sheet.
+
+     - Legenda (#legendSidebarBody) memakai pola PINDAH: onOpen memindahkan
+       semua anak .legend-body ke body sidebar, onClose memindahkannya semua
+       kembali (map-core.js). Unit yang disisipkan DI DALAM body akan ikut
+       terbawa ke .legend-body dan muncul di kontrol legenda di peta walau sheet
+       sudah ditutup. Jadi unitnya dibuat saudara SESUDAH body, di dalam
+       #legendSidebar, yang tidak pernah disentuh pola pindah itu. Karena
+       .lg-sidebar-body memakai flex:1 1 auto, unit ini tertempel di dasar
+       sidebar. */
+  var TOOL_SHEET_AD_PLACEMENTS = [
+    { key: 'alat-ukur', anchor: '#drawSidebar .dm-sidebar-body', position: 'beforeend' },
+    { key: 'tabel', anchor: '#attr-table-sheet .at-sheet-body', position: 'beforeend' },
+    { key: 'legenda', anchor: '#legendSidebarBody', position: 'afterend' }
+  ];
+
+  function addToolSheetAds() {
+    TOOL_SHEET_AD_PLACEMENTS.forEach(function (placement) {
+      var el = document.querySelector(placement.anchor);
+      if (!el || !el.parentNode) return;
+      var marker = 'tool-sheet-adsense--' + placement.key;
+      var neighbour = placement.position === 'afterend'
+        ? el.nextElementSibling
+        : el.lastElementChild;
+      if (neighbour && neighbour.classList.contains('tool-sheet-adsense')) return;
       var ad = createAdUnit();
-      ad.classList.add('geotools-inline-adsense', 'geotools-inline-adsense--' + placement.key);
-      card.insertAdjacentElement('afterend', ad);
+      ad.classList.add('tool-sheet-adsense', marker);
+      ad.setAttribute('aria-label', 'Iklan');
+      el.insertAdjacentElement(placement.position, ad);
       dorongSlotIklan(ad);
     });
   }
@@ -169,11 +245,13 @@
       addDonationBanners();
       addGeoToolsInlineAds();
       addGeoDataAds();
+      addToolSheetAds();
     }, { once: true });
   } else {
     addDonationBanners();
     addGeoToolsInlineAds();
     addGeoDataAds();
+    addToolSheetAds();
   }
   window.addEventListener('resize', addDonationBanners, { passive: true });
 })();

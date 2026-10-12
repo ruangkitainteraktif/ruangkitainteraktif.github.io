@@ -3253,6 +3253,16 @@
     .lc-adsense.at-search-adsense { margin: 0 0 10px; }
     .lc-adsense.geotools-inline-adsense { margin: 10px 0; }
     .lc-adsense.geodata-menu-adsense { margin: 10px 0; }
+    /* Unit di sheet Draw & Ukur, Tabel Atribut, dan Legenda. Ketiganya
+       ditambahkan sebagai anak terakhir badan sheet, sehingga margin bawaan
+       .lc-adsense tidak berlaku dan padding disetel sendiri agar sejajar
+       dengan padding badan sheet (12px 16px 16px). */
+.lc-adsense.tool-sheet-adsense { margin: 0; padding: 10px 16px 14px; }
+    .lc-adsense.tool-sheet-adsense--legenda { padding: 8px 16px 12px; }
+    /* Mode tabel tanah mengubah .at-sheet-body menjadi kolom flex dengan
+       overflow hidden, dan #at-sheet-content memakai flex: 1 1 auto. Unit
+       harus dikunci agar tidak ikut terjepit bersama tabel. */
+#attr-table-sheet.at-soil-table-mode .lc-adsense.tool-sheet-adsense { flex: 0 0 auto; }
     /* Format fluid menentukan tinggi slot mengikuti materi iklan. */
     .lc-adsense .adsbygoogle { display: block; }
     .lc-adsense .adsbygoogle[data-ad-status="unfilled"] { display: none !important; }
