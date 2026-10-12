@@ -1,11 +1,18 @@
 (function () {
   'use strict';
 
-  var PROXY_PREFIX = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=';
+var PROXY_PREFIX = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=';
   var PAGE_SIZE = 1000;
   var MAX_PAGES = 100;
   var ATTRIBUTE_PAGE_SIZE = 100;
-  var state = { run: 0, controller: null, busy: false, layers: [], selected: {}, loaded: {}, featureData: {}, counts: {}, activeTableLayer: '', attributePage: 1, attributeField: '*', attributeQuery: '', highlight: null };
+  var FETCH_TIMEOUT_MS = 25000;
+  var EXPORT_BUDGET_MS = 120000;
+  var state = { run: 0, controller: null, busy: false, layers: [], selected: {}, loaded: {}, featureData: {}, counts: {}, activeTableLayer: '', attributePage: 1, attributeField: '*', attributeQuery: '', highlight: null, deadline: 0 };
+
+  function remainingBudget() {
+    if (!state.deadline) return FETCH_TIMEOUT_MS;
+    return state.deadline - Date.now();
+  }
 
   function el(id) { return document.getElementById(id); }
   function escapeHtml(value) {
@@ -61,8 +68,15 @@
     url.pathname = path;
     return url.toString();
   }
-  async function fetchText(url) {
+async function fetchText(url) {
     async function request(requestUrl) {
+      var budget = remainingBudget();
+      if (budget <= 0) {
+        var expired = new Error('Waktu total pembacaan habis.');
+        expired.timedOut = true;
+        throw expired;
+      }
+      var limit = Math.max(1000, Math.min(FETCH_TIMEOUT_MS, budget));
       var controller = new AbortController();
       var parent = state.controller;
       var abortParent = function () { controller.abort(); };
@@ -70,7 +84,8 @@
         if (parent.signal.aborted) controller.abort();
         else parent.signal.addEventListener('abort', abortParent, { once: true });
       }
-      var timeout = window.setTimeout(function () { controller.abort(); }, 25000);
+      var timedOut = false;
+      var timeout = window.setTimeout(function () { timedOut = true; controller.abort(); }, limit);
       try {
         var response = await fetch(requestUrl, { signal: controller.signal, headers: { Accept: 'application/json, application/xml, text/xml, */*' } });
         if (!response.ok) {
@@ -79,6 +94,13 @@
           throw httpError;
         }
         return await response.text();
+      } catch (error) {
+        if (timedOut && error && error.name === 'AbortError') {
+          var timeoutError = new Error('Waktu baca habis (' + Math.round(limit / 1000) + ' d).');
+          timeoutError.timedOut = true;
+          throw timeoutError;
+        }
+        throw error;
       } finally {
         window.clearTimeout(timeout);
         if (parent) parent.signal.removeEventListener('abort', abortParent);
@@ -88,10 +110,19 @@
       return await request(url);
     } catch (directError) {
       if (state.controller && state.controller.signal.aborted) throw directError;
-      if (directError && directError.httpStatus && directError.httpStatus < 500) throw directError;
+      /* Timeout berarti servernya sendiri tidak merespons. Mencoba proxy
+         hanya menambah waktu tunggu tanpa memperbaiki apa pun. */
+      if (directError && directError.timedOut) throw directError;
+      /* 403 sering datang dari WAF/proxy depan GeoServer yang menolak
+         permintaan langsung, padahal proxy CORS diteruskan. */
+      var retryable = !directError || !directError.httpStatus || directError.httpStatus >= 500 || directError.httpStatus === 403;
+      if (!retryable) throw directError;
       try {
         return await request(PROXY_PREFIX + encodeURIComponent(url));
       } catch (proxyError) {
+        if (directError.httpStatus === 403 && proxyError.httpStatus === 403) {
+          throw new Error('GeoServer menolak permintaan ini (403) baik langsung maupun melalui proxy. Periksa izin WFS atau aturan firewall server.');
+        }
         throw new Error('GeoServer tidak dapat dibaca langsung maupun melalui proxy. ' + (directError.message || proxyError.message));
       }
     }
@@ -145,7 +176,7 @@
       tree.innerHTML = '<div class="arcgis-tree-empty">Tidak ada workspace atau layer WFS.</div>';
       return;
     }
-    tree.innerHTML = workspaces.map(function (workspace) {
+tree.innerHTML = workspaces.map(function (workspace, workspaceIndex) {
       var children = groups[workspace].map(function (entry) {
         var layer = entry.layer;
         var checked = state.selected[layer.name] ? ' checked' : '';
@@ -153,7 +184,7 @@
         var count = Object.prototype.hasOwnProperty.call(state.counts, layer.name) ? ' · ' + state.counts[layer.name].toLocaleString('id-ID') + ' fitur' : '';
         return '<label class="arcgis-tree-leaf"><input type="checkbox" data-geoserver-layer="' + entry.index + '"' + checked + '><span class="arcgis-tree-label" title="' + escapeHtml(layer.name) + '">' + escapeHtml(layer.title) + '</span><span class="arcgis-tree-type" title="' + escapeHtml(layer.name) + '">' + escapeHtml(layer.name.split(':').pop()) + escapeHtml(loaded + count) + '</span></label>';
       }).join('');
-      return '<details class="arcgis-tree-group"><summary><span class="arcgis-tree-summary-title">' + escapeHtml(workspace) + '</span><span class="arcgis-tree-meta">' + groups[workspace].length + ' layer WFS</span></summary><div class="arcgis-tree-children">' + children + '</div></details>';
+      return '<details class="arcgis-tree-group"' + (workspaceIndex === 0 ? ' open' : '') + '><summary><span class="arcgis-tree-summary-title">' + escapeHtml(workspace) + '</span><span class="arcgis-tree-meta">' + groups[workspace].length + ' layer WFS</span></summary><div class="arcgis-tree-children">' + children + '</div></details>';
     }).join('');
     updateSelection();
   }
@@ -261,7 +292,12 @@
     var base = rootBase;
     var version = '1.0.0';
     var data, lastError;
-    for (var attempt = 0; attempt < attempts.length; attempt++) {
+for (var attempt = 0; attempt < attempts.length; attempt++) {
+      /* Jangan wasting sisa anggaran untuk percobaan berikutnya. */
+      if (state.deadline && Date.now() >= state.deadline) {
+        lastError = new Error('Waktu total pembacaan habis sebelum semua percobaan selesai.');
+        break;
+      }
       try {
         base = attempts[attempt].base;
         version = attempts[attempt].version;
@@ -283,13 +319,21 @@
         truncated = true;
         break;
       }
-      previousSignature = signature;
-      data = await getFeaturePage(base, layer.name, offset, version);
+previousSignature = signature;
+      try {
+        data = await getFeaturePage(base, layer.name, offset, version);
+      } catch (pageError) {
+        /* Halaman berikutnya gagal: lebih baik kirim hasil parsial
+           daripada membatalkan seluruh ekspor. */
+        truncated = true;
+        break;
+      }
       if (!data.features.length) break;
       features = features.concat(data.features);
       offset += data.features.length;
       page++;
       if (typeof onProgress === 'function') onProgress(features.length);
+      if (state.deadline && Date.now() >= state.deadline) { truncated = true; break; }
     }
     if (page >= MAX_PAGES && data.features.length === PAGE_SIZE) truncated = true;
     return { type: 'FeatureCollection', features: features, truncated: truncated };
@@ -483,8 +527,9 @@
   async function exportSelected() {
     var selected = Object.keys(state.selected).map(function (name) { return state.selected[name]; });
     if (!selected.length) return;
-    var run = ++state.run;
+var run = ++state.run;
     makeController();
+    state.deadline = Date.now() + EXPORT_BUDGET_MS;
     setBusy(true, 'export');
     var summaries = [];
     var errors = [];
@@ -507,8 +552,9 @@
         }
       }
       var message = summaries.concat(errors).join(' · ');
-      setStatus(message || 'Tidak ada layer yang berhasil diekspor.', errors.length > 0);
+setStatus(message || 'Tidak ada layer yang berhasil diekspor.', errors.length > 0);
     } finally {
+      state.deadline = 0;
       if (run === state.run) setBusy(false);
     }
   }
