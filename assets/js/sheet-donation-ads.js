@@ -135,6 +135,36 @@ Penempatan memakai iterasi children panel, bukan selektor :scope, karena
        #legendSidebar, yang tidak pernah disentuh pola pindah itu. Karena
        .lg-sidebar-body memakai flex:1 1 auto, unit ini tertempel di dasar
        sidebar. */
+
+  /* Unit tepat di bawah tombol "Export SHP" pada kartu "Geospasial
+  Indonesia" di tab GeoPortal.
+  
+  Berbeda dengan tiga unit di atas, unit ini harus mengikuti tampilan
+  tombolnya. syncSHPExportButton() di satupeta-downloader.js hanya menulis
+  style.display dan disabled pada tombol, tanpa pernah menyinggung modul
+  iklan, jadi iklannya akan terlihat walau belum ada data yang bisa
+  diekspor -- iklan yatim yang tidak ada konteksnya. Observer di bawah
+  menjembataninya tanpa mengubah satupeta-downloader.js sama sekali. */
+  function addGeoPortalExportShpAd() {
+    var button = document.getElementById('satupetaExportShpBtn');
+    if (!button || !button.parentNode) return;
+    var next = button.nextElementSibling;
+    if (next && next.classList.contains('satupeta-export-shp-adsense')) return;
+    var ad = createAdUnit();
+    ad.classList.add('satupeta-export-shp-adsense');
+    ad.setAttribute('aria-label', 'Iklan');
+    button.insertAdjacentElement('afterend', ad);
+
+    var apply = function () {
+      ad.style.display = (button.style.display !== 'none' && !button.disabled) ? '' : 'none';
+    };
+    apply();
+    if ('MutationObserver' in window) {
+      new MutationObserver(apply)
+        .observe(button, { attributes: true, attributeFilter: ['style', 'disabled'] });
+    }
+    dorongSlotIklan(ad);
+  }
   var TOOL_SHEET_AD_PLACEMENTS = [
     { key: 'alat-ukur', anchor: '#drawSidebar .dm-sidebar-body', position: 'beforeend' },
     { key: 'tabel', anchor: '#attr-table-sheet .at-sheet-body', position: 'beforeend' },
@@ -247,12 +277,14 @@ Penempatan memakai iterasi children panel, bukan selektor :scope, karena
       addGeoToolsInlineAds();
       addGeoDataAds();
       addToolSheetAds();
+      addGeoPortalExportShpAd();
     }, { once: true });
   } else {
     addDonationBanners();
     addGeoToolsInlineAds();
     addGeoDataAds();
     addToolSheetAds();
+    addGeoPortalExportShpAd();
   }
   window.addEventListener('resize', addDonationBanners, { passive: true });
 })();
