@@ -46,12 +46,24 @@ L.control.scale({
       transparent: true,
       crs: L.CRS.EPSG3857,
       version: '1.3.0',
-      tileSize: 512,
+      /* tileSize WAJIB 256. Dengan 512, koordinat tile Leaflet berada di
+       * grid 512px, sedangkan endpoint fallback
+       * petadasar.meritech.cloud/tile/ memakai grid 256px. Akibatnya
+       * petadasar-cache.js salah mengirim koordinat: server membalas
+       * HTTP 200 berisi placeholder 776 B, bukan 47 KB data sebenarnya.
+       * Placeholder itu diterima sebagai tile yang sukses, sehingga isinya
+       * terlihat ter-zoom dan tidak sesuai basemap di bawahnya.
+       * 256 juga memangkas piksel jadi seperempat sehingga jauh lebih
+       * ringan di jaringan seluler. */
+      tileSize: 256,
       keepBuffer: 1,
       updateWhenIdle: true,
       updateWhenZooming: false,
-      maxZoom: 22,
-      minZoom: 14,
+      /* XYZ hanya menyediakan tile z16-z21 (di luar itu server membalas
+       * 404). Layer mengikuti rentang itu supaya tidak ada permintaan
+       * yang pasti kosong. Peta global tetap bisa di-zoom 3-22. */
+      maxZoom: 21,
+      minZoom: 16,
       attribution: 'ATR/BPN'
     }),
     'landsat-agriculture': L.esri.imageMapLayer({
@@ -1954,8 +1966,17 @@ L.control.scale({
   const BPS_WMS_URL = 'https://geoserver.bps.go.id/ows';
   const KLATEN_WMS_URL = 'https://geoportal.klaten.go.id/geoserver/wms';
   const CIREBON_WMS_URL = 'https://geoserver.cirebonkota.go.id/geoserver/wms';
-  const BHUMI_PERSIL_WMS_URL = 'https://bhumi.atrbpn.go.id/expapi/wms?authkey=e61b8fc8-20e2-442b-8e27-da62f6e6245v';
-  const GISTARU_WMS_URL = 'https://atlas.atrbpn.go.id/geoserver/gistaru/ows';
+const BHUMI_PERSIL_WMS_URL = 'https://bhumi.atrbpn.go.id/expapi/wms?authkey=e61b8fc8-20e2-442b-8e27-da62f6e6245v';
+const GISTARU_WMS_URL = 'https://atlas.atrbpn.go.id/geoserver/gistaru/ows';
+/* Lahan sawah dilindungi - GISLINER. Layer tile biner (hijau = sawah
+ * dilindungi, transparan = bukan sawah), format XYZ, CORS terbuka.
+ * Cakupannya belum nasional: diuji hanya Jawa yang utuh, sedangkan
+ * Kalimantan, Maluku, Papua dan NTT kosong di atas zoom 7. Karena itu
+ * layer dibatasi ke Jawa supaya wilayah kosong tidak terbaca sebagai error. */
+const SAWAH_TILE_URL = 'https://gisliner.atrbpn.go.id/layers/tms/public/269_lsd_/{z}/{x}/{y}/?tileSize=256';
+/* Leaflet memakai urutan [[latSelatan, lonBarat], [latUtara, lonTimur]]. */
+const SAWAH_BOUNDS = [[-9.2, 105.0], [-5.2, 115.8]];
+const SAWAH_COLOR = '#87cf15';
 
   /* ── Persil tanah ATR/BPN ──
    * Dua sumber, klasifikasi warna sama persis (delapan jenis hak):
@@ -1967,6 +1988,8 @@ L.control.scale({
    * proxy -- asal option crossOrigin tidak diaktifkan. */
   var bumiPersilLayer = null;
   var gistaruPersilLayer = null;
+  var sawahLayer = null;
+  var legendSawahShown = false;
   var legendPersilShown = false;
 
   /* Warna asli hasil render BHUMI, diambil dari sampling tile. GetLegendGraphic
@@ -2082,6 +2105,64 @@ L.control.scale({
   window.toggleGistaruPersilLayer = toggleGistaruPersilLayer;
   window.isGistaruPersilLayerActive = function () {
     return !!(gistaruPersilLayer && map.hasLayer(gistaruPersilLayer));
+  };
+
+  /* ── Lahan Sawah Dilindungi (GISLINER / ATR-BPN) ──
+   * Tile PNG biner, format XYZ, sudah mengizinkan CORS sehingga tidak
+   * perlu proxy. Legenda memakai warna yang diambil dari sampling tile
+   * (rgb 135,207,21) supaya titik legenda cocok dengan isi peta. */
+  function showSawahLegend() {
+    if (legendSawahShown) return;
+    if (typeof addUnifiedLegend !== 'function') return;
+
+    var div = L.DomUtil.create('div', 'atrbpn-legend');
+    L.DomEvent.disableClickPropagation(div);
+
+    div.innerHTML =
+      '<div class="atrbpn-legend-title">Legenda Lahan Sawah</div>' +
+      '<div class="atrbpn-legend-items">' +
+        '<div class="atrbpn-legend-item">' +
+          '<span class="atrbpn-legend-dot" style="background:' + SAWAH_COLOR + ';"></span>' +
+          '<span>Lahan sawah dilindungi</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="atrbpn-legend-source">Sumber: ATR/BPN - GISLINER</div>';
+
+    addUnifiedLegend('atrbpn-sawah', typeof createLegendWithToggle === 'function' ? createLegendWithToggle(div) : div);
+    legendSawahShown = true;
+  }
+
+  function hideSawahLegend() {
+    if (typeof removeUnifiedLegend !== 'function') return;
+    removeUnifiedLegend('atrbpn-sawah');
+    legendSawahShown = false;
+  }
+
+  function toggleSawahGislinerLayer(show) {
+    if (show) {
+      if (sawahLayer && map.hasLayer(sawahLayer)) return;
+      /* bounds: Leaflet 1.9.4 (_isValidTile) melewati tile yang tidak
+       * beririsan dengan bounds, jadi tidak ada request ke luar Jawa.
+       * Sengaja TIDAK memanggil setView/flyTo -- pengguna yang memilih
+       * sendiri sampai ke Jawa, supaya posisi peta tidak hilang. */
+      sawahLayer = L.tileLayer(SAWAH_TILE_URL, {
+        bounds: SAWAH_BOUNDS,
+        minZoom: 8,
+        maxZoom: 19,
+        maxNativeZoom: 19,
+        attribution: 'ATR/BPN - GISLINER'
+      });
+      sawahLayer.addTo(map);
+      showSawahLegend();
+    } else {
+      if (sawahLayer && map.hasLayer(sawahLayer)) map.removeLayer(sawahLayer);
+      sawahLayer = null;
+      hideSawahLegend();
+    }
+  }
+  window.toggleSawahGislinerLayer = toggleSawahGislinerLayer;
+  window.isSawahGislinerLayerActive = function () {
+    return !!(sawahLayer && map.hasLayer(sawahLayer));
   };
 
   /* ── VIIRS NOAA-20 Thermal Anomalies (NASA GIBS WMS) ── */
@@ -2963,16 +3044,7 @@ L.control.scale({
         { subcat: 'Kerawanan pangan', layers: [
           { id: 'toggleFsvaLayer', label: 'FSVA 2025 (Badan Pangan)' }
         ]},
-        { subcat: 'Statistik lahan sawah (BPS)', layers: [
-          { id: 'bps-lbs-2024', label: 'LBS Nasional 2024' }
-        ]},
-        { subcat: 'Lahan sawah dilindungi', layers: [
-          { id: 'toggleSawahDilindungi', label: 'LSD 50K' },
-          { id: 'toggleSawahNasional50k', label: 'LBS 50K' }
-        ]},
         { subcat: 'Kawasan tanaman pangan', layers: [
-          { id: 'arcgis-sawah-2023', label: 'LBS 2023' },
-          { id: 'arcgis-sawah-2019', label: 'LBS 2019' },
           { id: 'arcgis-kawasan-padi', label: 'Kawasan Padi (KEMENTAN)' },
           { id: 'arcgis-kawasan-jagung', label: 'Kawasan Jagung (KEMENTAN)' },
           { id: 'arcgis-kawasan-kedelai', label: 'Kawasan Kedelai (KEMENTAN)' }
@@ -2987,11 +3059,7 @@ L.control.scale({
      },
       {
         cat: 'Pertanian',
-        subcats: [
-          { subcat: 'Lahan Baku Sawah — Vektor Tile', layers: [
-            { id: 'arcgis-vt-lbs-2024', label: 'LBS 2024 (Vektor)' },
-            { id: 'arcgis-vt-lbs-2019', label: 'LBS 2019 (Vektor)' }
-          ]},
+      subcats: [
           { subcat: 'Rekap Serangan OPT — Padi', layers: [
             { id: 'opt-padi-penggerek', label: 'Penggerek Batang' },
             { id: 'opt-padi-wbc', label: 'Wereng Batang Cokelat (WBC)' },
@@ -3336,6 +3404,19 @@ L.control.scale({
           { subcat: 'Peta Digital', layers: g.digital || [] }
         ];
       })()
+    },
+{
+      cat: 'Tutupan Lahan & Vegetasi',
+      layers: [
+        { id: 'toggleSawahGislinerLayer', label: 'Lahan Sawah Dilindungi (ATR/BPN)' },
+        { id: 'toggleSawahDilindungi', label: 'LSD 50K' },
+        { id: 'toggleSawahNasional50k', label: 'LBS 50K' },
+        { id: 'arcgis-vt-lbs-2024', label: 'LBS 2024 (Vektor)' },
+        { id: 'arcgis-vt-lbs-2019', label: 'LBS 2019 (Vektor)' },
+        { id: 'arcgis-sawah-2023', label: 'LBS 2023' },
+        { id: 'arcgis-sawah-2019', label: 'LBS 2019' },
+        { id: 'bps-lbs-2024', label: 'LBS Nasional 2024' }
+      ]
     },
     {
       cat: 'Elevasi & Tutupan Lahan',
@@ -3961,6 +4042,7 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
           (id === 'toggleNonTollRoad' && typeof window.toggleNonTollRoadLayer === 'function') ||
           (id === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') ||
           (id === 'toggleGistaruPersilLayer' && typeof window.toggleGistaruPersilLayer === 'function') ||
+          (id === 'toggleSawahGislinerLayer' && typeof window.toggleSawahGislinerLayer === 'function') ||
           (id === 'toggleJenisTanahJateng' && typeof window.toggleJenisTanahJateng === 'function') ||
           (id === 'toggleHwsdIndonesia' && typeof window.toggleHwsdIndonesia === 'function') ||
           (id === 'toggleGeologiArcGISOnline' && typeof window.toggleGeologiArcGISOnline === 'function') ||
@@ -4067,6 +4149,9 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
         }
         if (id === 'toggleGistaruPersilLayer' && typeof window.toggleGistaruPersilLayer === 'function') {
           window.toggleGistaruPersilLayer(cb.checked);
+        }
+        if (id === 'toggleSawahGislinerLayer' && typeof window.toggleSawahGislinerLayer === 'function') {
+          window.toggleSawahGislinerLayer(cb.checked);
         }
         if (id === 'toggleJenisTanahJateng' && typeof window.toggleJenisTanahJateng === 'function') {
           window.toggleJenisTanahJateng(cb.checked);

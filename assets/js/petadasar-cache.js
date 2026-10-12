@@ -83,15 +83,36 @@
     return coords.z + '/' + coords.x + '/' + coords.y;
   }
 
-  /* Fallback XYZ per-tile (CORS kosong → muat via <img>, tanpa IndexedDB).
-     Endpoint hanya punya tile z16–z21; di luar rentang itu biarkan error. */
-  var XYZ_FALLBACK_BASE = 'https://petadasar.meritech.cloud/tile/';
-  var XYZ_FALLBACK_MIN_Z = 16;
-  var XYZ_FALLBACK_MAX_Z = 21;
+  /* ── Sumber tile ──
+     Utamakan endpoint XYZ: ~150-200 ms per tile dan berisi data asli
+     (16-51 KB). Endpoint WMS hanya jadi cadangan: dari pengujian ia
+     mengembalikan PNG putih kosong 919 B pada semua lokasi yang dicek,
+     dan untuk tile kecil butuh 7-12 detik.
 
-  function xyzFallbackUrl(coords) {
-    if (coords.z < XYZ_FALLBACK_MIN_Z || coords.z > XYZ_FALLBACK_MAX_Z) return null;
-    return XYZ_FALLBACK_BASE + coords.z + '/' + coords.x + '/' + coords.y + '.jpg';
+     PENTING soal IndexedDB: NEITHER endpoint mengirim header
+     Access-Control-Allow-Origin (dan OPTIONS membalas 405). Artinya
+     fetch() di browser SELALU gagal CORS -- bukan karena tile rusak,
+     tapi karena browser menolak membacanya. Versi lama memakai fetch()
+     lebih dulu, jadi setiap tile melakukan dua unduhan penuh: satu
+     fetch yang percuma gagal, lalu satu <img>. Flag corsBlocked di
+     bawah membuat kelas ini mencoba fetch() hanya sekali; setelah itu
+     semua tile langsung lewat <img> dan di-cache oleh HTTP cache
+     browser (server mengirim max-age 604800 untuk XYZ). */
+  var XYZ_BASE = 'https://petadasar.meritech.cloud/tile/';
+  var XYZ_MIN_Z = 16;
+  var XYZ_MAX_Z = 21;
+
+  /* Tileplaceholder yang koordinatnya salah sudah terukur 776 B, sedangkan
+     tile berisi 16-51 KB. Ambang 3 KB memisahkan keduanya dengan jauh,
+     sehingga tile yang pasti kosong tidak dianggap Request Sukses. */
+  var MIN_PLAUSIBLE_BYTES = 3000;
+
+  /* null = belum dicoba, true = fetch berhasil, false = diblokir CORS. */
+  var corsWorks = null;
+
+  function xyzUrl(coords) {
+    if (coords.z < XYZ_MIN_Z || coords.z > XYZ_MAX_Z) return null;
+    return XYZ_BASE + coords.z + '/' + coords.x + '/' + coords.y + '.jpg';
   }
 
   /* ── Custom Cached WMS Tile Layer ── */
@@ -108,55 +129,73 @@
 
     _loadTileCached: function (tile, coords, done) {
       var self = this;
-      var src  = this.getTileUrl(coords);
-      // Include the rendered URL so a change to the WMS request cannot reuse
-      // an incompatible tile from a previous layer configuration.
-      var key  = src;
+      var wmsUrl = this.getTileUrl(coords);
+      var xyz = xyzUrl(coords);
 
-      function setTileSource(source) {
+      /* Urutan sumber: XYZ dulu, WMS cadangan. WMS tetap dimasukkan walau
+         di luar rentang XYZ (mis. di bawah z16) supaya perlakuannya
+         tidak berubah mendadak saat pengguna zoom. */
+      var sources = [];
+      if (xyz) sources.push(xyz);
+      if (wmsUrl) sources.push(wmsUrl);
+      if (!sources.length) { self._tileOnError(done, tile); return; }
+
+      function setTileSource(source, onFail) {
+        var isBlob = source.indexOf('blob:') === 0;
         tile.onload = function () {
-          if (source.indexOf('blob:') === 0) URL.revokeObjectURL(source);
+          if (isBlob) URL.revokeObjectURL(source);
           self._tileOnLoad(done, tile);
         };
         tile.onerror = function () {
-          if (source.indexOf('blob:') === 0) URL.revokeObjectURL(source);
-          if (!tile._xyzFallbackTried) {
-            var xyz = xyzFallbackUrl(coords);
-            if (xyz) {
-              tile._xyzFallbackTried = true;
-              tile.src = xyz;
-              return;
-            }
-          }
-          self._tileOnError(done, tile);
+          if (isBlob) URL.revokeObjectURL(source);
+          if (typeof onFail === 'function') onFail();
+          else self._tileOnError(done, tile);
         };
         tile.src = source;
       }
 
-      dbGet(key, function (cached) {
-        if (cached) {
-          setTileSource(URL.createObjectURL(cached));
-          return;
-        }
+      function attempt(index) {
+        if (index >= sources.length) { self._tileOnError(done, tile); return; }
+        var src = sources[index];
+        var next = function () { attempt(index + 1); };
 
-        fetch(src)
-          .then(function (res) {
-            if (!res.ok) throw new Error('WMS request failed: ' + res.status);
-            return res.blob();
-          })
-          .then(function (blob) {
-            if (blob && blob.size > 100) {
-              dbCount(function (cnt) {
-                if (cnt >= MAX_CACHE) dbEvict(100);
-                dbPut(key, blob);
-              });
-            }
-            setTileSource(URL.createObjectURL(blob));
-          })
-          .catch(function () {
-            setTileSource(src);
-          });
-      });
+        /* Sudah tahu fetch diblokir CORS → langsung <img>, satu unduhan. */
+        if (corsWorks === false) { setTileSource(src, next); return; }
+
+        dbGet(src, function (cached) {
+          if (cached) { setTileSource(URL.createObjectURL(cached), next); return; }
+
+          fetch(src)
+            .then(function (res) {
+              if (!res.ok) throw new Error('HTTP ' + res.status);
+              return res.blob();
+            })
+            .then(function (blob) {
+              if (blob && blob.size < MIN_PLAUSIBLE_BYTES) {
+                /* Terlalu kecil untuk jadi data asli: perlakukan sebagai
+                 * placeholder, jangan sampai tersimpan dan di-cache. */
+                next();
+                return;
+              }
+              corsWorks = true;
+              if (blob && blob.size > 100) {
+                dbCount(function (cnt) {
+                  if (cnt >= MAX_CACHE) dbEvict(100);
+                  dbPut(src, blob);
+                });
+              }
+              setTileSource(URL.createObjectURL(blob), next);
+            })
+            .catch(function () {
+              /* Network gagal atau -- jauh lebih mungkin -- CORS. Sekali
+                 tahu, jangan ulangi percobaan mahal ini untuk tiap tile. */
+              if (corsWorks === null) corsWorks = false;
+              setTileSource(src, next);
+            });
+        });
+      }
+
+      attempt(0);
     }
   });
 
