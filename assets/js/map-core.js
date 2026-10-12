@@ -1849,6 +1849,9 @@ L.control.scale({
         if (typeof toggleBumiPersilLayer === 'function') toggleBumiPersilLayer(false);
         if (typeof toggleGistaruPersilLayer === 'function') toggleGistaruPersilLayer(false);
 
+        // Layer dari kategori dinamis (IGTPR) punya toggle sendiri.
+        if (typeof window.resetDynamicCatalogLayers === 'function') window.resetDynamicCatalogLayers();
+
         setBaseMap('google-maps');
         currentBasemapName = 'google-maps';
         window.currentBasemapName = 'google-maps';
@@ -3470,6 +3473,15 @@ L.control.scale({
   _pinnedLayers = _defaultPinnedLayers.concat(_pinnedLayers).slice(0, PINNED_MAX);
   savePinnedLayers();
 
+  /* Kategori dari sumber eksternal (IGTPR) dimuat saat katalog pertama kali
+     dibuka, bukan saat halaman dimuat: daftar layer-nya 52 KB dan tidak
+     perlu ikut membebani waktu muat awal. Modul sumber menyediakan
+     ensureDynamicCatalogLoaded() yang idempoten. */
+  function muatKategoriDinamis() {
+    if (typeof window.ensureDynamicCatalogLoaded !== 'function') return;
+    try { window.ensureDynamicCatalogLoaded(); } catch (e) { /* sumber gagal, katalog tetap jalan */ }
+  }
+
   function toggleLayerCatalog() {
     var dd = document.getElementById('layerCatalogDropdown');
     var btn = document.getElementById('layerCatalogBtn');
@@ -3477,6 +3489,7 @@ L.control.scale({
     _layerCatalogOpen = !_layerCatalogOpen;
     dd.classList.toggle('open', _layerCatalogOpen);
     btn.classList.toggle('active', _layerCatalogOpen);
+    muatKategoriDinamis();
     if (_layerCatalogOpen && !dd.dataset.built) {
       buildLayerCatalog(dd);
       dd.dataset.built = '1';
@@ -3521,8 +3534,11 @@ L.control.scale({
   function syncLayerCatalogState() {
     document.querySelectorAll('.lc-item input[type="checkbox"]').forEach(function(cb) {
       var el = findLayerById(cb.dataset.layerId);
-      if (cb.dataset.geoportalKey && typeof window.isGeoportalCatalogLayerActive === 'function') {
+if (cb.dataset.geoportalKey && typeof window.isGeoportalCatalogLayerActive === 'function') {
         cb.checked = window.isGeoportalCatalogLayerActive(cb.dataset.geoportalKey);
+        _layerCatalogState[cb.dataset.layerId] = cb.checked;
+      } else if (cb.dataset.dynamicKey && typeof window.isDynamicCatalogLayerActive === 'function') {
+        cb.checked = window.isDynamicCatalogLayerActive(cb.dataset.dynamicKey);
         _layerCatalogState[cb.dataset.layerId] = cb.checked;
       } else if (el) {
         cb.checked = el.checked;
@@ -3543,6 +3559,35 @@ L.control.scale({
     document.querySelectorAll('.lc-item input[type="checkbox"]').forEach(function (cb) {
       if (cb.dataset.layerId === id) cb.checked = !!checked;
     });
+  };
+
+  /* ── Kategori katalog dari sumber eksternal ──
+   * Dipakai IGTPR ATR/BPN yang punya 788 layer, terlalu banyak untuk ditulis
+   * satu per satu di LAYER_CATALOG_DATA. Daftar layer dikirim modul sumber
+   * lewat registerDynamicLayerCategory() saat katalog dibuka pertama kali.
+   *
+   * Bedanya dari registerGeoportalCatalogLayers: checkbox memakai atribut
+   * `dynamicKey`, bukan `geoportalKey`, supaya tidak grabbed oleh
+   * window.toggleGeoportalCatalogLayer milik geoportal.js yang terikat ke
+   * tree jsTree GeoPortal Hub. */
+  window.registerDynamicLayerCategory = function (opts) {
+    opts = opts || {};
+    var signature = opts.signature;
+    LAYER_CATALOG_DATA = LAYER_CATALOG_DATA.filter(function (category) {
+      return category.dynamicSignature !== signature;
+    });
+    if (!opts.title || !opts.layers || !opts.layers.length) {
+      var rebuilt = document.getElementById('layerCatalogDropdown');
+      if (rebuilt && rebuilt.dataset.built) buildLayerCatalog(rebuilt);
+      return;
+    }
+    LAYER_CATALOG_DATA.push({
+      cat: opts.title,
+      dynamicSignature: signature,
+      subcats: opts.subcats || [{ subcat: opts.subcat || opts.title, layers: opts.layers }]
+    });
+    var dropdown = document.getElementById('layerCatalogDropdown');
+    if (dropdown && dropdown.dataset.built) buildLayerCatalog(dropdown);
   };
 
   window.registerGeoportalCatalogLayers = function (sourceLayers) {
@@ -3770,7 +3815,7 @@ L.control.scale({
               isChecked = isHujanLayerActive();
             }
             html += '<div class="lc-item">';
-            html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (l.geoportalKey ? ' data-geoportal-key="' + l.geoportalKey + '"' : '') + (isChecked ? ' checked' : '') + ' />';
+html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (l.geoportalKey ? ' data-geoportal-key="' + l.geoportalKey + '"' : '') + (l.dynamicKey ? ' data-dynamic-key="' + l.dynamicKey + '"' : '') + (isChecked ? ' checked' : '') + ' />';
             html += '<label for="lc_' + l.id + '">' + l.label + '</label>';
             html += '<div class="lc-item-actions">';
             if (l.id !== 'toggleBmkgNormalHujan' && (l.id.indexOf('isee-soil-') !== 0 || l.id === 'isee-soil-boundaries')) {
@@ -3801,7 +3846,9 @@ L.control.scale({
           html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (l.geoportalKey ? ' data-geoportal-key="' + l.geoportalKey + '"' : '') + (isChecked ? ' checked' : '') + ' />';
           html += '<label for="lc_' + l.id + '">' + l.label + '</label>';
           html += '<div class="lc-item-actions">';
-          if (l.id !== 'toggleHwsdIndonesia' && (l.id.indexOf('isee-soil-') !== 0 || l.id === 'isee-soil-boundaries')) {
+          /* Layer dari kategori dinamis (IGTPR) adalah WMS tile raster tanpa
+             tabel atribut, jadi tombol tabel atribut disembunyikan. */
+          if (!l.dynamicKey && l.id !== 'toggleHwsdIndonesia' && (l.id.indexOf('isee-soil-') !== 0 || l.id === 'isee-soil-boundaries')) {
             html += '<button type="button" class="lc-attr-btn' + ((isChecked || l.id === 'toggleJenisTanahJateng' || l.id === 'toggleGeologiArcGISOnline' || l.id === 'isee-soil-boundaries') ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
             html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
             html += '</button>';
@@ -3890,7 +3937,7 @@ L.control.scale({
     container.querySelectorAll('.lc-item input[type="checkbox"]').forEach(function(cb) {
       cb.addEventListener('change', function() {
         var id = cb.dataset.layerId;
-        var hasWindowToggle = !!cb.dataset.geoportalKey ||
+        var hasWindowToggle = !!cb.dataset.geoportalKey || !!cb.dataset.dynamicKey ||
           (id === 'toggleSignificantMarkers' && typeof window.toggleSignificantMarkers === 'function') ||
           (id === 'toggleFeltMarkers' && typeof window.toggleFeltMarkers === 'function') ||
           (id === 'toggleLatestEarthquake' && typeof window.toggleLatestEarthquake === 'function') ||
@@ -3961,8 +4008,11 @@ L.control.scale({
         if (id === 'toggleLatestEarthquake' && typeof window.toggleLatestEarthquake === 'function') {
           window.toggleLatestEarthquake(cb.checked);
         }
-        if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'function') {
+if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'function') {
           window.toggleGeoportalCatalogLayer(cb.dataset.geoportalKey, cb.checked);
+        }
+        if (cb.dataset.dynamicKey && typeof window.toggleDynamicCatalogLayer === 'function') {
+          window.toggleDynamicCatalogLayer(cb.dataset.dynamicKey, cb.checked);
         }
         if (id === 'toggleSebaranPasar' && typeof window.toggleSebaranPasar === 'function') {
           window.toggleSebaranPasar(cb.checked);

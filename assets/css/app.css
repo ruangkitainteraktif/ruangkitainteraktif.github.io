@@ -8982,6 +8982,20 @@
   margin-top: 4px; font-size: 9px; color: var(--text-muted); opacity: .8;
 }
 [data-theme="dark"] .nib-result { background: rgba(255,255,255,0.03); }
+
+/* ── Legenda IGTPR (ATR/BPN) ── */
+.igtpr-legend { padding: 8px; }
+.igtpr-legend-title {
+  margin-bottom: 5px; font-size: 11px; font-weight: 700; color: #0f172a;
+  overflow-wrap: anywhere; word-break: break-word;
+}
+.igtpr-legend-img {
+  max-width: 100%; background: #fff; border-radius: 4px;
+}
+.igtpr-legend-source {
+  margin-top: 5px; font-size: 9px; line-height: 1.3; color: #64748b;
+}
+[data-theme="dark"] .igtpr-legend-img { background: #fff; }
 .geotani-sls-popup-title {
   font-size: 12px; font-weight: 700; color: #166534;
   padding-bottom: 5px; margin-bottom: 5px; border-bottom: 1px solid #dcfce7;

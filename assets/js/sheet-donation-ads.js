@@ -81,6 +81,34 @@
     });
   }
 
+  /* Unit fluid tepat di bawah tombol "Export SHP" di sheet GeoData.
+
+     Sheet GeoData tidak ikut placement addGeoToolsInlineAds() di bawah: tab-nya
+     berawalan "alat-tab-" (alat-tab-arcgis-rest, alat-tab-geoserver), bukan
+     "geotoolsTab". Jadi unitnya ditambahkan sendiri dengan anchor berupa id
+     tombol, bukan berupa kartu tempat kartu disisipkan. */
+  var GEODATA_EXPORT_SHP_ANCHORS = [
+    { key: 'arcgis', anchor: '#arcgisExportSelectedBtn' },
+    { key: 'geoserver', anchor: '#geoserverExportBtn' }
+  ];
+
+  function addGeoDataExportShpAds() {
+    GEODATA_EXPORT_SHP_ANCHORS.forEach(function (placement) {
+      var button = document.querySelector(placement.anchor);
+      if (!button) return;
+      /* Di tab ArcGIS tombol ini berada di dalam grid aksi, jadi "afterend"
+         menaruh unit sebagai baris grid berikutnya dan ikut memakai gap yang
+         sama dengan tombol lain. */
+      var next = button.nextElementSibling;
+      if (next && next.classList.contains('geodata-menu-adsense')) return;
+      var ad = createAdUnit();
+      ad.classList.add('geodata-menu-adsense', 'geodata-menu-adsense--' + placement.key);
+      ad.setAttribute('aria-label', 'Iklan');
+      button.insertAdjacentElement('afterend', ad);
+      dorongSlotIklan(ad);
+    });
+  }
+
   /* Unit fluid untuk posisi di antara kartu GeoTools. Loader AdSense hanya
      dimuat sekali di <head> index.html. */
   function createAdUnit() {
@@ -130,10 +158,12 @@
     document.addEventListener('DOMContentLoaded', function () {
       addDonationBanners();
       addGeoToolsInlineAds();
+      addGeoDataExportShpAds();
     }, { once: true });
   } else {
     addDonationBanners();
     addGeoToolsInlineAds();
+    addGeoDataExportShpAds();
   }
   window.addEventListener('resize', addDonationBanners, { passive: true });
 })();
