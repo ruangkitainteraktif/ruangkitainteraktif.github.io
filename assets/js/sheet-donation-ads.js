@@ -81,30 +81,40 @@
     });
   }
 
-  /* Unit fluid tepat di bawah tombol "Export SHP" di sheet GeoData.
+  /* Unit fluid di sheet GeoData.
 
-     Sheet GeoData tidak ikut placement addGeoToolsInlineAds() di bawah: tab-nya
+     Sheet GeoData tidak ikut placement addGeoToolsInlineAds() di bawah: tabnya
      berawalan "alat-tab-" (alat-tab-arcgis-rest, alat-tab-geoserver), bukan
      "geotoolsTab". Jadi unitnya ditambahkan sendiri dengan anchor berupa id
-     tombol, bukan berupa kartu tempat kartu disisipkan. */
-  var GEODATA_EXPORT_SHP_ANCHORS = [
-    { key: 'arcgis', anchor: '#arcgisExportSelectedBtn' },
-    { key: 'geoserver', anchor: '#geoserverExportBtn' }
+     elemen, bukan berupa kartu tempat kartu disisipkan.
+
+     afterend dipakai untuk dua tombol "Export SHP". Di tab ArcGIS tombol itu
+     berada di dalam grid aksi, sehingga unit menjadi baris grid berikutnya dan
+     ikut memakai gap yang sama dengan tombol lain, tanpa CSS tambahan.
+
+     beforebegin dipakai untuk kartu "Layer Dimuat". Anchor-nya #alatLayerList
+     yang berada DI DALAM kartu itu, sedangkan yang harus didahului adalah kartu
+     seluruhnya, jadi elemen sasaran dinaikkan lewat closest() lebih dulu. */
+  var GEODATA_AD_PLACEMENTS = [
+    { key: 'arcgis', anchor: '#arcgisExportSelectedBtn', position: 'afterend' },
+    { key: 'geoserver', anchor: '#geoserverExportBtn', position: 'afterend' },
+    { key: 'layer-dimuat', anchor: '#alatLayerList', position: 'beforebegin', climb: '.alat-card' }
   ];
 
-  function addGeoDataExportShpAds() {
-    GEODATA_EXPORT_SHP_ANCHORS.forEach(function (placement) {
-      var button = document.querySelector(placement.anchor);
-      if (!button) return;
-      /* Di tab ArcGIS tombol ini berada di dalam grid aksi, jadi "afterend"
-         menaruh unit sebagai baris grid berikutnya dan ikut memakai gap yang
-         sama dengan tombol lain. */
-      var next = button.nextElementSibling;
-      if (next && next.classList.contains('geodata-menu-adsense')) return;
+  function addGeoDataAds() {
+    GEODATA_AD_PLACEMENTS.forEach(function (placement) {
+      var el = document.querySelector(placement.anchor);
+      if (!el) return;
+      var target = (placement.climb && el.closest) ? (el.closest(placement.climb) || el) : el;
+      if (!target.parentNode) return;
+      var sibling = placement.position === 'beforebegin'
+        ? target.previousElementSibling
+        : target.nextElementSibling;
+      if (sibling && sibling.classList.contains('geodata-menu-adsense')) return;
       var ad = createAdUnit();
       ad.classList.add('geodata-menu-adsense', 'geodata-menu-adsense--' + placement.key);
       ad.setAttribute('aria-label', 'Iklan');
-      button.insertAdjacentElement('afterend', ad);
+      target.insertAdjacentElement(placement.position, ad);
       dorongSlotIklan(ad);
     });
   }
@@ -158,12 +168,12 @@
     document.addEventListener('DOMContentLoaded', function () {
       addDonationBanners();
       addGeoToolsInlineAds();
-      addGeoDataExportShpAds();
+      addGeoDataAds();
     }, { once: true });
   } else {
     addDonationBanners();
     addGeoToolsInlineAds();
-    addGeoDataExportShpAds();
+    addGeoDataAds();
   }
   window.addEventListener('resize', addDonationBanners, { passive: true });
 })();
