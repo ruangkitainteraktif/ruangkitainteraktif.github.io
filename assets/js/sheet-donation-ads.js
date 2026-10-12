@@ -2,6 +2,8 @@
 (function () {
   'use strict';
 
+  /* '#ai-sheet .ais-sheet-body' sengaja tidak ada di daftar berikut: sheet Tanya
+     Ruang tidak lagi menampilkan banner donasi. */
   var SHEET_CONTENTS = [
     '#hotspot-sheet .hs-sheet-body',
     '#geopangan-sheet .gp-sheet-body',
@@ -10,7 +12,6 @@
     '#geotoolsSheetBody',
     '#geodataSheetBody',
     '#attr-table-sheet .at-sheet-body',
-    '#ai-sheet .ais-sheet-body',
     '#drawSidebar .dm-sidebar-body',
     '#legendSidebarBody',
     '#polygonAnalysisList'
