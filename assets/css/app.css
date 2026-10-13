@@ -8495,9 +8495,28 @@
       /* ── Attribute Table Sheet (Mobile: bottom 50vh) ── */
       #attr-table-sheet {
         top: auto; right: 0; bottom: 0; left: 0;
-        width: 100%; height: var(--sheet-h, 50vh); height: var(--sheet-h, 50dvh);
+        width: 100%;
+        height: var(--sheet-h, 50vh); height: var(--sheet-h, 50dvh);
         border-radius: 16px 16px 0 0;
         transform: translateY(100%);
+      }
+      /* ── Penjaga tinggi terhadap skrip iklan pihak ketiga ──
+         Unit AdSense di dalam sheet ini memakai data-ad-format="auto".
+         Begitu slotnya dirender, show_ads_impl.js menulis
+         `height: auto !important` ke leluhur fixed terdekat, yaitu sheet
+         ini. Karena !important, deklarasi `height` di atas TIDAK pernah
+         menang: sheet ikut setinggi isi tabel, dan di ponsel itu berarti
+         sheet membuka layar penuh (semua layer, bukan cuma gempa --
+         slotnya ikut dirender untuk setiap tabel yang punya iklan).
+
+         Ukuran kotak karena itu dijaga dari dua sisi. min-height dan
+         max-height memakai variabel --sheet-h YANG SAMA dengan height, jadi
+         tinggi sheet jadi tetap -- tidak bisa dilebihi maupun dikecilkan
+         oleh deklarasi height inline pihak ketiga. Nilai tetap mengikuti
+         --sheet-h, termasuk saat pengguna menggeser tingginya. */
+      #attr-table-sheet {
+        min-height: var(--sheet-h, 50vh); min-height: var(--sheet-h, 50dvh);
+        max-height: var(--sheet-h, 50vh); max-height: var(--sheet-h, 50dvh);
       }
       /* Beri tabel Jenis Tanah ruang vertikal lebih besar saat pertama dibuka.
          Nilai inline dari sheet-drag.js tetap bisa mengatur tinggi saat digeser. */
@@ -8518,6 +8537,10 @@
       #attr-table-sheet.attr-table-sheet-minimized {
         top: auto; right: auto; bottom: 72px; left: 50%;
         width: min(260px, calc(100vw - 48px)); height: 36px;
+        /* min/max-height ikut ditimpa: tanpa ini penjaga tinggi di atas
+           memaksa chip membesar setinggi sheet saat iklan pernah menulis
+           height inline di keadaan sheet sedang jadi chip. */
+        min-height: 36px; max-height: 36px;
         border-radius: 14px; transform: translateX(-50%);
         border: 1px solid rgba(255, 255, 255, .72);
         background: rgba(255, 255, 255, .92);

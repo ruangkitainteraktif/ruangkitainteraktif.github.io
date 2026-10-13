@@ -3792,17 +3792,28 @@ if (cb.dataset.geoportalKey && typeof window.isGeoportalCatalogLayerActive === '
             var el = findLayerById(l.id);
             var isChecked = el ? el.checked : (_layerCatalogState[l.id] || false);
             if (l.id === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') isChecked = isHujanLayerActive();
-            html += '<div class="lc-item lc-item-pinned">';
-            html += '<input type="checkbox" id="lc_pin_' + l.id + '" data-layer-id="' + l.id + '"' + (l.geoportalKey ? ' data-geoportal-key="' + l.geoportalKey + '"' : '') + (isChecked ? ' checked' : '') + ' />';
-            html += '<label for="lc_pin_' + l.id + '">' + l.label + '</label>';
-            html += '<div class="lc-item-actions">';
-            if (l.id !== 'toggleBmkgNormalHujan' && (l.id.indexOf('isee-soil-') !== 0 || l.id === 'isee-soil-boundaries')) {
-              html += '<button type="button" class="lc-attr-btn' + ((isChecked || l.id === 'isee-soil-boundaries') ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
-              html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
-              html += '</button>';
-            }
-            html += '<button type="button" class="lc-pin-btn lc-pin-btn-active" data-layer-id="' + l.id + '" title="Hapus Pin">' + pinIconFilled + '</button>';
-            html += '</div></div>';
+html += '<div class="lc-item lc-item-pinned">';
+        html += '<input type="checkbox" id="lc_pin_' + l.id + '" data-layer-id="' + l.id + '"' + (l.geoportalKey ? ' data-geoportal-key="' + l.geoportalKey + '"' : '') + (isChecked ? ' checked' : '') + ' />';
+        html += '<label for="lc_pin_' + l.id + '">' + l.label + '</label>';
+        html += '<div class="lc-item-actions">';
+        if (l.id !== 'toggleBmkgNormalHujan' && (l.id.indexOf('isee-soil-') !== 0 || l.id === 'isee-soil-boundaries')) {
+          html += '<button type="button" class="lc-attr-btn' + ((isChecked || l.id === 'isee-soil-boundaries') ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
+          html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
+          html += '</button>';
+        }
+        html += '<button type="button" class="lc-pin-btn lc-pin-btn-active" data-layer-id="' + l.id + '" title="Hapus Pin">' + pinIconFilled + '</button>';
+        html += '</div></div>';
+      });
+      /* Slot iklan Adsense fluid di kategori layer, tepat di bawah layer-layer yang dipin. */
+      html += '<div class="lc-adsense layer-pinned-adsense" aria-label="Iklan">' +
+        '<ins class="adsbygoogle"' +
+        ' style="display:block"' +
+        ' data-ad-format="fluid"' +
+        ' data-ad-layout-key="-fb+5w+4e-db+86"' +
+        ' data-ad-client="ca-pub-7501816933195235"' +
+        ' data-ad-slot="1306506445"></ins>' +
+        '</div>';
+      html += '</div></div>';
           }
         });
         html += '</div></div>';
