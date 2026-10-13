@@ -555,37 +555,88 @@
     });
   }
 
-  /* ── pemasangan ── */
-  function pasang(cfg) {
-    var e = elDari(cfg);
-    if (!e) return false;
-    var z = zona(cfg);
-    if (!z) return false;
-    /* Listener pointerdown dipasang per sheet (zona gesernya berbeda),
-       tapi pointermove/pointerup dipasang SATU KALI di window, bukan per
-       sheet. Alasannya jari berhenti di sheet ketika keluar dari sheet saat
-       sheet bergerak, jadi listener yang menempel di sheet akan kehilangan
-       event di tengah gestur dan sheet-nya tersangkut separuh jalan. */
-    /* Handle dan header dipasang BERPIKIRAN. Di markup, handle adalah
-       sibling header, bukan anaknya, jadi pointerdown di handle tidak akan
-       membubble ke header. Kalau hanya header yang didengarkan, gesekan
-       yang dimulai dari handle (tempat jari paling wajar mendarat)
-       akan mati diam-diam. Flag dipasang di sheet supaya keduanya tidak
-       terpasang dua kali. */
-    if (e.__sheetDragPasang) return true;
-    e.__sheetDragPasang = true;
-    var targets = [];
-    var hd = di(cfg, cfg.handle);
-    if (z) targets.push(z);
-    if (hd && hd !== z) targets.push(hd);
-    targets.forEach(function (t) {
-      if (!t) return;
-      t.classList.add('sheet-drag-zone');
-      t.addEventListener('pointerdown', function (ev) { onDown(ev, cfg.id); });
-    });
-    pasangAksesibilitas(cfg);
-    return true;
-  }
+/* ── penjaga tinggi terhadap penulisan pihak ketiga ──
+     Skrip iklan (AdSense show_ads_impl.js) pernah menulis
+     `height: auto !important` DAN `min-height: 0 !important` ke leluhur
+     fixed terdekat dari slot iklan -- yaitu sheet -- beberapa ratus ms
+     setelah slotnya dirender. Dua deklarasi itu mematikan tinggi yang
+     diatur modul ini dari dua arah berbeda: `height: auto` membuat sheet
+     membuka setinggi isi tabel (layar penuh di ponsel, karena itu bug yang
+     pertama terlihat di tabel 15 gempa), sedangkan `min-height: 0` membuat
+     sheet menyusut sampai tinggi isi saat tabelnya kosong.
+
+     Keduanya inline DAN !important, jadi tidak ada aturan CSS yang bisa
+     menang -- termasuk varian min-height/max-height yang dicoba lebih
+     dulu di app.css (ia menahan height, tapi AdSense ikut menimpa
+     min-height). Karena itu satu-satunya pintu adalah membuang
+     deklarasinya.
+
+     Modul ini sendiri tidak pernah menulis height/min-height/max-height
+     inline: tinggi sepenuhnya lewat custom property --sheet-h (lihat
+     keTengah dan terapkanTinggi). Karena itu ketiga properti itu dianggap
+     milik pihak ketiga dan dibersihkan begitu muncul. Pembersihan lewat
+     MutationObserver, bukan polling, supaya tumpukan panggilan hanya
+     berjalan ketika memang ada skrip lain yang menulis. */
+   var PROPS_TINGGI_ASING = ['height', 'min-height', 'max-height'];
+
+   function bersihkanTinggiAsing(e) {
+     if (!e || !e.style) return false;
+     var kotor = false;
+     for (var i = 0; i < PROPS_TINGGI_ASING.length; i++) {
+       var prop = PROPS_TINGGI_ASING[i];
+       if (e.style.getPropertyValue(prop)) {
+         e.style.removeProperty(prop);
+         kotor = true;
+       }
+     }
+     return kotor;
+   }
+
+   function jagaTinggiAsing(cfg) {
+     var e = elDari(cfg);
+     if (!e || e.__jagaTinggiAsing || !('MutationObserver' in window)) return;
+     e.__jagaTinggiAsing = true;
+     new MutationObserver(function () {
+       if (bersihkanTinggiAsing(e)) sinkronkanPeta();
+     }).observe(e, { attributes: true, attributeFilter: ['style'] });
+     /* Sekali saat pemasangan: slot iklan bisa saja sudah dirender lebih
+        dulu (unit di badan sheet dipasang oleh sheet-donation-ads.js ketika
+        halaman selesai dimuat, jauh sebelum sheet pertama dibuka). */
+     bersihkanTinggiAsing(e);
+   }
+
+   /* ── pemasangan ── */
+   function pasang(cfg) {
+     var e = elDari(cfg);
+     if (!e) return false;
+     var z = zona(cfg);
+     if (!z) return false;
+     /* Listener pointerdown dipasang per sheet (zona gesernya berbeda),
+        tapi pointermove/pointerup dipasang SATU KALI di window, bukan per
+        sheet. Alasannya jari berhenti di sheet ketika keluar dari sheet saat
+        sheet bergerak, jadi listener yang menempel di sheet akan kehilangan
+        event di tengah gestur dan sheet-nya tersangkut separuh jalan. */
+     /* Handle dan header dipasang BERPIKIRAN. Di markup, handle adalah
+        sibling header, bukan anaknya, jadi pointerdown di handle tidak akan
+        membubble ke header. Kalau hanya header yang didengarkan, gesekan
+        yang dimulai dari handle (tempat jari paling wajar mendarat)
+        akan mati diam-diam. Flag dipasang di sheet supaya keduanya tidak
+        terpasang dua kali. */
+     if (e.__sheetDragPasang) return true;
+     e.__sheetDragPasang = true;
+     var targets = [];
+     var hd = di(cfg, cfg.handle);
+     if (z) targets.push(z);
+     if (hd && hd !== z) targets.push(hd);
+     targets.forEach(function (t) {
+       if (!t) return;
+       t.classList.add('sheet-drag-zone');
+       t.addEventListener('pointerdown', function (ev) { onDown(ev, cfg.id); });
+     });
+     pasangAksesibilitas(cfg);
+     jagaTinggiAsing(cfg);
+     return true;
+   }
 
   function pasangGlobal() {
     if (pasangGlobal.sudah) return;

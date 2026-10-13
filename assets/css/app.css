@@ -8493,15 +8493,35 @@
       }
 
       /* ── Attribute Table Sheet (Mobile: bottom 50vh) ── */
-      #attr-table-sheet {
+#attr-table-sheet {
         top: auto; right: 0; bottom: 0; left: 0;
-        width: 100%; height: var(--sheet-h, 50vh); height: var(--sheet-h, 50dvh);
+        width: 100%;
+        height: var(--sheet-h, 50vh); height: var(--sheet-h, 50dvh);
         border-radius: 16px 16px 0 0;
         transform: translateY(100%);
       }
-      /* Beri tabel Jenis Tanah ruang vertikal lebih besar saat pertama dibuka.
-         Nilai inline dari sheet-drag.js tetap bisa mengatur tinggi saat digeser. */
-      #attr-table-sheet.at-soil-table-mode { --sheet-h: min(76dvh, 760px); }
+      /* ── Penjaga tinggi terhadap skrip iklan pihak ketiga ──
+         Unit AdSense di dalam sheet ini memakai data-ad-format="auto".
+         Begitu slotnya dirender, show_ads_impl.js menulis
+         `height: auto !important` ke leluhur fixed terdekat, yaitu sheet
+         ini. Karena !important, deklarasi `height` di atas TIDAK pernah
+         menang: sheet ikut setinggi isi tabel, dan di ponsel itu berarti
+         sheet membuka layar penuh (semua layer, bukan cuma gempa --
+         slotnya ikut dirender untuk setiap tabel yang punya iklan).
+
+         Ukuran kotak karena itu dijaga dari dua sisi. min-height dan
+         max-height memakai variabel --sheet-h YANG SAMA dengan height, jadi
+         tinggi sheet jadi tetap -- tidak bisa dilebihi maupun dikecilkan
+         oleh deklarasi height inline pihak ketiga. Nilai tetap mengikuti
+         --sheet-h, termasuk saat pengguna menggeser tingginya. */
+         #attr-table-sheet {
+           min-height: var(--sheet-h, 50vh); min-height: var(--sheet-h, 50dvh);
+           max-height: var(--sheet-h, 50vh); max-height: var(--sheet-h, 50dvh);
+         }
+     }
+     /* Beri tabel Jenis Tanah ruang vertikal lebih besar saat pertama dibuka.
+       Nilai inline dari sheet-drag.js tetap bisa mengatur tinggi saat digeser. */
+     #attr-table-sheet.at-soil-table-mode { --sheet-h: min(76dvh, 760px); }
       #attr-table-sheet.attr-table-sheet-open { transform: translateY(0); }
       #attr-table-sheet .at-sheet-handle {
         display: flex; width: 36px; height: 4px;
