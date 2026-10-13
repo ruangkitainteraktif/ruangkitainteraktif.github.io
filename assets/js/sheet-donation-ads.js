@@ -82,7 +82,7 @@ Penempatan memakai iterasi children panel, bukan selektor :scope, karena
     { key: 'geodisaster', id: 'geotoolsTabGeoDisaster', selectors: ['.cctv-card', '.geopulse-card', '.geonusa-card'] }
   ];
 
-  var MAX_PER_TAB = 5;
+  var MAX_PER_TAB = 3;
 
   function addGeoToolsInlineAds() {
     GEO_TOOLS_TABS.forEach(function (tab) {
@@ -205,8 +205,7 @@ Penempatan memakai iterasi children panel, bukan selektor :scope, karena
   var GEODATA_AD_PLACEMENTS = [
     { key: 'arcgis', anchor: '#arcgisExportSelectedBtn', position: 'afterend' },
     { key: 'geoserver', anchor: '#geoserverExportBtn', position: 'afterend' },
-    { key: 'layer-dimuat', anchor: '#alatLayerList', position: 'beforebegin', climb: '.alat-card' },
-    { key: 'display', anchor: '#geodataSheetBody', position: 'beforeend' }
+    { key: 'layer-dimuat', anchor: '#alatLayerList', position: 'beforebegin', climb: '.alat-card' }
   ];
 
   function addGeoDataAds() {

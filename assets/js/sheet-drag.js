@@ -555,56 +555,6 @@
     });
   }
 
-  /* ── penjaga tinggi terhadap penulisan pihak ketiga ──
-     Skrip iklan (AdSense show_ads_impl.js) pernah menulis
-     `height: auto !important` DAN `min-height: 0 !important` ke leluhur
-     fixed terdekat dari slot iklan -- yaitu sheet -- beberapa ratus ms
-     setelah slotnya dirender. Dua deklarasi itu mematikan tinggi yang
-     diatur modul ini dari dua arah berbeda: `height: auto` membuat sheet
-     membuka setinggi isi tabel (layar penuh di ponsel, karena itu bug yang
-     pertama terlihat di tabel 15 gempa), sedangkan `min-height: 0` membuat
-     sheet menyusut sampai tinggi isi saat tabelnya kosong.
-
-     Keduanya inline DAN !important, jadi tidak ada aturan CSS yang bisa
-     menang -- termasuk varian min-height/max-height yang dicoba lebih
-     dulu di app.css (ia menahan height, tapi AdSense ikut menimpa
-     min-height). Karena itu satu-satunya pintu adalah membuang
-     deklarasinya.
-
-     Modul ini sendiri tidak pernah menulis height/min-height/max-height
-     inline: tinggi sepenuhnya lewat custom property --sheet-h (lihat
-     keTengah dan terapkanTinggi). Ketiga properti itu karena ini selalu
-     dianggap milik pihak ketiga dan dibersihkan begitu muncul. Pembersihan
-     lewat MutationObserver, bukan polling, supaya tumpukan panggilan hanya
-     berjalan ketika memang ada skrip lain yang menulis. */
-  var PROPS_TINGGI_ASING = ['height', 'min-height', 'max-height'];
-
-  function bersihkanTinggiAsing(e) {
-    if (!e || !e.style) return false;
-    var kotor = false;
-    for (var i = 0; i < PROPS_TINGGI_ASING.length; i++) {
-      var prop = PROPS_TINGGI_ASING[i];
-      if (e.style.getPropertyValue(prop)) {
-        e.style.removeProperty(prop);
-        kotor = true;
-      }
-    }
-    return kotor;
-  }
-
-  function jagaTinggiAsing(cfg) {
-    var e = elDari(cfg);
-    if (!e || e.__jagaTinggiAsing || !('MutationObserver' in window)) return;
-    e.__jagaTinggiAsing = true;
-    new MutationObserver(function () {
-      if (bersihkanTinggiAsing(e)) sinkronkanPeta();
-    }).observe(e, { attributes: true, attributeFilter: ['style'] });
-    /* Sekali saat pemasangan: slot iklan bisa saja sudah dirender lebih
-       dulu (unit di badan sheet dipasang oleh sheet-donation-ads.js ketika
-       halaman selesai dimuat, jauh sebelum sheet pertama dibuka). */
-    bersihkanTinggiAsing(e);
-  }
-
   /* ── pemasangan ── */
   function pasang(cfg) {
     var e = elDari(cfg);
@@ -634,7 +584,6 @@
       t.addEventListener('pointerdown', function (ev) { onDown(ev, cfg.id); });
     });
     pasangAksesibilitas(cfg);
-    jagaTinggiAsing(cfg);
     return true;
   }
 
