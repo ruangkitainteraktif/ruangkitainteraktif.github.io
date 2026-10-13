@@ -33,7 +33,7 @@
     var buttons = document.createElement('div');
     buttons.className = 'lc-donation-btns';
     [
-      { label: 'Donasi', href: 'https://saweria.co/maspannn', className: 'lc-donation-saweria' },
+      { label: 'Donasi', href: 'https://saweria.co/ruangkita', className: 'lc-donation-saweria' },
       { label: 'PayPal', href: 'https://www.paypal.com/paypalme/panjidanutirto', className: 'lc-donation-paypal' }
     ].forEach(function (item) {
       var link = document.createElement('a');
