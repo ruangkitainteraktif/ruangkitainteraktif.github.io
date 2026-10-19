@@ -3719,6 +3719,44 @@ const SAWAH_COLOR = '#87cf15';
         ]
     },
     {
+      cat: 'Tutupan Lahan Global (UMD GLAD)',
+      subcats: [
+        { subcat: 'Komposit tutupan lahan', layers: [
+          { id: 'glcluc-composite2020', label: 'Komposit tutupan lahan 2020' },
+          { id: 'glcluc-composite2000', label: 'Komposit tutupan lahan 2000' }
+        ]},
+        { subcat: 'Hutan & tutupan pohon', layers: [
+          { id: 'glcluc-forest', label: 'Tutupan pohon (hutan)' }
+        ]},
+        { subcat: 'Lahan pertanian', layers: [
+          { id: 'glcluc-cropland', label: 'Lahan pertanian' },
+          { id: 'glcluc-cropland-invert', label: 'Lahan pertanian (inversi)' },
+          { id: 'glcluc-crop03', label: 'Lahan pertanian 2003' },
+          { id: 'glcluc-crop07', label: 'Lahan pertanian 2007' },
+          { id: 'glcluc-crop11', label: 'Lahan pertanian 2011' },
+          { id: 'glcluc-crop15', label: 'Lahan pertanian 2015' },
+          { id: 'glcluc-crop19', label: 'Lahan pertanian 2019' },
+          { id: 'glcluc-cropchange-only', label: 'Perubahan lahan pertanian' }
+        ]},
+        { subcat: 'Permukiman & bangunan', layers: [
+          { id: 'glcluc-builtup', label: 'Permukiman & bangunan' },
+          { id: 'glcluc-builtup-2', label: 'Permukiman & bangunan v2' }
+        ]},
+        { subcat: 'Air, salju & tutupan khusus', layers: [
+          { id: 'glcluc-water', label: 'Air' },
+          { id: 'glcluc-snow', label: 'Salju & es' }
+        ]},
+        { subcat: 'Perubahan tutupan lahan', layers: [
+          { id: 'glcluc-change-mask', label: 'Mask perubahan tutupan lahan (2000-2020)' },
+          { id: 'glcluc-change-hill', label: 'Hillshade perubahan tutupan lahan' }
+        ]},
+        { subcat: 'Natural Lands (NatLand)', layers: [
+          { id: 'natland-classes', label: 'NatLand — tutupan lahan (kelas)' },
+          { id: 'natland-binary', label: 'NatLand — alam vs non-alam' }
+        ]}
+      ]
+    },
+    {
       cat: 'Elevasi & Tutupan Lahan',
       layers: [
         { id: 'toggleDemnasOverlay', label: 'Ketinggian permukaan (DEMNAS / SRTM)' },
@@ -3776,7 +3814,8 @@ const SAWAH_COLOR = '#87cf15';
     'Cuaca, Iklim & Kualitas Udara': 'Prakiraan dan pengamatan cuaca, pola iklim, kekeringan, serta polutan udara.',
     'Hutan, Lahan & Konservasi': 'Kawasan hutan, lahan gambut, perkebunan, dan kawasan lindung.',
     'Peta Kehutanan & Lahan (SIGAP)': 'Data kehutanan dan lahan dari SIGAP KLHK: kawasan hutan, penggunaan lahan, perizinan, konservasi, kebakaran hutan, dan FOLU.',
-    'Elevasi & Tutupan Lahan': 'Ketinggian dan bentuk permukaan bumi, kedalaman laut, serta jenis tutupan lahan.'
+    'Elevasi & Tutupan Lahan': 'Ketinggian dan bentuk permukaan bumi, kedalaman laut, serta jenis tutupan lahan.',
+    'Tutupan Lahan Global (UMD GLAD)': 'Tutupan lahan global 30 m dari UMD GLAD Land & Carbon Lab (Landsat): komposit 2000 & 2020, hutan, lahan pertanian, permukiman, air, salju, perubahan tutupan lahan, serta kawasan alam NatLand.'
   };
 
   (function placeGeologyAfterBasemap() {
@@ -4407,6 +4446,7 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
            id === 'toggleRtrwTmsLayer' ||
            id.indexOf('atrbpn-wms-') === 0 ||
            id.indexOf('sigap-') === 0 ||
+            ((id.indexOf('glcluc-') === 0 || id.indexOf('natland-') === 0) && typeof window.toggleLclTileLayer === 'function') ||
            id === 'toggleSekolahLayer' ||
           id.indexOf('omi-') === 0 ||
            id === 'toggleEoxOverlay' ||
@@ -4543,6 +4583,9 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
         }
         if (id.indexOf('sigap-') === 0 && typeof window.toggleSigapLayer === 'function') {
           window.toggleSigapLayer(id, cb.checked);
+        }
+        if ((id.indexOf('glcluc-') === 0 || id.indexOf('natland-') === 0) && typeof window.toggleLclTileLayer === 'function') {
+          window.toggleLclTileLayer(id, cb.checked);
         }
         if (id.indexOf('st2023:') === 0 && typeof window.toggleBpsSt2023Layer === 'function') {
           window.toggleBpsSt2023Layer(id, cb.checked);
