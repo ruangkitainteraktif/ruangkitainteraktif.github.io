@@ -891,6 +891,24 @@
           </div>
         </details>
 
+        <details class="dm-card">
+          <summary class="gt-card-head">
+            <span class="gt-card-icon" aria-hidden="true">&#128506;</span>
+            <span>
+              <b>Grid Koordinat</b>
+              <small>Garis lintang &amp; bujur otomatis mengikuti zoom</small>
+            </span>
+          </summary>
+          <div class="dm-card-body">
+        <div class="dm-sidebar-grid">
+          <div class="dm-sidebar-option" id="cgToggleBtn" onclick="window.toggleCoordGridFromSheet && toggleCoordGridFromSheet()">
+            <div class="dm-sidebar-option-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg></div>
+            <span class="dm-sidebar-option-label">Tampilkan Grid</span>
+          </div>
+        </div>
+          </div>
+        </details>
+
         <details id="dmKoordinatConverter" class="dm-card">
           <summary class="gt-card-head">
             <span class="gt-card-icon" aria-hidden="true">&#128260;</span>
@@ -3811,6 +3829,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/bmkg-curah-hujan-layer.js"></script>
     <script src="assets/js/bmkg-normal-hujan.js"></script>
     <script src="assets/js/province-boundary-vector.js"></script>
+    <script src="assets/js/ekoregion-layer.js"></script>
     <script src="assets/js/chlorophyll-par-overlay.js"></script>
 
     <script src="assets/js/modis-time-slider.js"></script>
@@ -3825,6 +3844,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/landsat-time-slider.js?v=20261008"></script>
     <script src="assets/js/eox-s2cloudless-slider.js"></script>
     <script src="assets/js/bmkg-himawari-slider.js"></script>
+    <script src="assets/js/nowcoast-visible-imagery-slider.js"></script>
     <script src="assets/js/gsmap-time-slider.js"></script>
     <script src="assets/js/sentinel1-rtc-slider.js"></script>
     <script src="assets/js/satellite-export.js"></script>
@@ -3914,6 +3934,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
        saat Katalog Layer dibuka pertama kali, bukan saat halaman dimuat. -->
   <script src="assets/js/igtpr-wms-layers.js?v=20261012-katalog-disabled"></script>
   <script src="assets/js/eox-overlay.js"></script>
+  <script src="assets/js/coord-grid.js"></script>
   <script src="assets/js/bmkg-timezone.js"></script>
   <script src="assets/js/bmkg-precip-10days.js"></script>
   <script src="assets/js/bmkg-radar-overlay.js"></script>

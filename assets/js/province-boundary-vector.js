@@ -15,6 +15,7 @@
     'bmkg-himawari-hires': true, 'bmkg-gk2a': true, 'bmkg-gk2a-wv': true,
     'bmkg-gk2a-rp': true,
     'noaa-true-color': true, 'noaa-goes-ir': true,
+    'nowcoast-visible-imagery': true,
     'sentinel2': true, 'eox-s2cloudless-2024': true, 'eox-blackmarble': true
   };
 

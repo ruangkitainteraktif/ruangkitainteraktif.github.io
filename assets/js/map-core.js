@@ -81,6 +81,21 @@ L.control.scale({
       maxZoom: 19,
       attribution: 'Esri, USGS, NASA'
     }),
+    'landsat-agriculture-v2': L.esri.imageMapLayer({
+      url: 'https://landsat.arcgis.com/arcgis/rest/services/Landsat/MS/ImageServer',
+      renderingRule: { rasterFunction: 'Agriculture with DRA' },
+      mosaicRule: {
+        mosaicMethod: 'esriMosaicAttribute',
+        sortField: 'Best',
+        sortValue: '0',
+        mosaicOperation: 'MT_FIRST'
+      },
+      format: 'jpgpng',
+      opacity: 1,
+      minZoom: 5,
+      maxZoom: 19,
+      attribution: 'Esri, USGS, NASA'
+    }),
     'esri-dark-gray': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
       attribution: 'Esri'
@@ -255,6 +270,18 @@ L.control.scale({
       minZoom: 3,
       tms: true,
       attribution: 'BMKG GK-2A Rainfall'
+    }),
+    'nowcoast-visible-imagery': L.tileLayer.wms('https://nowcoast.noaa.gov/geoserver/satellite/wms', {
+      layers: 'global_visible_imagery_mosaic',
+      format: 'image/png',
+      transparent: true,
+      version: '1.3.0',
+      crs: L.CRS.EPSG3857,
+      tileSize: 256,
+      maxNativeZoom: 18,
+      keepBuffer: 1,
+      updateWhenIdle: true,
+      updateWhenZooming: false
     }),
     'noaa-true-color': L.tileLayer('https://gis.nnvl.noaa.gov/arcgis/rest/services/TRUE/TRUE_current/ImageServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
@@ -1923,7 +1950,7 @@ L.control.scale({
     var zoomWrap = document.querySelector('.zoom-control-wrap');
     if (zoomWrap) {
       zoomWrap.style.position = 'fixed';
-      zoomWrap.style.bottom = '16px';
+      zoomWrap.style.bottom = '30px';
       zoomWrap.style.left = '50%';
       zoomWrap.style.transform = 'translateX(-50%)';
       zoomWrap.style.zIndex = '999';
@@ -2493,6 +2520,261 @@ const SAWAH_COLOR = '#87cf15';
   }
   window.toggleFsvaLayer = toggleFsvaLayer;
 
+  /* ── SIGAP WMS overlay layers ── */
+  var SIGAP_WMS_URL = 'https://sigap.kehutanan.go.id/sigap-forge-geoserver-2026/sigap/wms';
+  var sigapEsc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+
+  function sigapGetFeatureInfo(layerName, e) {
+    var b = map.getBounds();
+    var nw = map.project(b.getNorthWest(), map.getZoom());
+    var se = map.project(b.getSouthEast(), map.getZoom());
+    var infoUrl = SIGAP_WMS_URL + '?' + L.Util.getParamString({
+      service: 'WMS',
+      version: '1.3.0',
+      request: 'GetFeatureInfo',
+      layers: layerName,
+      query_layers: layerName,
+      info_format: 'application/json',
+      x: Math.floor(e.containerPoint.x),
+      y: Math.floor(e.containerPoint.y),
+      width: map.getSize().x,
+      height: map.getSize().y,
+      crs: 'EPSG:3857',
+      bbox: nw.x + ',' + se.y + ',' + se.x + ',' + nw.y
+    });
+    fetch(infoUrl)
+      .then(function(r) {
+        if (r.status === 401 || r.status === 403) {
+          L.popup({ maxWidth: 320, className: 'sigap-leaflet-popup' })
+            .setLatLng(e.latlng)
+            .setContent('<div class="sigap-popup"><strong>SIGAP — ' + layerName.split(':')[1] + '</strong><br>Data memerlukan autentikasi dari server KLHK SIGAP.</div>')
+            .openOn(map);
+          return null;
+        }
+        return r.json();
+      })
+      .then(function(data) {
+        if (!data) return;
+        if (data.features && data.features.length > 0) {
+          var props = data.features[0].properties || {};
+          var html = '<div class="sigap-popup"><strong>SIGAP — ' + layerName.split(':')[1] + '</strong><br>';
+          for (var k in props) {
+            if (props[k] != null && props[k] !== '') {
+              html +='<strong>' + sigapEsc(k) + ':</strong> ' + sigapEsc(String(props[k])) + '<br>';
+            }
+          }
+          html += '</div>';
+          L.popup({ maxWidth: 320, className: 'sigap-leaflet-popup' })
+            .setLatLng(e.latlng)
+            .setContent(html)
+            .openOn(map);
+        } else {
+          L.popup({ maxWidth: 320, className: 'sigap-leaflet-popup' })
+            .setLatLng(e.latlng)
+            .setContent('<div class="sigap-popup"><strong>SIGAP — ' + layerName.split(':')[1] + '</strong><br>Tidak ada data di lokasi ini.</div>')
+            .openOn(map);
+        }
+      })
+      .catch(function(err) {
+        console.warn('[SIGAP] GetFeatureInfo gagal:', err.message);
+        L.popup({ maxWidth: 320, className: 'sigap-leaflet-popup' })
+          .setLatLng(e.latlng)
+          .setContent('<div class="sigap-popup"><strong>SIGAP — ' + layerName.split(':')[1] + '</strong><br>Gagal memuat data fitur.</div>')
+          .openOn(map);
+      });
+  }
+
+  function sigapAttachClickHandler(layer, layerName) {
+    layer._sigapClickHandler = function (e) {
+      if (!map.hasLayer(layer)) return;
+      sigapGetFeatureInfo(layerName, e);
+    };
+    layer._sigapContainerClickHandler = function (event) {
+      if (!map.hasLayer(layer)) return;
+      if (event.target.closest('.leaflet-control')) return;
+      try {
+        layer._sigapClickHandler({
+          latlng: map.mouseEventToLatLng(event),
+          containerPoint: map.mouseEventToContainerPoint(event)
+        });
+      } catch (err) {}
+    };
+    map.getContainer().addEventListener('click', layer._sigapContainerClickHandler, true);
+  }
+
+  function sigapDetachClickHandler(layer) {
+    if (layer && layer._sigapContainerClickHandler) {
+      map.getContainer().removeEventListener('click', layer._sigapContainerClickHandler, true);
+    }
+  }
+
+  /* ── SIGAP WMS overlay layers (registry-driven) ──
+     Setiap entri katalog "sigap-*" dipetakan ke satu nama layer WMS
+     lewat SIGAP_LAYER_REGISTRY. Legenda diambil dari GetLegendGraphic
+     sehingga symbology selalu mengikuti server SIGAP. */
+  var SIGAP_LAYER_REGISTRY = {
+    'sigap-kawasan-hutan': { wms: 'sigap:kwshutan_ar_250k_jun2026', title: 'Kawasan Hutan (SIGAP 250K)', sub: 'Kawasan Hutan' },
+    'sigap-khg-ar-250k': { wms: 'sigap:khg_ar_250k', title: 'KHG 250K', sub: 'Kawasan Hutan' },
+    'sigap-khg-ar-50k': { wms: 'sigap:khg_ar_50k', title: 'KHG 50K', sub: 'Kawasan Hutan' },
+    'sigap-khkp-ar-50k': { wms: 'sigap:khkp_ar_50k_iden', title: 'KHKP 50K', sub: 'Kawasan Hutan' },
+    'sigap-khdtk-ar-50k-112024': { wms: 'sigap:khdtk_ar_50k_112024', title: 'KHDTK 50K 11/2024', sub: 'Kawasan Hutan' },
+    'sigap-khdpk-ar-50k-122025': { wms: 'sigap:khdpk_ar_50k_122025_iden', title: 'KHDPK 50K 12/2025', sub: 'Kawasan Hutan' },
+    'sigap-kphk-ar-250k-102025': { wms: 'sigap:kphk_ar_250k_102025_iden', title: 'KPHK 250K 10/2025', sub: 'Kawasan Hutan' },
+    'sigap-kphp-kphl-ar-250k-0925': { wms: 'sigap:kphp_kphl_ar_250k_0925', title: 'KPHP KPHL 250K 09/2025', sub: 'Kawasan Hutan' },
+    'sigap-blok-kk-ar-50k': { wms: 'sigap:blok_kk_ar_50k_iden', title: 'Blok KK 50K', sub: 'Kawasan Hutan' },
+    'sigap-daerah-penyangga-kk-ar-50k': { wms: 'sigap:daerah_penyangga_kk_ar_50k', title: 'Daerah Penyangga KK 50K', sub: 'Kawasan Hutan' },
+    'sigap-profil-kk-ar-50k': { wms: 'sigap:profil_kk_ar_50k', title: 'Profil KK 50K', sub: 'Kawasan Hutan' },
+    'sigap-pkk-ar-50k-122025': { wms: 'sigap:pkk_ar_50k_122025', title: 'PKK 50K 12/2025', sub: 'Kawasan Hutan' },
+    'sigap-pkk-ar-50k': { wms: 'sigap:pkk_ar_50k_iden', title: 'PKK 50K', sub: 'Kawasan Hutan' },
+    'sigap-tata-hutan-kph-ar-50k': { wms: 'sigap:tata_hutan_kph_ar_50k_iden', title: 'Tata Hutan KPH 50K', sub: 'Kawasan Hutan' },
+    'sigap-potensihutan-ar-250k': { wms: 'sigap:potensihutan_ar_250k', title: 'Potensihutan 250K', sub: 'Kawasan Hutan' },
+    'sigap-feg-ar-250k': { wms: 'sigap:feg_ar_250k', title: 'FEG 250K', sub: 'Kawasan Hutan' },
+    'sigap-feg-ar-50k-24': { wms: 'sigap:feg_ar_50k_24', title: 'FEG 50K 2024', sub: 'Kawasan Hutan' },
+    'sigap-pntpnkwshutan-ar-50k-072024': { wms: 'sigap:pntpnkwshutan_ar_50k_072024', title: 'PNTPNKWSHUTAN 50K 07/2024', sub: 'Kawasan Hutan' },
+    'sigap-rpkhdpk-ar-50k-122025': { wms: 'sigap:rpkhdpk_ar_50k_122025_iden', title: 'RPKHDPK 50K 12/2025', sub: 'Kawasan Hutan' },
+    'sigap-rpkhdpk-ar-50k': { wms: 'sigap:rpkhdpk_ar_50k_iden', title: 'RPKHDPK 50K', sub: 'Kawasan Hutan' },
+    'sigap-pl-2025': { wms: 'sigap:pl2025_ar_50k', title: 'Areal Penggunaan Lain (SIGAP 50K 2025)', sub: 'Penggunaan Lahan (PL)' },
+    'sigap-pl2018-ar-250k': { wms: 'sigap:pl2018_ar_250k_iden', title: 'Penggunaan Lahan 2018 250K', sub: 'Penggunaan Lahan (PL)' },
+    'sigap-pl2024-ar-250k': { wms: 'sigap:pl2024_ar_250k', title: 'Penggunaan Lahan 2024 250K', sub: 'Penggunaan Lahan (PL)' },
+    'sigap-pl2024-ar-50k': { wms: 'sigap:pl2024_ar_50k', title: 'Penggunaan Lahan 2024 50K', sub: 'Penggunaan Lahan (PL)' },
+    'sigap-plskwshutan-ar-50k': { wms: 'sigap:plskwshutan_ar_50k_iden', title: 'PLSKWSHUTAN 50K', sub: 'Penggunaan Lahan (PL)' },
+    'sigap-paph-ar-250k-0825': { wms: 'sigap:paph_ar_250k_0825_iden', title: 'PAPH 250K 08/2025', sub: 'Perizinan & Pemanfaatan Hutan' },
+    'sigap-ph2024-ar-250k': { wms: 'sigap:ph2024_ar_250k_iden', title: 'PH2024 250K', sub: 'Perizinan & Pemanfaatan Hutan' },
+    'sigap-pkspkh-ar-50k-0525': { wms: 'sigap:pkspkh_ar_50k_0525', title: 'PKSPKH 50K 05/2025', sub: 'Perizinan & Pemanfaatan Hutan' },
+    'sigap-pphd-ar-50k-122025': { wms: 'sigap:pphd_ar_50k_122025', title: 'PPHD 50K 12/2025', sub: 'Perizinan & Pemanfaatan Hutan' },
+    'sigap-pphd-ar-50k': { wms: 'sigap:pphd_ar_50k_iden', title: 'PPHD 50K', sub: 'Perizinan & Pemanfaatan Hutan' },
+    'sigap-pphkm-ar-50k-122025': { wms: 'sigap:pphkm_ar_50k_122025', title: 'PPHKM 50K 12/2025', sub: 'Perizinan & Pemanfaatan Hutan' },
+    'sigap-pphkm-ar-50k': { wms: 'sigap:pphkm_ar_50k_iden', title: 'PPHKM 50K', sub: 'Perizinan & Pemanfaatan Hutan' },
+    'sigap-pphtr-ar-50k-122025': { wms: 'sigap:pphtr_ar_50k_122025', title: 'PPHTR 50K 12/2025', sub: 'Perizinan & Pemanfaatan Hutan' },
+    'sigap-pphtr-ar-50k': { wms: 'sigap:pphtr_ar_50k_iden', title: 'PPHTR 50K', sub: 'Perizinan & Pemanfaatan Hutan' },
+    'sigap-ppkh-ar-50k-0525': { wms: 'sigap:ppkh_ar_50k_0525', title: 'PPKH 50K 05/2025', sub: 'Perizinan & Pemanfaatan Hutan' },
+    'sigap-ppkh-ar-50k-jan2026': { wms: 'sigap:ppkh_ar_50k_jan2026_iden', title: 'PPKH 50K Januari 2026', sub: 'Perizinan & Pemanfaatan Hutan' },
+    'sigap-ppkh-eksplorasi-ar-50k-0525': { wms: 'sigap:ppkh_eksplorasi_ar_50k_0525', title: 'PPKH Eksplorasi 50K 05/2025', sub: 'Perizinan & Pemanfaatan Hutan' },
+    'sigap-ppkh-eksplorasi-ar-50k-jan2026': { wms: 'sigap:ppkh_eksplorasi_ar_50k_jan2026_iden', title: 'PPKH Eksplorasi 50K Januari 2026', sub: 'Perizinan & Pemanfaatan Hutan' },
+    'sigap-ppkspkh-ar-50k-052025': { wms: 'sigap:ppkspkh_ar_50k_052025', title: 'PPKSPKH 50K 05/2025', sub: 'Perizinan & Pemanfaatan Hutan' },
+    'sigap-pptpkh-ar-250k': { wms: 'sigap:pptpkh_ar_250k', title: 'PPTPKH 250K', sub: 'Perizinan & Pemanfaatan Hutan' },
+    'sigap-pptpkh-ar-250k-rev-iv': { wms: 'sigap:pptpkh_ar_250k_rev_iv_iden', title: 'PPTPKH 250K Revisi IV', sub: 'Perizinan & Pemanfaatan Hutan' },
+    'sigap-hutan-adat-50k-092025': { wms: 'sigap:hutan_adat_50k_092025', title: 'Hutan Adat 50K 09/2025', sub: 'Hutan Sosial' },
+    'sigap-hutan-adat-ar-50k-012026': { wms: 'sigap:hutan_adat_ar_50k_012026_iden', title: 'Hutan Adat 50K 01/2026', sub: 'Hutan Sosial' },
+    'sigap-hutan-hak-ar-50k-092025': { wms: 'sigap:hutan_hak_ar_50k_092025', title: 'Hutan Hak 50K 09/2025', sub: 'Hutan Sosial' },
+    'sigap-hutan-penelitian-ar-250k': { wms: 'sigap:hutan_penelitian_ar_250k', title: 'Hutan Penelitian 250K', sub: 'Hutan Sosial' },
+    'sigap-pbph-ar-50k-0924': { wms: 'sigap:pbph_ar_50k_0924', title: 'PBPH 50K 09/2024', sub: 'Hutan Sosial' },
+    'sigap-tbpbph-ln-50k': { wms: 'sigap:tbpbph_ln_50k', title: 'TBPBPH 50K', sub: 'Hutan Sosial' },
+    'sigap-kba-ar-250k': { wms: 'sigap:kba_ar_250k', title: 'KBA 250K', sub: 'Konservasi & Biodiversitas' },
+    'sigap-kee-ar-50k': { wms: 'sigap:kee_ar_50k', title: 'KEE 50K', sub: 'Konservasi & Biodiversitas' },
+    'sigap-kee-indikatif-ar-250k': { wms: 'sigap:kee_indikatif_ar_250k', title: 'KEE Indikatif 250K', sub: 'Konservasi & Biodiversitas' },
+    'sigap-kemitraan-konservasi-kk-ar-50k': { wms: 'sigap:kemitraan_konservasi_kk_ar_50k', title: 'Kemitraan Konservasi KK 50K', sub: 'Konservasi & Biodiversitas' },
+    'sigap-konflik-satwa-dan-manusia-pnt-50k': { wms: 'sigap:konflik_satwa_dan_manusia_pnt_50k', title: 'Konflik Satwa Dan Manusia Titik 50K', sub: 'Konservasi & Biodiversitas' },
+    'sigap-kva-ar-250k': { wms: 'sigap:kva_ar_250k', title: 'KVA 250K', sub: 'Konservasi & Biodiversitas' },
+    'sigap-zona-tn-ar-50k': { wms: 'sigap:zona_tn_ar_50k_iden', title: 'Zona TN 50K', sub: 'Konservasi & Biodiversitas' },
+    'sigap-mangrove-ar-25k-24': { wms: 'sigap:mangrove_ar_25k_24', title: 'Mangrove 25K 2024', sub: 'Vegetasi & Reforestasi' },
+    'sigap-perjumpaan-tumbuhan-alam-pada-kk-pnt-50k-2025': { wms: 'sigap:perjumpaan_tumbuhan_alam_pada_kk_pnt_50k_2025', title: 'Perjumpaan Tumbuhan Alam Pada KK Titik 50K 2025', sub: 'Vegetasi & Reforestasi' },
+    'sigap-persemaian-permanen-pnt-250k': { wms: 'sigap:persemaian_permanen_pnt_250k', title: 'Persemaian Permanen Titik 250K', sub: 'Vegetasi & Reforestasi' },
+    'sigap-rhl-2019-ar-10k': { wms: 'sigap:rhl_2019_ar_10k_iden', title: 'RHL 2019 10K', sub: 'Vegetasi & Reforestasi' },
+    'sigap-rurhl-ar-50k': { wms: 'sigap:rurhl_ar_50k', title: 'RURHL 50K', sub: 'Vegetasi & Reforestasi' },
+    'sigap-sumber-benih-pnt-250k': { wms: 'sigap:sumber_benih_pnt_250k', title: 'Sumber Benih Titik 250K', sub: 'Vegetasi & Reforestasi' },
+    'sigap-zona-benih-ar-250k': { wms: 'sigap:zona_benih_ar_250k', title: 'Zona Benih 250K', sub: 'Vegetasi & Reforestasi' },
+    'sigap-rawan-karhutla-ar-250k-2025': { wms: 'sigap:rawan_karhutla_ar_250k_2025', title: 'Rawan Karhutla 250K 2025', sub: 'Kebakaran Hutan' },
+    'sigap-areal-karhutla-januari-maret-2026-ar-250k': { wms: 'sigap:areal_karhutla_januari_maret_2026_ar_250k', title: 'Areal Karhutla Januari-Maret 2026 250K', sub: 'Kebakaran Hutan' },
+    'sigap-areal-karhutla-januari-mei-2026-ar-50k': { wms: 'sigap:areal_karhutla_januari_mei_2026_ar_50k_iden', title: 'Areal Karhutla Januari-Mei 2026 50K', sub: 'Kebakaran Hutan' },
+    'sigap-sebaran-hotspot-januari-desember-2025-pnt-250k': { wms: 'sigap:sebaran_hotspot_januari_desember_2025_pnt_250k_iden', title: 'Sebaran Hotspot Januari-Desember 2025 Titik 250K', sub: 'Kebakaran Hutan' },
+    'sigap-arahan-folu-2030-ar-250k': { wms: 'sigap:arahan_folu_2030_ar_250k', title: 'Arahan FOLU 2030 250K', sub: 'FOLU, REDD+ & Emisi' },
+    'sigap-renja-folu-2030-ar-250k-051224': { wms: 'sigap:renja_folu_2030_ar_250k_051224_iden', title: 'Renja FOLU 2030 250K 05/12/2024', sub: 'FOLU, REDD+ & Emisi' },
+    'sigap-redd-ar-250k': { wms: 'sigap:redd_ar_250k', title: 'REDD 250K', sub: 'FOLU, REDD+ & Emisi' },
+    'sigap-beban-emisi-ar-250k-2022': { wms: 'sigap:beban_emisi_ar_250k_2022', title: 'Beban Emisi 250K 2022', sub: 'FOLU, REDD+ & Emisi' },
+    'sigap-jlkarbon-ar-50k': { wms: 'sigap:jlkarbon_ar_50k', title: 'JLKARBON 50K', sub: 'FOLU, REDD+ & Emisi' },
+    'sigap-nsdh-2025-ar-250k': { wms: 'sigap:nsdh_2025_ar_250k_iden', title: 'NSDH 2025 250K', sub: 'FOLU, REDD+ & Emisi' },
+    'sigap-nsdhkwshutan-2023-ar-250k': { wms: 'sigap:nsdhkwshutan_2023_ar_250k_iden', title: 'NSDHKWSHUTAN 2023 250K', sub: 'FOLU, REDD+ & Emisi' },
+    'sigap-rktn-ar-250k': { wms: 'sigap:rktn_ar_250k', title: 'RKTN 250K', sub: 'FOLU, REDD+ & Emisi' },
+    'sigap-deforestasi-2023-2024-ar-250k': { wms: 'sigap:deforestasi_2023_2024_ar_250k_iden', title: 'Deforestasi 2023-2024 250K', sub: 'FOLU, REDD+ & Emisi' },
+    'sigap-reforestasi-2023-2024-ar-250k': { wms: 'sigap:reforestasi_2023_2024_ar_250k', title: 'Reforestasi 2023-2024 250K', sub: 'FOLU, REDD+ & Emisi' },
+    'sigap-reforestasi-2024-2025-ar-50k': { wms: 'sigap:reforestasi_2024_2025_ar_50k_iden', title: 'Reforestasi 2024-2025 50K', sub: 'FOLU, REDD+ & Emisi' },
+    'sigap-lahan-kritis': { wms: 'sigap:lahan_kritis_ar_50k_2024_iden', title: 'Lahan Kritis (SIGAP 50K 2024)', sub: 'DAS, Ekoregion & Lingkungan' },
+    'sigap-addendum-andal-rkl-rpl-ar-50k': { wms: 'sigap:addendum_andal_rkl_rpl_ar_50k', title: 'Addendum Andal RKL RPL 50K', sub: 'DAS, Ekoregion & Lingkungan' },
+    'sigap-amdal-ar-50k': { wms: 'sigap:amdal_ar_50k', title: 'AMDAL 50K', sub: 'DAS, Ekoregion & Lingkungan' },
+    'sigap-das-ar-50k-03-2025': { wms: 'sigap:das_ar_50k_03_2025_iden', title: 'DAS 50K 03/2025', sub: 'DAS, Ekoregion & Lingkungan' },
+    'sigap-dta-danau-ar-50k': { wms: 'sigap:dta_danau_ar_50k', title: 'DTA Danau 50K', sub: 'DAS, Ekoregion & Lingkungan' },
+    'sigap-ekoregion-darat-ar-500k': { wms: 'sigap:ekoregion_darat_ar_500k', title: 'Ekoregion Darat 500K', sub: 'DAS, Ekoregion & Lingkungan' },
+    'sigap-ekoregion-laut-ar-500k': { wms: 'sigap:ekoregion_laut_ar_500k', title: 'Ekoregion Laut 500K', sub: 'DAS, Ekoregion & Lingkungan' },
+    'sigap-indeks-kualitas-air-laut-pnt-250k': { wms: 'sigap:indeks_kualitas_air_laut_pnt_250k', title: 'Indeks Kualitas Air Laut Titik 250K', sub: 'DAS, Ekoregion & Lingkungan' },
+    'sigap-klasifikasi-das-ar-50k': { wms: 'sigap:klasifikasi_das_ar_50k_iden', title: 'Klasifikasi DAS 50K', sub: 'DAS, Ekoregion & Lingkungan' },
+    'sigap-mata-air-pnt-250k': { wms: 'sigap:mata_air_pnt_250k', title: 'Mata Air Titik 250K', sub: 'DAS, Ekoregion & Lingkungan' },
+    'sigap-pantau-sampah-laut-p-2020-ar-250k': { wms: 'sigap:pantau_sampah_laut_p_2020_ar_250k_iden', title: 'Pantau Sampah Laut 2020 250K', sub: 'DAS, Ekoregion & Lingkungan' },
+    'sigap-pengelolaansampah-2020-ar-50k': { wms: 'sigap:pengelolaansampah_2020_ar_50k', title: 'Pengelolaansampah 2020 50K', sub: 'DAS, Ekoregion & Lingkungan' },
+    'sigap-pmt-merkuri-pnt-50k': { wms: 'sigap:pmt_merkuri_pnt_50k', title: 'PMT Merkuri Titik 50K', sub: 'DAS, Ekoregion & Lingkungan' },
+    'sigap-rehab-das-ar-50k': { wms: 'sigap:rehab_das_ar_50k', title: 'Rehab DAS 50K', sub: 'DAS, Ekoregion & Lingkungan' },
+    'sigap-ukl-upl-ar-50k': { wms: 'sigap:ukl_upl_ar_50k', title: 'UKL UPL 50K', sub: 'DAS, Ekoregion & Lingkungan' },
+    'sigap-kerentanan-perubahan-iklim-ar-250k': { wms: 'sigap:kerentanan_perubahan_iklim_ar_250k', title: 'Kerentanan Perubahan Iklim 250K', sub: 'Perubahan Iklim' },
+    'sigap-lokasi-proklim-ar-250k': { wms: 'sigap:lokasi_proklim_ar_250k', title: 'Lokasi Proklim 250K', sub: 'Perubahan Iklim' },
+    'sigap-capaian-pe-ar-25k': { wms: 'sigap:capaian_pe_ar_25k', title: 'Capaian PE 25K', sub: 'Lainnya' },
+    'sigap-iku-ar-250k': { wms: 'sigap:iku_ar_250k', title: 'IKU 250K', sub: 'Lainnya' },
+    'sigap-iphps-ar-50k-122025': { wms: 'sigap:iphps_ar_50k_122025', title: 'IPHPS 50K 12/2025', sub: 'Lainnya' },
+    'sigap-ipl-ar-250k': { wms: 'sigap:ipl_ar_250k', title: 'IPL 250K', sub: 'Lainnya' },
+    'sigap-keslah-ar-50k': { wms: 'sigap:keslah_ar_50k_iden', title: 'KESLAH 50K', sub: 'Lainnya' },
+    'sigap-kl-ar-250k': { wms: 'sigap:kl_ar_250k', title: 'KL 250K', sub: 'Lainnya' },
+    'sigap-klasterihn-pnt-250k': { wms: 'sigap:klasterihn_pnt_250k_iden', title: 'Klasterihn Titik 250K', sub: 'Lainnya' },
+    'sigap-penerapan-tkt-pnt-25k-20202024': { wms: 'sigap:penerapan_tkt_pnt_25k_20202024', title: 'Penerapan TKT Titik 25K 2020-2024', sub: 'Lainnya' },
+    'sigap-piaps-rev-ix-ar-250k': { wms: 'sigap:piaps_rev_ix_ar_250k', title: 'PIAPS Revisi IX 250K', sub: 'Lainnya' },
+    'sigap-piaps-rev-x-ar-250k-wgs1984': { wms: 'sigap:piaps_rev_x_ar_250k_wgs1984_iden', title: 'PIAPS Revisi X 250K WGS84', sub: 'Lainnya' },
+    'sigap-pippib-2026-i-250k': { wms: 'sigap:pippib_2026_i_250k', title: 'PIPPIB 2026 I 250K', sub: 'Lainnya' },
+    'sigap-pippib-2026-i-250k-rev': { wms: 'sigap:pippib_2026_i_250k_rev_iden', title: 'PIPPIB 2026 I 250K Revisi', sub: 'Lainnya' },
+    'sigap-tipologi-lembaga-ar-250k': { wms: 'sigap:tipologi_lembaga_ar_250k', title: 'Tipologi Lembaga 250K', sub: 'Lainnya' }
+  };
+  var sigapActiveLayers = {};
+
+  function sigapLegendHtml(def) {
+    var legendUrl = SIGAP_WMS_URL + '?' + L.Util.getParamString({
+      service: 'WMS',
+      version: '1.3.0',
+      request: 'GetLegendGraphic',
+      format: 'image/png',
+      layer: def.wms,
+      legend_options: 'fontName:Arial;fontSize:11;forceLabels:on;dpi:96'
+    });
+    return (
+      '<div class="himawari-legend-title">' + sigapEsc(def.title) + '</div>' +
+      '<div style="max-height:260px;overflow:auto;">' +
+      '<img src="' + legendUrl + '" alt="Legenda" style="max-width:100%;" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'beforeend\',\'<div class=&quot;himawari-legend-unit&quot;>Legenda tidak tersedia</div>\')">' +
+      '</div>' +
+      '<div class="himawari-legend-unit">Sumber: KLHK SIGAP — ' + sigapEsc(def.wms) + '</div>'
+    );
+  }
+
+  function toggleSigapLayer(id, show) {
+    var def = SIGAP_LAYER_REGISTRY[id];
+    if (!def) return;
+    var layer = sigapActiveLayers[id];
+    if (show) {
+      if (layer && map.hasLayer(layer)) return;
+      layer = L.tileLayer.wms(SIGAP_WMS_URL, {
+        layers: def.wms,
+        format: 'image/png',
+        transparent: true,
+        version: '1.3.0',
+        crs: L.CRS.EPSG3857,
+        tileSize: 256,
+        maxZoom: 18,
+        attribution: 'KLHK (SIGAP)'
+      });
+      layer.addTo(map);
+      sigapAttachClickHandler(layer, def.wms);
+      sigapActiveLayers[id] = layer;
+      if (typeof addUnifiedLegend === 'function' && typeof createLegendWithToggle === 'function') {
+        var div = L.DomUtil.create('div', 'sigap-layer-legend');
+        L.DomEvent.disableClickPropagation(div);
+        div.innerHTML = sigapLegendHtml(def);
+        addUnifiedLegend(id, createLegendWithToggle(div));
+      }
+    } else {
+      if (layer && map.hasLayer(layer)) map.removeLayer(layer);
+      sigapDetachClickHandler(layer);
+      delete sigapActiveLayers[id];
+      if (typeof removeUnifiedLegend === 'function') removeUnifiedLegend(id);
+      map.closePopup();
+    }
+  }
+  window.toggleSigapLayer = toggleSigapLayer;
+
   /* ═══════════════════════════════════════════════════════
      QUICK LAYER TOOLBAR
      ═══════════════════════════════════════════════════════ */
@@ -2999,6 +3281,7 @@ const SAWAH_COLOR = '#87cf15';
             { id: 'google-satellite-kh', label: 'Google Satellite' },
             { id: 'petadasar-bpn', label: 'Peta Dasar ATR/BPN' },
             { id: 'landsat-agriculture', label: 'Landsat Agriculture' },
+            { id: 'landsat-agriculture-v2', label: 'Landsat Agriculture (v2)' },
             { id: 'bmkg-himawari', label: 'Himawari-9 IR (BMKG)' },
             { id: 'bmkg-himawari-nc', label: 'Himawari-9 Natural Color (BMKG)' },
             { id: 'bmkg-himawari-wv', label: 'Himawari-9 Water Vapor (BMKG)' },
@@ -3020,18 +3303,19 @@ const SAWAH_COLOR = '#87cf15';
             { id: 'oci-pace', label: 'OCI PACE (NASA)' },
             { id: 'noaa-true-color', label: 'NOAA True Color' },
             { id: 'noaa-goes-ir', label: 'NOAA GOES IR' },
+            { id: 'nowcoast-visible-imagery', label: 'NOAA Visible Imagery' },
             { id: 'sentinel1-rtc', label: 'Sentinel-1 RTC (ESA)' },
             { id: 'sentinel2', label: 'Sentinel-2 (ESA)' },
             { id: 'eox-s2cloudless-2024', label: 'Sentinel-2 Cloudless 2024 (EOX)' },
             { id: 'eox-blackmarble', label: 'NASA Black Marble (EOX)' },
             { id: 'eox-terrain-light', label: 'Terrain Light (EOX)' }
           ]
-        }
-      ]
-    },
-    {
-      /* Jaringan bus TransJakarta dan Trans Jogja. Masing-masing punya
-       * modul dan panel kendali sendiri. */
+}
+    ],
+  },
+  {
+    /* Jaringan bus TransJakarta dan Trans Jogja. Masing-masing punya
+     * modul dan panel kendali sendiri. */
       cat: 'Transportasi',
       layers: [
         { id: 'toggleTransjakarta', label: 'Koridor Transportasi Umum — TransJakarta Network' },
@@ -3329,6 +3613,21 @@ const SAWAH_COLOR = '#87cf15';
       ]
     },
     {
+      /* Seluruh layer overlay SIGAP (GeoServer KLHK) dibangkitkan dari
+       * SIGAP_LAYER_REGISTRY agar id, label, dan nama WMS selalu sinkron. */
+      cat: 'Peta Kehutanan & Lahan (SIGAP)',
+      subcats: (function () {
+        var order = [], groups = {};
+        Object.keys(SIGAP_LAYER_REGISTRY).forEach(function (id) {
+          var def = SIGAP_LAYER_REGISTRY[id];
+          var sub = def.sub || 'Lainnya';
+          if (!groups[sub]) { groups[sub] = []; order.push(sub); }
+          groups[sub].push({ id: id, label: def.title });
+        });
+        return order.map(function (name) { return { subcat: name, layers: groups[name] }; });
+      })()
+    },
+    {
       cat: 'Geologi & Tanah',
       subcats: [
         { subcat: 'Geologi', layers: [
@@ -3342,7 +3641,8 @@ const SAWAH_COLOR = '#87cf15';
           { id: 'toggleGeostruktur', label: 'Geologi Geostruktur (BIG)' },
           { id: 'togglePatahanAktif', label: 'Patahan Aktif 1:50K (BIG)' },
           { id: 'toggleLikuifaksi', label: 'Kerentanan Likuifaksi (BIG)' },
-          { id: 'toggleKarst', label: 'Kawasan Bentang Alam Karst (BIG)' },
+{ id: 'toggleKarst', label: 'Kawasan Bentang Alam Karst (BIG)' },
+          { id: 'toggleEkoregion', label: 'Bentang Lahan Indonesia' },
           { id: 'toggleBouguerBMKG', label: 'Anomali Bouguer Indonesia (BMKG)' }
         ]},
         { subcat: 'Peta tanah global (ISee / Purdue)', layers: [
@@ -3416,7 +3716,7 @@ const SAWAH_COLOR = '#87cf15';
         { id: 'arcgis-sawah-2023', label: 'LBS 2023' },
         { id: 'arcgis-sawah-2019', label: 'LBS 2019' },
         { id: 'bps-lbs-2024', label: 'LBS Nasional 2024' }
-      ]
+        ]
     },
     {
       cat: 'Elevasi & Tutupan Lahan',
@@ -3475,6 +3775,7 @@ const SAWAH_COLOR = '#87cf15';
     'Lingkungan & Laut': 'Ekosistem, kondisi perairan, dan indikator kualitas lingkungan.',
     'Cuaca, Iklim & Kualitas Udara': 'Prakiraan dan pengamatan cuaca, pola iklim, kekeringan, serta polutan udara.',
     'Hutan, Lahan & Konservasi': 'Kawasan hutan, lahan gambut, perkebunan, dan kawasan lindung.',
+    'Peta Kehutanan & Lahan (SIGAP)': 'Data kehutanan dan lahan dari SIGAP KLHK: kawasan hutan, penggunaan lahan, perizinan, konservasi, kebakaran hutan, dan FOLU.',
     'Elevasi & Tutupan Lahan': 'Ketinggian dan bentuk permukaan bumi, kedalaman laut, serta jenis tutupan lahan.'
   };
 
@@ -3613,15 +3914,32 @@ const SAWAH_COLOR = '#87cf15';
     return null;
   }
 
-  function syncLayerCatalogState() {
+function syncLayerCatalogState() {
     document.querySelectorAll('.lc-item input[type="checkbox"]').forEach(function(cb) {
-      var el = findLayerById(cb.dataset.layerId);
-if (cb.dataset.geoportalKey && typeof window.isGeoportalCatalogLayerActive === 'function') {
+      var id = cb.dataset.layerId;
+      if (cb.dataset.geoportalKey && typeof window.isGeoportalCatalogLayerActive === 'function') {
         cb.checked = window.isGeoportalCatalogLayerActive(cb.dataset.geoportalKey);
-        _layerCatalogState[cb.dataset.layerId] = cb.checked;
+        _layerCatalogState[id] = cb.checked;
+        if (id === 'rdtr-2022-dki-siap' && cb.checked && typeof map !== 'undefined' && map) {
+          map.flyTo([-6.1754, 106.8272], 11, { duration: 1.2 });
+          // Load ArcGIS Feature Layer
+          if (!window._rdtrLayer) {
+            window._rdtrLayer = loadArcgisFeatureLayer('https://dki-siap.atrbpn.go.id/server/rest/services/RDTR_2022/MapServer', function(layer) {
+              if (layer && !map.hasLayer(layer)) {
+                map.addLayer(layer);
+              }
+            });
+          }
+        } else if (id === 'rdtr-2022-dki-siap' && !cb.checked && window._rdtrLayer && map) {
+          // Remove layer when unchecked
+          if (map.hasLayer(window._rdtrLayer)) {
+            map.removeLayer(window._rdtrLayer);
+          }
+          window._rdtrLayer = null;
+        }
       } else if (cb.dataset.dynamicKey && typeof window.isDynamicCatalogLayerActive === 'function') {
         cb.checked = window.isDynamicCatalogLayerActive(cb.dataset.dynamicKey);
-        _layerCatalogState[cb.dataset.layerId] = cb.checked;
+        _layerCatalogState[id] = cb.checked;
       } else if (el) {
         cb.checked = el.checked;
       } else if (cb.dataset.layerId === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') {
@@ -3630,10 +3948,25 @@ if (cb.dataset.geoportalKey && typeof window.isGeoportalCatalogLayerActive === '
         cb.checked = window.isBumiPersilLayerActive();
       } else if (cb.dataset.layerId === 'toggleGistaruPersilLayer' && typeof window.isGistaruPersilLayerActive === 'function') {
         cb.checked = window.isGistaruPersilLayerActive();
-      } else if (_layerCatalogState.hasOwnProperty(cb.dataset.layerId)) {
-        cb.checked = _layerCatalogState[cb.dataset.layerId];
+      } else if (_layerCatalogState.hasOwnProperty(id)) {
+        cb.checked = _layerCatalogState[id];
       }
     });
+  }
+
+  function loadArcgisFeatureLayer(layerUrl, callback) {
+    if (typeof L !== 'undefined' && L.esri && L.esri.featureLayer) {
+      var layer = L.esri.featureLayer(layerUrl);
+      if (callback) callback(layer);
+      return layer;
+    }
+    fetch(layerUrl + '?f=json')
+      .then(function(r) { return r.json(); })
+      .then(function(json) {
+        var layer = L.geoJSON(json.features, { style: function(feature) { return { color: '#3388ff', weight: 1, fillOpacity: 0.4 }; } });
+        if (callback) callback(layer);
+        return layer;
+      });
   }
 
   window.setLayerCatalogCheckboxState = function (id, checked) {
@@ -4073,6 +4406,7 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
            id === 'toggleSaluranIrTmsLayer' ||
            id === 'toggleRtrwTmsLayer' ||
            id.indexOf('atrbpn-wms-') === 0 ||
+           id.indexOf('sigap-') === 0 ||
            id === 'toggleSekolahLayer' ||
           id.indexOf('omi-') === 0 ||
            id === 'toggleEoxOverlay' ||
@@ -4203,6 +4537,12 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
         }
         if (id === 'toggleFsvaLayer' && typeof window.toggleFsvaLayer === 'function') {
           window.toggleFsvaLayer(cb.checked);
+        }
+        if (id === 'toggleEkoregion' && typeof window.toggleEkoregion === 'function') {
+          window.toggleEkoregion(cb.checked);
+        }
+        if (id.indexOf('sigap-') === 0 && typeof window.toggleSigapLayer === 'function') {
+          window.toggleSigapLayer(id, cb.checked);
         }
         if (id.indexOf('st2023:') === 0 && typeof window.toggleBpsSt2023Layer === 'function') {
           window.toggleBpsSt2023Layer(id, cb.checked);
