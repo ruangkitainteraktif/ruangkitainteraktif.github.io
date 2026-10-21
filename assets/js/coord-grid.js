@@ -174,4 +174,20 @@
 
   window.toggleCoordGrid = toggleCoordGrid;
   window.isCoordGridActive = function () { return _active; };
+
+  /* Default aktif: nyalakan sendiri begitu map tersedia. map-core.js dimuat
+   * sebelum skrip ini sehingga map biasanya sudah ada — interval hanya sebagai
+   * pengaman bila urutan muat berubah. Pengguna masih bisa mematikan lewat
+   * tombol di sheet Alat (Gambar & Ukur); status tidak disimpan — muat ulang
+   * selalu kembali aktif (memang itulah "default"). */
+  function autoEnable() {
+    if (getMap()) { toggleCoordGrid(true); return; }
+    var tries = 0;
+    var timer = setInterval(function () {
+      if (getMap()) { clearInterval(timer); toggleCoordGrid(true); }
+      else if (++tries > 100) clearInterval(timer);
+    }, 100);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', autoEnable);
+  else autoEnable();
 })();
