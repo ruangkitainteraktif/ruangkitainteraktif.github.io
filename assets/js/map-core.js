@@ -1914,6 +1914,12 @@ L.control.scale({
           delete lcDd.dataset.built;
         }
 
+        // 10e2. Kembalikan pilihan identifikasi klik BHUMI ke default
+        // (layer inti: zona nilai, nilai bidang, toponim) + matikan heatmap.
+        try { localStorage.removeItem(BHUMI_IDENTIFY_STORAGE_KEY); } catch (e) {}
+        bhumiIdentifyHydrate();
+        if (typeof window.toggleBhumiHeatmap === 'function') window.toggleBhumiHeatmap(false);
+
         // 10f. Sync layer catalog checkboxes
         if (typeof syncLayerCatalogState === 'function') syncLayerCatalogState();
 
@@ -2247,8 +2253,10 @@ const SAWAH_COLOR = '#87cf15';
     return bhumiPersilToken.pending;
   }
 
-  /* BHUMI-CRYPTO-START -- MD5 + OpenSSL EVP_BytesToKey (AES-256-CBC),
-     diuji terpisah terhadap ciphertext contoh app BHUMI. */
+  /* BHUMI-CRYPTO-START -- MD5 + OpenSSL EVP_BytesToKey (AES-256-CBC).
+     Passphrase mengikuti bundle resmi app BHUMI (chunk 8815, dibobok
+     lewat String.fromCharCode XOR); terakhir diperbarui 2026-10-21 saat
+     BHUMI merotasi kunci. */
   function bhumiMd5Bytes(bytes) {
     function add32(a, b) { return (a + b) & 0xFFFFFFFF; }
     function rol(n, c) { return (n << c) | (n >>> (32 - c)); }
@@ -2307,7 +2315,7 @@ const SAWAH_COLOR = '#87cf15';
       if (bin.length < 17 || bin.slice(0, 8) !== 'Salted__') return Promise.resolve(null);
       var raw = new Uint8Array(bin.length);
       for (var i = 0; i < bin.length; i++) raw[i] = bin.charCodeAt(i);
-      var pass = 's3CRetCR1pT0';
+      var pass = 'S3cretATRXBUMI';
       var prev = new Uint8Array(0), out = new Uint8Array(0);
       while (out.length < 48) {
         var input = new Uint8Array(prev.length + pass.length + 8);
@@ -2458,16 +2466,51 @@ const SAWAH_COLOR = '#87cf15';
       });
   }
 
-  function bhumiPersilRenderResult(latlng, fcs) {
+  function bhumiPersilTematikCard(label, f, index, total) {
+    var p = f.properties || {};
+    var keys = Object.keys(p);
+    var priority = ['NAMA', 'nama', 'NAME', 'name', 'NAMAKANTOR', 'kecamatan', 'KECAMATAN',
+      'kelurahan', 'KELURAHAN', 'desa', 'DESA', 'LUAS', 'luas', 'tipehak', 'TIPEHAK'];
+    var title = '';
+    for (var pi = 0; pi < priority.length && !title; pi++) {
+      if (p[priority[pi]] != null && p[priority[pi]] !== '') title = String(p[priority[pi]]);
+    }
+    var subtitle = total > 1
+      ? (label + ' \u2014 ' + (index + 1) + ' dari ' + total)
+      : (title ? label : 'Layer tematik BHUMI');
+    var ordered = [];
+    priority.forEach(function (k) { if (keys.indexOf(k) >= 0) ordered.push(k); });
+    keys.forEach(function (k) { if (ordered.indexOf(k) < 0) ordered.push(k); });
+    var fields = [];
+    ordered.slice(0, 12).forEach(function (k) {
+      var v = p[k];
+      if (v && typeof v === 'object') { try { v = JSON.stringify(v); } catch (e) { v = ''; } }
+      fields.push([k.replace(/_/g, ' '), v]);
+    });
+    return bhumiPersilCard(title || label, subtitle, fields);
+  }
+
+  function bhumiPersilCardBuilder(layer) {
+    if (layer === 'umum:Persil') return bhumiPersilFeatureCard;
+    if (layer === 'umum:ZNTRANGE') return bhumiPersilZntCard;
+    if (layer === 'umum:nbt3') return bhumiPersilNbtCard;
+    if (layer === 'umum:toponimi') return bhumiPersilTopoCard;
+    var label = layer;
+    BHUMI_IDENTIFY_TEMPLAYERS.forEach(function (t) { if (t.layer === layer) label = t.label; });
+    return function (f, i, n) { return bhumiPersilTematikCard(label, f, i, n); };
+  }
+
+  function bhumiPersilRenderResult(latlng, layers, results) {
     if (!bhumiPersilNasionalLayer || !map.hasLayer(bhumiPersilNasionalLayer)) return;
     bhumiPersilClearHighlight();
-    var builders = [bhumiPersilFeatureCard, bhumiPersilZntCard, bhumiPersilNbtCard, bhumiPersilTopoCard];
-    var groups = fcs.map(function (fc, i) {
-      return { feats: (fc && fc.features) ? fc.features : [], card: builders[i] };
+    var groups = layers.map(function (layer, i) {
+      var r = results[i];
+      var fc = (r && r.ok) ? r.fc : null;
+      return { feats: (fc && fc.features) ? fc.features : [], card: bhumiPersilCardBuilder(layer) };
     });
     if (!groups.some(function (g) { return g.feats.length; })) {
       bhumiPersilOpenPopup(latlng, bhumiPersilStatusCard('Data Pertanahan',
-        'Tidak ada data persil, zona nilai, nilai bidang, atau toponim di titik ini.'));
+        'Tidak ada data persil atau layer terpilih di titik ini.'));
       return;
     }
     var group = L.featureGroup();
@@ -2520,17 +2563,19 @@ const SAWAH_COLOR = '#87cf15';
       y: Math.max(0, Math.min(grid - 1, Math.round(pt.y / (size.y || 1) * grid)))
     });
     bhumiPersilOpenPopup(e.latlng, bhumiPersilStatusCard('Data Pertanahan',
-      'Mencari data persil, zona nilai, bidang & toponim\u2026'));
+      'Mencari data persil & layer terpilih\u2026'));
     var settled = function (p) {
       return p.then(function (fc) { return { ok: true, fc: fc }; },
         function () { return { ok: false }; });
     };
-    Promise.all([
-      settled(bhumiPersilQueryLayer('umum:Persil', payload)),
-      settled(bhumiPersilQueryLayer('umum:ZNTRANGE', payload)),
-      settled(bhumiPersilQueryLayer('umum:nbt3', payload)),
-      settled(bhumiPersilQueryLayer('umum:toponimi', payloadTopo))
-    ])
+    var queryLayers = ['umum:Persil'].concat(bhumiIdentifyActiveLayers());
+    Promise.all(queryLayers.map(function (layer) {
+      /* Persil/ZNT/nbt3 adalah data padat: pakai piksel klik yang presisi.
+         Layer tematik lain (toponim, lokasi PTSL, dll.) memakai kisi kasar
+         20x20 agar fitur langka di sekitar titik tetap terjangkau. */
+      var exact = layer === 'umum:Persil' || layer === 'umum:ZNTRANGE' || layer === 'umum:nbt3';
+      return settled(bhumiPersilQueryLayer(layer, exact ? payload : payloadTopo));
+    }))
       .then(function (res) {
         if (seq !== bhumiPersilClickSeq) return;
         if (!res.some(function (r) { return r.ok; })) {
@@ -2538,7 +2583,7 @@ const SAWAH_COLOR = '#87cf15';
             'Gagal mengambil data pertanahan. Coba lagi.'));
           return;
         }
-        bhumiPersilRenderResult(e.latlng, res.map(function (r) { return r.ok ? r.fc : null; }));
+        bhumiPersilRenderResult(e.latlng, queryLayers, res);
       })
       .catch(function () {
         if (seq !== bhumiPersilClickSeq) return;
@@ -2547,6 +2592,42 @@ const SAWAH_COLOR = '#87cf15';
       });
   }
   map.on('click', bhumiPersilIdentify);
+
+  /* ── Heatmap Sebaran Transaksi Jual Beli Tanah 2023 (BHUMI) ──
+     GeoJSON dari /expapi/get-sebarantransaksi lewat proxy. Endpoint
+     merespons 200; jumlah fitur mengikuti data yang tersedia di BHUMI. */
+  var bhumiHeatmapLayer = null;
+  window.toggleBhumiHeatmap = function (on) {
+    if (on) {
+      if (bhumiHeatmapLayer) {
+        if (!map.hasLayer(bhumiHeatmapLayer)) bhumiHeatmapLayer.addTo(map);
+        return;
+      }
+      var url = BHUMI_PERSIL_NASIONAL_PROXY +
+        encodeURIComponent('https://bhumi.atrbpn.go.id/expapi/get-sebarantransaksi');
+      fetch(url)
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (fc) {
+          if (!fc || !fc.features || !fc.features.length) return;
+          if (_layerCatalogState['bhumi-heatmap-transaksi'] !== true) return;
+          if (bhumiHeatmapLayer) return;
+          bhumiHeatmapLayer = L.geoJSON(fc, {
+            pointToLayer: function (feature, latlng) {
+              return L.circleMarker(latlng, {
+                radius: 5, color: '#e11d48', weight: 1,
+                fillColor: '#f43f5e', fillOpacity: 0.55
+              });
+            },
+            style: function () {
+              return { color: '#e11d48', weight: 1, fillColor: '#f43f5e', fillOpacity: 0.35 };
+            }
+          }).addTo(map);
+        })
+        .catch(function () { /* diamkan: layer hanya tampil bila data ada */ });
+    } else if (bhumiHeatmapLayer && map.hasLayer(bhumiHeatmapLayer)) {
+      map.removeLayer(bhumiHeatmapLayer);
+    }
+  };
 
   /* ── Lahan Sawah Dilindungi (GISLINER / ATR-BPN) ──
    * Tile PNG biner, format XYZ, sudah mengizinkan CORS sehingga tidak
@@ -3668,6 +3749,43 @@ const SAWAH_COLOR = '#87cf15';
      Layer Catalog Dropdown
      ═══════════════════════════════════════ */
 
+  /* Direktori layer resmi BHUMI (Directus: /panel/items/layers).
+     74 rekaman → 25 layer tematik yang bisa di-query klik (umum:*)
+     + Persil (entri tile sendiri). Entri yang tidak dapat diakses
+     (45 entri "(tidak tersedia)" + heatmap tanpa data) sudah dihapus
+     dari katalog; 2 rekaman duplikat persis disatukan. */
+  var BHUMI_IDENTIFY_TEMPLAYERS = [
+    { layer: "umum:PIPPIB_2022_1", label: "Peta Indikatif Penghentian Pemberian Izin Baru (PIPPIB) Tahun 2022 Periode I" },
+    { layer: "umum:PersilBerdasarkanPengakuanTanah", label: "Persil Berdasarkan Status Pendaftaran" },
+    { layer: "umum:toponimi", label: "Toponim" },
+    { layer: "umum:lahanbakusawah_new", label: "Lahan Baku Sawah 2024" },
+    { layer: "umum:HGUPelepasanHutan", label: "HGU Pelepasan Hutan" },
+    { layer: "umum:PengumumanYuridis", label: "Pengumuman Yuridis" },
+    { layer: "umum:lokasiptsl", label: "Lokasi PTSL" },
+    { layer: "umum:lsd_merge", label: "Lahan Sawah Dilindungi 12 Provinsi" },
+    { layer: "umum:ZNTRANGE", label: "Zona Nilai Tanah" },
+    { layer: "umum:nbt3", label: "Peta Nilai Bidang Tanah" },
+    { layer: "umum:PenggunaanTanah", label: "Penggunaan Tanah" },
+    { layer: "umum:PENUNJUKAN_KAWASAN_HUTAN", label: "Kawasan Hutan0" },
+    { layer: "umum:garis_pantai", label: "Garis Pantai" },
+    { layer: "umum:tanahulayatnew", label: "Tanah Ulayat" },
+    { layer: "umum:LahanBakuSawah", label: "Lahan Baku Sawah 2019" },
+    { layer: "umum:PTSL2025", label: "Bidang Tanah PTSL 2025" },
+    { layer: "umum:lsd_merge_8_provinsi", label: "Lahan Sawah Dilindungi 8 Provinsi" },
+    { layer: "umum:penunjukan_kawasan_hutan", label: "Kawasan Hutan" },
+    { layer: "umum:pippib_2025", label: "Peta PIPPIB Tahun 2025 – Hutan Alam Primer dan Lahan Gambut" },
+    { layer: "umum:area_penggunaan_lain", label: "Area Penggunaan Lain" },
+    { layer: "umum:detaildatabthgu", label: "Hak Guna Usaha" },
+    { layer: "umum:persil_hktgg", label: "Hak Tanggungan" },
+    { layer: "pippib_baru_2021", label: "Peta Indikatif Penghentian Pemberian Izin Baru (PIPPIB) Tahun 2021" },
+    { layer: "umum:kawasan_hutan", label: "Kawasan Hutan00" },
+    { layer: "umum:persil_sbts", label: "Sebaran Transaksi" }
+  ];
+  /* Identifikasi klik default menyala hanya untuk layer inti; pilihan
+     lain di-state dapat diubah lewat katalog dan disimpan di localStorage. */
+  var BHUMI_IDENTIFY_CORE = ["umum:ZNTRANGE", "umum:nbt3", "umum:toponimi"];
+  var BHUMI_IDENTIFY_STORAGE_KEY = 'ruangkita-bhumi-identify-layers';
+
   var LAYER_CATALOG_DATA = [
     {
       cat: 'Peta Dasar',
@@ -4100,8 +4218,13 @@ const SAWAH_COLOR = '#87cf15';
     },
     {
       cat: 'ATRBPN',
-      layers: [
-        { id: 'toggleBhumiPersilNasionalLayer', label: 'Persil Nasional (BHUMI)' }
+      subcats: [
+        { subcat: 'Peta Pertanahan', layers: [
+          { id: 'toggleBhumiPersilNasionalLayer', label: 'Persil Nasional (BHUMI)' }
+        ]},
+        { subcat: 'Identifikasi klik — layer tematik BHUMI', layers: BHUMI_IDENTIFY_TEMPLAYERS.map(function(t) {
+          return { id: 'bhumi-identify:' + t.layer, label: t.label };
+        })}
       ]
     },
     {
@@ -4229,7 +4352,7 @@ const SAWAH_COLOR = '#87cf15';
     'Geologi & Tanah': 'Informasi batuan, struktur bumi, jenis tanah, dan sifat tanah.',
     'Transportasi': 'Jaringan jalan dan rute transportasi umum.',
     'Pertanian & Ketahanan Pangan': 'Lahan pertanian, komoditas, serta organisme pengganggu tanaman (OPT), yaitu hama dan penyakit tanaman, juga kondisi dan layanan pangan.',
-    'ATRBPN': 'Data pertanahan dari ATR/BPN (BHUMI): batas persil seluruh Indonesia. Saat layer menyala, klik peta untuk melihat atribut persil (jenis hak, luas, NIB), zona nilai tanah, peta nilai bidang tanah, dan toponim (nama tempat) di sekitar titik tersebut.',
+      'ATRBPN': 'Direktori layer resmi BHUMI (ATR/BPN). "Peta Pertanahan": batas persil nasional + heatmap transaksi 2023 — saat persil menyala, klik peta untuk atribut di titik tersebut. "Identifikasi klik": 25 layer tematik (zona nilai tanah, nilai bidang, toponim, kawasan hutan, sawah, PIPPIB, dll.) yang ikut diperiksa saat klik — aktifkan layer yang ingin dicari. Entri "(tidak tersedia)" berasal dari direktori BHUMI tetapi sumbernya tidak dapat diakses.',
     'Bencana & Risiko': 'Kejadian bencana, sumber bahaya, pemantauan, dan informasi kesiapsiagaan.',
     'Lingkungan & Laut': 'Ekosistem, kondisi perairan, dan indikator kualitas lingkungan.',
     'Cuaca, Iklim & Kualitas Udara': 'Prakiraan dan pengamatan cuaca, pola iklim, kekeringan, serta polutan udara.',
@@ -4267,6 +4390,38 @@ const SAWAH_COLOR = '#87cf15';
   function savePinnedLayers() {
     try { localStorage.setItem(_pinStorageKey, JSON.stringify(_pinnedLayers)); } catch (e) {}
   }
+
+  function bhumiIdentifyStateId(layer) { return 'bhumi-identify:' + layer; }
+  function bhumiIdentifyActiveLayers() {
+    var out = [];
+    BHUMI_IDENTIFY_TEMPLAYERS.forEach(function(t) {
+      if (_layerCatalogState[bhumiIdentifyStateId(t.layer)]) out.push(t.layer);
+    });
+    return out;
+  }
+  function bhumiIdentifySaveState() {
+    try {
+      var obj = {};
+      BHUMI_IDENTIFY_TEMPLAYERS.forEach(function(t) {
+        obj[t.layer] = _layerCatalogState[bhumiIdentifyStateId(t.layer)] === true;
+      });
+      localStorage.setItem(BHUMI_IDENTIFY_STORAGE_KEY, JSON.stringify(obj));
+    } catch (e) {}
+  }
+  function bhumiIdentifyHydrate() {
+    var saved = null;
+    try {
+      var raw = localStorage.getItem(BHUMI_IDENTIFY_STORAGE_KEY);
+      if (raw) saved = JSON.parse(raw);
+    } catch (e) { saved = null; }
+    BHUMI_IDENTIFY_TEMPLAYERS.forEach(function(t) {
+      var v = (saved && typeof saved[t.layer] === 'boolean')
+        ? saved[t.layer]
+        : BHUMI_IDENTIFY_CORE.indexOf(t.layer) >= 0;
+      _layerCatalogState[bhumiIdentifyStateId(t.layer)] = v;
+    });
+  }
+  bhumiIdentifyHydrate();
   function isPinnedLayer(id) { return _pinnedLayers.indexOf(id) >= 0; }
   function togglePinLayer(id) {
     var idx = _pinnedLayers.indexOf(id);
@@ -4378,6 +4533,10 @@ const SAWAH_COLOR = '#87cf15';
 function syncLayerCatalogState() {
     document.querySelectorAll('.lc-item input[type="checkbox"]').forEach(function(cb) {
       var id = cb.dataset.layerId;
+      /* el: elemen DOM dengan id sama (mis. checkbox sidebar di luar katalog).
+         Dulu variabel ini tidak pernah dideklarasikan sehingga sync melempar
+         ReferenceError bila global el tidak kebetulan ada. */
+      var el = findLayerById(id);
       if (cb.dataset.geoportalKey && typeof window.isGeoportalCatalogLayerActive === 'function') {
         cb.checked = window.isGeoportalCatalogLayerActive(cb.dataset.geoportalKey);
         _layerCatalogState[id] = cb.checked;
@@ -4698,17 +4857,20 @@ function syncLayerCatalogState() {
             if (l.id === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') {
               isChecked = isHujanLayerActive();
             }
-            html += '<div class="lc-item">';
-html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (l.geoportalKey ? ' data-geoportal-key="' + l.geoportalKey + '"' : '') + (l.dynamicKey ? ' data-dynamic-key="' + l.dynamicKey + '"' : '') + (isChecked ? ' checked' : '') + ' />';
+            var isBhumiEntry = l.id.indexOf('bhumi-') === 0;
+            html += '<div class="lc-item' + (l.unavailable ? ' lc-item-unavailable' : '') + '">';
+html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (l.geoportalKey ? ' data-geoportal-key="' + l.geoportalKey + '"' : '') + (l.dynamicKey ? ' data-dynamic-key="' + l.dynamicKey + '"' : '') + (l.unavailable ? ' disabled' : '') + (isChecked ? ' checked' : '') + ' />';
             html += '<label for="lc_' + l.id + '">' + l.label + '</label>';
             html += '<div class="lc-item-actions">';
-            if (l.id !== 'toggleBmkgNormalHujan' && (l.id.indexOf('isee-soil-') !== 0 || l.id === 'isee-soil-boundaries')) {
+            if (!isBhumiEntry && l.id !== 'toggleBmkgNormalHujan' && (l.id.indexOf('isee-soil-') !== 0 || l.id === 'isee-soil-boundaries')) {
               html += '<button type="button" class="lc-attr-btn' + ((isChecked || l.id === 'isee-soil-boundaries') ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
               html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
               html += '</button>';
             }
-            var pinned = isPinnedLayer(l.id);
-            html += '<button type="button" class="lc-pin-btn' + (pinned ? ' lc-pin-btn-active' : '') + '" data-layer-id="' + l.id + '" title="' + (pinned ? 'Hapus Pin' : 'Pin Layer') + '">' + (pinned ? pinIconFilled : pinIconOutline) + '</button>';
+            if (!isBhumiEntry) {
+              var pinned = isPinnedLayer(l.id);
+              html += '<button type="button" class="lc-pin-btn' + (pinned ? ' lc-pin-btn-active' : '') + '" data-layer-id="' + l.id + '" title="' + (pinned ? 'Hapus Pin' : 'Pin Layer') + '">' + (pinned ? pinIconFilled : pinIconOutline) + '</button>';
+            }
             html += '</div></div>';
             if (l.id === 'toggleBmkgNormalHujan') {
               var selectedMonth = Number(window._bmkgNormalHujanMonth || 0);
@@ -4887,6 +5049,7 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
           var el = findLayerById(id);
           if (el) el.checked = cb.checked;
         }
+        if (id.indexOf('bhumi-identify:') === 0) bhumiIdentifySaveState();
         if (id === 'toggleSignificantMarkers' && typeof window.toggleSignificantMarkers === 'function') {
           window.toggleSignificantMarkers(cb.checked);
         }

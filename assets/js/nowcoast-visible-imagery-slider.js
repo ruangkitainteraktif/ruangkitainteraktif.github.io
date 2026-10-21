@@ -6,6 +6,7 @@
   var sliderControl = null;
   var legendControl = null;
   var currentTimestamp = null;
+  var _prevMaxZoom = null;
 
   var MONTH_NAMES = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',

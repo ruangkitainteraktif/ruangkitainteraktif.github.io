@@ -267,6 +267,14 @@
       flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere;
       font-size: 12px; color: #334155; cursor: pointer; line-height: 1.3;
     }
+    /* Entri direktori yang sumbernya tidak dapat diakses: label berbayang
+       dan checkbox nonaktif agar tidak bisa dicentang. */
+    .lc-item-unavailable { cursor: default; }
+    .lc-item-unavailable:hover { background: transparent; }
+    .lc-item-unavailable input[type="checkbox"] {
+      cursor: not-allowed; opacity: .45; accent-color: #94a3b8;
+    }
+    .lc-item-unavailable label { color: #94a3b8; cursor: not-allowed; }
     .lc-basemap-group {
       font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase;
       letter-spacing: .05em; padding: 8px 8px 2px 28px;
