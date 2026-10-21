@@ -4228,6 +4228,116 @@ const SAWAH_COLOR = '#87cf15';
       ]
     },
     {
+      cat: 'SITR Jawa Timur',
+      subcats: [
+        { subcat: 'Pola ruang & kawasan', layers: [
+          { id: 'sitr-wms-5', label: 'Batas Administrasi Area' },
+          { id: 'sitr-wms-6', label: 'Rencana Pola Ruang' },
+          { id: 'sitr-wms-7', label: 'Rencana Pola Ruang (Kab/Kota)' },
+          { id: 'sitr-wms-28', label: 'Rencana Pola Ruang (Jawa Timur)' },
+          { id: 'sitr-wms-44', label: 'Rencana Kawasan Agropolitan (Kab/Kota)' },
+          { id: 'sitr-wms-45', label: 'Rencana Kawasan Lindung (Kab/Kota)' },
+          { id: 'sitr-wms-59', label: 'Kawasan Pertahanan & Keamanan (Kab/Kota)' },
+          { id: 'sitr-wms-62', label: 'Rencana Wilayah Pelayanan (Kab/Kota)' },
+          { id: 'sitr-wms-72', label: 'Batas Unit Lingkungan (Kab/Kota)' },
+          { id: 'sitr-wms-81', label: 'Wilayah Perencanaan (Kab/Kota)' },
+          { id: 'sitr-wms-86', label: 'Kawasan Industri & Rawan Banjir, Erosi (Kab/Kota)' },
+          { id: 'sitr-wms-87', label: 'Kawasan Industri (Kab/Kota)' },
+          { id: 'sitr-wms-88', label: 'Rencana Kawasan Strategis Ekonomi (Kab/Kota)' },
+          { id: 'sitr-wms-90', label: 'Rencana Pariwisata (Kab/Kota)' },
+          { id: 'sitr-wms-91', label: 'Rencana Pengembangan Wilayah (Kab/Kota)' },
+          { id: 'sitr-wms-92', label: 'Rencana Rute Wisata (Kab/Kota)' },
+          { id: 'sitr-wms-100', label: 'Rencana Pola Ruang (Kab/Kota)' },
+          { id: 'sitr-wms-103', label: 'Pola Ruang (Kab/Kota) Percobaan' },
+          { id: 'sitr-wms-108', label: 'Kawasan Strategis' },
+          { id: 'sitr-wms-118', label: 'Rencana Pola Ruang Kab/Kota Perda 2023' },
+          { id: 'sitr-wms-120', label: 'KKPRL Perda 10/2023 — RTRW Provinsi' }
+        ]},
+        { subcat: 'Transportasi', layers: [
+          { id: 'sitr-wms-12', label: 'Sistem Jaringan Jalan' },
+          { id: 'sitr-wms-26', label: 'Bandar Udara' },
+          { id: 'sitr-wms-29', label: 'Stasiun KA' },
+          { id: 'sitr-wms-32', label: 'Sistem Jaringan Jalan (Kab/Kota)' },
+          { id: 'sitr-wms-37', label: 'Sistem Jaringan Jalan Tol' },
+          { id: 'sitr-wms-40', label: 'Rencana Bandara (Kab/Kota)' },
+          { id: 'sitr-wms-41', label: 'Rencana Terminal (Kab/Kota)' },
+          { id: 'sitr-wms-51', label: 'Rencana Jalur Pelayaran (Kab/Kota)' },
+          { id: 'sitr-wms-52', label: 'Rencana Jalur Penerbangan (Kab/Kota)' },
+          { id: 'sitr-wms-54', label: 'Rencana Rel Kereta Api (Kab/Kota)' },
+          { id: 'sitr-wms-63', label: 'Rencana Jaringan Jalan Lingkar Utara (Kab/Kota)' },
+          { id: 'sitr-wms-64', label: 'Rencana Jaringan Pedestarian (Kab/Kota)' },
+          { id: 'sitr-wms-65', label: 'Rencana Pengembangan Pintu Perlintasan KA (Kab/Kota)' },
+          { id: 'sitr-wms-66', label: 'Rencana Prasarana Transportasi (Kab/Kota)' },
+          { id: 'sitr-wms-77', label: 'Rencana Titik Jaringan Transportasi (Kab/Kota)' },
+          { id: 'sitr-wms-79', label: 'Rencana Area Jaringan Jalan Tol (Kab/Kota)' },
+          { id: 'sitr-wms-80', label: 'Rencana Toll Gate (Kab/Kota)' },
+          { id: 'sitr-wms-82', label: 'Rencana ORR (Kab/Kota)' },
+          { id: 'sitr-wms-83', label: 'Rencana IRR (Kab/Kota)' },
+          { id: 'sitr-wms-84', label: 'Rencana Jaringan Jalan (Kab/Kota)' },
+          { id: 'sitr-wms-94', label: 'Rencana Pelabuhan Penyeberangan (Kab/Kota)' },
+          { id: 'sitr-wms-95', label: 'Rencana Pelabuhan (Kab/Kota)' },
+          { id: 'sitr-wms-96', label: 'Rencana Rel Double Track (Kab/Kota)' },
+          { id: 'sitr-wms-97', label: 'Rencana Rel Konservasi (Kab/Kota)' },
+          { id: 'sitr-wms-98', label: 'Rencana Stasiun KA (Kab/Kota)' },
+          { id: 'sitr-wms-99', label: 'Rencana Pelabuhan Ikan (Kab/Kota)' },
+          { id: 'sitr-wms-101', label: 'Rencana Titik Rel Kereta Api Konservasi (Kab/Kota)' },
+          { id: 'sitr-wms-102', label: 'Rencana Terminal Barang (Kab/Kota)' },
+          { id: 'sitr-wms-104', label: 'Bandar Udara (Testing)' },
+          { id: 'sitr-wms-107', label: 'Infrastruktur Transportasi' },
+          { id: 'sitr-wms-117', label: 'Sistem Jaringan Transportasi' }
+        ]},
+        { subcat: 'Energi & telekomunikasi', layers: [
+          { id: 'sitr-wms-20', label: 'Sistem Jaringan Energi' },
+          { id: 'sitr-wms-21', label: 'Jaringan Gas dan Minyak' },
+          { id: 'sitr-wms-38', label: 'Rencana Jaringan Gas (Kab/Kota)' },
+          { id: 'sitr-wms-42', label: 'Rencana Jaringan Listrik (Kab/Kota)' },
+          { id: 'sitr-wms-43', label: 'Rencana SUTET' },
+          { id: 'sitr-wms-49', label: 'Rencana Telematika (Kab/Kota)' },
+          { id: 'sitr-wms-50', label: 'Rencana Gardu Induk (Kab/Kota)' },
+          { id: 'sitr-wms-55', label: 'Rencana Sistem Jaringan Telekomunikasi (Kab/Kota)' },
+          { id: 'sitr-wms-60', label: 'Rencana SUTT (Kab/Kota)' },
+          { id: 'sitr-wms-73', label: 'BTS (Kab/Kota)' },
+          { id: 'sitr-wms-74', label: 'Rencana Titik Sistem Jaringan Telekomunikasi' },
+          { id: 'sitr-wms-76', label: 'Rencana Titik Jaringan Listrik (Kab/Kota)' },
+          { id: 'sitr-wms-89', label: 'Rencana Menara Bersama (Kab/Kota)' },
+          { id: 'sitr-wms-109', label: 'Rencana Jaringan Telekomunikasi' },
+          { id: 'sitr-wms-110', label: 'Sistem Infrastruktur Energi' },
+          { id: 'sitr-wms-114', label: 'Sistem Jaringan Energi' }
+        ]},
+        { subcat: 'Sumber daya air & drainase', layers: [
+          { id: 'sitr-wms-19', label: 'Sumber Mata Air' },
+          { id: 'sitr-wms-35', label: 'Sistem Drainase (Kab/Kota)' },
+          { id: 'sitr-wms-39', label: 'Rencana Saluran Irigasi (Kab/Kota)' },
+          { id: 'sitr-wms-48', label: 'Perencanaan Sistem Penyediaan Air Minum (Kab/Kota)' },
+          { id: 'sitr-wms-53', label: 'Rencana Jaringan Air Bersih (Kab/Kota)' },
+          { id: 'sitr-wms-56', label: 'Rencana Sumber Daya Air (Kab/Kota)' },
+          { id: 'sitr-wms-71', label: 'Rencana Saluran (Kab/Kota)' },
+          { id: 'sitr-wms-75', label: 'Rencana Titik Jaringan Air Bersih (Kab/Kota)' },
+          { id: 'sitr-wms-78', label: 'Rencana SPAM (Kab/Kota)' },
+          { id: 'sitr-wms-93', label: 'SSWP (Kab/Kota)' },
+          { id: 'sitr-wms-112', label: 'Sistem Infrastruktur Sumber Daya Air' },
+          { id: 'sitr-wms-116', label: 'Sistem Jaringan Sumber Daya Air' }
+        ]},
+        { subcat: 'Permukiman & prasarana', layers: [
+          { id: 'sitr-wms-15', label: 'Sistem Jaringan Prasarana Lainnya' },
+          { id: 'sitr-wms-25', label: 'Sistem Perkotaan' },
+          { id: 'sitr-wms-33', label: 'Sistem Perkotaan (Kab/Kota)' },
+          { id: 'sitr-wms-61', label: 'Rencana Sistem Perkotaan (Kab/Kota)' },
+          { id: 'sitr-wms-111', label: 'Sistem Infrastruktur Prasarana Lain' },
+          { id: 'sitr-wms-113', label: 'Sistem Pusat Permukiman' },
+          { id: 'sitr-wms-115', label: 'Sistem Jaringan Prasarana Lain' }
+        ]},
+        { subcat: 'Persampahan & IPAL', layers: [
+          { id: 'sitr-wms-36', label: 'Sistem Jaringan Persampahan (Kab/Kota)' },
+          { id: 'sitr-wms-46', label: 'Rencana Cakupan Persampahan (Kab/Kota)' },
+          { id: 'sitr-wms-47', label: 'Rencana Persampahan TPA (Kab/Kota)' },
+          { id: 'sitr-wms-67', label: 'Rencana IPAL (Kab/Kota)' },
+          { id: 'sitr-wms-68', label: 'Rencana Area Persampahan TPA (Kab/Kota)' },
+          { id: 'sitr-wms-69', label: 'Rencana Persampahan TPS (Kab/Kota)' }
+        ]}
+      ]
+    },
+    {
       cat: 'Citra Udara & Peta BIG',
       subcats: (function () {
         var g = (typeof window.getFuCatalogGroups === 'function')
@@ -4353,6 +4463,7 @@ const SAWAH_COLOR = '#87cf15';
     'Transportasi': 'Jaringan jalan dan rute transportasi umum.',
     'Pertanian & Ketahanan Pangan': 'Lahan pertanian, komoditas, serta organisme pengganggu tanaman (OPT), yaitu hama dan penyakit tanaman, juga kondisi dan layanan pangan.',
       'ATRBPN': 'Direktori layer resmi BHUMI (ATR/BPN). "Peta Pertanahan": batas persil nasional + heatmap transaksi 2023 — saat persil menyala, klik peta untuk atribut di titik tersebut. "Identifikasi klik": 25 layer tematik (zona nilai tanah, nilai bidang, toponim, kawasan hutan, sawah, PIPPIB, dll.) yang ikut diperiksa saat klik — aktifkan layer yang ingin dicari. Entri "(tidak tersedia)" berasal dari direktori BHUMI tetapi sumbernya tidak dapat diakses.',
+    'SITR Jawa Timur': 'Sistem Informasi Tata Ruang Provinsi Jawa Timur (Pemprov Jatim). 93 layer perencanaan tata ruang — pola ruang RTRW/Perda, jaringan transportasi, energi, telekomunikasi, sumber daya air, permukiman, dan persampahan — dalam enam kelompok. Klik layer untuk menampilkan; peta otomatis menuju Jawa Timur.',
     'Bencana & Risiko': 'Kejadian bencana, sumber bahaya, pemantauan, dan informasi kesiapsiagaan.',
     'Lingkungan & Laut': 'Ekosistem, kondisi perairan, dan indikator kualitas lingkungan.',
     'Cuaca, Iklim & Kualitas Udara': 'Prakiraan dan pengamatan cuaca, pola iklim, kekeringan, serta polutan udara.',
@@ -5205,6 +5316,9 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
         }
         if (id.indexOf('atrbpn-wms-') === 0 && typeof window.toggleAtrbpnWmsLayer === 'function') {
           window.toggleAtrbpnWmsLayer(id, cb.checked);
+        }
+        if (id.indexOf('sitr-wms-') === 0 && typeof window.toggleSitrJatimWmsLayer === 'function') {
+          window.toggleSitrJatimWmsLayer(id, cb.checked);
         }
         if (id.indexOf('omi-') === 0 && typeof window.toggleOmiLayer === 'function') {
           window.toggleOmiLayer(id, cb.checked);
