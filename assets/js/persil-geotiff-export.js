@@ -148,17 +148,13 @@
     }
     // Posisi dinamis: menempel di bawah quick layer; bila blok Petadasar
     // ikut tampil, digeser 6px di bawahnya agar tidak tumpang tindih
-    // (tinggi blok Petadasar berubah-ubah karena hint/status).
+    // (tinggi blok Petadasar berubah-ubah karena hint/status). Berlaku untuk
+    // desktop dan mobile — memakai top, jangan bottom: kombinasi top+bottom
+    // membuat blok melar setinggi viewport dan menutupi peta di mobile.
     var pet = document.getElementById('petadasarExportBlock');
     var petShow = pet && pet.style.display !== 'none';
-    var mobile = window.innerWidth <= 700;
-    if (mobile) {
-      block.style.top = '';
-      block.style.bottom = petShow ? Math.max(60, Math.round(pet.getBoundingClientRect().top - 6)) + 'px' : '';
-    } else {
-      block.style.bottom = '';
-      block.style.top = petShow ? Math.round(pet.getBoundingClientRect().bottom + 6) + 'px' : '';
-    }
+    block.style.bottom = '';
+    block.style.top = petShow ? Math.round(pet.getBoundingClientRect().bottom + 6) + 'px' : '';
   }
 
   function bindVisibility() {

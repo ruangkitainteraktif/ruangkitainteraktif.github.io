@@ -1038,11 +1038,16 @@ L.control.scale({
   }
   map.on('click', closeFAB);
 
+  /* GPS: setView 'always' supaya marker tetap di tengah layar selama tracking
+     aktif — mode bawaan 'untilPanOrZoom' berhenti memusat setelah satu
+     geser/zoom (marker keluar frame saat berjalan). keepCurrentZoomLevel
+     true agar tiap fix hanya memusat tanpa mengubah zoom (anti-kedip);
+     zoom awal tetap 16 saat tombol diklik pertama kali. */
   L.control.locate({
     position: 'bottomright',
     flyTo: true,
-    setView: 'untilPanOrZoom',
-    keepCurrentZoomLevel: false,
+    setView: 'always',
+    keepCurrentZoomLevel: true,
     initialZoomLevel: 16,
     showPopup: false,
     strings: {
@@ -4599,6 +4604,10 @@ const SAWAH_COLOR = '#87cf15';
     _layerCatalogOpen = !_layerCatalogOpen;
     dd.classList.toggle('open', _layerCatalogOpen);
     btn.classList.toggle('active', _layerCatalogOpen);
+    /* Blok export GeoTIFF ikut disembunyikan selama katalog terbuka:
+       di mobile z-index blok (99998) menang atas dropdown (.unified-search
+       1000), jadi tanpa ini tombol menutupi daftar layer. */
+    document.body.classList.toggle('layer-catalog-open', _layerCatalogOpen);
     muatKategoriDinamis();
     if (_layerCatalogOpen && !dd.dataset.built) {
       buildLayerCatalog(dd);
@@ -4613,6 +4622,7 @@ const SAWAH_COLOR = '#87cf15';
     var btn = document.getElementById('layerCatalogBtn');
     if (dd) dd.classList.remove('open');
     if (btn) btn.classList.remove('active');
+    document.body.classList.remove('layer-catalog-open');
     _layerCatalogOpen = false;
   }
   window.closeLayerCatalog = closeLayerCatalog;

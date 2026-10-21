@@ -1,4 +1,4 @@
-ï»¿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -173,7 +173,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=20261021-bhumi-catalog">
+  <link rel="stylesheet" href="assets/css/app.css?v=20261026-catalog-tiff">
   <link rel="stylesheet" href="assets/css/geodisaster.css?v=5">
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261010-press-pages2-7">
@@ -249,7 +249,7 @@
               <div class="welcome-feature-icon icon-satellite">&#128752;&#65039;</div>
               <div class="welcome-feature-info">
                 <div class="welcome-feature-name">Citra Satelit BMKG</div>
-                <div class="welcome-feature-desc">19+ layer citra satelit real-time dari BMKG Himawari-9 & GK-2A â€” IR, Natural Color, Water Vapor, Rainfall, SST, Volcanic Ash, Visible. Dilengkapi MODIS, VIIRS, OCI PACE, Sentinel. Time slider & export PNG dengan legenda.</div>
+                <div class="welcome-feature-desc">19+ layer citra satelit real-time dari BMKG Himawari-9 & GK-2A — IR, Natural Color, Water Vapor, Rainfall, SST, Volcanic Ash, Visible. Dilengkapi MODIS, VIIRS, OCI PACE, Sentinel. Time slider & export PNG dengan legenda.</div>
               </div>
             </div>
             <!-- Peta Interaktif -->
@@ -443,7 +443,7 @@
         <button type="button" id="resetLayersBtn" class="reset-layers-search-btn" title="Reset semua layer" style="display:none">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
         </button>
-        <button type="button" id="geonusaUnifiedToggle" class="geonusa-unified-toggle" title="GeoNusa Hub Â· pencarian batas desa BIG" aria-label="Buka GeoNusa Hub" aria-expanded="false" aria-controls="geonusaUnifiedPanel">
+        <button type="button" id="geonusaUnifiedToggle" class="geonusa-unified-toggle" title="GeoNusa Hub · pencarian batas desa BIG" aria-label="Buka GeoNusa Hub" aria-expanded="false" aria-controls="geonusaUnifiedPanel">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
         </button>
         <button type="button" id="aiAnalysisBtn" class="ai-trigger-btn" title="AI Geospatial Analysis (Beta)">
@@ -456,7 +456,7 @@
       <div id="unifiedSearchResults" class="unified-search-results"></div>
       <section id="geonusaUnifiedPanel" class="geonusa-unified-panel" aria-label="Pencarian batas administrasi BIG" hidden>
         <div class="geonusa-unified-heading"><strong>Cari Wilayah</strong><span id="geonusaUnifiedStatus" role="status" aria-live="polite">Pilih provinsi untuk memulai.</span></div>
-        <label>Provinsi<select id="geonusaProvince" disabled><option value="">Memuat provinsiâ€¦</option></select></label>
+        <label>Provinsi<select id="geonusaProvince" disabled><option value="">Memuat provinsi…</option></select></label>
         <label>Kabupaten/Kota<select id="geonusaKabupaten" disabled><option value="">Pilih provinsi dahulu</option></select></label>
         <label>Kecamatan<select id="geonusaKecamatan" disabled><option value="">Pilih kabupaten/kota dahulu</option></select></label>
         <label>Desa/Kelurahan<select id="geonusaDesa" disabled><option value="">Pilih kecamatan dahulu</option></select></label>
@@ -478,7 +478,7 @@
         <span>Hotspot</span>
         <span class="ql-badge">NEW</span>
       </button>
-      <button type="button" class="ql-btn" id="qlTransjakarta" title="Koridor Transportasi Umum â€” Transjakarta Network">
+      <button type="button" class="ql-btn" id="qlTransjakarta" title="Koridor Transportasi Umum — Transjakarta Network">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <rect x="3" y="7" width="16" height="10" rx="2.5"/>
           <path d="M7 7V5.5A1.5 1.5 0 0 1 8.5 4h7A1.5 1.5 0 0 1 17 5.5V7"/>
@@ -606,7 +606,7 @@
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Export GeoTIFF Persil
       </button>
-      <div id="persilTiffHint" class="petadasar-tiff-hint" style="display:none;">Mozaik tile BHUMI (512 px) Â· maks 4096 px Â· EPSG:3857</div>
+      <div id="persilTiffHint" class="petadasar-tiff-hint" style="display:none;">Mozaik tile BHUMI (512 px) · maks 4096 px · EPSG:3857</div>
       <div id="persilTiffStatus" class="cctv-message petadasar-tiff-status" style="display:none;"></div>
     </div>
     <button class="minimize-all-btn" id="minimizeAllBtn" type="button" onclick="minimizeAllSheets()" aria-label="Minimalkan semua panel" title="Minimalkan semua panel">
@@ -672,7 +672,7 @@
       <div class="tj-sheet-head">
         <div class="tj-sheet-title">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ff4d6d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="14" rx="3"/><path d="M3 11h18"/><circle cx="7.5" cy="14.5" r="1.2"/><circle cx="16.5" cy="14.5" r="1.2"/><path d="M7 17v2M17 17v2"/></svg>
-          <span>TransJakarta Network<span class="tj-sheet-sub">GTFS Â· JakartaSatu</span></span>
+          <span>TransJakarta Network<span class="tj-sheet-sub">GTFS · JakartaSatu</span></span>
         </div>
         <div class="tj-sheet-actions">
           <button id="transjakarta-sheet-minimize" class="tj-sheet-minimize" type="button" aria-label="Minimalkan panel Jalur TransJakarta" title="Minimalkan panel">
@@ -689,7 +689,7 @@
     <div id="transjogja-sheet" aria-label="Daftar rute Trans Jogja">
       <div class="tj-sheet-handle"></div>
       <div class="tj-sheet-head">
-        <div class="tj-sheet-title"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#0e7490" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="14" rx="3"/><path d="M3 11h18M7 17v2M17 17v2"/></svg><span>Trans Jogja<span class="tj-sheet-sub">Jaringan Rute Â· Geoportal DIY</span></span></div>
+        <div class="tj-sheet-title"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#0e7490" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="14" rx="3"/><path d="M3 11h18M7 17v2M17 17v2"/></svg><span>Trans Jogja<span class="tj-sheet-sub">Jaringan Rute · Geoportal DIY</span></span></div>
         <div class="tj-sheet-actions">
           <button id="transjogja-sheet-minimize" class="tj-sheet-minimize" type="button" aria-label="Minimalkan panel Trans Jogja" title="Minimalkan panel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
           <button id="transjogja-sheet-close" class="tj-sheet-close" type="button" aria-label="Tutup panel Trans Jogja" title="Tutup">&times;</button>
@@ -929,10 +929,10 @@
           <p class="dm-cek-lokasi-desc">Pilih format input dan hasil. Datum yang dipakai adalah WGS84.</p>
           <div class="dm-koordinat-fields dm-koordinat-selects">
             <label for="dmCoordInputFormat">Format input
-              <select id="dmCoordInputFormat"><option value="dd">DD â€” Derajat desimal</option><option value="dms">DMS â€” Derajat, menit, detik</option><option value="dmm">DMM â€” Derajat, menit desimal</option><option value="utm">UTM â€” Universal Transverse Mercator</option></select>
+              <select id="dmCoordInputFormat"><option value="dd">DD — Derajat desimal</option><option value="dms">DMS — Derajat, menit, detik</option><option value="dmm">DMM — Derajat, menit desimal</option><option value="utm">UTM — Universal Transverse Mercator</option></select>
             </label>
             <label for="dmCoordFormat">Format hasil
-              <select id="dmCoordFormat"><option value="dd">DD â€” Derajat desimal</option><option value="dms">DMS â€” Derajat, menit, detik</option><option value="dmm">DMM â€” Derajat, menit desimal</option><option value="utm">UTM â€” Universal Transverse Mercator</option></select>
+              <select id="dmCoordFormat"><option value="dd">DD — Derajat desimal</option><option value="dms">DMS — Derajat, menit, detik</option><option value="dmm">DMM — Derajat, menit desimal</option><option value="utm">UTM — Universal Transverse Mercator</option></select>
             </label>
             <label for="dmCoordDatum">Datum
               <select id="dmCoordDatum"><option value="WGS84">WGS84</option></select>
@@ -955,7 +955,7 @@
             <span class="gt-card-icon" aria-hidden="true">&#9881;&#65039;</span>
             <span>
               <b>Geoprocessing</b>
-              <small>Clip Â· Buffer Â· Intersect Â· Union Â· Merge Â· Dissolve</small>
+              <small>Clip · Buffer · Intersect · Union · Merge · Dissolve</small>
             </span>
           </summary>
           <div class="dm-card-body">
@@ -985,9 +985,9 @@
             </details>
             <label class="geotani-form-label" for="gpOperation">Operasi</label>
             <select class="geotani-form-input" id="gpOperation" onchange="updateGeoprocessingForm()">
-              <option value="buffer" selected>Buffer â€” zona jarak</option><option value="clip">Clip â€” potong dengan batas poligon</option>
-              <option value="intersect">Intersect â€” irisan dua layer</option><option value="union">Union â€” gabungkan area poligon</option>
-              <option value="merge">Merge â€” gabungkan fitur sejenis</option><option value="dissolve">Dissolve â€” gabungkan menurut atribut</option>
+              <option value="buffer" selected>Buffer — zona jarak</option><option value="clip">Clip — potong dengan batas poligon</option>
+              <option value="intersect">Intersect — irisan dua layer</option><option value="union">Union — gabungkan area poligon</option>
+              <option value="merge">Merge — gabungkan fitur sejenis</option><option value="dissolve">Dissolve — gabungkan menurut atribut</option>
             </select>
             <div id="gpLayerFields"></div>
             <div id="gpStatus" role="status" aria-live="polite" style="font-size:11px;margin:10px 0;color:#64748b;"></div>
@@ -1092,7 +1092,7 @@
        <div class="measure-hud-reading">
          <div>
            <span class="measure-hud-label">Total</span>
-           <strong id="measureHudValue">â€”</strong>
+           <strong id="measureHudValue">—</strong>
          </div>
          <span id="measureHudMeta" class="measure-hud-meta">0 titik</span>
        </div>
@@ -1232,7 +1232,7 @@
         <div id="tab-cctv" class="tab-content">
           <div style="text-align:center; padding:40px 20px;">
             <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#94a3b8" stroke-width="1.5" style="margin-bottom:12px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            <p class="geotools-desc">Pencarian CCTV sekarang ada di tab <b>GeoTools â†’ GeoNusa</b>.</p>
+            <p class="geotools-desc">Pencarian CCTV sekarang ada di tab <b>GeoTools ? GeoNusa</b>.</p>
              <button onclick="openTab(null, 'tab-geotools'); setTimeout(function(){ var dd = document.querySelector('.geotools-dropdown'); if(dd){ dd.value='geotoolsTabGeonusa'; dd.dispatchEvent(new Event('change')); } }, 200);" style="padding:8px 16px; font-size:12px; font-weight:600; color:#fff; background:#0891b2; border:none; border-radius:6px; cursor:pointer;">Buka GeoTools &#8594; GeoNusa</button>
           </div>
         </div>
@@ -1255,7 +1255,7 @@
                sidebar.js:184 mencarinya dengan querySelectorAll di SELURUH
                dokumen, jadi begitu pengguna menekan salah satu tombol Alat di panel
                GeoData, kelas .active akan dilepas dari kartu ini dan
-               ".geoid-subtab-panel { display:none }" menyembunyikannya permanen â€”
+               ".geoid-subtab-panel { display:none }" menyembunyikannya permanen —
                tanpa nav, tidak ada cara membukanya lagi.
 
                openGeoidSubtab() dan seluruh aturan .geoid-subtab* tetap dipakai
@@ -1279,19 +1279,19 @@
               <div class="geonusa-card-body">
                 <div id="geoidSummaryCards" class="geoid-summary-cards">
                   <div class="geoid-summary-box geoid-summary-prov">
-                    <span class="geoid-summary-count" id="geoidCountProv" style="font-size:20px;font-weight:700;line-height:1;">â€“</span>
+                    <span class="geoid-summary-count" id="geoidCountProv" style="font-size:20px;font-weight:700;line-height:1;">–</span>
                     <span class="geoid-summary-label">Provinsi</span>
                   </div>
                   <div class="geoid-summary-box geoid-summary-kab">
-                    <span class="geoid-summary-count" id="geoidCountKab" style="font-size:20px;font-weight:700;line-height:1;">â€“</span>
+                    <span class="geoid-summary-count" id="geoidCountKab" style="font-size:20px;font-weight:700;line-height:1;">–</span>
                     <span class="geoid-summary-label">Kab/Kota</span>
                   </div>
                   <div class="geoid-summary-box geoid-summary-kec">
-                    <span class="geoid-summary-count" id="geoidCountKec" style="font-size:20px;font-weight:700;line-height:1;">â€“</span>
+                    <span class="geoid-summary-count" id="geoidCountKec" style="font-size:20px;font-weight:700;line-height:1;">–</span>
                     <span class="geoid-summary-label">Kecamatan</span>
                   </div>
                   <div class="geoid-summary-box geoid-summary-desa">
-                    <span class="geoid-summary-count" id="geoidCountDesa" style="font-size:20px;font-weight:700;line-height:1;">â€“</span>
+                    <span class="geoid-summary-count" id="geoidCountDesa" style="font-size:20px;font-weight:700;line-height:1;">–</span>
                     <span class="geoid-summary-label">Desa/Kel</span>
                   </div>
                 </div>
@@ -1344,15 +1344,15 @@
                 <span class="gt-card-icon" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17V6a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v11M5 12h14M7 17l-2 4M17 17l2 4M8 21h8"/><circle cx="8" cy="16" r="1"/><circle cx="16" cy="16" r="1"/><path d="M8 7h8v3H8z"/></svg>
                 </span>
-                <span><b id="geotransPageTitle">GeoTrans</b><small>Informasi transportasi bus Â· Data lokal</small></span>
+                <span><b id="geotransPageTitle">GeoTrans</b><small>Informasi transportasi bus · Data lokal</small></span>
               </summary>
               <div class="geotrans-card-body">
               <section class="geotrans-app" aria-label="Informasi operator, rute, dan halte">
 
               <div class="geotrans-summary" id="geotransSummary" aria-label="Ringkasan jaringan transportasi">
-                <div><b id="geotransOperatorCount">â€”</b><span>Operator</span></div>
-                <div><b id="geotransRouteCount">â€”</b><span>Rute</span></div>
-                <div><b id="geotransStopCount">â€”</b><span>Halte</span></div>
+                <div><b id="geotransOperatorCount">—</b><span>Operator</span></div>
+                <div><b id="geotransRouteCount">—</b><span>Rute</span></div>
+                <div><b id="geotransStopCount">—</b><span>Halte</span></div>
               </div>
 
               <div class="geotrans-workspace">
@@ -1413,7 +1413,7 @@
        daftar saran tampil tanpa gaya. -->
 
 
-            <!-- GeoOSS â€” pemeriksaan awal zona peruntukan sebelum pengajuan resmi.
+            <!-- GeoOSS — pemeriksaan awal zona peruntukan sebelum pengajuan resmi.
                  Berdiri sendiri sebagai modul GeoTools tersendiri, bukan bagian
                  GeoTani. Alurnya berurutan dan bukan free-form:
                  pilih wilayah, pilih RDTR, gambar area, pilih kegiatan.
@@ -1495,7 +1495,7 @@
               </div>
             </details>
 
-            <!-- KKPR (Kartu Kepemilikan Plekitas) via pencarian NIB â€” ATR/BPN
+            <!-- KKPR (Kartu Kepemilikan Plekitas) via pencarian NIB — ATR/BPN
                  GISTARU. Sekarang menjadi bagian modul GeoOSS, dengan
                  alur yang sama seperti GeoOSS: satu kolom pencarian, tombol
                  muat, tombol reset, baris status, lalu hasil.
@@ -1601,7 +1601,7 @@
      menyembunyikannya secara permanen.
 
      <canvas> HNT dan histori tetap berada di dalam pembungkus
-     <div style="height:â€¦"> di dalam badan kartu. Wajib: Chart.js
+     <div style="height:…"> di dalam badan kartu. Wajib: Chart.js
      memasang ResizeObserver pada induk canvas, dan pembungkus tinggi tetap
      itulah yang membuat grafik menggambar ulang saat kartu dibuka lagi.
 
@@ -1719,7 +1719,7 @@
                 <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
                 <span class="cctv-layer-info">
                   <span class="cctv-layer-name">Katalog Gempa Global (USGS)</span>
-                  <small id="historicalQuakesInfo">Gempa per viewport Â· zoom untuk M5+/M6+ (USGS)</small>
+                  <small id="historicalQuakesInfo">Gempa per viewport · zoom untuk M5+/M6+ (USGS)</small>
                 </span>
               </label>
               <label class="cctv-layer-toggle">
@@ -1743,7 +1743,7 @@
                 <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
                 <span class="cctv-layer-info">
                   <span class="cctv-layer-name">Hotspot VIIRS (Global)</span>
-                  <small id="viirsHotspotsInfo">Hotspot thermal Â· filter per zoom (NASA/NOAA)</small>
+                  <small id="viirsHotspotsInfo">Hotspot thermal · filter per zoom (NASA/NOAA)</small>
                 </span>
               </label>
               <label class="cctv-layer-toggle">
@@ -1751,7 +1751,7 @@
                 <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
                 <span class="cctv-layer-info">
                   <span class="cctv-layer-name">Hotspot MODIS (48 Jam)</span>
-                  <small id="modisHotspots48Info">Terra/Aqua Â· filter confidence per zoom</small>
+                  <small id="modisHotspots48Info">Terra/Aqua · filter confidence per zoom</small>
                 </span>
               </label>
               <label class="cctv-layer-toggle">
@@ -1759,7 +1759,7 @@
                 <span class="cctv-layer-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
                 <span class="cctv-layer-info">
                   <span class="cctv-layer-name">Hotspot MODIS (7 Hari)</span>
-                  <small id="modisHotspots7dInfo">Terra/Aqua Â· filter confidence per zoom</small>
+                  <small id="modisHotspots7dInfo">Terra/Aqua · filter confidence per zoom</small>
                 </span>
               </label>
             </div>
@@ -2177,7 +2177,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
             <div class="cctv-card" style="margin-bottom:12px;">
               <div class="cctv-card-header">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10"/></svg>
-                <span>SPI â€” Standardized Precipitation Index</span>
+                <span>SPI — Standardized Precipitation Index</span>
               </div>
               <div class="cctv-card-body cctv-layers">
                 <label class="cctv-layer-toggle">
@@ -2225,7 +2225,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
             <div class="cctv-card" style="margin-bottom:12px;">
               <div class="cctv-card-header">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10"/></svg>
-                <span>SPEI â€” Standardized Precipitation-Evapotranspiration Index</span>
+                <span>SPEI — Standardized Precipitation-Evapotranspiration Index</span>
               </div>
               <div class="cctv-card-body cctv-layers">
                 <label class="cctv-layer-toggle">
@@ -2382,11 +2382,11 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     <div class="geonusa-card-body">
                     <div class="gd-controls">
                       <label for="gd-province-select">Pilih provinsi</label>
-                      <select id="gd-province-select"><option value="">Memuat daftar provinsiâ€¦</option></select>
+                      <select id="gd-province-select"><option value="">Memuat daftar provinsi…</option></select>
                       <button id="gd-run" type="button" disabled>Analisis Water Risk</button>
                       <label class="gd-map-toggle"><input id="gd-map-layer-toggle" type="checkbox" disabled><span>Tampilkan hasil Water Risk di peta</span></label>
                       <button id="gd-reset-polygon" type="button" disabled>Reset Polygon</button>
-                      <div id="gd-status" role="status" aria-live="polite">Memuat daftar provinsiâ€¦</div>
+                      <div id="gd-status" role="status" aria-live="polite">Memuat daftar provinsi…</div>
                     </div>
                     <div id="gd-results" hidden>
                       <div class="gd-summary" id="gd-summary"></div>
@@ -2481,12 +2481,12 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                 </p>
 
                 <label class="geotani-form-label" for="demnasSearchInput">Cari DEMNAS</label>
-                <input id="demnasSearchInput" class="geotani-form-input" type="search" placeholder="Ketik Nama atau OBJECTIDâ€¦" autocomplete="off" />
+                <input id="demnasSearchInput" class="geotani-form-input" type="search" placeholder="Ketik Nama atau OBJECTID…" autocomplete="off" />
                 <div id="demnasSearchCount" style="margin-top:5px;font-size:10px;color:#64748b;"></div>
 
                 <label class="geotani-form-label" for="demnasNamobjSelect" style="margin-top:8px;">Index DEMNAS (OBJECTID / Name)</label>
                 <select id="demnasNamobjSelect" class="geotani-form-input" size="1">
-                  <option value="">Memuat katalog DEMNASâ€¦</option>
+                  <option value="">Memuat katalog DEMNAS…</option>
                 </select>
                 <div id="demnasIndexSelected" style="display:none;margin-top:8px;padding:6px 8px;font-size:10px;color:#166534;background:#f0fdf4;border-radius:4px;"></div>
 
@@ -2494,7 +2494,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                   <div class="demnas-recommendation-heading"><strong>Rekomendasi wilayah clip</strong><span id="demnasRecommendationCount"></span></div>
                   <div id="demnasRecommendationStatus" class="demnas-recommendation-status"></div>
                   <select id="demnasRecommendedSelect" class="geotani-form-input" size="1">
-                    <option value="">Pilih rekomendasi wilayahâ€¦</option>
+                    <option value="">Pilih rekomendasi wilayah…</option>
                   </select>
                 </div>
 
@@ -2511,7 +2511,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     <label class="geotani-form-label" for="demnasAdminSearch">Cari Kode atau Nama</label>
                     <input id="demnasAdminSearch" class="geotani-form-input" type="search" placeholder="Contoh: 33.01.10.2001" autocomplete="off" />
                     <select id="demnasAdminSelect" class="geotani-form-input" size="1">
-                      <option value="">Pilih wilayahâ€¦</option>
+                      <option value="">Pilih wilayah…</option>
                     </select>
                     <div id="demnasAdminSearchCount" class="demnas-admin-search-count"></div>
                   </div>
@@ -2539,7 +2539,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     <span class="demnas-loading-spinner" aria-hidden="true"></span>
                     <div>
                       <strong id="demnasLoadingTitle">Menyiapkan GeoTIFF DEMNAS</strong>
-                      <small id="demnasLoadingMessage">Menyiapkan permintaan rasterâ€¦</small>
+                      <small id="demnasLoadingMessage">Menyiapkan permintaan raster…</small>
                     </div>
                   </div>
                   <div class="demnas-loading-track"><span id="demnasLoadingBar"></span></div>
@@ -2589,7 +2589,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                         <button id="geojogjaLoadBtn" class="geotools-btn geotools-btn--green" type="button">Tampilkan layer &amp; tabel</button>
                         <button id="geojogjaHideBtn" class="geotools-btn" type="button" hidden>Sembunyikan layer</button>
                       </div>
-                      <p id="geojogjaStatus" class="geojogja-status" role="status">Sumber: Geoportal DIY Â· Jenis tanah</p>
+                      <p id="geojogjaStatus" class="geojogja-status" role="status">Sumber: Geoportal DIY · Jenis tanah</p>
                       <div id="geojogjaTableWrap" class="geojogja-table-wrap" hidden>
                         <table class="geojogja-table">
                           <thead><tr><th>No.</th><th>Jenis tanah</th><th>Tekstur</th><th>Infiltrasi</th><th>Luas</th></tr></thead>
@@ -2615,7 +2615,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     <div class="geojakarta-body">
                       <p class="geojakarta-desc">Pilih wilayah berurutan. Batas RT terpilih akan ditampilkan pada peta.</p>
                       <label class="geojakarta-label" for="geojakarta-kota">Kota/Kabupaten</label>
-                      <select id="geojakarta-kota" class="geotani-form-select" aria-label="Pilih kota atau kabupaten Jakarta" disabled><option value="">Memuat kota/kabupatenâ€¦</option></select>
+                      <select id="geojakarta-kota" class="geotani-form-select" aria-label="Pilih kota atau kabupaten Jakarta" disabled><option value="">Memuat kota/kabupaten…</option></select>
                       <label class="geojakarta-label" for="geojakarta-kecamatan">Kecamatan</label>
                       <select id="geojakarta-kecamatan" class="geotani-form-select" aria-label="Pilih kecamatan" disabled><option value="">Pilih kota/kabupaten dahulu</option></select>
                       <label class="geojakarta-label" for="geojakarta-kelurahan">Kelurahan</label>
@@ -2627,7 +2627,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                       <div class="geojakarta-actions">
                         <button id="geojakarta-clear" class="geotools-btn" type="button" disabled>Hapus batas dari peta</button>
                       </div>
-                      <p id="geojakarta-status" class="geojakarta-status" role="status" aria-live="polite">Sumber: Batas Administrasi DKI Jakarta Â· RT</p>
+                      <p id="geojakarta-status" class="geojakarta-status" role="status" aria-live="polite">Sumber: Batas Administrasi DKI Jakarta · RT</p>
                     </div>
                   </details>
 
@@ -2969,7 +2969,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                   <label for="gfDasimetriProvince">Provinsi</label>
                   <select id="gfDasimetriProvince"><option value="33">Jawa Tengah</option></select>
                   <label for="gfDasimetriDistrict">Kabupaten/kota</label>
-                  <select id="gfDasimetriDistrict"><option value="">Memuat batas kabupatenâ€¦</option></select>
+                  <select id="gfDasimetriDistrict"><option value="">Memuat batas kabupaten…</option></select>
                   <label for="gfDasimetriMetric">Indikator</label>
                   <select id="gfDasimetriMetric">
                     <option value="harvest">Luas panen (ha)</option>
@@ -3100,7 +3100,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                 <div id="sp2kpResult"></div>
                 <div id="sp2kpTable"></div>
                 <div id="sp2kpHntChartCard" style="display:none;margin-top:12px;padding:10px;border:1px solid #dbe7e1;border-radius:8px;background:#fbfefc;">
-                  <div class="sp2kp-table-title">Harga HNT Provinsi â€” 10 Tertinggi</div>
+                  <div class="sp2kp-table-title">Harga HNT Provinsi — 10 Tertinggi</div>
                   <div id="sp2kpHntChartSubtitle" class="sp2kp-table-subtitle"></div>
                   <div style="height:260px;margin-top:8px;"><canvas id="sp2kpHntChart"></canvas></div>
                 </div>
@@ -3134,7 +3134,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
             <!-- Kenapa status unggah (#geofarmUploadStatus) diletakkan tepat di
                  atas tombol Buka Analisis, bukan di bawah catatan SHP:
-                 pesan "1 poligon dimuat Â· total 0,21 ha" adalah hasil dari aksi
+                 pesan "1 poligon dimuat · total 0,21 ha" adalah hasil dari aksi
                  yang baru saja dilakukan pengguna, jadi harus muncul dekat
                  tombol yang terkait. Kalau ditaruh paling bawah, pesan
                  sampai terlewat di balik blok <details> catatan SHP dan
@@ -3283,8 +3283,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                 </summary>
                 <div class="gf-ebook-content">
                 <section class="gf-press-catalog" aria-labelledby="gfPressTitle">
-                  <div class="gf-press-heading"><div><h4 id="gfPressTitle">Katalog Pertanian Press</h4><p id="gfPressStatus">Halaman 2 Â· 25 judul. PDF dibuka di pembaca GeoFarm bila tersedia.</p></div>
-                    <input type="search" id="gfPressSearch" aria-label="Cari buku Pertanian Press" placeholder="Cari judul bukuâ€¦" autocomplete="off" />
+                  <div class="gf-press-heading"><div><h4 id="gfPressTitle">Katalog Pertanian Press</h4><p id="gfPressStatus">Halaman 2 · 25 judul. PDF dibuka di pembaca GeoFarm bila tersedia.</p></div>
+                    <input type="search" id="gfPressSearch" aria-label="Cari buku Pertanian Press" placeholder="Cari judul buku…" autocomplete="off" />
                   </div>
                   <div class="gf-press-list" id="gfPressList" aria-live="polite"></div>
                   <nav class="gf-press-pagination" id="gfPressPagination" aria-label="Halaman katalog e-book"></nav>
@@ -3293,7 +3293,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                 </div>
               </details>
               <dialog class="gf-reader" id="gfEbookReader" aria-labelledby="gfReaderTitle">
-                <div class="gf-reader-bar"><div class="gf-reader-heading"><span class="gf-reader-mark" aria-hidden="true">GF</span><div><strong id="gfReaderTitle">Pembaca publikasi</strong><small>GeoFarm Â· Perpustakaan digital</small></div></div>
+                <div class="gf-reader-bar"><div class="gf-reader-heading"><span class="gf-reader-mark" aria-hidden="true">GF</span><div><strong id="gfReaderTitle">Pembaca publikasi</strong><small>GeoFarm · Perpustakaan digital</small></div></div>
                   <div class="gf-reader-actions"><a id="gfReaderDownload" class="gf-reader-download" href="#" target="_blank" rel="noopener noreferrer">Buka PDF &#8594;</a><button type="button" class="gf-reader-close" data-reader-close aria-label="Tutup pembaca">&#10005;</button></div>
                 </div>
                 <div class="gf-reader-stage"><iframe id="gfReaderFrame" title="Pembaca dokumen PDF" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
@@ -3384,7 +3384,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                 </summary>
                 <div class="geofarm-ref-body geofarm-pupuk-rekom-body">
                   <div class="gfpr-filter-grid">
-                    <label>Provinsi<select id="gfprProvinsi"><option value="">Memuat daftar wilayahâ€¦</option></select></label>
+                    <label>Provinsi<select id="gfprProvinsi"><option value="">Memuat daftar wilayah…</option></select></label>
                     <label>Kabupaten / kota<select id="gfprKabupaten" disabled><option value="">Semua kabupaten/kota</option></select></label>
                     <label>Kecamatan<select id="gfprKecamatan" disabled><option value="">Semua kecamatan</option></select></label>
                     <label>Komoditas<select id="gfprKomoditas" disabled><option value="">Pilih komoditas</option></select></label>
@@ -3397,7 +3397,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                   <p id="gfprStatus" class="geofarm-ref-status" role="status" aria-live="polite">Buka kartu ini untuk memuat dosis 2027.</p>
                   <div id="gfprResult" class="gfpr-result" hidden></div>
                   <div id="gfprMapLegend" class="gfpr-map-legend" hidden></div>
-                  <p class="gfpr-source">Sumber dosis: <a href="https://erdkk25.pertanian.go.id/uploads/ref/Dosis_2027_Semua_Komoditas_Subsidi.xlsx" target="_blank" rel="noopener noreferrer">e-RDKK Kementerian Pertanian Â· 2027</a>. Polygon kabupaten memakai batas wilayah BPS lokal; hasil kecamatan memakai batas BIG yang digunakan GeoFarm.</p>
+                  <p class="gfpr-source">Sumber dosis: <a href="https://erdkk25.pertanian.go.id/uploads/ref/Dosis_2027_Semua_Komoditas_Subsidi.xlsx" target="_blank" rel="noopener noreferrer">e-RDKK Kementerian Pertanian · 2027</a>. Polygon kabupaten memakai batas wilayah BPS lokal; hasil kecamatan memakai batas BIG yang digunakan GeoFarm.</p>
                 </div>
               </details>
 
@@ -3657,17 +3657,17 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                <div class="alat-card">
                  <div class="alat-card-head">
                    <span class="gt-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></span>
-                   <span><b>Unduh Persil Nasional (BHUMI)</b><small>Rekap bidang tanah seluruh Indonesia dari endpoint resmi BHUMI â€” PNG georeferensi EPSG:3857 + world file (.pgw/.prj) sehingga langsung bisa dibuka di QGIS/ArcGIS.</small></span>
+                   <span><b>Unduh Persil Nasional (BHUMI)</b><small>Rekap bidang tanah seluruh Indonesia dari endpoint resmi BHUMI — PNG georeferensi EPSG:3857 + world file (.pgw/.prj) sehingga langsung bisa dibuka di QGIS/ArcGIS.</small></span>
                  </div>
                  <div class="alat-card-body">
-                   <label class="geotani-form-label" for="persilBboxInput">Wilayah unduh (barat, selatan, timur, utara â€” derajat)</label>
-                   <input id="persilBboxInput" class="geotani-form-input" type="text" placeholder="106.7950,-6.2460,106.7975,-6.2440 Â· kosongkan = tampilan peta saat ini" autocomplete="off" />
+                   <label class="geotani-form-label" for="persilBboxInput">Wilayah unduh (barat, selatan, timur, utara — derajat)</label>
+                   <input id="persilBboxInput" class="geotani-form-input" type="text" placeholder="106.7950,-6.2460,106.7975,-6.2440 · kosongkan = tampilan peta saat ini" autocomplete="off" />
                    <label class="geotani-form-label" for="persilPrecision">Resolusi gambar</label>
                    <select id="persilPrecision" class="geotani-form-input">
-                     <option value="4000">Cepat â€” â‰ˆ8 m/piksel (4 km per permintaan)</option>
-                     <option value="2000" selected>Sedang â€” â‰ˆ4 m/piksel (2 km per permintaan)</option>
-                     <option value="1000">Detail â€” â‰ˆ2 m/piksel (1 km per permintaan)</option>
-                     <option value="500">Sangat detail â€” â‰ˆ1 m/piksel (500 m per permintaan)</option>
+                     <option value="4000">Cepat — ˜8 m/piksel (4 km per permintaan)</option>
+                     <option value="2000" selected>Sedang — ˜4 m/piksel (2 km per permintaan)</option>
+                     <option value="1000">Detail — ˜2 m/piksel (1 km per permintaan)</option>
+                     <option value="500">Sangat detail — ˜1 m/piksel (500 m per permintaan)</option>
                    </select>
                    <div class="geoserver-actions">
                      <button id="persilDownloadBtn" class="geotools-btn geotools-btn--green arcgis-source-action-btn" type="button">Unduh PNG + World File (ZIP)</button>
@@ -3742,7 +3742,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
       <div id="gpxExportSpinner" class="gpx-export-spinner">
         <div class="gpx-export-spinner-inner">
           <svg class="gpx-export-spinner-svg" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="90 150" stroke-dashoffset="0"/></svg>
-          <span class="gpx-export-spinner-text">Export MP4â€¦</span>
+          <span class="gpx-export-spinner-text">Export MP4…</span>
         </div>
       </div>
       <div id="gpxAnimControls" class="alat-card" style="display:none">
@@ -3849,7 +3849,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
          geopangan, attribute-table, ai-analysis, dan polygon-analysis
          semuanya mendaftarkan sheet ke window.SheetDrag saat dimuat. -->
     <script src="assets/js/sheet-drag.js?v=20261008-close-without-reset"></script>
-    <script src="assets/js/map-core.js?v=20261026-sitr-jatim"></script>
+    <script src="assets/js/map-core.js?v=20261026-catalog-tiff"></script>
     <script src="assets/js/isric-soil-layers.js?v=20261007-wrb-clip"></script>
     <script src="assets/js/isee-global-soils.js?v=20261010-soil-temperature-legend"></script>
     <script src="assets/js/layer-loading.js?v=20261012-persil-gistaru"></script>
@@ -3880,7 +3880,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/sentinel1-rtc-slider.js"></script>
     <script src="assets/js/satellite-export.js"></script>
     <script src="assets/js/petadasar-export.js"></script>
-    <script src="assets/js/persil-geotiff-export.js?v=20261026-persil-tiff"></script>
+    <script src="assets/js/persil-geotiff-export.js?v=20261026-tiff-pos-mobile"></script>
 
     <script src="assets/js/geoportal.js?v=20261010-print-basemap-picker"></script>
     <script src="assets/js/geojogja.js?v=20261007"></script>

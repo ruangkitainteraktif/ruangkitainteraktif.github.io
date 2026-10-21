@@ -4456,15 +4456,19 @@
       .quick-layer-bar::-webkit-scrollbar { display: none; }
       .petadasar-export-block,
       .petadasar-export-block.persil-tiff-export-block {
-        top: auto;
-        bottom: calc(106px + env(safe-area-inset-bottom, 0px));
+        /* Mobile: menempel di bawah quick layer bar (top menang dari aturan
+           desktop 10430/10489 karena properti yang sama — bottom HARUS auto.
+           Bila bottom ikut aktif (106px) blok melar 630px dan menutupi
+           seluruh peta sehingga sentuhan tak sampai ke peta). */
+        top: 108px;
+        bottom: auto;
         max-width: calc(100% - 24px);
-        flex-direction: column-reverse;
+        flex-direction: column;
         z-index: 99998;
       }
       body.petadasar-tiff-tampil .petadasar-export-block.persil-tiff-export-block {
         top: auto;
-        bottom: calc(144px + env(safe-area-inset-bottom, 0px));
+        bottom: auto;
       }
       .petadasar-export-block .geotools-btn {
         height: 30px;
@@ -10502,6 +10506,16 @@ details[open] > .gt-card-head::after {
     .petadasar-export-block.persil-tiff-export-block .geotools-btn:hover {
       background: #16a34a;
       box-shadow: 0 4px 14px rgba(22,163,74,.35);
+    }
+
+    /* Selama katalog layer terbuka, blok export disembunyikan: dropdown
+       katalog menempel dari unified-search (z-index 1000) ke bawah, sedangkan
+       blok export mobile z-index 99998 sehingga menutupi daftar layer.
+       Pola yang sama dengan aturan body.*-sheet-open di bawah. */
+    body.layer-catalog-open .petadasar-export-block {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
     }
 
     /* Timeline Steps */
