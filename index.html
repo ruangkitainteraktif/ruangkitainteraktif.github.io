@@ -601,6 +601,14 @@
       <div id="petadasarTiffHint" class="petadasar-tiff-hint" style="display:none;">Maks 4096 px - EPSG:3857</div>
       <div id="petadasarTiffStatus" class="cctv-message petadasar-tiff-status" style="display:none;"></div>
     </div>
+    <div class="petadasar-export-block persil-tiff-export-block" id="persilTiffExportBlock" style="display:none;">
+      <button id="persilTiffBtn" class="geotools-btn" type="button" onclick="window.exportPersilGeoTiff()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export GeoTIFF Persil
+      </button>
+      <div id="persilTiffHint" class="petadasar-tiff-hint" style="display:none;">Mozaik tile BHUMI (512 px) · maks 4096 px · EPSG:3857</div>
+      <div id="persilTiffStatus" class="cctv-message petadasar-tiff-status" style="display:none;"></div>
+    </div>
     <button class="minimize-all-btn" id="minimizeAllBtn" type="button" onclick="minimizeAllSheets()" aria-label="Minimalkan semua panel" title="Minimalkan semua panel">
       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/></svg>
       <span>Minimalkan Semua</span>
@@ -3872,6 +3880,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/sentinel1-rtc-slider.js"></script>
     <script src="assets/js/satellite-export.js"></script>
     <script src="assets/js/petadasar-export.js"></script>
+    <script src="assets/js/persil-geotiff-export.js?v=20261026-persil-tiff"></script>
 
     <script src="assets/js/geoportal.js?v=20261010-print-basemap-picker"></script>
     <script src="assets/js/geojogja.js?v=20261007"></script>

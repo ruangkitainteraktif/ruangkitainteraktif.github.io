@@ -312,7 +312,10 @@ export default {
     }
 
     const fwdHeaders = {
-      "User-Agent": "Mozilla/5.0 (compatible; kta-cors-proxy/1.0)",
+      // UA harus terlihat seperti browser biasa; BHUMI menolak request
+      // dengan UA ber-ekor "kta-cors-proxy" (404 "Forbidden" dari nginx).
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       "Accept": request.headers.get("Accept") || "*/*"
     };
     // Forward useful client headers if present

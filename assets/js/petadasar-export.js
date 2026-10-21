@@ -196,6 +196,8 @@
     var show = isPetadasarActive(fromEvent);
     block.style.display = show ? '' : 'none';
     if (hint) hint.style.display = show ? '' : 'none';
+    // Penanda agar blok export persil digeser turun dan tidak tumpang tindih
+    document.body.classList.toggle('petadasar-tiff-tampil', show);
     if (!show) {
       setStatus('');
       var btn = document.getElementById('petadasarTiffBtn');
