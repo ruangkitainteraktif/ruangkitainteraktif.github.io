@@ -12,9 +12,9 @@
   // dinonaktifkan dan semua request lolos tanpa batas -- jadi Worker TIDAK
   // akan gagal_total, hanya pembatasan yang tidak berlaku.
   //
-  // id di bawah wajib diganti dengan milik Anda:
+  // id di bawah sudah dibuat dengan:
   //   npx wrangler kv namespace create RATE_KV
   "kv_namespaces": [
-    { "binding": "RATE_KV", "id": "GANTI_DENGAN_ID_NAMESPACE_ANDA" }
+    { "binding": "RATE_KV", "id": "2bb0818f8177444cba328aa243c2da53" }
   ]
 }

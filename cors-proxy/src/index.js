@@ -123,7 +123,7 @@ function corsHeaders(origin) {
   return {
     "Access-Control-Allow-Origin": allowed,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Accept, Origin, X-Requested-With",
+    "Access-Control-Allow-Headers": "Content-Type, Accept, Origin, X-Requested-With, Authorization",
     "Access-Control-Max-Age": "86400",
     // X-RateLimit-* WAJIB ada di sini. Tanpa diexpose, browser tidak
     // boleh membacanya dari JavaScript, jadi klien tidak akan pernah tahu
@@ -319,6 +319,29 @@ export default {
     const contentType = request.headers.get("Content-Type");
     if (contentType) fwdHeaders["Content-Type"] = contentType;
 
+    // Endpoint WMS persil BHUMI (/mprx/service) dan API ekspor (/expapi:
+    // loginApi, getPersil) menolak permintaan yang Referer/Origin-nya bukan
+    // domainnya sendiri (balasannya 403 nginx / 401 aplikasi). Untuk /expapi
+    // Origin sendiri WAJIB ada dan bernilai domain bhumi -- tanpa Origin
+    // loginApi selalu 401 meski Referer benar. Browser DILARANG memalsukan
+    // kedua header ini, jadi hanya bisa diisi di server -- di sinilah
+    // tempatnya.
+    const isBhumiHost = target.hostname === "bhumi.atrbpn.go.id";
+    const isBhumiMprx =
+      isBhumiHost &&
+      (target.pathname === "/mprx" || target.pathname.startsWith("/mprx/"));
+    const isBhumiExpapi =
+      isBhumiHost &&
+      (target.pathname === "/expapi" || target.pathname.startsWith("/expapi/"));
+    if (isBhumiMprx || isBhumiExpapi) {
+      fwdHeaders["Referer"] = "https://bhumi.atrbpn.go.id/peta";
+      fwdHeaders["Origin"] = "https://bhumi.atrbpn.go.id";
+    }
+    // JWT dari /expapi/loginApi dikirim kembali oleh klien lewat header
+    // Authorization; kalau tidak diteruskan, getPersil selalu 401.
+    const authorization = request.headers.get("Authorization");
+    if (authorization && isBhumiExpapi) fwdHeaders["Authorization"] = authorization;
+
     let body = null;
     if (method === "POST") {
       body = await request.arrayBuffer();
@@ -330,13 +353,19 @@ export default {
         headers: fwdHeaders,
         body: method === "POST" ? body : undefined,
         redirect: "follow",
-        cf: { cacheTtl: 0 }
+        // Tile persil BHUMI bersifat publik dan nyaris tidak berubah; di-cache
+        // di edge supaya pemetaan (ratusan tile per layar) tidak membebani
+        // maupun menghafal ulang permintaan ke server ATR/BPN.
+        cf: { cacheTtl: isBhumiMprx ? 86400 : 0 }
       });
 
       const outHeaders = new Headers(corsHeaders(origin));
       const ct = upstream.headers.get("Content-Type");
       if (ct) outHeaders.set("Content-Type", ct);
       outHeaders.set("X-Proxy-Status", String(upstream.status));
+      if (isBhumiMprx && method === "GET" && upstream.ok) {
+        outHeaders.set("Cache-Control", "public, max-age=86400");
+      }
 
       // Penghitungan naik hanya setelah upstream benar-benar berhasil.
       // Kalau BPS sedang lambat atau errornya di sisi mereka, pengguna

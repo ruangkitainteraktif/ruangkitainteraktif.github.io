@@ -6606,6 +6606,8 @@
     .agol-geo-kawasan  { background: linear-gradient(135deg, #14532d, #16a34a); }
     .agol-geo-kttht    { background: linear-gradient(135deg, #1e3a5f, #0369a1); }
     .agol-geo-satupeta { background: linear-gradient(135deg, #14532d, #22c55e); }
+    .agol-geo-persil   { background: linear-gradient(135deg, #92400e, #d97706); }
+    .bhumi-persil-list { display: grid; gap: 8px; padding: 8px; background: #eceef1; max-height: 55vh; overflow-y: auto; }
     .agol-geo-kawasan .agol-popup-badge { font-size: 10px; padding: 3px 10px; border-radius: 5px; letter-spacing: .02em; }
     .agol-geo-kawasan .agol-popup-title { font-size: 15px; }
 

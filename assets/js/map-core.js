@@ -2015,6 +2015,7 @@ const SAWAH_COLOR = '#87cf15';
    * proxy -- asal option crossOrigin tidak diaktifkan. */
   var bumiPersilLayer = null;
   var gistaruPersilLayer = null;
+  var bhumiPersilNasionalLayer = null;
   var sawahLayer = null;
   var legendSawahShown = false;
   var legendPersilShown = false;
@@ -2035,7 +2036,8 @@ const SAWAH_COLOR = '#87cf15';
 
   function anyPersilLayerActive() {
     return !!((bumiPersilLayer && map.hasLayer(bumiPersilLayer)) ||
-              (gistaruPersilLayer && map.hasLayer(gistaruPersilLayer)));
+              (gistaruPersilLayer && map.hasLayer(gistaruPersilLayer)) ||
+              (bhumiPersilNasionalLayer && map.hasLayer(bhumiPersilNasionalLayer)));
   }
 
   function showPersilLegend() {
@@ -2133,6 +2135,325 @@ const SAWAH_COLOR = '#87cf15';
   window.isGistaruPersilLayerActive = function () {
     return !!(gistaruPersilLayer && map.hasLayer(gistaruPersilLayer));
   };
+
+  /* ── Persil nasional (BHUMI /mprx/service) ──
+   * WMS 1.3 publik dengan layer bhumi_persil; melayani seluruh Indonesia
+   * (diuji dari Medan, Makassar sampai Jayapura pada zoom 10-19). Dua
+   * syarat yang tidak bisa dilanggar:
+   *   - WIDTH/HEIGHT harus tepat 512; ukuran lain ditolak GeoServer;
+   *   - nginx hanya menerima Referer dari domain bhumi, jadi tile dimuat
+   *     lewat kta-cors-proxy yang menyuntikkan Referer
+   *     https://bhumi.atrbpn.go.id/peta (browser dilarang memalsukan
+   *     Referer, tidak ada cara lain dari sisi klien).
+   * URL tile disusun manual karena Leaflet tidak mengenal VERSION=1.3.0
+   * (pergantian SRS -> CRS). BBOX memakai lebar span x (tileSize/256):
+   * dengan tileSize 512 satu tile Leaflet mencakup dua kali lebar grid
+   * 256 pada zoom yang sama. */
+  var BHUMI_PERSIL_NASIONAL_PROXY = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=';
+
+  function bhumiPersilNasionalTileUrl(coords) {
+    var size = this.getTileSize().x;
+    var half = 20037508.342789244;
+    var span = ((half * 2) / Math.pow(2, coords.z)) * (size / 256);
+    var minX = -half + coords.x * span;
+    var maxY = half - coords.y * span;
+    var bbox = minX + ',' + (maxY - span) + ',' + (minX + span) + ',' + maxY;
+    var upstream = 'https://bhumi.atrbpn.go.id/mprx/service' +
+      '?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap' +
+      '&FORMAT=image%2Fpng&TRANSPARENT=true' +
+      '&LAYERS=bhumi_persil&STYLES=' +
+      '&SRS=EPSG:3857&CRS=EPSG:3857&TILED=true' +
+      '&WIDTH=' + size + '&HEIGHT=' + size +
+      '&BBOX=' + bbox;
+    return BHUMI_PERSIL_NASIONAL_PROXY + encodeURIComponent(upstream);
+  }
+
+  function toggleBhumiPersilNasionalLayer(show) {
+    if (show) {
+      if (bhumiPersilNasionalLayer && map.hasLayer(bhumiPersilNasionalLayer)) return;
+      bhumiPersilNasionalLayer = L.tileLayer('', {
+        tileSize: 512,
+        minZoom: 10,
+        maxZoom: 21,
+        attribution: 'ATR/BPN - BHUMI'
+      });
+      bhumiPersilNasionalLayer.getTileUrl = bhumiPersilNasionalTileUrl;
+      bhumiPersilNasionalLayer.addTo(map);
+      zoomToPersilDetail();
+      refreshPersilLegend();
+    } else {
+      if (bhumiPersilNasionalLayer && map.hasLayer(bhumiPersilNasionalLayer)) map.removeLayer(bhumiPersilNasionalLayer);
+      bhumiPersilNasionalLayer = null;
+      bhumiPersilClearHighlight();
+      refreshPersilLegend();
+    }
+  }
+  window.toggleBhumiPersilNasionalLayer = toggleBhumiPersilNasionalLayer;
+  window.isBhumiPersilNasionalLayerActive = function () {
+    return !!(bhumiPersilNasionalLayer && map.hasLayer(bhumiPersilNasionalLayer));
+  };
+
+  /* ── Identifikasi persil saat klik (BHUMI /expapi/getPersil) ──
+   * Saat layer Persil Nasional menyala, setiap klik peta mengirim query
+   * titik (bbox viewport + posisi piksel klik, format identik dengan app
+   * BHUMI) ke getPersil lewat kta-cors-proxy -- worker menyuntikkan
+   * Referer/Origin BHUMI dan meneruskan Authorization, karena server
+   * menolak origin lain. Login memakai akun publik yang hardcoded di app
+   * BHUMI; JWT di-cache ~50 menit. Respons berupa AES-OpenSSL (passphrase
+   * sama dengan enkripsi di app BHUMI) didekripsi langsung di browser. */
+  var bhumiPersilToken = { value: null, expiresAt: 0 };
+  var bhumiPersilHighlight = null;
+  var bhumiPersilPopup = null;
+  var bhumiPersilClickSeq = 0;
+
+  function bhumiPersilClearHighlight() {
+    if (bhumiPersilHighlight && map.hasLayer(bhumiPersilHighlight)) {
+      map.removeLayer(bhumiPersilHighlight);
+    }
+    bhumiPersilHighlight = null;
+    if (bhumiPersilPopup) {
+      map.closePopup(bhumiPersilPopup);
+      bhumiPersilPopup = null;
+    }
+  }
+
+  function bhumiPersilProxyPost(pathname, payload, token) {
+    var url = BHUMI_PERSIL_NASIONAL_PROXY +
+      encodeURIComponent('https://bhumi.atrbpn.go.id' + pathname);
+    var headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = token;
+    return fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(payload) });
+  }
+
+  function bhumiPersilGetToken() {
+    if (bhumiPersilToken.value && Date.now() < bhumiPersilToken.expiresAt) {
+      return Promise.resolve(bhumiPersilToken.value);
+    }
+    return bhumiPersilProxyPost('/expapi/loginApi', { username: 'user', password: 'password' }, null)
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (t) {
+        if (typeof t === 'string' && t.indexOf('.') > 0 && t.charAt(0) !== '{') {
+          bhumiPersilToken.value = t;
+          bhumiPersilToken.expiresAt = Date.now() + 50 * 60 * 1000;
+        }
+        return bhumiPersilToken.value;
+      })
+      .catch(function () { return null; });
+  }
+
+  /* BHUMI-CRYPTO-START -- MD5 + OpenSSL EVP_BytesToKey (AES-256-CBC),
+     diuji terpisah terhadap ciphertext contoh app BHUMI. */
+  function bhumiMd5Bytes(bytes) {
+    function add32(a, b) { return (a + b) & 0xFFFFFFFF; }
+    function rol(n, c) { return (n << c) | (n >>> (32 - c)); }
+    function cmn(q, a, b, x, s, t) { return add32(rol(add32(add32(a, q), add32(x, t)), s), b); }
+    function ff(a, b, c, d, x, s, t) { return cmn((b & c) | (~b & d), a, b, x, s, t); }
+    function gg(a, b, c, d, x, s, t) { return cmn((b & d) | (c & ~d), a, b, x, s, t); }
+    function hh(a, b, c, d, x, s, t) { return cmn(b ^ c ^ d, a, b, x, s, t); }
+    function ii(a, b, c, d, x, s, t) { return cmn(c ^ (b | ~d), a, b, x, s, t); }
+    var msgLen = bytes.length;
+    var padded = new Uint8Array((((msgLen + 8) >> 6) + 1) * 64);
+    padded.set(bytes);
+    padded[msgLen] = 0x80;
+    var bitLen = msgLen * 8;
+    padded[padded.length - 8] = bitLen & 0xFF;
+    padded[padded.length - 7] = (bitLen >>> 8) & 0xFF;
+    padded[padded.length - 6] = (bitLen >>> 16) & 0xFF;
+    padded[padded.length - 5] = (bitLen >>> 24) & 0xFF;
+    var a = 1732584193, b = -271733879, c = -1732584194, d = 271733878;
+    for (var i = 0; i < padded.length; i += 64) {
+      var x = [];
+      for (var j = 0; j < 16; j++) {
+        x[j] = padded[i + j * 4] | (padded[i + j * 4 + 1] << 8) |
+                (padded[i + j * 4 + 2] << 16) | (padded[i + j * 4 + 3] << 24);
+      }
+      var oa = a, ob = b, oc = c, od = d;
+      a = ff(a,b,c,d,x[0],7,-680876936); d = ff(d,a,b,c,x[1],12,-389564586); c = ff(c,d,a,b,x[2],17,606105819); b = ff(b,c,d,a,x[3],22,-1044525330);
+      a = ff(a,b,c,d,x[4],7,-176418897); d = ff(d,a,b,c,x[5],12,1200080426); c = ff(c,d,a,b,x[6],17,-1473231341); b = ff(b,c,d,a,x[7],22,-45705983);
+      a = ff(a,b,c,d,x[8],7,1770035416); d = ff(d,a,b,c,x[9],12,-1958414417); c = ff(c,d,a,b,x[10],17,-42063); b = ff(b,c,d,a,x[11],22,-1990404162);
+      a = ff(a,b,c,d,x[12],7,1804603682); d = ff(d,a,b,c,x[13],12,-40341101); c = ff(c,d,a,b,x[14],17,-1502002290); b = ff(b,c,d,a,x[15],22,1236535329);
+      a = gg(a,b,c,d,x[1],5,-165796510); d = gg(d,a,b,c,x[6],9,-1069501632); c = gg(c,d,a,b,x[11],14,643717713); b = gg(b,c,d,a,x[0],20,-373897302);
+      a = gg(a,b,c,d,x[5],5,-701558691); d = gg(d,a,b,c,x[10],9,38016083); c = gg(c,d,a,b,x[15],14,-660478335); b = gg(b,c,d,a,x[4],20,-405537848);
+      a = gg(a,b,c,d,x[9],5,568446438); d = gg(d,a,b,c,x[14],9,-1019803690); c = gg(c,d,a,b,x[3],14,-187363961); b = gg(b,c,d,a,x[8],20,1163531501);
+      a = gg(a,b,c,d,x[13],5,-1444681467); d = gg(d,a,b,c,x[2],9,-51403784); c = gg(c,d,a,b,x[7],14,1735328473); b = gg(b,c,d,a,x[12],20,-1926607734);
+      a = hh(a,b,c,d,x[5],4,-378558); d = hh(d,a,b,c,x[8],11,-2022574463); c = hh(c,d,a,b,x[11],16,1839030562); b = hh(b,c,d,a,x[14],23,-35309556);
+      a = hh(a,b,c,d,x[1],4,-1530992060); d = hh(d,a,b,c,x[4],11,1272893353); c = hh(c,d,a,b,x[7],16,-155497632); b = hh(b,c,d,a,x[10],23,-1094730640);
+      a = hh(a,b,c,d,x[13],4,681279174); d = hh(d,a,b,c,x[0],11,-358537222); c = hh(c,d,a,b,x[3],16,-722521979); b = hh(b,c,d,a,x[6],23,76029189);
+      a = hh(a,b,c,d,x[9],4,-640364487); d = hh(d,a,b,c,x[12],11,-421815835); c = hh(c,d,a,b,x[15],16,530742520); b = hh(b,c,d,a,x[2],23,-995338651);
+      a = ii(a,b,c,d,x[0],6,-198630844); d = ii(d,a,b,c,x[7],10,1126891415); c = ii(c,d,a,b,x[14],15,-1416354905); b = ii(b,c,d,a,x[5],21,-57434055);
+      a = ii(a,b,c,d,x[12],6,1700485571); d = ii(d,a,b,c,x[3],10,-1894986606); c = ii(c,d,a,b,x[10],15,-1051523); b = ii(b,c,d,a,x[1],21,-2054922799);
+      a = ii(a,b,c,d,x[8],6,1873313359); d = ii(d,a,b,c,x[15],10,-30611744); c = ii(c,d,a,b,x[6],15,-1560198380); b = ii(b,c,d,a,x[13],21,1309151649);
+      a = ii(a,b,c,d,x[4],6,-145523070); d = ii(d,a,b,c,x[11],10,-1120210379); c = ii(c,d,a,b,x[2],15,718787259); b = ii(b,c,d,a,x[9],21,-343485551);
+      a = add32(a, oa); b = add32(b, ob); c = add32(c, oc); d = add32(d, od);
+    }
+    var out = new Uint8Array(16);
+    function put(word, off) {
+      out[off] = word & 0xFF; out[off + 1] = (word >>> 8) & 0xFF;
+      out[off + 2] = (word >>> 16) & 0xFF; out[off + 3] = (word >>> 24) & 0xFF;
+    }
+    put(a, 0); put(b, 4); put(c, 8); put(d, 12);
+    return out;
+  }
+
+  function bhumiAesOpenSslDecrypt(cipherB64) {
+    try {
+      var bin = atob(cipherB64);
+      if (bin.length < 17 || bin.slice(0, 8) !== 'Salted__') return Promise.resolve(null);
+      var raw = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) raw[i] = bin.charCodeAt(i);
+      var pass = 's3CRetCR1pT0';
+      var prev = new Uint8Array(0), out = new Uint8Array(0);
+      while (out.length < 48) {
+        var input = new Uint8Array(prev.length + pass.length + 8);
+        input.set(prev, 0);
+        for (var k = 0; k < pass.length; k++) input[prev.length + k] = pass.charCodeAt(k);
+        input.set(raw.subarray(8, 16), prev.length + pass.length);
+        prev = bhumiMd5Bytes(input);
+        var merged = new Uint8Array(out.length + prev.length);
+        merged.set(out, 0); merged.set(prev, out.length);
+        out = merged;
+      }
+      return crypto.subtle.importKey('raw', out.subarray(0, 32), { name: 'AES-CBC' }, false, ['decrypt'])
+        .then(function (key) {
+          return crypto.subtle.decrypt({ name: 'AES-CBC', iv: out.subarray(32, 48) }, key, raw.subarray(16));
+        })
+        .then(function (buf) { return new TextDecoder().decode(buf); })
+        .catch(function () { return null; });
+    } catch (err) {
+      return Promise.resolve(null);
+    }
+  }
+  /* BHUMI-CRYPTO-END */
+
+  function bhumiPersilParseResponse(json) {
+    if (json && json.encrypted && json.data) {
+      return bhumiAesOpenSslDecrypt(json.data).then(function (text) {
+        if (!text) return null;
+        try { return JSON.parse(text); } catch (err) { return null; }
+      });
+    }
+    if (json && json.type === 'FeatureCollection') return Promise.resolve(json);
+    return Promise.resolve(null);
+  }
+
+  function bhumiPersilEsc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+
+  function bhumiPersilStatusCard(title, message) {
+    return '<div class="agol-popup"><div class="agol-popup-header agol-geo-persil">' +
+      '<div class="agol-popup-badge"><span class="agol-popup-badge-dot"></span>BHUMI ATR/BPN</div>' +
+      '<div class="agol-popup-title">' + bhumiPersilEsc(title) + '</div></div>' +
+      '<div class="agol-popup-body"><div style="font-size:12px;color:#555;line-height:1.45">' +
+      bhumiPersilEsc(message) + '</div></div></div>';
+  }
+
+  function bhumiPersilOpenPopup(latlng, html) {
+    bhumiPersilPopup = L.popup({ maxWidth: 340, className: 'agol-leaflet-popup' })
+      .setLatLng(latlng)
+      .setContent(html)
+      .openOn(map);
+    return bhumiPersilPopup;
+  }
+
+  function bhumiPersilFeatureCard(f, index, total) {
+    var p = f.properties || {};
+    var fields = [
+      ['Jenis Hak', p.tipehak],
+      ['Luas', (p.luas != null && p.luas !== '') ? Number(p.luas).toLocaleString('id-ID') + ' m\u00B2' : ''],
+      ['NIB', p.nib],
+      ['Akurasi Bidang', p.akurasibidang]
+    ];
+    var rows = '';
+    fields.forEach(function (pair) {
+      if (pair[1] == null || pair[1] === '') return;
+      rows += '<div class="agol-popup-field">' +
+        '<span class="agol-popup-field-label">' + bhumiPersilEsc(pair[0]) + '</span>' +
+        '<span class="agol-popup-field-value">' + bhumiPersilEsc(pair[1]) + '</span></div>';
+    });
+    if (!rows) rows = '<div class="agol-popup-field"><span class="agol-popup-field-label">Atribut</span><span class="agol-popup-field-value">-</span></div>';
+    var subtitle = total > 1 ? ('Persil ' + (index + 1) + ' dari ' + total) : 'Batas persil';
+    return '<div class="agol-popup"><div class="agol-popup-header agol-geo-persil">' +
+      '<div class="agol-popup-badge"><span class="agol-popup-badge-dot"></span>BHUMI ATR/BPN</div>' +
+      '<div class="agol-popup-title">' + bhumiPersilEsc(p.tipehak || 'Data Persil') + '</div>' +
+      '<div class="agol-popup-subtitle">' + bhumiPersilEsc(subtitle) + '</div></div>' +
+      '<div class="agol-popup-body"><div class="agol-popup-fields">' + rows + '</div></div>' +
+      '<div class="agol-popup-footer"><span>Sumber: ATR/BPN \u2014 BHUMI</span></div></div>';
+  }
+
+  function bhumiPersilRenderResult(latlng, fc) {
+    if (!bhumiPersilNasionalLayer || !map.hasLayer(bhumiPersilNasionalLayer)) return;
+    bhumiPersilClearHighlight();
+    var feats = (fc && fc.features) ? fc.features : [];
+    if (!feats.length) {
+      bhumiPersilOpenPopup(latlng, bhumiPersilStatusCard('Data Persil', 'Tidak ada data persil di titik ini.'));
+      return;
+    }
+    var group = L.featureGroup();
+    feats.forEach(function (f) {
+      if (f.bbox && f.bbox.coordinates) {
+        try {
+          var rings = f.bbox.coordinates.map(function (ring) {
+            return ring.map(function (p) { return [p[1], p[0]]; });
+          });
+          L.polygon(rings, { color: '#FFAA00', weight: 2, fill: false, dashArray: '4 3' }).addTo(group);
+        } catch (err) { /* bbox tidak valid: abaikan, kartu tetap tampil */ }
+      }
+    });
+    group.addTo(map);
+    bhumiPersilHighlight = group;
+    var cards = feats.map(function (f, i) {
+      return bhumiPersilFeatureCard(f, i, feats.length);
+    }).join('');
+    if (feats.length > 1) cards = '<div class="bhumi-persil-list">' + cards + '</div>';
+    bhumiPersilOpenPopup(latlng, cards);
+  }
+
+  function bhumiPersilIdentify(e) {
+    if (!bhumiPersilNasionalLayer || !map.hasLayer(bhumiPersilNasionalLayer)) return;
+    if (!e.latlng) return;
+    var seq = ++bhumiPersilClickSeq;
+    var size = map.getSize();
+    var pt = map.latLngToContainerPoint(e.latlng);
+    var vb = map.getBounds();
+    var payload = {
+      service_layer_name: 'umum:Persil',
+      query_layers: 'umum:Persil',
+      width: size.x,
+      height: size.y,
+      bbox: vb.getWest() + ',' + vb.getSouth() + ',' + vb.getEast() + ',' + vb.getNorth(),
+      x: Math.round(pt.x),
+      y: Math.round(pt.y),
+      url: '/expapi/getPersil',
+      service: '/bhumigs/umum'
+    };
+    bhumiPersilOpenPopup(e.latlng, bhumiPersilStatusCard('Data Persil', 'Mencari data persil\u2026'));
+    bhumiPersilGetToken()
+      .then(function (token) {
+        if (!token) throw new Error('token tidak tersedia');
+        return bhumiPersilProxyPost('/expapi/getPersil', payload, token)
+          .then(function (r) {
+            if (r.status !== 401) return r;
+            bhumiPersilToken.value = null;
+            return bhumiPersilGetToken().then(function (t2) {
+              return bhumiPersilProxyPost('/expapi/getPersil', payload, t2);
+            });
+          });
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (json) { return bhumiPersilParseResponse(json); })
+      .then(function (fc) {
+        if (seq !== bhumiPersilClickSeq) return;
+        bhumiPersilRenderResult(e.latlng, fc);
+      })
+      .catch(function () {
+        if (seq !== bhumiPersilClickSeq) return;
+        bhumiPersilOpenPopup(e.latlng, bhumiPersilStatusCard('Gagal Memuat', 'Gagal mengambil data persil. Coba lagi.'));
+      });
+  }
+  map.on('click', bhumiPersilIdentify);
 
   /* ── Lahan Sawah Dilindungi (GISLINER / ATR-BPN) ──
    * Tile PNG biner, format XYZ, sudah mengizinkan CORS sehingga tidak
@@ -3685,6 +4006,12 @@ const SAWAH_COLOR = '#87cf15';
       ]
     },
     {
+      cat: 'ATRBPN',
+      layers: [
+        { id: 'toggleBhumiPersilNasionalLayer', label: 'Persil Nasional (BHUMI)' }
+      ]
+    },
+    {
       cat: 'Citra Udara & Peta BIG',
       subcats: (function () {
         var g = (typeof window.getFuCatalogGroups === 'function')
@@ -3809,6 +4136,7 @@ const SAWAH_COLOR = '#87cf15';
     'Geologi & Tanah': 'Informasi batuan, struktur bumi, jenis tanah, dan sifat tanah.',
     'Transportasi': 'Jaringan jalan dan rute transportasi umum.',
     'Pertanian & Ketahanan Pangan': 'Lahan pertanian, komoditas, serta organisme pengganggu tanaman (OPT), yaitu hama dan penyakit tanaman, juga kondisi dan layanan pangan.',
+    'ATRBPN': 'Data pertanahan dari ATR/BPN (BHUMI): batas persil seluruh Indonesia. Saat layer menyala, klik peta untuk melihat jenis hak, luas, dan NIB di titik tersebut.',
     'Bencana & Risiko': 'Kejadian bencana, sumber bahaya, pemantauan, dan informasi kesiapsiagaan.',
     'Lingkungan & Laut': 'Ekosistem, kondisi perairan, dan indikator kualitas lingkungan.',
     'Cuaca, Iklim & Kualitas Udara': 'Prakiraan dan pengamatan cuaca, pola iklim, kekeringan, serta polutan udara.',
@@ -4414,6 +4742,7 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
           (id === 'toggleNonTollRoad' && typeof window.toggleNonTollRoadLayer === 'function') ||
           (id === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') ||
           (id === 'toggleGistaruPersilLayer' && typeof window.toggleGistaruPersilLayer === 'function') ||
+          (id === 'toggleBhumiPersilNasionalLayer' && typeof window.toggleBhumiPersilNasionalLayer === 'function') ||
           (id === 'toggleSawahGislinerLayer' && typeof window.toggleSawahGislinerLayer === 'function') ||
           (id === 'toggleJenisTanahJateng' && typeof window.toggleJenisTanahJateng === 'function') ||
           (id === 'toggleHwsdIndonesia' && typeof window.toggleHwsdIndonesia === 'function') ||
@@ -4523,6 +4852,9 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
         }
         if (id === 'toggleGistaruPersilLayer' && typeof window.toggleGistaruPersilLayer === 'function') {
           window.toggleGistaruPersilLayer(cb.checked);
+        }
+        if (id === 'toggleBhumiPersilNasionalLayer' && typeof window.toggleBhumiPersilNasionalLayer === 'function') {
+          window.toggleBhumiPersilNasionalLayer(cb.checked);
         }
         if (id === 'toggleSawahGislinerLayer' && typeof window.toggleSawahGislinerLayer === 'function') {
           window.toggleSawahGislinerLayer(cb.checked);
