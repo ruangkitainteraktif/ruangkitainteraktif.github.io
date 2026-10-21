@@ -2201,7 +2201,7 @@ const SAWAH_COLOR = '#87cf15';
    * menolak origin lain. Login memakai akun publik yang hardcoded di app
    * BHUMI; JWT di-cache ~50 menit. Respons berupa AES-OpenSSL (passphrase
    * sama dengan enkripsi di app BHUMI) didekripsi langsung di browser. */
-  var bhumiPersilToken = { value: null, expiresAt: 0 };
+  var bhumiPersilToken = { value: null, expiresAt: 0, pending: null };
   var bhumiPersilHighlight = null;
   var bhumiPersilPopup = null;
   var bhumiPersilClickSeq = 0;
@@ -2229,16 +2229,22 @@ const SAWAH_COLOR = '#87cf15';
     if (bhumiPersilToken.value && Date.now() < bhumiPersilToken.expiresAt) {
       return Promise.resolve(bhumiPersilToken.value);
     }
-    return bhumiPersilProxyPost('/expapi/loginApi', { username: 'user', password: 'password' }, null)
+    if (bhumiPersilToken.pending) return bhumiPersilToken.pending;
+    bhumiPersilToken.pending = bhumiPersilProxyPost('/expapi/loginApi', { username: 'user', password: 'password' }, null)
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (t) {
+        bhumiPersilToken.pending = null;
         if (typeof t === 'string' && t.indexOf('.') > 0 && t.charAt(0) !== '{') {
           bhumiPersilToken.value = t;
           bhumiPersilToken.expiresAt = Date.now() + 50 * 60 * 1000;
         }
         return bhumiPersilToken.value;
       })
-      .catch(function () { return null; });
+      .catch(function () {
+        bhumiPersilToken.pending = null;
+        return null;
+      });
+    return bhumiPersilToken.pending;
   }
 
   /* BHUMI-CRYPTO-START -- MD5 + OpenSSL EVP_BytesToKey (AES-256-CBC),
@@ -2358,14 +2364,7 @@ const SAWAH_COLOR = '#87cf15';
     return bhumiPersilPopup;
   }
 
-  function bhumiPersilFeatureCard(f, index, total) {
-    var p = f.properties || {};
-    var fields = [
-      ['Jenis Hak', p.tipehak],
-      ['Luas', (p.luas != null && p.luas !== '') ? Number(p.luas).toLocaleString('id-ID') + ' m\u00B2' : ''],
-      ['NIB', p.nib],
-      ['Akurasi Bidang', p.akurasibidang]
-    ];
+  function bhumiPersilCard(title, subtitle, fields) {
     var rows = '';
     fields.forEach(function (pair) {
       if (pair[1] == null || pair[1] === '') return;
@@ -2374,40 +2373,124 @@ const SAWAH_COLOR = '#87cf15';
         '<span class="agol-popup-field-value">' + bhumiPersilEsc(pair[1]) + '</span></div>';
     });
     if (!rows) rows = '<div class="agol-popup-field"><span class="agol-popup-field-label">Atribut</span><span class="agol-popup-field-value">-</span></div>';
-    var subtitle = total > 1 ? ('Persil ' + (index + 1) + ' dari ' + total) : 'Batas persil';
     return '<div class="agol-popup"><div class="agol-popup-header agol-geo-persil">' +
       '<div class="agol-popup-badge"><span class="agol-popup-badge-dot"></span>BHUMI ATR/BPN</div>' +
-      '<div class="agol-popup-title">' + bhumiPersilEsc(p.tipehak || 'Data Persil') + '</div>' +
+      '<div class="agol-popup-title">' + bhumiPersilEsc(title) + '</div>' +
       '<div class="agol-popup-subtitle">' + bhumiPersilEsc(subtitle) + '</div></div>' +
       '<div class="agol-popup-body"><div class="agol-popup-fields">' + rows + '</div></div>' +
       '<div class="agol-popup-footer"><span>Sumber: ATR/BPN \u2014 BHUMI</span></div></div>';
   }
 
-  function bhumiPersilRenderResult(latlng, fc) {
+  function bhumiPersilFeatureCard(f, index, total) {
+    var p = f.properties || {};
+    var subtitle = total > 1 ? ('Persil ' + (index + 1) + ' dari ' + total) : 'Batas persil';
+    return bhumiPersilCard(p.tipehak || 'Data Persil', subtitle, [
+      ['Jenis Hak', p.tipehak],
+      ['Luas', (p.luas != null && p.luas !== '') ? Number(p.luas).toLocaleString('id-ID') + ' m\u00B2' : ''],
+      ['NIB', p.nib],
+      ['Akurasi Bidang', p.akurasibidang]
+    ]);
+  }
+
+  function bhumiPersilZntCard(f, index, total) {
+    var p = f.properties || {};
+    var subtitle = total > 1 ? ('Zona ' + (index + 1) + ' dari ' + total) :
+      (p.NOMORZONE != null && p.NOMORZONE !== '' ? ('Zona ' + p.NOMORZONE) : 'Zona nilai tanah');
+    return bhumiPersilCard('Zona Nilai Tanah', subtitle, [
+      ['Nama Kantor', p.NAMAKANTOR],
+      ['Nomor Zone', p.NOMORZONE],
+      ['Tahun Dibuat', p.TAHUNDIBUAT],
+      ['Range Nilai', p.RANGENILAI],
+      ['Kelas Nilai', p.KELASNILAI]
+    ]);
+  }
+
+  function bhumiPersilNbtCard(f, index, total) {
+    var p = f.properties || {};
+    var subtitle = total > 1 ? ('Bidang ' + (index + 1) + ' dari ' + total) :
+      (p.kelurahan || p.kecamatan || 'Nilai bidang tanah');
+    return bhumiPersilCard('Peta Nilai Bidang Tanah', subtitle, [
+      ['Kecamatan', p.kecamatan],
+      ['Kelurahan', p.kelurahan],
+      ['Tipe Hak', p.tipehak],
+      ['Zonasi', p.zonasi],
+      ['Luas Bidang', (p.luasbidang != null && p.luasbidang !== '') ?
+        Number(p.luasbidang).toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' m\u00B2' : '']
+    ]);
+  }
+
+  function bhumiPersilTopoCard(f, index, total) {
+    var p = f.properties || {};
+    var tanggal = p.TANGGALSISIP ? String(p.TANGGALSISIP).slice(0, 10) : '';
+    var subtitle = total > 1 ? ('Toponim ' + (index + 1) + ' dari ' + total) :
+      (p.UNSUR || 'Toponim');
+    return bhumiPersilCard(p.NAMA || 'Toponim', subtitle, [
+      ['Unsur', p.UNSUR],
+      ['Alamat', p.ALAMAT],
+      ['Tanggal Data', tanggal]
+    ]);
+  }
+
+  function bhumiPersilQueryLayer(layerName, payload) {
+    var body = Object.assign({}, payload, { service_layer_name: layerName, query_layers: layerName });
+    return bhumiPersilGetToken()
+      .then(function (token) {
+        if (!token) throw new Error('token tidak tersedia');
+        return bhumiPersilProxyPost('/expapi/getPersil', body, token)
+          .then(function (r) {
+            if (r.status !== 401) return r;
+            bhumiPersilToken.value = null;
+            return bhumiPersilGetToken().then(function (t2) {
+              if (!t2) throw new Error('token tidak tersedia');
+              return bhumiPersilProxyPost('/expapi/getPersil', body, t2);
+            });
+          });
+      })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (json) {
+        return bhumiPersilParseResponse(json).then(function (fc) {
+          if (!fc) throw new Error('respons tidak valid');
+          return fc;
+        });
+      });
+  }
+
+  function bhumiPersilRenderResult(latlng, fcs) {
     if (!bhumiPersilNasionalLayer || !map.hasLayer(bhumiPersilNasionalLayer)) return;
     bhumiPersilClearHighlight();
-    var feats = (fc && fc.features) ? fc.features : [];
-    if (!feats.length) {
-      bhumiPersilOpenPopup(latlng, bhumiPersilStatusCard('Data Persil', 'Tidak ada data persil di titik ini.'));
+    var builders = [bhumiPersilFeatureCard, bhumiPersilZntCard, bhumiPersilNbtCard, bhumiPersilTopoCard];
+    var groups = fcs.map(function (fc, i) {
+      return { feats: (fc && fc.features) ? fc.features : [], card: builders[i] };
+    });
+    if (!groups.some(function (g) { return g.feats.length; })) {
+      bhumiPersilOpenPopup(latlng, bhumiPersilStatusCard('Data Pertanahan',
+        'Tidak ada data persil, zona nilai, nilai bidang, atau toponim di titik ini.'));
       return;
     }
     var group = L.featureGroup();
-    feats.forEach(function (f) {
-      if (f.bbox && f.bbox.coordinates) {
-        try {
-          var rings = f.bbox.coordinates.map(function (ring) {
-            return ring.map(function (p) { return [p[1], p[0]]; });
-          });
-          L.polygon(rings, { color: '#FFAA00', weight: 2, fill: false, dashArray: '4 3' }).addTo(group);
-        } catch (err) { /* bbox tidak valid: abaikan, kartu tetap tampil */ }
-      }
+    groups.forEach(function (g) {
+      g.feats.forEach(function (f) {
+        if (f.bbox && f.bbox.coordinates) {
+          try {
+            var rings = f.bbox.coordinates.map(function (ring) {
+              return ring.map(function (p) { return [p[1], p[0]]; });
+            });
+            L.polygon(rings, { color: '#FFAA00', weight: 2, fill: false, dashArray: '4 3' }).addTo(group);
+          } catch (err) { /* bbox tidak valid: abaikan, kartu tetap tampil */ }
+        }
+      });
     });
     group.addTo(map);
     bhumiPersilHighlight = group;
-    var cards = feats.map(function (f, i) {
-      return bhumiPersilFeatureCard(f, i, feats.length);
-    }).join('');
-    if (feats.length > 1) cards = '<div class="bhumi-persil-list">' + cards + '</div>';
+    var parts = [];
+    groups.forEach(function (g) {
+      g.feats.forEach(function (f, i) { parts.push(g.card(f, i, g.feats.length)); });
+    });
+    var cards = parts.join('');
+    if (parts.length > 1) cards = '<div class="bhumi-persil-list">' + cards + '</div>';
     bhumiPersilOpenPopup(latlng, cards);
   }
 
@@ -2419,8 +2502,6 @@ const SAWAH_COLOR = '#87cf15';
     var pt = map.latLngToContainerPoint(e.latlng);
     var vb = map.getBounds();
     var payload = {
-      service_layer_name: 'umum:Persil',
-      query_layers: 'umum:Persil',
       width: size.x,
       height: size.y,
       bbox: vb.getWest() + ',' + vb.getSouth() + ',' + vb.getEast() + ',' + vb.getNorth(),
@@ -2429,28 +2510,40 @@ const SAWAH_COLOR = '#87cf15';
       url: '/expapi/getPersil',
       service: '/bhumigs/umum'
     };
-    bhumiPersilOpenPopup(e.latlng, bhumiPersilStatusCard('Data Persil', 'Mencari data persil\u2026'));
-    bhumiPersilGetToken()
-      .then(function (token) {
-        if (!token) throw new Error('token tidak tersedia');
-        return bhumiPersilProxyPost('/expapi/getPersil', payload, token)
-          .then(function (r) {
-            if (r.status !== 401) return r;
-            bhumiPersilToken.value = null;
-            return bhumiPersilGetToken().then(function (t2) {
-              return bhumiPersilProxyPost('/expapi/getPersil', payload, t2);
-            });
-          });
-      })
-      .then(function (r) { return r.json(); })
-      .then(function (json) { return bhumiPersilParseResponse(json); })
-      .then(function (fc) {
+    // Toponim berupa data titik: piksel wajib kasar agar "radius klik"
+    // mencakup ratusan meter di sekitar titik (kisi 20x20).
+    var grid = 20;
+    var payloadTopo = Object.assign({}, payload, {
+      width: grid,
+      height: grid,
+      x: Math.max(0, Math.min(grid - 1, Math.round(pt.x / (size.x || 1) * grid))),
+      y: Math.max(0, Math.min(grid - 1, Math.round(pt.y / (size.y || 1) * grid)))
+    });
+    bhumiPersilOpenPopup(e.latlng, bhumiPersilStatusCard('Data Pertanahan',
+      'Mencari data persil, zona nilai, bidang & toponim\u2026'));
+    var settled = function (p) {
+      return p.then(function (fc) { return { ok: true, fc: fc }; },
+        function () { return { ok: false }; });
+    };
+    Promise.all([
+      settled(bhumiPersilQueryLayer('umum:Persil', payload)),
+      settled(bhumiPersilQueryLayer('umum:ZNTRANGE', payload)),
+      settled(bhumiPersilQueryLayer('umum:nbt3', payload)),
+      settled(bhumiPersilQueryLayer('umum:toponimi', payloadTopo))
+    ])
+      .then(function (res) {
         if (seq !== bhumiPersilClickSeq) return;
-        bhumiPersilRenderResult(e.latlng, fc);
+        if (!res.some(function (r) { return r.ok; })) {
+          bhumiPersilOpenPopup(e.latlng, bhumiPersilStatusCard('Gagal Memuat',
+            'Gagal mengambil data pertanahan. Coba lagi.'));
+          return;
+        }
+        bhumiPersilRenderResult(e.latlng, res.map(function (r) { return r.ok ? r.fc : null; }));
       })
       .catch(function () {
         if (seq !== bhumiPersilClickSeq) return;
-        bhumiPersilOpenPopup(e.latlng, bhumiPersilStatusCard('Gagal Memuat', 'Gagal mengambil data persil. Coba lagi.'));
+        bhumiPersilOpenPopup(e.latlng, bhumiPersilStatusCard('Gagal Memuat',
+          'Gagal mengambil data pertanahan. Coba lagi.'));
       });
   }
   map.on('click', bhumiPersilIdentify);
@@ -4136,7 +4229,7 @@ const SAWAH_COLOR = '#87cf15';
     'Geologi & Tanah': 'Informasi batuan, struktur bumi, jenis tanah, dan sifat tanah.',
     'Transportasi': 'Jaringan jalan dan rute transportasi umum.',
     'Pertanian & Ketahanan Pangan': 'Lahan pertanian, komoditas, serta organisme pengganggu tanaman (OPT), yaitu hama dan penyakit tanaman, juga kondisi dan layanan pangan.',
-    'ATRBPN': 'Data pertanahan dari ATR/BPN (BHUMI): batas persil seluruh Indonesia. Saat layer menyala, klik peta untuk melihat jenis hak, luas, dan NIB di titik tersebut.',
+    'ATRBPN': 'Data pertanahan dari ATR/BPN (BHUMI): batas persil seluruh Indonesia. Saat layer menyala, klik peta untuk melihat atribut persil (jenis hak, luas, NIB), zona nilai tanah, peta nilai bidang tanah, dan toponim (nama tempat) di sekitar titik tersebut.',
     'Bencana & Risiko': 'Kejadian bencana, sumber bahaya, pemantauan, dan informasi kesiapsiagaan.',
     'Lingkungan & Laut': 'Ekosistem, kondisi perairan, dan indikator kualitas lingkungan.',
     'Cuaca, Iklim & Kualitas Udara': 'Prakiraan dan pengamatan cuaca, pola iklim, kekeringan, serta polutan udara.',
@@ -4209,6 +4302,7 @@ const SAWAH_COLOR = '#87cf15';
   // Layer utama selalu diprioritaskan dalam pin bawaan katalog.
   var _defaultPinnedLayers = [
     'petadasar-bpn',
+    'toggleBhumiPersilNasionalLayer',
     'isee-soil-orders',
     'toggleHwsdIndonesia',
     'toggleFsvaLayer',
