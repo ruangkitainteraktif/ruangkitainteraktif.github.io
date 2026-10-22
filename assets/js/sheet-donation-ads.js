@@ -96,6 +96,7 @@ Penempatan memakai iterasi children panel, bukan selektor :scope, karena
          kedua akan lolos lagi di bawah batas dan menyisip unit tambahan --
          tiap pemanggilan menambah iklan baru. */
       var placed = panel.querySelectorAll('.geotools-inline-adsense').length;
+      panel.querySelectorAll('.geotools-inline-adsense').forEach(dorongSlotIklan);
       nodes.forEach(function (node) {
         if (placed >= (tab.maxAds || MAX_PER_TAB)) return;
         if (!node.matches) return;
@@ -158,6 +159,8 @@ Penempatan memakai iterasi children panel, bukan selektor :scope, karena
      keadaan tersembunyi diisi tinggi nol oleh AdSense lalu tidak pernah
      dirender ulang -- slotnya jadi kosong terus meski sheet dibuka. */
   function dorongSlotIklan(ad) {
+    if (ad.dataset.pantau === '1') return;
+    ad.dataset.pantau = '1';
     if (!('IntersectionObserver' in window)) { dorongSekarang(ad); return; }
     var io = new IntersectionObserver(function (entries) {
       for (var i = 0; i < entries.length; i++) {
