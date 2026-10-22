@@ -1527,6 +1527,7 @@ L.control.scale({
           'toggleSawahDilindungi', 'toggleSawahNasional50k',
           'toggleBppLayer', 'toggleSawitLayer', 'toggleErosiLayer',
           'toggleHotspotLayer', 'toggleKawasanHutanLayer', 'toggleGambutLayer', 'toggleKhLayer', 'togglePippibLayer',
+          'kwshutan-planologi', 'brmp-provitas', 'brmp-ip', 'brmp-sc',
           'toggleCuacaPelabuhanLayer', 'toggleCuacaPerairanLayer',
           'toggleSawitNasionalLayer', 'toggleSawitPerkebunanLayer', 'toggleRehabDasLayer', 'togglePerkebunanPl24Layer',
           'toggleRktnSumateraLayer', 'toggleRktnSulawesiLayer', 'toggleRktnPapuaLayer', 'toggleRktnMalukuLayer', 'toggleRktnKalimantanLayer', 'toggleRktnJawaLayer', 'toggleRktnBaliNtLayer',
@@ -1568,6 +1569,10 @@ L.control.scale({
 
         if (typeof window.toggleTransjakarta === 'function') window.toggleTransjakarta(false);
         if (typeof window.toggleTransjogja === 'function') window.toggleTransjogja(false);
+        if (typeof window.toggleKwshutanPlanologiLayer === 'function') window.toggleKwshutanPlanologiLayer(false);
+        if (typeof window.toggleProvitasKementanLayer === 'function') window.toggleProvitasKementanLayer(false);
+        if (typeof window.toggleIpKementanLayer === 'function') window.toggleIpKementanLayer(false);
+        if (typeof window.toggleSiscropScLayer === 'function') window.toggleSiscropScLayer(false);
         if (typeof toggleTollRoadLayer === 'function') toggleTollRoadLayer(false);
         if (typeof toggleNonTollRoadLayer === 'function') toggleNonTollRoadLayer(false);
          if (typeof toggleNationalRoadLayer === 'function') toggleNationalRoadLayer(false);
@@ -3887,6 +3892,11 @@ const SAWAH_COLOR = '#87cf15';
           { id: 'arcgis-kawasan-jagung', label: 'Kawasan Jagung (KEMENTAN)' },
           { id: 'arcgis-kawasan-kedelai', label: 'Kawasan Kedelai (KEMENTAN)' }
         ]},
+        { subcat: 'Standing Crop (SISCrop)', layers: [
+          { id: 'brmp-provitas', label: 'Provitas Pangan (KEMENTAN)' },
+          { id: 'brmp-ip', label: 'Indeks Pertanaman (KEMENTAN)' },
+          { id: 'brmp-sc', label: 'Fase Pertanaman Padi (KEMENTAN)' }
+        ]},
         { subcat: 'Pasar dan layanan pangan', layers: [
           { id: 'toggleSebaranPasar', label: 'Sebaran Pasar Indonesia' },
           { id: 'toggleSppgSebaranLayer', label: 'Sebaran SPPG Indonesia' },
@@ -4152,6 +4162,7 @@ const SAWAH_COLOR = '#87cf15';
         { id: 'toggleKawasanHutanLayer', label: 'Kawasan Hutan (ESDM)' },
         { id: 'toggleGambutLayer', label: 'Lahan Gambut (SIMONTANA)' },
         { id: 'toggleKhLayer', label: 'Kawasan Hutan (Kemenhut)' },
+        { id: 'kwshutan-planologi', label: 'Kawasan Hutan 250K Juni 2026 (Planologi)' },
         { id: 'togglePippibLayer', label: 'PIPPIB 2023 Periode I' },
         { id: 'toggleSawitNasionalLayer', label: 'Sawit Nasional' },
         { id: 'toggleSawitPerkebunanLayer', label: 'Sawit dan Perkebunan' },
@@ -5032,7 +5043,7 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
           html += '<div class="lc-item-actions">';
           /* Layer dari kategori dinamis (IGTPR) adalah WMS tile raster tanpa
              tabel atribut, jadi tombol tabel atribut disembunyikan. */
-          if (!l.dynamicKey && l.id !== 'toggleHwsdIndonesia' && (l.id.indexOf('isee-soil-') !== 0 || l.id === 'isee-soil-boundaries')) {
+          if (!l.dynamicKey && l.id !== 'toggleHwsdIndonesia' && l.id.indexOf('kwshutan-planologi') !== 0 && l.id.indexOf('brmp-provitas') !== 0 && l.id.indexOf('brmp-ip') !== 0 && l.id.indexOf('brmp-sc') !== 0 && (l.id.indexOf('isee-soil-') !== 0 || l.id === 'isee-soil-boundaries')) {
             html += '<button type="button" class="lc-attr-btn' + ((isChecked || l.id === 'toggleJenisTanahJateng' || l.id === 'toggleGeologiArcGISOnline' || l.id === 'isee-soil-boundaries') ? ' lc-attr-btn-show' : '') + '" data-layer-id="' + l.id + '" title="Buka Tabel Atribut">';
             html += '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
             html += '</button>';
@@ -5169,6 +5180,8 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
            id === 'toggleRtrwTmsLayer' ||
            id.indexOf('atrbpn-wms-') === 0 ||
            id.indexOf('sigap-') === 0 ||
+           id.indexOf('kwshutan-planologi') === 0 ||
+           id.indexOf('brmp-provitas') === 0 || id.indexOf('brmp-ip') === 0 || id.indexOf('brmp-sc') === 0 ||
             ((id.indexOf('glcluc-') === 0 || id.indexOf('natland-') === 0) && typeof window.toggleLclTileLayer === 'function') ||
            id === 'toggleSekolahLayer' ||
           id.indexOf('omi-') === 0 ||
@@ -5310,6 +5323,18 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
         }
         if (id.indexOf('sigap-') === 0 && typeof window.toggleSigapLayer === 'function') {
           window.toggleSigapLayer(id, cb.checked);
+        }
+        if (id.indexOf('kwshutan-planologi') === 0 && typeof window.toggleKwshutanPlanologiLayer === 'function') {
+          window.toggleKwshutanPlanologiLayer(cb.checked);
+        }
+        if (id.indexOf('brmp-provitas') === 0 && typeof window.toggleProvitasKementanLayer === 'function') {
+          window.toggleProvitasKementanLayer(cb.checked);
+        }
+        if (id.indexOf('brmp-ip') === 0 && typeof window.toggleIpKementanLayer === 'function') {
+          window.toggleIpKementanLayer(cb.checked);
+        }
+        if (id.indexOf('brmp-sc') === 0 && typeof window.toggleSiscropScLayer === 'function') {
+          window.toggleSiscropScLayer(cb.checked);
         }
         if ((id.indexOf('glcluc-') === 0 || id.indexOf('natland-') === 0) && typeof window.toggleLclTileLayer === 'function') {
           window.toggleLclTileLayer(id, cb.checked);
