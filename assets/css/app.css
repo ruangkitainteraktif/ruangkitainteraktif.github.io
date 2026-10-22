@@ -1,4 +1,4 @@
-* {
+﻿* {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
@@ -191,7 +191,7 @@
       cursor: pointer; transition: background .15s; flex-shrink: 0;
     }
     .unified-search-clear:hover { background: rgba(0,0,0,.12); }
-    /* ── Layer Catalog Button ── */
+    /* â”€â”€ Layer Catalog Button â”€â”€ */
     .reset-layers-search-btn {
       display: flex; align-items: center; justify-content: center;
       width: 28px; height: 28px; border: 0; border-radius: 50%; flex-shrink: 0;
@@ -207,7 +207,7 @@
     }
     .layer-catalog-btn:hover { background: rgba(37,99,235,.2); transform: scale(1.08); }
     .layer-catalog-btn.active { background: #2563eb; color: #fff; }
-    /* ── Layer Catalog Dropdown ── */
+    /* â”€â”€ Layer Catalog Dropdown â”€â”€ */
     .layer-catalog-dropdown {
       display: none; box-sizing: border-box; width: 100%;
       height: min(60vh, calc(100vh - 76px));
@@ -395,7 +395,7 @@
     .unified-ac-empty { padding: 14px 16px; text-align: center; color: #5f6368; font-size: 12px; }
 
     /* Tombol lokasi saya (Leaflet Locate Control) */
-    /* ── Map FAB Menu ── */
+    /* â”€â”€ Map FAB Menu â”€â”€ */
     .map-fab-wrap {
       position: relative;
       margin: 8px !important;
@@ -910,8 +910,8 @@
     }
     .sat-export-text { color: #94a3b8; font-size: 13px; font-family: 'Segoe UI', system-ui, sans-serif; }
 
-    /* basemap-btn removed — basemap now in layer catalog */
-    /* ── Basemap Modal ── */
+    /* basemap-btn removed â€” basemap now in layer catalog */
+    /* â”€â”€ Basemap Modal â”€â”€ */
     .basemap-modal {
       position: fixed; inset: 0; z-index: 3000;
       display: none; align-items: center; justify-content: center;
@@ -1055,7 +1055,7 @@
       white-space: nowrap;
     }
 
-    /* ── MODIS Time Slider ── */
+    /* â”€â”€ MODIS Time Slider â”€â”€ */
     .modis-time-slider-wrap {
       display: flex;
       flex-direction: column;
@@ -1081,7 +1081,7 @@
     .leaflet-control-attribution { display: none !important; }
     .leaflet-control-scale { display: none !important; }
 
-    /* ── Bottom sheet mobile: gestur geser tinggi ──
+    /* â”€â”€ Bottom sheet mobile: gestur geser tinggi â”€â”€
        Register --sheet-h supaya nilainya bisa diinterpolasi. Tanpa
        @property, custom property ini berubah secara diskret sehingga
        `transition: height` tidak akan menganimasikan lonjakan dari
@@ -1093,7 +1093,7 @@
       initial-value: 50dvh;
     }
 
-    /* Pita bawah tengah: zoom control & chip mode minimal ──
+    /* Pita bawah tengah: zoom control & chip mode minimal â”€â”€
        ZOOM CONTROL
        Posisinya TIDAK diatur di CSS ini, tapi lewat style inline dari
        map-core.js (cari "Zoom Control di bawah tengah"): position fixed,
@@ -1110,14 +1110,14 @@
        Sembilan chip sheet/panel yang sedang minimal (hotspot, geopangan,
        AI, GeoTools, Atribut, Gambar & Ukur, GeoFarm, Legenda, dan chip
        buka-kembali GeoFarm) semuanya dipin ke bawah tengah. Semuanya
-       memakai bottom 68px dengan z-index 100. Pita zoom kini 30–74px,
+       memakai bottom 68px dengan z-index 100. Pita zoom kini 30â€“74px,
        jadi 6px bawah chip bisa tertimpa pill zoom; masih aman karena
        chip berada jauh di bawah z-index zoom (100 vs 999) dan tumpang
        tindihnya hanya di padding bawah chip.
 
        Dua aturan yang wajib dijaga kalau ada chip mode minimal baru:
          1. bottom >= 68px. Chip yang lebih rendah akan jatuh di bawah
-            label grid koordinat dan tertutup tombol +/−.
+            label grid koordinat dan tertutup tombol +/âˆ’.
          2. z-index < 999. Aturan dasar sheet memakai 1100, jadi mode
             minimal wajib menurunkannya sendiri, kalau tidak chip akan
             menutupi zoom dan tombolnya tidak bisa diklik.
@@ -1278,7 +1278,7 @@
       .modis-ts-time { font-size: 9px; }
     }
 
-    /* ── Sentinel-2 Time Slider ── */
+    /* â”€â”€ Sentinel-2 Time Slider â”€â”€ */
     .sentinel2-time-slider-wrap {
       display: flex;
       flex-direction: column;
@@ -1397,7 +1397,7 @@
       .sentinel2-ts-time { font-size: 9px; }
     }
 
-    /* ── BMKG Himawari Time Slider ── */
+    /* â”€â”€ BMKG Himawari Time Slider â”€â”€ */
     .bmkg-time-slider-wrap {
       display: flex;
       flex-direction: column;
@@ -1516,7 +1516,7 @@
       .bmkg-ts-time { font-size: 9px; }
     }
 
-    /* ── Sentinel-1 RTC Time Slider ── */
+    /* â”€â”€ Sentinel-1 RTC Time Slider â”€â”€ */
     .s1rtc-time-slider-wrap {
       display: flex;
       flex-direction: column;
@@ -2456,7 +2456,7 @@
       font-weight: 600;
     }
 
-    /* ── Quick Layer Toolbar ── */
+    /* â”€â”€ Quick Layer Toolbar â”€â”€ */
     .quick-layer-bar {
       position: absolute;
       top: 68px;
@@ -2572,7 +2572,7 @@
     }
     .ql-btn { position: relative; }
 
-    /* ── AI Trigger Button (Search Bar) ── */
+    /* â”€â”€ AI Trigger Button (Search Bar) â”€â”€ */
     .ai-trigger-btn {
       display: flex; align-items: center; justify-content: center;
       width: 28px; height: 28px; border: 0; border-radius: 50%; flex-shrink: 0;
@@ -2582,7 +2582,7 @@
     .ai-trigger-btn:hover { background: rgba(168,85,247,.2); transform: scale(1.08); }
     .ai-trigger-btn.active { background: #a855f7; color: #fff; }
 
-    /* ── AI Analysis Sheet ── */
+    /* â”€â”€ AI Analysis Sheet â”€â”€ */
     #ai-sheet {
       position: fixed;
       top: 120px; right: 12px; bottom: 12px;
@@ -3407,7 +3407,7 @@
       background: transparent;
     }
     .geotani-kta-card h5 { display: flex; align-items: center; gap: 6px; margin: 0 0 5px; color: var(--text-primary); font-size: 13px; text-transform: none; letter-spacing: normal; }
-    .geotani-kta-card h5::before { content: '◈'; color: var(--accent-green); font-size: 15px; }
+    .geotani-kta-card h5::before { content: 'â—ˆ'; color: var(--accent-green); font-size: 15px; }
     .geotani-kta-card .geoportal-filter { padding: 6px 8px; border-radius: 5px; background: var(--bg-secondary); }
     .geotani-form-select, .geotani-form-input {
       width: 100%; padding: 7px 10px; font-size: 11px;
@@ -4227,8 +4227,8 @@
        Kolomnya dikunci 3 agar tombol tetap mudah disentuh pada sheet sempit.
      
        Sebelumnya `repeat(auto-fit, minmax(112px, 1fr))`. Di sheet GeoTools
-       (380px, padding 12/16px → konten ~348px) auto-fit hanya menghasilkan
-       2 kolom: (348 + 8) / (112 + 8) = 2,96 → turun ke 2. Akibatnya enam
+       (380px, padding 12/16px â†’ konten ~348px) auto-fit hanya menghasilkan
+       2 kolom: (348 + 8) / (112 + 8) = 2,96 â†’ turun ke 2. Akibatnya enam
        tombol menjadi 2x3 dan sheet-nya jauh lebih tinggi dari yang perlu -
        padahal separuh isinya adalah form ArcGIS REST yang harus tetap muat
        tanpa menggulir.
@@ -4266,7 +4266,7 @@
     .geoid-subtab-panel { display: none; }
     .geoid-subtab-panel.active { display: block; }
 
-    /* ── GeoTools Main Tabs (Muat Data | Geonusa) ── */
+    /* â”€â”€ GeoTools Main Tabs (Muat Data | Geonusa) â”€â”€ */
     .geotools-dropdown {
       width: 100%;
       padding: 10px 32px 10px 12px;
@@ -4457,7 +4457,7 @@
       .petadasar-export-block,
       .petadasar-export-block.persil-tiff-export-block {
         /* Mobile: menempel di bawah quick layer bar (top menang dari aturan
-           desktop 10430/10489 karena properti yang sama — bottom HARUS auto.
+           desktop 10430/10489 karena properti yang sama â€” bottom HARUS auto.
            Bila bottom ikut aktif (106px) blok melar 630px dan menutupi
            seluruh peta sehingga sentuhan tak sampai ke peta). */
         top: 108px;
@@ -4636,7 +4636,7 @@
         margin: 0;
       }
 
-      /* ── Hotspot Bottom Sheet (Mobile: dari bawah, 50vh) ── */
+      /* â”€â”€ Hotspot Bottom Sheet (Mobile: dari bawah, 50vh) â”€â”€ */
       #hotspot-sheet {
         position: fixed;
         bottom: 0; left: 0; right: 0;
@@ -4770,7 +4770,7 @@
       }
       .alat-grid-2 { grid-template-columns: 1fr; }
 
-      /* AI Sheet — Mobile. --sheet-h diisi sheet-drag.js saat digeser;
+      /* AI Sheet â€” Mobile. --sheet-h diisi sheet-drag.js saat digeser;
          kosong berarti aturan 50dvh yang berlaku. */
       #ai-sheet {
         position: fixed;
@@ -6155,7 +6155,7 @@
     .wind-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
     .wind-legend-unit { font-size: 8px; color: #94a3b8; margin-top: 6px; font-style: italic; }
 
-    /* ── Himawari Legend ── */
+    /* â”€â”€ Himawari Legend â”€â”€ */
     .himawari-legend {
       background: rgba(255,255,255,0.96);
       backdrop-filter: blur(10px);
@@ -6456,7 +6456,7 @@
       font-weight: 600;
     }
 
-    /* ── Modern ArcGIS Online-style popup ── */
+    /* â”€â”€ Modern ArcGIS Online-style popup â”€â”€ */
     .agol-popup {
       width: 320px;
       max-width: 100%;
@@ -6662,7 +6662,7 @@
       transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
     }
     .cctv-result-item::after {
-      content: '›';
+      content: 'â€º';
       position: absolute;
       top: 50%;
       right: 14px;
@@ -6700,7 +6700,7 @@
     #cctv-search-sheet { margin-top: 10px; }
     #geotoolsTabGeonusa #cctv-search-sheet { margin-top: 12px; }
 
-    /* ── Hotspot Sidebar (Desktop: kanan) ── */
+    /* â”€â”€ Hotspot Sidebar (Desktop: kanan) â”€â”€ */
     #hotspot-sheet {
       display: flex;
       position: fixed;
@@ -6875,7 +6875,7 @@
       #geopangan-sheet.sheet-minimized .gp-sheet-body { display: none; }
     }
 
-/* ── TransJakarta Sheet (Desktop: panel kanan) ──
+/* â”€â”€ TransJakarta Sheet (Desktop: panel kanan) â”€â”€
        Struktur dan perilaku sengaja mengikuti #geopangan-sheet persis:
        panel sisi kanan di desktop, bottom sheet di mobile, chip saat
        diminimize. Sheet ini bukan pola baru, dan tidak boleh punya
@@ -7100,7 +7100,7 @@
     #transjogja-sheet .tgj-route:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
     [data-theme="dark"] :is(#transjakarta-sheet, #transjogja-sheet) { background: var(--bg-secondary); }
     [data-theme="dark"] :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-head { border-bottom-color: var(--border-color); }
-    /* ── GeoTools Bottom Sheet (Desktop) ── */
+    /* â”€â”€ GeoTools Bottom Sheet (Desktop) â”€â”€ */
     #geotools-sheet {
       --desktop-sheet-width: 37vw;
       position: fixed; top: 120px; right: 12px; bottom: 12px;
@@ -7181,7 +7181,7 @@
     #geotools-sheet .gs-sheet-body::-webkit-scrollbar-track { background: transparent; }
     #geotools-sheet .gs-sheet-body::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
 
-      /* ── GeoData Sheet (Desktop) ──
+      /* â”€â”€ GeoData Sheet (Desktop) â”€â”€
        *
        * GeoData punya sheet sendiri (register 'geodata' di map-core.js) dan
        * kelas sendiri. Aturan .gs-sheet-* di blok GeoTools TIDAK berlaku di
@@ -7262,7 +7262,7 @@
       #geodata-sheet .geodata-sheet-body::-webkit-scrollbar-track { background: transparent; }
       #geodata-sheet .geodata-sheet-body::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
 
-      /* ── Draw & Measure Sidebar (Desktop) ── */
+      /* â”€â”€ Draw & Measure Sidebar (Desktop) â”€â”€ */
 
     .dm-sidebar {
       position: fixed; top: 120px; right: 12px; bottom: 12px;
@@ -7550,7 +7550,7 @@
     }
     .dm-sidebar.dm-sidebar-minimized .dm-sidebar-title { cursor: pointer; font-size: 11px; }
 
-    /* ── Legend Sidebar (Desktop) ── */
+    /* â”€â”€ Legend Sidebar (Desktop) â”€â”€ */
     .lg-sidebar {
       position: fixed; top: 120px; right: 12px; bottom: 12px;
       width: min(320px, calc(100vw - 106px));
@@ -7579,7 +7579,7 @@
     }
     .pa-panel.pa-open { transform: translateX(0); visibility: visible; }
 
-    /* ── Handle geser pada mode chip ──
+    /* â”€â”€ Handle geser pada mode chip â”€â”€
        Handle cuma berguna saat sheet sedang mengembang. Di mode chip yang
        tingginya cuma 36px, handle .sheet-drag-handle memakan 17px
        (padding 8+5 dan batang 4px) -- hampir separuh tinggi chip. Kepala
@@ -7682,7 +7682,7 @@
     .lg-sidebar.lg-sidebar-minimized .lg-sidebar-title { cursor: pointer; font-size: 11px; }
     [data-theme="dark"] .lg-sidebar { background: var(--bg-primary); color: var(--text-primary); }
 
-    /* ── Attribute Table Sheet (Desktop: kanan) ── */
+    /* â”€â”€ Attribute Table Sheet (Desktop: kanan) â”€â”€ */
     #attr-table-sheet {
       display: flex; position: fixed; top: 120px; right: 12px; bottom: 12px; left: auto;
       width: min(420px, calc(100vw - 106px)); height: auto;
@@ -7717,7 +7717,7 @@
     }
     #attr-table-sheet .at-sheet-back:hover { background: var(--border-color); }
 
-    /* ── Attribute Table Picker ── */
+    /* â”€â”€ Attribute Table Picker â”€â”€ */
     .at-picker-search {
       width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 8px;
       font-size: 12px; background: var(--bg-secondary); color: var(--text-primary);
@@ -7818,7 +7818,7 @@
       }
     #attr-table-sheet.attr-table-sheet-minimized .at-sheet-title { cursor: pointer; font-size: 11px; }
 
-    /* ── Attr Table Inner Styles ── */
+    /* â”€â”€ Attr Table Inner Styles â”€â”€ */
     .at-controls { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
     .at-search {
       width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 8px;
@@ -7975,7 +7975,7 @@
         }
 
 
-      /* ── Sembunyikan Zoom Control di Mobile ── */
+      /* â”€â”€ Sembunyikan Zoom Control di Mobile â”€â”€ */
       .zoom-control-wrap { display: none !important; }
 
       /* Gestur sheet: geser tinggi ala Google Maps. Didukung
@@ -7987,7 +7987,7 @@
                     height .22s cubic-bezier(.2, 0, 0, 1);
       }
 
-/* ── TransJakarta (mobile: bottom sheet) ── */
+/* â”€â”€ TransJakarta (mobile: bottom sheet) â”€â”€ */
       .tj-routing-panel {
         position: fixed;
         z-index: 1101;
@@ -8222,7 +8222,7 @@
         background: #c4d5e3;
       }
 
-      /* ── GeoTools Bottom Sheet (Mobile) ── */
+      /* â”€â”€ GeoTools Bottom Sheet (Mobile) â”€â”€ */
       #geotools-sheet {
         top: auto; right: 0; bottom: 0; left: 0;
         width: 100%; height: var(--sheet-h, 50vh); height: var(--sheet-h, 50dvh);
@@ -8256,7 +8256,7 @@
       }
       #geotools-sheet.gs-sheet-minimized .gs-sheet-head { min-height: 36px; padding: 4px 12px; }
 
-        /* ── GeoData Sheet (Mobile) ──
+        /* â”€â”€ GeoData Sheet (Mobile) â”€â”€
          * Bottom sheet 50vh, sama seperti sheet GeoTools dan sheet tabel.
          * Di mobile handle berupa drag pill, bukan display:none seperti di
          * desktop. */
@@ -8297,7 +8297,7 @@
           min-height: 36px; box-sizing: border-box; padding: 4px 12px; border-bottom: 0;
         }
 
-        /* ── Draw & Measure Sidebar (Mobile) ── */
+        /* â”€â”€ Draw & Measure Sidebar (Mobile) â”€â”€ */
 
       .dm-sidebar {
         top: auto; right: 0; bottom: 0; left: 0;
@@ -8324,7 +8324,7 @@
         z-index: 100;
       }
 
-      /* ── Legend Sidebar (Mobile) ── */
+      /* â”€â”€ Legend Sidebar (Mobile) â”€â”€ */
       .lg-sidebar, .pa-panel {
         top: auto; right: 0; bottom: 0; left: 0;
         width: 100%; height: var(--sheet-h, 50vh); height: var(--sheet-h, 50dvh);
@@ -8361,10 +8361,10 @@
       }
 
 
-      /* ── Hide minimize buttons that don't apply on mobile ── */
+      /* â”€â”€ Hide minimize buttons that don't apply on mobile â”€â”€ */
       #geopangan-sheet .gp-sheet-minimize { display: none !important; }
 
-      /* ── FAB → Bottom Navigation Bar (Mobile: Floating Glass) ──
+      /* â”€â”€ FAB â†’ Bottom Navigation Bar (Mobile: Floating Glass) â”€â”€
          bottom digeser dari 12px ke 30px agar bar FAB tidak menutupi
          label koordinat grid (graticule) di tepi bawah peta (area
          ~10-26px dari bawah). Tumpukan di atas FAB ikut digeser dan
@@ -8487,8 +8487,8 @@
         transform: translateX(-50%) scaleX(1);
       }
 
-      /* ── Legend: push up for floating bottom nav ── */
-      /* ── Tinggi & posisi peta di mobile ──
+      /* â”€â”€ Legend: push up for floating bottom nav â”€â”€ */
+      /* â”€â”€ Tinggi & posisi peta di mobile â”€â”€
          Tanpa sheet yang mengembang, peta tetap 100% seperti biasa -- tidak
          ada perubahan sama sekali dari keadaan sebelumnya.
 
@@ -8537,7 +8537,7 @@
 
       .leaflet-bottom.leaflet-left { bottom: calc(106px + env(safe-area-inset-bottom, 0px)) !important; }
 
-      /* ── Bottom nav: hide when sheet/sidebar open ── */
+      /* â”€â”€ Bottom nav: hide when sheet/sidebar open â”€â”€ */
         body.geotools-sheet-open:not(.geotools-sheet-minimized) .map-fab-wrap,
         body.geodata-sheet-open:not(.geodata-sheet-minimized) .map-fab-wrap,
 
@@ -8556,7 +8556,7 @@
         transition: transform 0.35s cubic-bezier(0.32,0.72,0,1), opacity 0.25s ease !important;
       }
 
-      /* ── Attribute Table Sheet (Mobile: bottom 50vh) ── */
+      /* â”€â”€ Attribute Table Sheet (Mobile: bottom 50vh) â”€â”€ */
 #attr-table-sheet {
         top: auto; right: 0; bottom: 0; left: 0;
         width: 100%;
@@ -8564,7 +8564,7 @@
         border-radius: 16px 16px 0 0;
         transform: translateY(100%);
       }
-      /* ── Penjaga tinggi terhadap skrip iklan pihak ketiga ──
+      /* â”€â”€ Penjaga tinggi terhadap skrip iklan pihak ketiga â”€â”€
          Unit AdSense di dalam sheet ini memakai data-ad-format="auto".
          Begitu slotnya dirender, show_ads_impl.js menulis
          `height: auto !important` ke leluhur fixed terdekat, yaitu sheet
@@ -8631,7 +8631,7 @@
     }
     .cctv-card-header svg { color: #fff; flex-shrink: 0; }
 
-    /* CCTV — kartu pencarian, sekarang <details> yang mengikuti template
+    /* CCTV â€” kartu pencarian, sekarang <details> yang mengikuti template
        kartu GeoTools: <summary class="gt-card-head"> + badan, dan badan
        disembunyikan saat terlipat.
 
@@ -8667,7 +8667,7 @@
     .geowatch-cctv-body > .cctv-results { margin-top: 10px; }
     .cctv-search-body { display: grid; gap: 12px; }
 
-    /* Panel GeoRaster — kartu "Unduh DEMNAS", mengikuti template kartu
+    /* Panel GeoRaster â€” kartu "Unduh DEMNAS", mengikuti template kartu
      * GeoTools seperti GeoFarm, GeoTani, dan GeoWatch.
      *
      * overflow: hidden aman di sini, BERBEDA dari .geowatch-cctv yang
@@ -8702,7 +8702,7 @@
     .georaster-card-body .geotani-form-input { min-height: 34px; }
     .georaster-card-body .geotools-btn { margin-top: 12px; }
 
-    /* Panel GeoNusa — dua kartu ("Statistik Indonesia" dan "Indikator
+    /* Panel GeoNusa â€” dua kartu ("Statistik Indonesia" dan "Indikator
      * Penduduk") yang menggantikan nav subtab. Kelas .geoid-subtab-panel
      * SENGAJA tidak dipakai di sini: sidebar.js:184 mencarinya dengan
      * querySelectorAll di seluruh dokumen, jadi begitu pengguna menekan
@@ -8711,7 +8711,7 @@
      * menyembunyikannya permanen. Tanpa nav, kartu tidak bisa dibuka lagi.
      *
      * overflow: hidden aman: population-chart.js hanya menghasilkan satu
-     * elemen ber-posisi absolute — ikon pembesar 12x12 px yang terpusat
+     * elemen ber-posisi absolute â€” ikon pembesar 12x12 px yang terpusat
      * di dalam wrapper position:relative-nya sendiri, dengan
      * pointer-events:none. <select> penanda indikator adalah select
      * bawaan browser, digambar di lapisan teratas sehingga tidak pernah
@@ -8809,7 +8809,7 @@
     .geopulse-card-body .weather-hero { margin: 0; border-radius: 8px; }
     .geopulse-card-body .temp-chart-section { margin: 0; border-radius: 8px; }
 
-    /* ── Kartu "Cuaca Sekarang": statis, dan jadi rumah dua kontrol ──
+    /* â”€â”€ Kartu "Cuaca Sekarang": statis, dan jadi rumah dua kontrol â”€â”€
      *
      * Dua kontrol yang tadinya berdiri sendiri di level panel
      * (#weatherSearchInput + #autocompleteResults, lalu
@@ -9008,7 +9008,7 @@
 }
 [data-theme="dark"] .geotani-sls-picked { color: #86efac; background: #052e16; }
 
-/* ── Cek NIB Tanah (ATR/BPN GISTARU) ──
+/* â”€â”€ Cek NIB Tanah (ATR/BPN GISTARU) â”€â”€
    Satu NIB bisa punya banyak bidang di kabupaten/kota berbeda, jadi hasilnya
    berupa daftar kartu, bukan satu baris ringkasan. */
 .geotani-sls-status.is-error {
@@ -9082,7 +9082,7 @@
 }
 [data-theme="dark"] .nib-result { background: rgba(255,255,255,0.03); }
 
-/* ── Legenda IGTPR (ATR/BPN) ── */
+/* â”€â”€ Legenda IGTPR (ATR/BPN) â”€â”€ */
 .igtpr-legend { padding: 8px; }
 .igtpr-legend-title {
   margin-bottom: 5px; font-size: 11px; font-weight: 700; color: #0f172a;
@@ -9352,7 +9352,7 @@
    .dm-sidebar-option, .geolokasi-*, .dm-koordinat-*), karena itu isi
    modul, bukan kerangka kartu.
 
-   Chevron lama berupa teks '+' dan '−' yang ditulis lewat ::after pada
+   Chevron lama berupa teks '+' dan 'âˆ’' yang ditulis lewat ::after pada
    summary; kalau dibiarkan, seleksinya lebih spesifik dari
    .gt-card-head::after dan menang, jadi kartu ini kehilangan chevron
    segitiga yang dipakai seluruh GeoTools. */
@@ -9559,7 +9559,7 @@
   background: var(--bg-tertiary); color: var(--text-secondary);
 }
 
-/* ── Kartu hasil GeoOSS ───────────────────────────────────────────────────
+/* â”€â”€ Kartu hasil GeoOSS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Satu kartu per analisis, memakai <details>/<summary> supaya bisa dilipat
    tanpa satu baris JavaScript pun. Tampilannya meniru .geotani-lbslsd --
    kartu GeoTools lain -- supaya panel ini tidak terlihat seperti hasil
@@ -9627,7 +9627,7 @@
   border: 1px solid var(--border-color); border-radius: 8px;
   background: var(--bg-card);
 }
-/* ── Kepala kartu GeoTools ───────────────────────────────────────────────
+/* â”€â”€ Kepala kartu GeoTools â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    SATU template untuk semua panel, diambil dari kartu LBS & LSD GeoTani:
    ikon 20px, judul 13px tebal, subjudul 9,5px redup, pita
    var(--bg-card-active).
@@ -9742,7 +9742,7 @@ details[open] > .gt-card-head::after {
 .geotani-lbslsd-list li:first-child { border-top: 0; }
 .geotani-lbslsd-list li:hover { background: var(--bg-card-hover); }
 .geotani-lbslsd-list i { font-style: normal; font-size: 9px; color: var(--text-muted); }
-/* GeoTani — KKPR: tab "Cari NIB" dan "Cari Nama Usaha".
+/* GeoTani â€” KKPR: tab "Cari NIB" dan "Cari Nama Usaha".
    Dua panel, bukan dua kartu. Satu kartu dengan dua mode pencarian yang
    memakai tombol dan area hasil yang sama jauh lebih mudah dibandingkan
    daripada dua kartu terpisah -- dan perbandingan itu justru yang
@@ -9817,7 +9817,7 @@ details[open] > .gt-card-head::after {
 .geotani-lbslsd-list--ringkas li { cursor: default; }
 .geotani-lbslsd-list--ringkas li:hover { background: transparent; }
 
-/* ── Grafik & insight: Tutupan Lahan ──
+/* â”€â”€ Grafik & insight: Tutupan Lahan â”€â”€
    SVG-nya digambar sendiri oleh geotani-tutupan-lahan.js (pola yang sama
    dengan grafik tren GeoFarm), jadi yang didefinisikan di sini hanya
    warna dan ukuran. Tanpa max-height di blok manapun: tinggi grafik
@@ -10077,7 +10077,7 @@ details[open] > .gt-card-head::after {
       line-height: 1.5;
     }
 
-    /* Geotools File Panels — Modern Style */
+    /* Geotools File Panels â€” Modern Style */
     #tab-geotools .geoid-subtab-panel.active {
       display: grid; grid-template-columns: 1fr; gap: 12px; padding-top: 4px;
     }
@@ -10240,7 +10240,7 @@ details[open] > .gt-card-head::after {
     }
     @keyframes arcgis-source-spin { to { transform: rotate(360deg); } }
 
-    /* ══ KARTU SHEET ALAT ═════════════════════════════════════════════
+    /* â•â• KARTU SHEET ALAT â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
        Sheet Alat (panel GeoData) punya empat kartu: ArcGIS REST Source,
        Layer Dimuat, Tabel Atribut, dan Animasi Track. Semuanya tadinya
        memakai angka dan hex sendiri -- padding 12px di dalam kartu,
@@ -10399,8 +10399,8 @@ details[open] > .gt-card-head::after {
       list-style: none;
     }
     .arcgis-tree-group summary::-webkit-details-marker { display: none; }
-    .arcgis-tree-group summary::before { content: '▸'; color: var(--text-muted); font-size: 10px; }
-    .arcgis-tree-group[open] > summary::before { content: '▾'; }
+    .arcgis-tree-group summary::before { content: 'â–¸'; color: var(--text-muted); font-size: 10px; }
+    .arcgis-tree-group[open] > summary::before { content: 'â–¾'; }
     .arcgis-tree-group summary:hover { background: var(--bg-card-hover); }
     .arcgis-tree-summary-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
     .arcgis-tree-meta { color: var(--text-muted); font-size: 8px; white-space: nowrap; }
@@ -10430,7 +10430,7 @@ details[open] > .gt-card-head::after {
     .arcgis-popup-row strong { max-width: 58%; color: #315b78; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
     .arcgis-leaflet-popup .leaflet-popup-content { margin: 0; }
 
-    /* Export GeoTIFF Petadasar — di bawah Quick Layer Bar */
+    /* Export GeoTIFF Petadasar â€” di bawah Quick Layer Bar */
     .petadasar-export-block {
       position: absolute;
       top: 108px;
@@ -10487,7 +10487,7 @@ details[open] > .gt-card-head::after {
       background: #fef2f2;
     }
 
-    /* Export GeoTIFF Persil Nasional — menempel di bawah blok Petadasar
+    /* Export GeoTIFF Persil Nasional â€” menempel di bawah blok Petadasar
        (top 108px = baris quick layer). Hanya digeser turun ~44px bila blok
        Petadasar ikut tampil agar keduanya tidak tumpang tindih. */
     .petadasar-export-block.persil-tiff-export-block {
@@ -10814,7 +10814,7 @@ details[open] > .gt-card-head::after {
     @keyframes gpxExportSpin {
       to { transform: rotate(360deg); }
     }
-    /* Layer WMS point (marker cluster) — popup gaya CCTV */
+    /* Layer WMS point (marker cluster) â€” popup gaya CCTV */
     .gp-point-icon {
       background: transparent;
       border: 0;
@@ -10976,7 +10976,7 @@ details[open] > .gt-card-head::after {
     }
     .geoportal-search-input.with-icon { padding-left: 32px; }
 
-    /* jsTree tweaks — minimal, keep default theme */
+    /* jsTree tweaks â€” minimal, keep default theme */
     #geoportalLayerList { flex: 1; overflow-y: auto; min-height: 0; }
     #geoportalLayerList .jstree-container-ul { padding: 0; margin: 0; }
     #geoportalLayerList .jstree-node { padding-left: 8px; }
@@ -11206,7 +11206,7 @@ details[open] > .gt-card-head::after {
       z-index: 999;
     }
 
-    /* Floating Draw Toolbar — FAB Style */
+    /* Floating Draw Toolbar â€” FAB Style */
     .leaflet-draw-toolbar-wrap {
       display: none !important;
     }
@@ -11243,7 +11243,7 @@ details[open] > .gt-card-head::after {
       color: var(--text-inverse) !important;
       transform: scale(0.95);
     }
-    /* Draw control + Actions (Clear All / Export) — satu kotak tunggal, gaya modern GIS 2026 */
+    /* Draw control + Actions (Clear All / Export) â€” satu kotak tunggal, gaya modern GIS 2026 */
     .leaflet-draw {
       background: #fff;
       border: 2px solid rgba(0, 0, 0, .2);
@@ -11376,7 +11376,7 @@ details[open] > .gt-card-head::after {
       padding-top: 1px;
     }
 
-    /* ── AirVisual Legend ── */
+    /* â”€â”€ AirVisual Legend â”€â”€ */
     .airvisual-legend.leaflet-bar {
       background: rgba(255,255,255,.96);
       border: 1px solid #e2e8f0;
@@ -11425,7 +11425,7 @@ details[open] > .gt-card-head::after {
       word-break: break-word;
     }
 
-    /* ── OMI Legend ── */
+    /* â”€â”€ OMI Legend â”€â”€ */
     .omi-legend.leaflet-bar {
       background: rgba(255,255,255,.96);
       border: 1px solid #e2e8f0;
@@ -11673,7 +11673,7 @@ details[open] > .gt-card-head::after {
       }
     }
 
-/* ══ Pernyataan dan Penafian (disclaimer) ══
+/* â•â• Pernyataan dan Penafian (disclaimer) â•â•
        Muncul setelah modal welcome. Berbeda dari welcome, modal ini tidak
        punya tombol tutup: satu-satunya jalan keluar adalah tombol terima,
        dan tombol itu terkunci sampai kotak persetujuan dicentang. Jadi
@@ -11930,7 +11930,7 @@ details[open] > .gt-card-head::after {
       margin: 10px 12px;
     }
 
-    /* ── ECMWF Fire Legend & Popup ── */
+    /* â”€â”€ ECMWF Fire Legend & Popup â”€â”€ */
     .ecmwf-fire-legend {
       background: rgba(255,255,255,.95);
       border-radius: 8px;
@@ -12001,7 +12001,7 @@ details[open] > .gt-card-head::after {
       font-style: italic;
     }
 
-    /* ── FSVA 2025 Legend ── */
+    /* â”€â”€ FSVA 2025 Legend â”€â”€ */
     .fsva-legend {
       background: rgba(255,255,255,.95);
       border-radius: 8px;
@@ -12050,7 +12050,7 @@ details[open] > .gt-card-head::after {
       max-height: 200px;
     }
 
-    /* ── FSVA 2025 Popup ── */
+    /* â”€â”€ FSVA 2025 Popup â”€â”€ */
     .fsva-leaflet-popup .leaflet-popup-content-wrapper {
       border-radius: 12px;
       box-shadow: 0 6px 24px rgba(0,0,0,0.12);
@@ -12174,7 +12174,7 @@ details[open] > .gt-card-head::after {
       text-align: center;
     }
 
-    /* ── DEM Topography Analysis ── */
+    /* â”€â”€ DEM Topography Analysis â”€â”€ */
     .topo-report-card {
       background: #fff;
       border-radius: 12px;
@@ -12238,7 +12238,7 @@ details[open] > .gt-card-head::after {
       border-top-color: #7c3aed;
     }
 
-    /* ── DEM Point Popup ── */
+    /* â”€â”€ DEM Point Popup â”€â”€ */
     .dem-leaflet-popup .leaflet-popup-content-wrapper {
       border-radius: 12px;
       padding: 0;
@@ -12321,7 +12321,7 @@ details[open] > .gt-card-head::after {
       white-space: nowrap;
     }
 
-    /* ── DEM Polygon Popup ── */
+    /* â”€â”€ DEM Polygon Popup â”€â”€ */
     .dem-poly-popup .leaflet-popup-content-wrapper {
       border-radius: 12px;
       padding: 0;
@@ -12334,7 +12334,7 @@ details[open] > .gt-card-head::after {
       min-width: 260px;
     }
 
-    /* ── Crop Health Card ── */
+    /* â”€â”€ Crop Health Card â”€â”€ */
     .crop-health-card-wrap {
       margin-top: 8px;
       max-height: 30vh;
@@ -12531,7 +12531,7 @@ details[open] > .gt-card-head::after {
       border-top: 1px solid #f1f5f9;
     }
 
-    /* ── Universal map-layer loading spinner overlay ── */
+    /* â”€â”€ Universal map-layer loading spinner overlay â”€â”€ */
     .map-loading-overlay {
       position: absolute;
       inset: 0;
@@ -12553,7 +12553,7 @@ details[open] > .gt-card-head::after {
     }
     @keyframes map-spin { to { transform: rotate(360deg); } }
 
-    /* ── Unified Legend Container ── */
+    /* â”€â”€ Unified Legend Container â”€â”€ */
     .unified-legend-container {
       display: none !important;
       max-height: 40vh;
@@ -12710,7 +12710,7 @@ details[open] > .gt-card-head::after {
       border: 1px solid rgba(255,255,255,0.1) !important;
     }
 
-    /* ── ATRBPN Legend ── */
+    /* â”€â”€ ATRBPN Legend â”€â”€ */
     .unified-legend-section .atrbpn-legend {
       background: rgba(255,255,255,0.96) !important;
       backdrop-filter: blur(8px);
@@ -12860,7 +12860,7 @@ details[open] > .gt-card-head::after {
       line-height: 1.3;
     }
 
-    /* ── Geologi BNPB Legend ── */
+    /* â”€â”€ Geologi BNPB Legend â”€â”€ */
     .unified-legend-section .geologi-bnpb-legend {
       background: rgba(255,255,255,0.96) !important;
       backdrop-filter: blur(8px);
@@ -12913,7 +12913,7 @@ details[open] > .gt-card-head::after {
       line-height: 1.3;
     }
 
-    /* ── Unified Slider Container ── */
+    /* â”€â”€ Unified Slider Container â”€â”€ */
     .unified-slider-container {
       display: flex;
       flex-direction: column;
@@ -13017,7 +13017,7 @@ details[open] > .gt-card-head::after {
     /* Legend collapse toggle */
     .legend-wrap { position: relative; }
 
-    /* ── Print Preview Overlay ── */
+    /* â”€â”€ Print Preview Overlay â”€â”€ */
     .print-preview-overlay {
       position: fixed; inset: 0; z-index: 10000;
       background: rgba(15, 23, 42, 0.9);
@@ -13102,7 +13102,7 @@ details[open] > .gt-card-head::after {
     }
     .print-preview-cancel:hover { background: rgba(255,255,255,0.18); }
 
-    /* Print Area Selection — auto rectangle overlay */
+    /* Print Area Selection â€” auto rectangle overlay */
     .print-area-vignette {
       position: fixed; inset: 0; z-index: 10000;
       background: rgba(15, 23, 42, 0.55);
@@ -13217,7 +13217,7 @@ details[open] > .gt-card-head::after {
       to { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
 
-    /* ── Responsive Print Overlay & Preview (Mobile ≤480px) ── */
+    /* â”€â”€ Responsive Print Overlay & Preview (Mobile â‰¤480px) â”€â”€ */
     @media (max-width: 480px) {
       .print-area-frame {
         height: 48vh;
@@ -13314,7 +13314,7 @@ details[open] > .gt-card-head::after {
     .legend-wrap.legend-collapsed .geologi-bnpb-legend-source { display: none !important; }
     .legend-wrap.legend-collapsed .legend-toggle-icon { transform: rotate(-90deg); }
 
-    /* ── Map Toast Notification ── */
+    /* â”€â”€ Map Toast Notification â”€â”€ */
     .map-toast {
       position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
       z-index: 10002; padding: 10px 20px; border-radius: 10px;
@@ -13330,7 +13330,7 @@ details[open] > .gt-card-head::after {
     @keyframes map-toast-in { from { opacity: 0; transform: translateX(-50%) translateY(12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
     @keyframes map-toast-out { from { opacity: 1; } to { opacity: 0; } }
 
-    /* ── Dark Mode Global Overrides ── */
+    /* â”€â”€ Dark Mode Global Overrides â”€â”€ */
     [data-theme="dark"] select,
     [data-theme="dark"] input,
     [data-theme="dark"] textarea {
@@ -13820,7 +13820,7 @@ details[open] > .gt-card-head::after {
       border-color: var(--border-color);
     }
 
-    /* ── Zoom Earth Time Slider ── */
+    /* â”€â”€ Zoom Earth Time Slider â”€â”€ */
     .ze-time-slider-wrap {
       display: flex;
       flex-direction: column;
@@ -13917,7 +13917,7 @@ details[open] > .gt-card-head::after {
     [data-theme="dark"] .sppgd-popup-item-name { color: var(--text-primary); }
     [data-theme="dark"] .sppgd-tooltip { background: var(--bg-card); color: var(--text-primary); }
 
-/* ── GHRSST SST Anomaly Time Slider (BMKG pattern) ── */
+/* â”€â”€ GHRSST SST Anomaly Time Slider (BMKG pattern) â”€â”€ */
 .ghrsst-time-slider-wrap {
       display: flex;
       flex-direction: column;
@@ -14037,7 +14037,7 @@ details[open] > .gt-card-head::after {
 }
 
 
-/* ── Analisis Polygon (polygon-analysis.js) ─────────────────
+/* â”€â”€ Analisis Polygon (polygon-analysis.js) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Geometri panel (posisi, tinggi, radius, head, body) memakai aturan
    yang sama dengan .lg-sidebar lewat selector bersama di atas, agar
    keduanya tidak bisa melenceng. Yang di bawah hanya isi kartunya. */
@@ -14071,7 +14071,7 @@ details[open] > .gt-card-head::after {
 .pa-minimize:hover { background: var(--border-color); }
 .pa-close:hover { background: var(--border-color); }
 
-/* ══ Kontrol export di kepala panel ══
+/* â•â• Kontrol export di kepala panel â•â•
    Muncul hanya setelah semua analisis selesai. Sengaja tanpa footer supaya
    tidak mengurangi ruang daftar polygon. */
 .pa-export { position: relative; display: flex; }
@@ -14362,7 +14362,7 @@ details[open] > .gt-card-head::after {
       baris tombol di dalam section supaya tidak terlihat sebagai bagian dari
       section terakhir. Reset sengaja tidak diberi warna merah: ia menghapus
       hasil hitungan yang bisa diulang, bukan mencabut polygon seperti tombol
-      × di kepala kartu. */
+      Ã— di kepala kartu. */
    .pa-btn-row-reanalyze { margin: 4px 0 2px; }
 /* Baris tombol yang hanya berisi satu tombol (mis. "Hitung" indeks lanjutan)
    dibuat selebar panel supaya luas sentuhnya enak untuk jari. */
@@ -14904,7 +14904,7 @@ details[open] > .gt-card-head::after {
 }
 #geotoolsTabGeoFarm .geofarm-draw-btn[disabled] { cursor: progress; }
 
-/* ── GeoFarm: impor polygon dari file ──
+/* â”€â”€ GeoFarm: impor polygon dari file â”€â”€
    Tombol unggah memakai warna amber supaya bedanya jelas dari tombol
    "Buat Polygon" yang biru, dan sama dengan garis poligon unggahan di peta. */
 #geotoolsTabGeoFarm .geofarm-upload-btn {
@@ -14933,7 +14933,7 @@ details[open] > .gt-card-head::after {
 }
 .geofarm-upload-input { display: none; }
 
-/* ── GeoFarm: tombol pemanggil sheet analisis ──
+/* â”€â”€ GeoFarm: tombol pemanggil sheet analisis â”€â”€
    Sheet analisis tidak muncul otomatis begitu polygon dibuat, jadi tombol
    inilah satu-satunya jalan membukanya. Tombolnya hidup di dalam tab ini,
    bukan melayang di atas peta, supaya tidak menutupi peta dan tidak
@@ -15071,7 +15071,7 @@ details[open] > .gt-card-head::after {
 [data-theme="dark"] .geofarm-upload-status.is-error { background: #450a0a; border-color: #991b1b; color: #fca5a5; }
 [data-theme="dark"] .geofarm-upload-status.is-ok { background: #052e16; border-color: #15803d; color: #bbf7d0; }
 
-/* ── GeoFarm: Kalkulator Benih & Pupuk ──
+/* â”€â”€ GeoFarm: Kalkulator Benih & Pupuk â”€â”€
    Satu kartu, dua tab (Benih / Pupuk), satu field luas bersama. Kepala
    kartu ini memakai .gt-card-head yang sama dengan kartu LBS & LSD, tapi
    input dan warnanya TIDAK memakai .geotani-form-input:
@@ -15725,18 +15725,18 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   padding-top: 6px;
   border-top: 1px solid var(--border-color);
 }
-/* ══ REFERENSI PERTANIAN (geofarm-referensi.js) ═════════════════════════
+/* â•â• REFERENSI PERTANIAN (geofarm-referensi.js) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    Empat kartu <details> di tab GeoFarm: Artikel, Kamus, Hama & Penyakit,
    Pestisida. Semuanya mulai terlipat dan isinya diambil dengan fetch()
    hanya saat kartu dibuka.
 
    Kepala (ikon, judul, subjudul, chevron) memakai .gt-card-head yang
-   sudah dipakai kartu GeoFarm/Kalkulator/GeoTani di atas — bukan kelas
+   sudah dipakai kartu GeoFarm/Kalkulator/GeoTani di atas â€” bukan kelas
    kepala sendiri. Modul ini tidak menambah apa pun ke kepala, jadi tidak
    ada lencana ukuran file di sana: angka "264 KB" di kartu terlipat lebih
    banyak menambah rapat daripada membantu, dan jumlah entri tetap
    terbaca di baris status begitu kartu dibuka.
-   ─────────────────────────────────────────────────────────────────────── */
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 /* Teks di dalam kepala boleh menyusut supaya judul panjang di sidebar
    sempit tidak mendorong chevron keluar. .gt-card-head::after sudah pakai
@@ -15747,8 +15747,8 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
 }
 
 /* Jarak antar kartu di tab ini satu nilai: 10px.
-   Sebelumnya tiap kartu punya angkanya sendiri — Kalkulator 14px, grup
-   Referensi 20px, kartu Referensi 8px — sehingga enam kartu dalam satu
+   Sebelumnya tiap kartu punya angkanya sendiri â€” Kalkulator 14px, grup
+   Referensi 20px, kartu Referensi 8px â€” sehingga enam kartu dalam satu
    panel terlihat seperti tiga modul berbeda yang ditempel beruntun.
    Sekarang .geofarm-kalk dan .geofarm-ref memakai angka yang sama, dan
    jarak sebelum grup Referensi diambil dari margin kartu sebelumnya,
@@ -15965,7 +15965,7 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   -webkit-overflow-scrolling: touch;
 }
 
-/* ── Kamus: isi pendek, selalu terlihat, tanpa <details> per baris ── */
+/* â”€â”€ Kamus: isi pendek, selalu terlihat, tanpa <details> per baris â”€â”€ */
 .geofarm-ref-row {
   padding: 5px 0;
   border-bottom: 1px dotted var(--border-color);
@@ -15985,8 +15985,8 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   color: var(--text-secondary);
 }
 
-/* ── Artikel / Hama / Pestisida: <details> per entri, supaya isinya yang
-      panjang baru ikut ke DOM saat barisnya dibuka ── */
+/* â”€â”€ Artikel / Hama / Pestisida: <details> per entri, supaya isinya yang
+      panjang baru ikut ke DOM saat barisnya dibuka â”€â”€ */
 .geofarm-ref-item { border-bottom: 1px dotted var(--border-color); }
 .geofarm-ref-item:last-child { border-bottom: none; }
 .geofarm-ref-item-sum {
@@ -16056,7 +16056,7 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   background: var(--bg-primary);
 }
 
-/* ── Isi artikel & tabel detail hama ──
+/* â”€â”€ Isi artikel & tabel detail hama â”€â”€
    Dua sumber punya gaya sendiri yang tidak konsisten satu sama lain dan
    tidak cocok dengan kartu: blog.js menulis <p>/<ul>/<ol>/<h4> dengan
    <br> hard, opete.js menulis <table border=0 width=90%>. Yang di style
@@ -16545,4 +16545,5 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
 #geotoolsTabGeoportal > .georaster-card + .geoportal-card {
   margin-top: 12px;
 }
+
 

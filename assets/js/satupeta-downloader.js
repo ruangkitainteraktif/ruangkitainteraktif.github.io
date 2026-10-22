@@ -483,13 +483,8 @@
     rekamKey: 'JML_REKAM'
   });
 
-  var KAB_URL = 'assets/data/bps/geojson/kabupaten.geojson';
-  var PROV_URL = 'assets/data/bps/geojson/provinsi.geojson';
   var DESA_URL = 'assets/data/kode_wilayah.json';
   var BIG_RBI_BASE = 'https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH/';
-  var GEOPORTAL_DESA_BASE = 'https://geoportal.pertanian.go.id/arcgis/rest/services/Hosted/Batas_Administrasi_Desa_2/FeatureServer/0/';
-  var GEOPORTAL_KEC_BASE = 'https://geoportal.pertanian.go.id/arcgis/rest/services/Batas_Administrasi/MapServer/0/';
-  var WILAYAH_BOUNDARY_API = 'https://wilayah.smartartstudio.my.id/api/boundaries/';
   var BIG_SERVICE_BASE = 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/';
   var BIG_FOLDERS = [
     'BATAS_WILAYAH',
@@ -751,7 +746,6 @@
     visible: false,
     kabData: null,
     provData: null,
-    provDataGeo: null,
     kecData: null,
     desaData: null,
     selectedFeature: null,
@@ -762,6 +756,7 @@
     outlineLayer: null,
     selectedTableFeatureIndex: null,
     clipped: [],
+    clipErrors: 0,
     nationalObjectIds: null,
     nationalPage: 0,
     loading: false,
@@ -857,29 +852,27 @@
     return gj;
   }
 
-  /* ---- Load Kabupaten GeoJSON ---- */
+  /* ---- Load kabupaten search names/codes from BIG; geometry is fetched on selection. ---- */
   function loadKab() {
     if (state.kabData) return Promise.resolve(state.kabData);
-    return fetch(KAB_URL)
-      .then(function (r) { return r.json(); })
+    var url = BIG_RBI_BASE + 'BATAS_KABKOTA_AR/MapServer/0/query?'
+      + new URLSearchParams({ where: '1=1', outFields: 'KDPKAB,NAMOBJ,KDPPUM,WADMPR', returnGeometry: 'false', f: 'json' }).toString();
+    return fetch(url)
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status + ' dari BIG RBI.'); return r.json(); })
       .then(function (data) {
-        state.kabData = data;
-        return data;
+        if (data.error) throw new Error(data.error.message || 'Gagal memuat daftar kabupaten/kota BIG.');
+        state.kabData = { features: (data.features || []).map(function (feature) {
+          var a = feature.attributes || {}, code = String(a.KDPKAB || ''), parts = code.split('.');
+          return { type: 'Feature', properties: {
+            idkab: parts.join(''), kdprov: a.KDPPUM || parts[0] || '', kdkab: parts[1] || '',
+            nmkab: a.NAMOBJ || a.WADMKK || '', nmprov: a.WADMPR || ''
+          }, geometry: null };
+        }) };
+        return state.kabData;
       });
   }
 
-  /* ---- Load Provinsi GeoJSON ---- */
-  function loadProvGeo() {
-    if (state.provDataGeo) return Promise.resolve(state.provDataGeo);
-    return fetch(PROV_URL)
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        state.provDataGeo = data;
-        return data;
-      });
-  }
-
-  /* ---- Load Desa/Prov/Kec (kode_wilayah.json) ---- */
+  /* ---- Local search index for names/codes; selected boundary geometry always comes from BIG. ---- */
   function loadDesa() {
     if (state.desaData && state.provData && state.kecData) {
       return Promise.resolve(state.desaData);
@@ -900,7 +893,7 @@
       });
   }
 
-  /* ---- Fetch boundary from BIG RBI ---- */
+  /* ---- Fetch every selected boundary geometry from BIG RBI ---- */
   function esriRingsToPolygon(rings) {
     var outers = [], holes = [];
     for (var i = 0; i < rings.length; i++) {
@@ -936,8 +929,11 @@
         return r.json();
       })
       .then(function (data) {
+        if (data && data.error) {
+          throw new Error(data.error.message || 'BIG RBI gagal mengambil geometri batas.');
+        }
         if (data && data.status === 'error') {
-          throw new Error((data.messages && data.messages[0]) || 'ESRI error');
+          throw new Error((data.messages && data.messages[0]) || 'BIG RBI gagal mengambil geometri batas.');
         }
         var f = data.features && data.features[0];
         if (!f || !f.geometry || !f.geometry.rings || !f.geometry.rings.length) {
@@ -957,91 +953,7 @@
       });
   }
 
-  function queryWilayahBoundary(opts) {
-    var url = WILAYAH_BOUNDARY_API + encodeURIComponent(opts.kode);
-    var ctrl = new AbortController();
-    var timeout = setTimeout(function () { ctrl.abort(); }, opts.timeoutMs || 8000);
-    return fetch(url, { signal: ctrl.signal })
-      .then(function (r) {
-        clearTimeout(timeout);
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      })
-      .then(function (data) {
-        if (!data || !data.path || !data.path.length) return null;
-        var rings = [];
-        data.path.forEach(function (a) {
-          if (Array.isArray(a[0][0])) {
-            a.forEach(function (r) { rings.push(r); });
-          } else {
-            rings.push(a);
-          }
-        });
-        rings = rings.filter(function (r) { return r && r.length >= 4; });
-        if (!rings.length) return null;
-        var geoRings = rings.map(function (r) {
-          return r.map(function (p) { return [p[1], p[0]]; });
-        });
-        return ensureMultiPolygon({
-          type: 'Feature',
-          properties: { name: data.nama || '', kode: opts.kode },
-          geometry: esriRingsToPolygon(geoRings)
-        });
-      })
-      .catch(function (e) {
-        clearTimeout(timeout);
-        throw e;
-      });
-  }
-
-  function geoJsonBbox(geom) {
-    if (typeof turf !== 'undefined' && turf.bbox && geom) {
-      try { return turf.bbox({ type: 'Feature', properties: {}, geometry: geom }); } catch (e) {}
-    }
-    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    (function walk(c) {
-      if (typeof c[0] === 'number') {
-        if (c[0] < minX) minX = c[0];
-        if (c[0] > maxX) maxX = c[0];
-        if (c[1] < minY) minY = c[1];
-        if (c[1] > maxY) maxY = c[1];
-        return;
-      }
-      for (var i = 0; i < c.length; i++) walk(c[i]);
-    })(geom.coordinates);
-    return [minX, minY, maxX, maxY];
-  }
-
-  function queryLocalKabBoundary(kode) {
-    return loadKab().then(function (gj) {
-      var parts = String(kode).split('.');
-      var f = gj && gj.features && gj.features.find(function (ft) {
-        var p = ft.properties || {};
-        return (p.kdprov === parts[0] && p.kdkab === parts[1]) || String(p.idkab) === (parts[0] + parts[1]);
-      });
-      if (!f || !f.geometry) return null;
-      return ensureMultiPolygon({
-        type: 'Feature',
-        properties: { name: f.properties.nmkab || '', kode: kode },
-        geometry: f.geometry
-      });
-    }).catch(function () { return null; });
-  }
-
-  function runBoundarySource(src) {
-    if (src.local === 'kab') return queryLocalKabBoundary(src.kode);
-    if (src.api === 'wilayah') return queryWilayahBoundary(src);
-    if (src.api === 'village-fallback' && typeof window.fetchVillageBoundaryFallback === 'function') {
-      return window.fetchVillageBoundaryFallback({ where: "KDEPUM='" + src.kode + "'", returnGeometry: 'true', outSR: '4326', outFields: '*', timeoutMs: src.timeoutMs || 9000 })
-        .then(function (data) {
-          var feature = data && data.features && data.features.find(function (item) { return item.geometry && item.geometry.rings && item.geometry.rings.length; });
-          if (!feature) return null;
-          var a = feature.attributes || {};
-          return ensureMultiPolygon({ type: 'Feature', properties: { name: a.NAMOBJ || a.WADMKD || a.NAMA_KEL || '', kode: src.kode }, geometry: esriRingsToPolygon(feature.geometry.rings) });
-        });
-    }
-    return queryEsriBoundary(src);
-  }
+  function runBoundarySource(src) { return queryEsriBoundary(src); }
 
   /* First success wins (race); all fail → null */
   function raceBoundarySources(sources) {
@@ -1065,31 +977,9 @@
     });
   }
 
-  /* Sequential: try sources in order until one returns a boundary */
-  function sequentialBoundarySources(sources, attempt) {
-    var i = 0;
-    function next() {
-      if (i >= sources.length) return Promise.resolve(null);
-      var src = sources[i++];
-      return runBoundarySource(src).catch(function (e) {
-        console.warn('[Satupeta] boundary source failed:', e.message);
-        return null;
-      }).then(function (b) {
-        if (b) return b;
-        return next();
-      });
-    }
-    return next();
-  }
-
-  /* Race primary sources; on failure run fallback sources sequentially */
+  /* All boundary requests use BIG RBI endpoints. */
   function runBoundarySources(sources) {
-    var primary = sources.filter(function (s) { return !s.fallback; });
-    var fallbacks = sources.filter(function (s) { return s.fallback; });
-    return raceBoundarySources(primary).then(function (b) {
-      if (b) return b;
-      return sequentialBoundarySources(fallbacks);
-    });
+    return raceBoundarySources(sources);
   }
 
   function buildDesaSources(kode) {
@@ -1100,27 +990,12 @@
         outFields: 'KDEPUM,NAMOBJ,WADMKD,WADMKK,WADMPR,LUASWH',
         kode: kode,
         timeoutMs: 8000
-      },
-      {
-        baseUrl: GEOPORTAL_DESA_BASE,
-        where: "kdepum='" + kode + "'",
-        outFields: 'kdepum,namobj,wadmkd,wadmkk,wadmpr,luaswh',
-        kode: kode,
-        timeoutMs: 12000
-      },
-      { api: 'village-fallback', kode: kode, timeoutMs: 9000, fallback: true },
-      {
-        api: 'wilayah',
-        kode: kode,
-        timeoutMs: 8000,
-        fallback: true
       }
     ];
   }
 
-  function buildKecSources(kode, nama) {
-    var parts = String(kode).split('.');
-    var sources = [
+  function buildKecSources(kode) {
+    return [
       {
         baseUrl: BIG_RBI_BASE + 'BATAS_KECAMATAN_AR/MapServer/0/',
         where: "KDCPUM='" + kode + "'",
@@ -1129,31 +1004,6 @@
         timeoutMs: 8000
       }
     ];
-    var pending = Promise.resolve(sources);
-    if (nama && parts.length === 3) {
-      pending = loadKab().then(function (gj) {
-        var f = gj && gj.features && gj.features.find(function (ft) {
-          var p = ft.properties || {};
-          return (p.kdprov === parts[0] && p.kdkab === parts[1]) || String(p.idkab) === (parts[0] + parts[1]);
-        });
-        if (!f || !f.geometry) return sources;
-        var b = geoJsonBbox(f.geometry);
-        var pad = 0.01;
-        sources.push({
-          baseUrl: GEOPORTAL_KEC_BASE,
-          where: "UPPER(WADMKC)='" + String(nama).toUpperCase().replace(/'/g, "''") + "'",
-          geometry: [(b[0] - pad), (b[1] - pad), (b[2] + pad), (b[3] + pad)].join(','),
-          outFields: 'WADMKC',
-          kode: kode,
-          timeoutMs: 12000
-        });
-        return sources;
-      }).catch(function () { return sources; });
-    }
-    return pending.then(function (list) {
-      list.push({ api: 'wilayah', kode: kode, timeoutMs: 8000, fallback: true });
-      return list;
-    });
   }
 
   function buildKabSources(kode) {
@@ -1164,8 +1014,7 @@
         outFields: 'NAMOBJ,KDPKAB',
         kode: kode,
         timeoutMs: 8000
-      },
-      { local: 'kab', kode: kode, fallback: true }
+      }
     ];
   }
 
@@ -1173,26 +1022,26 @@
     attempt = attempt || 0;
     var parts = String(kode || '').split('.');
 
-    /* Provinsi (depth 1): local BPS geojson (fast, offline) */
+    /* Provinsi */
     if (parts.length === 1) {
-      return loadProvGeo().then(function (gj) {
-        var f = gj && gj.features && gj.features.find(function (ft) {
-          return String(ft.properties && ft.properties.kdprov) === kode;
-        });
-        if (!f || !f.geometry) return null;
-        return ensureMultiPolygon({
-          type: 'Feature',
-          properties: { name: (f.properties.nmprov || ''), kode: kode },
-          geometry: f.geometry
-        });
-      }).catch(function () { return null; });
+      return runBoundarySources([{
+        baseUrl: BIG_RBI_BASE + 'BATAS_PROVINSI_AR/MapServer/0/',
+        where: "KDPPUM='" + kode + "'",
+        outFields: 'NAMOBJ,KDPPUM',
+        kode: kode,
+        timeoutMs: 8000
+      }]).then(function (boundary) {
+        if (boundary || attempt >= 2) return boundary;
+        return new Promise(function (resolve) { setTimeout(resolve, 700 * (attempt + 1)); })
+          .then(function () { return fetchBoundary(kode, attempt + 1); });
+      });
     }
 
     var build;
     if (parts.length === 4) {
       build = Promise.resolve(buildDesaSources(kode));
     } else if (parts.length === 3) {
-      build = buildKecSources(kode, state.pendingBoundaryNama || '');
+      build = Promise.resolve(buildKecSources(kode));
     } else if (parts.length === 2) {
       build = Promise.resolve(buildKabSources(kode));
     } else {
@@ -1284,51 +1133,70 @@
     });
   }
 
-  /* ---- Fetch pages with spatial filter ---- */
-  function fetchPagesWithBBox(bbox, signal) {
-    var spatialParams = '';
-    var minX = bbox[0], minY = bbox[1], maxX = bbox[2], maxY = bbox[3];
-    var envelopeJson = JSON.stringify({ xmin: minX, ymin: minY, xmax: maxX, ymax: maxY, spatialReference: { wkid: 4326 } });
-    spatialParams = '&geometry=' + encodeURIComponent(envelopeJson)
-      + '&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&inSR=4326';
-    var offset = 0;
-    var all = [];
-
-    var info = document.getElementById('satupetaInfo');
-
-    var loop = function () {
-      var url = currentSource().query
-        + '?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326'
-        + spatialParams
-        + '&resultOffset=' + offset + '&resultRecordCount=' + PAGE_SIZE
-        + '&f=json';
-
-      if (info) {
-        info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> Mengambil data... (halaman ' + (Math.floor(offset / PAGE_SIZE) + 1) + ')</div>';
-      }
-
-      return fetch(url, { signal: signal })
-        .then(function (r) {
-          if (!r.ok) throw new Error('HTTP ' + r.status + ' dari SatuPeta BIG');
-          return r.json();
+  function fetchFeaturesByIds(ids, signal, progress) {
+    var batchSize = 200;
+    var batches = [];
+    for (var i = 0; i < ids.length; i += batchSize) batches.push(ids.slice(i, i + batchSize));
+    var results = new Array(batches.length), next = 0, completed = 0;
+    function worker() {
+      if (next >= batches.length) return Promise.resolve();
+      var index = next++, batch = batches[index];
+      var params = new URLSearchParams({ objectIds: batch.join(','), outFields: '*', returnGeometry: 'true', outSR: '4326', f: 'json' });
+      return fetch(currentSource().query + '?' + params.toString(), { signal: signal })
+        .then(function (response) {
+          if (!response.ok) throw new Error('HTTP ' + response.status + ' dari SatuPeta BIG');
+          return response.json();
         })
         .then(function (data) {
-          if (data && data.error) {
-            var detail = data.error.message || 'Permintaan layer BIG ditolak';
-            throw new Error(detail);
-          }
-          if (data.features) all = all.concat(data.features);
-          if (info) {
-            info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> Mengambil data... ' + all.length + ' fitur</div>';
-          }
-          if (data.exceededTransferLimit && data.features && data.features.length > 0) {
-            offset += PAGE_SIZE;
-            return loop();
-          }
-          return all;
+          if (data && data.error) throw new Error(data.error.message || 'Gagal mengambil fitur dari BIG.');
+          results[index] = data.features || [];
+          completed += batch.length;
+          if (progress) progress(Math.min(completed, ids.length), ids.length);
+          return worker();
         });
-    };
-    return loop();
+    }
+    return Promise.all([worker(), worker(), worker(), worker()]).then(function () {
+      return [].concat.apply([], results);
+    });
+  }
+
+  function fetchAllNationalFeatures(signal, progress) {
+    return fetchNationalObjectIds(signal).then(function (ids) {
+      if (!ids.length) return [];
+      return fetchFeaturesByIds(ids, signal, progress).then(function (features) {
+        if (features.length !== ids.length) {
+          throw new Error('BIG mengembalikan ' + features.length.toLocaleString('id-ID') + ' dari ' + ids.length.toLocaleString('id-ID') + ' fitur. Ekspor dibatalkan agar hasil parsial tidak disimpan.');
+        }
+        return features;
+      });
+    });
+  }
+
+  /* ---- Fetch pages with spatial filter ---- */
+  function fetchPagesWithBBox(bbox, signal) {
+    var minX = bbox[0], minY = bbox[1], maxX = bbox[2], maxY = bbox[3];
+    var envelopeJson = JSON.stringify({ xmin: minX, ymin: minY, xmax: maxX, ymax: maxY, spatialReference: { wkid: 4326 } });
+    var params = new URLSearchParams({
+      where: '1=1', geometry: envelopeJson, geometryType: 'esriGeometryEnvelope',
+      spatialRel: 'esriSpatialRelIntersects', inSR: '4326', returnIdsOnly: 'true', f: 'json'
+    });
+    var url = currentSource().query + '?' + params.toString();
+    var info = document.getElementById('satupetaInfo');
+    if (info) info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> Mengambil daftar ID fitur...</div>';
+    return fetch(url, { signal: signal }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status + ' dari SatuPeta BIG');
+      return r.json();
+    }).then(function (data) {
+      if (data && data.error) throw new Error(data.error.message || 'Gagal mengambil daftar ID fitur dari BIG.');
+      var ids = data.objectIds || [];
+      if (info) info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> Mengambil geometri 0 dari ' + ids.length.toLocaleString('id-ID') + ' fitur...</div>';
+      return fetchFeaturesByIds(ids, signal, function (loaded, total) {
+        if (info) info.innerHTML = '<div class="satupeta-loading"><span class="satupeta-spinner"></span> Mengambil geometri ' + loaded.toLocaleString('id-ID') + ' dari ' + total.toLocaleString('id-ID') + ' fitur...</div>';
+      }).then(function (features) {
+        if (features.length !== ids.length) throw new Error('BIG mengembalikan ' + features.length.toLocaleString('id-ID') + ' dari ' + ids.length.toLocaleString('id-ID') + ' fitur.');
+        return features;
+      });
+    });
   }
 
   /* ---- Search ---- */
@@ -1442,38 +1310,50 @@
     }
   }
 
+  function prepareBoundarySelection() {
+    if (state.fetchAbort) { state.fetchAbort.abort(); state.fetchAbort = null; }
+    state.loading = false;
+    if (state.layer && window.map) window.map.removeLayer(state.layer);
+    state.layer = null;
+    state.selectedBoundary = null;
+    state.selectedFeature = null;
+    state.clipped = [];
+    clearSelOutline();
+    clearFeatureTable();
+    syncSHPExportButton();
+  }
+
   function selectKabupaten(feature) {
+    prepareBoundarySelection();
     var p = feature.properties;
     var kode = p.kdprov && p.kdkab
       ? (p.kdprov + '.' + p.kdkab)
       : (p.idkab ? (String(p.idkab).slice(0, 2) + '.' + String(p.idkab).slice(2)) : '');
-
-    state.selectedFeature = {
-      properties: Object.assign({}, p, { nama: p.nmkab, nmkab: p.nmkab, nmprov: p.nmprov }),
-      geometry: feature.geometry
-    };
-    state.selectedBoundary = ensureMultiPolygon({
-      type: 'Feature',
-      properties: p,
-      geometry: feature.geometry
-    });
     state.pendingBoundaryKode = kode;
     state.pendingBoundaryNama = p.nmkab;
     updateSelectedLabel(p.nmkab, p.nmprov);
-    drawSelOutline(state.selectedBoundary);
     showToggleButton();
+    setBoundaryLoadingInfo('Memuat batas kabupaten/kota dari BIG...');
 
     fetchBoundary(kode).then(function (boundary) {
       if (state.pendingBoundaryKode !== kode) return;
       if (boundary) {
+        state.selectedFeature = {
+          properties: Object.assign({}, p, { nama: p.nmkab, nmkab: p.nmkab, nmprov: p.nmprov }),
+          geometry: boundary.geometry
+        };
         state.selectedBoundary = boundary;
-        state.selectedFeature.geometry = boundary.geometry;
-        drawSelOutline(boundary, false);
+        drawSelOutline(boundary);
+        var info = document.getElementById('satupetaInfo');
+        if (info) info.style.display = 'none';
+      } else {
+        setBoundaryErrorInfo('Batas kabupaten/kota BIG gagal dimuat. Klik "Tampilkan Data" untuk mencoba lagi.');
       }
     });
   }
 
   function selectDesa(kode, nama) {
+    prepareBoundarySelection();
     state.pendingBoundaryKode = kode;
     state.pendingBoundaryNama = nama;
     state.pendingFeature = { properties: { kode: kode, nama: nama } };
@@ -1496,6 +1376,7 @@
   }
 
   function selectProvinsi(kode, nama) {
+    prepareBoundarySelection();
     state.pendingBoundaryKode = kode;
     state.pendingBoundaryNama = nama;
     state.pendingFeature = { properties: { kode: kode, nama: nama } };
@@ -1518,6 +1399,7 @@
   }
 
   function selectKecamatan(kode, nama) {
+    prepareBoundarySelection();
     state.pendingBoundaryKode = kode;
     state.pendingBoundaryNama = nama;
     state.pendingFeature = { properties: { kode: kode, nama: nama } };
@@ -1672,10 +1554,24 @@
     if (button) { button.disabled = true; button.classList.add('is-loading'); button.textContent = 'Menyiapkan SHP…'; }
     if (status) { status.style.display = 'block'; status.style.color = '#475569'; status.textContent = 'Membuat shapefile dari ' + state.clipped.length.toLocaleString('id-ID') + ' fitur…'; }
     try {
-      var features = state.clipped.filter(function (feature) {
+      var sourceFeatures = state.clipped;
+      if (state.level === 'indonesia') {
+        if (status) status.textContent = 'Mengambil semua fitur nasional dari BIG…';
+        var national = await fetchAllNationalFeatures(null, function (loaded, total) {
+          if (status) status.textContent = 'Mengambil fitur nasional ' + loaded.toLocaleString('id-ID') + ' dari ' + total.toLocaleString('id-ID') + '…';
+        });
+        sourceFeatures = national.map(attrToGeoJSON).filter(Boolean);
+        if (sourceFeatures.length !== national.length) {
+          throw new Error(sourceFeatures.length.toLocaleString('id-ID') + ' dari ' + national.length.toLocaleString('id-ID') + ' fitur nasional memiliki geometri yang dapat diekspor. SHP parsial dibatalkan.');
+        }
+      }
+      var features = sourceFeatures.filter(function (feature) {
         return feature && feature.geometry && feature.geometry.type && Array.isArray(feature.geometry.coordinates);
       });
       if (!features.length) throw new Error('Tidak ada geometri yang dapat diekspor.');
+      if (features.length !== sourceFeatures.length) {
+        throw new Error(features.length.toLocaleString('id-ID') + ' dari ' + sourceFeatures.length.toLocaleString('id-ID') + ' fitur memiliki geometri yang dapat diekspor. SHP parsial dibatalkan.');
+      }
       var types = {};
       features.forEach(function (feature) {
         var type = feature.geometry.type;
@@ -1700,7 +1596,11 @@
       link.href = url; link.download = fileName + '.zip';
       document.body.appendChild(link); link.click(); link.remove();
       window.setTimeout(function () { URL.revokeObjectURL(url); }, 1200);
-      if (status) { status.style.color = '#047857'; status.textContent = features.length.toLocaleString('id-ID') + ' fitur diekspor ke ' + fileName + '.zip'; }
+      if (status) {
+        status.style.color = state.clipErrors ? '#b45309' : '#047857';
+        status.textContent = features.length.toLocaleString('id-ID') + ' fitur diekspor ke ' + fileName + '.zip'
+          + (state.clipErrors ? '; ' + state.clipErrors.toLocaleString('id-ID') + ' fitur gagal dipotong dan tidak disertakan.' : '');
+      }
     } catch (error) {
       if (status) { status.style.color = '#b91c1c'; status.textContent = 'Gagal export SHP: ' + (error && error.message || String(error)); }
     } finally {
@@ -2139,9 +2039,10 @@
     pageRequest
       .then(function (features) {
         var clipped = [];
+        var clipErrors = 0;
         features.forEach(function (f) {
           var gj = attrToGeoJSON(f);
-          if (!gj) return;
+          if (!gj) { if (!nationalMode) clipErrors++; return; }
           if (nationalMode) {
             clipped.push(gj);
             return;
@@ -2151,7 +2052,6 @@
           try {
             var intersection = clipFeatureToBoundary(gj, clipBoundary);
             if (intersection && intersection.geometry) {
-              if (isSliverClip(intersection, gj, clipBoundary)) return;
               var p = gj.properties || {};
               var m = measureClip(intersection);
               if (m.ha != null) p._area_ha = m.ha;
@@ -2162,10 +2062,14 @@
                 geometry: intersection.geometry
               });
             }
-          } catch (e) {}
+          } catch (e) {
+            clipErrors++;
+            console.warn('[Satupeta] Fitur gagal dipotong dan tidak masuk SHP:', (f.attributes || {}).OBJECTID || (f.attributes || {}).objectid, e);
+          }
         });
 
         state.clipped = clipped;
+        state.clipErrors = clipErrors;
         state.loading = false;
         syncSHPExportButton();
 
@@ -2442,7 +2346,6 @@
 
     loadKab();
     loadDesa();
-    loadProvGeo();
 
     var origOpenGeotani = window.openGeotaniAnalysisTab;
     window.openGeotaniAnalysisTab = function (tabId) {
@@ -2451,7 +2354,6 @@
         state.visible = true;
         loadKab();
         loadDesa();
-        loadProvGeo();
       }
     };
   }
