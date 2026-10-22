@@ -141,8 +141,7 @@ Penempatan memakai iterasi children panel, bukan selektor :scope, karena
     var wrap = document.createElement('div');
     wrap.className = 'lc-adsense sheet-adsense';
     wrap.setAttribute('aria-label', 'Iklan');
-    wrap.innerHTML = '<span class="lc-adsense-label">Iklan</span>' +
-      '<!-- Ruang Kita -->' +
+    wrap.innerHTML = '<!-- Ruang Kita -->' +
       '<ins class="adsbygoogle" style="display:block"' +
       ' data-ad-format="fluid"' +
       ' data-ad-layout-key="-fb+5w+4e-db+86"' +
@@ -167,7 +166,7 @@ Penempatan memakai iterasi children panel, bukan selektor :scope, karena
         dorongSekarang(ad);
         return;
       }
-    }, { rootMargin: '100px' });
+    }, { rootMargin: '0px' });
     io.observe(ad);
   }
 
@@ -179,7 +178,9 @@ Penempatan memakai iterasi children panel, bukan selektor :scope, karena
     try {
       window.adsbygoogle = window.adsbygoogle || [];
       window.adsbygoogle.push({});
-    } catch (e) { /* slot gagal diisi, biarkan */ }
+    } catch (e) {
+      if (window.console && console.warn) console.warn('[AdSense] Slot gagal dimuat:', e);
+    }
   }
 
   if (document.readyState === 'loading') {

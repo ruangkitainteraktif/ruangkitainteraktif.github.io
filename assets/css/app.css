@@ -3263,12 +3263,10 @@
        status unfilled akan menyembunyikan slot supaya tidak menyisakan
        ruang kosong ketika tidak ada iklan yang tersedia. */
     .lc-adsense { margin: 0 8px 6px; }
-    .lc-adsense.sheet-adsense { margin: 0 0 6px; }
+    .lc-adsense.sheet-adsense { width: 100%; min-width: 250px; box-sizing: border-box; margin: 0 0 6px; }
     .lc-adsense.at-search-adsense { margin: 0 0 10px; }
     .lc-adsense.geotools-inline-adsense { margin: 16px 0; }
     .lc-adsense.geodata-menu-adsense { margin: 16px 0; }
-    .lc-adsense-label { display: block; margin-bottom: 4px; color: #64748b; font-size: 10px; line-height: 1.3; }
-    .lc-adsense:has(.adsbygoogle[data-ad-status="unfilled"]) .lc-adsense-label { display: none; }
     /* Unit di sheet Draw & Ukur, Tabel Atribut, dan Legenda. Ketiganya
        ditambahkan sebagai anak terakhir badan sheet, sehingga margin bawaan
        .lc-adsense tidak berlaku dan padding disetel sendiri agar sejajar
@@ -3285,7 +3283,7 @@
        tombol: lihat addGeoPortalExportShpAd() di sheet-donation-ads.js. */
     .lc-adsense.satupeta-export-shp-adsense { margin: 4px 0 10px; }
     /* Format fluid menentukan tinggi slot mengikuti materi iklan. */
-    .lc-adsense .adsbygoogle { display: block; }
+    .lc-adsense .adsbygoogle { display: block; width: 100%; }
     .lc-adsense .adsbygoogle[data-ad-status="unfilled"] { display: none !important; }
     [data-theme="dark"] .lc-adsense .adsbygoogle { background: transparent; }
 

@@ -18,23 +18,27 @@
 
   var _statusTimer = null;
   var _cancelled = false;
+  var _clipPreviewLayer = null;
 
   function setStatus(msg, isError, autoHideMs) {
     var el = document.getElementById('persilTiffStatus');
+    var cardStatus = document.getElementById('persilStatus');
     if (_statusTimer) {
       clearTimeout(_statusTimer);
       _statusTimer = null;
     }
-    if (!el) return;
+    if (!el && !cardStatus) return;
     if (!msg) {
-      el.style.display = 'none';
-      el.textContent = '';
-      el.classList.remove('petadasar-tiff-status--error');
+      if (el) { el.style.display = 'none'; el.textContent = ''; el.classList.remove('petadasar-tiff-status--error'); }
+      if (cardStatus) { cardStatus.hidden = true; cardStatus.textContent = ''; }
       return;
     }
-    el.style.display = '';
-    el.textContent = msg;
-    el.classList.toggle('petadasar-tiff-status--error', !!isError);
+    if (el) {
+      el.style.display = '';
+      el.textContent = msg;
+      el.classList.toggle('petadasar-tiff-status--error', !!isError);
+    }
+    if (cardStatus) { cardStatus.hidden = false; cardStatus.textContent = msg; cardStatus.style.color = isError ? '#b91c1c' : '#52728a'; }
     if (autoHideMs) {
       _statusTimer = setTimeout(function () {
         _statusTimer = null;
@@ -45,9 +49,26 @@
 
   function setBusy(busy) {
     var btn = document.getElementById('persilTiffBtn');
-    if (!btn) return;
-    btn.disabled = busy;
-    btn.classList.toggle('petadasar-export-busy', busy);
+    var cardButton = document.getElementById('persilDownloadBtn');
+    var cancelButton = document.getElementById('persilCancelBtn');
+    if (cancelButton) cancelButton.hidden = !busy;
+    [btn, cardButton].forEach(function (button) {
+      if (!button) return;
+      button.disabled = busy;
+      button.classList.toggle('petadasar-export-busy', busy);
+    });
+  }
+
+  function setProgress(percent, message) {
+    var panel = document.getElementById('persilClipLoading');
+    var bar = document.getElementById('persilClipProgressBar');
+    var value = document.getElementById('persilClipPercent');
+    var label = document.getElementById('persilClipMessage');
+    var normalized = Math.max(0, Math.min(100, Math.round(Number(percent) || 0)));
+    if (panel) panel.style.display = 'block';
+    if (bar) bar.style.width = normalized + '%';
+    if (value) value.textContent = normalized + '%';
+    if (label && message) label.textContent = message;
   }
 
   function getWebMercatorBbox() {
@@ -57,6 +78,76 @@
     var sw = L.CRS.EPSG3857.project(b.getSouthWest());
     var ne = L.CRS.EPSG3857.project(b.getNorthEast());
     return { minX: sw.x, minY: sw.y, maxX: ne.x, maxY: ne.y };
+  }
+
+  function getVillageBbox(boundary) {
+    if (!boundary || !boundary.geometry) throw new Error('Pilih batas desa sebelum mengunduh GeoTIFF.');
+    var bounds = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+    function visit(value) {
+      if (!Array.isArray(value)) return;
+      if (value.length >= 2 && typeof value[0] === 'number' && typeof value[1] === 'number') {
+        var x = value[0] * HALF / 180;
+        var lat = Math.max(-85, Math.min(85, value[1]));
+        var y = 6378137 * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
+        bounds.minX = Math.min(bounds.minX, x); bounds.maxX = Math.max(bounds.maxX, x);
+        bounds.minY = Math.min(bounds.minY, y); bounds.maxY = Math.max(bounds.maxY, y);
+        return;
+      }
+      value.forEach(visit);
+    }
+    visit(boundary.geometry.coordinates);
+    if (![bounds.minX, bounds.minY, bounds.maxX, bounds.maxY].every(Number.isFinite) || bounds.minX >= bounds.maxX || bounds.minY >= bounds.maxY) {
+      throw new Error('Geometri batas desa tidak valid.');
+    }
+    return bounds;
+  }
+
+  function maskToBoundary(ctx, boundary, bbox, width, height) {
+    var geometry = boundary.geometry;
+    var resX = (bbox.maxX - bbox.minX) / width;
+    var resY = (bbox.maxY - bbox.minY) / height;
+    function ring(points) {
+      points.forEach(function (point, index) {
+        var x = (point[0] * HALF / 180 - bbox.minX) / resX;
+        var lat = Math.max(-85, Math.min(85, point[1]));
+        var yMerc = 6378137 * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
+        var y = (bbox.maxY - yMerc) / resY;
+        if (index) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+      });
+      ctx.closePath();
+    }
+    function polygon(rings) { rings.forEach(ring); }
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.beginPath();
+    if (geometry.type === 'Polygon') polygon(geometry.coordinates);
+    else if (geometry.type === 'MultiPolygon') geometry.coordinates.forEach(polygon);
+    else throw new Error('Geometri clip harus berupa poligon.');
+    ctx.fill('evenodd');
+    ctx.restore();
+  }
+
+  function resetClipPreview() {
+    if (_clipPreviewLayer && window.map && window.map.hasLayer(_clipPreviewLayer)) window.map.removeLayer(_clipPreviewLayer);
+    _clipPreviewLayer = null;
+    var button = document.getElementById('persilResetClipBtn');
+    if (button) button.hidden = true;
+  }
+
+  function showClipPreview(canvas, bbox, boundary) {
+    if (!window.map || !L || !L.imageOverlay || !L.CRS || !L.CRS.EPSG3857) return;
+    resetClipPreview();
+    var southWest = L.CRS.EPSG3857.unproject(L.point(bbox.minX, bbox.minY));
+    var northEast = L.CRS.EPSG3857.unproject(L.point(bbox.maxX, bbox.maxY));
+    var imageUrl = canvas.toDataURL('image/png');
+    _clipPreviewLayer = L.imageOverlay(imageUrl, [southWest, northEast], { opacity: 1, interactive: false, zIndex: 900 }).addTo(window.map);
+    var button = document.getElementById('persilResetClipBtn');
+    if (button) button.hidden = false;
+    var bounds = L.latLngBounds(southWest, northEast);
+    window.map.fitBounds(bounds, { padding: [24, 24], maxZoom: Number(window.map.getMaxZoom && window.map.getMaxZoom()) || 18 });
+    if (boundary && boundary.properties && boundary.properties.nama) {
+      setStatus('Hasil clip ' + boundary.properties.nama + ' ditampilkan di peta. GeoTIFF juga sudah diunduh.');
+    }
   }
 
   function tileUrl(tx, ty, z) {
@@ -159,6 +250,14 @@
 
   function bindVisibility() {
     syncExportVisibility();
+    var resetButton = document.getElementById('persilResetClipBtn');
+    if (resetButton && !resetButton._persilResetBound) {
+      resetButton._persilResetBound = true;
+      resetButton.addEventListener('click', function () {
+        resetClipPreview();
+        setStatus('Overlay hasil clip dihapus dari peta.');
+      });
+    }
     if (syncExportVisibility._bound) return;
     syncExportVisibility._bound = true;
     // Pantau toggle layer lewat checkbox katalog + interval ringan (layer bisa
@@ -172,7 +271,8 @@
     setInterval(syncExportVisibility, 800);
   }
 
-  async function exportPersilGeoTiff() {
+  async function exportPersilGeoTiff(options) {
+    options = options || {};
     if (typeof window.GeoTIFF === 'undefined' || typeof window.GeoTIFF.writeArrayBuffer !== 'function') {
       setStatus('Library geotiff.js belum termuat. Muat ulang halaman.', true, 8000);
       return;
@@ -181,12 +281,12 @@
       setStatus('Peta tidak siap.', true, 8000);
       return;
     }
-    if (!isPersilActive()) {
+    if (!options.boundary && !isPersilActive()) {
       setStatus('Aktifkan dulu layer Persil Nasional (BHUMI).', true, 8000);
       return;
     }
 
-    var zoom = window.map.getZoom();
+    var zoom = Number(options.zoom) || window.map.getZoom();
     if (zoom < MIN_ZOOM) {
       setStatus('Zoom minimal ' + MIN_ZOOM + ' untuk export persil.', true, 8000);
       return;
@@ -201,9 +301,10 @@
 
     _cancelled = false;
     setBusy(true);
+    setProgress(1, options.boundary ? 'Menyiapkan batas desa...' : 'Menyiapkan area peta...');
 
     try {
-      var bbox = getWebMercatorBbox();
+      var bbox = options.boundary ? getVillageBbox(options.boundary) : getWebMercatorBbox();
       var span = (HALF * 2) / Math.pow(2, zoom - 1);
       var eps = span / 1e6;
       var tx0 = Math.floor((bbox.minX + HALF) / span + eps);
@@ -226,6 +327,7 @@
       if (!ctx) throw new Error('Canvas 2D tidak tersedia.');
 
       setStatus('Mengunduh ' + nTiles + ' tile persil (zoom ' + zoom + ')…');
+      setProgress(5, 'Mengunduh tile raster (0/' + nTiles + ')...');
       var done = 0;
       var failed = [];
       var queue = [];
@@ -247,13 +349,15 @@
           }
           done++;
           setStatus('Mengunduh tile ' + done + '/' + nTiles + '…');
+          setProgress(5 + Math.round(done / nTiles * 70), 'Mengunduh tile raster (' + done + '/' + nTiles + ')...');
         }
       }
       await Promise.all(Array.from({ length: workers }, worker));
-      if (_cancelled) { setStatus('Dibatalkan.', true, 4000); return; }
+      if (_cancelled) { setProgress(0, 'Proses clip dibatalkan.'); setStatus('Dibatalkan.', true, 4000); return; }
       if (failed.length === nTiles) {
         throw new Error('Semua tile gagal. Coba lagi atau perbesar zoom.');
       }
+      setProgress(78, 'Menyusun raster hasil unduhan...');
 
       // Crop mozaik ke extent viewport yang presisi
       var sx = (bbox.minX - originX) / span * TILE;
@@ -275,14 +379,20 @@
       octx.fillStyle = '#ffffff';
       octx.fillRect(0, 0, outW, outH);
       octx.drawImage(canvas, sx, sy, sw, sh, 0, 0, outW, outH);
+      if (options.boundary) {
+        setProgress(84, 'Memotong raster mengikuti batas desa...');
+        maskToBoundary(octx, options.boundary, bbox, outW, outH);
+      }
 
       setStatus('Encode GeoTIFF…');
+      setProgress(90, 'Menyusun file GeoTIFF...');
       var rgba = octx.getImageData(0, 0, outW, outH).data;
-      var rgb = new Uint8Array(outW * outH * 3);
-      for (var i = 0, j = 0; i < rgba.length; i += 4, j += 3) {
+      var rgb = new Uint8Array(outW * outH * 4);
+      for (var i = 0, j = 0; i < rgba.length; i += 4, j += 4) {
         rgb[j] = rgba[i];
         rgb[j + 1] = rgba[i + 1];
         rgb[j + 2] = rgba[i + 2];
+        rgb[j + 3] = rgba[i + 3];
       }
 
       var resX = (bbox.maxX - bbox.minX) / outW;
@@ -290,10 +400,11 @@
       var metadata = {
         width: outW,
         height: outH,
-        SamplesPerPixel: [3],
-        BitsPerSample: [8, 8, 8],
+        SamplesPerPixel: [4],
+        BitsPerSample: [8, 8, 8, 8],
         PhotometricInterpretation: 2,
         PlanarConfiguration: 1,
+        ExtraSamples: [2],
         Compression: 1,
         ModelPixelScale: [resX, resY, 0],
         ModelTiepoint: [0, 0, 0, bbox.minX, bbox.maxY, 0],
@@ -302,13 +413,19 @@
         ProjectedCSTypeGeoKey: 3857
       };
 
+      setProgress(96, 'Menulis georeferensi EPSG:3857...');
       var buffer = await window.GeoTIFF.writeArrayBuffer(rgb, metadata);
-      var name = buildFilename(zoom, outW, outH);
+      var name = options.boundary && options.boundary.properties && options.boundary.properties.kode
+        ? 'persil-' + String(options.boundary.properties.kode).replace(/[^0-9A-Za-z.-]/g, '-') + '-' + buildFilename(zoom, outW, outH).replace(/^persil-nasional-/, '')
+        : buildFilename(zoom, outW, outH);
       downloadArrayBuffer(buffer, name);
+      if (options.boundary) showClipPreview(outCanvas, bbox, options.boundary);
+      setProgress(100, options.boundary ? 'Selesai. Hasil clip sudah ditampilkan di peta dan GeoTIFF diunduh.' : 'GeoTIFF selesai diunduh.');
       var note = failed.length ? ' (' + failed.length + ' tile kosong/gagal, diganti putih)' : '';
-      setStatus('Berhasil: ' + name + ' (' + outW + '×' + outH + ' m/piksel ' + resX.toFixed(2) + ', EPSG:3857)' + note + '.', false, 5000);
+      setStatus('Berhasil: ' + name + ' (' + outW + '×' + outH + ' px, ' + resX.toFixed(2) + ' m/piksel, EPSG:3857)' + note + '.', false, 5000);
     } catch (err) {
       console.error('[persil-geotiff-export]', err);
+      setProgress(0, 'Proses gagal: ' + (err && err.message ? err.message : err));
       setStatus('Gagal export: ' + (err && err.message ? err.message : err), true, 8000);
     } finally {
       setBusy(false);
@@ -316,6 +433,7 @@
   }
 
   window.exportPersilGeoTiff = exportPersilGeoTiff;
+  window.resetPersilGeoTiffPreview = resetClipPreview;
   window.cancelPersilGeoTiff = function () { _cancelled = true; };
   window.syncPersilTiffExportVisibility = syncExportVisibility;
 

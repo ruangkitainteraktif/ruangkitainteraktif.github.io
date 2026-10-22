@@ -1334,7 +1334,19 @@
   window.DemnasDownload = {
     load: load,
     download: downloadDemnasResmi,
-    clear: resetDemnasSelection
+    clear: resetDemnasSelection,
+    loadVillages: function () {
+      return loadAdminData().then(function (entries) {
+        return entries.filter(function (item) { return String(item.kode).split('.').length === 4; });
+      });
+    },
+    loadVillageBoundary: function (code) {
+      return loadAdminData().then(function () {
+        var entry = _adminByCode[String(code || '')];
+        if (!entry || String(entry.kode).split('.').length !== 4) throw new Error('Pilih batas desa yang valid.');
+        return loadBoundary({ nama: entry.nama, kode: entry.kode, level: '4' });
+      });
+    }
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

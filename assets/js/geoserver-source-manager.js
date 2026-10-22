@@ -626,7 +626,7 @@ setStatus(message || 'Tidak ada layer yang berhasil diekspor.', errors.length > 
   var PERSIL_MAX_TILES = 600;
   var PERSIL_MAX_DIM = 16384;
   var PERSIL_WKT_3857 = 'PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],CONVERSION["Popular Visualisation Pseudo-Mercator",METHOD["Popular Visualisation Pseudo Mercator",AUTHORITY["EPSG","9804"]],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],LENGTHUNIT["metre",1]],CS[Cartesian,2],AXIS["easting",east],AXIS["northing",north],UNIT["metre",1],AUTHORITY["EPSG","3857"]]';
-  var persilState = { run: 0, busy: false, lastPngUrl: null };
+  var persilState = { run: 0, busy: false, lastPngUrl: null, villageBoundary: null, villages: [] };
 
   function persilStatus(message, error) {
     var status = el('persilStatus');
@@ -728,26 +728,25 @@ setStatus(message || 'Tidak ada layer yang berhasil diekspor.', errors.length > 
   }
   function persilLonToX(lon) { return lon * 20037508.342789244 / 180; }
   function persilLatToY(lat) { return 6378137 * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)); }
-  function persilResolveBounds(text) {
-    text = String(text || '').trim();
-    if (text) {
-      var parts = text.split(',').map(function (part) { return Number(part.trim()); });
-      if (parts.length !== 4 || parts.some(function (n) { return !Number.isFinite(n); })) {
-        throw new Error('Format wilayah tidak valid. Tulis: barat,selatan,timur,utara (contoh 106.70,-6.30,106.85,-6.20).');
-      }
-      var west = parts[0], south = parts[1], east = parts[2], north = parts[3];
-      if (west < -180 || east > 180 || west >= east || south < -85 || north > 85 || south >= north) {
-        throw new Error('Rentang wilayah di luar batas (gunakan lon −180…180, lat −85…85, dan pastikan barat < timur, selatan < utara).');
-      }
-      return { x0: persilLonToX(west), y0: persilLatToY(south), x1: persilLonToX(east), y1: persilLatToY(north), label: 'wilayah masukan' };
+  function persilCoordinateBounds(value, bounds) {
+    if (!Array.isArray(value)) return;
+    if (value.length >= 2 && typeof value[0] === 'number' && typeof value[1] === 'number') {
+      var x = persilLonToX(value[0]), y = persilLatToY(Math.max(-85, Math.min(85, value[1])));
+      bounds.x0 = Math.min(bounds.x0, x); bounds.x1 = Math.max(bounds.x1, x);
+      bounds.y0 = Math.min(bounds.y0, y); bounds.y1 = Math.max(bounds.y1, y);
+      return;
     }
-    var map = window.map || window._map;
-    if (!map || typeof map.getBounds !== 'function') {
-      throw new Error('Tampilan peta belum siap. Geser peta ke wilayah yang ingin diunduh, atau isi kolom wilayah manual.');
+    value.forEach(function (item) { persilCoordinateBounds(item, bounds); });
+  }
+  function persilVillageBounds(boundary) {
+    if (!boundary || !boundary.geometry) throw new Error('Pilih batas desa sebelum mengunduh persil.');
+    var bounds = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+    persilCoordinateBounds(boundary.geometry.coordinates, bounds);
+    if (![bounds.x0, bounds.y0, bounds.x1, bounds.y1].every(Number.isFinite) || bounds.x0 >= bounds.x1 || bounds.y0 >= bounds.y1) {
+      throw new Error('Geometri batas desa tidak valid. Pilih desa lain.');
     }
-    var bounds = map.getBounds();
-    var sw = bounds.getSouthWest(), ne = bounds.getNorthEast();
-    return { x0: persilLonToX(sw.lng), y0: persilLatToY(sw.lat), x1: persilLonToX(ne.lng), y1: persilLatToY(ne.lat), label: 'tampilan peta' };
+    bounds.label = boundary.properties && boundary.properties.nama || 'batas desa';
+    return bounds;
   }
   function persilPlan(bounds, span) {
     if (!Number.isFinite(span) || span < 250 || span > 4000) span = 2000;
@@ -788,8 +787,8 @@ setStatus(message || 'Tidak ada layer yang berhasil diekspor.', errors.length > 
         return response.arrayBuffer().then(function (buffer) {
           var bytes = new Uint8Array(buffer);
           if (response.ok && persilIsPng(bytes)) return bytes;
-          var detail = response.ok ? new TextDecoder().decode(bytes.slice(0, 160)) : ('HTTP ' + response.status);
-          var error = new Error('Respons server bukan PNG (' + detail.trim() + ').');
+          var detail = new TextDecoder().decode(bytes.slice(0, 500)).replace(/\\s+/g, ' ').trim();
+          var error = new Error('Respons server bukan PNG (HTTP ' + response.status + (detail ? ': ' + detail : '') + ').');
           error.persilBadResponse = true;
           throw error;
         });
@@ -805,7 +804,8 @@ setStatus(message || 'Tidak ada layer yang berhasil diekspor.', errors.length > 
       .finally(cleanup);
   }
   function persilFetchTile(bboxText, filter, parentSignal) {
-    var url = PERSIL_WMS + '?layer=Persil&filter=' + encodeURIComponent(filter) + '&BBOX=' + bboxText;
+    var params = new URLSearchParams({ layer: 'Persil', filter: filter, BBOX: bboxText });
+    var url = PERSIL_WMS + '?' + params.toString();
     var proxied = PROXY_PREFIX + encodeURIComponent(url);
     return persilFetchOnce(proxied, parentSignal, 45000).catch(function (firstError) {
       if (firstError && firstError.name === 'AbortError') throw firstError;
@@ -814,6 +814,28 @@ setStatus(message || 'Tidak ada layer yang berhasil diekspor.', errors.length > 
         return persilFetchOnce(proxied, parentSignal, 45000);
       });
     });
+  }
+  function persilMaskToVillage(context, boundary, bounds, plan) {
+    var geometry = boundary && boundary.geometry;
+    if (!geometry) throw new Error('Geometri batas desa tidak tersedia.');
+    function drawRing(ring) {
+      if (!Array.isArray(ring) || !ring.length) return;
+      ring.forEach(function (point, index) {
+        var x = (persilLonToX(point[0]) - bounds.x0) / plan.res;
+        var y = (bounds.y1 - persilLatToY(Math.max(-85, Math.min(85, point[1])))) / plan.res;
+        if (!index) context.moveTo(x, y); else context.lineTo(x, y);
+      });
+      context.closePath();
+    }
+    function drawPolygon(rings) { (rings || []).forEach(drawRing); }
+    context.save();
+    context.globalCompositeOperation = 'destination-in';
+    context.beginPath();
+    if (geometry.type === 'Polygon') drawPolygon(geometry.coordinates);
+    else if (geometry.type === 'MultiPolygon') geometry.coordinates.forEach(drawPolygon);
+    else throw new Error('Jenis geometri batas desa tidak didukung.');
+    context.fill('evenodd');
+    context.restore();
   }
   var persilCrcTable = (function () {
     var table = new Uint32Array(256);
@@ -920,8 +942,8 @@ setStatus(message || 'Tidak ada layer yang berhasil diekspor.', errors.length > 
     try {
       var spanInput = el('persilPrecision');
       var span = Number(opts.span) || Number(spanInput && spanInput.value) || 2000;
-      var bboxText = opts.bbox != null ? opts.bbox : (el('persilBboxInput') ? el('persilBboxInput').value : '');
-      var bounds = persilResolveBounds(bboxText);
+      var boundary = opts.boundary || persilState.villageBoundary;
+      var bounds = persilVillageBounds(boundary);
       var plan = persilPlan(bounds, span);
       persilStatus('Menyiapkan filter enkripsi…');
       var filter = await persilEncryptFilter('%');
@@ -961,7 +983,9 @@ setStatus(message || 'Tidak ada layer yang berhasil diekspor.', errors.length > 
       var outCanvas = document.createElement('canvas');
       outCanvas.width = plan.outW;
       outCanvas.height = plan.outH;
-      outCanvas.getContext('2d').drawImage(fullCanvas, 0, 0, plan.outW, plan.outH, 0, 0, plan.outW, plan.outH);
+      var outContext = outCanvas.getContext('2d');
+      outContext.drawImage(fullCanvas, 0, 0, plan.outW, plan.outH, 0, 0, plan.outW, plan.outH);
+      persilMaskToVillage(outContext, boundary, bounds, plan);
       var pngBlob = await new Promise(function (resolve) { outCanvas.toBlob(resolve, 'image/png'); });
       if (!pngBlob) throw new Error('Gagal membuat PNG hasil unduhan.');
       var opaque = null;
@@ -982,7 +1006,7 @@ setStatus(message || 'Tidak ada layer yang berhasil diekspor.', errors.length > 
         res: plan.res, pngBytes: pngBytes.length, zipBytes: zipBlob.size, opaque: opaque
       };
       persilShowPreview(pngBlob);
-      if (opts.download !== false) persilSaveBlob(zipBlob, 'persil-nasional-' + persilTimestamp() + '.zip');
+      if (opts.download !== false) persilSaveBlob(zipBlob, 'persil-' + String(boundary.properties && boundary.properties.kode || 'desa') + '-' + persilTimestamp() + '.zip');
       persilStatus('Selesai: ' + plan.outW + '×' + plan.outH + ' px dari ' + total + ' tile (' + Math.round(zipBlob.size / 1024).toLocaleString('id-ID') + ' KB ZIP' + (opaque != null && opaque === 0 ? ' — tidak ada pixel persil terdeteksi di wilayah ini' : '') + ').');
       return stats;
     } finally {
@@ -1019,9 +1043,105 @@ setStatus(message || 'Tidak ada layer yang berhasil diekspor.', errors.length > 
     var exportButton = el('geoserverExportBtn');
     if (exportButton) exportButton.addEventListener('click', exportSelectedWithLogin);
     var persilButton = el('persilDownloadBtn');
-    if (persilButton) persilButton.addEventListener('click', persilDownloadGated);
+    if (persilButton) persilButton.addEventListener('click', function () {
+      if (!persilState.villageBoundary) {
+        persilStatus('Pilih batas desa sebelum mengunduh GeoTIFF.', true);
+        return;
+      }
+      var span = Number(el('persilPrecision') && el('persilPrecision').value) || 2000;
+      var zoom = Math.round(1 + Math.log((2 * 20037508.342789244) / span) / Math.LN2);
+      if (typeof window.exportPersilGeoTiff !== 'function') {
+        persilStatus('Modul GeoTIFF belum siap. Muat ulang halaman.', true);
+        return;
+      }
+      window.exportPersilGeoTiff({ boundary: persilState.villageBoundary, zoom: zoom });
+    });
     var persilCancelButton = el('persilCancelBtn');
-    if (persilCancelButton) persilCancelButton.addEventListener('click', persilCancelRun);
+    if (persilCancelButton) persilCancelButton.addEventListener('click', function () {
+      if (typeof window.cancelPersilGeoTiff === 'function') window.cancelPersilGeoTiff();
+    });
+    var villageSearch = el('persilVillageSearch');
+    var villageResults = el('persilVillageResults');
+    var villageCount = el('persilVillageCount');
+    var villageSelectionRun = 0;
+    function renderPersilVillages() {
+      if (!villageResults) return;
+      var query = String(villageSearch && villageSearch.value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('id-ID').trim();
+      if (!query || persilState.villageBoundary) {
+        villageResults.style.display = 'none';
+        villageResults.replaceChildren();
+        return;
+      }
+      var matches = persilState.villages.filter(function (item) {
+        return !query || (item.nama + ' ' + item.kode).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('id-ID').indexOf(query) !== -1;
+      });
+      matches.sort(function (a, b) { return a.nama.localeCompare(b.nama, 'id-ID'); });
+      var visible = matches.slice(0, 30);
+      villageResults.replaceChildren();
+      visible.forEach(function (item) {
+        var option = document.createElement('button');
+        option.type = 'button';
+        option.setAttribute('role', 'option');
+        option.style.cssText = 'display:block;width:100%;padding:8px 10px;border:0;border-bottom:1px solid #e5edf3;background:#fff;text-align:left;color:#334155;font:inherit;font-size:11px;cursor:pointer;';
+        option.textContent = item.nama + ' [' + item.kode + ']';
+        option.addEventListener('mouseenter', function () { this.style.background = '#f1f5f9'; });
+        option.addEventListener('mouseleave', function () { this.style.background = '#fff'; });
+        option.addEventListener('click', function () { selectPersilVillage(item); });
+        villageResults.appendChild(option);
+      });
+      villageResults.style.display = visible.length ? 'block' : 'none';
+      if (villageCount) villageCount.textContent = matches.length
+        ? matches.length.toLocaleString('id-ID') + ' desa cocok' + (matches.length > visible.length ? ' (30 hasil pertama)' : '')
+        : 'Desa tidak ditemukan.';
+    }
+    function selectPersilVillage(item) {
+      if (!item || !villageSearch) return;
+      var selectionRun = ++villageSelectionRun;
+      persilState.villageBoundary = null;
+      villageSearch.value = item.nama + ' [' + item.kode + ']';
+      villageResults.style.display = 'none';
+      villageResults.replaceChildren();
+      if (villageCount) villageCount.textContent = 'Memuat geometri batas desa...';
+      window.DemnasDownload.loadVillageBoundary(item.kode).then(function (boundary) {
+        if (selectionRun !== villageSelectionRun) return;
+        persilState.villageBoundary = boundary;
+        if (villageCount) villageCount.textContent = (boundary.properties.nama || item.nama) + ' siap untuk clip.';
+      }).catch(function (error) {
+        if (selectionRun !== villageSelectionRun) return;
+        if (villageCount) villageCount.textContent = 'Gagal memuat batas desa: ' + (error.message || String(error));
+      });
+    }
+    function loadPersilVillageList() {
+      if (!villageResults || persilState.villages.length || persilState.villagesLoading) return;
+      persilState.villagesLoading = true;
+      if (villageCount) villageCount.textContent = 'Memuat daftar desa...';
+      if (!window.DemnasDownload || typeof window.DemnasDownload.loadVillages !== 'function') {
+        persilState.villagesLoading = false;
+        if (villageCount) villageCount.textContent = 'Data batas desa belum siap. Muat ulang halaman.';
+        return;
+      }
+      window.DemnasDownload.loadVillages().then(function (items) {
+        persilState.villages = items;
+        renderPersilVillages();
+      }).catch(function (error) {
+        if (villageCount) villageCount.textContent = 'Gagal memuat batas desa: ' + (error.message || String(error));
+      }).finally(function () { persilState.villagesLoading = false; });
+    }
+    if (villageSearch) villageSearch.addEventListener('focus', loadPersilVillageList);
+    if (villageSearch) villageSearch.addEventListener('input', function () {
+      villageSelectionRun++;
+      if (persilState.villageBoundary) persilState.villageBoundary = null;
+      loadPersilVillageList();
+      renderPersilVillages();
+    });
+    if (villageSearch) villageSearch.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && villageResults) villageResults.style.display = 'none';
+    });
+    document.addEventListener('click', function (event) {
+      if (villageResults && villageSearch && !event.target.closest('#persilVillageSearch') && !event.target.closest('#persilVillageResults')) {
+        villageResults.style.display = 'none';
+      }
+    });
     window.RKDownloadPersil = persilRun;
     if (tree) tree.addEventListener('change', function (event) {
       var input = event.target.closest('input[data-geoserver-layer]');
