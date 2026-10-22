@@ -2205,13 +2205,16 @@ const SAWAH_COLOR = '#87cf15';
   };
 
   /* ── Identifikasi persil saat klik (BHUMI /expapi/getPersil) ──
-   * Saat layer Persil Nasional menyala, setiap klik peta mengirim query
-   * titik (bbox viewport + posisi piksel klik, format identik dengan app
-   * BHUMI) ke getPersil lewat kta-cors-proxy -- worker menyuntikkan
-   * Referer/Origin BHUMI dan meneruskan Authorization, karena server
-   * menolak origin lain. Login memakai akun publik yang hardcoded di app
-   * BHUMI; JWT di-cache ~50 menit. Respons berupa AES-OpenSSL (passphrase
-   * sama dengan enkripsi di app BHUMI) didekripsi langsung di browser. */
+    * Saat layer Persil Nasional menyala, setiap klik peta mengirim query
+    * titik (bbox viewport + posisi piksel klik, format identik dengan app
+    * BHUMI) ke getPersil lewat kta-cors-proxy -- worker menyuntikkan
+    * Referer/Origin BHUMI dan meneruskan Authorization + x-timestamp/
+    * x-signature, karena server menolak origin lain dan menuntut tanda
+    * tangan request (sejak 2026-10-22; tanpanya balasannya 401
+    * "Missing request signature"). Login memakai akun publik yang
+    * hardcoded di app BHUMI; JWT di-cache ~50 menit. Respons berupa
+    * AES-OpenSSL (passphrase sama dengan enkripsi di app BHUMI)
+    * didekripsi langsung di browser. Query klik hanya Persil + ZNT. */
   var bhumiPersilToken = { value: null, expiresAt: 0, pending: null };
   var bhumiPersilHighlight = null;
   var bhumiPersilPopup = null;
@@ -2228,12 +2231,32 @@ const SAWAH_COLOR = '#87cf15';
     }
   }
 
+  /* Rahasia tanda tangan /expapi — sama dengan yang dipakai app resmi
+     BHUMI (chunk 8815, fungsi s()): SHA256(timestamp + ":" + rahasia).
+     Didekode dari blob XOR di bundle resmi pada 2026-10-22. */
+  var BHUMI_PERSIL_SIGN_SECRET = 'Bhum1@TrBpn!2026#AntiScrape';
+
+  function bhumiPersilSignedHeaders() {
+    var ts = Date.now().toString();
+    return crypto.subtle.digest('SHA-256',
+      new TextEncoder().encode(ts + ':' + BHUMI_PERSIL_SIGN_SECRET))
+      .then(function (buf) {
+        var bytes = new Uint8Array(buf), hex = '';
+        for (var i = 0; i < bytes.length; i++) hex += ('0' + bytes[i].toString(16)).slice(-2);
+        return { 'x-timestamp': ts, 'x-signature': hex };
+      });
+  }
+
   function bhumiPersilProxyPost(pathname, payload, token) {
     var url = BHUMI_PERSIL_NASIONAL_PROXY +
       encodeURIComponent('https://bhumi.atrbpn.go.id' + pathname);
-    var headers = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = token;
-    return fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(payload) });
+    return bhumiPersilSignedHeaders().then(function (sig) {
+      var headers = { 'Content-Type': 'application/json' };
+      headers['x-timestamp'] = sig['x-timestamp'];
+      headers['x-signature'] = sig['x-signature'];
+      if (token) headers['Authorization'] = token;
+      return fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(payload) });
+    });
   }
 
   function bhumiPersilGetToken() {
@@ -2259,9 +2282,9 @@ const SAWAH_COLOR = '#87cf15';
   }
 
   /* BHUMI-CRYPTO-START -- MD5 + OpenSSL EVP_BytesToKey (AES-256-CBC).
-     Passphrase mengikuti bundle resmi app BHUMI (chunk 8815, dibobok
-     lewat String.fromCharCode XOR); terakhir diperbarui 2026-10-21 saat
-     BHUMI merotasi kunci. */
+     Passphrase mengikuti bundle resmi app BHUMI (chunk 8815, fungsi n(),
+     dibobok lewat String.fromCharCode XOR); rotasi kunci terakhir
+     2026-10-22 — sebelumnya S3cretATRXBUMI. */
   function bhumiMd5Bytes(bytes) {
     function add32(a, b) { return (a + b) & 0xFFFFFFFF; }
     function rol(n, c) { return (n << c) | (n >>> (32 - c)); }
@@ -2320,7 +2343,7 @@ const SAWAH_COLOR = '#87cf15';
       if (bin.length < 17 || bin.slice(0, 8) !== 'Salted__') return Promise.resolve(null);
       var raw = new Uint8Array(bin.length);
       for (var i = 0; i < bin.length; i++) raw[i] = bin.charCodeAt(i);
-      var pass = 'S3cretATRXBUMI';
+      var pass = 'K9#mQ8!wL5*zY4@tN7&eX1^bJ3(c';
       var prev = new Uint8Array(0), out = new Uint8Array(0);
       while (out.length < 48) {
         var input = new Uint8Array(prev.length + pass.length + 8);
@@ -2558,34 +2581,28 @@ const SAWAH_COLOR = '#87cf15';
       url: '/expapi/getPersil',
       service: '/bhumigs/umum'
     };
-    // Toponim berupa data titik: piksel wajib kasar agar "radius klik"
-    // mencakup ratusan meter di sekitar titik (kisi 20x20).
-    var grid = 20;
-    var payloadTopo = Object.assign({}, payload, {
-      width: grid,
-      height: grid,
-      x: Math.max(0, Math.min(grid - 1, Math.round(pt.x / (size.x || 1) * grid))),
-      y: Math.max(0, Math.min(grid - 1, Math.round(pt.y / (size.y || 1) * grid)))
-    });
     bhumiPersilOpenPopup(e.latlng, bhumiPersilStatusCard('Data Pertanahan',
-      'Mencari data persil & layer terpilih\u2026'));
+      'Mencari data persil & ZNT\u2026'));
     var settled = function (p) {
       return p.then(function (fc) { return { ok: true, fc: fc }; },
-        function () { return { ok: false }; });
+        function (err) { return { ok: false, err: (err && err.message) || '' }; });
     };
-    var queryLayers = ['umum:Persil'].concat(bhumiIdentifyActiveLayers());
+    /* Permintaan 2026-10-22: hasil identifikasi hanya Persil + Zona Nilai
+       Tanah, apa pun pilihan layer tematik di katalog. */
+    var queryLayers = ['umum:Persil', 'umum:ZNTRANGE'];
     Promise.all(queryLayers.map(function (layer) {
-      /* Persil/ZNT/nbt3 adalah data padat: pakai piksel klik yang presisi.
-         Layer tematik lain (toponim, lokasi PTSL, dll.) memakai kisi kasar
-         20x20 agar fitur langka di sekitar titik tetap terjangkau. */
-      var exact = layer === 'umum:Persil' || layer === 'umum:ZNTRANGE' || layer === 'umum:nbt3';
-      return settled(bhumiPersilQueryLayer(layer, exact ? payload : payloadTopo));
+      /* Persil/ZNT adalah data padat: pakai piksel klik yang presisi. */
+      return settled(bhumiPersilQueryLayer(layer, payload));
     }))
       .then(function (res) {
         if (seq !== bhumiPersilClickSeq) return;
         if (!res.some(function (r) { return r.ok; })) {
-          bhumiPersilOpenPopup(e.latlng, bhumiPersilStatusCard('Gagal Memuat',
-            'Gagal mengambil data pertanahan. Coba lagi.'));
+          var authFail = res.length > 0 && res.every(function (r) { return r.err === 'token tidak tersedia'; });
+          bhumiPersilOpenPopup(e.latlng, bhumiPersilStatusCard(
+            authFail ? 'Login BHUMI Ditolak' : 'Gagal Memuat',
+            authFail
+              ? 'Server BHUMI sedang menolak login (gangguan di sisi mereka), jadi data persil/ZNT belum bisa diambil. Coba lagi nanti.'
+              : 'Gagal mengambil data pertanahan. Coba lagi.'));
           return;
         }
         bhumiPersilRenderResult(e.latlng, queryLayers, res);

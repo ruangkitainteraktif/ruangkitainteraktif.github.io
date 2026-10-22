@@ -618,7 +618,10 @@ setStatus(message || 'Tidak ada layer yang berhasil diekspor.', errors.length > 
      AES-256-CBC gaya OpenSSL (Salted__) — nilai '%' = semua persil dalam
      BBOX. Rentang permintaan dijaga ≤4 km (≥8 km memicu 500 upstream). */
   var PERSIL_WMS = 'https://bhumi.atrbpn.go.id/expapi/umum/wms';
-  var PERSIL_PASS = 'S3cretATRXBUMI';
+  // Passphrase AES filter; dirotasi BHUMI 2026-10-22 (chunk 8815, fungsi
+  // n()). Nilai lama S3cretATRXBUMI kini membuat server membalas 400
+  // "Missing layer or filter parameter" karena filter tidak bisa dibuka.
+  var PERSIL_PASS = 'K9#mQ8!wL5*zY4@tN7&eX1^bJ3(c';
   var PERSIL_TILE = 512;
   var PERSIL_MAX_TILES = 600;
   var PERSIL_MAX_DIM = 16384;

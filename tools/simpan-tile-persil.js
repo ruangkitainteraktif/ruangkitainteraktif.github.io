@@ -8,13 +8,16 @@
  *          (Sel grid ini = slippy 256 pada zoom z-1. CATATAN: zoom site z13
  *          (span 9784 m) saat ini gagal di server — 500 "internal error" —
  *          tile gagal dicatat di gagal.txt, tidak menghentikan unduhan.)
- * Hasil  : <out>\{z}\{x}\{y}.png  (tile berisi)
+ * Hasil  : <out>\{z}\{x}\{y}.png  (tile berisi) — atau langsung ke MBTiles
+ *          dengan --mbtiles (tanpa pohon folder; zoom_level = z-1, baris TMS
+ *          dibalik — lihat buat-mbtiles.js; resume via tabel tiles)
  *          <out>\kosong.txt        (z/x/y tanpa isi — sengaja tidak disimpan)
  *          <out>\gagal.txt         (z/x/y + alasan — ulangi berjalan untuk memuat ulang)
  *          <out>\manifest.json     (cakupan, jumlah, sumber)
  *
  * Pakai  : node tools/simpan-tile-persil.js --bbox 106.75,-6.25,106.85,-6.15 --z 13-14
- *          opsi: --out "D:\TILE PERSIL"  --conc 4  --retry 2  --yes  --force  --help
+ *          opsi: --out "D:\TILE PERSIL"  --mbtiles [file]  --conc 4  --retry 2
+ *                --yes  --force  --help
  *
  * Contoh resep:
  *   Nasional ringkas (garis besar) : --bbox 94.6,-11.1,141.1,6.4 --z "10-12"
@@ -30,6 +33,7 @@
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
+const { DatabaseSync } = require('node:sqlite');
 
 const HALF = 20037508.342789244;
 const WORLD = HALF * 2;
@@ -42,22 +46,25 @@ Unduh tile persil BHUMI ke folder lokal (piramida {z}/{x}/{y}.png, grid Leaflet 
 Wajib : --bbox "W,S,E,N"   cakupan geografis (contoh: 106.3,-6.6,107.1,-5.9)
        --z "A-B" atau "10-12,14,16-17"   daftar zoom (grid site; z13 bermasalah)
 
-Opsi  : --out   folder tujuan   (default: D:\\TILE PERSIL)
-       --conc  pekerja paralel (default: 4)
-       --retry percobaan ulang per tile (default: 2)
-       --yes   lewati konfirmasi
-       --force unduh ulang meski file sudah ada
-       --help  bantuan ini
+Opsi  : --out     folder tujuan   (default: D:\\TILE PERSIL)
+       --mbtiles [file]  simpan langsung ke MBTiles, tanpa pohon folder
+                 (default file: <out>\\tiles.mbtiles; resume lewat tabel tiles)
+       --conc    pekerja paralel (default: 4)
+       --retry   percobaan ulang per tile (default: 2)
+       --yes     lewati konfirmasi
+       --force   unduh ulang meski tile sudah ada
+       --help    bantuan ini
 `;
 
 function parseArgs(argv) {
-  const a = { out: 'D:\\TILE PERSIL', conc: 4, retry: 2, yes: false, force: false, help: false, bbox: null, z: null };
+  const a = { out: 'D:\\TILE PERSIL', mbtiles: null, conc: 4, retry: 2, yes: false, force: false, help: false, bbox: null, z: null };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i], v = argv[i + 1];
     switch (k) {
       case '--bbox': a.bbox = v; i++; break;
       case '--z': a.z = v; i++; break;
       case '--out': a.out = v; i++; break;
+      case '--mbtiles': a.mbtiles = (v && !v.startsWith('--')) ? v : true; if (a.mbtiles === v) i++; break;
       case '--conc': a.conc = parseInt(v, 10); i++; break;
       case '--retry': a.retry = parseInt(v, 10); i++; break;
       case '--yes': a.yes = true; break;
@@ -243,6 +250,10 @@ function enumerate(bbox, zooms) {
   return cells;
 }
 
+/* Pemetaan grid site z/x/y → koordinat MBTiles (slippy 256 pada zoom z-1,
+ * baris TMS dibalik) — sama dengan buat-mbtiles.js. */
+function mbCoord(z, x, y) { const lvl = z - 1; return [lvl, x, (Math.pow(2, lvl) - 1) - y]; }
+
 function walkStats(dir) {
   let count = 0, bytes = 0;
   const stack = [dir];
@@ -272,6 +283,26 @@ async function main() {
   fs.mkdirSync(out, { recursive: true });
   for (const f of ['kosong.txt', 'gagal.txt']) fs.mkdirSync(path.dirname(path.join(out, f)), { recursive: true });
 
+  let db = null, insTile = null, mbFile = null;
+  const mbHas = new Set();
+  if (args.mbtiles) {
+    mbFile = path.resolve(args.mbtiles === true ? path.join(out, 'tiles.mbtiles') : args.mbtiles);
+    fs.mkdirSync(path.dirname(mbFile), { recursive: true });
+    if (fs.existsSync(mbFile) && fs.statSync(mbFile).size === 0) fs.unlinkSync(mbFile);
+    db = new DatabaseSync(mbFile);
+    db.exec(`
+      PRAGMA journal_mode=DELETE;
+      PRAGMA synchronous=OFF;
+      CREATE TABLE IF NOT EXISTS metadata (name TEXT, value TEXT);
+      CREATE TABLE IF NOT EXISTS tiles (zoom_level INTEGER, tile_column INTEGER, tile_row INTEGER, tile_data BLOB);
+      CREATE UNIQUE INDEX IF NOT EXISTS tile_index ON tiles (zoom_level, tile_column, tile_row);
+    `);
+    insTile = db.prepare('INSERT OR REPLACE INTO tiles (zoom_level, tile_column, tile_row, tile_data) VALUES (?, ?, ?, ?)');
+    for (const r of db.prepare('SELECT zoom_level, tile_column, tile_row FROM tiles').iterate()) {
+      mbHas.add(r.zoom_level + '/' + r.tile_column + '/' + r.tile_row);
+    }
+  }
+
   const kosongSet = new Set(loadLines(path.join(out, 'kosong.txt')));
   const gagalFile = path.join(out, 'gagal.txt');
   const gagalLines = loadLines(gagalFile);
@@ -285,15 +316,19 @@ async function main() {
   for (const c of cells) {
     const key = c[0] + '/' + c[1] + '/' + c[2];
     if (!args.force && kosongSet.has(key)) { preSkip++; continue; }
-    const file = path.join(out, String(c[0]), String(c[1]), c[2] + '.png');
-    if (!args.force && isPngFile(file)) { preSkip++; continue; }
+    if (db) {
+      if (!args.force && mbHas.has(mbCoord(c[0], c[1], c[2]).join('/'))) { preSkip++; continue; }
+    } else {
+      const file = path.join(out, String(c[0]), String(c[1]), c[2] + '.png');
+      if (!args.force && isPngFile(file)) { preSkip++; continue; }
+    }
     todo.push(c);
   }
 
-  console.log('Folder   : ' + out);
+  console.log(db ? 'MBTiles  : ' + mbFile : 'Folder   : ' + out);
   console.log('Bbox     : ' + bbox.join(', ') + '   Zoom: ' + zooms.join(', '));
   console.log('Sel      : ' + fmtNum(cells.length) + '  (lewat: ' + fmtNum(preSkip) + ' sudah ada/kosong, sisa ' + fmtNum(todo.length) + ')');
-  if (!todo.length) { writeManifest(out, bbox, zooms, null); console.log('Tidak ada tile untuk diunduh — semua sudah lengkap.'); return; }
+  if (!todo.length) { if (db) db.close(); writeManifest(out, bbox, zooms, null, mbFile); console.log('Tidak ada tile untuk diunduh — semua sudah lengkap.'); return; }
 
   const sampleN = Math.min(10, todo.length);
   const sampleIdx = new Set();
@@ -323,6 +358,7 @@ async function main() {
 
   const kosongArr = [], gagalArr = [];
   let clearKosong = new Set(), clearGagal = new Set();
+  let dbBatch = 0;
   const t0 = Date.now();
   let done = 0, written = 0, empty = 0, failed = 0, bytes = 0;
   let nextReport = 50;
@@ -337,11 +373,13 @@ async function main() {
     } catch (e) { /* abaikan */ }
   }
   function flush() {
+    if (db && dbBatch) { db.exec('COMMIT'); db.exec('BEGIN'); dbBatch = 0; }
     if (kosongArr.length) { fs.appendFileSync(path.join(out, 'kosong.txt'), kosongArr.join('\n') + '\n'); kosongArr.length = 0; }
     if (gagalArr.length) { fs.appendFileSync(path.join(out, 'gagal.txt'), gagalArr.join('\n') + '\n'); gagalArr.length = 0; }
     if (clearKosong.size) { pruneList(path.join(out, 'kosong.txt'), clearKosong); clearKosong = new Set(); }
     if (clearGagal.size) { pruneList(path.join(out, 'gagal.txt'), clearGagal); clearGagal = new Set(); }
   }
+  if (db) db.exec('BEGIN');
   const flushTimer = setInterval(flush, 5000);
 
   function recordGagal(key, note) {
@@ -361,9 +399,16 @@ async function main() {
       const oc = opaqueCount(buf);
       if (oc === 0) { empty++; kosongArr.push(key); kosongSet.add(key); }
       else {
-        const file = path.join(out, String(z), String(x), y + '.png');
-        fs.mkdirSync(path.dirname(file), { recursive: true });
-        fs.writeFileSync(file, buf);
+        if (db) {
+          const [lvl, col, row] = mbCoord(z, x, y);
+          insTile.run(lvl, col, row, buf);
+          mbHas.add(lvl + '/' + col + '/' + row);
+          if (++dbBatch >= 50) { db.exec('COMMIT'); db.exec('BEGIN'); dbBatch = 0; }
+        } else {
+          const file = path.join(out, String(z), String(x), y + '.png');
+          fs.mkdirSync(path.dirname(file), { recursive: true });
+          fs.writeFileSync(file, buf);
+        }
         written++; bytes += buf.length;
         if (kosongSet.has(key)) { clearKosong.add(key); kosongSet.delete(key); }
       }
@@ -404,16 +449,39 @@ async function main() {
   const el = Date.now() - t0;
   console.log('Selesai dalam ' + fmtDur(el) + ': tulis ' + fmtNum(written) + ' tile (' + fmtBytes(bytes) + '), kosong ' + fmtNum(empty) + ', gagal ' + fmtNum(failed) + '.');
   if (failed) console.log('Tile gagal tercatat di ' + path.join(out, 'gagal.txt') + ' — jalankan ulang perintah sama untuk mencoba lagi.');
-  writeManifest(out, bbox, zooms, { run: { tile: todo.length, tulis: written, kosong: empty, gagal: failed, bytes, detik: Math.round(el / 1000) } });
+  if (db) {
+    db.exec('COMMIT'); dbBatch = 0;
+    const lv = zooms.map(z => z - 1);
+    const meta = [
+      ['name', 'Persil nasional BHUMI/ATR-BPN (cadangan lokal)'],
+      ['type', 'overlay'],
+      ['version', '1.1.0'],
+      ['description', 'Cache WMS bhumi_persil (bhumi.atrbpn.go.id), zoom site ' + zooms.join(',') + ', PNG 512px pada grid 2^(z-1), EPSG:3857. Bukan untuk didistribusikan.'],
+      ['format', 'png'],
+      ['bounds', bbox.join(',')],
+      ['center', ((bbox[0] + bbox[2]) / 2) + ',' + ((bbox[1] + bbox[3]) / 2) + ',' + zooms[0]],
+      ['minzoom', String(lv[0])],
+      ['maxzoom', String(lv[lv.length - 1])],
+    ];
+    const insMeta = db.prepare('INSERT OR REPLACE INTO metadata (name, value) VALUES (?, ?)');
+    for (const [k, v] of meta) insMeta.run(k, v);
+    const st = db.prepare('SELECT COUNT(*) AS n, COALESCE(SUM(LENGTH(tile_data)), 0) AS b FROM tiles').get();
+    console.log('MBTiles  : ' + mbFile + ' — ' + fmtNum(st.n) + ' tile, ' + fmtBytes(st.b));
+    db.close();
+  }
+  writeManifest(out, bbox, zooms, { run: { tile: todo.length, tulis: written, kosong: empty, gagal: failed, bytes, detik: Math.round(el / 1000) } }, mbFile);
 }
 
-function writeManifest(out, bbox, zooms, runInfo) {
+function writeManifest(out, bbox, zooms, runInfo, mbFile) {
   const file = path.join(out, 'manifest.json');
   let m = {};
   try { m = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { m = {}; }
   m.sumber = 'https://bhumi.atrbpn.go.id/mprx/service (LAYERS=bhumi_persil, WMS 1.3, PNG 512x512, EPSG:3857)';
   m.grid = 'Leaflet tileSize 512: 2^(z-1) sel per zoom, span = world/2^(z-1) — sama dengan bhumiPersilNasionalTileUrl() di map-core.js (persis slippy-256 pada zoom z-1)';
-  m.formatFile = '{z}/{x}/{y}.png (tile berisi); z/x/y ada di kosong.txt berarti tidak ada isi';
+  m.formatFile = mbFile
+    ? mbFile + ' (MBTiles: zoom_level = z-1, baris TMS; z/x/y di kosong.txt = tidak ada isi)'
+    : '{z}/{x}/{y}.png (tile berisi); z/x/y ada di kosong.txt berarti tidak ada isi';
+  if (mbFile) m.mbtiles = mbFile;
   m.lisensi = 'Data: ATR/BPN BHUMI — cadangan lokal pribadi, bukan untuk didistribusikan ulang';
   m.dibuat = m.dibuat || new Date().toISOString();
   m.terakhir = new Date().toISOString();

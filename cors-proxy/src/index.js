@@ -123,7 +123,8 @@ function corsHeaders(origin) {
   return {
     "Access-Control-Allow-Origin": allowed,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Accept, Origin, X-Requested-With, Authorization",
+    "Access-Control-Allow-Headers":
+      "Content-Type, Accept, Origin, X-Requested-With, Authorization, X-Timestamp, X-Signature",
     "Access-Control-Max-Age": "86400",
     // X-RateLimit-* WAJIB ada di sini. Tanpa diexpose, browser tidak
     // boleh membacanya dari JavaScript, jadi klien tidak akan pernah tahu
@@ -344,6 +345,17 @@ export default {
     // Authorization; kalau tidak diteruskan, getPersil selalu 401.
     const authorization = request.headers.get("Authorization");
     if (authorization && isBhumiExpapi) fwdHeaders["Authorization"] = authorization;
+
+    // Sejak 2026-10-22 /expapi menuntut tanda tangan request:
+    //   x-signature = SHA256(x-timestamp + ":" + rahasia)
+    // dihitung di klien (sama seperti app resmi) dan diteruskan ke sini.
+    // Tanpa dua header ini server membalas 401 "Missing request signature".
+    const xTs = request.headers.get("X-Timestamp");
+    const xSig = request.headers.get("X-Signature");
+    if (xTs && xSig && isBhumiExpapi) {
+      fwdHeaders["X-Timestamp"] = xTs;
+      fwdHeaders["X-Signature"] = xSig;
+    }
 
     let body = null;
     if (method === "POST") {
