@@ -61,8 +61,7 @@
     });
   }
 
-  /* Unit fluid DI ANTARA kartu pada empat tab GeoTools, bukan hanya setelah
-     kartu pertama seperti sebelumnya.
+  /* Unit fluid di antara kartu pada empat tab GeoTools.
 
 Penempatan memakai iterasi children panel, bukan selektor :scope, karena
      indentasi HTML di index.html tidak konsisten: .georaster-card (baris 2445)
@@ -70,19 +69,20 @@ Penempatan memakai iterasi children panel, bukan selektor :scope, karena
      padahal keduanya anak langsung dari tab. Hanya panel.children yang bisa
      dipercaya.
 
-     MAX_PER_TAB membatasi jumlah unit per tab. Tanpa batas itu GeoDisaster
-     menghasilkan sebelas iklan dalam satu layar: kartu Cuaca Sekarang, tiga
-     kartu GeoPulse, enam kartu CCTV, dan satu kartu gd. AdSense membatasi
-     jumlah iklan per halaman, jadi nilainya sengaja dibatasi dan bisa
-     dinaikkan dari satu konstanta di bawah. */
+     Batas per tab menahan kepadatan iklan pada panel yang juga berisi banyak
+     tombol, filter, dan kontrol interaktif. */
   var GEO_TOOLS_TABS = [
-    { key: 'geonusa', id: 'geotoolsTabGeonusa', selectors: ['.geonusa-card', '.geotrans-card'] },
-    { key: 'geoportal', id: 'geotoolsTabGeoportal', selectors: ['.geotani-kta-card', '.georaster-card', '.geoportal-card'] },
-    { key: 'geofarm', id: 'geotoolsTabGeoFarm', selectors: ['.geofarm-card', '.geofarm-ref', '.geopangan-card'] },
-    { key: 'geodisaster', id: 'geotoolsTabGeoDisaster', selectors: ['.cctv-card', '.geopulse-card', '.geonusa-card'] }
+    { key: 'geonusa', id: 'geotoolsTabGeonusa', maxAds: 2, selectors: ['.geonusa-card', '.geotrans-card'] },
+    { key: 'geoportal', id: 'geotoolsTabGeoportal', maxAds: 3, selectors: ['.geotani-kta-card', '.georaster-card', '.geoportal-card'] },
+    { key: 'geofarm', id: 'geotoolsTabGeoFarm', maxAds: 3, selectors: ['.geofarm-card', '.geofarm-ref', '.geopangan-card'] },
+    { key: 'geodisaster', id: 'geotoolsTabGeoDisaster', maxAds: 2, selectors: ['.cctv-card', '.geopulse-card', '.geonusa-card'] }
   ];
 
-  var MAX_PER_TAB = 5;
+  /* Dua unit per tab menjaga kepadatan tetap wajar pada antarmuka alat yang
+     banyak tombol dan kontrol peta. */
+  /* Default dua slot; GeoFarm dan GeoPortal mendapat satu tambahan karena
+     panelnya memiliki lebih banyak konten informatif. */
+  var MAX_PER_TAB = 2;
 
   function addGeoToolsInlineAds() {
     GEO_TOOLS_TABS.forEach(function (tab) {
@@ -97,7 +97,7 @@ Penempatan memakai iterasi children panel, bukan selektor :scope, karena
          tiap pemanggilan menambah iklan baru. */
       var placed = panel.querySelectorAll('.geotools-inline-adsense').length;
       nodes.forEach(function (node) {
-        if (placed >= MAX_PER_TAB) return;
+        if (placed >= (tab.maxAds || MAX_PER_TAB)) return;
         if (!node.matches) return;
         var isCard = tab.selectors.some(function (sel) { return node.matches(sel); });
         if (!isCard) return;
@@ -112,101 +112,8 @@ Penempatan memakai iterasi children panel, bukan selektor :scope, karena
     });
   }
 
-  /* Unit di tiga sheet alat: Draw & Ukur, Tabel Atribut, dan Legenda.
-
-     Letak masing-masing dipilih karena isi sheet itu dibangun berbeda:
-
-     - Draw & Ukur (#drawSidebar .dm-sidebar-body) kartunya statis di
-       index.html, jadi unit cukup disisipkan di akhir badan.
-
-     - Tabel Atribut (#attr-table-sheet .at-sheet-body) isinya #at-sheet-content
-       yang ditulis ulang setiap kali tabel digambar ulang. Karena itu unit
-       TIDAK boleh masuk ke #at-sheet-content, cukup jadi saudara sesudahnya di
-       .at-sheet-body -- begitu isi tabel berganti, unitnya tetap ada.
-         Perhatikan sheet ini sudah punya iklan sendiri dari attribute-table.js
-(slot 1306506445) di bawah kolom pencarian; yang ditambah di sini
-        menempati posisi berbeda, yaitu dasar sheet.
-
-     - Legenda (#legendSidebarBody) memakai pola PINDAH: onOpen memindahkan
-       semua anak .legend-body ke body sidebar, onClose memindahkannya semua
-       kembali (map-core.js). Unit yang disisipkan DI DALAM body akan ikut
-       terbawa ke .legend-body dan muncul di kontrol legenda di peta walau sheet
-       sudah ditutup. Jadi unitnya dibuat saudara SESUDAH body, di dalam
-       #legendSidebar, yang tidak pernah disentuh pola pindah itu. Karena
-       .lg-sidebar-body memakai flex:1 1 auto, unit ini tertempel di dasar
-       sidebar. */
-
-  /* Unit tepat di bawah tombol "Export SHP" pada kartu "Geospasial
-  Indonesia" di tab GeoPortal.
-  
-  Berbeda dengan tiga unit di atas, unit ini harus mengikuti tampilan
-  tombolnya. syncSHPExportButton() di satupeta-downloader.js hanya menulis
-  style.display dan disabled pada tombol, tanpa pernah menyinggung modul
-  iklan, jadi iklannya akan terlihat walau belum ada data yang bisa
-  diekspor -- iklan yatim yang tidak ada konteksnya. Observer di bawah
-  menjembataninya tanpa mengubah satupeta-downloader.js sama sekali. */
-  function addGeoPortalExportShpAd() {
-    var button = document.getElementById('satupetaExportShpBtn');
-    if (!button || !button.parentNode) return;
-    var next = button.nextElementSibling;
-    if (next && next.classList.contains('satupeta-export-shp-adsense')) return;
-    var ad = createAdUnit();
-    ad.classList.add('satupeta-export-shp-adsense');
-    ad.setAttribute('aria-label', 'Iklan');
-    button.insertAdjacentElement('afterend', ad);
-
-    var apply = function () {
-      ad.style.display = (button.style.display !== 'none' && !button.disabled) ? '' : 'none';
-    };
-    apply();
-    if ('MutationObserver' in window) {
-      new MutationObserver(apply)
-        .observe(button, { attributes: true, attributeFilter: ['style', 'disabled'] });
-    }
-    dorongSlotIklan(ad);
-  }
-  var TOOL_SHEET_AD_PLACEMENTS = [
-    { key: 'alat-ukur', anchor: '#drawSidebar .dm-sidebar-body', position: 'beforeend' },
-    { key: 'tabel', anchor: '#attr-table-sheet .at-sheet-body', position: 'beforeend' },
-    { key: 'legenda', anchor: '#legendSidebarBody', position: 'afterend' }
-  ];
-
-  function addToolSheetAds() {
-    TOOL_SHEET_AD_PLACEMENTS.forEach(function (placement) {
-      var el = document.querySelector(placement.anchor);
-      if (!el || !el.parentNode) return;
-      var marker = 'tool-sheet-adsense--' + placement.key;
-      var neighbour = placement.position === 'afterend'
-        ? el.nextElementSibling
-        : el.lastElementChild;
-      if (neighbour && neighbour.classList.contains('tool-sheet-adsense')) return;
-      var ad = createAdUnit();
-      ad.classList.add('tool-sheet-adsense', marker);
-      ad.setAttribute('aria-label', 'Iklan');
-      el.insertAdjacentElement(placement.position, ad);
-      dorongSlotIklan(ad);
-    });
-  }
-
-  /* Unit fluid di sheet GeoData.
-
-     Sheet GeoData tidak ikut placement addGeoToolsInlineAds() di bawah: tabnya
-     berawalan "alat-tab-" (alat-tab-arcgis-rest, alat-tab-geoserver), bukan
-     "geotoolsTab". Jadi unitnya ditambahkan sendiri dengan anchor berupa id
-     elemen, bukan berupa kartu tempat kartu disisipkan.
-
-     afterend dipakai untuk dua tombol "Export SHP". Di tab ArcGIS tombol itu
-     berada di dalam grid aksi, sehingga unit menjadi baris grid berikutnya dan
-     ikut memakai gap yang sama dengan tombol lain, tanpa CSS tambahan.
-
-     beforebegin dipakai untuk kartu "Layer Dimuat". Anchor-nya #alatLayerList
-     yang berada DI DALAM kartu itu, sedangkan yang harus didahului adalah kartu
-     seluruhnya, jadi elemen sasaran dinaikkan lewat closest() lebih dulu. */
+  /* Satu unit di akhir sheet GeoData, terpisah dari tombol ekspor dan kontrol. */
   var GEODATA_AD_PLACEMENTS = [
-    { key: 'arcgis', anchor: '#arcgisExportSelectedBtn', position: 'afterend' },
-    { key: 'geoserver', anchor: '#geoserverExportBtn', position: 'afterend' },
-    { key: 'layer-dimuat', anchor: '#alatLayerList', position: 'beforebegin', climb: '.alat-card' },
-    { key: 'layer-bawah', anchor: '#alatLayerList', position: 'afterend', climb: '.alat-card' },
     { key: 'display', anchor: '#geodataSheetBody', position: 'beforeend' }
   ];
 
@@ -233,7 +140,9 @@ Penempatan memakai iterasi children panel, bukan selektor :scope, karena
   function createAdUnit() {
     var wrap = document.createElement('div');
     wrap.className = 'lc-adsense sheet-adsense';
-    wrap.innerHTML = '<!-- Ruang Kita -->' +
+    wrap.setAttribute('aria-label', 'Iklan');
+    wrap.innerHTML = '<span class="lc-adsense-label">Iklan</span>' +
+      '<!-- Ruang Kita -->' +
       '<ins class="adsbygoogle" style="display:block"' +
       ' data-ad-format="fluid"' +
       ' data-ad-layout-key="-fb+5w+4e-db+86"' +
@@ -278,15 +187,11 @@ Penempatan memakai iterasi children panel, bukan selektor :scope, karena
       addDonationBanners();
       addGeoToolsInlineAds();
       addGeoDataAds();
-      addToolSheetAds();
-      addGeoPortalExportShpAd();
     }, { once: true });
   } else {
     addDonationBanners();
     addGeoToolsInlineAds();
     addGeoDataAds();
-    addToolSheetAds();
-    addGeoPortalExportShpAd();
   }
   window.addEventListener('resize', addDonationBanners, { passive: true });
 })();

@@ -3265,8 +3265,10 @@
     .lc-adsense { margin: 0 8px 6px; }
     .lc-adsense.sheet-adsense { margin: 0 0 6px; }
     .lc-adsense.at-search-adsense { margin: 0 0 10px; }
-    .lc-adsense.geotools-inline-adsense { margin: 10px 0; }
-    .lc-adsense.geodata-menu-adsense { margin: 10px 0; }
+    .lc-adsense.geotools-inline-adsense { margin: 16px 0; }
+    .lc-adsense.geodata-menu-adsense { margin: 16px 0; }
+    .lc-adsense-label { display: block; margin-bottom: 4px; color: #64748b; font-size: 10px; line-height: 1.3; }
+    .lc-adsense:has(.adsbygoogle[data-ad-status="unfilled"]) .lc-adsense-label { display: none; }
     /* Unit di sheet Draw & Ukur, Tabel Atribut, dan Legenda. Ketiganya
        ditambahkan sebagai anak terakhir badan sheet, sehingga margin bawaan
        .lc-adsense tidak berlaku dan padding disetel sendiri agar sejajar
