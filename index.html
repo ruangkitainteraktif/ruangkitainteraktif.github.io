@@ -175,6 +175,7 @@
 
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261010-press-pages2-7">
   <link rel="stylesheet" href="assets/css/geotrans-mitradarat.css?v=20261010-geotrans-card-spacing">
+  <link rel="stylesheet" href="assets/css/network-trip-planner.css?v=20261022-network-button-template">
   <script>
     (function () {
       document.addEventListener('click', function (event) {
@@ -1260,6 +1261,32 @@
           <div id="geotoolsTabGeonusa" class="geotools-main-tab-panel">
             <h4 style="font-size:15px; margin-bottom:4px;">GeoNusa</h4>
             <p class="geotools-desc" style="margin-bottom:20px;">Data wilayah, penduduk, CCTV, dan transportasi.</p>
+
+            <details class="geonusa-card" id="networkRouteCard" aria-labelledby="networkRouteTitle">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M7 18c7 0 3-12 10-12"/></svg></span>
+                <span><b id="networkRouteTitle">Analisis Jaringan &amp; Perjalanan</b><small>Hitung jalur, jarak, dan estimasi waktu dari jaringan jalan BIG</small></span>
+              </summary>
+              <div class="geonusa-card-body">
+                <section id="alat-tab-network-routing" class="network-route-card" aria-label="Perencanaan perjalanan dua titik">
+                  <p class="network-route-note">Pilih titik asal dan tujuan pada peta. Jarak mengikuti ruas jalan BIG; waktu adalah estimasi tanpa kondisi lalu lintas.</p>
+                  <div class="network-route-point">
+                    <div class="network-route-point-label"><i class="network-route-dot network-route-dot--start"></i><b>Titik asal</b></div>
+                    <div class="network-route-point-row"><input id="networkRouteOrigin" type="text" inputmode="decimal" placeholder="Klik Pilih di peta atau masukkan lat, lon" aria-label="Koordinat titik asal"><button type="button" data-network-pick="origin">Pilih di peta</button></div>
+                  </div>
+                  <div class="network-route-point">
+                    <div class="network-route-point-label"><i class="network-route-dot network-route-dot--end"></i><b>Titik tujuan</b></div>
+                    <div class="network-route-point-row"><input id="networkRouteDestination" type="text" inputmode="decimal" placeholder="Klik Pilih di peta atau masukkan lat, lon" aria-label="Koordinat titik tujuan"><button type="button" data-network-pick="destination">Pilih di peta</button></div>
+                  </div>
+                  <label class="network-route-mode-label" for="networkRouteMode">Moda perjalanan</label>
+                  <select id="networkRouteMode" class="geotani-form-select"><option value="car">Kendaraan bermotor</option><option value="walk">Jalan kaki</option></select>
+                  <div class="network-route-actions"><button id="networkRouteCalculate" type="button" class="geotools-btn geotools-btn--green">Hitung rute dan waktu</button><button id="networkRouteClear" type="button" class="geotools-btn">Hapus rute</button></div>
+                  <div id="networkRouteStatus" class="network-route-status" role="status" aria-live="polite">Pilih titik asal dan tujuan untuk mulai analisis.</div>
+                  <div id="networkRouteResult" class="network-route-result" hidden></div>
+                  <small class="network-route-attribution">Sumber jaringan: BIG, JALAN_25K / JALAN_50K. Hasil bersifat analisis jaringan dan dapat berbeda dari navigasi dengan data lalu lintas langsung.</small>
+                </section>
+              </div>
+            </details>
 
             <details class="geonusa-card" aria-labelledby="geonusaStatistikTitle">
               <summary class="gt-card-head">
@@ -3863,7 +3890,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
          geopangan, attribute-table, ai-analysis, dan polygon-analysis
          semuanya mendaftarkan sheet ke window.SheetDrag saat dimuat. -->
     <script src="assets/js/sheet-drag.js?v=20261008-close-without-reset"></script>
-    <script src="assets/js/map-core.js?v=20261022-sc"></script>
+    <script src="assets/js/map-core.js?v=20261022-remove-bps-landcover"></script>
     <script src="assets/js/isric-soil-layers.js?v=20261007-wrb-clip"></script>
     <script src="assets/js/isee-global-soils.js?v=20261010-soil-temperature-legend"></script>
     <script src="assets/js/layer-loading.js?v=20261012-persil-gistaru"></script>
@@ -3896,7 +3923,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/petadasar-export.js"></script>
     <script src="assets/js/persil-geotiff-export.js?v=20261026-village-geotiff-progress"></script>
 
-    <script src="assets/js/geoportal.js?v=20261010-print-basemap-picker"></script>
+    <script src="assets/js/geoportal.js?v=20261022-remove-bps-landcover"></script>
     <script src="assets/js/geojogja.js?v=20261007"></script>
     <script src="assets/js/geojakarta.js?v=20261007-rt-search"></script>
     <script src="assets/js/admin-boundary-fallback.js?v=20261010-big-bnpb-boundary-fallback"></script>
@@ -4050,6 +4077,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/hwsd-indonesia.js?v=20261008-hwsd-print-legend"></script>
     <script src="assets/js/lcl-tile-layers.js?v=20261019-lcl-all"></script>
   <script src="assets/js/transjakarta-layer.js"></script>
+  <script src="assets/js/network-trip-planner.js?v=20261022-network-query-fix"></script>
   <script src="assets/js/transjogja-layer.js"></script>
   <script src="assets/js/geostruktur.js"></script>
   <script src="assets/js/patahan-aktif.js"></script>

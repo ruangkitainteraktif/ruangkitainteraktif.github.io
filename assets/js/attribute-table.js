@@ -701,7 +701,6 @@
     'bps-lbs-2024': { name: 'LBS Nasional 2024', type: 'raster' },
     toggleDemnasOverlay: { name: 'Terrain Overlay (SRTM)', type: 'raster' },
     toggleProvinceBoundary: { name: 'Batas Provinsi (PBF)', type: 'raster' },
-    toggleBpsTutupanLahan: { name: 'Peta Tutupan Lahan 100m (BPS)', type: 'raster' },
     toggleWindRgb: { name: 'Wind Speed and Direction (GFS)', type: 'raster' },
     toggleRhRgb: { name: 'Relative Humidity (GFS)', type: 'raster' },
     toggleTp24Rgb: { name: 'Total Precipitation 24 Jam (GFS)', type: 'raster' },

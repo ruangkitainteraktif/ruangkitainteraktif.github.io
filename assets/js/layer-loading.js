@@ -78,7 +78,6 @@
     'toggleDiTmsLayer': 'Data Daerah Irigasi tidak tersedia.',
     'toggleSaluranIrTmsLayer': 'Data Saluran Irigasi tidak tersedia.',
     'toggleRtrwTmsLayer': 'Data RTRW tidak tersedia.',
-    'toggleBpsTutupanLahan': 'Data Tutupan Lahan BPS sedang tidak tersedia — GeoServer BPS tidak merespons. Gangguan di sisi BPS, bukan di perangkat Anda. Coba lagi nanti.',
     'toggleErosiLayer': 'Data Peta Rawan Erosi tidak tersedia.',
     'toggleSawahDilindungi': 'Data LSD 50K tidak tersedia.',
     'toggleSawahNasional50k': 'Data LBS 50K tidak tersedia.',
@@ -220,8 +219,8 @@
        TIDAK lagi dilewati. Sebelumnya dilewati karena katalog punya
        checkbox sendiri yang dirender runtime, sehingga saat ini layer
        katalog yang gagal diam-diam: tidak ada spinner, tidak ada toast.
-       Itu yang membuat "Peta Tutupan Lahan 100m (KSA BPS)" hilang begitu
-       saja ketika GeoServer BPS tidak merespons.
+       Itu yang membuat layer katalog yang gagal diam-diam ketika layanan
+       sumber tidak merespons.
 
        Radio basemap di katalog aman: baris di atas sudah menyaring
        cb.type !== 'checkbox'. */

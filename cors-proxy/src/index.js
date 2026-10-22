@@ -124,7 +124,7 @@ function corsHeaders(origin) {
     "Access-Control-Allow-Origin": allowed,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers":
-      "Content-Type, Accept, Origin, X-Requested-With, Authorization, X-Timestamp, X-Signature",
+      "Content-Type, Accept, Origin, X-Requested-With, Authorization, X-Timestamp, X-Signature, X-Client-Pubkey",
     "Access-Control-Max-Age": "86400",
     // X-RateLimit-* WAJIB ada di sini. Tanpa diexpose, browser tidak
     // boleh membacanya dari JavaScript, jadi klien tidak akan pernah tahu
@@ -355,6 +355,17 @@ export default {
     if (xTs && xSig && isBhumiExpapi) {
       fwdHeaders["X-Timestamp"] = xTs;
       fwdHeaders["X-Signature"] = xSig;
+    }
+    // 2026-10-22 (rotasi kedua): getPersil juga menuntut x-client-pubkey
+    // (kunci pub ECDH P-256, dibuat baru per permintaan di klien untuk
+    // dekripsi sesi) serta User-Agent bergaya browser -- tanpa UA,
+    // server membalas 401 "Invalid signature" meski tanda tangan benar
+    // (serupa aturan UA di /mprx yang sudah ditemukan kemarin).
+    const xPub = request.headers.get("X-Client-Pubkey");
+    if (xPub && isBhumiExpapi) fwdHeaders["X-Client-Pubkey"] = xPub;
+    if (isBhumiExpapi || isBhumiMprx) {
+      fwdHeaders["User-Agent"] = request.headers.get("User-Agent") ||
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
     }
 
     let body = null;

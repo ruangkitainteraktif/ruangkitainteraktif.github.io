@@ -123,7 +123,7 @@
       keywords: ['geologi','gunung api','volcano','karst','likuifaksi','geostruktur','patahan aktif']
     },
     'Terrain & Lainnya': {
-      ids: ['toggleDemnasOverlay','toggleHillshade','toggleBatnas','toggleProvinceBoundary','toggleBmkgTimezone','toggleBpsTutupanLahan','toggleTollRoad','toggleNationalRoad','toggleEoxOverlay'],
+      ids: ['toggleDemnasOverlay','toggleHillshade','toggleBatnas','toggleProvinceBoundary','toggleBmkgTimezone','toggleTollRoad','toggleNationalRoad','toggleEoxOverlay'],
       keywords: ['terrain','hillshade','batnas','batas provinsi','jalan tol','jalan nasional','tutupan lahan','demnas','label']
     }
   };

@@ -35,7 +35,6 @@
     'toggleSawahDilindungi': function (v) { if (typeof toggleSawahDilindungi === 'function') toggleSawahDilindungi(v); },
     'toggleSawahNasional50k': function (v) { if (typeof toggleSawahNasional50k === 'function') toggleSawahNasional50k(v); },
     'toggleErosiLayer': function (v) { if (typeof toggleErosiLayer === 'function') toggleErosiLayer(v); },
-    'toggleBpsTutupanLahan': function (v) { if (typeof toggleBpsTutupanLahan === 'function') toggleBpsTutupanLahan(v); },
     'toggleBppLayer': function (v) { if (typeof toggleBppLayer === 'function') toggleBppLayer(v); },
     'toggleSawitLayer': function (v) { if (typeof toggleSawitLayer === 'function') toggleSawitLayer(v); }
   };

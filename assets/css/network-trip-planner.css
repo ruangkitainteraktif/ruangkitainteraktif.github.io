@@ -1,0 +1,29 @@
+.network-route-card{padding:0;border:0;border-radius:0;background:transparent;color:var(--text-primary,#1e293b)}
+.network-route-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.network-route-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:#e0f2fe;color:#0369a1;font-size:25px;font-weight:700}
+.network-route-head h3{margin:0;font-size:15px;color:#0f172a}
+.network-route-head p{margin:3px 0 0;font-size:11px;color:#64748b}
+.network-route-note,.network-route-attribution{display:block;font-size:11px;line-height:1.5;color:#64748b}
+.network-route-note{margin:10px 0 14px}
+.network-route-point{margin:11px 0}
+.network-route-point-label{display:flex;align-items:center;gap:7px;margin-bottom:6px;font-size:12px;color:#334155}
+.network-route-dot{width:10px;height:10px;border-radius:50%;background:#0284c7}
+.network-route-dot--end{background:#e11d48}
+.network-route-point-row{display:flex;gap:6px}
+.network-route-point-row input{min-width:0;flex:1;padding:9px 10px;border:1px solid #cbd5e1;border-radius:7px;font:inherit;font-size:11px;color:#1e293b}
+.network-route-point-row button{flex:none;border:1px solid #bae6fd;border-radius:7px;padding:0 10px;background:#f0f9ff;color:#0369a1;font-size:11px;font-weight:700;cursor:pointer}
+.network-route-point-row button.is-picking{background:#0369a1;color:#fff}
+.network-route-mode-label{display:block;margin:14px 0 5px;font-size:11px;font-weight:700;color:#475569}
+.network-route-card select{width:100%}
+.network-route-actions{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.network-route-actions .geotools-btn{width:100%;min-height:44px;flex:none;justify-content:center;white-space:normal}
+.network-route-status{margin-top:11px;padding:9px 10px;border-radius:7px;background:#f1f5f9;color:#475569;font-size:11px;line-height:1.5}
+.network-route-status.is-error{background:#fff1f2;color:#be123c}
+.network-route-result{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.network-route-metric{padding:10px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc}
+.network-route-metric b{display:block;color:#0f172a;font-size:17px}
+.network-route-metric span{display:block;margin-top:2px;color:#64748b;font-size:10px}
+.network-route-result-detail{grid-column:1/-1;color:#64748b;font-size:10px;line-height:1.5}
+.network-route-attribution{margin-top:12px;font-size:10px}
+.network-trip-line{filter:drop-shadow(0 1px 2px #fff)}
+@media(max-width:600px){.network-route-point-row button{padding:0 7px}}

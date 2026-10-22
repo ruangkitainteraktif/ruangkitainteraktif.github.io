@@ -652,9 +652,6 @@
       'arcgis-vt-lbs-2019': 'LBS 2019 (Vektor)'
     };
     try {
-      if (isMapLayerActive(bpsTutupanLahanState.layer)) {
-        items.push({ kind: 'wms', label: 'Tutupan Lahan 100 m', wmsUrl: 'https://geoserver.bps.go.id/tutupan_lahan/wms', layerName: 'tutupan_lahan:tutupan_lahan_100m' });
-      }
       Object.keys(bpsWmtsLayers).forEach(key => {
         if (!isMapLayerActive(bpsWmtsLayers[key])) return;
         if (key === 'bps-lbs-2024') items.push({ kind: 'wms', label: 'LBS Nasional 2024', wmsUrl: 'https://geoserver.bps.go.id/ksa/wms', layerName: 'ksa:lbs_2024' });
@@ -1050,32 +1047,6 @@
     }
   }
 
-  // WMS Tutupan Lahan 100m (KSA BPS) — tab Geotani
-  const bpsTutupanLahanState = { layer: null };
-
-  function toggleBpsTutupanLahan(visible) {
-    if (visible) {
-      if (!bpsTutupanLahanState.layer) {
-        bpsTutupanLahanState.layer = L.tileLayer.wms(
-          'https://geoserver.bps.go.id/tutupan_lahan/wms',
-          {
-            layers: 'tutupan_lahan:tutupan_lahan_100m',
-            format: 'image/png',
-            transparent: true,
-            version: '1.1.1',
-            opacity: 0.85,
-            attribution: 'KSA BPS'
-          }
-        );
-        bpsTutupanLahanState.layer.on('tileerror', function (e) {
-          console.warn('[Geotani] Tutupan Lahan tile error:', e.tile && e.tile.src);
-        });
-      }
-      if (!map.hasLayer(bpsTutupanLahanState.layer)) map.addLayer(bpsTutupanLahanState.layer);
-    } else if (bpsTutupanLahanState.layer && map.hasLayer(bpsTutupanLahanState.layer)) {
-      map.removeLayer(bpsTutupanLahanState.layer);
-    }
-  }
   const arcgisSawahLayers = {};
 
   function toggleArcgisSawah(layerKey, visible) {

@@ -1538,7 +1538,6 @@ L.control.scale({
           'toggleFsvaLayer',
           'toggleLsdTmsLayer', 'toggleLbsTmsLayer',
           'toggleDiTmsLayer', 'toggleSaluranIrTmsLayer', 'toggleRtrwTmsLayer',
-          'toggleBpsTutupanLahan',
           'toggleSekolahLayer',
           'st2023:batas_desa', 'st2023:batas_kecamatan', 'st2023:batas_kabupaten', 'st2023:batas_provinsi',
           'st2023:dasymetric_utp', 'st2023:dasymetric_utp_tp', 'st2023:dasymetric_utp_horti', 'st2023:dasymetric_utp_holti',
@@ -1622,9 +1621,6 @@ L.control.scale({
               map.removeLayer(bpsWmtsLayers[key]);
             }
           });
-        }
-        if (typeof bpsTutupanLahanState !== 'undefined' && bpsTutupanLahanState.layer && map.hasLayer(bpsTutupanLahanState.layer)) {
-          map.removeLayer(bpsTutupanLahanState.layer);
         }
 
         // 3c. Uncheck geoportal jsTree nodes
@@ -2213,13 +2209,16 @@ const SAWAH_COLOR = '#87cf15';
     * Saat layer Persil Nasional menyala, setiap klik peta mengirim query
     * titik (bbox viewport + posisi piksel klik, format identik dengan app
     * BHUMI) ke getPersil lewat kta-cors-proxy -- worker menyuntikkan
-    * Referer/Origin BHUMI dan meneruskan Authorization + x-timestamp/
-    * x-signature, karena server menolak origin lain dan menuntut tanda
-    * tangan request (sejak 2026-10-22; tanpanya balasannya 401
-    * "Missing request signature"). Login memakai akun publik yang
-    * hardcoded di app BHUMI; JWT di-cache ~50 menit. Respons berupa
-    * AES-OpenSSL (passphrase sama dengan enkripsi di app BHUMI)
-    * didekripsi langsung di browser. Query klik hanya Persil + ZNT. */
+    * Referer/Origin/UA browser BHUMI dan meneruskan Authorization +
+    * x-timestamp/x-signature + x-client-pubkey. Sejak rotasi kedua
+    * 2026-10-22 getPersil menuntut: tanda tangan request (SHA256
+    * timestamp+secret, masih sama), kunci pub ECDH P-256 yang baru
+    * setiap permintaan (x-client-pubkey, dari bundle resmi BHUMI
+    * chunk 8815 fungsi CJ()), dan Authorization JWT. Login memakai
+    * akun publik yang hardcoded di app BHUMI; JWT di-cache ~50 menit.
+    * Respons berupa AES-OpenSSL dengan passphrase hasil sesi ECDH
+    * (SHA256 atas shared secret) didekripsi langsung di browser; bila
+    * server tak memakai ECDH, fallback ke passphrase statis lama. */
   var bhumiPersilToken = { value: null, expiresAt: 0, pending: null };
   var bhumiPersilHighlight = null;
   var bhumiPersilPopup = null;
@@ -2252,16 +2251,80 @@ const SAWAH_COLOR = '#87cf15';
       });
   }
 
-  function bhumiPersilProxyPost(pathname, payload, token) {
+  function bhumiPersilProxyPost(pathname, payload, token, useEcdh) {
     var url = BHUMI_PERSIL_NASIONAL_PROXY +
       encodeURIComponent('https://bhumi.atrbpn.go.id' + pathname);
+    function traceFailure(response) {
+      if (response.ok) return Promise.resolve(response);
+      return response.clone().text().then(function (body) {
+        var safeBody = bhumiPersilSafeDiagnostic(body);
+        console.error('[BHUMI] POST ' + pathname + ' gagal', {
+          status: response.status,
+          proxyStatus: response.headers.get('X-Proxy-Status'),
+          contentType: response.headers.get('Content-Type'),
+          body: safeBody || '(respons kosong)'
+        });
+        return response;
+      }).catch(function (err) {
+        console.error('[BHUMI] Gagal membaca body respons POST ' + pathname, err);
+        return response;
+      });
+    }
     return bhumiPersilSignedHeaders().then(function (sig) {
       var headers = { 'Content-Type': 'application/json' };
       headers['x-timestamp'] = sig['x-timestamp'];
       headers['x-signature'] = sig['x-signature'];
       if (token) headers['Authorization'] = token;
-      return fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(payload) });
+      if (!useEcdh) {
+        return fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(payload) })
+          .then(traceFailure);
+      }
+      /* getPersil menuntut kunci pub ECDH P-256 baru per permintaan;
+         kunci privatnya disimpan untuk menghitung sesi dekripsi. */
+      return crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits'])
+        .then(function (pair) {
+          return crypto.subtle.exportKey('raw', pair.publicKey).then(function (raw) {
+            var bytes = new Uint8Array(raw), hex = '';
+            for (var i = 0; i < bytes.length; i++) hex += ('0' + bytes[i].toString(16)).slice(-2);
+            headers['x-client-pubkey'] = hex;
+            return fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(payload) })
+              .then(traceFailure)
+              .then(function (r) { return { res: r, privKey: pair.privateKey }; });
+          });
+        });
+    }).catch(function (err) {
+      console.error('[BHUMI] POST ' + pathname + ' gagal sebelum menerima respons HTTP', err);
+      throw err;
     });
+  }
+
+  function bhumiPersilSafeDiagnostic(text) {
+    return String(text == null ? '' : text)
+      .replace(/[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g, '[JWT disamarkan]')
+      .replace(/((?:"|')?(?:token|access_token|accessToken|authorization|x-signature|signature)(?:"|')?\s*:\s*)("[^"]*"|'[^']*'|[^,}\s]+)/gi, '$1"[RAHASIA DISAMARKAN]"');
+  }
+
+  function bhumiPersilTokenFrom(value, depth) {
+    if (depth > 3 || value == null) return null;
+    if (typeof value === 'string') {
+      var token = value.trim().replace(/^Bearer\s+/i, '');
+      return /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token) ? token : null;
+    }
+    if (typeof value !== 'object') return null;
+    var keys = ['token', 'access_token', 'accessToken', 'jwt', 'authorization', 'data', 'result'];
+    for (var i = 0; i < keys.length; i++) {
+      var found = bhumiPersilTokenFrom(value[keys[i]], depth + 1);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  function bhumiPersilResponseMessage(value) {
+    if (!value || typeof value !== 'object') return '';
+    var message = value.message || value.error_description || value.error || value.detail;
+    if (typeof message !== 'string') return '';
+    // Hindari menampilkan payload/token yang mungkin dikembalikan server.
+    return message.replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').slice(0, 160);
   }
 
   function bhumiPersilGetToken() {
@@ -2270,19 +2333,31 @@ const SAWAH_COLOR = '#87cf15';
     }
     if (bhumiPersilToken.pending) return bhumiPersilToken.pending;
     bhumiPersilToken.pending = bhumiPersilProxyPost('/expapi/loginApi', { username: 'user', password: 'password' }, null)
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (t) {
-        bhumiPersilToken.pending = null;
-        if (typeof t === 'string' && t.indexOf('.') > 0 && t.charAt(0) !== '{') {
-          bhumiPersilToken.value = t;
+      .then(function (r) {
+        return r.text().then(function (text) {
+          var body = null;
+          try { body = text ? JSON.parse(text) : null; } catch (e) { body = text; }
+          if (!r.ok) {
+            var detail = bhumiPersilSafeDiagnostic(text);
+            var upstreamStatus = r.headers.get('X-Proxy-Status');
+            throw new Error('BHUMI_LOGIN_HTTP_' + r.status +
+              (upstreamStatus ? ' (proxy upstream ' + upstreamStatus + ')' : '') +
+              (detail ? ': ' + detail : '\n(respons kosong)'));
+          }
+          var token = bhumiPersilTokenFrom(body, 0);
+          if (!token) {
+            var msg = bhumiPersilSafeDiagnostic(text);
+            throw new Error('BHUMI_LOGIN_TOKEN_MISSING' + (msg ? ': ' + msg : ''));
+          }
+          bhumiPersilToken.value = token;
           bhumiPersilToken.expiresAt = Date.now() + 50 * 60 * 1000;
-        }
-        return bhumiPersilToken.value;
+          return token;
+        });
       })
-      .catch(function () {
-        bhumiPersilToken.pending = null;
-        return null;
-      });
+      .catch(function (err) {
+        throw (err instanceof Error ? err : new Error('BHUMI_LOGIN_NETWORK_ERROR'));
+      })
+      .finally(function () { bhumiPersilToken.pending = null; });
     return bhumiPersilToken.pending;
   }
 
@@ -2342,18 +2417,25 @@ const SAWAH_COLOR = '#87cf15';
     return out;
   }
 
-  function bhumiAesOpenSslDecrypt(cipherB64) {
+  /* passphraseBytes: Uint8Array bila sesi ECDH; tanpa parameter memakai
+     passphrase statis (payload non-ECDH). */
+  function bhumiAesOpenSslDecrypt(cipherB64, passphraseBytes) {
     try {
       var bin = atob(cipherB64);
       if (bin.length < 17 || bin.slice(0, 8) !== 'Salted__') return Promise.resolve(null);
       var raw = new Uint8Array(bin.length);
       for (var i = 0; i < bin.length; i++) raw[i] = bin.charCodeAt(i);
-      var pass = 'K9#mQ8!wL5*zY4@tN7&eX1^bJ3(c';
+      var pass = passphraseBytes;
+      if (!pass) {
+        var fixed = 'K9#mQ8!wL5*zY4@tN7&eX1^bJ3(c';
+        pass = new Uint8Array(fixed.length);
+        for (var f = 0; f < fixed.length; f++) pass[f] = fixed.charCodeAt(f);
+      }
       var prev = new Uint8Array(0), out = new Uint8Array(0);
       while (out.length < 48) {
         var input = new Uint8Array(prev.length + pass.length + 8);
         input.set(prev, 0);
-        for (var k = 0; k < pass.length; k++) input[prev.length + k] = pass.charCodeAt(k);
+        for (var k = 0; k < pass.length; k++) input[prev.length + k] = pass[k];
         input.set(raw.subarray(8, 16), prev.length + pass.length);
         prev = bhumiMd5Bytes(input);
         var merged = new Uint8Array(out.length + prev.length);
@@ -2372,15 +2454,166 @@ const SAWAH_COLOR = '#87cf15';
   }
   /* BHUMI-CRYPTO-END */
 
-  function bhumiPersilParseResponse(json) {
-    if (json && json.encrypted && json.data) {
-      return bhumiAesOpenSslDecrypt(json.data).then(function (text) {
-        if (!text) return null;
-        try { return JSON.parse(text); } catch (err) { return null; }
+  function bhumiPersilBytesFromHex(hex) {
+    if (!/^[0-9a-fA-F]+$/.test(hex) || hex.length % 2 !== 0) return null;
+    var bytes = new Uint8Array(hex.length / 2);
+    for (var i = 0; i < bytes.length; i++) bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+    return bytes;
+  }
+
+  function bhumiPersilServerPubKey(response) {
+    var ecdh = response && response.ecdh;
+    var value = response && (response.serverPubKey || response.server_pub_key || response.serverPublicKey ||
+      response.server_public_key || response.publicKey || response.public_key) ||
+      (ecdh && typeof ecdh === 'object' && (ecdh.serverPubKey || ecdh.server_pub_key || ecdh.serverPublicKey ||
+        ecdh.server_public_key || ecdh.publicKey || ecdh.public_key || ecdh.key || ecdh.pubkey)) ||
+      (typeof ecdh === 'string' ? ecdh : null);
+    if (!value) return null;
+    if (typeof value === 'object') {
+      var x = value.x, y = value.y;
+      if (typeof x === 'string' && typeof y === 'string') {
+        var xy = bhumiPersilBytesFromHex(x + y);
+        if (!xy) {
+          try {
+            function b64urlBytes(part) {
+              var encoded = part.replace(/-/g, '+').replace(/_/g, '/');
+              while (encoded.length % 4) encoded += '=';
+              var decoded = atob(encoded), result = new Uint8Array(decoded.length);
+              for (var bi = 0; bi < decoded.length; bi++) result[bi] = decoded.charCodeAt(bi);
+              return result;
+            }
+            var xb = b64urlBytes(x), yb = b64urlBytes(y);
+            if (xb.length === 32 && yb.length === 32) {
+              xy = new Uint8Array(64); xy.set(xb); xy.set(yb, 32);
+            }
+          } catch (e) {}
+        }
+        if (xy && xy.length === 64) {
+          var xyRaw = new Uint8Array(65); xyRaw[0] = 4; xyRaw.set(xy, 1);
+          return { bytes: xyRaw, format: 'jwk-xy' };
+        }
+      }
+      value = value.key || value.value || value.pubkey || value.publicKey;
+    }
+    if (typeof value !== 'string') return null;
+    var text = value.trim();
+    var hex = text.replace(/^0x/i, '').replace(/\s+/g, '');
+    var fromHex = bhumiPersilBytesFromHex(hex);
+    if (fromHex && (fromHex.length === 65 || fromHex.length === 64)) {
+      if (fromHex.length === 64) {
+        var uncompressed = new Uint8Array(65); uncompressed[0] = 4; uncompressed.set(fromHex, 1); fromHex = uncompressed;
+      }
+      return { bytes: fromHex, format: 'hex' };
+    }
+    try {
+      var base64 = text.replace(/-/g, '+').replace(/_/g, '/');
+      while (base64.length % 4) base64 += '=';
+      var binary = atob(base64), decoded = new Uint8Array(binary.length);
+      for (var i = 0; i < binary.length; i++) decoded[i] = binary.charCodeAt(i);
+      if (decoded.length === 64) {
+        var uncompressedKey = new Uint8Array(65); uncompressedKey[0] = 4; uncompressedKey.set(decoded, 1); decoded = uncompressedKey;
+      }
+      if (decoded.length === 65) return { bytes: decoded, format: 'base64' };
+    } catch (e) {}
+    return null;
+  }
+
+  function bhumiPersilBytesToHex(bytes) {
+    var hex = '';
+    for (var i = 0; i < bytes.length; i++) hex += ('0' + bytes[i].toString(16)).slice(-2);
+    return hex;
+  }
+
+  function bhumiPersilDecryptMetadata(json, pubKeyInfo, attempts, hasPrivateKey) {
+    var ecdh = json && json.ecdh;
+    var ecdhInfo = ecdh && typeof ecdh === 'object'
+      ? { type: 'object', keys: Object.keys(ecdh) }
+      : { type: typeof ecdh, present: !!ecdh, length: typeof ecdh === 'string' ? ecdh.length : undefined, value: typeof ecdh === 'boolean' ? ecdh : undefined };
+    return {
+      responseKeys: json && typeof json === 'object' ? Object.keys(json).filter(function (key) { return key !== 'data'; }) : [],
+      encrypted: !!(json && json.encrypted),
+      encryptedDataLength: json && typeof json.data === 'string' ? json.data.length : null,
+      encryptedDataHeader: (function () {
+        try { return atob(json.data.slice(0, 16)).slice(0, 8); } catch (e) { return 'not-base64'; }
+      })(),
+      ecdh: ecdhInfo,
+      serverPubKey: pubKeyInfo ? { format: pubKeyInfo.format, bytes: pubKeyInfo.bytes.length } : {
+        present: !!(json && (json.serverPubKey || json.server_pub_key || json.serverPublicKey || json.server_public_key ||
+          json.publicKey || json.public_key || json.ecdh)), format: 'unrecognized'
+      },
+      clientPrivateKey: !!hasPrivateKey,
+      attempts: attempts || []
+    };
+  }
+
+  function bhumiPersilParseResponse(json, privKey) {
+    if (json && json.type === 'FeatureCollection') return Promise.resolve(json);
+    if (!json || !json.encrypted || !json.data) return Promise.resolve(null);
+
+    var attempts = [];
+    var pubKeyInfo = bhumiPersilServerPubKey(json);
+    function tryPassphrases(candidates, index) {
+      if (index >= candidates.length) return Promise.resolve(null);
+      var candidate = candidates[index];
+      return bhumiAesOpenSslDecrypt(json.data, candidate.bytes).then(function (text) {
+        if (text) {
+          try {
+            var parsed = JSON.parse(text);
+            if (parsed && parsed.type === 'FeatureCollection' && Array.isArray(parsed.features)) return parsed;
+            attempts.push(candidate.name + ': decrypted, payload bukan FeatureCollection');
+          } catch (e) { attempts.push(candidate.name + ': decrypt berhasil, JSON tidak valid'); }
+        } else attempts.push(candidate.name + ': AES decrypt gagal');
+        return tryPassphrases(candidates, index + 1);
       });
     }
-    if (json && json.type === 'FeatureCollection') return Promise.resolve(json);
-    return Promise.resolve(null);
+
+    var candidates = [];
+    function addCandidate(name, bytes) {
+      if (bytes && bytes.length) candidates.push({ name: name, bytes: bytes });
+    }
+    var fixed = 'K9#mQ8!wL5*zY4@tN7&eX1^bJ3(c', fixedBytes = new Uint8Array(fixed.length);
+    for (var f = 0; f < fixed.length; f++) fixedBytes[f] = fixed.charCodeAt(f);
+
+    var ecdhPromise = Promise.resolve();
+    if (pubKeyInfo && privKey && window.crypto && crypto.subtle) {
+      ecdhPromise = crypto.subtle.importKey('raw', pubKeyInfo.bytes, { name: 'ECDH', namedCurve: 'P-256' }, false, [])
+        .then(function (serverKey) { return crypto.subtle.deriveBits({ name: 'ECDH', public: serverKey }, privKey, 256); })
+        .then(function (sharedBuffer) {
+          var shared = new Uint8Array(sharedBuffer), sharedHex = bhumiPersilBytesToHex(shared);
+          addCandidate('ECDH shared bytes', shared);
+          addCandidate('ECDH shared hex text', new TextEncoder().encode(sharedHex));
+          return Promise.all([
+            crypto.subtle.digest('SHA-256', shared),
+            crypto.subtle.digest('SHA-256', new TextEncoder().encode(sharedHex))
+          ]).then(function (digests) {
+            var rawHex = bhumiPersilBytesToHex(new Uint8Array(digests[0]));
+            var hexText = bhumiPersilBytesToHex(new Uint8Array(digests[1]));
+            addCandidate('SHA256(ECDH bytes)', new Uint8Array(digests[0]));
+            addCandidate('SHA256(ECDH bytes) hex text', new TextEncoder().encode(rawHex));
+            addCandidate('SHA256(ECDH hex text)', new Uint8Array(digests[1]));
+            addCandidate('SHA256(ECDH hex text) hex text', new TextEncoder().encode(hexText));
+          });
+        }).catch(function (error) {
+          attempts.push('ECDH derive: ' + ((error && error.message) || 'gagal'));
+        });
+    } else {
+      attempts.push(!pubKeyInfo ? 'server public key tidak dikenali' : 'private key ECDH request tidak tersedia');
+    }
+
+    return ecdhPromise.then(function () {
+      addCandidate('legacy static passphrase', fixedBytes);
+      return tryPassphrases(candidates, 0);
+    }).then(function (featureCollection) {
+      if (featureCollection) return featureCollection;
+      json.__decryptDiagnostics = bhumiPersilDecryptMetadata(json, pubKeyInfo, attempts, !!privKey);
+      console.error('[BHUMI] Respons berhasil diterima tetapi dekripsi gagal', json.__decryptDiagnostics);
+      return null;
+    }).catch(function (error) {
+      attempts.push('decrypt pipeline: ' + ((error && error.message) || 'gagal'));
+      json.__decryptDiagnostics = bhumiPersilDecryptMetadata(json, pubKeyInfo, attempts, !!privKey);
+      console.error('[BHUMI] Respons berhasil diterima tetapi dekripsi gagal', json.__decryptDiagnostics);
+      return null;
+    });
   }
 
   function bhumiPersilEsc(v) {
@@ -2393,7 +2626,7 @@ const SAWAH_COLOR = '#87cf15';
     return '<div class="agol-popup"><div class="agol-popup-header agol-geo-persil">' +
       '<div class="agol-popup-badge"><span class="agol-popup-badge-dot"></span>BHUMI ATR/BPN</div>' +
       '<div class="agol-popup-title">' + bhumiPersilEsc(title) + '</div></div>' +
-      '<div class="agol-popup-body"><div style="font-size:12px;color:#555;line-height:1.45">' +
+      '<div class="agol-popup-body"><div style="font-size:12px;color:#555;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;max-height:300px;overflow:auto">' +
       bhumiPersilEsc(message) + '</div></div></div>';
   }
 
@@ -2476,25 +2709,37 @@ const SAWAH_COLOR = '#87cf15';
     var body = Object.assign({}, payload, { service_layer_name: layerName, query_layers: layerName });
     return bhumiPersilGetToken()
       .then(function (token) {
-        if (!token) throw new Error('token tidak tersedia');
-        return bhumiPersilProxyPost('/expapi/getPersil', body, token)
-          .then(function (r) {
-            if (r.status !== 401) return r;
+        return bhumiPersilProxyPost('/expapi/getPersil', body, token, true)
+          .then(function (out) {
+            if (out.res.status !== 401) return out;
             bhumiPersilToken.value = null;
             return bhumiPersilGetToken().then(function (t2) {
-              if (!t2) throw new Error('token tidak tersedia');
-              return bhumiPersilProxyPost('/expapi/getPersil', body, t2);
+              return bhumiPersilProxyPost('/expapi/getPersil', body, t2, true);
             });
           });
       })
-      .then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      })
-      .then(function (json) {
-        return bhumiPersilParseResponse(json).then(function (fc) {
-          if (!fc) throw new Error('respons tidak valid');
-          return fc;
+      .then(function (out) {
+        var r = out.res || out;
+        var privKey = out.privKey || null;
+        if (!r.ok) {
+          return r.text().then(function (text) {
+            var detail = bhumiPersilSafeDiagnostic(text);
+            throw new Error('BHUMI_GETPERSIL_HTTP_' + r.status +
+              (r.headers.get('X-Proxy-Status') ? ' (proxy upstream ' + r.headers.get('X-Proxy-Status') + ')' : '') +
+              (detail ? '\n' + detail : '\n(respons kosong)'));
+          });
+        }
+        return r.text().then(function (text) {
+          var json;
+          try { json = JSON.parse(text); }
+          catch (e) { throw new Error('BHUMI_GETPERSIL_JSON_INVALID: ' + bhumiPersilSafeDiagnostic(text)); }
+          return bhumiPersilParseResponse(json, privKey).then(function (fc) {
+            if (!fc) {
+              var diagnostics = json.__decryptDiagnostics || { responseKeys: Object.keys(json || {}) };
+              throw new Error('BHUMI_DECRYPT_FAILED: respons sukses diterima, tetapi payload terenkripsi tidak dapat didekripsi menjadi FeatureCollection.\nMetadata respons (tanpa ciphertext/token):\n' + JSON.stringify(diagnostics, null, 2));
+            }
+            return fc;
+          });
         });
       });
   }
@@ -2590,7 +2835,11 @@ const SAWAH_COLOR = '#87cf15';
       'Mencari data persil & ZNT\u2026'));
     var settled = function (p) {
       return p.then(function (fc) { return { ok: true, fc: fc }; },
-        function (err) { return { ok: false, err: (err && err.message) || '' }; });
+        function (err) {
+          var detail = (err && err.message) || String(err || 'Kesalahan tidak diketahui');
+          console.error('[BHUMI] Identifikasi klik gagal', { error: detail });
+          return { ok: false, err: detail };
+        });
     };
     /* Permintaan 2026-10-22: hasil identifikasi hanya Persil + Zona Nilai
        Tanah, apa pun pilihan layer tematik di katalog. */
@@ -2602,12 +2851,18 @@ const SAWAH_COLOR = '#87cf15';
       .then(function (res) {
         if (seq !== bhumiPersilClickSeq) return;
         if (!res.some(function (r) { return r.ok; })) {
-          var authFail = res.length > 0 && res.every(function (r) { return r.err === 'token tidak tersedia'; });
+          var errors = res.map(function (r) { return r.err || ''; }).filter(Boolean);
+          var detail = errors.length ? errors.join('\n\n') : 'Permintaan tidak berhasil.';
+          var loginFailure = /BHUMI_LOGIN_|token tidak tersedia/i.test(detail);
+          var loginStatus = detail.match(/BHUMI_LOGIN_HTTP_(\d{3})/);
+          var title = loginFailure ? 'Autentikasi BHUMI Gagal' : 'Gagal Memuat Data Pertanahan';
+          var message = loginStatus && loginStatus[1] === '401'
+            ? 'BHUMI menolak autentikasi. Detail respons lengkap:\n' + detail
+            : loginFailure
+              ? 'Login tidak menghasilkan token yang dapat digunakan. Detail respons lengkap:\n' + detail
+              : 'BHUMI tidak mengembalikan data. Detail respons lengkap:\n' + detail;
           bhumiPersilOpenPopup(e.latlng, bhumiPersilStatusCard(
-            authFail ? 'Login BHUMI Ditolak' : 'Gagal Memuat',
-            authFail
-              ? 'Server BHUMI sedang menolak login (gangguan di sisi mereka), jadi data persil/ZNT belum bisa diambil. Coba lagi nanti.'
-              : 'Gagal mengambil data pertanahan. Coba lagi.'));
+            title, message));
           return;
         }
         bhumiPersilRenderResult(e.latlng, queryLayers, res);
@@ -3808,9 +4063,10 @@ const SAWAH_COLOR = '#87cf15';
     { layer: "umum:kawasan_hutan", label: "Kawasan Hutan00" },
     { layer: "umum:persil_sbts", label: "Sebaran Transaksi" }
   ];
-  /* Identifikasi klik default menyala hanya untuk layer inti; pilihan
-     lain di-state dapat diubah lewat katalog dan disimpan di localStorage. */
-  var BHUMI_IDENTIFY_CORE = ["umum:ZNTRANGE", "umum:nbt3", "umum:toponimi"];
+  /* Tidak mengaktifkan layer identifikasi tematik secara otomatis.
+     Pengguna dapat memilih layer yang dibutuhkan dari katalog; pilihan
+     yang pernah disimpan tetap dipulihkan dari localStorage. */
+  var BHUMI_IDENTIFY_CORE = [];
   var BHUMI_IDENTIFY_STORAGE_KEY = 'ruangkita-bhumi-identify-layers';
 
   var LAYER_CATALOG_DATA = [
@@ -4450,7 +4706,6 @@ const SAWAH_COLOR = '#87cf15';
         { id: 'toggleBatnas', label: 'Kedalaman laut (BATNAS)' },
         { id: 'toggleProvinceBoundary', label: 'Batas Provinsi (PBF)' },
         { id: 'toggleBmkgTimezone', label: 'Batas Wilayah Waktu (BMKG)' },
-        { id: 'toggleBpsTutupanLahan', label: 'Peta Tutupan Lahan 100m (KSA BPS)' },
         { id: 'toggleTollRoad', label: 'Jalan Tol Pulau Jawa' },
         { id: 'toggleNationalRoad', label: 'Jalan Nasional' },
         { id: 'toggleEoxOverlay', label: 'Labels Overlay (EOX)' }
@@ -5172,7 +5427,6 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
            (id === 'toggleSawahDilindungi' && typeof window.toggleSawahDilindungiLayer === 'function') ||
           id === 'toggleSawahNasional50k' ||
           id === 'toggleErosiLayer' ||
-          id === 'toggleBpsTutupanLahan' ||
            id === 'toggleLsdTmsLayer' ||
            id === 'toggleLbsTmsLayer' ||
            id === 'toggleDiTmsLayer' ||
@@ -5356,9 +5610,6 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
         }
         if (id === 'toggleErosiLayer' && typeof window.toggleErosiLayer === 'function') {
           window.toggleErosiLayer(cb.checked);
-        }
-        if (id === 'toggleBpsTutupanLahan' && typeof window.toggleBpsTutupanLahan === 'function') {
-          window.toggleBpsTutupanLahan(cb.checked);
         }
         if (id === 'toggleSekolahLayer' && typeof window.toggleSekolahLayer === 'function') {
           window.toggleSekolahLayer(cb.checked);
