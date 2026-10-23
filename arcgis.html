@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ArcGIS Downloader</title>
+<style>
+:root{
+    --bg-0: linear-gradient(180deg,#f7fbff 0%,#eef6ff 100%);
+    --card-bg: rgba(255,255,255,0.9);
+    --accent: #0066cc;
+    --accent-2: #00a676;
+    --muted: #6b7280;
+    --shadow: 0 8px 30px rgba(16,24,40,0.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Arial;background:var(--bg-0);color:#0f172a}
+.container{max-width:1100px;margin:24px auto;padding:16px}
+.card{background:var(--card-bg);border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow);border:1px solid rgba(16,24,40,0.05)}
+h1{font-size:21px;margin:0}
+h3{margin:0 0 8px}
+.subtitle{color:var(--muted);margin:4px 0 14px;font-size:14px}
+label{display:block;font-weight:600;margin-top:12px;margin-bottom:6px;font-size:14px}
+input,textarea{width:100%;padding:11px 13px;border-radius:10px;border:1px solid rgba(15,23,42,0.08);font-size:13.5px;background:#fff;outline:none}
+textarea{min-height:72px;font-family:ui-monospace,monospace;font-size:12.5px}
+input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,102,204,0.12)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.buttons{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+button{border:0;padding:9px 13px;border-radius:9px;cursor:pointer;font-weight:700;font-size:13.5px;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:linear-gradient(90deg,var(--accent),#1e40af);color:#fff}
+.btn-success{background:linear-gradient(90deg,var(--accent-2),#16a34a);color:#fff}
+.btn-danger{background:linear-gradient(90deg,#ef4444,#dc2626);color:#fff}
+.btn-secondary{background:#f1f5f9;color:#0f172a;border:1px solid #e2e8f0}
+.btn-warning{background:linear-gradient(90deg,#f59e0b,#d97706);color:#fff}
+.btn-sm{padding:5px 10px;font-size:12px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.progress-container{margin-top:14px}
+.progress-bar{width:100%;height:12px;background:#eef2ff;border-radius:999px;overflow:hidden}
+.progress{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .3s}
+.stats{margin-top:8px;display:flex;justify-content:space-between;color:var(--muted);font-size:12.5px;flex-wrap:wrap;gap:6px}
+.log{margin-top:12px;background:#0b1220;color:#cfe8ff;border-radius:10px;padding:12px;height:300px;overflow:auto;font-family:ui-monospace,monospace;font-size:12px;white-space:pre-wrap;word-break:break-all}
+.status{padding:10px 12px;border-radius:9px;margin-top:12px;font-size:14px}
+.status.info{background:#e6f0ff;color:#073b7a}
+.status.success{background:#ecfdf5;color:#064e3b}
+.status.error{background:#fff1f2;color:#7f1d1d}
+.tip{background:#fffbeb;border-left:4px solid #f59e0b;padding:10px 12px;margin-top:12px;font-size:13px;border-radius:8px;color:#92400e}
+.tree{margin-top:10px;max-height:460px;overflow:auto;background:#f8fafc;border-radius:10px;padding:8px}
+.item{padding:8px 10px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.item:hover{background:#f1f5f9}
+.item-left{display:flex;align-items:center;gap:8px;min-width:0}
+.item-name{font-weight:600;font-size:13.5px;word-break:break-all}
+.item-meta{font-size:11.5px;color:#64748b}
+.badge{display:inline-block;padding:2px 7px;border-radius:999px;font-size:11px;font-weight:600}
+.badge-folder{background:#e0e7ff;color:#3730a3}
+.badge-service{background:#dbeafe;color:#1e40af}
+.badge-group{background:#fee2e2;color:#991b1b}
+.badge-feature{background:#dcfce7;color:#166534}
+.indent-1{padding-left:18px}
+.indent-2{padding-left:36px}
+.indent-3{padding-left:54px}
+.folder-info{font-size:12.5px;color:#166534;margin-top:6px;padding:6px 10px;background:#ecfdf5;border-radius:8px;display:none}
+.folder-info.active{display:block}
+.resume-box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px;margin-top:12px}
+.resume-box label{margin-top:0}
+.hint{font-size:12px;color:var(--muted);margin-top:4px}
+@media(max-width:880px){.row,.row3{grid-template-columns:1fr}}
+
+/* Toast Notification */
+.toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{padding:14px 20px;border-radius:10px;color:#fff;font-size:13.5px;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,0.15);pointer-events:auto;animation:slideIn .3s ease;display:flex;align-items:center;gap:10px;max-width:420px}
+.toast-success{background:linear-gradient(135deg,#10b981,#059669)}
+.toast-error{background:linear-gradient(135deg,#ef4444,#dc2626)}
+.toast-warning{background:linear-gradient(135deg,#f59e0b,#d97706)}
+.toast-info{background:linear-gradient(135deg,#3b82f6,#2563eb)}
+.toast-close{margin-left:auto;cursor:pointer;opacity:.8;font-size:18px}
+.toast-close:hover{opacity:1}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(100%);opacity:0}}
+</style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="container">
+
+<!-- EXPLORER -->
+<div class="card">
+    <h3>ArcGIS Downloader</h3>
+    <p class="subtitle">Mulai dari root services, buka folder, pilih MapServer/FeatureServer, lalu pilih Feature Layer.</p>
+
+    <label>Root / Service URL</label>
+    <select id="urlPreset" style="width:100%;padding:10px 13px;border-radius:10px;border:1px solid rgba(15,23,42,0.08);font-size:13.5px;background:#fff;outline:none;margin-bottom:8px">
+        <optgroup label="ATRBPN">
+            <option value="https://gistaru-proxy.atrbpn.go.id/proxy.ashx?https://gistaru.atrbpn.go.id/arcgis/rest/services/?f=json">ATRBPN Gistaru (Proxy + Referer)</option>
+        </optgroup>
+        <optgroup label="BNPB">
+            <option value="https://gis.bnpb.go.id/server/rest/services/?f=json">BNPB GIS Indonesia</option>
+        </optgroup>
+        <optgroup label="ESDM">
+            <option value="https://geoportal.esdm.go.id/gis1/rest/services/?F=JSON">ESDM GIS 1</option>
+            <option value="https://geoportal.esdm.go.id/gis2/rest/services/?F=JSON">ESDM GIS 2</option>
+            <option value="https://geoportal.esdm.go.id/gis3/rest/services/?F=JSON">ESDM GIS 3</option>
+            <option value="https://geoportal.esdm.go.id/gis4/rest/services/?F=JSON">ESDM GIS 4</option>
+            <option value="https://geoportal.esdm.go.id/gis5/rest/services/?F=JSON">ESDM GIS 5</option>
+            <option value="https://datamigas.esdm.go.id/arcgis/rest/services/?f=pjson">ESDM Data Migas</option>
+        </optgroup>
+        <optgroup label="KEMENHUT">
+            <option value="https://geoportal.planologi.kehutanan.go.id/server/rest/services/?f=json">Planologi Kehutanan</option>
+            <option value="https://simontana.kehutanan.go.id/arcgis/rest/services/?f=json">Simontana Kehutanan</option>
+        </optgroup>
+        <optgroup label="BMKG">
+            <option value="https://gis.bmkg.go.id/arcgis/rest/services/?f=json">BMKG GIS</option>
+            <option value="https://datacuaca.bmkg.go.id/arcgis/rest/services/">BMKG Data Cuaca</option>
+        </optgroup>
+        <optgroup label="KEMENDAGRI">
+            <option value="https://gis.dukcapil.kemendagri.go.id/arcgis/rest/services/?f=json">Dukcapil Kemendagri</option>
+        </optgroup>
+        <optgroup label="KEMENTAN">
+            <option value="https://geoportal.pertanian.go.id/arcgis/rest/services">Geoportal Pertanian</option>
+            <option value="https://sig02.pertanian.go.id/server/rest/services">SIG02 Pertanian</option>
+        </optgroup>
+        <optgroup label="BIG">
+            <option value="https://kspservices.big.go.id/satupeta/rest/services/">KSP Services BIG</option>
+            <option value="https://geoservices.big.go.id/gis/rest/services">Geoservices BIG</option>
+            <option value="https://geoservices.big.go.id/rbi/rest/services/">Geoservices RBI BIG</option>
+        </optgroup>
+        <optgroup label="PUPR">
+            <option value="https://sigi.pu.go.id/imagery/rest/services">SIGI PUPR</option>
+        </optgroup>
+    </select>
+    <textarea id="rootUrl">https://gistaru-proxy.atrbpn.go.id/proxy.ashx?https://gistaru.atrbpn.go.id/arcgis/rest/services/?f=json</textarea>
+
+    <div class="buttons">
+        <button class="btn-primary" id="exploreBtn">🔍 Explore Root</button>
+        <button class="btn-secondary" id="clearTreeBtn">🗑 Clear</button>
+    </div>
+
+    <div id="tree" class="tree"></div>
+</div>
+
+<!-- DOWNLOADER -->
+<div class="card">
+    <h1>ArcGIS Downloader</h1>
+    <div class="subtitle">Download feature batch dengan resultOffset · Resume · Pilih folder</div>
+
+    <label>URL Count Query</label>
+    <textarea id="countUrl" placeholder="Akan terisi otomatis setelah pilih Feature Layer"></textarea>
+
+    <label>URL Feature Query</label>
+    <textarea id="queryUrl" placeholder="Akan terisi otomatis setelah pilih Feature Layer"></textarea>
+
+    <div class="row">
+        <div>
+            <label>Batch Size</label>
+            <input type="number" id="batchSize" value="1000" min="1" max="2000">
+        </div>
+        <div>
+            <label>Delay (ms)</label>
+            <input type="number" id="delay" value="600" min="0">
+        </div>
+    </div>
+
+    <label>Prefix Nama File</label>
+    <input type="text" id="filePrefix" value="layer">
+
+    <!-- LOKASI DOWNLOAD -->
+    <label>Lokasi Download</label>
+    <div class="buttons" style="margin-top:0">
+        <button class="btn-secondary" id="pickFolderBtn">📁 Pilih Folder</button>
+        <button class="btn-secondary" id="clearFolderBtn">✕ Reset ke Default</button>
+    </div>
+    <div id="folderInfo" class="folder-info"></div>
+    <div class="hint">Chrome / Edge: file langsung disimpan ke folder pilihan. Browser lain: download ke folder default browser.</div>
+
+    <!-- RESUME -->
+    <div class="resume-box">
+        <label>Resume / Mulai dari Offset</label>
+        <div class="row3">
+            <div>
+                <label style="font-weight:500;font-size:12.5px;margin-top:0">Start Offset</label>
+                <input type="number" id="startOffset" value="0" min="0" step="1">
+            </div>
+            <div>
+                <label style="font-weight:500;font-size:12.5px;margin-top:0">Start Batch #</label>
+                <input type="number" id="startBatch" value="1" min="1" step="1">
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:6px;flex-wrap:wrap">
+                <button class="btn-warning btn-sm" id="loadProgressBtn" type="button">↺ Muat Progress</button>
+                <button class="btn-secondary btn-sm" id="clearProgressBtn" type="button">🗑 Hapus Progress</button>
+            </div>
+        </div>
+        <div class="hint" id="progressHint">Progress tersimpan otomatis per layer. Klik "Muat Progress" untuk melanjutkan dari batch terakhir yang sukses.</div>
+    </div>
+
+    <div class="buttons">
+        <button class="btn-primary" id="checkBtn">🔍 Cek Total Feature</button>
+        <button class="btn-warning" id="checkAltBtn">⚡ Cek via returnIdsOnly</button>
+        <button class="btn-success" id="startBtn" disabled>▶ Mulai Download</button>
+        <button class="btn-danger" id="stopBtn" disabled>⏹ Stop</button>
+        <button class="btn-secondary" id="clearLogBtn">🗑 Clear Log</button>
+    </div>
+
+    <div id="status" class="status" style="display:none"></div>
+
+    <div class="progress-container">
+        <div class="progress-bar"><div class="progress" id="progress"></div></div>
+        <div class="stats">
+            <span id="progressText">0 / 0</span>
+            <span id="batchText">Batch: 0</span>
+            <span id="resumeText"></span>
+        </div>
+    </div>
+
+    <div class="tip">
+        <b>Alur:</b> Explore Root → buka Folder → klik <b>Open Service</b> → pilih <b>Use Layer</b> → Cek Total → (opsional) Pilih Folder &amp; Muat Progress → Download.<br>
+        <b>Resume:</b> Progress disimpan otomatis. Setelah stop/error, klik "Muat Progress" lalu "Mulai Download" untuk lanjut dari offset terakhir.
+    </div>
+</div>
+
+<!-- LOG -->
+<div class="card">
+    <h3>📜 Activity Log</h3>
+    <div class="log" id="log"></div>
+</div>
+
+</div>
+
+<script>
+/* ===================== STATE ===================== */
+let totalFeatures = 0;
+let stopProcess = false;
+let currentOffset = 0;
+let currentBatch = 0;
+let dirHandle = null;          // File System Access API
+let currentLayerKey = "";      // key untuk localStorage progress
+
+/* ===================== ELEMENTS ===================== */
+const rootUrlInput    = document.getElementById("rootUrl");
+const urlPreset       = document.getElementById("urlPreset");
+const exploreBtn      = document.getElementById("exploreBtn");
+const clearTreeBtn    = document.getElementById("clearTreeBtn");
+const treeBox         = document.getElementById("tree");
+const countUrlInput   = document.getElementById("countUrl");
+const queryUrlInput   = document.getElementById("queryUrl");
+const batchSizeInput  = document.getElementById("batchSize");
+const delayInput      = document.getElementById("delay");
+const filePrefixInput = document.getElementById("filePrefix");
+const startOffsetInput= document.getElementById("startOffset");
+const startBatchInput = document.getElementById("startBatch");
+const pickFolderBtn   = document.getElementById("pickFolderBtn");
+const clearFolderBtn  = document.getElementById("clearFolderBtn");
+const folderInfo      = document.getElementById("folderInfo");
+const loadProgressBtn = document.getElementById("loadProgressBtn");
+const clearProgressBtn= document.getElementById("clearProgressBtn");
+const progressHint    = document.getElementById("progressHint");
+const checkBtn        = document.getElementById("checkBtn");
+const checkAltBtn     = document.getElementById("checkAltBtn");
+const startBtn        = document.getElementById("startBtn");
+const stopBtn         = document.getElementById("stopBtn");
+const clearLogBtn     = document.getElementById("clearLogBtn");
+const logBox          = document.getElementById("log");
+const progress        = document.getElementById("progress");
+const progressText    = document.getElementById("progressText");
+const batchText       = document.getElementById("batchText");
+const resumeText      = document.getElementById("resumeText");
+const statusBox       = document.getElementById("status");
+const toastContainer  = document.getElementById("toastContainer");
+
+/* ===================== HELPERS ===================== */
+function safe(s){ return String(s??"").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function log(msg){
+    const t = new Date().toLocaleTimeString();
+    logBox.innerHTML += `[${t}] ${safe(msg)}<br>`;
+    logBox.scrollTop = logBox.scrollHeight;
+}
+
+function showToast(message, type = "info", duration = 5000){
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+
+    const icons = { success: "✓", error: "✕", warning: "⚠", info: "ℹ" };
+    toast.innerHTML = `<span>${icons[type] || ""}</span><span>${message}</span><span class="toast-close" onclick="this.parentElement.remove()">×</span>`;
+
+    toastContainer.appendChild(toast);
+
+    // Auto remove
+    setTimeout(() => {
+        toast.style.animation = "slideOut .3s ease forwards";
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+function setStatus(msg, type="info"){
+    statusBox.style.display = "block";
+    statusBox.className = "status " + type;
+    statusBox.innerHTML = msg;
+}
+
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+function splitProxy(fullUrl){
+    const m = String(fullUrl||"").match(/^(https?:\/\/[^?]+\proxy\.ashx\?)(https?:\/\/.+)$/i);
+    if(m){
+        return { proxyPrefix: m[1], target: m[2] };
+    }
+    return { proxyPrefix: "", target: String(fullUrl||"") };
+}
+
+const GISTARU_ARCGIS_PROXY = "https://gistaru-proxy.atrbpn.go.id/proxy.ashx?";
+const KTA_CORS_PROXY = "https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=";
+
+function gistaruFetchUrl(url){
+    const parts = splitProxy(url);
+    let target = parts.target;
+    try{
+        const parsed = new URL(target);
+        if(parsed.hostname.toLowerCase() !== "gistaru.atrbpn.go.id" ||
+           !parsed.pathname.toLowerCase().startsWith("/arcgis/rest/services/")) return url;
+        // Browser tidak dapat mengatur Referer. Request GISTARU diteruskan
+        // lewat proxy ashx, lalu Worker memasang Referer/Origin GISTARU.
+        return KTA_CORS_PROXY + encodeURIComponent(GISTARU_ARCGIS_PROXY + target);
+    }catch(_){
+        return url;
+    }
+}
+
+function gistaruDirectFallbackUrl(url){
+    const parts = splitProxy(url);
+    try{
+        const target = new URL(parts.target);
+        if(target.hostname.toLowerCase() !== "gistaru.atrbpn.go.id" ||
+           !target.pathname.toLowerCase().startsWith("/arcgis/rest/services/")) return "";
+        return KTA_CORS_PROXY + encodeURIComponent(target.href);
+    }catch(_){
+        return "";
+    }
+}
+
+function ensureJson(url){
+    if(/[?&]f=json/i.test(url)) return url;
+    return url + (url.includes("?") ? "&" : "?") + "f=json";
+}
+
+function buildFinalUrl(proxyPrefix, targetPath){
+    let target = String(targetPath||"").replace(/\?f=json$/i,"");
+    const withJson = ensureJson(target);
+    return (proxyPrefix || "") + withJson;
+}
+
+async function fetchJSON(url){
+    log("→ " + (url.length > 130 ? url.slice(0,130)+"..." : url));
+    const requestUrl = gistaruFetchUrl(url);
+    if(requestUrl !== url){
+        log("↳ Lewat CORS Worker + proxy.ashx (Worker memasang Referer GISTARU)");
+    }
+    let res;
+    try{
+        res = await fetch(requestUrl, {
+            method: "GET",
+            headers: { "Accept": "application/json" },
+            cache: "no-store",
+            mode: "cors"
+        });
+    }catch(e){
+        showToast(`Network Error: ${e.message}. Coba jalankan dari HTTP server atau gunakan browser extension CORS.`, "error", 8000);
+        throw new Error("Network/CORS: " + e.message);
+    }
+
+    let text = await res.text();
+    // Host proxy.ashx may return Cloudflare 1016 (origin DNS failure).
+    // Retry the same ArcGIS REST URL directly through our CORS Worker, which
+    // can set the GISTARU Referer/Origin headers server-side.
+    const directFallback = gistaruDirectFallbackUrl(url);
+    if(res.status === 530 && /error code:\s*1016/i.test(text) && directFallback){
+        log("Proxy ashx gagal (Cloudflare 1016); mencoba ArcGIS GISTARU langsung lewat CORS Worker...");
+        try{
+            res = await fetch(directFallback, {
+                method: "GET",
+                headers: { "Accept": "application/json" },
+                cache: "no-store",
+                mode: "cors"
+            });
+            text = await res.text();
+            log(`↳ Fallback ArcGIS langsung: HTTP ${res.status} | ${text.length} chars`);
+        }catch(e){
+            log("Fallback ArcGIS langsung gagal: " + e.message);
+        }
+    }
+    log(`← HTTP ${res.status} | ${text.length} chars`);
+
+    let data;
+    try{
+        data = JSON.parse(text);
+    }catch(e){
+        const preview = text.slice(0,240).replace(/\s+/g," ");
+        const contentType = res.headers.get("content-type") || "tanpa Content-Type";
+        log("Respons non-JSON (HTTP " + res.status + "; " + contentType + "): " + preview);
+        const shortPreview = preview.length > 100 ? preview.slice(0,100) + "…" : preview;
+        showToast(`GISTARU mengembalikan HTTP ${res.status} (${contentType}): ${shortPreview}`, "error", 12000);
+        throw new Error(`HTTP ${res.status}, ${contentType}: ${safe(preview)}`);
+    }
+
+    // Deteksi error ArcGIS
+    if(data.error){
+        const errMsg = data.error.message || JSON.stringify(data.error);
+        const errCode = data.error.code || "";
+
+        // Deteksi error login/auth ESRI
+        if(/token|unauthorized|401|403|login|authenticated/i.test(errMsg)){
+            showToast(`🔐 Login Diperlukan: ${errMsg}`, "error", 8000);
+        }else{
+            showToast(`ArcGIS Error ${errCode}: ${errMsg}`, "error");
+        }
+        throw new Error(`ArcGIS ${errCode}: ${errMsg}`);
+    }
+
+    // Deteksi HTML response (biasanya login page)
+    if(text.includes("<html") || text.includes("<!DOCTYPE")){
+        showToast("⚠ Server mengembalikan HTML (kemungkinan halaman login ESRI).", "error", 8000);
+        throw new Error("Server mengembalikan HTML, bukan JSON. Kemungkinan halaman login.");
+    }
+
+    if(!res.ok) throw new Error("HTTP " + res.status);
+
+    return data;
+}
+
+/* ===================== PROGRESS (localStorage) ===================== */
+function makeLayerKey(countUrl, queryUrl, prefix){
+    const raw = (countUrl || queryUrl || "") + "|" + (prefix || "");
+    // simple hash
+    let h = 0;
+    for(let i=0;i<raw.length;i++){ h = ((h<<5)-h) + raw.charCodeAt(i); h |= 0; }
+    return "arcgis_dl_" + Math.abs(h);
+}
+
+function saveProgress(offset, batch, total){
+    if(!currentLayerKey) return;
+    const data = {
+        offset: offset,
+        batch: batch,
+        total: total,
+        prefix: filePrefixInput.value.trim(),
+        batchSize: parseInt(batchSizeInput.value,10) || 1000,
+        updatedAt: new Date().toISOString()
+    };
+    try{
+        localStorage.setItem(currentLayerKey, JSON.stringify(data));
+    }catch(e){ /* ignore quota */ }
+}
+
+function loadProgressFromStorage(){
+    if(!currentLayerKey){
+        // coba generate dari URL saat ini
+        currentLayerKey = makeLayerKey(countUrlInput.value, queryUrlInput.value, filePrefixInput.value);
+    }
+    try{
+        const raw = localStorage.getItem(currentLayerKey);
+        if(!raw) return null;
+        return JSON.parse(raw);
+    }catch(e){
+        return null;
+    }
+}
+
+function clearProgressFromStorage(){
+    if(currentLayerKey){
+        localStorage.removeItem(currentLayerKey);
+    }
+}
+
+/* ===================== FOLDER PICKER ===================== */
+async function pickFolder(){
+    if(!window.showDirectoryPicker){
+        setStatus("Browser ini tidak mendukung File System Access API. File akan di-download ke folder default browser.", "info");
+        log("File System Access API tidak tersedia → fallback download biasa.");
+        return;
+    }
+    try{
+        dirHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+        // test permission
+        const perm = await dirHandle.requestPermission({ mode: "readwrite" });
+        if(perm !== "granted"){
+            dirHandle = null;
+            throw new Error("Izin tulis folder ditolak");
+        }
+        folderInfo.textContent = "📁 Folder aktif: " + (dirHandle.name || "(tanpa nama)");
+        folderInfo.classList.add("active");
+        log("Folder dipilih: " + dirHandle.name);
+        setStatus("Folder download: <b>" + safe(dirHandle.name) + "</b>", "success");
+    }catch(e){
+        if(e.name === "AbortError"){
+            log("Pemilihan folder dibatalkan.");
+            return;
+        }
+        log("ERROR pilih folder: " + e.message);
+        setStatus("Error folder: " + e.message, "error");
+        dirHandle = null;
+        folderInfo.classList.remove("active");
+    }
+}
+
+function clearFolder(){
+    dirHandle = null;
+    folderInfo.classList.remove("active");
+    folderInfo.textContent = "";
+    log("Folder direset → download ke default browser.");
+    setStatus("Lokasi download direset ke default browser.", "info");
+}
+
+pickFolderBtn.addEventListener("click", pickFolder);
+clearFolderBtn.addEventListener("click", clearFolder);
+
+/* ===================== URL PRESET ===================== */
+urlPreset.addEventListener("change", () => {
+    rootUrlInput.value = urlPreset.value;
+    log("URL preset dipilih: " + urlPreset.options[urlPreset.selectedIndex].text);
+});
+
+/* ===================== TREE UI ===================== */
+function clearTree(){ treeBox.innerHTML = ""; }
+clearTreeBtn.addEventListener("click", clearTree);
+
+function makeRow(opts){
+    const row = document.createElement("div");
+    row.className = "item indent-" + (opts.indent || 0);
+
+    const left = document.createElement("div");
+    left.className = "item-left";
+    left.innerHTML = `
+        <span class="badge ${opts.badgeClass}">${safe(opts.badgeText)}</span>
+        <div>
+            <div class="item-name">${safe(opts.name)}</div>
+            ${opts.meta ? `<div class="item-meta">${safe(opts.meta)}</div>` : ""}
+        </div>
+    `;
+
+    const right = document.createElement("div");
+    right.style.display = "flex";
+    right.style.gap = "6px";
+    right.style.flexShrink = "0";
+
+    (opts.buttons || []).forEach(b => {
+        const btn = document.createElement("button");
+        btn.className = (b.className || "btn-secondary") + " btn-sm";
+        btn.textContent = b.label;
+        if(b.disabled) btn.disabled = true;
+        btn.addEventListener("click", b.onClick);
+        right.appendChild(btn);
+    });
+
+    row.appendChild(left);
+    row.appendChild(right);
+    return row;
+}
+
+function getProxyPartsFromRoot(){
+    const raw = rootUrlInput.value.trim();
+    const { proxyPrefix, target } = splitProxy(raw);
+    let serviceRoot = target.replace(/[?&]f=json/i,"").replace(/\/$/,"");
+    return { proxyPrefix, serviceRoot };
+}
+
+/* ===================== EXPLORE ROOT ===================== */
+exploreBtn.addEventListener("click", async () => {
+    try{
+        exploreBtn.disabled = true;
+        clearTree();
+        setStatus("Explore root services...", "info");
+        log("========== EXPLORE ROOT ==========");
+
+        const raw = rootUrlInput.value.trim();
+        if(!raw) throw new Error("Root URL kosong");
+
+        const { proxyPrefix, target } = splitProxy(raw);
+        const url = buildFinalUrl(proxyPrefix, target);
+
+        const data = await fetchJSON(url);
+
+        if(Array.isArray(data.folders) && data.folders.length){
+            const h = document.createElement("div");
+            h.style.padding = "6px 10px";
+            h.style.fontWeight = "700";
+            h.textContent = "Folders";
+            treeBox.appendChild(h);
+
+            data.folders.forEach(folderName => {
+                const container = document.createElement("div");
+                container.dataset.loaded = "0";
+
+                const row = makeRow({
+                    indent: 0,
+                    badgeClass: "badge-folder",
+                    badgeText: "Folder",
+                    name: folderName,
+                    buttons: [{
+                        label: "Open",
+                        className: "btn-primary",
+                        onClick: async () => {
+                            if(container.dataset.loaded === "1"){
+                                container.querySelectorAll(".child").forEach(k => k.remove());
+                                container.dataset.loaded = "0";
+                                return;
+                            }
+                            await openFolder(folderName, container, 1);
+                            container.dataset.loaded = "1";
+                        }
+                    }]
+                });
+                container.appendChild(row);
+                treeBox.appendChild(container);
+            });
+        }
+
+        if(Array.isArray(data.services) && data.services.length){
+            const h = document.createElement("div");
+            h.style.padding = "6px 10px";
+            h.style.fontWeight = "700";
+            h.style.marginTop = "8px";
+            h.textContent = "Services (root)";
+            treeBox.appendChild(h);
+
+            data.services.forEach(svc => {
+                renderServiceRow(svc.name, svc.type, treeBox, 0);
+            });
+        }
+
+        if((!data.folders || !data.folders.length) && (!data.services || !data.services.length)){
+            log("Tidak ada folders/services. Keys: " + Object.keys(data).join(", "));
+        }
+
+        setStatus("Explore selesai. Buka folder atau service.", "success");
+        log("Explore root selesai.");
+    }catch(err){
+        console.error(err);
+        log("ERROR: " + err.message);
+        setStatus("Error: " + err.message, "error");
+    }finally{
+        exploreBtn.disabled = false;
+    }
+});
+
+/* ===================== OPEN FOLDER ===================== */
+async function openFolder(folderName, parentEl, indent){
+    setStatus(`Membuka folder: ${folderName}...`, "info");
+    log(`Open folder: ${folderName}`);
+
+    const { proxyPrefix, serviceRoot } = getProxyPartsFromRoot();
+    const folderUrl = buildFinalUrl(proxyPrefix, `${serviceRoot}/${folderName}`);
+
+    const data = await fetchJSON(folderUrl);
+
+    if(Array.isArray(data.services) && data.services.length){
+        data.services.forEach(svc => {
+            const rowWrap = document.createElement("div");
+            rowWrap.className = "child";
+            renderServiceRow(svc.name, svc.type, rowWrap, indent);
+            parentEl.appendChild(rowWrap);
+        });
+    } else {
+        const empty = document.createElement("div");
+        empty.className = "child item indent-" + indent;
+        empty.innerHTML = `<span class="item-meta">Tidak ada service di folder ini</span>`;
+        parentEl.appendChild(empty);
+    }
+
+    if(Array.isArray(data.folders) && data.folders.length){
+        data.folders.forEach(sub => {
+            const wrap = document.createElement("div");
+            wrap.className = "child";
+            wrap.dataset.loaded = "0";
+            const row = makeRow({
+                indent: indent,
+                badgeClass: "badge-folder",
+                badgeText: "Folder",
+                name: sub,
+                buttons: [{
+                    label: "Open",
+                    className: "btn-primary",
+                    onClick: async () => {
+                        if(wrap.dataset.loaded === "1"){
+                            wrap.querySelectorAll(".child").forEach(k => k.remove());
+                            wrap.dataset.loaded = "0";
+                            return;
+                        }
+                        await openFolder(`${folderName}/${sub}`, wrap, indent + 1);
+                        wrap.dataset.loaded = "1";
+                    }
+                }]
+            });
+            wrap.appendChild(row);
+            parentEl.appendChild(wrap);
+        });
+    }
+}
+
+/* ===================== RENDER SERVICE ===================== */
+function renderServiceRow(serviceName, serviceType, parentEl, indent){
+    const isMapOrFeature = /MapServer|FeatureServer/i.test(serviceType);
+
+    const wrap = document.createElement("div");
+    const row = makeRow({
+        indent: indent,
+        badgeClass: "badge-service",
+        badgeText: serviceType || "Service",
+        name: serviceName,
+        meta: isMapOrFeature ? "Klik Open Service untuk lihat layers" : "Tipe tidak didukung",
+        buttons: isMapOrFeature ? [{
+            label: "Open Service",
+            className: "btn-primary",
+            onClick: async () => {
+                if(wrap.dataset.opened === "1"){
+                    wrap.querySelectorAll(".layer-child").forEach(n => n.remove());
+                    wrap.dataset.opened = "0";
+                    return;
+                }
+                await openServiceLayers(serviceName, serviceType, wrap, indent + 1);
+                wrap.dataset.opened = "1";
+            }
+        }] : []
+    });
+    wrap.appendChild(row);
+    parentEl.appendChild(wrap);
+}
+
+/* ===================== OPEN SERVICE → LAYERS ===================== */
+async function openServiceLayers(serviceName, serviceType, parentEl, indent){
+    setStatus(`Membuka layers: ${serviceName}...`, "info");
+    log(`Open service: ${serviceName} (${serviceType})`);
+
+    const { proxyPrefix, serviceRoot } = getProxyPartsFromRoot();
+    const typePath = /FeatureServer/i.test(serviceType) ? "FeatureServer" : "MapServer";
+    const serviceUrl = buildFinalUrl(proxyPrefix, `${serviceRoot}/${serviceName}/${typePath}`);
+
+    const data = await fetchJSON(serviceUrl);
+
+    if(!Array.isArray(data.layers) || !data.layers.length){
+        const empty = document.createElement("div");
+        empty.className = "layer-child item indent-" + indent;
+        empty.innerHTML = `<span class="item-meta">Tidak ada layers</span>`;
+        parentEl.appendChild(empty);
+        return;
+    }
+
+    log(`Ditemukan ${data.layers.length} layer`);
+
+    data.layers.forEach(lyr => {
+        const isGroup = (lyr.type||"").toLowerCase().includes("group");
+        const isFeature = (lyr.type||"").toLowerCase().includes("feature");
+
+        const row = makeRow({
+            indent: indent,
+            badgeClass: isGroup ? "badge-group" : "badge-feature",
+            badgeText: lyr.type || "Layer",
+            name: `[${lyr.id}] ${lyr.name}`,
+            meta: [
+                lyr.geometryType || "",
+                lyr.subLayerIds ? "sub: " + lyr.subLayerIds.join(",") : ""
+            ].filter(Boolean).join(" · "),
+            buttons: isFeature ? [{
+                label: "Use Layer",
+                className: "btn-success",
+                onClick: () => {
+                    const baseNoJson = (proxyPrefix || "") + `${serviceRoot}/${serviceName}/${typePath}`;
+                    useLayer(baseNoJson, lyr.id, lyr.name);
+                }
+            }] : [{
+                label: "Group",
+                className: "btn-secondary",
+                disabled: true,
+                onClick: () => {}
+            }]
+        });
+        row.classList.add("layer-child");
+        parentEl.appendChild(row);
+    });
+
+    setStatus(`Layers dimuat: ${serviceName}`, "success");
+}
+
+/* ===================== USE LAYER ===================== */
+function useLayer(serviceBase, layerId, layerName){
+    const base = serviceBase.replace(/\/$/, "").replace(/[?&]f=json/i, "");
+    const countUrl = `${base}/${layerId}/query?where=1%3D1&returnCountOnly=true&returnIdsOnly=false&f=json`;
+    const featureUrl = `${base}/${layerId}/query?where=1%3D1&outFields=*&returnGeometry=true&resultOffset=0&resultRecordCount=1000&f=json`;
+
+    countUrlInput.value = countUrl;
+    queryUrlInput.value = featureUrl;
+    filePrefixInput.value = String(layerName || ("layer_"+layerId)).replace(/[^\w\-]+/g,"_").slice(0,70);
+
+    // reset progress key & offset UI
+    currentLayerKey = makeLayerKey(countUrl, featureUrl, filePrefixInput.value);
+    startOffsetInput.value = 0;
+    startBatchInput.value = 1;
+    resumeText.textContent = "";
+
+    // cek apakah ada progress tersimpan
+    const saved = loadProgressFromStorage();
+    if(saved && saved.offset > 0){
+        progressHint.innerHTML = `Ada progress tersimpan: offset <b>${saved.offset.toLocaleString()}</b> · batch <b>${saved.batch}</b> · ${saved.updatedAt ? new Date(saved.updatedAt).toLocaleString() : ""}`;
+        log(`Progress tersimpan ditemukan untuk layer ini (offset=${saved.offset}). Klik "Muat Progress" untuk resume.`);
+    } else {
+        progressHint.textContent = "Progress tersimpan otomatis per layer. Klik \"Muat Progress\" untuk melanjutkan dari batch terakhir yang sukses.";
+    }
+
+    log(`Layer dipilih: [${layerId}] ${layerName}`);
+    setStatus(`Layer aktif: <b>[${layerId}] ${safe(layerName)}</b>`, "success");
+    countUrlInput.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+/* ===================== BUILD QUERY ===================== */
+function buildQueryURL(offset, recordCount){
+    let url = queryUrlInput.value.trim();
+    function setOrReplace(u, key, val){
+        const re = new RegExp("(" + key + "=)[^&]*", "i");
+        if(re.test(u)) return u.replace(re, "$1" + encodeURIComponent(val));
+        return u + (u.includes("?") ? "&" : "?") + key + "=" + encodeURIComponent(val);
+    }
+    url = setOrReplace(url, "resultOffset", offset);
+    url = setOrReplace(url, "resultRecordCount", recordCount);
+    url = setOrReplace(url, "f", "json");
+    return url;
+}
+
+/* ===================== SAVE FILE (folder atau blob download) ===================== */
+async function saveJSON(data, filename){
+    const text = JSON.stringify(data, null, 2);
+
+    if(dirHandle){
+        try{
+            const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(text);
+            await writable.close();
+            return "folder";
+        }catch(e){
+            log("Gagal tulis ke folder (" + e.message + ") → fallback download biasa");
+            // fallback
+        }
+    }
+
+    // fallback: browser download
+    const blob = new Blob([text], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    return "browser";
+}
+
+function updateProgress(downloaded, batch){
+    const pct = totalFeatures > 0 ? Math.min(100, (downloaded / totalFeatures) * 100) : 0;
+    progress.style.width = pct + "%";
+    progressText.textContent = `${downloaded.toLocaleString()} / ${totalFeatures.toLocaleString()} (${pct.toFixed(2)}%)`;
+    batchText.textContent = "Batch: " + batch;
+}
+
+function setTotalSuccess(count){
+    totalFeatures = Number(count) || 0;
+    if(totalFeatures <= 0) throw new Error("Total feature = 0");
+    log("✓ Total feature: " + totalFeatures.toLocaleString());
+    setStatus(`Total Feature: <b>${totalFeatures.toLocaleString()}</b>`, "success");
+    progressText.textContent = `0 / ${totalFeatures.toLocaleString()}`;
+    progress.style.width = "0%";
+    batchText.textContent = "Batch: 0";
+    startBtn.disabled = false;
+
+    // refresh key
+    currentLayerKey = makeLayerKey(countUrlInput.value, queryUrlInput.value, filePrefixInput.value);
+}
+
+/* ===================== RESUME UI ===================== */
+loadProgressBtn.addEventListener("click", () => {
+    currentLayerKey = makeLayerKey(countUrlInput.value, queryUrlInput.value, filePrefixInput.value);
+    const saved = loadProgressFromStorage();
+    if(!saved){
+        setStatus("Tidak ada progress tersimpan untuk layer ini.", "info");
+        log("Tidak ada progress di localStorage.");
+        return;
+    }
+    startOffsetInput.value = saved.offset || 0;
+    startBatchInput.value = saved.batch || 1;
+    if(saved.batchSize) batchSizeInput.value = saved.batchSize;
+    resumeText.textContent = `Resume dari offset ${Number(saved.offset||0).toLocaleString()}`;
+    log(`Progress dimuat: offset=${saved.offset}, batch=${saved.batch}, total=${saved.total}`);
+    setStatus(`Progress dimuat · offset <b>${Number(saved.offset||0).toLocaleString()}</b> · batch <b>${saved.batch}</b>`, "success");
+});
+
+clearProgressBtn.addEventListener("click", () => {
+    currentLayerKey = makeLayerKey(countUrlInput.value, queryUrlInput.value, filePrefixInput.value);
+    clearProgressFromStorage();
+    startOffsetInput.value = 0;
+    startBatchInput.value = 1;
+    resumeText.textContent = "";
+    progressHint.textContent = "Progress tersimpan otomatis per layer. Klik \"Muat Progress\" untuk melanjutkan dari batch terakhir yang sukses.";
+    log("Progress localStorage dihapus.");
+    setStatus("Progress dihapus.", "info");
+});
+
+// sinkronisasi Start Offset ↔ Start Batch
+startOffsetInput.addEventListener("change", () => {
+    const bs = parseInt(batchSizeInput.value, 10) || 1000;
+    const off = parseInt(startOffsetInput.value, 10) || 0;
+    startBatchInput.value = Math.floor(off / bs) + 1;
+});
+startBatchInput.addEventListener("change", () => {
+    const bs = parseInt(batchSizeInput.value, 10) || 1000;
+    const bat = Math.max(1, parseInt(startBatchInput.value, 10) || 1);
+    startOffsetInput.value = (bat - 1) * bs;
+});
+
+/* ===================== CHECK COUNT ===================== */
+checkBtn.addEventListener("click", async () => {
+    try{
+        checkBtn.disabled = true;
+        checkAltBtn.disabled = true;
+        startBtn.disabled = true;
+        setStatus("Cek total (returnCountOnly)...", "info");
+        log("========== CEK TOTAL ==========");
+
+        const url = countUrlInput.value.trim();
+        if(!url) throw new Error("URL Count masih kosong. Pilih Feature Layer dulu.");
+
+        const data = await fetchJSON(url);
+
+        if(typeof data.count !== "undefined"){
+            setTotalSuccess(data.count);
+            return;
+        }
+        if(Array.isArray(data.layers)){
+            throw new Error("URL masih ke MapServer, bukan /query. Pilih Feature Layer lewat Explorer.");
+        }
+        throw new Error("Tidak ada property count. Coba tombol ⚡ Cek via returnIdsOnly.");
+    }catch(err){
+        console.error(err);
+        log("ERROR: " + err.message);
+        setStatus("Error: " + err.message, "error");
+        totalFeatures = 0;
+        startBtn.disabled = true;
+    }finally{
+        checkBtn.disabled = false;
+        checkAltBtn.disabled = false;
+    }
+});
+
+/* ===================== CHECK ALT ===================== */
+checkAltBtn.addEventListener("click", async () => {
+    try{
+        checkBtn.disabled = true;
+        checkAltBtn.disabled = true;
+        startBtn.disabled = true;
+        setStatus("Cek total via returnIdsOnly...", "info");
+        log("========== CEK TOTAL (returnIdsOnly) ==========");
+
+        let base = countUrlInput.value.trim() || queryUrlInput.value.trim();
+        if(!base) throw new Error("URL kosong");
+
+        function setOrReplace(u, key, val){
+            const re = new RegExp("(" + key + "=)[^&]*", "i");
+            if(re.test(u)) return u.replace(re, "$1" + encodeURIComponent(val));
+            return u + (u.includes("?") ? "&" : "?") + key + "=" + encodeURIComponent(val);
+        }
+
+        let url = base;
+        url = setOrReplace(url, "returnCountOnly", "false");
+        url = setOrReplace(url, "returnIdsOnly", "true");
+        url = setOrReplace(url, "returnGeometry", "false");
+        url = setOrReplace(url, "f", "json");
+        url = url.replace(/&?resultOffset=[^&]*/gi,"").replace(/&?resultRecordCount=[^&]*/gi,"");
+
+        const data = await fetchJSON(url);
+
+        if(Array.isArray(data.objectIds)){
+            setTotalSuccess(data.objectIds.length);
+            return;
+        }
+        if(Array.isArray(data.features)){
+            setTotalSuccess(data.features.length);
+            return;
+        }
+        throw new Error("Tidak ada objectIds/features");
+    }catch(err){
+        console.error(err);
+        log("ERROR: " + err.message);
+        setStatus("Error: " + err.message, "error");
+        totalFeatures = 0;
+        startBtn.disabled = true;
+    }finally{
+        checkBtn.disabled = false;
+        checkAltBtn.disabled = false;
+    }
+});
+
+/* ===================== DOWNLOAD ===================== */
+startBtn.addEventListener("click", async () => {
+    if(totalFeatures <= 0){
+        alert("Cek total feature dulu.");
+        return;
+    }
+
+    const batchSize = parseInt(batchSizeInput.value, 10) || 1000;
+    const delay = parseInt(delayInput.value, 10) || 0;
+    const prefix = filePrefixInput.value.trim() || "download";
+
+    let startOffset = parseInt(startOffsetInput.value, 10) || 0;
+    if(startOffset < 0) startOffset = 0;
+    if(startOffset >= totalFeatures){
+        alert("Start Offset sudah >= total feature. Tidak ada yang perlu di-download.");
+        return;
+    }
+
+    // pastikan key ada
+    currentLayerKey = makeLayerKey(countUrlInput.value, queryUrlInput.value, prefix);
+
+    stopProcess = false;
+    currentOffset = startOffset;
+    currentBatch = Math.floor(startOffset / batchSize); // 0-based internal, display +1
+
+    startBtn.disabled = true;
+    checkBtn.disabled = true;
+    checkAltBtn.disabled = true;
+    stopBtn.disabled = false;
+
+    log("================================");
+    log("DOWNLOAD DIMULAI");
+    log(`Total: ${totalFeatures.toLocaleString()} | Batch size: ${batchSize} | Start offset: ${startOffset.toLocaleString()}`);
+    if(dirHandle) log("Lokasi: folder \"" + dirHandle.name + "\"");
+    else log("Lokasi: download default browser");
+
+    const remaining = totalFeatures - startOffset;
+    const totalBatchFromStart = Math.ceil(remaining / batchSize);
+    setStatus(startOffset > 0
+        ? `Resume dari offset ${startOffset.toLocaleString()}...`
+        : "Download berjalan...", "info");
+
+    updateProgress(currentOffset, currentBatch);
+
+    try{
+        while(currentOffset < totalFeatures){
+            if(stopProcess){
+                log("Dihentikan user");
+                setStatus("Dihentikan. Progress tersimpan — bisa resume nanti.", "error");
+                saveProgress(currentOffset, currentBatch + 1, totalFeatures);
+                break;
+            }
+
+            currentBatch++;
+            const limit = Math.min(batchSize, totalFeatures - currentOffset);
+            log(`Batch ${currentBatch} | offset=${currentOffset} | limit=${limit}`);
+
+            const url = buildQueryURL(currentOffset, limit);
+            const data = await fetchJSON(url);
+
+            if(!data.features || !data.features.length){
+                log("Tidak ada feature lagi.");
+                break;
+            }
+
+            const startN = currentOffset + 1;
+            const endN = currentOffset + data.features.length;
+            const filename = `${prefix}_${String(startN).padStart(7,"0")}-${String(endN).padStart(7,"0")}.json`;
+
+            const where = await saveJSON(data, filename);
+            log(`✓ ${filename} (${data.features.length}) → ${where === "folder" ? "folder" : "browser"}`);
+
+            currentOffset += data.features.length;
+            updateProgress(currentOffset, currentBatch);
+
+            // simpan progress setiap batch sukses
+            saveProgress(currentOffset, currentBatch + 1, totalFeatures);
+
+            if(delay > 0) await sleep(delay);
+        }
+
+        if(!stopProcess && currentOffset >= totalFeatures){
+            log("SEMUA SELESAI");
+            setStatus(`Selesai! ${totalFeatures.toLocaleString()} feature.`, "success");
+            // hapus progress karena sudah selesai
+            clearProgressFromStorage();
+            startOffsetInput.value = 0;
+            startBatchInput.value = 1;
+            resumeText.textContent = "";
+        }
+    }catch(err){
+        console.error(err);
+        log("ERROR: " + err.message);
+        setStatus("ERROR: " + err.message + " · Progress tersimpan.", "error");
+        saveProgress(currentOffset, currentBatch + 1, totalFeatures);
+    }finally{
+        startBtn.disabled = false;
+        checkBtn.disabled = false;
+        checkAltBtn.disabled = false;
+        stopBtn.disabled = true;
+    }
+});
+
+stopBtn.addEventListener("click", () => {
+    stopProcess = true;
+    log("Stop diminta...");
+});
+clearLogBtn.addEventListener("click", () => { logBox.innerHTML = ""; });
+</script>
+</body>
+</html>

@@ -97,6 +97,12 @@ const GISTARU_INTERACTIVE_API_PREFIXES = [
   "https://gistaru-proxy.atrbpn.go.id/proxy.ashx?https://gistaru.atrbpn.go.id/rdtrinteraktif/api/interactive/data?",
   "https://gistaru-proxy.atrbpn.go.id/proxy.ashx?https://gistaru.atrbpn.go.id/rdtrinteraktif/api/interactive/activities?"
 ];
+const GISTARU_ARCGIS_SERVICES_PREFIX =
+  "https://gistaru-proxy.atrbpn.go.id/proxy.ashx?https://gistaru.atrbpn.go.id/arcgis/rest/services/";
+const GISTARU_DIRECT_ARCGIS_SERVICES_PREFIX =
+  "https://gistaru.atrbpn.go.id/arcgis/rest/services/";
+const GISTARU_TRES_ARCGIS_SERVICES_PREFIX =
+  "https://gistaru.atrbpn.go.id/tres/proxy.ashx?https://gistaru.atrbpn.go.id/arcgis/rest/services/";
 
 function isHostAllowed(hostname) {
   const h = (hostname || "").toLowerCase();
@@ -354,14 +360,27 @@ export default {
       target.origin === "https://gistaru-proxy.atrbpn.go.id" &&
       target.pathname === "/proxy.ashx" &&
       GISTARU_INTERACTIVE_API_PREFIXES.some((prefix) => target.href.startsWith(prefix));
+    const isGistaruArcgisService =
+      target.origin === "https://gistaru-proxy.atrbpn.go.id" &&
+      target.pathname === "/proxy.ashx" &&
+      target.href.startsWith(GISTARU_ARCGIS_SERVICES_PREFIX);
+    const isGistaruDirectArcgisService =
+      target.origin === "https://gistaru.atrbpn.go.id" &&
+      target.href.startsWith(GISTARU_DIRECT_ARCGIS_SERVICES_PREFIX);
+    const isGistaruTresArcgisService =
+      target.origin === "https://gistaru.atrbpn.go.id" &&
+      target.pathname === "/tres/proxy.ashx" &&
+      target.href.startsWith(GISTARU_TRES_ARCGIS_SERVICES_PREFIX);
     if (isBhumiMprx || isBhumiExpapi) {
       fwdHeaders["Referer"] = "https://bhumi.atrbpn.go.id/peta";
       fwdHeaders["Origin"] = "https://bhumi.atrbpn.go.id";
     }
-    if (isGistaruRdtrExport || isGistaruInteractiveApi) {
+    if (isGistaruRdtrExport || isGistaruInteractiveApi || isGistaruArcgisService || isGistaruDirectArcgisService || isGistaruTresArcgisService) {
       fwdHeaders["Referer"] = isGistaruInteractiveApi
         ? "https://gistaru.atrbpn.go.id/rdtrinteraktif/"
-        : "https://gistaru.atrbpn.go.id/";
+        : isGistaruTresArcgisService
+          ? "https://gistaru.atrbpn.go.id/tres/"
+          : "https://gistaru.atrbpn.go.id/";
       fwdHeaders["Origin"] = "https://gistaru.atrbpn.go.id";
       fwdHeaders["User-Agent"] =
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
