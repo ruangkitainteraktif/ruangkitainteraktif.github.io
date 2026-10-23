@@ -6672,6 +6672,8 @@
     .catalog-popup-sheet-card.fsva-leaflet-popup .leaflet-popup-content { min-width: 0 !important; max-height: none !important; overflow: visible !important; }
     .catalog-popup-sheet-card .agol-popup { width: 100% !important; min-width: 0; max-width: none; max-height: none; overflow: visible; border: 0; border-radius: 0 !important; box-shadow: none; }
     .catalog-popup-sheet-card.bhumi-persil-detail-card .bhumi-persil-coordinates { margin: 0; border-right: 0; border-bottom: 0; border-left: 0; border-radius: 0; }
+    .bhumi-persil-retry-wrap { display: flex; justify-content: flex-end; padding: 10px 12px; border-top: 1px solid var(--border-color); }
+    .bhumi-persil-retry { min-height: 34px; padding: 7px 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; }
     .catalog-popup-sheet-card .sppgd-popup { width: 100% !important; min-width: 0; max-width: none; max-height: none !important; overflow: visible; }
     .catalog-popup-sheet-card.sppgd-leaflet-popup .leaflet-popup-content-wrapper { max-height: none !important; overflow: visible !important; }
     .catalog-popup-sheet-card .sppgd-popup-body { max-height: none !important; overflow: visible !important; }

@@ -32,14 +32,25 @@
     document.body.appendChild(sheet);
     var minimizeButton = sheet.querySelector('.bhumi-persil-sheet-minimize');
     function updateIcon() {
-      var minimized = window.SheetDrag && window.SheetDrag.isMinimized('catalog-popup');
+      var minimized = sheet.classList.contains('is-minimized');
       minimizeButton.innerHTML = minimized
         ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>'
         : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>';
     }
     minimizeButton.addEventListener('click', function () {
-      if (!window.SheetDrag) return;
-      window.SheetDrag.toggleMinimize('catalog-popup');
+      if (window.SheetDrag) {
+        if (sheet.classList.contains('is-minimized')) window.SheetDrag.restore('catalog-popup');
+        else if (sheet.classList.contains('is-open')) window.SheetDrag.minimize('catalog-popup');
+        else {
+          window.SheetDrag.buka('catalog-popup');
+          window.SheetDrag.minimize('catalog-popup');
+        }
+      } else {
+        var minimized = sheet.classList.toggle('is-minimized');
+        sheet.classList.add('is-open');
+        document.body.classList.add('catalog-popup-sheet-open');
+        document.body.classList.toggle('catalog-popup-sheet-minimized', minimized);
+      }
       updateIcon();
     });
     sheet.querySelector('.bhumi-persil-sheet-close').addEventListener('click', function () {
@@ -57,6 +68,10 @@
     sheet.querySelector('.bhumi-persil-sheet-head').addEventListener('click', function (event) {
       if (sheet.classList.contains('is-minimized') && !event.target.closest('.bhumi-persil-sheet-actions') && window.SheetDrag) {
         window.SheetDrag.restore('catalog-popup');
+        updateIcon();
+      } else if (sheet.classList.contains('is-minimized') && !event.target.closest('.bhumi-persil-sheet-actions')) {
+        sheet.classList.remove('is-minimized');
+        document.body.classList.remove('catalog-popup-sheet-minimized');
         updateIcon();
       }
     });
@@ -2798,8 +2813,9 @@ const SAWAH_COLOR = '#87cf15';
     });
   }
 
-  function bhumiPersilStatusCard(title, message) {
-    return bhumiPersilCard(title, 'Persil Nasional', [['Status', message]]);
+  function bhumiPersilStatusCard(title, message, canRetry) {
+    return bhumiPersilCard(title, 'Persil Nasional', [['Status', message]]) +
+      (canRetry ? '<div class="bhumi-persil-retry-wrap"><button type="button" class="bhumi-persil-retry">Coba lagi</button></div>' : '');
   }
 
   function bhumiPersilEnsureSheet() {
@@ -2819,6 +2835,10 @@ const SAWAH_COLOR = '#87cf15';
       '<div class="bhumi-persil-coord-actions"><button type="button" class="bhumi-persil-copy" data-coordinates="' + bhumiPersilEsc(coords) + '">Salin koordinat</button>' +
       '<a class="bhumi-persil-maps" href="' + mapsUrl + '" target="_blank" rel="noopener noreferrer">Lihat di Google Maps</a></div></div>';
     sheet.querySelector('.catalog-popup-sheet-cards').replaceChildren(card);
+    var retryButton = card.querySelector('.bhumi-persil-retry');
+    if (retryButton) retryButton.addEventListener('click', function () {
+      bhumiPersilIdentify({ latlng: latlng });
+    });
     var copyButton = sheet.querySelector('.bhumi-persil-copy');
     copyButton.addEventListener('click', function () {
       var value = copyButton.getAttribute('data-coordinates');
@@ -3092,14 +3112,18 @@ const SAWAH_COLOR = '#87cf15';
           var detail = errors.length ? errors.join('\n\n') : 'Permintaan tidak berhasil.';
           var loginFailure = /BHUMI_LOGIN_|token tidak tersedia/i.test(detail);
           var loginStatus = detail.match(/BHUMI_LOGIN_HTTP_(\d{3})/);
-          var title = loginFailure ? 'Autentikasi BHUMI Gagal' : 'Gagal Memuat Data Pertanahan';
-          var message = loginStatus && loginStatus[1] === '401'
-            ? 'BHUMI menolak autentikasi. Detail respons lengkap:\n' + detail
-            : loginFailure
-              ? 'Login tidak menghasilkan token yang dapat digunakan. Detail respons lengkap:\n' + detail
-              : 'BHUMI tidak mengembalikan data. Detail respons lengkap:\n' + detail;
+          var upstreamUnavailable = /BHUMI_LOGIN_HTTP_530|error code:\s*1016/i.test(detail);
+          var title = upstreamUnavailable ? 'Layanan Data Pertanahan Tidak Tersedia' :
+            loginFailure ? 'Autentikasi BHUMI Gagal' : 'Gagal Memuat Data Pertanahan';
+          var message = upstreamUnavailable
+            ? 'Layanan data pertanahan sedang tidak tersedia. Silakan coba lagi beberapa saat.'
+            : loginStatus && loginStatus[1] === '401'
+              ? 'Autentikasi data pertanahan gagal. Silakan coba ulangi permintaan.'
+              : loginFailure
+                ? 'Sesi autentikasi data pertanahan belum dapat digunakan. Silakan coba ulangi permintaan.'
+                : 'Data pertanahan belum berhasil dimuat. Silakan coba ulangi permintaan.';
           bhumiPersilOpenSheet(e.latlng, bhumiPersilStatusCard(
-            title, message));
+            title, message, true));
           return;
         }
         bhumiPersilRenderResult(e.latlng, queryLayers, res);
@@ -3107,7 +3131,7 @@ const SAWAH_COLOR = '#87cf15';
       .catch(function () {
         if (seq !== bhumiPersilClickSeq) return;
         bhumiPersilOpenSheet(e.latlng, bhumiPersilStatusCard('Gagal Memuat',
-          'Gagal mengambil data pertanahan. Coba lagi.'));
+          'Data pertanahan belum berhasil dimuat. Silakan coba lagi.', true));
       });
   }
   map.on('click', bhumiPersilIdentify);
