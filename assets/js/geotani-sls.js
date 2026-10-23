@@ -2,40 +2,14 @@
  *
  * Menampilkan batas SLS di dalam desa yang sedang dipilih di GeoTani.
  *
- * Dua hal yang membentuk seluruh desain modul ini:
- *
- * 1. Kode desa GeoTani TIDAK bisa diturunkan menjadi prefiks idsls.
- *    GeoTani memakai kode BPS standar (11.01.01.2001, dari
- *    wilayah.smartartstudio.my.id), sedangkan frame BPS memakai penomoran
- *    sendiri: 514 kabupaten (BPS standar 416) dan kdkab yang tidak cocok.
- *    Prefix naif selalu mengembalikan 0 hasil. Karena itu desa dicari lewat
- *    koordinat, bukan lewat kode.
- *
- * 2. Kolom `luas` TIDAK dipakai. Satuan kolom itu tidak terdokumentasi dan
- *    berbeda antar layer: rasio terhadap luas geometri ~95 di layer SLS tapi
- *    ~2420 di layer desa. Menampilkannya akan salah sampai dua orde besaran.
- *    Semua luas dihitung dari geometri lewat window.geoArea (geodesik).
- *
-   * Server WFS tidak mengirim header CORS, jadi browser tidak bisa mengambil
-   * data ini langsung. Semua request lewat kta-cors-proxy. Worker itu memakai
-   * cacheTtl: 0, jadi tiap permintaan benar-benar tembus ke BPS -- karena itu
-   * ada cache sisi klien dan pemanggilan hanya terjadi atas permintaan pengguna.
-   *
-   * PENTING (verified 2026-09-29): GeoServer BPS sedang tidak mempublikasikan
-   * layer apa pun. GetCapabilities WFS 2.0.0 mengembalikan FeatureTypeList
-   * kosong, WMS hanya punya satu layer dummy bernama "WMS" dengan extent
-   * minx=0/maxx=-1, dan setiap namespace (wilkerstat, bps, wilayah, geospasial,
-   * statistik) dijawab "Unknown namespace". Jadi LAYER_DESA dan LAYER_SLS di
-   * bawah akan menjatuhkan HTTP 400 sampai BPS memublikasikan workspace itu
-   * lagi. Ini kondisi di luar kendali aplikasi; pesan error sudah dibuat
-   * jujur soal itu, bukan menyalahkan perangkat pengguna.
-   */
+ * Data SLS dibaca dari GeoServer InaRISK melalui proxy CORS. Kode desa yang
+ * dipilih dicocokkan dengan atribut kddesa. Luas dihitung geodesik.
+ */
 (function () {
   'use strict';
 
-  var OWS = 'https://geoserver.bps.go.id/ows/service/WFS';
-  var LAYER_DESA = 'wilkerstat:desa_2025_1';
-  var LAYER_SLS = 'wilkerstat:sls_2025_1';
+  var OWS = 'https://inarisk1.bnpb.go.id:8443/geoserver/wfs';
+  var LAYER_SLS = 'basemap:ina_bps_sls_2019';
   var PROXY = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=';
 
   /* Maks SLS per desa yang teramati di lapangan adalah 85. 200 memberi
@@ -43,11 +17,6 @@
      ditandai terpotong alih-alih ditampilkan seolah-olah lengkap. */
   var MAX_SLS = 200;
 
-  /* Kandidat desa dicari dalam kotak di sekitar titik dengan radius ini. 0,02
-     derajat (~2,2 km) cukup untuk mencakup desa tanpa menarik tetangga yang
-     jauh, dan tidak bergantung pada kecocokan nama "nmkec" yang bisa berbeda
-     kapitalisasi atau spasi antara sumber. */
-  var CANDIDATE_PAD_DEG = 0.02;
   var REQUEST_TIMEOUT_MS = 30000;
 
   /* Dipakai printGeotaniPdf() di geoid-wilayah.js; lastGeotaniPopupData di sana
@@ -92,19 +61,17 @@ var generasi = 0;
     return m ? m[1].trim() : '';
   }
 
-  /* GeoServer BPS membalas 400 dengan "Unknown namespace" ketika workspace
+  /* GeoServer membalas 400 dengan "Unknown namespace" ketika workspace
      tempat layer SLS berada sudah tidak dipublikasikan. Itu hal yang terjadi
      di luar kendali aplikasi, jadi pesannya harus menyuruh pengguna
      menunggu BPS, bukan menyalahkan perangkatnya. */
   function pesanBpsGagal(status, txt) {
     var ows = bacaOwsException(txt);
     if (/unknown namespace/i.test(ows)) {
-      return 'Layanan data spasial BPS sedang tidak tersedia: '
-        + 'wilayah kerja statistik (SLS) belum dipublikasikan. '
-        + 'Ini gangguan di sisi BPS, bukan di perangkat Anda. Coba lagi nanti.';
+      return 'Layer SLS InaRISK tidak ditemukan pada GeoServer: ' + ows;
     }
-    if (ows) return 'BPS menolak permintaan (' + status + '): ' + ows;
-    return 'Permintaan ke BPS gagal (HTTP ' + status + ').';
+    if (ows) return 'GeoServer InaRISK menolak permintaan (' + status + '): ' + ows;
+    return 'Permintaan ke GeoServer InaRISK gagal (HTTP ' + status + ').';
   }
 
   async function fetchJson(url) {
@@ -112,12 +79,12 @@ var generasi = 0;
     var timer = setTimeout(function () { ctrl.abort(); }, REQUEST_TIMEOUT_MS);
     try {
       var res = await fetch(url, { signal: ctrl.signal });
-      /* 429 dari proxy berarti kuota harian BPS habis, bukan kegagalan
+      /* 429 dari proxy berarti batas permintaan tercapai, bukan kegagalan
          jaringan. Error-nya dibuat dengan resetAt terisi supaya lapisan UI
          bisa menampilkan hitung mundur, bukan kalimat "gagal" yang menyesatkan. */
       if (res.status === 429) {
         var resetSec = Number(res.headers.get('X-RateLimit-Reset'));
-        var err = new Error('Kuota harian BPS habis untuk alamat IP ini.');
+        var err = new Error('Batas permintaan layanan tercapai untuk alamat IP ini.');
         err.kuotaHabis = true;
         err.resetAt = Number.isFinite(resetSec) && resetSec > 0 ? resetSec * 1000 : null;
         throw err;
@@ -131,7 +98,7 @@ var generasi = 0;
       }
       return await res.json();
     } catch (e) {
-      if (e && e.name === 'AbortError') throw new Error('Permintaan ke BPS timeout.');
+      if (e && e.name === 'AbortError') throw new Error('Permintaan ke GeoServer InaRISK timeout.');
       throw e;
     } finally {
       clearTimeout(timer);
@@ -153,7 +120,7 @@ var generasi = 0;
   }
 
   /* ── cache ──
-     Dua tahap: kode desa -> iddesa frame BPS, lalu iddesa -> SLS.
+     Kode desa terpilih dipakai langsung untuk meminta polygon SLS InaRISK.
      Dibatasi CACHE_MAX entri dengan eviction berbasis urutan pakai, supaya
      kunjungan tidak mengembang tanpa batas di memori peramban. */
   function remember(map, key, value) {
@@ -168,64 +135,30 @@ var generasi = 0;
     }
   }
 
-  /* ── tahap 1: desa mana? ──
-     Titik sentroid dari API boundary diuji terhadap setiap kandidat. Satu titik
-     jauh lebih tahan beda batas sumber daripada poligon-dalam-poligon: kedua
-     sumber pasti berbeda sedikit di tepi, tapi sentroid hampir selalu jatuh
-     jelas di dalam satu desa. Kalau kandidat 0 atau lebih dari 1, modul menolak
-     menebak. */
-  async function findDesaId(lat, lng) {
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-      throw new Error('Koordinat desa tidak valid.');
+  /* Cari fitur SLS milik desa terpilih melalui atribut kddesa. */
+  async function findDesaId(kode) {
+    var kodeDesa = String(kode || '').replace(/\D/g, '');
+    if (!/^\d{10}$/.test(kodeDesa)) {
+      throw new Error('Kode desa yang dipilih tidak valid.');
     }
-    var key = lat.toFixed(5) + ',' + lng.toFixed(5);
+    var key = kodeDesa;
     if (cacheDesa.has(key)) return cacheDesa.get(key);
-
-    var bbox = [
-      (lng - CANDIDATE_PAD_DEG).toFixed(6),
-      (lat - CANDIDATE_PAD_DEG).toFixed(6),
-      (lng + CANDIDATE_PAD_DEG).toFixed(6),
-      (lat + CANDIDATE_PAD_DEG).toFixed(6)
-    ].join(',') + ',EPSG:4326';
 
     var url = wfsUrl({
       service: 'WFS', version: '2.0.0', request: 'GetFeature',
-      typeNames: LAYER_DESA, outputFormat: 'application/json', srsName: 'EPSG:4326',
-      count: 25, bbox: bbox, propertyName: 'iddesa,nmdesa,geometry'
+      typeNames: LAYER_SLS, outputFormat: 'application/json', srsName: 'EPSG:4326',
+      count: 1, propertyName: 'kddesa,idsls,nmsls,nmdesa',
+      CQL_FILTER: "kddesa = '" + kodeDesa + "'"
     });
 
     var json = await fetchJson(proxyUrl(url));
     var features = (json && json.features) || [];
     if (!features.length) {
-      throw new Error('Desa ini belum tersedia pada frame BPS 2025-1.');
+      throw new Error('Layer InaRISK tidak memiliki SLS untuk kode desa ' + kodeDesa + '.');
     }
 
-    var pt = [lng, lat];
-    var inside = [];
-    for (var i = 0; i < features.length; i++) {
-      var f = features[i];
-      if (!f || !f.geometry) continue;
-      var ok = false;
-      try {
-        // Selalu lewat window.turf, bukan nama telanjang: nama global hanya
-        // berlaku di browser dan hilang begitu modul ini diuji di Node.
-        ok = !!(window.turf && window.turf.booleanPointInPolygon(pt, f));
-      } catch (e) { ok = false; }
-      if (ok) inside.push(f);
-    }
-
-    if (inside.length === 0) {
-      throw new Error('Batas desa tidak dapat dicocokkan dengan frame BPS. Pilih ulang wilayah.');
-    }
-    if (inside.length > 1) {
-      throw new Error('Batas desa tumpang tindih dengan ' + inside.length + ' desa BPS. Pilih ulang wilayah.');
-    }
-
-    var pick = inside[0];
-    var result = { iddesa: String(pick.properties.iddesa), nama: pick.properties.nmdesa || '' };
-    if (!/^\d{10}$/.test(result.iddesa)) {
-      throw new Error('Kode desa BPS tidak valid.');
-    }
+    var props = (features[0] && features[0].properties) || {};
+    var result = { iddesa: kodeDesa, nama: props.nmdesa || props.nmsls || '' };
     remember(cacheDesa, key, result);
     return result;
   }
@@ -236,15 +169,15 @@ var generasi = 0;
      tetangga ikut terbawa. */
   async function loadSlsOfDesa(iddesa) {
     if (!/^\d{10}$/.test(String(iddesa || ''))) {
-      throw new Error('Kode desa BPS tidak valid.');
+      throw new Error('Kode desa tidak valid.');
     }
     if (cacheSls.has(iddesa)) return cacheSls.get(iddesa);
 
     var url = wfsUrl({
       service: 'WFS', version: '2.0.0', request: 'GetFeature',
       typeNames: LAYER_SLS, outputFormat: 'application/json', srsName: 'EPSG:4326',
-      count: MAX_SLS, propertyName: 'idsls,nmsls,geometry',
-      CQL_FILTER: "idsls LIKE '" + iddesa + "%'"
+      count: MAX_SLS, propertyName: 'idsls,nmsls,the_geom',
+      CQL_FILTER: "kddesa = '" + iddesa + "'"
     });
 
     var json = await fetchJson(proxyUrl(url));
@@ -268,14 +201,14 @@ var generasi = 0;
   }
 
   /* ── orkestrasi ── */
-  function load(kode, lat, lng) {
+  function load(kode) {
     if (inFlight.has(kode)) return inFlight.get(kode);
     var gen = generasi;
     var p = (async function () {
-      var desa = await findDesaId(lat, lng);
+      var desa = await findDesaId(kode);
       var sls = await loadSlsOfDesa(desa.iddesa);
       if (!sls.items.length) {
-        throw new Error('Desa ini belum memiliki data SLS pada frame BPS 2025-1.');
+        throw new Error('Desa ini belum memiliki data SLS pada layer InaRISK 2019.');
       }
       var total = 0;
       var tanpaLuas = 0;
@@ -386,11 +319,11 @@ var generasi = 0;
   }
 
   var credit = {
-    judul: 'Wilayah Kerja Statistik - SLS (Satuan Lingkungan Setempat) 2025-1',
-    penulis: 'BPS-Statistics Indonesia',
-    periode: '2025-1',
+    judul: 'SLS BPS 2019',
+    penulis: 'InaRISK BNPB',
+    periode: '2019',
     layer: LAYER_SLS,
-    tautan: 'https://www.bps.go.id/'
+    tautan: 'https://inarisk1.bnpb.go.id:8443/geoserver/web/wicket/bookmarkable/org.geoserver.web.demo.MapPreviewPage?1&filter=false'
   };
 
   function creditHtml() {
@@ -532,7 +465,6 @@ var generasi = 0;
         '</li>';
     }
     h += '</ul>';
-    h += creditHtml();
     return h;
   }
 
@@ -659,17 +591,12 @@ var generasi = 0;
         if (input) input.focus();
         return;
       }
-      var meta = await villageMeta(kode);
-      if (!meta || !Number.isFinite(meta.lat) || !Number.isFinite(meta.lng)) {
-        if (status) status.textContent = 'Batas desa tidak dapat dimuat. Pilih desa lain atau coba lagi.';
-        return;
-      }
       btn.disabled = true;
       out.innerHTML = '';
       berhentiHitungMundur();
-      if (status) status.textContent = 'Mengambil data SLS dari BPS...';
+      if (status) status.textContent = 'Mengambil data wilayah...';
       try {
-        var st = await load(kode, meta.lat, meta.lng);
+        var st = await load(kode);
         // null = pengguna menekan "Reset Polygon" selagi request berjalan.
         if (!st) return;
         drawOnMap();
@@ -697,27 +624,6 @@ var generasi = 0;
     return api;
   }
 
-  /* Metadata desa (nama + sentroid) dari API yang sama dengan boundary GeoTani,
-     jadi tidak ada sumber kedua yang harus dijaga. */
-  var metaCache = new Map();
-  async function villageMeta(kode) {
-    if (metaCache.has(kode)) return metaCache.get(kode);
-    var url = 'https://wilayah.smartartstudio.my.id/api/boundaries/' + encodeURIComponent(kode);
-    try {
-      var ctrl = new AbortController();
-      var timer = setTimeout(function () { ctrl.abort(); }, REQUEST_TIMEOUT_MS);
-      var res = await fetch(url, { signal: ctrl.signal });
-      clearTimeout(timer);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      var d = await res.json();
-      var meta = { nama: d.nama || kode, lat: d.lat, lng: d.lng };
-      metaCache.set(kode, meta);
-      return meta;
-    } catch (e) {
-      return null;
-    }
-  }
-
   api = {
     load: load,
     clear: clear,
@@ -735,7 +641,6 @@ var generasi = 0;
     areaHa: areaHa,
     findDesaId: findDesaId,
     loadSlsOfDesa: loadSlsOfDesa,
-    villageMeta: villageMeta,
     daftarDesa: daftarDesa,
     cariDesa: cariDesa,
     setSelectedKode: setSelectedKode,
@@ -745,7 +650,6 @@ var generasi = 0;
     MAX_SLS: MAX_SLS,
     OWS: OWS,
     LAYER_SLS: LAYER_SLS,
-    LAYER_DESA: LAYER_DESA,
     _wfsUrl: wfsUrl,
     _proxyUrl: proxyUrl
   };
