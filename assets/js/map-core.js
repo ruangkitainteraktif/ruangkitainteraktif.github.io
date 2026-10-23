@@ -18,6 +18,8 @@
   // responsive sheet instead of anchoring the content to a Leaflet popup.
   var catalogPopupSheet = null;
   var catalogPopupCenterTimer = 0;
+  var catalogPopupAdTimer = 0;
+  var catalogPopupAdRequested = false;
   function ensureCatalogPopupSheet() {
     if (catalogPopupSheet) return catalogPopupSheet;
     var sheet = document.createElement('section');
@@ -26,7 +28,7 @@
     sheet.setAttribute('role', 'region');
     sheet.setAttribute('aria-label', 'Detail layer peta');
     sheet.setAttribute('aria-hidden', 'true');
-    sheet.innerHTML = '<div class="bhumi-persil-sheet-handle" aria-hidden="true"></div><div class="bhumi-persil-sheet-head"><div class="bhumi-persil-sheet-title">Detail Layer</div><div class="bhumi-persil-sheet-actions"><button type="button" class="bhumi-persil-sheet-minimize" aria-label="Minimalkan detail layer" title="Minimalkan panel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button><button type="button" class="bhumi-persil-sheet-close" aria-label="Tutup detail layer" title="Tutup">&times;</button></div></div><div class="bhumi-persil-sheet-content catalog-popup-sheet-content"></div>';
+    sheet.innerHTML = '<div class="bhumi-persil-sheet-handle" aria-hidden="true"></div><div class="bhumi-persil-sheet-head"><div class="bhumi-persil-sheet-title">Detail Layer</div><div class="bhumi-persil-sheet-actions"><button type="button" class="bhumi-persil-sheet-minimize" aria-label="Minimalkan detail layer" title="Minimalkan panel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button><button type="button" class="bhumi-persil-sheet-close" aria-label="Tutup detail layer" title="Tutup">&times;</button></div></div><div class="bhumi-persil-sheet-content catalog-popup-sheet-content"><div class="catalog-popup-sheet-ad-slot"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-7501816933195235" data-ad-slot="1306506445" data-ad-format="auto" data-full-width-responsive="true"></ins></div><div class="catalog-popup-sheet-cards"></div></div>';
     document.body.appendChild(sheet);
     var minimizeButton = sheet.querySelector('.bhumi-persil-sheet-minimize');
     function updateIcon() {
@@ -42,7 +44,8 @@
     });
     sheet.querySelector('.bhumi-persil-sheet-close').addEventListener('click', function () {
       window.clearTimeout(catalogPopupCenterTimer);
-      sheet.querySelector('.catalog-popup-sheet-content').innerHTML = '';
+      window.clearTimeout(catalogPopupAdTimer);
+      sheet.querySelector('.catalog-popup-sheet-cards').innerHTML = '';
       if (window.SheetDrag) window.SheetDrag.close('catalog-popup');
       else sheet.classList.remove('is-open');
       sheet.setAttribute('aria-hidden', 'true');
@@ -76,7 +79,7 @@
     if (!popupContent) return false;
     var popupWrapper = popupContainer.querySelector('.leaflet-popup-content-wrapper') || popupContent;
     var sheet = ensureCatalogPopupSheet();
-    var content = sheet.querySelector('.catalog-popup-sheet-content');
+    var content = sheet.querySelector('.catalog-popup-sheet-cards');
     var card = document.createElement('div');
     card.className = 'catalog-popup-sheet-card';
     if (popupContainer.classList) {
@@ -149,6 +152,19 @@
       if (sheet.__updateMinimizeIcon) sheet.__updateMinimizeIcon();
     } else sheet.classList.add('is-open');
     sheet.setAttribute('aria-hidden', 'false');
+    if (!catalogPopupAdRequested) {
+      window.clearTimeout(catalogPopupAdTimer);
+      catalogPopupAdTimer = window.setTimeout(function () {
+        if (!sheet.classList.contains('is-open') || sheet.classList.contains('is-minimized')) return;
+        catalogPopupAdRequested = true;
+        try {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+        } catch (error) {
+          catalogPopupAdRequested = false;
+          if (window.console && console.warn) console.warn('[AdSense] Slot detail layer gagal dimuat:', error);
+        }
+      }, 550);
+    }
     window.clearTimeout(catalogPopupCenterTimer);
     if (latlng) catalogPopupCenterTimer = window.setTimeout(function () {
       if (!sheet.classList.contains('is-open') || sheet.classList.contains('is-minimized')) return;

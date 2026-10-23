@@ -6661,6 +6661,9 @@
     .bhumi-persil-sheet-handle { display: none; }
     .bhumi-persil-sheet-content { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 12px 12px 16px; -webkit-overflow-scrolling: touch; }
     .catalog-popup-sheet-content { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 12px; min-width: 0; }
+    .catalog-popup-sheet-ad-slot { display: block; width: 100%; min-width: 0; overflow: hidden; }
+    .catalog-popup-sheet-ad-slot .adsbygoogle { display: block; width: 100%; min-width: 0; }
+    .catalog-popup-sheet-cards { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 12px; min-width: 0; }
     .catalog-popup-sheet-card { display: block; width: 100% !important; min-width: 0; max-width: none; box-sizing: border-box; overflow: visible; }
     .catalog-popup-sheet-card.boundary-leaflet-popup { width: 100% !important; min-width: 0 !important; max-width: none !important; }
     .catalog-popup-sheet-card .leaflet-popup-content-wrapper { width: 100% !important; max-width: none !important; box-sizing: border-box; padding: 0 !important; border: 1px solid var(--border-color); border-radius: 0 !important; background: var(--bg-primary); box-shadow: none; overflow: hidden; }
@@ -6669,7 +6672,11 @@
     .catalog-popup-sheet-card.fsva-leaflet-popup .leaflet-popup-content { min-width: 0 !important; max-height: none !important; overflow: visible !important; }
     .catalog-popup-sheet-card .agol-popup { width: 100% !important; min-width: 0; max-width: none; max-height: none; overflow: visible; border: 0; border-radius: 0 !important; box-shadow: none; }
     .catalog-popup-sheet-card .sppgd-popup { width: 100% !important; min-width: 0; max-width: none; max-height: none !important; overflow: visible; }
-    .catalog-popup-sheet-card .sppgd-popup-body { max-height: none !important; overflow: visible !important; }
+    .catalog-popup-sheet-card .sppgd-popup-body { max-height: min(45vh, 360px) !important; overflow-y: auto !important; }
+    .catalog-popup-sheet-card .sppgd-popup-pagination { position: sticky; bottom: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 9px 10px; border-top: 1px solid var(--border-color); background: var(--bg-primary); }
+    .catalog-popup-sheet-card .sppgd-popup-pagination span { color: var(--text-tertiary); font-size: 10px; text-align: center; }
+    .catalog-popup-sheet-card .sppgd-popup-page-btn { min-height: 30px; padding: 5px 8px; border: 1px solid var(--border-color); border-radius: 0; background: var(--bg-secondary); color: var(--text-primary); font: inherit; font-size: 10px; font-weight: 600; cursor: pointer; }
+    .catalog-popup-sheet-card .sppgd-popup-page-btn:disabled { opacity: .45; cursor: default; }
     .catalog-popup-sheet-card .boundary-popup { width: 100% !important; min-width: 0; max-width: none; box-sizing: border-box; color: var(--text-primary); background: var(--bg-primary); }
     .catalog-popup-sheet-card .boundary-popup-header { padding: 14px 15px 13px; background: linear-gradient(135deg, #713f12, #b45309); }
     .catalog-popup-sheet-card .boundary-popup-header strong { font-size: 15px; line-height: 1.35; }

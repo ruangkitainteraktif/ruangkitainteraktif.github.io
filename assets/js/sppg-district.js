@@ -17,6 +17,7 @@
   var aggregatedData = {};
   var tableState = { sortKey: 'no', sortDir: 'asc', page: 1, search: '', rows: [] };
   var PER_PAGE = 10;
+  var POPUP_PER_PAGE = 10;
 
   /* ── Helpers ── */
   function $(id) { return document.getElementById(id); }
@@ -160,6 +161,28 @@
   }
 
   /* ── Popup builder ── */
+  function renderPopupPage(items, page, districtKey) {
+    var totalPages = Math.max(1, Math.ceil(items.length / POPUP_PER_PAGE));
+    page = Math.max(1, Math.min(totalPages, page));
+    var start = (page - 1) * POPUP_PER_PAGE;
+    var listHtml = '';
+    items.slice(start, start + POPUP_PER_PAGE).forEach(function (it) {
+      listHtml += '<div class="sppgd-popup-item">' +
+        '<span class="sppgd-popup-item-name">' + esc(it.name) + '</span>' +
+        '<span class="sppgd-popup-item-sub">' + esc(it.subDistrict || '') + (it.village ? ', ' + esc(it.village) : '') + '</span>' +
+      '</div>';
+    });
+    if (!listHtml) listHtml = '<div class="sppgd-popup-empty">Tidak ada data SPPG</div>';
+    var pagination = items.length > POPUP_PER_PAGE
+      ? '<div class="sppgd-popup-pagination">' +
+          '<button type="button" class="sppgd-popup-page-btn" data-direction="prev" data-district="' + esc(districtKey) + '" ' + (page <= 1 ? 'disabled' : '') + '>Sebelumnya</button>' +
+          '<span>Halaman ' + page + ' dari ' + totalPages + ' - ' + items.length.toLocaleString('id-ID') + ' lokasi</span>' +
+          '<button type="button" class="sppgd-popup-page-btn" data-direction="next" data-district="' + esc(districtKey) + '" ' + (page >= totalPages ? 'disabled' : '') + '>Berikutnya</button>' +
+        '</div>'
+      : '';
+    return { list: listHtml, pagination: pagination, page: page };
+  }
+
   function buildPopup(feature, districtData) {
     var props = feature.properties;
     var name = props.nmkab || '-';
@@ -169,22 +192,17 @@
 
     var badgeColor = count > 500 ? '#991b1b' : count > 200 ? '#ef4444' : count > 100 ? '#f97316' : count > 50 ? '#fbbf24' : '#10b981';
 
-    var listHtml = '';
-    for (var i = 0; i < items.length; i++) {
-      var it = items[i];
-      listHtml += '<div class="sppgd-popup-item">' +
-        '<span class="sppgd-popup-item-name">' + esc(it.name) + '</span>' +
-        '<span class="sppgd-popup-item-sub">' + esc(it.subDistrict || '') + (it.village ? ', ' + esc(it.village) : '') + '</span>' +
-      '</div>';
-    }
-    return '<div class="sppgd-popup">' +
+    var districtKey = normalizeDistrict(name);
+    var pageContent = renderPopupPage(items, 1, districtKey);
+    return '<div class="sppgd-popup" data-page="' + pageContent.page + '">' +
       '<div class="sppgd-popup-header">' +
         '<div class="sppgd-popup-badge" style="background:' + badgeColor + '">' + count + ' SPPG</div>' +
         '<div class="sppgd-popup-title">' + esc(name) + '</div>' +
         '<div class="sppgd-popup-subtitle">' + esc(prov) + '</div>' +
       '</div>' +
       '<div class="sppgd-popup-body">' +
-        '<div class="sppgd-popup-list">' + (listHtml || '<div class="sppgd-popup-empty">Tidak ada data SPPG</div>') + '</div>' +
+        '<div class="sppgd-popup-list">' + pageContent.list + '</div>' +
+        pageContent.pagination +
       '</div>' +
       '<div class="sppgd-popup-footer">' +
         '<div class="sppgd-popup-source">Sumber: MBG Watch API</div>' +
@@ -193,6 +211,22 @@
   }
 
   /* ── Table panel ── */
+  document.addEventListener('click', function (event) {
+    var button = event.target.closest && event.target.closest('.sppgd-popup-page-btn');
+    if (!button || button.disabled) return;
+    var districtData = aggregatedData[button.getAttribute('data-district')];
+    var popup = button.closest('.sppgd-popup');
+    if (!districtData || !popup) return;
+    var page = parseInt(popup.getAttribute('data-page'), 10) || 1;
+    page += button.getAttribute('data-direction') === 'next' ? 1 : -1;
+    var rendered = renderPopupPage(districtData.items, page, button.getAttribute('data-district'));
+    popup.setAttribute('data-page', rendered.page);
+    popup.querySelector('.sppgd-popup-list').innerHTML = rendered.list;
+    var currentPagination = popup.querySelector('.sppgd-popup-pagination');
+    if (currentPagination) currentPagination.remove();
+    if (rendered.pagination) popup.querySelector('.sppgd-popup-body').insertAdjacentHTML('beforeend', rendered.pagination);
+  });
+
   function renderTable(districtName) {
     var items = [];
     if (districtName) {
