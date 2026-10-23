@@ -415,40 +415,51 @@
     }
 
     features.forEach(({ layerName, properties }) => {
+      const entries = Object.entries(properties || {});
       const card = document.createElement('article');
-      card.className = 'geoportal-card';
+      card.className = 'agol-popup geoportal-feature-card';
 
       const header = document.createElement('div');
-      header.className = 'geoportal-card-head';
-      const title = document.createElement('strong');
+      header.className = 'agol-popup-header agol-geo-kawasan';
+      const badge = document.createElement('div');
+      badge.className = 'agol-popup-badge';
+      badge.textContent = 'Detail fitur';
+      const title = document.createElement('div');
+      title.className = 'agol-popup-title';
       title.textContent = layerName || 'Layer Geoportal';
-      const badge = document.createElement('span');
-      badge.textContent = `${Object.keys(properties || {}).length} properti`;
-      header.append(title, badge);
+      const subtitle = document.createElement('div');
+      subtitle.className = 'agol-popup-subtitle';
+      subtitle.textContent = `${entries.length} atribut`;
+      header.append(badge, title, subtitle);
 
-      const propertyList = document.createElement('div');
-      propertyList.className = 'geoportal-property-list';
-
-      const entries = Object.entries(properties || {});
       if (!entries.length) {
         const noProp = document.createElement('p');
         noProp.className = 'geoportal-no-prop';
         noProp.textContent = 'Tidak ada properti yang tersedia untuk fitur ini.';
-        propertyList.appendChild(noProp);
+        const body = document.createElement('div');
+        body.className = 'agol-popup-body';
+        body.appendChild(noProp);
+        card.append(header, body);
       } else {
+        const table = document.createElement('table');
+        table.className = 'bhumi-persil-data-table catalog-feature-data-table';
+        const tbody = document.createElement('tbody');
         entries.forEach(([key, value]) => {
-          const propCard = document.createElement('div');
-          propCard.className = 'geoportal-prop';
-          const label = document.createElement('label');
+          const row = document.createElement('tr');
+          const label = document.createElement('th');
+          label.scope = 'row';
           label.textContent = key.replace(/_/g, ' ');
-          const text = document.createElement('p');
+          const text = document.createElement('td');
           text.textContent = formatGeoportalValue(value);
-          propCard.append(label, text);
-          propertyList.appendChild(propCard);
+          row.append(label, text);
+          tbody.appendChild(row);
         });
+        table.appendChild(tbody);
+        const body = document.createElement('div');
+        body.className = 'agol-popup-body';
+        body.appendChild(table);
+        card.append(header, body);
       }
-
-      card.append(header, propertyList);
       container.appendChild(card);
     });
   }

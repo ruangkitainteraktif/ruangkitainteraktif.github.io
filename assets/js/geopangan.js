@@ -1576,6 +1576,12 @@
   /* ── SPPG Layer (Sismonbgn / Kementerian PUPR) ── */
   var SPPG_URL = 'assets/data/SPPG.geojson';
 
+  function escapeSppgPopupValue(value) {
+    return String(value == null || value === '' ? '-' : value).replace(/[&<>"']/g, function (character) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+    });
+  }
+
   function toggleSppg(visible) {
     var _m = getMap();
     if (!visible) {
@@ -1607,6 +1613,17 @@
             if (!coords || coords.length < 2) continue;
             var latlng = [coords[1], coords[0]];
             var p = f.properties || {};
+            var popupRows = [
+              ['Kategori', p.category],
+              ['Alamat', p.desc]
+            ];
+            Object.keys(p).forEach(function (key) {
+              if (key === 'name' || key === 'category' || key === 'desc' || p[key] == null || p[key] === '') return;
+              popupRows.push([key.replace(/[_-]/g, ' '), p[key]]);
+            });
+            var popupFields = popupRows.map(function (row) {
+              return '<div class="agol-popup-field"><span class="agol-popup-field-label">' + escapeSppgPopupValue(row[0]) + '</span><span class="agol-popup-field-value">' + escapeSppgPopupValue(row[1]) + '</span></div>';
+            }).join('');
             var marker = L.marker(latlng, {
               icon: L.divIcon({
                 className: 'sppg-marker-icon',
@@ -1618,11 +1635,16 @@
               properties: { name: p.name, category: p.category, desc: p.desc }
             });
             marker.bindPopup(
-              '<div style="font-size:12px;line-height:1.6">' +
-                '<strong style="color:#6d28d9">' + (p.name || '-') + '</strong><br>' +
-                'Kategori: ' + (p.category || '-') + '<br>' +
-                'Alamat: ' + (p.desc || '-') +
-              '</div>'
+              '<div class="agol-popup sppg-national-feature">' +
+                '<div class="agol-popup-header agol-geo-pangan">' +
+                  '<div class="agol-popup-badge">SPPG Nasional</div>' +
+                  '<div class="agol-popup-title">' + escapeSppgPopupValue(p.name || 'Lokasi SPPG') + '</div>' +
+                  '<div class="agol-popup-subtitle">' + escapeSppgPopupValue(p.category || 'Fasilitas layanan pangan') + '</div>' +
+                '</div>' +
+                '<div class="agol-popup-body"><div class="agol-popup-fields">' + popupFields + '</div></div>' +
+                '<div class="agol-popup-footer"><span>Sumber: SPPG Nasional</span></div>' +
+              '</div>',
+              { className: 'sppg-national-leaflet-popup' }
             );
             sppgLayer.addLayer(marker);
           }

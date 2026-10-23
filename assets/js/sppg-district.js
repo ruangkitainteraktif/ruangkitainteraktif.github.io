@@ -202,8 +202,8 @@
       '</div>' +
       '<div class="sppgd-popup-body">' +
         '<div class="sppgd-popup-list">' + pageContent.list + '</div>' +
-        pageContent.pagination +
       '</div>' +
+      pageContent.pagination +
       '<div class="sppgd-popup-footer">' +
         '<div class="sppgd-popup-source">Sumber: MBG Watch API</div>' +
       '</div>' +
@@ -224,7 +224,7 @@
     popup.querySelector('.sppgd-popup-list').innerHTML = rendered.list;
     var currentPagination = popup.querySelector('.sppgd-popup-pagination');
     if (currentPagination) currentPagination.remove();
-    if (rendered.pagination) popup.querySelector('.sppgd-popup-body').insertAdjacentHTML('beforeend', rendered.pagination);
+    if (rendered.pagination) popup.querySelector('.sppgd-popup-body').insertAdjacentHTML('afterend', rendered.pagination);
   });
 
   function renderTable(districtName) {

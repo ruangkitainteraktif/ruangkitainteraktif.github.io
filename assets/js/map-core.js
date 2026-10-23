@@ -45,6 +45,10 @@
     sheet.querySelector('.bhumi-persil-sheet-close').addEventListener('click', function () {
       window.clearTimeout(catalogPopupCenterTimer);
       window.clearTimeout(catalogPopupAdTimer);
+      if (sheet.querySelector('.bhumi-persil-detail-card')) {
+        bhumiPersilClearHighlight();
+        return;
+      }
       sheet.querySelector('.catalog-popup-sheet-cards').innerHTML = '';
       if (window.SheetDrag) window.SheetDrag.close('catalog-popup');
       else sheet.classList.remove('is-open');
@@ -143,6 +147,12 @@
     popupWrapper.style.width = '100%';
     popupWrapper.style.maxWidth = '100%';
     card.appendChild(popupWrapper);
+    var persilCard = content.querySelector('.bhumi-persil-detail-card');
+    if (persilCard) {
+      window.clearTimeout(bhumiPersilCenterTimer);
+      bhumiPersilClickSeq++;
+      bhumiPersilClearMapSelection();
+    }
     content.innerHTML = '';
     content.appendChild(card);
     map.closePopup(popup);
@@ -2789,57 +2799,12 @@ const SAWAH_COLOR = '#87cf15';
   }
 
   function bhumiPersilStatusCard(title, message) {
-    return '<div class="agol-popup"><div class="agol-popup-header agol-geo-persil">' +
-      '<div class="agol-popup-title">' + bhumiPersilEsc(title) + '</div></div>' +
-      '<div class="agol-popup-body"><div style="font-size:12px;color:#555;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;max-height:300px;overflow:auto">' +
-      bhumiPersilEsc(message) + '</div></div></div>';
+    return bhumiPersilCard(title, 'Persil Nasional', [['Status', message]]);
   }
 
   function bhumiPersilEnsureSheet() {
-    if (bhumiPersilSheet) return bhumiPersilSheet;
-    var sheet = document.createElement('section');
-    sheet.id = 'bhumi-persil-sheet';
-    sheet.className = 'bhumi-persil-sheet';
-    sheet.setAttribute('role', 'region');
-    sheet.setAttribute('aria-label', 'Detail Persil BHUMI');
-    sheet.setAttribute('aria-hidden', 'true');
-    sheet.innerHTML = '<div class="bhumi-persil-sheet-handle" aria-hidden="true"></div><div class="bhumi-persil-sheet-head"><div class="bhumi-persil-sheet-title">Detail Persil</div><div class="bhumi-persil-sheet-actions"><button type="button" class="bhumi-persil-sheet-minimize" aria-label="Minimalkan detail Persil" title="Minimalkan panel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button><button type="button" class="bhumi-persil-sheet-close" aria-label="Tutup detail Persil" title="Tutup">&times;</button></div></div><div class="bhumi-persil-sheet-content"></div>';
-    document.body.appendChild(sheet);
-    sheet.querySelector('.bhumi-persil-sheet-close').addEventListener('click', bhumiPersilClearHighlight);
-    var minimizeButton = sheet.querySelector('.bhumi-persil-sheet-minimize');
-    var updateMinimizeIcon = function () {
-      var minimized = window.SheetDrag && window.SheetDrag.isMinimized('bhumi-persil');
-      minimizeButton.innerHTML = minimized
-        ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>'
-        : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>';
-    };
-    minimizeButton.addEventListener('click', function () {
-      if (!window.SheetDrag) return;
-      window.SheetDrag.toggleMinimize('bhumi-persil');
-      updateMinimizeIcon();
-    });
-    sheet.querySelector('.bhumi-persil-sheet-head').addEventListener('click', function (event) {
-      if (sheet.classList.contains('is-minimized') && !event.target.closest('.bhumi-persil-sheet-actions') && window.SheetDrag) {
-        window.SheetDrag.restore('bhumi-persil');
-        updateMinimizeIcon();
-      }
-    });
-    if (window.SheetDrag) {
-      window.SheetDrag.register('bhumi-persil', {
-        el: sheet,
-        openClass: 'is-open',
-        minClass: 'is-minimized',
-        bodyOpen: 'bhumi-persil-sheet-open',
-        bodyMin: 'bhumi-persil-sheet-minimized',
-        handle: '.bhumi-persil-sheet-handle',
-        header: '.bhumi-persil-sheet-head',
-        minButton: '.bhumi-persil-sheet-minimize',
-        labelMin: 'Minimalkan detail Persil',
-        labelOpen: 'Perluas detail Persil'
-      });
-    }
-    bhumiPersilSheet = sheet;
-    return sheet;
+    bhumiPersilSheet = ensureCatalogPopupSheet();
+    return bhumiPersilSheet;
   }
 
   function bhumiPersilOpenSheet(latlng, html) {
@@ -2847,11 +2812,13 @@ const SAWAH_COLOR = '#87cf15';
     var lat = Number(latlng.lat).toFixed(6), lng = Number(latlng.lng).toFixed(6);
     var coords = lat + ', ' + lng;
     var mapsUrl = 'https://www.google.com/maps?q=' + encodeURIComponent(lat + ',' + lng);
-    sheet.querySelector('.bhumi-persil-sheet-content').innerHTML =
-      html +
+    var card = document.createElement('div');
+    card.className = 'catalog-popup-sheet-card bhumi-persil-detail-card';
+    card.innerHTML = html +
       '<div class="bhumi-persil-coordinates"><div class="bhumi-persil-coord-value"><span>Koordinat titik</span><strong>' + bhumiPersilEsc(coords) + '</strong></div>' +
       '<div class="bhumi-persil-coord-actions"><button type="button" class="bhumi-persil-copy" data-coordinates="' + bhumiPersilEsc(coords) + '">Salin koordinat</button>' +
       '<a class="bhumi-persil-maps" href="' + mapsUrl + '" target="_blank" rel="noopener noreferrer">Lihat di Google Maps</a></div></div>';
+    sheet.querySelector('.catalog-popup-sheet-cards').replaceChildren(card);
     var copyButton = sheet.querySelector('.bhumi-persil-copy');
     copyButton.addEventListener('click', function () {
       var value = copyButton.getAttribute('data-coordinates');
@@ -2861,25 +2828,32 @@ const SAWAH_COLOR = '#87cf15';
       } else bhumiPersilCopyFallback(value, copied);
     });
     if (window.SheetDrag) {
-      if (!window.SheetDrag.isOpen('bhumi-persil')) window.SheetDrag.buka('bhumi-persil');
-      else if (window.SheetDrag.isMinimized('bhumi-persil')) window.SheetDrag.restore('bhumi-persil');
+      if (!window.SheetDrag.isOpen('catalog-popup')) window.SheetDrag.buka('catalog-popup');
+      else if (window.SheetDrag.isMinimized('catalog-popup')) window.SheetDrag.restore('catalog-popup');
+      if (sheet.__updateMinimizeIcon) sheet.__updateMinimizeIcon();
     } else sheet.classList.add('is-open');
-    var minimizeButton = sheet.querySelector('.bhumi-persil-sheet-minimize');
-    if (minimizeButton && window.SheetDrag) {
-      minimizeButton.innerHTML = window.SheetDrag.isMinimized('bhumi-persil')
-        ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>'
-        : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>';
-    }
     sheet.setAttribute('aria-hidden', 'false');
     if (bhumiPersilMarker) map.removeLayer(bhumiPersilMarker);
     bhumiPersilMarker = L.marker(latlng, { keyboard: false, riseOnHover: true, title: 'Lokasi persil dipilih' }).addTo(map);
     window.clearTimeout(bhumiPersilCenterTimer);
     bhumiPersilCenterTimer = window.setTimeout(function () {
       if (!bhumiPersilSheet || !bhumiPersilSheet.classList.contains('is-open') ||
-          (window.SheetDrag && window.SheetDrag.isMinimized('bhumi-persil'))) return;
+          (window.SheetDrag && window.SheetDrag.isMinimized('catalog-popup'))) return;
       if (typeof map.invalidateSize === 'function') map.invalidateSize({ pan: false });
       map.panTo(latlng, { animate: true, duration: 0.45 });
     }, 420);
+    if (!catalogPopupAdRequested) {
+      window.clearTimeout(catalogPopupAdTimer);
+      catalogPopupAdTimer = window.setTimeout(function () {
+        if (!sheet.classList.contains('is-open') || sheet.classList.contains('is-minimized')) return;
+        catalogPopupAdRequested = true;
+        try { (window.adsbygoogle = window.adsbygoogle || []).push({}); }
+        catch (error) {
+          catalogPopupAdRequested = false;
+          if (window.console && console.warn) console.warn('[AdSense] Slot detail layer gagal dimuat:', error);
+        }
+      }, 550);
+    }
     return sheet;
   }
 
@@ -2896,11 +2870,11 @@ const SAWAH_COLOR = '#87cf15';
   function bhumiPersilCloseSheet() {
     window.clearTimeout(bhumiPersilCenterTimer);
     bhumiPersilCenterTimer = 0;
-    if (!bhumiPersilSheet) return;
-    if (window.SheetDrag && window.SheetDrag.isOpen('bhumi-persil')) window.SheetDrag.close('bhumi-persil');
+    if (!bhumiPersilSheet || !bhumiPersilSheet.querySelector('.bhumi-persil-detail-card')) return;
+    if (window.SheetDrag && window.SheetDrag.isOpen('catalog-popup')) window.SheetDrag.close('catalog-popup');
     else bhumiPersilSheet.classList.remove('is-open');
     bhumiPersilSheet.setAttribute('aria-hidden', 'true');
-    var content = bhumiPersilSheet.querySelector('.bhumi-persil-sheet-content');
+    var content = bhumiPersilSheet.querySelector('.catalog-popup-sheet-cards');
     if (content) content.innerHTML = '';
   }
 

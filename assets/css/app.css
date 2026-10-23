@@ -6671,9 +6671,12 @@
     .catalog-popup-sheet-card.fsva-leaflet-popup .leaflet-popup-content-wrapper,
     .catalog-popup-sheet-card.fsva-leaflet-popup .leaflet-popup-content { min-width: 0 !important; max-height: none !important; overflow: visible !important; }
     .catalog-popup-sheet-card .agol-popup { width: 100% !important; min-width: 0; max-width: none; max-height: none; overflow: visible; border: 0; border-radius: 0 !important; box-shadow: none; }
+    .catalog-popup-sheet-card.bhumi-persil-detail-card .bhumi-persil-coordinates { margin: 0; border-right: 0; border-bottom: 0; border-left: 0; border-radius: 0; }
     .catalog-popup-sheet-card .sppgd-popup { width: 100% !important; min-width: 0; max-width: none; max-height: none !important; overflow: visible; }
-    .catalog-popup-sheet-card .sppgd-popup-body { max-height: min(45vh, 360px) !important; overflow-y: auto !important; }
-    .catalog-popup-sheet-card .sppgd-popup-pagination { position: sticky; bottom: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 9px 10px; border-top: 1px solid var(--border-color); background: var(--bg-primary); }
+    .catalog-popup-sheet-card.sppgd-leaflet-popup .leaflet-popup-content-wrapper { max-height: none !important; overflow: visible !important; }
+    .catalog-popup-sheet-card .sppgd-popup-body { max-height: none !important; overflow: visible !important; }
+    .catalog-popup-sheet-card .sppgd-popup-list { max-height: min(45vh, 360px); overflow-y: auto; overscroll-behavior: contain; }
+    .catalog-popup-sheet-card .sppgd-popup-pagination { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 9px 10px; border-top: 1px solid var(--border-color); background: var(--bg-primary); }
     .catalog-popup-sheet-card .sppgd-popup-pagination span { color: var(--text-tertiary); font-size: 10px; text-align: center; }
     .catalog-popup-sheet-card .sppgd-popup-page-btn { min-height: 30px; padding: 5px 8px; border: 1px solid var(--border-color); border-radius: 0; background: var(--bg-secondary); color: var(--text-primary); font: inherit; font-size: 10px; font-weight: 600; cursor: pointer; }
     .catalog-popup-sheet-card .sppgd-popup-page-btn:disabled { opacity: .45; cursor: default; }
@@ -11109,6 +11112,8 @@ details[open] > .gt-card-head::after {
     .geoportal-modal-body::-webkit-scrollbar-thumb { border-radius: 999px; background: #b7c7d6; }
     .geoportal-properties { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; align-content: start; }
     .geoportal-properties h4 { grid-column: 1 / -1; margin: 3px 0 0; color: #0879bf; font-size: 14px; }
+    .geoportal-properties .geoportal-feature-card { width: 100%; max-width: none; max-height: none; overflow: hidden; border: 1px solid var(--border-color); border-radius: 0; box-shadow: none; }
+    .geoportal-feature-card .agol-popup-body { padding: 0; }
 
     /* Sawah Popup */
     .sawah-popup { font-family: 'Google Sans', 'Segoe UI', sans-serif; }
