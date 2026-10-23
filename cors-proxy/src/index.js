@@ -363,7 +363,7 @@ export default {
     // (serupa aturan UA di /mprx yang sudah ditemukan kemarin).
     const xPub = request.headers.get("X-Client-Pubkey");
     if (xPub && isBhumiExpapi) fwdHeaders["X-Client-Pubkey"] = xPub;
-    if (isBhumiExpapi || isBhumiMprx) {
+    if (isBhumiMprx || isBhumiExpapi) {
       fwdHeaders["User-Agent"] = request.headers.get("User-Agent") ||
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
     }
