@@ -6637,6 +6637,63 @@
        popup dihitung dari teks natural kartu (bisa < 200px). Kartu mengisi
        lebar daftar agar tidak ada gulir horizontal saat popup di-clamp. */
     .bhumi-persil-list .agol-popup { width: 100% !important; max-width: none; min-width: 0; }
+    .bhumi-persil-sheet {
+      display: flex; position: fixed; top: 120px; right: 12px; bottom: 12px; left: auto;
+      z-index: 1100; width: min(390px, calc(100vw - 106px)); height: auto;
+      flex-direction: column; overflow: hidden; visibility: hidden; pointer-events: none;
+      border-radius: 16px; background: var(--bg-primary); color: var(--text-primary);
+      box-shadow: var(--shadow-sheet); transform: translateX(calc(100% + 24px));
+      transition: transform .3s ease-in-out, visibility .3s;
+    }
+    .bhumi-persil-sheet.is-open { visibility: visible; pointer-events: auto; transform: translateX(0); }
+    .bhumi-persil-sheet-head { display: flex; min-height: 52px; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 12px; box-sizing: border-box; padding: 10px 16px; border-bottom: 1px solid var(--border-color); background: var(--bg-primary); }
+    .bhumi-persil-sheet-title { color: var(--text-primary); font-size: 13px; font-weight: 700; }
+    .bhumi-persil-sheet-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 6px; }
+    .bhumi-persil-sheet-minimize, .bhumi-persil-sheet-close { display: grid; width: 28px; height: 28px; place-items: center; border: 0; border-radius: 50%; background: var(--bg-tertiary); color: var(--text-tertiary); cursor: pointer; }
+    .bhumi-persil-sheet-close { font-size: 16px; }
+    .bhumi-persil-sheet-minimize:hover, .bhumi-persil-sheet-close:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+    .bhumi-persil-sheet-minimize:focus-visible, .bhumi-persil-sheet-close:focus-visible { outline: 2px solid #64748b; outline-offset: 2px; }
+    #bhumi-persil-sheet .bhumi-persil-sheet-head { display: flex !important; width: 100%; align-items: center; justify-content: space-between; gap: 12px; }
+    #bhumi-persil-sheet .bhumi-persil-sheet-title { flex: 1 1 auto; min-width: 0; margin: 0; color: var(--text-primary); font-family: inherit; font-size: 13px; font-weight: 700; line-height: 1.3; }
+    #bhumi-persil-sheet .bhumi-persil-sheet-actions { display: flex !important; flex: 0 0 auto; align-items: center; gap: 6px; }
+    #bhumi-persil-sheet .bhumi-persil-sheet-minimize,
+    #bhumi-persil-sheet .bhumi-persil-sheet-close { appearance: none; flex: 0 0 28px; width: 28px; height: 28px; margin: 0; padding: 0; border: 0; border-radius: 50%; background: var(--bg-tertiary); color: var(--text-tertiary); font: 16px/1 Arial, sans-serif; }
+    .bhumi-persil-sheet-handle { display: none; }
+    .bhumi-persil-sheet-content { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 12px 12px 16px; -webkit-overflow-scrolling: touch; }
+    .bhumi-persil-sheet-content > .agol-popup { width: 100% !important; max-width: none; min-width: 0; max-height: none; overflow: visible; border: 0; border-radius: 0; box-shadow: none; }
+    .bhumi-persil-sheet-content .bhumi-persil-list { display: grid; gap: 12px; width: 100%; max-width: none; max-height: none; box-sizing: border-box; padding: 0; background: transparent; }
+    .bhumi-persil-sheet-content .bhumi-persil-list > .agol-popup { width: 100% !important; max-width: none; min-width: 0; max-height: none; overflow: visible; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: var(--shadow-card); }
+    .bhumi-persil-sheet-content .agol-popup-header.agol-geo-persil { padding: 14px 15px 13px; background: linear-gradient(135deg, #713f12, #b45309); }
+    .bhumi-persil-sheet-content .agol-geo-persil .agol-popup-badge { margin-bottom: 9px; padding: 4px 8px; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; font-size: 9px; letter-spacing: .06em; }
+    .bhumi-persil-sheet-content .agol-geo-persil .agol-popup-title { font-size: 15px; line-height: 1.35; text-shadow: none; }
+    .bhumi-persil-sheet-content .agol-geo-persil .agol-popup-subtitle { margin-top: 4px; color: rgba(255,255,255,.82); font-size: 11px; line-height: 1.4; opacity: 1; }
+    .bhumi-persil-sheet-content .agol-popup-footer { padding: 8px 12px; }
+    .bhumi-persil-coordinates { display: grid; gap: 11px; margin: 12px; padding: 13px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-secondary); }
+    .bhumi-persil-coord-value { display: grid; gap: 4px; }
+    .bhumi-persil-coord-value span { color: var(--text-tertiary); font-size: 10px; }
+    .bhumi-persil-coord-value strong { color: var(--text-primary); font: 600 13px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .01em; }
+    .bhumi-persil-coord-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .bhumi-persil-coord-actions button, .bhumi-persil-coord-actions a { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; box-sizing: border-box; padding: 7px 11px; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); background: var(--bg-primary); font: inherit; font-size: 10px; font-weight: 600; line-height: 1.2; text-decoration: none; cursor: pointer; }
+    .bhumi-persil-coord-actions .bhumi-persil-maps { border-color: #0e7490; color: #fff; background: #0e7490; }
+    .bhumi-persil-data-table { width: 100%; border-collapse: separate; border-spacing: 0; color: var(--text-primary); font-size: 11px; }
+    .bhumi-persil-data-table tr:nth-child(odd) { background: var(--bg-secondary); }
+    .bhumi-persil-data-table th, .bhumi-persil-data-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+    .bhumi-persil-data-table th { width: 42%; color: var(--text-tertiary); font-weight: 500; }
+    .bhumi-persil-data-table td { color: var(--text-primary); font-weight: 600; }
+    .bhumi-persil-sheet.is-minimized { top: auto; right: auto; bottom: 68px; left: 50%; width: min(300px, calc(100vw - 24px)); height: 52px; visibility: visible; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-primary); box-shadow: var(--shadow-sheet); transform: translateX(-50%); z-index: 100; }
+    .bhumi-persil-sheet.is-minimized .bhumi-persil-sheet-handle,
+    .bhumi-persil-sheet.is-minimized .bhumi-persil-sheet-content { display: none; }
+    .bhumi-persil-sheet.is-minimized .bhumi-persil-sheet-head { min-height: 50px; padding: 8px 12px; border-bottom: 0; cursor: pointer; }
+    @media (max-width: 768px) {
+      .bhumi-persil-sheet { top: auto; right: 0; bottom: 0; left: 0; width: 100%; height: 50dvh; max-height: 50dvh; box-sizing: border-box; border-radius: 18px 18px 0 0; padding-bottom: env(safe-area-inset-bottom); transform: translateY(24px); }
+      .bhumi-persil-sheet.is-open { transform: translateY(0); }
+      .bhumi-persil-sheet-handle { display: block; flex: 0 0 18px; position: relative; background: var(--bg-primary); touch-action: none; }
+      .bhumi-persil-sheet-handle::after { content: ''; position: absolute; top: 7px; left: 50%; width: 36px; height: 4px; border-radius: 99px; background: var(--border-color); transform: translateX(-50%); }
+      .bhumi-persil-sheet.is-minimized { top: 100px; right: auto; bottom: auto; left: 50%; width: min(250px, calc(100vw - 48px)); height: 36px; max-height: 36px; padding-bottom: 0; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-primary); box-shadow: var(--shadow-sheet); transform: translateX(-50%); z-index: 100; }
+      .bhumi-persil-sheet.is-minimized .bhumi-persil-sheet-handle,
+      .bhumi-persil-sheet.is-minimized .bhumi-persil-sheet-content { display: none; }
+      .bhumi-persil-sheet.is-minimized .bhumi-persil-sheet-head { min-height: 36px; padding: 4px 12px; border-bottom: 0; cursor: pointer; }
+    }
     .agol-geo-kawasan .agol-popup-badge { font-size: 10px; padding: 3px 10px; border-radius: 5px; letter-spacing: .02em; }
     .agol-geo-kawasan .agol-popup-title { font-size: 15px; }
 
