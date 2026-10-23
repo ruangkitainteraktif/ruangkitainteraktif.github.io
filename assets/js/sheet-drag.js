@@ -45,7 +45,7 @@
   var desktopResize = null;
 
   /* Resize sheet kanan dari tepi kirinya pada desktop. */
-  var SELECTOR_SHEET_DESKTOP = '#hotspot-sheet,#geopangan-sheet,#transjakarta-sheet,#transjogja-sheet,#geotools-sheet,#geodata-sheet,#attr-table-sheet,#ai-sheet,.dm-sidebar,.lg-sidebar,.pa-panel';
+  var SELECTOR_SHEET_DESKTOP = '#catalog-popup-sheet,#hotspot-sheet,#geopangan-sheet,#transjakarta-sheet,#transjogja-sheet,#geotools-sheet,#geodata-sheet,#attr-table-sheet,#ai-sheet,.dm-sidebar,.lg-sidebar,.pa-panel';
   document.addEventListener('pointerdown', function (e) {
     if (window.innerWidth <= BATAS_MOBILE || e.button !== 0) return;
     var sheet = e.target.closest && e.target.closest(SELECTOR_SHEET_DESKTOP);

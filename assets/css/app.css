@@ -6729,6 +6729,41 @@
     .bhumi-persil-data-table th, .bhumi-persil-data-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
     .bhumi-persil-data-table th { width: 42%; color: var(--text-tertiary); font-weight: 500; }
     .bhumi-persil-data-table td { color: var(--text-primary); font-weight: 600; }
+    .bhumi-persil-gistaru { min-width: 0; width: 100%; }
+    .bhumi-persil-gistaru .agol-popup { width: 100%; min-width: 0; max-width: none; max-height: min(62vh, 560px); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: var(--shadow-card); }
+    .bhumi-persil-gistaru .bhumi-persil-data-table { table-layout: fixed; }
+    .bhumi-persil-gistaru .bhumi-persil-data-table th { width: 34%; }
+    .bhumi-persil-gistaru .bhumi-persil-data-table th,
+    .bhumi-persil-gistaru .bhumi-persil-data-table td { padding: 8px 10px; font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; word-break: normal; }
+    .bhumi-persil-gistaru .bhumi-persil-data-table td,
+    .bhumi-persil-gistaru-activities li { white-space: pre-wrap; }
+    .bhumi-persil-gistaru-section + .bhumi-persil-gistaru-section { margin-top: 16px; }
+    .bhumi-persil-gistaru-section h3 { margin: 0; padding: 9px 10px; border-bottom: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); font-size: 11px; font-weight: 700; letter-spacing: .025em; }
+    .bhumi-persil-gistaru-section .bhumi-persil-data-table { table-layout: fixed; }
+    .bhumi-persil-gistaru-section .bhumi-persil-data-table tr { display: grid; grid-template-columns: minmax(0, 1fr); }
+    .bhumi-persil-gistaru-section .bhumi-persil-data-table th,
+    .bhumi-persil-gistaru-section .bhumi-persil-data-table td { display: block; width: auto; padding: 7px 10px 3px; border-bottom: 0; }
+    .bhumi-persil-gistaru-section .bhumi-persil-data-table th { color: var(--text-tertiary); font-size: 10px; font-weight: 600; text-transform: uppercase; }
+    .bhumi-persil-gistaru-section .bhumi-persil-data-table td { padding: 2px 10px 9px; border-bottom: 1px solid var(--border-color); font-size: 12px; font-weight: 500; }
+    .bhumi-persil-gistaru-rule-list { display: grid; gap: 6px; margin: 0; padding-left: 18px; }
+    .bhumi-persil-gistaru-rule-list li { padding-left: 2px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .bhumi-persil-gistaru-activity-groups { display: grid; gap: 8px; padding: 9px; }
+    .bhumi-persil-gistaru-activity-group { overflow: hidden; border: 1px solid var(--border-color); border-radius: 9px; background: var(--bg-primary); }
+    .bhumi-persil-gistaru-activity-group.is-status-1 { border-left: 3px solid #16a34a; }
+    .bhumi-persil-gistaru-activity-group.is-status-2 { border-left: 3px solid #eab308; }
+    .bhumi-persil-gistaru-activity-group.is-status-3 { border-left: 3px solid #f97316; }
+    .bhumi-persil-gistaru-activity-group.is-status-4 { border-left: 3px solid #ef4444; }
+    .bhumi-persil-gistaru-activity-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 10px; border-bottom: 1px solid var(--border-color); background: var(--bg-secondary); }
+    .bhumi-persil-gistaru-activity-head strong { color: var(--text-primary); font-size: 11px; }
+    .bhumi-persil-gistaru-activity-head span { flex: 0 0 auto; padding: 3px 7px; border-radius: 99px; background: var(--bg-tertiary); color: var(--text-secondary); font-size: 9px; font-weight: 600; }
+    .bhumi-persil-gistaru-activity-group ul { display: grid; gap: 5px; margin: 0; padding: 9px 12px 9px 28px; color: var(--text-primary); font-size: 11px; line-height: 1.45; }
+    .bhumi-persil-gistaru-empty { margin: 0; padding: 10px; color: var(--text-tertiary); font-size: 11px; }
+    .bhumi-persil-gistaru-activity-rule { padding: 0 10px 9px; }
+    .bhumi-persil-gistaru-activity-rule summary { color: var(--text-secondary); font-size: 10px; font-weight: 600; cursor: pointer; }
+    .bhumi-persil-gistaru-activity-rule ul { padding-top: 7px; }
+    .bhumi-persil-gistaru-activities { max-height: 190px; overflow: auto; padding: 10px 12px; border-top: 1px solid var(--border-color); background: var(--bg-primary); }
+    .bhumi-persil-gistaru-activities > strong { display: block; margin-bottom: 7px; color: var(--text-tertiary); font-size: 10px; letter-spacing: .04em; text-transform: uppercase; }
+    .bhumi-persil-gistaru-activities ul { display: grid; gap: 5px; margin: 0; padding-left: 17px; color: var(--text-primary); font-size: 11px; line-height: 1.45; }
     .bhumi-persil-sheet.is-minimized { top: auto; right: auto; bottom: 68px; left: 50%; width: min(300px, calc(100vw - 24px)); height: 52px; visibility: visible; border: 1px solid var(--border-color); border-radius: 14px; background: var(--bg-primary); box-shadow: var(--shadow-sheet); transform: translateX(-50%); z-index: 100; }
     .bhumi-persil-sheet.is-minimized .bhumi-persil-sheet-handle,
     .bhumi-persil-sheet.is-minimized .bhumi-persil-sheet-content { display: none; }
@@ -16476,7 +16511,7 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
     border-radius: 0;
   }
 
-  :is(#hotspot-sheet,#geopangan-sheet,#transjakarta-sheet,#transjogja-sheet,#geotools-sheet,#geodata-sheet,#attr-table-sheet,#ai-sheet,.dm-sidebar,.lg-sidebar,.pa-panel):not(.sheet-minimized):not(.gs-sheet-minimized):not(.geodata-sheet-minimized):not(.attr-table-sheet-minimized):not(.ais-sheet-minimized):not(.dm-sidebar-minimized):not(.lg-sidebar-minimized):not(.pa-min)::before {
+  :is(#catalog-popup-sheet,#hotspot-sheet,#geopangan-sheet,#transjakarta-sheet,#transjogja-sheet,#geotools-sheet,#geodata-sheet,#attr-table-sheet,#ai-sheet,.dm-sidebar,.lg-sidebar,.pa-panel):not(.sheet-minimized):not(.gs-sheet-minimized):not(.geodata-sheet-minimized):not(.attr-table-sheet-minimized):not(.ais-sheet-minimized):not(.dm-sidebar-minimized):not(.lg-sidebar-minimized):not(.pa-min)::before {
     content: "";
     position: absolute;
     z-index: 20;
@@ -16486,9 +16521,10 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
     width: 8px;
     cursor: ew-resize;
     touch-action: none;
+    background: linear-gradient(90deg, transparent 0 4px, color-mix(in srgb, var(--border-color) 65%, transparent) 4px 6px, transparent 6px);
   }
 
-  :is(#hotspot-sheet,#geopangan-sheet,#transjakarta-sheet,#transjogja-sheet,#geotools-sheet,#geodata-sheet,#attr-table-sheet,#ai-sheet,.dm-sidebar,.lg-sidebar,.pa-panel).desktop-sheet-resizing {
+  :is(#catalog-popup-sheet,#hotspot-sheet,#geopangan-sheet,#transjakarta-sheet,#transjogja-sheet,#geotools-sheet,#geodata-sheet,#attr-table-sheet,#ai-sheet,.dm-sidebar,.lg-sidebar,.pa-panel).desktop-sheet-resizing {
     transition: none !important;
     user-select: none;
   }

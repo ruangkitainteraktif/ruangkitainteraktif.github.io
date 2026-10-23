@@ -1,0 +1,3726 @@
+{
+  "_meta": {
+    "deskripsi": "Snapshot statis identifikasi RDTR GISTARU untuk satu titik contoh; tidak mengikuti klik persil.",
+    "sumber": "https://gistaru.atrbpn.go.id/rdtrinteraktif/api/interactive/data?id_wilayah=3372000000&latitude=-7.5393212797350015&longitude=110.82485970453568",
+    "sumberKegiatan": "https://gistaru.atrbpn.go.id/rdtrinteraktif/api/interactive/activities?id_wilayah=3372000000&id_rtr=001",
+    "diambil": "2026-10-23T12:24:18.727Z",
+    "latitude": -7.5393212797350015,
+    "longitude": 110.82485970453568,
+    "id_wilayah": "3372000000"
+  },
+  "lokasi": {
+    "wilayah": "Kota Surakarta",
+    "kecamatan": "Kecamatan Banjarsari",
+    "kelurahan": "Kelurahan Banjarsari"
+  },
+  "zona": {
+    "rtr": "RDTR",
+    "id_rtr": "001",
+    "nama": "Zona Ruang Terbuka Hijau",
+    "kode": "RTH",
+    "subzona": "Pemakaman",
+    "kodeSubzona": "RTH-7",
+    "kodeBlok": "1",
+    "kodeSubblok": "Tidak Ada",
+    "namaSWK": "-"
+  },
+  "intensitas": {
+    "kdb": [
+      "30%"
+    ],
+    "klb": [
+      "0,6"
+    ],
+    "kdh": [
+      "70%"
+    ],
+    "ktgbgn": [
+      {
+        "lotSize": "Luas Kaveling <200 m2",
+        "values": [
+          "5m"
+        ]
+      },
+      {
+        "lotSize": "Luas Kaveling 200 – 500 m2",
+        "values": [
+          "5m"
+        ]
+      },
+      {
+        "lotSize": "Luas Kaveling 500-1000 m2",
+        "values": [
+          "10m"
+        ]
+      },
+      {
+        "lotSize": "Luas Kaveling 1000-2000 m2",
+        "values": [
+          "10m"
+        ]
+      },
+      {
+        "lotSize": "Luas Kaveling 2000-3000 m2",
+        "values": [
+          "10m"
+        ]
+      },
+      {
+        "lotSize": "Luas Kaveling 3000-4000 m2",
+        "values": [
+          "10m"
+        ]
+      },
+      {
+        "lotSize": "Luas Kaveling >5000 m2",
+        "values": [
+          "10m"
+        ]
+      }
+    ],
+    "ktb": [
+      {
+        "rule": "Jarak Antar Bangunan Minimal (m)",
+        "values": [
+          "4"
+        ],
+        "roadClassCount": 7
+      },
+      {
+        "rule": "Jarak bebas samping (JBS) dan jarak bebas belakang (JBB) Minimum (m)",
+        "values": [
+          "2"
+        ],
+        "roadClassCount": 7
+      }
+    ],
+    "gsb": [
+      "GSB pada jalan dengan rumija > 20 m, maka GSB = (0,5 x Rumija) + 10 m",
+      "GSB pada jalan dengan rumija 12 - 20 m, maka GSB = (0,5 x Rumija) + 7,5 m",
+      "GSB pada jalan dengan rumija 8-12 m, maka GSB = (0,5 x Rumija) + 5 m",
+      "GSB pada jalan dengan rumija 6-8 m, maka GSB = 0,5 x Rumija + 3 m",
+      "GSB pada jalan dengan rumija 3-6 m, maka GSB = 0,5 x Rumija + 2 m",
+      "GSB pada jalan dengan rumija <=  3m, maka GSB = 0,5 x Rumija +1 m",
+      "GSB dihitung dari tepi Rumija."
+    ],
+    "ketrgn": [
+      "1) Prasarana dan sarana minimal untuk mendukung fungsi ekologis dapat dilakukan melalui hal berikut",
+      "-  Penyediaan ruang pengembangan vegetasi dengan stratifikasi lengkap (pohon besar, pohon sedang, pohon kecil, perdu, semak, dan groundcover) dan/atau",
+      "-  Pemilihan vegetasi pengundang satwa (misalnya burung, serangga, dan satwa lain).",
+      "2) Prasarana dan sarana minimal untuk mendukung fungsi resapan air dapat dilakukan melalui:",
+      "-  Penyediaan ruang terbuka biru (misalnya danau retensi atau detensi, kolam retensi atau detensi, sumur resapan, bioswale, kebun hujan (rain garden) dan/atau biopori) untuk mengatur dan mengendalikan limpasan air dan/atau",
+      "-  Penyediaan sarana pemanenan air hujan untuk keperluan pemeliharaan taman.",
+      "3) Prasarana dan sarana minimal untuk mendukung ekonomi dapat dilakukan melalui hal berikut:",
+      "-  Penyediaan kios pendungung kegiatan makam",
+      "-  Pengembangan prasarana dan sarana pertanian perkotaan (misal; pasar bunga).",
+      "4) Prasarana dan sarana minimal untuk mendukung sosial budaya dilakukan melalui:",
+      "-  Penyediaan plaza multifungsi dengan material ramah lingkungan/berpori (porous/permeablematerial)",
+      "-  Penyediaan ruang beratap/gazebo untuk sarana berkumpul",
+      "-  Menyediakan tempat duduk",
+      "-  Penyediaan area parkir terbatas (kendaraan bermotor, kendaraan listrik, sepeda dan lain sebagainya) dengan material ramah lingkungan/berpori (porous/permeable material)",
+      "-  Penyediaan bangunan pendukung yang dilengkapi ramp (dengan program ruang terdiri dari pos jaga, mushola, dan toilet (pria, wanita, kaum difabel)",
+      "-  Penyediaan ubin pengarah (tactile paving) untuk kaum difabel",
+      "-  Penyediaan penerangan sesuai dengan kebutuhan dan standar penerangan.",
+      "5) Prasarana dan sarana minimal untuk mendukung estetika dapat dilakukan melalui:",
+      "-  Penyediaan ruang untuk tanaman lokal khas daerah",
+      "-  Penyediaan pola perkerasan dan landscape furniture (misalnya bangku taman, lampu taman, tempat sampah, dan lain sebagainya) dengan merujuk pada kearifan lokal (misalnya ornamen, seni kriya, ragam hias daerah dan lain-lain) dan/atau",
+      "-  Pemberian papan informasi/ penandan (bisa menggunakan aksara (tipografi) lokal untuk sign letter)",
+      "6) Prasarana dan sarana minimal untuk mendukung penanggulangan bencana dapat dilakukan melalui hal berikut:",
+      "-  Penyediaan ruang titik kumpul berupa area terbuka multifungsi dalam taman sebagai ruang evakuasi dan pengungsian sementara",
+      "-  Penyediaan jalur evakuasi bencana",
+      "-  Penyediaan instalasi hidran kebakaran; dan/atau",
+      "-  Penyediaan instalasi hidran kebakaran.",
+      "A) ketentuan khusus Kawasan Keselamatan Operasional Penerbangan",
+      "Ketentuan khusus Kawasan Keselamatan Operasional Penerbangan berupa Bandar Udara Adi Sumarmo. Pengaturan batas-batas ketinggian pada KKOP di Kota Surakarta merujuk pada Keputusan Menteri Perhubungan No. 408 tahun 2017 tentang Batas Batas Keselamatan Operasi Penerbangan Di Sekitar Bandar Udara Adi Soemarmo. Dengan ketentuan ketinggian sebagai berikut :",
+      "1. kawasan di bawah permukaan horizontal-dalam",
+      "- Batas-batas ketinggian ditentukan + 45 m di atas ketinggian ambang Landasan.",
+      "2. kawasan di bawah permukaan kerucut",
+      "- atas-batas ketinggian ditentukan oleh kemiringan 5% arah ke atas dan ke luar dimulai dari tepi luar Kawasan Di Bawah Permukaan Horizontal dalam pada ketinggian +45m sampai memotong Permukaan Horizontal Luar pada ketinggian +145 m",
+      "3. kawasan di bawah permukaan horizontal-luar",
+      "- Batas-batas ketinggian ditentukan + 191 m di atas ketinggian ambang Landasan",
+      "B) ketentuan khusus Kawasan Rawan Bencana",
+      "1. Kawasan rawan bencana banjir tingkat sangat tinggi berlaku ketentuan:",
+      "a. penetapan batas dataran banjir dan risikonya",
+      "b. penggunaan rekayasa teknis dalam rangka mengurangi dampak dan resiko bencana banjir",
+      "c. pemasangan sistem peringatan dini, papan info dan rambu peringatan, jalur evakuasi, dan tempat evakuasi sementara",
+      "d. mempertimbangkan integrasi dengan sistem drainase Daerah; dan",
+      "e. mendapatkan pertimbangan persyaratan pemanfaatan dari perangkat daerah yang membidangi penataan ruang atau kebencanaan daerah.",
+      "1. Kawasan rawan bencana banjir tingkat tinggi berlaku ketentuan:",
+      "a. penetapan batas dataran banjir dan resikonya",
+      "b. pemasangan sistem peringatan dini, papan info dan rambu peringatan, jalur evakuasi, dan tempat evakuasi sementara; dan",
+      "c.mempertimbangkan integrasi dengan sistem drainase Daerah.",
+      "C) ketentuan khusus Tempat Evakuasi Bencana",
+      "Ketentuan khusus tempat evakuasi bencana meliputi:",
+      "a. tempat evakuasi sementara",
+      "Tempat evakuasi sementara berlaku ketentuan:",
+      "- lokasi mudah dijangkau dalam kurun waktu tertentu setelah terjadi bencana",
+      "- berada pada ketinggian yang cukup di atas permukaan tanah",
+      "- terdapat ruang yang dapat diubah sebagai penampungan sementara dan",
+      "- terdapat fasilitas sanitasi.",
+      "b. tempat evakuasi akhir.",
+      "Tempat evakuasi akhir berlaku ketentuan:",
+      "- terdapat ruang pada bangunan yang bebas dari bencana",
+      "- terdapat ruang yang dapat diubah sebagai penampungan, ruang sosialisasi dan pemulihan korban bencana dan:",
+      "D) ketentuan khusus kawasan Cagar Budaya",
+      "Ketentuan pelestarian cagar budaya dilakukan dalam rangka pelestarian melalui perlindungan, pemanfaatan dan pengembangan cagar budaya, meliputi:",
+      "- perlindungan, pemanfaatan dan pengembangan cagar budaya mendapatkan pertimbangan dari Tim Ahli Cagar Budaya",
+      "- pengaturan kegiatan, intensitas pemanfaatan ruang di kawasan cagar",
+      "budaya dilaksanakan berdasarkan rencana tata bangunan dan lingkungan dan",
+      "- Pemerintah daerah melakukan registrasi dalam rangka pelestarian cagar budaya Daerah.",
+      "E) ketentuan khusus kawasan sempadan",
+      "Ketentuan khusus kawasan sempadan sungai berlaku ketentuan:",
+      "a. Sempadan sungai hanya dapat dimanfaatkan secara terbatas untuk:",
+      "- ruang terbuka hijau",
+      "- bangunan prasarana sumber daya air",
+      "- fasilitas jembatan dan dermaga",
+      "- jalur pipa gas dan air minum",
+      "- rentangan kabel listrik dan telekomunikasi",
+      "- kegiatan lain sepanjang tidak mengganggu fungsi sungai, antara lain kegiatan menanam tanaman sayur-mayur dan",
+      "- bangunan ketenagalistrikan.",
+      "b. Dalam hal di dalam sempadan sungai terdapat tanggul untuk kepentingan pengendali banjir, perlindungan badan tanggul dilakukan dengan larangan:",
+      "- menanam tanaman selain rumput",
+      "- mendirikan bangunan dan",
+      "- mengurangi dimensi tanggul.",
+      "c. bangunan yang terdapat dalam sempadan sungai yang didirikan berdasarkan izin yang diperoleh berdasarkan prosedur yang benar dinyatakan sebagai status quo dan secara bertahap ditertibkan untuk mengembalikan fungsi sempadan sungai.",
+      "1) Ketentuan variansi pemanfaatan ruang",
+      "a. Pelaksanaan pemanfaatan ruang terhadap satu kepemilikan hak atas tanah yang terdapat lebih dari satu zona pemanfaatan ruang selain zona Lindung, pemanfaatannya diperbolehkan mengikuti zona yang memiliki nilai ekonomi paling tinggi",
+      "b Pelaksanaan pemanfaatan ruang prasarana dan sarana untuk kepentingan umum yang berbeda dengan Peraturan Wali Kota ini dapat dilakukan berdasarkan pertimbangan kajian Forum Penataan Ruang atau Perangkat Daerah yang membidangi penataan ruang",
+      "c Permohonan ajuan pemanfaatan ruang di Zona RTH yang bidang tanahnya belum dikuasai Pemerintah Daerah untuk kegiatan selain RTH, dilakukan mempertimbangkan kajian Forum Penataan Ruang Daerah atau Perangkat Daerah yang membidangi penataan ruang",
+      "d Hak atas tanah dapat diterbitkan di zona lindung dan zona budidaya sesuai peraturan perundang - undangan, sedangkan pemanfaatannya berdasarkan Peraturan Wali Kota ini.",
+      "2) Ketentuan untuk penggunaan lahan yang sudah ada dan tidak sesuai dengan peraturan zonasi",
+      "a. Ketentuan ini berlaku untuk pemanfaatan ruang yang izinnya diterbitkan sebelum penetapan RDTR, dan dapat dibuktikan bahwa izin tersebut diperoleh sesuai dengan prosedur yang benar",
+      "b. Pembangunan yang tidak sesuai dengan peraturan zonasi ini namun sudah memiliki izin yang diperoleh sebelum disahkannya Peraturan Wali Kota ini dan belum dilaksanakan, maka pembangunannya dapat terus dilakukan, namun akan ditinjau izinnya setelah 5 tahun",
+      "c. Penggunaan lahan saat ini yang tidak sesuai sebelum peraturan ini ditetapkan maka diperbolehkan selama memiliki izin yang sah dan akan dibatasi perkembangannya untuk kegiatan yang diizinkan terbatas sedangkan untuk kegiatan yang tidak diizinkan akan ditinjau kembali setelah 5 tahun",
+      "d. Penggunaan lahan saat ini yang tidak sesuai sebelum peraturan ini ditetapkan dan tidak memiliki izin yang sah harus segera disesuaikan dalam waktu paling lama 6 (enam) bulan setelah berlakunya Peraturan Wali Kota ini.",
+      "3) Ketentuan pemberian insentif dan disinsentif",
+      "- dilakukan untuk mendorong terwujudnya perkembangan pemanfaatan ruang sesuai dengan rencana tata ruang serta disinsentif untuk mengendalikan atau membatasi kegiatan pemanfaatan ruang yang tidak sesuai dengan rencana tata ruang",
+      "- Ketentuan pemberian insentif dan disinsentif diatur dengan Peraturan Wali Kota."
+    ],
+    "ketentuanKegiatan": {
+      "iznktg": [
+        "Diperbolehkan/Diizinkan"
+      ],
+      "tbtktg": [
+        "T1 = pemanfaatan terbatas dengan pembatasan jumlah kegiatan di dalam WP/SWP/Blok",
+        "T2 = pemanfaatan terbatas dengan pembatasan jarak maksimum kegiatan di dalam WP/SWP/Blok dengan kegiatan lain yang menimbulkan konflik pemanfaatan"
+      ],
+      "bstktg": [
+        "B1 = pemanfaatan dengan syarat mempertimbangkan secara spesifik skala dan risiko kegiatan/usaha serta kemampuan layanan prasarana dan sarana, seperti sediaan energi, telekomunikasi, akses jalan, persampahan, air minum, drainase, dan/atau ruang parkir",
+        "B3 = pemanfaatan dengan syarat menyediakan fasilitas pengolah dan/atau penyimpan bahan sisa kegiatan (untuk kegiatan yang operasionalnya menghasilkan sisa bahan yang dapat mempengaruhi kondisi ruang di sekitarnya), penggunaan teknologi untuk mengurangi dampak bagi kawasan sekitarnya",
+        "B2 = pemanfaatan bersyarat dengan syarat menyediakan sarana khusus untuk meminimalisir pengaruh iklim mikro, seperti ruang terbuka hijau, resapan air, filter udara, penahan angin, dan/atau lainnya sesuai kebutuhan"
+      ],
+      "tbsktg": [
+        "T1 = pemanfaatan terbatas dengan pembatasan jumlah kegiatan di dalam WP/SWP/Blok",
+        "B3 = pemanfaatan dengan syarat menyediakan fasilitas pengolah dan/atau penyimpan bahan sisa kegiatan (untuk kegiatan yang operasionalnya menghasilkan sisa bahan yang dapat mempengaruhi kondisi ruang di sekitarnya), penggunaan teknologi untuk mengurangi dampak bagi kawasan sekitarnya",
+        "T2 = pemanfaatan terbatas dengan pembatasan jarak maksimum kegiatan di dalam WP/SWP/Blok dengan kegiatan lain yang menimbulkan konflik pemanfaatan",
+        "B1 = pemanfaatan dengan syarat mempertimbangkan secara spesifik skala dan risiko kegiatan/usaha serta kemampuan layanan prasarana dan sarana, seperti sediaan energi, telekomunikasi, akses jalan, persampahan, air minum, drainase, dan/atau ruang parkir",
+        "B2 = pemanfaatan bersyarat dengan syarat menyediakan sarana khusus untuk meminimalisir pengaruh iklim mikro, seperti ruang terbuka hijau, resapan air, filter udara, penahan angin, dan/atau lainnya sesuai kebutuhan",
+        "B4 = pemanfaatan bersyarat dengan syarat mempertimbangkan hak atas tanah, mempertimbangkan keterkaitan dengan kegiatan utama, risiko konflik dengan kegiatan sekitarnya dan/atau konflik sosial"
+      ]
+    }
+  },
+  "kegiatan": {
+    "diizinkan": [
+      {
+        "id": "006",
+        "nama": "Pemakaman"
+      }
+    ],
+    "terbatas": [
+      {
+        "id": "032",
+        "nama": "Halte"
+      },
+      {
+        "id": "033",
+        "nama": "Shelter"
+      },
+      {
+        "id": "161",
+        "nama": "pemanfaatan kayu hutan tanaman pada hutan produksi"
+      },
+      {
+        "id": "162",
+        "nama": "pemanfaatan kayu hutan tanaman hasil rehabilitasi pada hutan produksi"
+      },
+      {
+        "id": "163",
+        "nama": "pemanfaatan kayu hutan tanaman rakyat"
+      },
+      {
+        "id": "164",
+        "nama": "pemanfaatan kayu hutan tanaman lainnya"
+      },
+      {
+        "id": "165",
+        "nama": "pemanfaatan kayu hutan alam"
+      },
+      {
+        "id": "166",
+        "nama": "pemanfaatan kayu hasil restorasi ekosistem pada hutan alam"
+      },
+      {
+        "id": "167",
+        "nama": "pemanfaatan hasil hutan bukan kayu"
+      },
+      {
+        "id": "168",
+        "nama": "pengusahaan perbenihan tanaman kehutanan"
+      },
+      {
+        "id": "169",
+        "nama": "pemanenan kayu"
+      },
+      {
+        "id": "170",
+        "nama": "usaha pemungutan kayu"
+      },
+      {
+        "id": "171",
+        "nama": "usaha kehutanan lainnya"
+      },
+      {
+        "id": "172",
+        "nama": "pemungutan getah karet"
+      },
+      {
+        "id": "173",
+        "nama": "pemungutan rotan"
+      },
+      {
+        "id": "174",
+        "nama": "pemungutan getah pinus"
+      },
+      {
+        "id": "175",
+        "nama": "pemungutan getah pinus"
+      },
+      {
+        "id": "176",
+        "nama": "pemungutan daun kayu putih"
+      },
+      {
+        "id": "177",
+        "nama": "pemungutan kokon/ kepompong ulat sutera"
+      },
+      {
+        "id": "178",
+        "nama": "pemungutan damar"
+      },
+      {
+        "id": "179",
+        "nama": "pemungutan madu"
+      },
+      {
+        "id": "180",
+        "nama": "pemungutan bambu"
+      },
+      {
+        "id": "181",
+        "nama": "pemungutan bukan kayu lainnya"
+      }
+    ],
+    "bersyarat": [
+      {
+        "id": "034",
+        "nama": "Jalan dan fasilitas pendukungnya"
+      },
+      {
+        "id": "035",
+        "nama": "Rel dan fasilitas pendukungnya"
+      },
+      {
+        "id": "036",
+        "nama": "Dermaga dan fasilitas pendukungnya"
+      },
+      {
+        "id": "037",
+        "nama": "Jaringan energi dan fasilitas pendukungnya"
+      },
+      {
+        "id": "038",
+        "nama": "Jaringan Listrik dan fasilitas pendukungnya"
+      },
+      {
+        "id": "039",
+        "nama": "Pembangkit listrik"
+      },
+      {
+        "id": "040",
+        "nama": "Jaringan telekomunikasi  dan fasilitas pendukungnya"
+      },
+      {
+        "id": "042",
+        "nama": "Jaringan Irigasi dan fasilitas pendukungnya"
+      },
+      {
+        "id": "043",
+        "nama": "Jaringan Drainase dan fasilitas pendukungnya"
+      },
+      {
+        "id": "044",
+        "nama": "Rumah Pompa"
+      },
+      {
+        "id": "045",
+        "nama": "Jaringan penyediaan air minum dan fasilitas pendukungnya"
+      },
+      {
+        "id": "046",
+        "nama": "Bangunan pengambil air baku (intake)"
+      },
+      {
+        "id": "047",
+        "nama": "Instalasi Pengolahan Air Minum"
+      },
+      {
+        "id": "048",
+        "nama": "Resevoir (bak penampung)"
+      },
+      {
+        "id": "049",
+        "nama": "Jaringan penyediaan air limbah dan fasilitas pendukungnya"
+      },
+      {
+        "id": "050",
+        "nama": "IPAL Industri/Perdagangan"
+      },
+      {
+        "id": "051",
+        "nama": "IPAL Komunal Skala Lingkungan"
+      },
+      {
+        "id": "052",
+        "nama": "Instalasi pengolah lumpur tinja (IPLT) terpusat"
+      },
+      {
+        "id": "053",
+        "nama": "Jaringan Persampahan dan fasilitas pendukungnya"
+      },
+      {
+        "id": "054",
+        "nama": "TPS 3R"
+      },
+      {
+        "id": "1498",
+        "nama": "jasa inspeksi periodik"
+      },
+      {
+        "id": "1499",
+        "nama": "jasa inspeksi teknik instalasi"
+      },
+      {
+        "id": "1501",
+        "nama": "jasa kalibrasi/ metrologi"
+      },
+      {
+        "id": "1502",
+        "nama": "jasa commissioning proses industrial, quality assurance (qa), dan quality control (qc)"
+      },
+      {
+        "id": "1503",
+        "nama": "jasa klasifikasi kapal"
+      },
+      {
+        "id": "1504",
+        "nama": "aktivitas pengujian dan atau kalibrasi alat kesehatan dan inspeksi sarana prasarana kesehatan"
+      },
+      {
+        "id": "1505",
+        "nama": "analisis dan uji teknis lainnya"
+      },
+      {
+        "id": "1506",
+        "nama": "penelitian dan pengembangan ilmu pengetahuan alam"
+      },
+      {
+        "id": "1507",
+        "nama": "penelitian dan pengembangan teknologi dan rekayasa"
+      },
+      {
+        "id": "1508",
+        "nama": "penelitian dan pengembangan ilmu kedokteran"
+      },
+      {
+        "id": "1510",
+        "nama": "penelitian dan pengembangan ilmu pertanian, peternakan, dan kehutanan"
+      },
+      {
+        "id": "1511",
+        "nama": "penelitian dan pengembangan ilmu perikanan dan kelautan"
+      },
+      {
+        "id": "1513",
+        "nama": "penelitian dan pengembangan ilmu pengetahuan alam dan teknologi rekayasa lainnya"
+      },
+      {
+        "id": "1514",
+        "nama": "penelitian dan pengembangan ilmu pengetahuan sosial"
+      },
+      {
+        "id": "1515",
+        "nama": "penelitian dan pengembangan linguistik dan sastra"
+      },
+      {
+        "id": "1516",
+        "nama": "penelitian dan pengembangan agama"
+      },
+      {
+        "id": "1517",
+        "nama": "penelitian dan pengembangan seni"
+      },
+      {
+        "id": "1518",
+        "nama": "penelitian dan pengembangan psikologi"
+      },
+      {
+        "id": "1519",
+        "nama": "penelitian dan pengembangan sejarah/cagar budaya"
+      },
+      {
+        "id": "1520",
+        "nama": "penelitian dan pengembangan ilmu pengetahuan sosial dan humaniora lainnya."
+      },
+      {
+        "id": "1521",
+        "nama": "periklanan"
+      },
+      {
+        "id": "1522",
+        "nama": "penelitian pasar"
+      },
+      {
+        "id": "1523",
+        "nama": "jajak pendapat masyarakat"
+      },
+      {
+        "id": "1524",
+        "nama": "aktivitas desain alat transportasi dan permesinan"
+      },
+      {
+        "id": "1525",
+        "nama": "aktivitas desain peralatan rumah tangga dan furnitur"
+      },
+      {
+        "id": "1526",
+        "nama": "aktivitas desain tekstil, fashion dan apparel"
+      },
+      {
+        "id": "1527",
+        "nama": "aktivitas desain industri strategis dan pertahanan"
+      },
+      {
+        "id": "1528",
+        "nama": "aktivitas desain alat komunikasi dan elektronika"
+      },
+      {
+        "id": "1529",
+        "nama": "aktivitas desain peralatan olahraga dan permainan"
+      },
+      {
+        "id": "1530",
+        "nama": "aktivitas desain produk kesehatan, kosmetik dan perlengkapan laboratorium"
+      },
+      {
+        "id": "1531",
+        "nama": "aktivitas desain pengemasan"
+      },
+      {
+        "id": "1532",
+        "nama": "aktivitas desain industri lainnya"
+      },
+      {
+        "id": "1533",
+        "nama": "aktivitas desain interior"
+      },
+      {
+        "id": "1534",
+        "nama": "aktivitas desain komunikasi visual/desain grafis"
+      },
+      {
+        "id": "1535",
+        "nama": "aktivitas desain khusus film, video, program tv, animasi dan komik"
+      },
+      {
+        "id": "1536",
+        "nama": "aktivitas desain konten game"
+      },
+      {
+        "id": "1537",
+        "nama": "aktivitas desain konten kreatif lainya"
+      },
+      {
+        "id": "1538",
+        "nama": "aktivitas fotografi"
+      },
+      {
+        "id": "1539",
+        "nama": "aktivitas angkutan udara khusus pemotretan, survei dan pemetaan"
+      },
+      {
+        "id": "1540",
+        "nama": "aktivitas sertifikasi profesi pihak 1"
+      },
+      {
+        "id": "1541",
+        "nama": "aktivitas sertifikasi profesi pihak 2"
+      },
+      {
+        "id": "1542",
+        "nama": "aktivitas sertifikasi profesi pihak 3"
+      },
+      {
+        "id": "1543",
+        "nama": "aktivitas sertifikasi personel independen"
+      },
+      {
+        "id": "1544",
+        "nama": "aktivitas penerjemah atau interpreter"
+      },
+      {
+        "id": "1545",
+        "nama": "aktivitas konsultasi bisnis dan broker bisnis"
+      },
+      {
+        "id": "1546",
+        "nama": "aktivitas profesional, ilmiah dan teknis lainnya YTDL"
+      },
+      {
+        "id": "1547",
+        "nama": "aktivitas kesehatan hewan"
+      },
+      {
+        "id": "1770",
+        "nama": "taman budaya"
+      },
+      {
+        "id": "1771",
+        "nama": "wisata budaya lainnya"
+      },
+      {
+        "id": "1772",
+        "nama": "taman konservasi di luar habitat alami (ex-situ)"
+      },
+      {
+        "id": "1773",
+        "nama": "taman nasional"
+      },
+      {
+        "id": "1774",
+        "nama": "taman hutan raya"
+      },
+      {
+        "id": "1775",
+        "nama": "taman wisata alam"
+      },
+      {
+        "id": "1776",
+        "nama": "suaka margasatwa"
+      },
+      {
+        "id": "1778",
+        "nama": "kawasan buru"
+      },
+      {
+        "id": "1779",
+        "nama": "hutan lindung"
+      },
+      {
+        "id": "1780",
+        "nama": "aktivitas kawasan alam lainnya"
+      },
+      {
+        "id": "1782",
+        "nama": "fasilitas stadion"
+      },
+      {
+        "id": "1783",
+        "nama": "fasilitas sirkuit"
+      },
+      {
+        "id": "1784",
+        "nama": "fasilitas gelanggang/arena"
+      },
+      {
+        "id": "1785",
+        "nama": "fasilitas lapangan"
+      },
+      {
+        "id": "1786",
+        "nama": "fasilitas olahraga beladiri"
+      },
+      {
+        "id": "1787",
+        "nama": "fasilitas pusat kebugaran/ fitness center"
+      },
+      {
+        "id": "1788",
+        "nama": "pengelolaan fasilitas olah raga lainnya"
+      },
+      {
+        "id": "1789",
+        "nama": "klub sepak bola"
+      },
+      {
+        "id": "1790",
+        "nama": "klub golf"
+      },
+      {
+        "id": "1791",
+        "nama": "klub renang"
+      },
+      {
+        "id": "1792",
+        "nama": "klub tenis lapangan"
+      },
+      {
+        "id": "1793",
+        "nama": "klub tinju"
+      },
+      {
+        "id": "1794",
+        "nama": "klub bela diri"
+      },
+      {
+        "id": "1795",
+        "nama": "klub kebugaran/ fitness dan binaraga"
+      },
+      {
+        "id": "1796",
+        "nama": "klub bowling"
+      },
+      {
+        "id": "1797",
+        "nama": "klub olahraga lainnya"
+      },
+      {
+        "id": "1798",
+        "nama": "promotor kegiatan olahraga"
+      },
+      {
+        "id": "1799",
+        "nama": "olahragawan, juri dan wasit profesional"
+      },
+      {
+        "id": "1800",
+        "nama": "aktivitas perburuan"
+      },
+      {
+        "id": "1801",
+        "nama": "badan regulasi dan liga olahraga"
+      },
+      {
+        "id": "1802",
+        "nama": "aktivitas olahraga tradisional"
+      },
+      {
+        "id": "1803",
+        "nama": "aktivitas lainnya yang berkaitan dengan olahraga"
+      },
+      {
+        "id": "1804",
+        "nama": "taman rekreasi"
+      },
+      {
+        "id": "1805",
+        "nama": "aktivitas taman bertema atau taman hiburan lainnya"
+      },
+      {
+        "id": "1806",
+        "nama": "pemandian alam"
+      },
+      {
+        "id": "1807",
+        "nama": "wisata gua"
+      },
+      {
+        "id": "1808",
+        "nama": "wisata petualangan alam"
+      },
+      {
+        "id": "1809",
+        "nama": "wisata pantai"
+      },
+      {
+        "id": "1810",
+        "nama": "daya tarik wisata alam lainnya"
+      },
+      {
+        "id": "1811",
+        "nama": "wisata agro"
+      },
+      {
+        "id": "1812",
+        "nama": "taman rekreasi/ taman wisata"
+      },
+      {
+        "id": "1813",
+        "nama": "kolam pemancingan"
+      },
+      {
+        "id": "1814",
+        "nama": "daya tarik wisata buatan/binaan manusia lainnya"
+      },
+      {
+        "id": "1815",
+        "nama": "arung jeram"
+      },
+      {
+        "id": "1818",
+        "nama": "kolam pemancingan"
+      },
+      {
+        "id": "1819",
+        "nama": "wisata memancing"
+      },
+      {
+        "id": "1820",
+        "nama": "aktivitas wisata air"
+      },
+      {
+        "id": "1821",
+        "nama": "wisata tirta lainnya"
+      }
+    ],
+    "tidakSesuai": [
+      {
+        "id": "001",
+        "nama": "Rimba Kota"
+      },
+      {
+        "id": "002",
+        "nama": "Taman Kota"
+      },
+      {
+        "id": "003",
+        "nama": "Taman Kecamatan"
+      },
+      {
+        "id": "004",
+        "nama": "Taman Kelurahan"
+      },
+      {
+        "id": "005",
+        "nama": "Taman RW"
+      },
+      {
+        "id": "007",
+        "nama": "Jalur Hijau"
+      },
+      {
+        "id": "008",
+        "nama": "Pekarangan"
+      },
+      {
+        "id": "009",
+        "nama": "Penghijauan"
+      },
+      {
+        "id": "010",
+        "nama": "Konstruksi perlindungan setempat"
+      },
+      {
+        "id": "011",
+        "nama": "Sungai"
+      },
+      {
+        "id": "012",
+        "nama": "Polder"
+      },
+      {
+        "id": "013",
+        "nama": "Ruang Terbuka Biru"
+      },
+      {
+        "id": "014",
+        "nama": "Rumah Tinggal Pribadi Tidak Disewakan"
+      },
+      {
+        "id": "015",
+        "nama": "Rumah tradisional atau adat"
+      },
+      {
+        "id": "016",
+        "nama": "Rumah dinas"
+      },
+      {
+        "id": "017",
+        "nama": "Asrama/Mess/Hunian Bersama tidak disewakan"
+      },
+      {
+        "id": "018",
+        "nama": "Panti Asuhan Non Profit"
+      },
+      {
+        "id": "019",
+        "nama": "Panti Jompo Non Profit"
+      },
+      {
+        "id": "020",
+        "nama": "Kantor Pemerintah"
+      },
+      {
+        "id": "021",
+        "nama": "Kantor dan Fasilitas Pertahanan dan Keamanan"
+      },
+      {
+        "id": "022",
+        "nama": "Kantor dan Fasilitas Kepolisian"
+      },
+      {
+        "id": "023",
+        "nama": "Masjid Jami/Masjid Raya"
+      },
+      {
+        "id": "024",
+        "nama": "Masjid Lingkungan"
+      },
+      {
+        "id": "025",
+        "nama": "Mushalla"
+      },
+      {
+        "id": "026",
+        "nama": "Wihara/ Klenteng"
+      },
+      {
+        "id": "027",
+        "nama": "Gereja"
+      },
+      {
+        "id": "028",
+        "nama": "Pondok Pesantren Non Profit"
+      },
+      {
+        "id": "029",
+        "nama": "Balai pertemuan"
+      },
+      {
+        "id": "030",
+        "nama": "Pos Keamanan Lingkungan"
+      },
+      {
+        "id": "031",
+        "nama": "Lapangan Olah raga/Outdoor"
+      },
+      {
+        "id": "041",
+        "nama": "Menara Telekomunikasi"
+      },
+      {
+        "id": "055",
+        "nama": "pertanian jagung"
+      },
+      {
+        "id": "056",
+        "nama": "pertanian gandum"
+      },
+      {
+        "id": "057",
+        "nama": "pertanian kedelai"
+      },
+      {
+        "id": "058",
+        "nama": "pertanian kacang tanah"
+      },
+      {
+        "id": "059",
+        "nama": "pertanian kacang hijau"
+      },
+      {
+        "id": "060",
+        "nama": "pertanian aneka kacang hortikultura"
+      },
+      {
+        "id": "061",
+        "nama": "pertanian biji-bijian penghasil minyak makan"
+      },
+      {
+        "id": "062",
+        "nama": "pertanian biji-bijian penghasil bukan minyak makan"
+      },
+      {
+        "id": "063",
+        "nama": "pertanian serealia lainnya, aneka kacang dan biji-bijian penghasil minyak lainnya"
+      },
+      {
+        "id": "064",
+        "nama": "pertanian padi hibrida"
+      },
+      {
+        "id": "065",
+        "nama": "pertanian padi hibrida"
+      },
+      {
+        "id": "066",
+        "nama": "pertanian padi inbrida"
+      },
+      {
+        "id": "067",
+        "nama": "pertanian hortikultura sayuran daun"
+      },
+      {
+        "id": "068",
+        "nama": "pertanian hortikultura buah"
+      },
+      {
+        "id": "069",
+        "nama": "pertanian hortikultura sayuran buah"
+      },
+      {
+        "id": "070",
+        "nama": "pertanian hortikultura sayuran umbi"
+      },
+      {
+        "id": "071",
+        "nama": "pertanian aneka umbi palawija"
+      },
+      {
+        "id": "072",
+        "nama": "pertanian jamur"
+      },
+      {
+        "id": "073",
+        "nama": "pertanian bit gula dan tanaman pemanis bukan tebu"
+      },
+      {
+        "id": "074",
+        "nama": "pertanian sayuran, buah dan aneka umbi lainnya"
+      },
+      {
+        "id": "075",
+        "nama": "perkebunan tebu"
+      },
+      {
+        "id": "076",
+        "nama": "perkebunan tembakau"
+      },
+      {
+        "id": "077",
+        "nama": "pertanian tanaman berserat"
+      },
+      {
+        "id": "078",
+        "nama": "pertanian tanaman pakan ternak"
+      },
+      {
+        "id": "079",
+        "nama": "perbenihan tanaman pakan ternak dan pembibitan bit (bukan bit gula)"
+      },
+      {
+        "id": "080",
+        "nama": "pertanian tanaman bunga"
+      },
+      {
+        "id": "081",
+        "nama": "pertanian pembibitan tanaman bunga"
+      },
+      {
+        "id": "082",
+        "nama": "pertanian tanaman semusim lainnya YTDL"
+      },
+      {
+        "id": "083",
+        "nama": "pertanian buah anggur"
+      },
+      {
+        "id": "084",
+        "nama": "pertanian buah- buahan tropis dan subtropis"
+      },
+      {
+        "id": "085",
+        "nama": "pertanian buah jeruk"
+      },
+      {
+        "id": "086",
+        "nama": "pertanian buah apel dan buah batu (pome and stone fruits)"
+      },
+      {
+        "id": "087",
+        "nama": "pertanian buah beri"
+      },
+      {
+        "id": "088",
+        "nama": "pertanian buah biji kacang-kacangan"
+      },
+      {
+        "id": "089",
+        "nama": "pertanian sayuran tahunan"
+      },
+      {
+        "id": "090",
+        "nama": "pertanian buah semak lainnya"
+      },
+      {
+        "id": "091",
+        "nama": "perkebunan buah kelapa"
+      },
+      {
+        "id": "092",
+        "nama": "perkebunan buah kelapa sawit"
+      },
+      {
+        "id": "093",
+        "nama": "perkebunan buah oleaginous lainnya"
+      },
+      {
+        "id": "094",
+        "nama": "pertanian tanaman untuk bahan minuman"
+      },
+      {
+        "id": "095",
+        "nama": "perkebunan lada"
+      },
+      {
+        "id": "096",
+        "nama": "perkebunan cengkeh"
+      },
+      {
+        "id": "097",
+        "nama": "pertanian cabai"
+      },
+      {
+        "id": "098",
+        "nama": "perkebunan tanaman aromatik/penyegar"
+      },
+      {
+        "id": "099",
+        "nama": "pertanian tanaman obat atau biofarmaka rimpang"
+      },
+      {
+        "id": "100",
+        "nama": "pertanian tanaman obat atau biofarmaka non rimpang"
+      },
+      {
+        "id": "101",
+        "nama": "pertanian tanaman narkotika dan tanaman obat terlarang"
+      },
+      {
+        "id": "102",
+        "nama": "pertanian tanaman rempah-rempah, aromatik/penyegar, dan obat lainnya"
+      },
+      {
+        "id": "103",
+        "nama": "perkebunan karet dan tanaman penghasil getah lainnya"
+      },
+      {
+        "id": "104",
+        "nama": "pertanian cemara dan tanaman tahunan lainnya"
+      },
+      {
+        "id": "105",
+        "nama": "pertanian tanaman hias"
+      },
+      {
+        "id": "106",
+        "nama": "pertanian pengembangbiakan tanaman"
+      },
+      {
+        "id": "136",
+        "nama": "jasa pengolahan lahan"
+      },
+      {
+        "id": "137",
+        "nama": "jasa pemupukan, penanaman bibit/benih dan pengendalian hama dan gulma"
+      },
+      {
+        "id": "138",
+        "nama": "jasa pemanenan"
+      },
+      {
+        "id": "139",
+        "nama": "jasa penyemprotan dan penyerbukan melalui udara"
+      },
+      {
+        "id": "140",
+        "nama": "jasa penunjang pertanian lainnya"
+      },
+      {
+        "id": "141",
+        "nama": "jasa pelayanan kesehatan ternak"
+      },
+      {
+        "id": "142",
+        "nama": "jasa perkawinan ternak"
+      },
+      {
+        "id": "143",
+        "nama": "jasa penetasan telur"
+      },
+      {
+        "id": "144",
+        "nama": "jasa penunjang peternakan lainnya"
+      },
+      {
+        "id": "145",
+        "nama": "jasa pasca panen"
+      },
+      {
+        "id": "146",
+        "nama": "pemilihan benih tanaman untuk pengembangbiakan"
+      },
+      {
+        "id": "147",
+        "nama": "perburuan dan penangkapan primata"
+      },
+      {
+        "id": "148",
+        "nama": "perburuan dan penangkapan mamalia"
+      },
+      {
+        "id": "149",
+        "nama": "perburuan dan penangkapan reptil"
+      },
+      {
+        "id": "150",
+        "nama": "perburuan dan penangkapan burung"
+      },
+      {
+        "id": "151",
+        "nama": "perburuan dan penangkapan insekta"
+      },
+      {
+        "id": "152",
+        "nama": "perburuan dan penangkapan satwa liar lainnya"
+      },
+      {
+        "id": "153",
+        "nama": "penangkaran primata"
+      },
+      {
+        "id": "154",
+        "nama": "penangkaran mamalia"
+      },
+      {
+        "id": "155",
+        "nama": "penangkaran reptil"
+      },
+      {
+        "id": "156",
+        "nama": "penangkaran burung"
+      },
+      {
+        "id": "157",
+        "nama": "penangkaran insekta"
+      },
+      {
+        "id": "158",
+        "nama": "penangkaran anggrek"
+      },
+      {
+        "id": "159",
+        "nama": "penangkaran ikan dan coral/karang"
+      },
+      {
+        "id": "160",
+        "nama": "penangkaran tumbuhan/satwa liar lainnya"
+      },
+      {
+        "id": "182",
+        "nama": "jasa penggunaan kawasan hutan di luar sektor kehutanan"
+      },
+      {
+        "id": "183",
+        "nama": "jasa perlindungan hutan dan konservasi alam"
+      },
+      {
+        "id": "184",
+        "nama": "jasa rehabilitasi dan restorasi kehutanan sosial"
+      },
+      {
+        "id": "185",
+        "nama": "jasa kehutanan bidang perencanaan kehutanan"
+      },
+      {
+        "id": "186",
+        "nama": "jasa penunjang kehutanan lainnya"
+      },
+      {
+        "id": "203",
+        "nama": "jasa sarana produksi penangkapan ikan di laut"
+      },
+      {
+        "id": "204",
+        "nama": "jasa produksi penangkapan ikan di laut"
+      },
+      {
+        "id": "205",
+        "nama": "jasa pasca panen penangkapan ikan di laut"
+      },
+      {
+        "id": "206",
+        "nama": "jasa sarana produksi penangkapan ikan di perairan darat"
+      },
+      {
+        "id": "207",
+        "nama": "jasa produksi penangkapan ikan di perairan darat"
+      },
+      {
+        "id": "208",
+        "nama": "jasa pasca panen penangkapan ikan di perairan darat"
+      },
+      {
+        "id": "226",
+        "nama": "pembesaran ikan air tawar di kolam"
+      },
+      {
+        "id": "230",
+        "nama": "budidaya ikan hias air tawar"
+      },
+      {
+        "id": "231",
+        "nama": "pembenihan ikan air tawar"
+      },
+      {
+        "id": "233",
+        "nama": "budidaya ikan air tawar di media lainnya"
+      },
+      {
+        "id": "237",
+        "nama": "jasa sarana produksi budidaya ikan air tawar"
+      },
+      {
+        "id": "238",
+        "nama": "jasa produksi budidaya ikan air tawar"
+      },
+      {
+        "id": "239",
+        "nama": "jasa pasca panen budidaya ikan air tawar"
+      },
+      {
+        "id": "240",
+        "nama": "pembesaran pisces/ ikan bersirip air payau"
+      },
+      {
+        "id": "241",
+        "nama": "pembenihan ikan air payau"
+      },
+      {
+        "id": "242",
+        "nama": "pembesaran mollusca air payau"
+      },
+      {
+        "id": "243",
+        "nama": "pembesaran crustacea air payau"
+      },
+      {
+        "id": "244",
+        "nama": "pembesaran tumbuhan air payau"
+      },
+      {
+        "id": "245",
+        "nama": "budidaya biota air payau lainnya"
+      },
+      {
+        "id": "246",
+        "nama": "jasa sarana produksi budidaya ikan air payau"
+      },
+      {
+        "id": "247",
+        "nama": "jasa produksi budidaya ikan air payau"
+      },
+      {
+        "id": "248",
+        "nama": "jasa pasca panen budidaya ikan air payau"
+      },
+      {
+        "id": "249",
+        "nama": "pengembangbiakan ikan bersirip (pisces) yang dilindungi dan/ atau termasuk dalam appendiks cites"
+      },
+      {
+        "id": "250",
+        "nama": "pengembangbiakan crustacea yang dilindungi dan/atau termasuk dalam appendiks cites"
+      },
+      {
+        "id": "251",
+        "nama": "pengembangbiakan mollusca yang dilindungi dan/atau termasuk dalam appendiks cites"
+      },
+      {
+        "id": "252",
+        "nama": "pengembangbiakan coelenterata yang dilindungi dan/atau termasuk dalam appendiks cites"
+      },
+      {
+        "id": "253",
+        "nama": "pengembangbiakan echinodermata yang dilindungi dan/atau termasuk dalam appendiks cites"
+      },
+      {
+        "id": "254",
+        "nama": "pengembangbiakan amphibia yang dilindungi dan/atau termasuk dalam appendiks cites"
+      },
+      {
+        "id": "255",
+        "nama": "pengembangbiakan reptilia yang dilindungi dan/atau termasuk dalam appendiks cites"
+      },
+      {
+        "id": "256",
+        "nama": "pengembangbiakan"
+      },
+      {
+        "id": "257",
+        "nama": "pengembangbiakan algae dan biota perairan lainnya yang dilindungi dan/ atau termasuk dalam appendiks cites"
+      },
+      {
+        "id": "298",
+        "nama": "aktivitas penunjang pertambangan minyak bumi dan gas alam"
+      },
+      {
+        "id": "299",
+        "nama": "aktivitas penunjang pertambangan dan penggalian lainnya"
+      },
+      {
+        "id": "775",
+        "nama": "pembangkitan tenaga listrik"
+      },
+      {
+        "id": "776",
+        "nama": "transmisi tenaga listrik"
+      },
+      {
+        "id": "777",
+        "nama": "distribusi tenaga listrik"
+      },
+      {
+        "id": "779",
+        "nama": "pembangkit, transmisi, distribusi dan penjualan tenaga listrik dalam satu kesatuan usaha"
+      },
+      {
+        "id": "780",
+        "nama": "pembangkit, transmisi, dan penjualan tenaga listrik dalam satu kesatuan usaha"
+      },
+      {
+        "id": "781",
+        "nama": "pembangkit, distribusi, dan penjualan tenaga listrik dalam satu kesatuan usaha"
+      },
+      {
+        "id": "782",
+        "nama": "distribusi, dan penjualan tenaga listrik dalam satu kesatuan usaha"
+      },
+      {
+        "id": "783",
+        "nama": "pengoperasian instalasi penyediaan tenaga listrik"
+      },
+      {
+        "id": "784",
+        "nama": "pengoperasian instalasi pemanfaatan tenaga listrik"
+      },
+      {
+        "id": "785",
+        "nama": "aktivitas penunjang tenaga listrik lainnya"
+      },
+      {
+        "id": "786",
+        "nama": "pengadaan gas alam dan buatan"
+      },
+      {
+        "id": "787",
+        "nama": "distribusi gas alam dan buatan"
+      },
+      {
+        "id": "788",
+        "nama": "pengadaan gas bio"
+      },
+      {
+        "id": "789",
+        "nama": "pengadaan uap/ air panas, udara dingin dan produksi es"
+      },
+      {
+        "id": "791",
+        "nama": "penampungan, penjernihan dan penyaluran air minum"
+      },
+      {
+        "id": "792",
+        "nama": "penampungan dan penyaluran air baku"
+      },
+      {
+        "id": "793",
+        "nama": "aktivitas penunjang treatment air"
+      },
+      {
+        "id": "794",
+        "nama": "pengumpulan air limbah tidak berbahaya"
+      },
+      {
+        "id": "795",
+        "nama": "pengumpulan air limbah  berbahaya"
+      },
+      {
+        "id": "796",
+        "nama": "treatment dan pembuangan air limbah tidak berbahaya"
+      },
+      {
+        "id": "797",
+        "nama": "treatment dan pembuangan air limbah berbahaya"
+      },
+      {
+        "id": "798",
+        "nama": "pengumpulan limbah dan sampah tidak berbahaya"
+      },
+      {
+        "id": "799",
+        "nama": "pengumpulan limbah berbahaya"
+      },
+      {
+        "id": "800",
+        "nama": "treatment dan pembuangan limbah dan sampah tidak berbahaya"
+      },
+      {
+        "id": "801",
+        "nama": "produksi kompos sampah organik"
+      },
+      {
+        "id": "802",
+        "nama": "treatment dan pembuangan limbah berbahaya"
+      },
+      {
+        "id": "803",
+        "nama": "pemulihan material barang logam"
+      },
+      {
+        "id": "804",
+        "nama": "pemulihan material barang bukan logam"
+      },
+      {
+        "id": "805",
+        "nama": "aktivitas remediasi dan pengelolaan limbah dan sampah lainnya"
+      },
+      {
+        "id": "976",
+        "nama": "perdagangan eceran berbagai macam barang yang utamanya makanan, minuman atau tembakau di minimarket/ supermarket/ hypermarket"
+      },
+      {
+        "id": "977",
+        "nama": "perdagangan eceran berbagai macam barang yang utamanya makanan, minuman atau tembakau bukan di minimarket/ supermarket/ hypermarket (tradisional)"
+      },
+      {
+        "id": "978",
+        "nama": "perdagangan eceran berbagai macam barang yang utamanya bukan makanan, minuman atau tembakau di toserba (department store)"
+      },
+      {
+        "id": "979",
+        "nama": "perdagangan eceran berbagai macam barang yang utamanya bukan makanan, minuman atau tembakau (barang-barang kelontong) bukan di toserba (department store)"
+      },
+      {
+        "id": "980",
+        "nama": "perdagangan eceran padi dan palawija"
+      },
+      {
+        "id": "981",
+        "nama": "perdagangan eceran buah-buahan"
+      },
+      {
+        "id": "982",
+        "nama": "perdagangan eceran sayuran"
+      },
+      {
+        "id": "983",
+        "nama": "perdagangan eceran hasil peternakan"
+      },
+      {
+        "id": "984",
+        "nama": "perdagangan eceran hasil perikanan"
+      },
+      {
+        "id": "985",
+        "nama": "perdagangan eceran hasil kehutanan dan perburuan"
+      },
+      {
+        "id": "986",
+        "nama": "perdagangan eceran hasil pertanian lainnya"
+      },
+      {
+        "id": "987",
+        "nama": "perdagangan eceran minuman beralkohol"
+      },
+      {
+        "id": "988",
+        "nama": "perdagangan eceran minuman tidak beralkohol"
+      },
+      {
+        "id": "989",
+        "nama": "perdagangan eceran khusus rokok dan tembakau di toko"
+      },
+      {
+        "id": "990",
+        "nama": "perdagangan eceran beras"
+      },
+      {
+        "id": "991",
+        "nama": "perdagangan eceran roti, kue kering, serta kue basah dan sejenisnya"
+      },
+      {
+        "id": "992",
+        "nama": "perdagangan eceran kopi, gula pasir dan gula merah"
+      },
+      {
+        "id": "993",
+        "nama": "perdagangan eceran tahu, tempe, tauco dan oncom"
+      },
+      {
+        "id": "994",
+        "nama": "perdagangan eceran daging dan ikan olahan"
+      },
+      {
+        "id": "995",
+        "nama": "perdagangan eceran makanan lainnya"
+      },
+      {
+        "id": "996",
+        "nama": "perdagangan eceran bahan bakar minyak, bahan bakar gas (bbg), dan liquefied petroleum gas (lpg) di sarana pengisian bahan bakar transportasi darat, laut,dan udara"
+      },
+      {
+        "id": "997",
+        "nama": "perdagangan eceran bahan bakar minyak, bahan bakar gas (bbg), dan liquefied petroleum gas (lpg) selain di sarana pengisian bahan bakar transportasi darat, laut, dan udara"
+      },
+      {
+        "id": "998",
+        "nama": "perdagangan eceran minyak pelumas di toko"
+      },
+      {
+        "id": "999",
+        "nama": "perdagangan eceran komputer dan perlengkapannya"
+      },
+      {
+        "id": "1000",
+        "nama": "perdagangan eceran peralatan video game dan sejenisnya"
+      },
+      {
+        "id": "1001",
+        "nama": "perdagangan eceran piranti lunak (software)"
+      },
+      {
+        "id": "1002",
+        "nama": "perdagangan eceran alat telekomunikasi"
+      },
+      {
+        "id": "1003",
+        "nama": "perdagangan eceran mesin kantor"
+      },
+      {
+        "id": "1004",
+        "nama": "perdagangan eceran khusus peralatan audio dan video di toko"
+      },
+      {
+        "id": "1005",
+        "nama": "perdagangan eceran tekstil"
+      },
+      {
+        "id": "1006",
+        "nama": "perdagangan eceran perlengkapan rumah tangga daritekstil"
+      },
+      {
+        "id": "1007",
+        "nama": "perdagangan eceran perlengkapan jahit menjahit"
+      },
+      {
+        "id": "1008",
+        "nama": "perdagangan eceran barang logam untuk bahan konstruksi"
+      },
+      {
+        "id": "1009",
+        "nama": "perdagangan eceran kaca"
+      },
+      {
+        "id": "1010",
+        "nama": "perdagangan eceran genteng, batu bata, ubin dan sejenisnya dari tanah liat, kapur, semen atau kaca"
+      },
+      {
+        "id": "1011",
+        "nama": "perdagangan eceran semen, kapur, pasir dan batu"
+      },
+      {
+        "id": "1012",
+        "nama": "perdagangan eceran bahan konstruksi dari porselen"
+      },
+      {
+        "id": "1013",
+        "nama": "perdagangan eceran bahan konstruksi dari kayu"
+      },
+      {
+        "id": "1014",
+        "nama": "perdagangan eceran cat, pernis dan lak"
+      },
+      {
+        "id": "1015",
+        "nama": "perdagangan eceran berbagai macam material bangunan"
+      },
+      {
+        "id": "1016",
+        "nama": "perdagangan eceran berbagai macam material bangunan"
+      },
+      {
+        "id": "1017",
+        "nama": "perdagangan eceran berbagai macam material bangunan"
+      },
+      {
+        "id": "1018",
+        "nama": "perdagangan eceran bahan dan barang konstruksi lainnya"
+      },
+      {
+        "id": "1019",
+        "nama": "perdagangan eceran khusus karpet, permadani dan penutup dinding dan lantai di toko"
+      },
+      {
+        "id": "1020",
+        "nama": "perdagangan eceran furnitur"
+      },
+      {
+        "id": "1021",
+        "nama": "perdagangan eceran peralatan listrik rumah tangga dan peralatan penerangan dan perlengkapannya"
+      },
+      {
+        "id": "1022",
+        "nama": "perdagangan eceran barang pecah belah dan perlengkapan dapur dari plastik"
+      },
+      {
+        "id": "1023",
+        "nama": "perdagangan eceran barang pecah belah dan perlengkapan dapur dari batu atau tanah liat"
+      },
+      {
+        "id": "1024",
+        "nama": "perdagangan eceran barang pecah belah dan perlengkapan dapur dari kayu, bambu atau rotan"
+      },
+      {
+        "id": "1025",
+        "nama": "perdagangan eceran barang pecah belah dan perlengkapan dapur bukan dari plastik, batu, tanah liat, kayu, bambu atau rotan"
+      },
+      {
+        "id": "1026",
+        "nama": "perdagangan eceran alat musik"
+      },
+      {
+        "id": "1027",
+        "nama": "perdagangan eceran peralatan dan perlengkapan rumah tangga lainnya YTDL"
+      },
+      {
+        "id": "1028",
+        "nama": "perdagangan eceran alat tulis menulis dan gambar"
+      },
+      {
+        "id": "1029",
+        "nama": "perdagangan eceran hasil pencetakan dan penerbitan"
+      },
+      {
+        "id": "1030",
+        "nama": "perdagangan eceran khusus rekaman musik dan video di toko"
+      },
+      {
+        "id": "1031",
+        "nama": "perdagangan eceran khusus peralatan olahraga di toko"
+      },
+      {
+        "id": "1032",
+        "nama": "perdagangan eceran khusus alat permainan dan mainan anak-anak di toko"
+      },
+      {
+        "id": "1033",
+        "nama": "perdagangan eceran kertas, kertas karton dan barang dari kertas/ karton"
+      },
+      {
+        "id": "1034",
+        "nama": "perdagangan eceran pakaian"
+      },
+      {
+        "id": "1035",
+        "nama": "perdagangan eceran sepatu, sandal dan alas kaki lainnya"
+      },
+      {
+        "id": "1036",
+        "nama": "perdagangan eceran pelengkap pakaian"
+      },
+      {
+        "id": "1037",
+        "nama": "perdagangan eceran tas, dompet, koper, ransel dan sejenisnya"
+      },
+      {
+        "id": "1038",
+        "nama": "perdagangan eceran barang dan obat farmasi untuk manusia di apotik"
+      },
+      {
+        "id": "1039",
+        "nama": "perdagangan eceran barang dan obat farmasi untuk manusia bukan di apotik"
+      },
+      {
+        "id": "1040",
+        "nama": "perdagangan eceran obat tradisional untuk manusia"
+      },
+      {
+        "id": "1041",
+        "nama": "perdagangan eceran kosmetik untuk manusia"
+      },
+      {
+        "id": "1042",
+        "nama": "perdagangan eceran alat laboratorium, alat farmasi dan alat kesehatan untuk manusia"
+      },
+      {
+        "id": "1043",
+        "nama": "perdagangan eceran barang dan obat farmasi untuk hewan di apotik dan bukan di apotik"
+      },
+      {
+        "id": "1044",
+        "nama": "perdagangan eceran obat tradisional untuk hewan"
+      },
+      {
+        "id": "1045",
+        "nama": "perdagangan eceran kosmetik untuk hewan"
+      },
+      {
+        "id": "1046",
+        "nama": "perdagangan eceran khusus barang dan obat farmasi, alat kedokteran, parfum dan kosmetik lainnya"
+      },
+      {
+        "id": "1047",
+        "nama": "perdagangan eceran alat fotografi dan perlengkapannya"
+      },
+      {
+        "id": "1048",
+        "nama": "perdagangan eceran alat optik dan perlengkapannya"
+      },
+      {
+        "id": "1049",
+        "nama": "perdagangan eceran kaca mata"
+      },
+      {
+        "id": "1050",
+        "nama": "perdagangan eceran jam"
+      },
+      {
+        "id": "1051",
+        "nama": "perdagangan eceran barang perhiasan"
+      },
+      {
+        "id": "1052",
+        "nama": "perdagangan eceran perlengkapan pengendara kendaraan bermotor"
+      },
+      {
+        "id": "1053",
+        "nama": "perdagangan eceran pembungkus dari plastik"
+      },
+      {
+        "id": "1054",
+        "nama": "perdagangan eceran khusus barang baru lainnya YTDL"
+      },
+      {
+        "id": "1055",
+        "nama": "perdagangan eceran barang bekas perlengkapan rumah tangga"
+      },
+      {
+        "id": "1056",
+        "nama": "perdagangan eceran pakaian, alas kaki dan pelengkap pakaian bekas"
+      },
+      {
+        "id": "1057",
+        "nama": "perdagangan eceran barang perlengkapan pribadi bekas"
+      },
+      {
+        "id": "1058",
+        "nama": "perdagangan eceran barang listrik dan elektronik bekas"
+      },
+      {
+        "id": "1059",
+        "nama": "perdagangan eceran bahan konstruksi dan sanitasi bekas"
+      },
+      {
+        "id": "1060",
+        "nama": "perdagangan eceran barang antik"
+      },
+      {
+        "id": "1061",
+        "nama": "perdagangan eceran barang bekas lainnya"
+      },
+      {
+        "id": "1062",
+        "nama": "perdagangan eceran hewan piaraan (pet animals)"
+      },
+      {
+        "id": "1063",
+        "nama": "perdagangan eceran hewan ternak"
+      },
+      {
+        "id": "1064",
+        "nama": "perdagangan eceran ikan hias"
+      },
+      {
+        "id": "1065",
+        "nama": "perdagangan eceran pakan ternak/unggas/ ikan dan hewan piaraan"
+      },
+      {
+        "id": "1066",
+        "nama": "perdagangan eceran bunga potong/florist"
+      },
+      {
+        "id": "1067",
+        "nama": "perdagangan eceran tanaman dan bibit tanaman"
+      },
+      {
+        "id": "1068",
+        "nama": "perdagangan eceran pupuk dan pemberantas hama"
+      },
+      {
+        "id": "1069",
+        "nama": "perdagangan eceran perlengkapan dan media tanaman hias"
+      },
+      {
+        "id": "1070",
+        "nama": "perdagangan eceran minyak tanah"
+      },
+      {
+        "id": "1071",
+        "nama": "perdagangan eceran gas elpiji"
+      },
+      {
+        "id": "1072",
+        "nama": "perdagangan eceran bahan kimia"
+      },
+      {
+        "id": "1073",
+        "nama": "perdagangan eceran aromatik/penyegar (minyak atsiri)"
+      },
+      {
+        "id": "1074",
+        "nama": "perdagangan eceran bahan kimia, dan aromatik/penyegar (minyak atsiri), dan bahan bakar bukan bahan bakar untuk kendaraan bermotor lainnnya"
+      },
+      {
+        "id": "1075",
+        "nama": "perdagangan eceran barang kerajinan dari kayu, bambu, rotan, pandan, rumput dan sejenisnya"
+      },
+      {
+        "id": "1076",
+        "nama": "perdagangan eceran barang kerajinan dari kulit, tulang, tanduk, gading, bulu dan binatang/hewan yang diawetkan"
+      },
+      {
+        "id": "1077",
+        "nama": "perdagangan eceran barang kerajinan dari logam"
+      },
+      {
+        "id": "1078",
+        "nama": "perdagangan eceran barang kerajinan dari keramik"
+      },
+      {
+        "id": "1079",
+        "nama": "perdagangan eceran lukisan"
+      },
+      {
+        "id": "1080",
+        "nama": "perdagangan eceran barang kerajinan dan lukisan lainnya"
+      },
+      {
+        "id": "1081",
+        "nama": "perdagangan eceran mesin pertanian dan perlengkapannya"
+      },
+      {
+        "id": "1082",
+        "nama": "perdagangan eceran mesin jahit dan perlengkapannya"
+      },
+      {
+        "id": "1083",
+        "nama": "perdagangan eceran mesin lainnya dan perlengkapannya"
+      },
+      {
+        "id": "1084",
+        "nama": "perdagangan eceran alat transportasi darat tidak bermotor dan perlengkapannya"
+      },
+      {
+        "id": "1085",
+        "nama": "perdagangan eceran alat transportasi air dan perlengkapannya"
+      },
+      {
+        "id": "1086",
+        "nama": "perdagangan eceran alat-alat pertanian"
+      },
+      {
+        "id": "1087",
+        "nama": "perdagangan eceran alat-alat pertukangan"
+      },
+      {
+        "id": "1088",
+        "nama": "perdagangan eceran kaki lima dan los pasar komoditi padi dan palawija"
+      },
+      {
+        "id": "1089",
+        "nama": "perdagangan eceran kaki lima dan los pasar komoditi buah-buahan"
+      },
+      {
+        "id": "1090",
+        "nama": "perdagangan eceran kaki lima dan los pasar komoditi sayur-sayuran"
+      },
+      {
+        "id": "1091",
+        "nama": "perdagangan eceran kaki lima dan los pasar komoditi hasil peternakan"
+      },
+      {
+        "id": "1092",
+        "nama": "perdagangan eceran kaki lima dan los pasar komoditi hasil perikanan"
+      },
+      {
+        "id": "1093",
+        "nama": "perdagangan eceran kaki lima dan los pasar komoditi hasil kehutanan dan perburuan"
+      },
+      {
+        "id": "1094",
+        "nama": "perdagangan eceran kaki lima dan los pasar komoditi tanaman hias dan hasil pertanian lainnya"
+      },
+      {
+        "id": "1095",
+        "nama": "perdagangan eceran kaki lima dan los pasar beras"
+      },
+      {
+        "id": "1096",
+        "nama": "perdagangan eceran kaki lima dan los pasar roti, kue kering, kue basah dan sejenisnya"
+      },
+      {
+        "id": "1097",
+        "nama": "perdagangan eceran kaki lima dan los pasar kopi, gula pasir, gula merah dan sejenisnya"
+      },
+      {
+        "id": "1098",
+        "nama": "perdagangan eceran kaki lima dan los pasar tahu, tempe, tauco dan oncom"
+      },
+      {
+        "id": "1099",
+        "nama": "perdagangan eceran kaki lima dan los pasar daging olahan dan ikan olahan"
+      },
+      {
+        "id": "1100",
+        "nama": "perdagangan eceran kaki lima dan los pasar minuman"
+      },
+      {
+        "id": "1101",
+        "nama": "perdagangan eceran kaki lima dan los pasar rokok dan tembakau"
+      },
+      {
+        "id": "1102",
+        "nama": "perdagangan eceran kaki lima dan los pasar pakan ternak, pakan unggas dan pakan ikan"
+      },
+      {
+        "id": "1103",
+        "nama": "perdagangan eceran kaki lima dan los pasar komoditi makanan dan minuman YTDL"
+      },
+      {
+        "id": "1104",
+        "nama": "perdagangan eceran kaki lima dan los pasar tekstil"
+      },
+      {
+        "id": "1105",
+        "nama": "perdagangan eceran kaki lima dan los pasar pakaian"
+      },
+      {
+        "id": "1106",
+        "nama": "perdagangan eceran kaki lima dan los pasar sepatu, sandal dan alas kaki lainnya"
+      },
+      {
+        "id": "1107",
+        "nama": "perdagangan eceran kaki lima dan los pasar pelengkap pakaian dan benang"
+      },
+      {
+        "id": "1108",
+        "nama": "perdagangan eceran kaki lima dan los pasar bahan kimia"
+      },
+      {
+        "id": "1109",
+        "nama": "perdagangan eceran kaki lima dan los pasar farmasi"
+      },
+      {
+        "id": "1110",
+        "nama": "perdagangan eceran kaki lima dan los pasar obat tradisional"
+      },
+      {
+        "id": "1111",
+        "nama": "perdagangan eceran kaki lima dan los pasar kosmetik"
+      },
+      {
+        "id": "1112",
+        "nama": "perdagangan eceran kaki lima dan los pasar pupuk dan pemberantas hama"
+      },
+      {
+        "id": "1113",
+        "nama": "perdagangan eceran kaki lima dan los pasar aromatik/penyegar (minyak atsiri)"
+      },
+      {
+        "id": "1114",
+        "nama": "perdagangan eceran kaki lima dan los pasar bahan kimia, farmasi, kosmetik dan alat laboratorium dan ybdi YTDL"
+      },
+      {
+        "id": "1115",
+        "nama": "perdagangan eceran kaki lima dan los pasar kaca mata"
+      },
+      {
+        "id": "1116",
+        "nama": "perdagangan eceran kaki lima dan los pasar barang perhiasan"
+      },
+      {
+        "id": "1117",
+        "nama": "perdagangan eceran kaki lima dan los pasarjam"
+      },
+      {
+        "id": "1118",
+        "nama": "perdagangan ecerankaki lima dan los pasar tas, dompet, koper,ransel dan sejenisnya"
+      },
+      {
+        "id": "1119",
+        "nama": "perdagangan eceran kaki lima dan los pasar perlengkapan pengendara sepeda motor"
+      },
+      {
+        "id": "1120",
+        "nama": "perdagangan eceran kaki lima dan los pasar barang keperluan pribadi lainnya"
+      },
+      {
+        "id": "1121",
+        "nama": "perdagangan eceran kaki lima dan los pasar barang elektronik"
+      },
+      {
+        "id": "1122",
+        "nama": "perdagangan eceran kaki lima dan los pasar alat dan perlengkapan listrik"
+      },
+      {
+        "id": "1123",
+        "nama": "perdagangan eceran kaki lima dan los pasar barang pecah belah dan perlengkapan dapur dari plastik/melamin"
+      },
+      {
+        "id": "1124",
+        "nama": "perdagangan eceran kaki lima dan los pasar barang pecah belah dan perlengkapan dapur dari batu atau tanah liat"
+      },
+      {
+        "id": "1125",
+        "nama": "perdagangan eceran kaki lima dan los pasar barang dan perlengkapan dapur dari kayu, bambu atau rotan"
+      },
+      {
+        "id": "1126",
+        "nama": "perdagangan eceran kaki lima dan los pasar barang pecah belah dan perlengkapan dapur bukan dari plastik, batu,tanah liat, kayu, bambu atau rotan"
+      },
+      {
+        "id": "1127",
+        "nama": "perdagangan eceran kaki lima dan los pasar alat kebersihan"
+      },
+      {
+        "id": "1128",
+        "nama": "perdagangan eceran kaki lima dan los pasar perlengkapan rumah tangga lainnya"
+      },
+      {
+        "id": "1129",
+        "nama": "perdagangan eceran kaki lima dan los pasar kertas, karton dan barang dari kertas"
+      },
+      {
+        "id": "1130",
+        "nama": "perdagangan eceran kaki lima dan los pasar alat tulis menulis dan gambar"
+      },
+      {
+        "id": "1131",
+        "nama": "perdagangan eceran kaki lima dan los pasar hasil pencetakan dan penerbitan"
+      },
+      {
+        "id": "1132",
+        "nama": "perdagangan eceran kaki lima dan los pasar alat olahraga dan alat musik"
+      },
+      {
+        "id": "1133",
+        "nama": "perdagangan eceran kaki lima dan los pasar alat fotografi, alat optik dan perlengkapannya"
+      },
+      {
+        "id": "1134",
+        "nama": "perdagangan eceran kaki lima dan los pasar mesin kantor"
+      },
+      {
+        "id": "1135",
+        "nama": "perdagangan eceran kaki lima dan los pasar peralatan telekomunikasi"
+      },
+      {
+        "id": "1136",
+        "nama": "perdagangan eceran kaki lima dan los pasar campuran kertas, karton, barang dari kertas, alat tulis- menulis, alat gambar, hasil pencetakan, penerbitan dan lainnya"
+      },
+      {
+        "id": "1137",
+        "nama": "perdagangan eceran kaki lima dan los pasar barang kerajinan"
+      },
+      {
+        "id": "1138",
+        "nama": "perdagangan eceran kaki lima dan los pasar mainan anak-anak"
+      },
+      {
+        "id": "1139",
+        "nama": "perdagangan eceran kaki lima dan los pasar lukisan"
+      },
+      {
+        "id": "1140",
+        "nama": "perdagangan eceran kaki lima dan los pasar hewan hidup"
+      },
+      {
+        "id": "1141",
+        "nama": "perdagangan eceran kaki lima dan los pasar bahan bakar minyak, gas, minyak pelumas dan bahan bakar lainnya"
+      },
+      {
+        "id": "1142",
+        "nama": "perdagangan eceran kaki lima dan los pasar barang antik"
+      },
+      {
+        "id": "1143",
+        "nama": "perdagangan eceran kaki lima dan los pasar barang bekas perlengkapan rumah tangga"
+      },
+      {
+        "id": "1144",
+        "nama": "perdagangan eceran kaki lima dan los pasar pakaian, alas kaki, perlengkapan pakaian dan barang perlengkapan pribadi bekas"
+      },
+      {
+        "id": "1145",
+        "nama": "perdagangan eceran kaki lima dan los pasar barang listrik dan elektronik bekas"
+      },
+      {
+        "id": "1146",
+        "nama": "perdagangan eceran kaki lima dan los pasar barang bekas campuran"
+      },
+      {
+        "id": "1147",
+        "nama": "perdagangan eceran kaki lima dan los pasar barang lainnya"
+      },
+      {
+        "id": "1148",
+        "nama": "perdagangan eceran melalui media untuk komoditi makanan, minuman, tembakau, kimia, farmasi, kosmetik dan alat laboratorium"
+      },
+      {
+        "id": "1149",
+        "nama": "perdagangan eceran melalui media untuk komoditi tekstil, pakaian, alas kaki dan barang keperluan pribadi"
+      },
+      {
+        "id": "1150",
+        "nama": "perdagangan eceran melalui media untuk barang perlengkapan rumah tangga dan perlengkapan dapur"
+      },
+      {
+        "id": "1151",
+        "nama": "perdagangan eceran melalui media untuk barang campuran sebagaimana tersebut dalam 47911 s.d. 47913"
+      },
+      {
+        "id": "1152",
+        "nama": "perdagangan eceran melalui media untuk berbagai macam barang lainnya"
+      },
+      {
+        "id": "1153",
+        "nama": "perdagangan eceran atas dasar balas jasa (fee) atau kontrak"
+      },
+      {
+        "id": "1154",
+        "nama": "perdagangan eceran keliling komoditi makanan dari hasil pertanian"
+      },
+      {
+        "id": "1155",
+        "nama": "perdagangan eceran keliling komoditi makanan, minuman atau tembakau hasil industri pengolahan"
+      },
+      {
+        "id": "1156",
+        "nama": "perdagangan eceran keliling bahan kimia, farmasi, kosmetik dan alat laboratorium"
+      },
+      {
+        "id": "1157",
+        "nama": "perdagangan eceran keliling tekstil, pakaian, alas kaki dan barang keperluan pribadi"
+      },
+      {
+        "id": "1158",
+        "nama": "perdagangan ecerankeliling perlengkapan rumah tangga dan perlengkapan dapur"
+      },
+      {
+        "id": "1159",
+        "nama": "perdagangan eceran keliling bahan bakar dan minyak pelumas"
+      },
+      {
+        "id": "1160",
+        "nama": "perdagangan eceran keliling kertas, barang dari kertas, alat tulis, barang cetakan, alat olahraga, alat musik, alat fotografi dan komputer"
+      },
+      {
+        "id": "1161",
+        "nama": "perdagangan eceran keliling barang kerajinan, mainan anak- anak dan lukisan"
+      },
+      {
+        "id": "1162",
+        "nama": "perdagangan eceran bukan di toko, kios, kaki lima dan los pasar lainnya YTDL"
+      },
+      {
+        "id": "1163",
+        "nama": "angkutan jalan rel untuk penumpang"
+      },
+      {
+        "id": "1164",
+        "nama": "angkutan jalan rel untuk barang"
+      },
+      {
+        "id": "1165",
+        "nama": "angkutan bus antarkota antarprovinsi (akap)"
+      },
+      {
+        "id": "1166",
+        "nama": "angkutan bus perbatasan"
+      },
+      {
+        "id": "1167",
+        "nama": "angkutan bus antarkota dalam provinsi (akdp)"
+      },
+      {
+        "id": "1168",
+        "nama": "angkutan bus kota"
+      },
+      {
+        "id": "1169",
+        "nama": "angkutan bus lintas batas negara"
+      },
+      {
+        "id": "1170",
+        "nama": "angkutan bus khusus"
+      },
+      {
+        "id": "1171",
+        "nama": "angkutan bus dalam trayek lainnya"
+      },
+      {
+        "id": "1172",
+        "nama": "angkutan bus pariwisata"
+      },
+      {
+        "id": "1173",
+        "nama": "angkutan bus tidak dalam trayek lainnya"
+      },
+      {
+        "id": "1174",
+        "nama": "angkutan melalui saluran pipa"
+      },
+      {
+        "id": "1175",
+        "nama": "angkutan perbatasan bukan bus, dalam trayek"
+      },
+      {
+        "id": "1176",
+        "nama": "angkutan antarkota dalam provinsi (akdp) bukan bus, dalam trayek"
+      },
+      {
+        "id": "1177",
+        "nama": "angkutan perkotaan bukan bus, dalam trayek"
+      },
+      {
+        "id": "1178",
+        "nama": "angkutan perdesaan bukan bus, dalam trayek"
+      },
+      {
+        "id": "1179",
+        "nama": "angkutan darat khusus bukan bus"
+      },
+      {
+        "id": "1180",
+        "nama": "angkutan darat bukan bus untuk penumpang lainnya, dalam trayek"
+      },
+      {
+        "id": "1181",
+        "nama": "angkutan taksi"
+      },
+      {
+        "id": "1182",
+        "nama": "angkutan sewa"
+      },
+      {
+        "id": "1183",
+        "nama": "angkutan tidak bermotor untuk penumpang"
+      },
+      {
+        "id": "1184",
+        "nama": "angkutan ojek motor"
+      },
+      {
+        "id": "1185",
+        "nama": "angkutan darat wisata"
+      },
+      {
+        "id": "1186",
+        "nama": "angkutan sewa khusus"
+      },
+      {
+        "id": "1187",
+        "nama": "angkutan darat lainnya untuk penumpang"
+      },
+      {
+        "id": "1188",
+        "nama": "angkutan bermotor untuk barang umum"
+      },
+      {
+        "id": "1189",
+        "nama": "angkutan bermotor untuk barang khusus"
+      },
+      {
+        "id": "1190",
+        "nama": "angkutan tidak bermotor untuk barang umum"
+      },
+      {
+        "id": "1191",
+        "nama": "angkutan jalan rel perkotaan"
+      },
+      {
+        "id": "1192",
+        "nama": "angkutan jalan rel wisata"
+      },
+      {
+        "id": "1193",
+        "nama": "angkutan jalan rel lainnya"
+      },
+      {
+        "id": "1248",
+        "nama": "aktivitas terminal darat"
+      },
+      {
+        "id": "1249",
+        "nama": "aktivitas stasiun kereta api"
+      },
+      {
+        "id": "1250",
+        "nama": "aktivitas jalan tol"
+      },
+      {
+        "id": "1251",
+        "nama": "aktivitas perparkiran di badan jalan (on street parking)"
+      },
+      {
+        "id": "1252",
+        "nama": "aktivitas perparkiran di luar badan jalan (off street parking)"
+      },
+      {
+        "id": "1253",
+        "nama": "aktivitas penunjang angkutan darat lainnya"
+      },
+      {
+        "id": "1255",
+        "nama": "aktivitas pelayanan kepelabuhanan sungai dan danau"
+      },
+      {
+        "id": "1257",
+        "nama": "aktivitas pelabuhan perikanan"
+      },
+      {
+        "id": "1258",
+        "nama": "aktivitas pengelolaan kapal"
+      },
+      {
+        "id": "1259",
+        "nama": "aktivitas penunjang angkutan perairan lainnya"
+      },
+      {
+        "id": "1262",
+        "nama": "penanganan kargo (bongkar muat barang)"
+      },
+      {
+        "id": "1263",
+        "nama": "jasa pengurusan transportasi (jpt)"
+      },
+      {
+        "id": "1264",
+        "nama": "aktivitas ekspedisi muatan kereta api dan ekspedisi angkutan darat (emka & ead)"
+      },
+      {
+        "id": "1265",
+        "nama": "aktivitas ekspedisi muatan kapal (emkl)"
+      },
+      {
+        "id": "1266",
+        "nama": "aktivitas ekspedisi muatan pesawat udara (empu)"
+      },
+      {
+        "id": "1267",
+        "nama": "angkutan multimoda"
+      },
+      {
+        "id": "1268",
+        "nama": "jasa penunjang angkutan udara"
+      },
+      {
+        "id": "1269",
+        "nama": "jasa keagenan kapal/agen perkapalan perusahaan pelayaran"
+      },
+      {
+        "id": "1270",
+        "nama": "aktivitas tally mandiri"
+      },
+      {
+        "id": "1271",
+        "nama": "aktivitas penunjang angkutan lainnya YTDL"
+      },
+      {
+        "id": "1272",
+        "nama": "aktivitas pos"
+      },
+      {
+        "id": "1273",
+        "nama": "aktivitas kurir"
+      },
+      {
+        "id": "1274",
+        "nama": "aktivitas agen kurir"
+      },
+      {
+        "id": "1277",
+        "nama": "pondok wisata"
+      },
+      {
+        "id": "1278",
+        "nama": "penginapan remaja (youth hostel)"
+      },
+      {
+        "id": "1279",
+        "nama": "bumi perkemahan,persinggahan karavan dan taman karavan"
+      },
+      {
+        "id": "1280",
+        "nama": "vila"
+      },
+      {
+        "id": "1282",
+        "nama": "penyediaan akomodasi jangka pendek lainnya"
+      },
+      {
+        "id": "1283",
+        "nama": "penyediaan akomodasi lainnya"
+      },
+      {
+        "id": "1284",
+        "nama": "rumah/warung makan"
+      },
+      {
+        "id": "1285",
+        "nama": "kedai makanan"
+      },
+      {
+        "id": "1286",
+        "nama": "penyediaan makanan keliling/tempat tidak tetap"
+      },
+      {
+        "id": "1287",
+        "nama": "restoran dan penyediaan makanan keliling lainnya"
+      },
+      {
+        "id": "1288",
+        "nama": "jasa boga untuk suatu event tertentu (event catering)"
+      },
+      {
+        "id": "1289",
+        "nama": "penyediaan jasa boga periode tertentu"
+      },
+      {
+        "id": "1290",
+        "nama": "bar"
+      },
+      {
+        "id": "1291",
+        "nama": "kelab malam atau diskotek yang utamanya menyediakan minuman"
+      },
+      {
+        "id": "1292",
+        "nama": "rumah minum/kafe"
+      },
+      {
+        "id": "1293",
+        "nama": "kedai minuman"
+      },
+      {
+        "id": "1294",
+        "nama": "rumah/kedai obat tradisional"
+      },
+      {
+        "id": "1295",
+        "nama": "penyediaan minuman keliling/tempat tidak tetap"
+      },
+      {
+        "id": "1296",
+        "nama": "penerbitan buku"
+      },
+      {
+        "id": "1297",
+        "nama": "penerbitan direktori dan mailing list"
+      },
+      {
+        "id": "1298",
+        "nama": "penerbitan surat kabar, jurnal dan buletin atau majalah"
+      },
+      {
+        "id": "1299",
+        "nama": "aktivitas penerbitan lainnya"
+      },
+      {
+        "id": "1300",
+        "nama": "penerbitan piranti lunak (software)"
+      },
+      {
+        "id": "1301",
+        "nama": "aktivitas produksi film, video dan program televisi oleh pemerintah"
+      },
+      {
+        "id": "1302",
+        "nama": "aktivitas produksi film, video dan program televisi oleh swasta"
+      },
+      {
+        "id": "1303",
+        "nama": "aktivitas pascaproduksi film, video dan program televisi oleh pemerintah"
+      },
+      {
+        "id": "1304",
+        "nama": "aktivitas pascaproduksi film, video dan program televisi oleh swasta"
+      },
+      {
+        "id": "1305",
+        "nama": "aktivitas distribusi film, video dan program televisi oleh pemerintah"
+      },
+      {
+        "id": "1306",
+        "nama": "aktivitas distribusi film, video dan program televisi oleh swasta"
+      },
+      {
+        "id": "1307",
+        "nama": "aktivitas pemutaran film"
+      },
+      {
+        "id": "1308",
+        "nama": "aktivitas perekaman suara"
+      },
+      {
+        "id": "1309",
+        "nama": "aktivitas penerbitan musik dan buku musik"
+      },
+      {
+        "id": "1310",
+        "nama": "penyiaran radio oleh pemerintah"
+      },
+      {
+        "id": "1311",
+        "nama": "penyiaran radio oleh swasta"
+      },
+      {
+        "id": "1312",
+        "nama": "aktivitas penyiaran dan pemrograman televisi oleh pemerintah"
+      },
+      {
+        "id": "1313",
+        "nama": "aktivitas penyiaran dan pemrograman televisi oleh swasta"
+      },
+      {
+        "id": "1314",
+        "nama": "aktivitas telekomunikasi dengan kabel"
+      },
+      {
+        "id": "1315",
+        "nama": "aktivitas telekomunikasi tanpa kabel"
+      },
+      {
+        "id": "1316",
+        "nama": "aktivitas telekomunikasi satelit"
+      },
+      {
+        "id": "1317",
+        "nama": "jasa panggilan premium (premium call)"
+      },
+      {
+        "id": "1318",
+        "nama": "jasa konten sms premium"
+      },
+      {
+        "id": "1319",
+        "nama": "jasa internet teleponi untuk keperluan publik (itkp)"
+      },
+      {
+        "id": "1320",
+        "nama": "jasa panggilan terkelola (calling card)"
+      },
+      {
+        "id": "1321",
+        "nama": "jasa nilai tambah teleponi lainnya"
+      },
+      {
+        "id": "1322",
+        "nama": "internet service provider"
+      },
+      {
+        "id": "1323",
+        "nama": "jasa sistem komunikasi data"
+      },
+      {
+        "id": "1324",
+        "nama": "jasa televisi protokol internet (iptv)"
+      },
+      {
+        "id": "1325",
+        "nama": "jasa interkoneksi internet (nap)"
+      },
+      {
+        "id": "1326",
+        "nama": "jasa multimedia lainnya"
+      },
+      {
+        "id": "1327",
+        "nama": "aktivitas telekomunikasi khusus untuk penyiaran"
+      },
+      {
+        "id": "1328",
+        "nama": "aktivitas telekomunikasi khusus untuk keperluan sendiri"
+      },
+      {
+        "id": "1329",
+        "nama": "aktivitas telekomunikasi khusus untuk keperluan pertahanan keamanan"
+      },
+      {
+        "id": "1330",
+        "nama": "jasa jual kembali jasa telekomunikasi"
+      },
+      {
+        "id": "1331",
+        "nama": "aktivitas telekomunikasi lainnya YTDL"
+      },
+      {
+        "id": "1332",
+        "nama": "aktivitas pengembangan video game"
+      },
+      {
+        "id": "1333",
+        "nama": "aktivitas pengembangan aplikasi perdagangan melalui internet (e-commerce)"
+      },
+      {
+        "id": "1334",
+        "nama": "aktivitas pemrograman dan produksi konten media imersif"
+      },
+      {
+        "id": "1335",
+        "nama": "aktivitas pengembangan teknologi blockchain"
+      },
+      {
+        "id": "1336",
+        "nama": "aktivitas pemrograman berbasis kecerdasan artifisial"
+      },
+      {
+        "id": "1337",
+        "nama": "aktivitas pemrograman komputer lainnya"
+      },
+      {
+        "id": "1338",
+        "nama": "aktivitas konsultasi keamanan informasi"
+      },
+      {
+        "id": "1339",
+        "nama": "aktivitas penyediaan sertifikat elektronik dan layanan yang menggunakan sertifikat elektronik"
+      },
+      {
+        "id": "1340",
+        "nama": "aktivitas konsultasi dan perancangan internet of things (iot)"
+      },
+      {
+        "id": "1341",
+        "nama": "aktivitas konsultasi komputer dan manajemen fasilitas komputer lainnya"
+      },
+      {
+        "id": "1342",
+        "nama": "aktivitas teknologi informasi dan jasa komputer lainnya"
+      },
+      {
+        "id": "1343",
+        "nama": "aktivitas pengolahan data"
+      },
+      {
+        "id": "1344",
+        "nama": "aktivitas hosting dan ybdi"
+      },
+      {
+        "id": "1345",
+        "nama": "portal web dan/ atau platform digital tanpa tujuan komersial"
+      },
+      {
+        "id": "1346",
+        "nama": "portal web dan/ atau platform digital dengan tujuan komersial"
+      },
+      {
+        "id": "1347",
+        "nama": "aktivitas kantor berita oleh pemerintah"
+      },
+      {
+        "id": "1348",
+        "nama": "aktivitas kantor berita oleh swasta"
+      },
+      {
+        "id": "1349",
+        "nama": "aktivitas jasa informasi lainnya YTDL"
+      },
+      {
+        "id": "1476",
+        "nama": "real estat yang dimiliki sendiri atau disewa"
+      },
+      {
+        "id": "1477",
+        "nama": "penyewaan venue penyelenggaraan aktifitas mice dan event khusus"
+      },
+      {
+        "id": "1478",
+        "nama": "kawasan pariwisata"
+      },
+      {
+        "id": "1480",
+        "nama": "real estat atas dasar balas jasa (fee) atau kontrak"
+      },
+      {
+        "id": "1488",
+        "nama": "aktivitas kantor pusat"
+      },
+      {
+        "id": "1489",
+        "nama": "aktivitas konsultansi pariwisata"
+      },
+      {
+        "id": "1490",
+        "nama": "aktivitas konsultansi transportasi"
+      },
+      {
+        "id": "1491",
+        "nama": "aktivitas kehumasan"
+      },
+      {
+        "id": "1492",
+        "nama": "aktivitas konsultansi manajemen industri"
+      },
+      {
+        "id": "1493",
+        "nama": "aktivitas konsultasi manajemen lainnya"
+      },
+      {
+        "id": "1494",
+        "nama": "aktivitas arsitektur"
+      },
+      {
+        "id": "1495",
+        "nama": "aktivitas keinsinyuran dan konsultasi teknis ybdi"
+      },
+      {
+        "id": "1496",
+        "nama": "jasa sertifikasi"
+      },
+      {
+        "id": "1497",
+        "nama": "jasa pengujian laboratorium"
+      },
+      {
+        "id": "1500",
+        "nama": "penelitian dan pengembangan bioteknologi"
+      },
+      {
+        "id": "1509",
+        "nama": "penelitian dan pengembangan bioteknologi"
+      },
+      {
+        "id": "1512",
+        "nama": "penelitian dan pengembangan ketenaganukliran"
+      },
+      {
+        "id": "1548",
+        "nama": "aktivitas penyewaan dan sewa guna usaha tanpa hak opsi mobil, bus, truk dan sejenisnya"
+      },
+      {
+        "id": "1549",
+        "nama": "aktivitas penyewaan dan sewa guna usaha tanpa hak opsi alat rekreasi dan olahraga"
+      },
+      {
+        "id": "1550",
+        "nama": "aktivitas penyewaan kaset video, cd, vcd/ dvd dan sejenisnya"
+      },
+      {
+        "id": "1551",
+        "nama": "aktivitas penyewaan dan sewa guna usaha tanpa hak opsi alat pesta"
+      },
+      {
+        "id": "1552",
+        "nama": "aktivitas penyewaan dan sewa guna usaha tanpa hak opsi barang keperluan rumah tangga dan pribadi"
+      },
+      {
+        "id": "1553",
+        "nama": "aktivitas penyewaan dan sewa guna usaha tanpa hak opsi barang hasil pencetakan dan penerbitan"
+      },
+      {
+        "id": "1554",
+        "nama": "aktivitas penyewaan dan sewa guna usaha tanpa hak opsi bunga dan tanaman hias"
+      },
+      {
+        "id": "1555",
+        "nama": "aktivitas penyewaan dan sewa guna usaha tanpa hak opsi alat musik"
+      },
+      {
+        "id": "1556",
+        "nama": "aktivitas penyewaan dan sewa guna usaha tanpa hak opsi barang keperluan rumah tangga dan pribadi lainnya YTDL"
+      },
+      {
+        "id": "1557",
+        "nama": "aktivitas penyewaan dan sewa guna usaha tanpa hak opsi alat transportasi darat bukan kendaraan bermotor roda empat atau lebih"
+      },
+      {
+        "id": "1558",
+        "nama": "aktivitas penyewaan dan sewa guna usaha tanpa hak opsi alat transportasi air"
+      },
+      {
+        "id": "1559",
+        "nama": "aktivitas penyewaan dan sewa guna usaha tanpa hak opsi alat transportasi udara"
+      },
+      {
+        "id": "1560",
+        "nama": "aktivitas penyewaan dan sewa guna usaha tanpa hak opsi alat transportasi lainnya"
+      },
+      {
+        "id": "1561",
+        "nama": "aktivitas penyewaan dan sewa guna tanpa hak opsi alat perekaman gambar & editing"
+      },
+      {
+        "id": "1562",
+        "nama": "aktivitas penyewaan dan sewa guna tanpa hak opsi alat alat bantu teknologi digital"
+      },
+      {
+        "id": "1563",
+        "nama": "aktivitas penyewaan dan sewa guna tanpa hak opsi alat kebutuhan mice"
+      },
+      {
+        "id": "1564",
+        "nama": "aktivitas penyewaan dan sewa guna tanpa hak opsi mesin dan peralatan industri kreatif lainnya"
+      },
+      {
+        "id": "1565",
+        "nama": "aktivitas penyewaan dan sewa guna usaha tanpa hak opsi mesin dan peralatan industri pengolahan"
+      },
+      {
+        "id": "1566",
+        "nama": "aktivitas penyewaan dan sewa guna usaha tanpa hak opsi mesin pertanian dan peralatannya"
+      },
+      {
+        "id": "1567",
+        "nama": "aktivitas penyewaan dan sewa guna usaha tanpa hak opsi mesin dan peralatan konstruksi dan teknik sipil"
+      },
+      {
+        "id": "1568",
+        "nama": "aktivitas penyewaan dan sewa guna usaha tanpa hak opsi mesin kantor dan peralatannya"
+      },
+      {
+        "id": "1569",
+        "nama": "aktivitas penyewaan dan sewa guna tanpa hak opsi mesin pertambangan dan energi serta peralatannya"
+      },
+      {
+        "id": "1570",
+        "nama": "aktivitas penyewaan dan sewa guna usaha tanpa hak opsi mesin, peralatan dan barang berwujud lainnya YTDL"
+      },
+      {
+        "id": "1571",
+        "nama": "sewa guna usaha tanpa hak opsi intelektual properti,bukan karya hak cipta"
+      },
+      {
+        "id": "1572",
+        "nama": "aktivitas penyeleksian dan penempatan tenaga kerja dalam negeri"
+      },
+      {
+        "id": "1573",
+        "nama": "aktivitas penyeleksian dan penempatan tenaga kerja luar negeri"
+      },
+      {
+        "id": "1574",
+        "nama": "aktivitas penempatan pekerja rumah tangga"
+      },
+      {
+        "id": "1575",
+        "nama": "aktivitas penempatan tenaga kerja daring (job portal)"
+      },
+      {
+        "id": "1576",
+        "nama": "aktivitas penyediaan tenaga kerja waktu tertentu"
+      },
+      {
+        "id": "1577",
+        "nama": "penyediaan sumber daya manusia dan manajemen fungsi sumber daya manusia"
+      },
+      {
+        "id": "1578",
+        "nama": "pelatihan kerja teknik pemerintah"
+      },
+      {
+        "id": "1579",
+        "nama": "pelatihan kerja teknologi informasi dan komunikasi pemerintah"
+      },
+      {
+        "id": "1580",
+        "nama": "pelatihan kerja industri kreatif pemerintah"
+      },
+      {
+        "id": "1581",
+        "nama": "pelatihan kerja pariwisata dan perhotelan pemerintah"
+      },
+      {
+        "id": "1582",
+        "nama": "pelatihan kerja bisnis dan manajemen pemerintah"
+      },
+      {
+        "id": "1583",
+        "nama": "pelatihan kerja pekerjaan domestik pemerintah"
+      },
+      {
+        "id": "1584",
+        "nama": "pelatihan kerja pertanian dan perikanan pemerintah"
+      },
+      {
+        "id": "1585",
+        "nama": "pelatihan kerja pemerintah lainnya"
+      },
+      {
+        "id": "1586",
+        "nama": "pelatihan kerja teknik swasta"
+      },
+      {
+        "id": "1587",
+        "nama": "pelatihan kerja teknologi informasi dan komunikasi swasta"
+      },
+      {
+        "id": "1588",
+        "nama": "pelatihan kerja industri kreatif swasta"
+      },
+      {
+        "id": "1589",
+        "nama": "pelatihan kerja pariwisata dan perhotelan swasta"
+      },
+      {
+        "id": "1590",
+        "nama": "pelatihan kerja bisnis dan manajemen swasta"
+      },
+      {
+        "id": "1591",
+        "nama": "pelatihan kerja pekerjaan domestik swasta"
+      },
+      {
+        "id": "1592",
+        "nama": "pelatihan kerja pertanian dan perikanan swasta"
+      },
+      {
+        "id": "1593",
+        "nama": "pelatihan kerja pertanian dan perikanan swasta"
+      },
+      {
+        "id": "1594",
+        "nama": "pelatihan kerja teknik perusahaan"
+      },
+      {
+        "id": "1595",
+        "nama": "pelatihan kerja teknologi informasi dan komunikasi perusahaan"
+      },
+      {
+        "id": "1596",
+        "nama": "pelatihan kerja industri kreatif perusahaan"
+      },
+      {
+        "id": "1597",
+        "nama": "pelatihan kerja pariwisata dan perhotelan perusahaan"
+      },
+      {
+        "id": "1598",
+        "nama": "pelatihan kerja bisnis dan manajemen perusahaan"
+      },
+      {
+        "id": "1599",
+        "nama": "pelatihan kerja pekerjaan domestik perusahaan"
+      },
+      {
+        "id": "1600",
+        "nama": "pelatihan kerja pertanian dan perikanan perusahaan"
+      },
+      {
+        "id": "1601",
+        "nama": "pelatihan kerja perusahaan lainnya"
+      },
+      {
+        "id": "1602",
+        "nama": "aktivitas agen perjalanan wisata"
+      },
+      {
+        "id": "1603",
+        "nama": "aktivitas agen perjalanan ibadah umroh dan haji"
+      },
+      {
+        "id": "1604",
+        "nama": "aktivitas agen perjalanan lainnya"
+      },
+      {
+        "id": "1605",
+        "nama": "aktivitas biro perjalanan"
+      },
+      {
+        "id": "1606",
+        "nama": "aktivitas biro perjalanan ibadah umroh dan haji khusus"
+      },
+      {
+        "id": "1607",
+        "nama": "aktivitas biro perjalanan"
+      },
+      {
+        "id": "1608",
+        "nama": "jasa informasi pariwisata"
+      },
+      {
+        "id": "1609",
+        "nama": "jasa informasi daya tarik wisata"
+      },
+      {
+        "id": "1610",
+        "nama": "jasa pramuwisata"
+      },
+      {
+        "id": "1611",
+        "nama": "jasa interpreter wisata"
+      },
+      {
+        "id": "1612",
+        "nama": "jasa reservasi lainnya ybdi YTDL"
+      },
+      {
+        "id": "1613",
+        "nama": "aktivitas keamanan swasta"
+      },
+      {
+        "id": "1614",
+        "nama": "aktivitas jasa sistem keamanan"
+      },
+      {
+        "id": "1615",
+        "nama": "aktivitas penyelidikan"
+      },
+      {
+        "id": "1616",
+        "nama": "aktivitas penyedia gabungan jasa penunjang fasilitas"
+      },
+      {
+        "id": "1617",
+        "nama": "aktivitas kebersihan umum bangunan"
+      },
+      {
+        "id": "1618",
+        "nama": "aktivitas kebersihan bangunan dan industri lainnya"
+      },
+      {
+        "id": "1619",
+        "nama": "aktivitas perawatan dan pemeliharaan taman"
+      },
+      {
+        "id": "1620",
+        "nama": "aktivitas penyedia gabungan jasa administrasi kantor"
+      },
+      {
+        "id": "1621",
+        "nama": "aktivitas fotokopi, penyiapan dokumen dan aktivitas khusus penunjang kantor lainnya"
+      },
+      {
+        "id": "1622",
+        "nama": "aktivitas call centre"
+      },
+      {
+        "id": "1623",
+        "nama": "jasa penyelenggara pertemuan, perjalanan insentif, konferensi dan pameran (mice)"
+      },
+      {
+        "id": "1624",
+        "nama": "jasa penyelenggara event khusus (special event)"
+      },
+      {
+        "id": "1625",
+        "nama": "aktivitas debt collection"
+      },
+      {
+        "id": "1626",
+        "nama": "aktivitas lembaga pengelola informasi perkreditan"
+      },
+      {
+        "id": "1627",
+        "nama": "aktivitas pengepakan"
+      },
+      {
+        "id": "1628",
+        "nama": "aktivitas jasa penunjang usaha lainnya YTDL"
+      },
+      {
+        "id": "1629",
+        "nama": "lembaga legislatif"
+      },
+      {
+        "id": "1630",
+        "nama": "penyelenggaraan pemerintah negara dan  kesekretariatan negara"
+      },
+      {
+        "id": "1631",
+        "nama": "lembaga eksekutif keuangan, perpajakan dan bea cukai"
+      },
+      {
+        "id": "1632",
+        "nama": "lembaga eksekutif perencanaan"
+      },
+      {
+        "id": "1633",
+        "nama": "lembaga pemerintah non kementrian dengan tugas khusus"
+      },
+      {
+        "id": "1634",
+        "nama": "kegiatan administrasi pemerintahan lainnya"
+      },
+      {
+        "id": "1635",
+        "nama": "administrasi pelayanan pemerintah bidang pendidikan"
+      },
+      {
+        "id": "1636",
+        "nama": "administrasi pelayanan pemerintah bidang kesehatan"
+      },
+      {
+        "id": "1637",
+        "nama": "administrasi pelayanan pemerintah bidang perumahan"
+      },
+      {
+        "id": "1638",
+        "nama": "administrasi pelayanan pemerintah bidang kesejahteraan sosial"
+      },
+      {
+        "id": "1639",
+        "nama": "administrasi pelayanan pemerintah bidang keagamaan"
+      },
+      {
+        "id": "1640",
+        "nama": "administrasi pelayanan pemerintah bidang kebudayaan/kesenian/rekreasi/olahraga"
+      },
+      {
+        "id": "1641",
+        "nama": "administrasi pelayanan pemerintah bidang lingkungan hidup"
+      },
+      {
+        "id": "1642",
+        "nama": "administrasi pelayanan pemerintah bidang sosial lainnya bukan kesehatan, pendidikan, keagamaan dan kebudayaan"
+      },
+      {
+        "id": "1643",
+        "nama": "kegiatan lembaga pemerintahan bidang pertanian"
+      },
+      {
+        "id": "1644",
+        "nama": "kegiatan lembaga pemerintahan bidang pertambangan dan penggalian, listrik, air dan gas"
+      },
+      {
+        "id": "1645",
+        "nama": "kegiatan lembaga pemerintahan bidang perindustrian"
+      },
+      {
+        "id": "1646",
+        "nama": "kegiatan lembaga pemerintahan bidang komunikasi dan informatika"
+      },
+      {
+        "id": "1647",
+        "nama": "kegiatan lembaga pemerintahan bidang konstruksi"
+      },
+      {
+        "id": "1648",
+        "nama": "kegiatan lembaga pemerintahan bidang perdagangan dan pariwisata"
+      },
+      {
+        "id": "1649",
+        "nama": "kegiatan lembaga pemerintahan bidang perhubungan"
+      },
+      {
+        "id": "1650",
+        "nama": "kegiatan lembaga pemerintahan bidang ketenagakerjaan"
+      },
+      {
+        "id": "1651",
+        "nama": "kegiatan lembaga pemerintahan untuk menciptakan efisiensi produksi dan bisnis lainnya"
+      },
+      {
+        "id": "1652",
+        "nama": "hubungan luar negeri"
+      },
+      {
+        "id": "1653",
+        "nama": "lembaga pertahanan dan angkatan bersenjata"
+      },
+      {
+        "id": "1654",
+        "nama": "angkatan darat"
+      },
+      {
+        "id": "1655",
+        "nama": "angkatan udara"
+      },
+      {
+        "id": "1656",
+        "nama": "angkatan laut"
+      },
+      {
+        "id": "1657",
+        "nama": "kepolisian"
+      },
+      {
+        "id": "1658",
+        "nama": "pertahanan sipil"
+      },
+      {
+        "id": "1659",
+        "nama": "lembaga peradilan"
+      },
+      {
+        "id": "1660",
+        "nama": "badan nasional penanggulangan bencana dan pemadam kebakaran"
+      },
+      {
+        "id": "1661",
+        "nama": "jaminan sosial wajib"
+      },
+      {
+        "id": "1662",
+        "nama": "pendidikan dasar/ibtidaiyah pemerintah"
+      },
+      {
+        "id": "1663",
+        "nama": "pendidikan menengah pertama/tsanawiyah pemerintah"
+      },
+      {
+        "id": "1664",
+        "nama": "pendidikan dasar/ ibtidaiyah swasta"
+      },
+      {
+        "id": "1665",
+        "nama": "pendidikan menengah pertama/tsanawiyah swasta"
+      },
+      {
+        "id": "1666",
+        "nama": "pendidikan taman kanak-kanak pemerintah"
+      },
+      {
+        "id": "1667",
+        "nama": "pendidikan taman kanak-kanak swasta/ raudatul athfal/bustanul athfal"
+      },
+      {
+        "id": "1668",
+        "nama": "pendidikan kelompok bermain"
+      },
+      {
+        "id": "1669",
+        "nama": "pendidikan taman penitipan anak"
+      },
+      {
+        "id": "1670",
+        "nama": "pendidikan taman kanak-kanak luar biasa"
+      },
+      {
+        "id": "1671",
+        "nama": "pendidikan anak usia dini sejenis lainnya"
+      },
+      {
+        "id": "1672",
+        "nama": "satuan pendidikan kerjasama kelompok bermain"
+      },
+      {
+        "id": "1673",
+        "nama": "satuan pendidikan kerjasama taman kanak-kanak"
+      },
+      {
+        "id": "1674",
+        "nama": "satuan pendidikan kerjasama pendidikan dasar"
+      },
+      {
+        "id": "1675",
+        "nama": "satuan pendidikan kerjasama pendidikan menengah pertama"
+      },
+      {
+        "id": "1676",
+        "nama": "satuan pendidikan anak usia dini/paud al- quran"
+      },
+      {
+        "id": "1677",
+        "nama": "satuan pendidikan muadalah/pendidikan diniyah formal ula"
+      },
+      {
+        "id": "1678",
+        "nama": "satuan pendidikan muadalah/pendidikan diniyah formal wustha"
+      },
+      {
+        "id": "1679",
+        "nama": "satuan pendidikan pesantren pengkajian kitab kuning ula"
+      },
+      {
+        "id": "1680",
+        "nama": "satuan pendidikan pesantren pengkajian kitab kuning wustha"
+      },
+      {
+        "id": "1681",
+        "nama": "satuan pendidikan keagamaan anak usia dini"
+      },
+      {
+        "id": "1682",
+        "nama": "satuan pendidikan keagamaan dasar"
+      },
+      {
+        "id": "1683",
+        "nama": "satuan pendidikan keagamaan menengah pertama"
+      },
+      {
+        "id": "1684",
+        "nama": "pendidikan menengah atas/aliyah pemerintah"
+      },
+      {
+        "id": "1685",
+        "nama": "pendidikan menengah/ aliyah swasta"
+      },
+      {
+        "id": "1686",
+        "nama": "pendidikan menengah kejuruan dan teknis/ aliyah kejuruan pemerintah"
+      },
+      {
+        "id": "1687",
+        "nama": "pendidikan menengah kejuruan/aliyah kejuruan swasta"
+      },
+      {
+        "id": "1688",
+        "nama": "satuan pendidikan kerjasama pendidikan menengah atas"
+      },
+      {
+        "id": "1689",
+        "nama": "satuan pendidikan kerjasama pendidikan menengah kejuruan"
+      },
+      {
+        "id": "1690",
+        "nama": "satuan pendidikan muadalah/ pendidikan diniyah formal ulya"
+      },
+      {
+        "id": "1691",
+        "nama": "satuan pendidikan pesantren pengkajian kitab kuning ulya"
+      },
+      {
+        "id": "1692",
+        "nama": "satuan pendidikan muadalah wustha dan ulya berkesinambungan"
+      },
+      {
+        "id": "1693",
+        "nama": "satuan pendidikan keagamaan menengah"
+      },
+      {
+        "id": "1694",
+        "nama": "pendidikan tinggi akademik pemerintah"
+      },
+      {
+        "id": "1695",
+        "nama": "pendidikan tinggi vokasi dan profesi pemerintah"
+      },
+      {
+        "id": "1696",
+        "nama": "pendidikan tinggi akademik swasta"
+      },
+      {
+        "id": "1697",
+        "nama": "pendidikan tinggi vokasi dan profesi swasta"
+      },
+      {
+        "id": "1698",
+        "nama": "pendidikan tinggi keagamaan pemerintah"
+      },
+      {
+        "id": "1699",
+        "nama": "pendidikan tinggi keagamaan swasta"
+      },
+      {
+        "id": "1700",
+        "nama": "pendidikan pesantren tinggi (mahad aly)"
+      },
+      {
+        "id": "1701",
+        "nama": "jasa pendidikan olahraga dan rekreasi"
+      },
+      {
+        "id": "1702",
+        "nama": "pendidikan kebudayaan"
+      },
+      {
+        "id": "1703",
+        "nama": "pendidikan lainnya pemerintah"
+      },
+      {
+        "id": "1704",
+        "nama": "satuan pendidikan kerjasama pendidikan nonformal"
+      },
+      {
+        "id": "1705",
+        "nama": "pendidikan pesantren lainnya"
+      },
+      {
+        "id": "1706",
+        "nama": "pendidikan keagamaan islam non formal"
+      },
+      {
+        "id": "1707",
+        "nama": "pendidikan keagamaan lainnya YTDL"
+      },
+      {
+        "id": "1708",
+        "nama": "jasa pendidikan manajemen dan perbankan"
+      },
+      {
+        "id": "1709",
+        "nama": "jasa pendidikan komputer (teknologi informasi dan komunikasi) swasta"
+      },
+      {
+        "id": "1710",
+        "nama": "pendidikan bahasa swasta"
+      },
+      {
+        "id": "1711",
+        "nama": "pendidikan kesehatan swasta"
+      },
+      {
+        "id": "1712",
+        "nama": "pendidikan bimbingan belajar dan konseling swasta"
+      },
+      {
+        "id": "1713",
+        "nama": "pendidikan awak pesawat dan jasa angkutan udara khusus pendidikan awak pesawat"
+      },
+      {
+        "id": "1714",
+        "nama": "pendidikan kerajinan dan industri"
+      },
+      {
+        "id": "1715",
+        "nama": "pendidikan lainnya swasta"
+      },
+      {
+        "id": "1716",
+        "nama": "kegiatan penunjang pendidikan"
+      },
+      {
+        "id": "1717",
+        "nama": "aktivitas rumah sakit pemerintah"
+      },
+      {
+        "id": "1718",
+        "nama": "aktivitas puskesmas"
+      },
+      {
+        "id": "1719",
+        "nama": "aktivitas rumah sakit swasta"
+      },
+      {
+        "id": "1720",
+        "nama": "aktivitas klinik pemerintah"
+      },
+      {
+        "id": "1721",
+        "nama": "aktivitas klinik swasta"
+      },
+      {
+        "id": "1722",
+        "nama": "aktivitas rumah sakit lainnya"
+      },
+      {
+        "id": "1723",
+        "nama": "aktivitas praktik dokter"
+      },
+      {
+        "id": "1724",
+        "nama": "aktivitas praktik dokter spesialis"
+      },
+      {
+        "id": "1725",
+        "nama": "aktivitas praktik dokter gigi"
+      },
+      {
+        "id": "1726",
+        "nama": "aktivitas pelayanan kesehatan yang dilakukan oleh tenaga kesehatan selain dokter dan dokter gigi"
+      },
+      {
+        "id": "1727",
+        "nama": "aktivitas pelayanan kesehatan tradisional"
+      },
+      {
+        "id": "1728",
+        "nama": "aktivitas pelayanan penunjang kesehatan"
+      },
+      {
+        "id": "1729",
+        "nama": "aktivitas angkutan khusus pengangkutan orang sakit (medical evacuation)"
+      },
+      {
+        "id": "1730",
+        "nama": "aktivitas sosial di dalam panti untuk perawatan dan pemulihan kesehatan"
+      },
+      {
+        "id": "1731",
+        "nama": "aktivitas sosial di dalam panti untuk penyandang disabilitas grahita"
+      },
+      {
+        "id": "1732",
+        "nama": "aktivitas sosial di dalam panti untuk penyandang disabilitas laras"
+      },
+      {
+        "id": "1733",
+        "nama": "aktivitas sosial di dalam panti untuk korban penyalah gunaan narkotika, alkohol , psikotropika dan zat adiktif (napza)"
+      },
+      {
+        "id": "1734",
+        "nama": "aktivitas sosial pemerintah di dalam panti untuk lanjut usia"
+      },
+      {
+        "id": "1735",
+        "nama": "aktivitas sosial swasta di dalam panti untuk lanjut usia"
+      },
+      {
+        "id": "1736",
+        "nama": "aktivitas sosial di dalam panti untuk penyandang disabilitas netraaktivitas sosial di dalam panti untuk penyandang disabilitas netra"
+      },
+      {
+        "id": "1737",
+        "nama": "aktivitas sosial di dalam panti untuk penyandang disabilitas daksa"
+      },
+      {
+        "id": "1738",
+        "nama": "aktivitas sosial di dalam panti untuk penyandang disabilitas rungu wicara"
+      },
+      {
+        "id": "1739",
+        "nama": "aktivitas panti asuhan pemerintah"
+      },
+      {
+        "id": "1740",
+        "nama": "aktivitas panti asuhan swasta"
+      },
+      {
+        "id": "1741",
+        "nama": "aktivitas sosial di dalam panti untuk anak yang berhadapan dengan hukum"
+      },
+      {
+        "id": "1742",
+        "nama": "aktivitas sosial di dalam panti untuk bina remaja"
+      },
+      {
+        "id": "1743",
+        "nama": "aktivitas sosial di dalam panti untuk petirahan anak"
+      },
+      {
+        "id": "1744",
+        "nama": "aktivitas sosial di dalam panti sosial karya wanita"
+      },
+      {
+        "id": "1745",
+        "nama": "aktivitas sosial di dalam panti gelandangan dan pengemis"
+      },
+      {
+        "id": "1746",
+        "nama": "aktivitas sosial di dalam panti lainnya YTDL"
+      },
+      {
+        "id": "1747",
+        "nama": "aktivitas sosial pemerintah tanpa akomodasi untuk lanjut usia dan penyandang disabilitas"
+      },
+      {
+        "id": "1748",
+        "nama": "aktivitas sosial swasta tanpa akomodasi untuk lanjut usia dan penyandang disabilitas"
+      },
+      {
+        "id": "1749",
+        "nama": "aktivitas sosial pengumpulan dana keislaman"
+      },
+      {
+        "id": "1750",
+        "nama": "aktivitas sosial pengumpulan dana lainnya"
+      },
+      {
+        "id": "1751",
+        "nama": "aktivitas sosial pemerintah tanpa akomodasi lainnya YTDL"
+      },
+      {
+        "id": "1752",
+        "nama": "aktivitas sosial swasta tanpa akomodasi lainnya YTDL"
+      },
+      {
+        "id": "1753",
+        "nama": "aktivitas seni pertunjukan"
+      },
+      {
+        "id": "1754",
+        "nama": "aktivitas penunjang seni pertunjukan"
+      },
+      {
+        "id": "1755",
+        "nama": "pelaku kreatif seni pertunjukan"
+      },
+      {
+        "id": "1756",
+        "nama": "pelaku kreatif seni musik"
+      },
+      {
+        "id": "1757",
+        "nama": "aktivitas pelaku kreatif seni rupa"
+      },
+      {
+        "id": "1758",
+        "nama": "aktivitas penulis dan pekerja sastra"
+      },
+      {
+        "id": "1759",
+        "nama": "jurnalis berita independen"
+      },
+      {
+        "id": "1760",
+        "nama": "aktivitas pekerja seni dan pekerja kreatif lainnya"
+      },
+      {
+        "id": "1761",
+        "nama": "aktivitas impresariat bidang seni dan festival seni"
+      },
+      {
+        "id": "1762",
+        "nama": "aktivitas operasional fasilitas seni"
+      },
+      {
+        "id": "1763",
+        "nama": "aktivitas hiburan, seni dan kreativitas lainnya"
+      },
+      {
+        "id": "1764",
+        "nama": "perpustakaan dan arsip pemerintah"
+      },
+      {
+        "id": "1765",
+        "nama": "perpustakaan dan arsip swasta"
+      },
+      {
+        "id": "1766",
+        "nama": "museum yang dikelola pemerintah"
+      },
+      {
+        "id": "1767",
+        "nama": "museum yang dikelola swasta"
+      },
+      {
+        "id": "1768",
+        "nama": "peninggalan sejarah/cagar budaya yang dikelola pemerintah"
+      },
+      {
+        "id": "1769",
+        "nama": "peninggalan sejarah/cagar budaya yang dikelola swasta"
+      },
+      {
+        "id": "1824",
+        "nama": "usaha arena permainan"
+      },
+      {
+        "id": "1826",
+        "nama": "aktivitas hiburan dan rekreasi lainnya YTDL"
+      },
+      {
+        "id": "1850",
+        "nama": "aktivitas rumah tangga sebagai pemberi kerja dari personil domestik"
+      },
+      {
+        "id": "1851",
+        "nama": "aktivitas yang menghasilkan barang oleh rumah  tangga yang digunakan untuk memenuhikebutuhan sendiri"
+      },
+      {
+        "id": "1852",
+        "nama": "aktivitas yang menghasilkan jasa oleh rumah tangga yang digunakan untuk memenuhi kebutuhan sendiri"
+      },
+      {
+        "id": "1854",
+        "nama": "Restoran"
+      }
+    ]
+  },
+  "peraturan": {
+    "ringkasan": "Peraturan Wali Kota Surakarta Nomor 33 Tahun 2023 tentang Rencana Detail Tata Ruang Kota Surakarta Tahun 2023-2043",
+    "persetujuanPerda": "https://gistaru.atrbpn.go.id/repository/Pages/View?f=01_33D5_PP",
+    "batangTubuh": "https://gistaru.atrbpn.go.id/repository/Pages/View?f=03_33D5_BT",
+    "catatan": "Tidak Ada"
+  }
+}

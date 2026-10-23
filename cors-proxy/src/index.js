@@ -91,6 +91,13 @@ const ALLOWED_HOST_SUFFIXES = [
 
 const ALLOWED_HOST_EXACT = new Set(ALLOWED_HOST_SUFFIXES.filter((h) => !h.startsWith(".")));
 
+const GISTARU_RDTR_EXPORT_PREFIX =
+  "https://gistaru-proxy.atrbpn.go.id/proxy.ashx?https://gistaru.atrbpn.go.id/arcgis/rest/services/044_RDTR_PROVINSI_ACEH/_RDTR_11A3_KAWASAN_PERKOTAAN_TAKENGON/MapServer/export?";
+const GISTARU_INTERACTIVE_API_PREFIXES = [
+  "https://gistaru-proxy.atrbpn.go.id/proxy.ashx?https://gistaru.atrbpn.go.id/rdtrinteraktif/api/interactive/data?",
+  "https://gistaru-proxy.atrbpn.go.id/proxy.ashx?https://gistaru.atrbpn.go.id/rdtrinteraktif/api/interactive/activities?"
+];
+
 function isHostAllowed(hostname) {
   const h = (hostname || "").toLowerCase();
   if (!h) return false;
@@ -337,9 +344,27 @@ export default {
     const isBhumiExpapi =
       isBhumiHost &&
       (target.pathname === "/expapi" || target.pathname.startsWith("/expapi/"));
+    // Ekspor gambar RDTR Takengon harus tampak berasal dari halaman GISTARU.
+    // Batasi penyisipan header ke endpoint dan service ekspor ini saja.
+    const isGistaruRdtrExport =
+      target.origin === "https://gistaru-proxy.atrbpn.go.id" &&
+      target.pathname === "/proxy.ashx" &&
+      target.href.startsWith(GISTARU_RDTR_EXPORT_PREFIX);
+    const isGistaruInteractiveApi =
+      target.origin === "https://gistaru-proxy.atrbpn.go.id" &&
+      target.pathname === "/proxy.ashx" &&
+      GISTARU_INTERACTIVE_API_PREFIXES.some((prefix) => target.href.startsWith(prefix));
     if (isBhumiMprx || isBhumiExpapi) {
       fwdHeaders["Referer"] = "https://bhumi.atrbpn.go.id/peta";
       fwdHeaders["Origin"] = "https://bhumi.atrbpn.go.id";
+    }
+    if (isGistaruRdtrExport || isGistaruInteractiveApi) {
+      fwdHeaders["Referer"] = isGistaruInteractiveApi
+        ? "https://gistaru.atrbpn.go.id/rdtrinteraktif/"
+        : "https://gistaru.atrbpn.go.id/";
+      fwdHeaders["Origin"] = "https://gistaru.atrbpn.go.id";
+      fwdHeaders["User-Agent"] =
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
     }
     // JWT dari /expapi/loginApi dikirim kembali oleh klien lewat header
     // Authorization; kalau tidak diteruskan, getPersil selalu 401.
@@ -382,7 +407,7 @@ export default {
         // Tile persil BHUMI bersifat publik dan nyaris tidak berubah; di-cache
         // di edge supaya pemetaan (ratusan tile per layar) tidak membebani
         // maupun menghafal ulang permintaan ke server ATR/BPN.
-        cf: { cacheTtl: isBhumiMprx ? 86400 : 0 }
+        cf: { cacheTtl: isBhumiMprx ? 86400 : isGistaruRdtrExport ? 3600 : isGistaruInteractiveApi ? 300 : 0 }
       });
 
       const outHeaders = new Headers(corsHeaders(origin));
@@ -391,6 +416,12 @@ export default {
       outHeaders.set("X-Proxy-Status", String(upstream.status));
       if (isBhumiMprx && method === "GET" && upstream.ok) {
         outHeaders.set("Cache-Control", "public, max-age=86400");
+      }
+      if (isGistaruRdtrExport && method === "GET" && upstream.ok) {
+        outHeaders.set("Cache-Control", "public, max-age=3600");
+      }
+      if (isGistaruInteractiveApi && method === "GET" && upstream.ok) {
+        outHeaders.set("Cache-Control", "public, max-age=300");
       }
 
       // Penghitungan naik hanya setelah upstream benar-benar berhasil.

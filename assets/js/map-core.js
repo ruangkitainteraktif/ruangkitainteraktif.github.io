@@ -14,6 +14,40 @@
   }).setView(INITIAL_CENTER, INITIAL_ZOOM);
   window.map = map;
 
+  // Snapshot ekspor RDTR Kawasan Perkotaan Takengon dari GISTARU.
+  // Cakupan sumber diberikan dalam EPSG:3857 dan diproyeksikan ke WGS84
+  // untuk Leaflet imageOverlay.
+  var rdtrTakengonBounds = L.latLngBounds(
+    [4.5810011934, 96.8174639376],
+    [4.6820027874, 96.8697645802]
+  );
+  var rdtrTakengonExportUrl = 'https://gistaru-proxy.atrbpn.go.id/proxy.ashx?https://gistaru.atrbpn.go.id/arcgis/rest/services/044_RDTR_PROVINSI_ACEH/_RDTR_11A3_KAWASAN_PERKOTAAN_TAKENGON/MapServer/export?bbox=10777670.785429507%2C510498.91036893707%2C10783492.866328474%2C521779.19211067737&bboxSR=102100&imageSR=102100&size=1620%2C3138&dpi=270&format=png32&transparent=true&layers=show%3A0&f=image';
+  var rdtrTakengonImageUrl = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=' +
+    encodeURIComponent(rdtrTakengonExportUrl);
+  var rdtrTakengonOverlay = L.imageOverlay(
+    rdtrTakengonImageUrl,
+    rdtrTakengonBounds,
+    {
+      opacity: 0.9,
+      pane: 'overlayPane',
+      interactive: false,
+      alt: 'RDTR Kawasan Perkotaan Takengon',
+      attribution: 'GISTARU ATR/BPN — RDTR Kawasan Perkotaan Takengon'
+    }
+  );
+  window.rdtrTakengonOverlay = rdtrTakengonOverlay;
+  window.toggleRdtrTakengon = function (show) {
+    if (show) {
+      if (!map.hasLayer(rdtrTakengonOverlay)) rdtrTakengonOverlay.addTo(map);
+      map.flyToBounds(rdtrTakengonBounds, { padding: [12, 12], maxZoom: 16, duration: 1.2 });
+    } else if (map.hasLayer(rdtrTakengonOverlay)) {
+      map.removeLayer(rdtrTakengonOverlay);
+    }
+  };
+  window.isRdtrTakengonActive = function () {
+    return map.hasLayer(rdtrTakengonOverlay);
+  };
+
   // Keep one map popup at a time, then present feature details in a single
   // responsive sheet instead of anchoring the content to a Leaflet popup.
   var catalogPopupSheet = null;
@@ -2823,7 +2857,218 @@ const SAWAH_COLOR = '#87cf15';
     return bhumiPersilSheet;
   }
 
-  function bhumiPersilOpenSheet(latlng, html) {
+  var gistaruKabupatenPromise = null;
+  var GISTARU_PROXY_BASE = 'https://gistaru-proxy.atrbpn.go.id/proxy.ashx?';
+  var GISTARU_API_BASE = 'https://gistaru.atrbpn.go.id/rdtrinteraktif/api/interactive/';
+
+  function bhumiPersilGistaruRegion(latlng) {
+    if (!gistaruKabupatenPromise) {
+      gistaruKabupatenPromise = fetch('assets/data/bps/geojson/kabupaten.geojson')
+        .then(function (response) {
+          if (!response.ok) throw new Error('Batas kabupaten tidak dapat dimuat.');
+          return response.json();
+        }).catch(function (error) {
+          gistaruKabupatenPromise = null;
+          throw error;
+        });
+    }
+    return gistaruKabupatenPromise.then(function (geojson) {
+      if (!window.turf || typeof window.turf.booleanPointInPolygon !== 'function') {
+        throw new Error('Pustaka geometri belum tersedia.');
+      }
+      var point = window.turf.point([Number(latlng.lng), Number(latlng.lat)]);
+      var features = geojson.features || [];
+      for (var i = 0; i < features.length; i++) {
+        var feature = features[i];
+        if (feature.geometry && window.turf.booleanPointInPolygon(point, feature)) {
+          var props = feature.properties || {};
+          var code = String(props.idkab || '').replace(/\D/g, '').padStart(4, '0');
+          if (code.length !== 4) break;
+          return { id: code + '000000', name: props.nmkab || props.namkab || props.NAMKAB || '' };
+        }
+      }
+      throw new Error('Koordinat tidak masuk ke batas kabupaten yang dikenal.');
+    });
+  }
+
+  function bhumiPersilGistaruRequest(path, params) {
+    var query = Object.keys(params).map(function (key) {
+      return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
+    }).join('&');
+    var target = GISTARU_PROXY_BASE + GISTARU_API_BASE + path + '?' + query;
+    var url = BHUMI_PERSIL_NASIONAL_PROXY + encodeURIComponent(target);
+    return fetch(url, { headers: { Accept: 'application/json' } }).then(function (response) {
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      return response.json();
+    }).then(function (json) {
+      if (!json || Number(json.status) !== 200 || !json.data) {
+        throw new Error((json && json.message) || 'Respons GISTARU tidak berisi data.');
+      }
+      return json.data;
+    });
+  }
+
+  function bhumiPersilGistaruValue(value) {
+    if (value == null || value === '') return '';
+    if (Array.isArray(value)) return value.map(bhumiPersilGistaruValue).filter(Boolean).join('\n');
+    if (typeof value === 'object') {
+      return Object.keys(value).map(function (key) {
+        return key + ': ' + bhumiPersilGistaruValue(value[key]);
+      }).join('\n');
+    }
+    return String(value);
+  }
+
+  function bhumiPersilGistaruLeaves(value, path, out) {
+    path = path || [];
+    out = out || [];
+    if (Array.isArray(value)) value.forEach(function (item) { bhumiPersilGistaruLeaves(item, path, out); });
+    else if (value && typeof value === 'object') {
+      Object.keys(value).forEach(function (key) { bhumiPersilGistaruLeaves(value[key], path.concat(key), out); });
+    } else if (value != null && String(value).trim() !== '') out.push({ path: path, value: String(value).trim() });
+    return out;
+  }
+
+  function bhumiPersilGistaruUnique(values) {
+    var seen = Object.create(null);
+    return values.filter(function (value) {
+      if (seen[value]) return false;
+      seen[value] = true;
+      return true;
+    });
+  }
+
+  function bhumiPersilGistaruSection(title, rows) {
+    rows = rows.filter(function (row) { return row[1] != null && row[1] !== ''; });
+    if (!rows.length) return '';
+    return '<section class="bhumi-persil-gistaru-section"><h3>' + bhumiPersilEsc(title) + '</h3>' +
+      '<table class="bhumi-persil-data-table"><tbody>' + rows.map(function (row) {
+        return '<tr' + (row[2] ? ' class="bhumi-persil-gistaru-intensity-row"' : '') + '><th scope="row">' +
+          bhumiPersilEsc(row[0]) + '</th><td>' + (row[2] ? row[1] : bhumiPersilEsc(row[1])) + '</td></tr>';
+      }).join('') + '</tbody></table></section>';
+  }
+
+  function bhumiPersilGistaruRuleLines(value) {
+    return bhumiPersilGistaruLeaves(value).map(function (item) {
+      var context = item.path.filter(Boolean).join(' › ');
+      return (context ? context + ' — ' : '') + item.value;
+    });
+  }
+
+  function bhumiPersilGistaruListHtml(values) {
+    values = values.filter(Boolean);
+    if (!values.length) return '';
+    return '<ul class="bhumi-persil-gistaru-rule-list">' + values.map(function (value) {
+      return '<li>' + bhumiPersilEsc(value) + '</li>';
+    }).join('') + '</ul>';
+  }
+
+  function bhumiPersilGistaruActivityGroups(data, activities) {
+    var nameById = Object.create(null);
+    (Array.isArray(activities) ? activities : []).forEach(function (item) {
+      if (item && item.id_kegiatan != null) nameById[String(item.id_kegiatan)] = item.kegiatan || item.nama_kegiatan || item.name || String(item.id_kegiatan);
+    });
+    return [
+      ['Diizinkan', 'bgnizn'], ['Terbatas', 'bgntbt'],
+      ['Bersyarat', 'bgnbst'], ['Tidak sesuai', 'bgntbs']
+    ].map(function (pair) {
+      var ids = bhumiPersilGistaruUnique(bhumiPersilGistaruLeaves(data[pair[1]]).map(function (item) { return item.value; }));
+      return { title: pair[0], names: ids.map(function (id) { return nameById[id] || id; }) };
+    });
+  }
+
+  function bhumiPersilGistaruActivitiesSection(data, activities) {
+    var groups = bhumiPersilGistaruActivityGroups(data, activities);
+    var rules = [
+      ['iznktg', 'Diizinkan'], ['tbtktg', 'Terbatas'],
+      ['bstktg', 'Bersyarat'], ['tbsktg', 'Tidak sesuai']
+    ];
+    var html = groups.map(function (group, index) {
+      var rule = bhumiPersilGistaruUnique(bhumiPersilGistaruLeaves(data[rules[index][0]])
+        .map(function (item) { return item.value; }));
+      var names = group.names.length
+        ? '<ul>' + group.names.map(function (name) { return '<li>' + bhumiPersilEsc(name) + '</li>'; }).join('') + '</ul>'
+        : '<p class="bhumi-persil-gistaru-empty">Tidak ada kegiatan pada kategori ini.</p>';
+      var ruleHtml = rule.length
+        ? '<details class="bhumi-persil-gistaru-activity-rule"><summary>Keterangan status</summary><ul>' +
+          rule.map(function (text) { return '<li>' + bhumiPersilEsc(text) + '</li>'; }).join('') + '</ul></details>'
+        : '';
+      return '<article class="bhumi-persil-gistaru-activity-group is-status-' + (index + 1) + '">' +
+        '<div class="bhumi-persil-gistaru-activity-head"><strong>' + bhumiPersilEsc(group.title) +
+        '</strong><span>' + group.names.length.toLocaleString('id-ID') + ' kegiatan</span></div>' + names + ruleHtml + '</article>';
+    }).join('');
+    return '<section class="bhumi-persil-gistaru-section bhumi-persil-gistaru-activities-section">' +
+      '<h3>Ketentuan kegiatan</h3><div class="bhumi-persil-gistaru-activity-groups">' + html + '</div></section>';
+  }
+
+  function bhumiPersilGistaruCard(data, regionName, activities) {
+    data = data || {};
+    var location = [
+      ['Wilayah', data.wadmkk || data.wadmkab || data.nmkab || regionName],
+      ['Kecamatan', data.wadmkc], ['Kelurahan/Desa', data.wadmkd]
+    ];
+    var zoneRows = [
+      ['Rencana', data.rtr], ['ID RTR', data.id_rtr], ['Zona', data.namzon], ['Kode zona', data.kodzon],
+      ['Subzona', data.namszn], ['Kode subzona', data.kodszn], ['Blok', data.kodblk],
+      ['Subblok', data.kodsbl], ['SWK', data.namswk]
+    ];
+    var intensityRows = [
+      ['KDB · Koefisien Dasar Bangunan', bhumiPersilGistaruListHtml(bhumiPersilGistaruRuleLines(data.kdb)), true],
+      ['KLB · Koefisien Lantai Bangunan', bhumiPersilGistaruListHtml(bhumiPersilGistaruRuleLines(data.klb)), true],
+      ['KDH · Koefisien Dasar Hijau', bhumiPersilGistaruListHtml(bhumiPersilGistaruRuleLines(data.kdh)), true],
+      ['Ketinggian bangunan', bhumiPersilGistaruListHtml(bhumiPersilGistaruRuleLines(data.ktgbgn)), true],
+      ['KTB · Ketentuan jarak bangunan', bhumiPersilGistaruListHtml(bhumiPersilGistaruRuleLines(data.ktb)), true],
+      ['GSB · Garis sempadan bangunan', bhumiPersilGistaruListHtml(bhumiPersilGistaruRuleLines(data.gsb)), true],
+      ['Keterangan zonasi', bhumiPersilGistaruListHtml(bhumiPersilGistaruRuleLines(data.ketrgn)), true]
+    ];
+    var rulesRows = [
+      ['Ringkasan', data.nothpr], ['Persetujuan Perda', data.pp],
+      ['Batang tubuh peraturan', data.bt], ['Catatan', data.ct]
+    ].map(function (row) { return [row[0], bhumiPersilGistaruValue(row[1])]; });
+    var title = data.namzon || data.namszn || 'Detail Informasi RDTR';
+    var subtitle = [data.kodzon, data.kodszn].filter(Boolean).join(' · ') || 'Rencana Detail Tata Ruang';
+    var sections = bhumiPersilGistaruSection('Lokasi', location) +
+      bhumiPersilGistaruSection('Zona dan subzona', zoneRows) +
+      bhumiPersilGistaruSection('Intensitas pemanfaatan ruang', intensityRows) +
+      bhumiPersilGistaruActivitiesSection(data, activities) +
+      bhumiPersilGistaruSection('Peraturan dan ketentuan', rulesRows);
+    return '<div class="agol-popup"><div class="agol-popup-header agol-geo-persil">' +
+      '<div class="agol-popup-title">' + bhumiPersilEsc(title) + '</div>' +
+      '<div class="agol-popup-subtitle">' + bhumiPersilEsc(subtitle) + '</div></div>' +
+      '<div class="agol-popup-body bhumi-persil-gistaru-body">' + sections + '</div>' +
+      '<div class="agol-popup-footer"><span>Sumber: GISTARU ATR/BPN · RDTR Interaktif</span></div></div>';
+  }
+
+  function bhumiPersilLoadGistaru(latlng, seq) {
+    var host = bhumiPersilSheet && bhumiPersilSheet.querySelector('.catalog-popup-sheet-cards');
+    if (!host) return;
+    var node = document.createElement('div');
+    node.className = 'bhumi-persil-gistaru';
+    node.innerHTML = bhumiPersilStatusCard('RDTR GISTARU ATR/BPN', 'Memuat informasi zonasi dari koordinat klik…');
+    host.insertBefore(node, host.firstChild);
+    bhumiPersilGistaruRegion(latlng).then(function (region) {
+      return bhumiPersilGistaruRequest('data', {
+        id_wilayah: region.id,
+        latitude: Number(latlng.lat).toFixed(7),
+        longitude: Number(latlng.lng).toFixed(7)
+      }).then(function (data) {
+        var idRtr = data.id_rtr || data.idrtr;
+        var activitiesPromise = idRtr
+          ? bhumiPersilGistaruRequest('activities', { id_wilayah: region.id, id_rtr: idRtr }).catch(function () { return null; })
+          : Promise.resolve(null);
+        return activitiesPromise.then(function (activities) {
+          if (seq !== bhumiPersilClickSeq || !node.isConnected) return;
+          node.innerHTML = bhumiPersilGistaruCard(data, region.name, activities);
+        });
+      });
+    }).catch(function (error) {
+      if (seq !== bhumiPersilClickSeq || !node.isConnected) return;
+      node.innerHTML = bhumiPersilStatusCard('RDTR GISTARU ATR/BPN',
+        'Data RDTR untuk titik ini tidak berhasil dimuat melalui proxy. ' + ((error && error.message) || 'Periksa koneksi atau cakupan RDTR.'));
+    });
+  }
+
+  function bhumiPersilOpenSheet(latlng, html, includeGistaru) {
     var sheet = bhumiPersilEnsureSheet();
     var lat = Number(latlng.lat).toFixed(6), lng = Number(latlng.lng).toFixed(6);
     var coords = lat + ', ' + lng;
@@ -2835,6 +3080,7 @@ const SAWAH_COLOR = '#87cf15';
       '<div class="bhumi-persil-coord-actions"><button type="button" class="bhumi-persil-copy" data-coordinates="' + bhumiPersilEsc(coords) + '">Salin koordinat</button>' +
       '<a class="bhumi-persil-maps" href="' + mapsUrl + '" target="_blank" rel="noopener noreferrer">Lihat di Google Maps</a></div></div>';
     sheet.querySelector('.catalog-popup-sheet-cards').replaceChildren(card);
+    if (includeGistaru) bhumiPersilLoadGistaru(latlng, bhumiPersilClickSeq);
     var retryButton = card.querySelector('.bhumi-persil-retry');
     if (retryButton) retryButton.addEventListener('click', function () {
       bhumiPersilIdentify({ latlng: latlng });
@@ -3045,7 +3291,7 @@ const SAWAH_COLOR = '#87cf15';
     });
     if (!groups.some(function (g) { return g.feats.length; })) {
       bhumiPersilOpenSheet(latlng, bhumiPersilStatusCard('Data Pertanahan',
-        'Tidak ada data persil atau layer terpilih di titik ini.'));
+        'Tidak ada data persil atau layer terpilih di titik ini.'), true);
       return;
     }
     var group = L.featureGroup();
@@ -3069,7 +3315,7 @@ const SAWAH_COLOR = '#87cf15';
     });
     var cards = parts.join('');
     if (parts.length > 1) cards = '<div class="bhumi-persil-list">' + cards + '</div>';
-    bhumiPersilOpenSheet(latlng, cards);
+    bhumiPersilOpenSheet(latlng, cards, true);
   }
 
   function bhumiPersilIdentify(e) {
@@ -3123,7 +3369,7 @@ const SAWAH_COLOR = '#87cf15';
                 ? 'Sesi autentikasi data pertanahan belum dapat digunakan. Silakan coba ulangi permintaan.'
                 : 'Data pertanahan belum berhasil dimuat. Silakan coba ulangi permintaan.';
           bhumiPersilOpenSheet(e.latlng, bhumiPersilStatusCard(
-            title, message, true));
+            title, message, true), true);
           return;
         }
         bhumiPersilRenderResult(e.latlng, queryLayers, res);
@@ -3131,7 +3377,7 @@ const SAWAH_COLOR = '#87cf15';
       .catch(function () {
         if (seq !== bhumiPersilClickSeq) return;
         bhumiPersilOpenSheet(e.latlng, bhumiPersilStatusCard('Gagal Memuat',
-          'Data pertanahan belum berhasil dimuat. Silakan coba lagi.', true));
+          'Data pertanahan belum berhasil dimuat. Silakan coba lagi.', true), true);
       });
   }
   map.on('click', bhumiPersilIdentify);
@@ -4778,6 +5024,12 @@ const SAWAH_COLOR = '#87cf15';
       ]
     },
     {
+      cat: 'RDTR GISTARU ATRBPN',
+      layers: [
+        { id: 'toggleRdtrTakengon', label: 'RDTR Kawasan Perkotaan Takengon' }
+      ]
+    },
+    {
       cat: 'SITR Jawa Timur',
       subcats: [
         { subcat: 'Pola ruang & kawasan', layers: [
@@ -5233,6 +5485,8 @@ function syncLayerCatalogState() {
         cb.checked = window.isBumiPersilLayerActive();
       } else if (cb.dataset.layerId === 'toggleGistaruPersilLayer' && typeof window.isGistaruPersilLayerActive === 'function') {
         cb.checked = window.isGistaruPersilLayerActive();
+      } else if (cb.dataset.layerId === 'toggleRdtrTakengon' && typeof window.isRdtrTakengonActive === 'function') {
+        cb.checked = window.isRdtrTakengonActive();
       } else if (_layerCatalogState.hasOwnProperty(id)) {
         cb.checked = _layerCatalogState[id];
       }
@@ -5663,6 +5917,7 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
           (id === 'toggleNonTollRoad' && typeof window.toggleNonTollRoadLayer === 'function') ||
           (id === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') ||
           (id === 'toggleGistaruPersilLayer' && typeof window.toggleGistaruPersilLayer === 'function') ||
+          (id === 'toggleRdtrTakengon' && typeof window.toggleRdtrTakengon === 'function') ||
           (id === 'toggleBhumiPersilNasionalLayer' && typeof window.toggleBhumiPersilNasionalLayer === 'function') ||
           (id === 'toggleSawahGislinerLayer' && typeof window.toggleSawahGislinerLayer === 'function') ||
           (id === 'toggleJenisTanahJateng' && typeof window.toggleJenisTanahJateng === 'function') ||
@@ -5775,6 +6030,9 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
         }
         if (id === 'toggleGistaruPersilLayer' && typeof window.toggleGistaruPersilLayer === 'function') {
           window.toggleGistaruPersilLayer(cb.checked);
+        }
+        if (id === 'toggleRdtrTakengon' && typeof window.toggleRdtrTakengon === 'function') {
+          window.toggleRdtrTakengon(cb.checked);
         }
         if (id === 'toggleBhumiPersilNasionalLayer' && typeof window.toggleBhumiPersilNasionalLayer === 'function') {
           window.toggleBhumiPersilNasionalLayer(cb.checked);
