@@ -135,7 +135,138 @@ var generasi = 0;
     }
   }
 
-  /* Cari fitur SLS milik desa terpilih melalui atribut kddesa. */
+  function escapeCql(value) {
+    return String(value == null ? '' : value).replace(/'/g, "''");
+  }
+
+  function slsFilterFromProperties(props) {
+    var fields = ['kdprov', 'kdkab', 'kdkec', 'kddesa'];
+    var terms = [];
+    for (var i = 0; i < fields.length; i++) {
+      var value = props && props[fields[i]];
+      if (value !== null && value !== undefined && String(value) !== '') {
+        var literal = typeof value === 'number' && Number.isFinite(value)
+          ? String(value) : "'" + escapeCql(value) + "'";
+        terms.push(fields[i] + ' = ' + literal);
+      }
+    }
+    if (!terms.length) throw new Error('Atribut kode SLS tidak tersedia pada hasil pencocokan.');
+    return terms.join(' AND ');
+  }
+
+  function collectRings(value, output) {
+    if (!Array.isArray(value)) return;
+    if (value.length >= 4 && Array.isArray(value[0]) && typeof value[0][0] === 'number') {
+      output.push(value);
+      return;
+    }
+    value.forEach(function (item) { collectRings(item, output); });
+  }
+
+  function toLonLat(point) {
+    var x = Number(point[0]), y = Number(point[1]);
+    if (Math.abs(x) > 90 && Math.abs(x) <= 180) return [x, y];
+    if (Math.abs(y) > 90 && Math.abs(y) <= 180) return [y, x];
+    return [y, x];
+  }
+
+  function villageGeometry(data) {
+    var rings = [];
+    collectRings(data && data.path, rings);
+    var polygons = rings.map(function (ring) { return [ring.map(toLonLat)]; })
+      .filter(function (polygon) {
+        return polygon[0].every(function (p) { return Number.isFinite(p[0]) && Number.isFinite(p[1]); });
+      });
+    if (!polygons.length) throw new Error('Geometri batas desa tidak ditemukan.');
+    return { type: 'Feature', properties: {}, geometry: { type: 'MultiPolygon', coordinates: polygons } };
+  }
+
+  async function fetchVillageBoundary(kode) {
+    var digits = String(kode || '').replace(/\D/g, '');
+    if (!/^\d{10}$/.test(digits)) throw new Error('Kode desa tidak valid untuk mengambil batas.');
+    var kodeApi = digits.slice(0, 2) + '.' + digits.slice(2, 4) + '.' +
+      digits.slice(4, 6) + '.' + digits.slice(6, 10);
+    var url = 'https://wilayah.smartartstudio.my.id/api/boundaries/' + encodeURIComponent(kodeApi);
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); }, REQUEST_TIMEOUT_MS);
+    try {
+      var response = await fetch(url, { signal: ctrl.signal });
+      if (!response.ok) throw new Error('Batas desa gagal dimuat (HTTP ' + response.status + ').');
+      var data = await response.json();
+      return { data: data, feature: villageGeometry(data) };
+    } catch (e) {
+      if (e && e.name === 'AbortError') throw new Error('Permintaan batas desa timeout.');
+      throw e;
+    } finally { clearTimeout(timer); }
+  }
+
+  async function findSlsAtPoint(point) {
+    if (!window.turf || typeof window.turf.booleanPointInPolygon !== 'function') {
+      throw new Error('Library geometri peta belum tersedia. Muat ulang halaman lalu coba lagi.');
+    }
+    var pads = [0.0002, 0.001, 0.005];
+    for (var p = 0; p < pads.length; p++) {
+      var pad = pads[p];
+      var bbox = [point[0] - pad, point[1] - pad, point[0] + pad, point[1] + pad].join(',') + ',EPSG:4326';
+      var url = wfsUrl({
+        service: 'WFS', version: '2.0.0', request: 'GetFeature',
+        typeNames: LAYER_SLS, outputFormat: 'application/json', srsName: 'EPSG:4326',
+        count: 250, bbox: bbox,
+        propertyName: 'kdprov,kdkab,kdkec,kddesa,idsls,nmsls,nmdesa,the_geom'
+      });
+      var json = await fetchJson(proxyUrl(url));
+      var features = (json && json.features) || [];
+      for (var i = 0; i < features.length; i++) {
+        var feature = features[i];
+        if (!feature || !feature.geometry) continue;
+        try { if (window.turf.booleanPointInPolygon(point, feature)) return feature; }
+        catch (e) { /* Abaikan kandidat dengan geometri rusak. */ }
+      }
+    }
+    return null;
+  }
+
+  async function findSlsInsideVillage(village) {
+    if (!window.turf || typeof window.turf.pointOnFeature !== 'function' ||
+        typeof window.turf.booleanPointInPolygon !== 'function') return null;
+    var coords = village.geometry.coordinates;
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    function visit(value) {
+      if (!Array.isArray(value)) return;
+      if (value.length >= 2 && typeof value[0] === 'number' && typeof value[1] === 'number') {
+        minX = Math.min(minX, value[0]); maxX = Math.max(maxX, value[0]);
+        minY = Math.min(minY, value[1]); maxY = Math.max(maxY, value[1]);
+        return;
+      }
+      value.forEach(visit);
+    }
+    visit(coords);
+    if (!Number.isFinite(minX) || !Number.isFinite(minY)) return null;
+    var bbox = [minX, minY, maxX, maxY, 'EPSG:4326'].join(',');
+    var url = wfsUrl({
+      service: 'WFS', version: '2.0.0', request: 'GetFeature',
+      typeNames: LAYER_SLS, outputFormat: 'application/json', srsName: 'EPSG:4326',
+      count: 1000, bbox: bbox,
+      propertyName: 'kdprov,kdkab,kdkec,kddesa,idsls,nmsls,nmdesa,the_geom'
+    });
+    var json = await fetchJson(proxyUrl(url));
+    var features = (json && json.features) || [];
+    var best = null, bestArea = -1;
+    for (var i = 0; i < features.length; i++) {
+      var feature = features[i];
+      if (!feature || !feature.geometry) continue;
+      try {
+        var sample = window.turf.pointOnFeature(feature);
+        if (!window.turf.booleanPointInPolygon(sample, village)) continue;
+        var area = window.turf.area(feature);
+        if (Number.isFinite(area) && area > bestArea) { best = feature; bestArea = area; }
+      } catch (e) { /* Abaikan kandidat dengan geometri rusak. */ }
+    }
+    return best;
+  }
+
+  /* Cocokkan titik interior batas desa ke geometri SLS; format kode kedua
+     sumber tidak diasumsikan sama. */
   async function findDesaId(kode) {
     var kodeDesa = String(kode || '').replace(/\D/g, '');
     if (!/^\d{10}$/.test(kodeDesa)) {
@@ -144,40 +275,44 @@ var generasi = 0;
     var key = kodeDesa;
     if (cacheDesa.has(key)) return cacheDesa.get(key);
 
-    var url = wfsUrl({
-      service: 'WFS', version: '2.0.0', request: 'GetFeature',
-      typeNames: LAYER_SLS, outputFormat: 'application/json', srsName: 'EPSG:4326',
-      count: 1, propertyName: 'kddesa,idsls,nmsls,nmdesa',
-      CQL_FILTER: "kddesa = '" + kodeDesa + "'"
-    });
-
-    var json = await fetchJson(proxyUrl(url));
-    var features = (json && json.features) || [];
-    if (!features.length) {
-      throw new Error('Layer InaRISK tidak memiliki SLS untuk kode desa ' + kodeDesa + '.');
+    var boundary = await fetchVillageBoundary(kodeDesa);
+    var point;
+    try {
+      point = window.turf.pointOnFeature(boundary.feature).geometry.coordinates;
+    } catch (e) {
+      throw new Error('Titik interior batas desa tidak dapat dihitung.');
     }
-
-    var props = (features[0] && features[0].properties) || {};
-    var result = { iddesa: kodeDesa, nama: props.nmdesa || props.nmsls || '' };
+    var feature = await findSlsAtPoint(point);
+    if (!feature) feature = await findSlsInsideVillage(boundary.feature);
+    if (!feature) throw new Error('Geometri SLS tidak ditemukan di dalam batas desa ' + kodeDesa + '.');
+    var props = feature.properties || {};
+    var result = {
+      iddesa: kodeDesa,
+      nama: boundary.data.nama || props.nmdesa || props.nmsls || '',
+      cqlFilter: slsFilterFromProperties(props)
+    };
     remember(cacheDesa, key, result);
     return result;
   }
 
   /* ── tahap 2: SLS di desa itu ──
-     iddesa berisi 10 digit, dan setiap idlss di dalamnya diawali kode itu,
-     jadi filter prefix ini tepat sasaran -- tidak ada risiko poligon desa
-     tetangga ikut terbawa. */
-  async function loadSlsOfDesa(iddesa) {
+     Filter memakai keempat komponen kode wilayah agar `kddesa` yang berulang
+     di kabupaten/kecamatan lain tidak ikut terambil. */
+  async function loadSlsOfDesa(iddesa, cqlFilter) {
     if (!/^\d{10}$/.test(String(iddesa || ''))) {
       throw new Error('Kode desa tidak valid.');
     }
     if (cacheSls.has(iddesa)) return cacheSls.get(iddesa);
 
+    if (!cqlFilter) {
+      var matched = await findDesaId(iddesa);
+      cqlFilter = matched.cqlFilter;
+    }
     var url = wfsUrl({
       service: 'WFS', version: '2.0.0', request: 'GetFeature',
       typeNames: LAYER_SLS, outputFormat: 'application/json', srsName: 'EPSG:4326',
       count: MAX_SLS, propertyName: 'idsls,nmsls,the_geom',
-      CQL_FILTER: "kddesa = '" + iddesa + "'"
+      CQL_FILTER: cqlFilter
     });
 
     var json = await fetchJson(proxyUrl(url));
@@ -206,7 +341,7 @@ var generasi = 0;
     var gen = generasi;
     var p = (async function () {
       var desa = await findDesaId(kode);
-      var sls = await loadSlsOfDesa(desa.iddesa);
+      var sls = await loadSlsOfDesa(desa.iddesa, desa.cqlFilter);
       if (!sls.items.length) {
         throw new Error('Desa ini belum memiliki data SLS pada layer InaRISK 2019.');
       }
@@ -465,7 +600,105 @@ var generasi = 0;
         '</li>';
     }
     h += '</ul>';
+    h += '<div id="geotani-sls-ad" class="lc-adsense sheet-adsense" aria-label="Iklan">' +
+      '<ins class="adsbygoogle" style="display:block" data-ad-format="fluid" ' +
+      'data-ad-layout-key="-fb+5w+4e-db+86" data-ad-client="ca-pub-7501816933195235" ' +
+      'data-ad-slot="5975101505"></ins></div>';
+    h += '<button type="button" id="geotani-sls-export" class="geotani-btn-print" style="margin-top:8px;width:100%;">Ekspor SHP (.zip)</button>';
     return h;
+  }
+
+  function pushSlsAd() {
+    var ad = document.querySelector('#geotani-sls-ad ins.adsbygoogle');
+    if (!ad || ad.dataset.pantau === '1') return;
+    ad.dataset.pantau = '1';
+    function push() {
+      if (!ad.isConnected || ad.dataset.terdorong === '1') return;
+      ad.dataset.terdorong = '1';
+      try {
+        window.adsbygoogle = window.adsbygoogle || [];
+        window.adsbygoogle.push({});
+      } catch (e) {
+        ad.dataset.terdorong = '0';
+        if (window.console && console.warn) console.warn('[AdSense] Slot SLS gagal dimuat:', e);
+      }
+    }
+    if (!('IntersectionObserver' in window)) { push(); return; }
+    var observer = new IntersectionObserver(function (entries) {
+      for (var i = 0; i < entries.length; i++) {
+        if (!entries[i].isIntersecting) continue;
+        observer.disconnect();
+        push();
+        break;
+      }
+    });
+    observer.observe(ad);
+  }
+
+  function shpSafeProperties(properties) {
+    var safe = {};
+    Object.keys(properties || {}).forEach(function (key) {
+      var base = String(key || 'field').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 10) || 'field';
+      var field = base, suffix = 1;
+      while (Object.prototype.hasOwnProperty.call(safe, field)) {
+        var tail = String(suffix++);
+        field = base.slice(0, 10 - tail.length) + tail;
+      }
+      var value = properties[key];
+      safe[field] = value == null || (typeof value === 'number' && !Number.isFinite(value)) ? ''
+        : typeof value === 'boolean' ? (value ? 1 : 0)
+          : typeof value === 'object' ? JSON.stringify(value) : value;
+    });
+    return safe;
+  }
+
+  async function exportSlsShapefile() {
+    if (!state || !state.items || !state.items.length) {
+      return { ok: false, message: 'Belum ada data SLS untuk diekspor.' };
+    }
+    var writer = window.shpwrite || (typeof shpwrite !== 'undefined' ? shpwrite : null);
+    if (!writer || typeof writer.zip !== 'function') {
+      return { ok: false, message: 'Modul pembuat SHP belum siap. Muat ulang halaman lalu coba kembali.' };
+    }
+    try {
+      var features = state.items.filter(function (item) { return item && item.geometry; }).map(function (item) {
+        return {
+          type: 'Feature',
+          geometry: item.geometry,
+          properties: shpSafeProperties({
+            id_sls: item.idsls,
+            nm_sls: item.nmsls,
+            kd_desa: state.iddesa,
+            nm_desa: state.namaDesa,
+            luas_ha: item.luasHa,
+            periode: '2019'
+          })
+        };
+      });
+      if (!features.length) return { ok: false, message: 'Tidak ada geometri SLS yang bisa diekspor.' };
+      var fileName = ('sls-' + (state.namaDesa || state.iddesa))
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9_-]+/gi, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'sls-desa';
+      var archive = await writer.zip({ type: 'FeatureCollection', features: features }, {
+        folder: fileName,
+        filename: fileName,
+        outputType: 'blob',
+        types: { polygon: 'polygons' },
+        prj: 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
+      });
+      var blob = archive instanceof Blob ? archive : new Blob([archive], { type: 'application/zip' });
+      var objectUrl = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = fileName + '.zip';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(function () { URL.revokeObjectURL(objectUrl); }, 1000);
+      return { ok: true, message: features.length.toLocaleString('id-ID') + ' SLS diekspor ke ' + fileName + '.zip.' };
+    } catch (error) {
+      return { ok: false, message: 'Gagal mengekspor SHP: ' + (error && error.message ? error.message : String(error)) };
+    }
   }
 
   function highlight(index) {
@@ -601,6 +834,7 @@ var generasi = 0;
         if (!st) return;
         drawOnMap();
         out.innerHTML = listHtml();
+        pushSlsAd();
         if (status) status.textContent = '';
       } catch (e) {
         /* Kuota habis punya tampilan sendiri: pesan error biasa akan
@@ -617,6 +851,15 @@ var generasi = 0;
     });
 
     out.addEventListener('click', function (ev) {
+      var exportButton = ev.target.closest ? ev.target.closest('#geotani-sls-export') : null;
+      if (exportButton) {
+        exportButton.disabled = true;
+        if (status) status.textContent = 'Menyiapkan berkas SHP...';
+        exportSlsShapefile().then(function (result) {
+          if (status) status.textContent = result.message;
+        }).finally(function () { exportButton.disabled = false; });
+        return;
+      }
       var li = ev.target.closest ? ev.target.closest('[data-sls-index]') : null;
       if (li) highlight(Number(li.getAttribute('data-sls-index')));
     });
@@ -641,6 +884,7 @@ var generasi = 0;
     areaHa: areaHa,
     findDesaId: findDesaId,
     loadSlsOfDesa: loadSlsOfDesa,
+    exportSlsShapefile: exportSlsShapefile,
     daftarDesa: daftarDesa,
     cariDesa: cariDesa,
     setSelectedKode: setSelectedKode,

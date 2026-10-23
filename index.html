@@ -2749,6 +2749,33 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     </div>
                   </details>
 
+                  <details class="geotani-kta-card geotani-sls-card" id="geotani-building-card" aria-labelledby="geotani-building-title">
+                    <summary class="gt-card-head">
+                      <span class="gt-card-icon" aria-hidden="true">&#127959;</span>
+                      <span>
+                        <b id="geotani-building-title">Bangunan Desa <span class="geotani-sls-badge">BNPB</span></b>
+                        <small>Jejak bangunan OpenBuilding</small>
+                      </span>
+                    </summary>
+                    <div>
+                      <p class="geotani-sls-desc">
+                        Cari desa untuk menampilkan jejak bangunan yang berada di dalam batas desa.
+                      </p>
+                      <div class="geotani-sls-search">
+                        <label class="geotani-form-label" for="geotaniBuildingVillageSearch">Cari nama desa</label>
+                        <input type="text" id="geotaniBuildingVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
+                        <div id="geotaniBuildingVillageResults" class="geotani-sls-results" hidden></div>
+                        <div id="geotaniBuildingVillageSelected" class="geotani-sls-picked" hidden></div>
+                      </div>
+                      <button id="geotani-building-load" class="geotani-btn-print" type="button">Tampilkan Bangunan Desa</button>
+                      <button id="geotani-building-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset jejak bangunan" aria-label="Reset jejak bangunan">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 7 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        Reset Bangunan
+                      </button>
+                      <div id="geotani-building-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                      <div id="geotani-building-output" class="geotani-sls-desc" aria-live="polite"></div>
+                    </div>
+                  </details>
 
                 </div>
 
@@ -4017,7 +4044,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/geotani-search.js"></script>
   <!-- SLS GeoTani: setelah geodesic-area (untuk luas) dan geoid-wilayah
        (kartu PDF membaca window._geotaniSlsData). -->
-  <script src="assets/js/geotani-sls.js"></script>
+  <script src="assets/js/geotani-sls.js?v=20261023-sls-fluid-ad"></script>
+  <script src="assets/js/geotani-buildings.js?v=20261023-arcgis-json-query2"></script>
   <script src="assets/js/geotani-cek-nib.js?v=20261012-gistaru-wfs"></script>
   <!-- LBS & LSD (BIG SatuPeta): butuh geodesic-area untuk luas, dan
        geoid-wilayah untuk seksi PDF. -->
