@@ -143,10 +143,11 @@
       return key !== 'hillshade' && map.hasLayer(layers[key]);
     });
     if (!activeKeys.length) return;
-    currentPopup = window.L.popup({ maxWidth: 360, className: 'isee-soil-leaflet-popup' })
+    var requestPopup = window.L.popup({ maxWidth: 360, className: 'isee-soil-leaflet-popup' })
       .setLatLng(event.latlng)
       .setContent('<div class="agol-popup isee-soil-popup"><div class="agol-popup-header agol-geo-tanah"><div class="agol-popup-badge">Soil Explorer</div><div class="agol-popup-title">Memuat informasi tanah...</div></div></div>')
       .openOn(map);
+    currentPopup = requestPopup;
     Promise.all(activeKeys.map(function (key) {
       return jsonp(getIdentifyUrl(key, event.latlng, map)).then(function (data) {
         return { key: key, results: formatIdentifyResult(key, data) };
@@ -154,13 +155,19 @@
     }).map(function (promise) {
       return promise.catch(function () { return { failed: true, results: [] }; });
     })).then(function (responses) {
-      if (requestId !== identifyRequestId || !map.hasLayer(currentPopup)) return;
+      // The shared detail-sheet handler closes the Leaflet popup after moving
+      // its DOM into the sheet. Check request ownership instead of map.hasLayer,
+      // then update the moved content node when the popup is already in sheet.
+      if (requestId !== identifyRequestId || currentPopup !== requestPopup) return;
       var results = [], failedCount = 0;
       responses.forEach(function (response) {
         if (response.failed) { failedCount++; return; }
         response.results.forEach(function (result) { results.push(result); });
       });
-      currentPopup.setContent(renderIdentifyPopup(event.latlng, results, failedCount));
+      var html = renderIdentifyPopup(event.latlng, results, failedCount);
+      var sheetContent = document.querySelector('#catalog-popup-sheet .catalog-popup-sheet-card .leaflet-popup-content');
+      if (sheetContent && !requestPopup._map) sheetContent.innerHTML = html;
+      else requestPopup.setContent(html);
     });
   }
 

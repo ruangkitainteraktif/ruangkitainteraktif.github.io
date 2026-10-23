@@ -1527,6 +1527,15 @@
             if (!geom || geom.x === undefined || geom.y === undefined) continue;
             var latlng = [geom.y, geom.x];
             var p = f.attributes || {};
+            var name = p.NAMA_PASAR || p.nama_pasar || '-';
+            var jenis = p.JENIS_PASAR || p.jenis_pasar || '-';
+            var kabkota = p.NAMA_KOTA || p.nama_kota || p.NAMA_KAB || p.nama_kab || '-';
+            var provinsi = p.NAMA_PROP || p.nama_prop || '-';
+            var esc = function (value) {
+              return String(value == null || value === '' ? '-' : value).replace(/[&<>"']/g, function (character) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+              });
+            };
             var marker = L.marker(latlng, {
               icon: L.divIcon({
                 className: 'pasar-marker-icon',
@@ -1534,20 +1543,23 @@
                 iconSize: [14, 14],
                 iconAnchor: [7, 7],
                 popupAnchor: [0, -8]
-              }),
-              properties: { NAMA_PASAR: name, JENIS_PASAR: jenis, NAMA_KOTA: kabkota, NAMA_PROP: provinsi }
+              })
             });
-            var name = p.NAMA_PASAR || p.nama_pasar || '-';
-            var jenis = p.JENIS_PASAR || p.jenis_pasar || '-';
-            var kabkota = p.NAMA_KOTA || p.nama_kota || p.NAMA_KAB || p.nama_kab || '-';
-            var provinsi = p.NAMA_PROP || p.nama_prop || '-';
             marker.bindPopup(
-              '<div style="font-size:12px;line-height:1.6">' +
-                '<strong style="color:#d35400">' + name + '</strong><br>' +
-                'Jenis: ' + jenis + '<br>' +
-                'Kab/Kota: ' + kabkota + '<br>' +
-                'Provinsi: ' + provinsi +
-              '</div>'
+              '<div class="agol-popup sebaran-pasar-feature">' +
+                '<div class="agol-popup-header agol-geo-pasar">' +
+                  '<div class="agol-popup-badge">Sebaran Pasar</div>' +
+                  '<div class="agol-popup-title">' + esc(name) + '</div>' +
+                  '<div class="agol-popup-subtitle">' + esc(jenis) + '</div>' +
+                '</div>' +
+                '<div class="agol-popup-body"><div class="agol-popup-fields">' +
+                  '<div class="agol-popup-field"><span class="agol-popup-field-label">Jenis Pasar</span><span class="agol-popup-field-value">' + esc(jenis) + '</span></div>' +
+                  '<div class="agol-popup-field"><span class="agol-popup-field-label">Kabupaten/Kota</span><span class="agol-popup-field-value">' + esc(kabkota) + '</span></div>' +
+                  '<div class="agol-popup-field"><span class="agol-popup-field-label">Provinsi</span><span class="agol-popup-field-value">' + esc(provinsi) + '</span></div>' +
+                '</div></div>' +
+                '<div class="agol-popup-footer"><span>Sumber: Kementerian Perdagangan</span></div>' +
+              '</div>',
+              { className: 'sebaran-pasar-leaflet-popup' }
             );
             sebaranPasarLayer.addLayer(marker);
           }

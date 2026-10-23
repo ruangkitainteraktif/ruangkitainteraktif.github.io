@@ -14,13 +14,157 @@
   }).setView(INITIAL_CENTER, INITIAL_ZOOM);
   window.map = map;
 
-  // Close all other popups when a new popup opens (prevent popup stacking)
+  // Keep one map popup at a time, then present feature details in a single
+  // responsive sheet instead of anchoring the content to a Leaflet popup.
+  var catalogPopupSheet = null;
+  var catalogPopupCenterTimer = 0;
+  function ensureCatalogPopupSheet() {
+    if (catalogPopupSheet) return catalogPopupSheet;
+    var sheet = document.createElement('section');
+    sheet.id = 'catalog-popup-sheet';
+    sheet.className = 'bhumi-persil-sheet catalog-popup-sheet';
+    sheet.setAttribute('role', 'region');
+    sheet.setAttribute('aria-label', 'Detail layer peta');
+    sheet.setAttribute('aria-hidden', 'true');
+    sheet.innerHTML = '<div class="bhumi-persil-sheet-handle" aria-hidden="true"></div><div class="bhumi-persil-sheet-head"><div class="bhumi-persil-sheet-title">Detail Layer</div><div class="bhumi-persil-sheet-actions"><button type="button" class="bhumi-persil-sheet-minimize" aria-label="Minimalkan detail layer" title="Minimalkan panel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button><button type="button" class="bhumi-persil-sheet-close" aria-label="Tutup detail layer" title="Tutup">&times;</button></div></div><div class="bhumi-persil-sheet-content catalog-popup-sheet-content"></div>';
+    document.body.appendChild(sheet);
+    var minimizeButton = sheet.querySelector('.bhumi-persil-sheet-minimize');
+    function updateIcon() {
+      var minimized = window.SheetDrag && window.SheetDrag.isMinimized('catalog-popup');
+      minimizeButton.innerHTML = minimized
+        ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>'
+        : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>';
+    }
+    minimizeButton.addEventListener('click', function () {
+      if (!window.SheetDrag) return;
+      window.SheetDrag.toggleMinimize('catalog-popup');
+      updateIcon();
+    });
+    sheet.querySelector('.bhumi-persil-sheet-close').addEventListener('click', function () {
+      window.clearTimeout(catalogPopupCenterTimer);
+      sheet.querySelector('.catalog-popup-sheet-content').innerHTML = '';
+      if (window.SheetDrag) window.SheetDrag.close('catalog-popup');
+      else sheet.classList.remove('is-open');
+      sheet.setAttribute('aria-hidden', 'true');
+    });
+    sheet.querySelector('.bhumi-persil-sheet-head').addEventListener('click', function (event) {
+      if (sheet.classList.contains('is-minimized') && !event.target.closest('.bhumi-persil-sheet-actions') && window.SheetDrag) {
+        window.SheetDrag.restore('catalog-popup');
+        updateIcon();
+      }
+    });
+    if (window.SheetDrag) {
+      window.SheetDrag.register('catalog-popup', {
+        el: sheet, openClass: 'is-open', minClass: 'is-minimized',
+        bodyOpen: 'catalog-popup-sheet-open', bodyMin: 'catalog-popup-sheet-minimized',
+        handle: '.bhumi-persil-sheet-handle', header: '.bhumi-persil-sheet-head',
+        minButton: '.bhumi-persil-sheet-minimize',
+        labelMin: 'Minimalkan detail layer', labelOpen: 'Perluas detail layer'
+      });
+    }
+    sheet.__updateMinimizeIcon = updateIcon;
+    catalogPopupSheet = sheet;
+    return sheet;
+  }
+
+  function showCatalogPopupInSheet(popup) {
+    if (!popup || (popup.options && popup.options.catalogSheet === false)) return false;
+    var latlng = (popup.getLatLng && popup.getLatLng()) || popup._latlng ||
+      (popup._source && popup._source.getLatLng && popup._source.getLatLng());
+    var popupContainer = popup._container;
+    var popupContent = popupContainer && popupContainer.querySelector('.leaflet-popup-content');
+    if (!popupContent) return false;
+    var popupWrapper = popupContainer.querySelector('.leaflet-popup-content-wrapper') || popupContent;
+    var sheet = ensureCatalogPopupSheet();
+    var content = sheet.querySelector('.catalog-popup-sheet-content');
+    var card = document.createElement('div');
+    card.className = 'catalog-popup-sheet-card';
+    if (popupContainer.classList) {
+      Array.prototype.forEach.call(popupContainer.classList, function (name) {
+        if (name !== 'leaflet-popup' && name !== 'leaflet-zoom-animated' && name !== 'leaflet-zoom-hide') card.classList.add(name);
+      });
+    }
+    // Normalize catalog attribute rows into the same two-column table used by
+    // the Persil sheet, while moving nodes (rather than copying HTML) so links
+    // and any attached behavior remain intact.
+    Array.prototype.forEach.call(popupContent.querySelectorAll('.agol-popup-fields'), function (fields) {
+      if (!fields.querySelector('.agol-popup-field')) return;
+      var table = document.createElement('table');
+      table.className = 'bhumi-persil-data-table catalog-feature-data-table';
+      var tbody = document.createElement('tbody');
+      Array.prototype.forEach.call(fields.querySelectorAll(':scope > .agol-popup-field'), function (field) {
+        var label = field.querySelector('.agol-popup-field-label');
+        var value = field.querySelector('.agol-popup-field-value');
+        if (!label || !value) return;
+        var row = document.createElement('tr');
+        var heading = document.createElement('th');
+        var cell = document.createElement('td');
+        heading.scope = 'row';
+        while (label.firstChild) heading.appendChild(label.firstChild);
+        while (value.firstChild) cell.appendChild(value.firstChild);
+        row.appendChild(heading);
+        row.appendChild(cell);
+        tbody.appendChild(row);
+      });
+      if (!tbody.children.length) return;
+      table.appendChild(tbody);
+      fields.parentNode.replaceChild(table, fields);
+    });
+    Array.prototype.forEach.call(popupContent.querySelectorAll('.fsva-popup-fields'), function (fields) {
+      var table = document.createElement('table');
+      table.className = 'bhumi-persil-data-table catalog-feature-data-table fsva-feature-data-table';
+      var tbody = document.createElement('tbody');
+      Array.prototype.forEach.call(fields.children, function (field) {
+        var label = field.querySelector('.fsva-popup-field-label');
+        var value = field.querySelector('.fsva-popup-field-value');
+        if (!label || !value) return;
+        var row = document.createElement('tr');
+        var heading = document.createElement('th');
+        var cell = document.createElement('td');
+        heading.scope = 'row';
+        heading.textContent = label.textContent;
+        var rank = field.querySelector('.fsva-popup-field-rank');
+        if (rank) cell.appendChild(rank);
+        cell.appendChild(value);
+        row.appendChild(heading);
+        row.appendChild(cell);
+        tbody.appendChild(row);
+      });
+      if (!tbody.children.length) return;
+      table.appendChild(tbody);
+      fields.parentNode.replaceChild(table, fields);
+    });
+    popupContent.style.width = '100%';
+    popupContent.style.maxWidth = 'none';
+    popupContent.style.margin = '0';
+    popupWrapper.style.width = '100%';
+    popupWrapper.style.maxWidth = '100%';
+    card.appendChild(popupWrapper);
+    content.innerHTML = '';
+    content.appendChild(card);
+    map.closePopup(popup);
+    if (window.SheetDrag) {
+      if (!window.SheetDrag.isOpen('catalog-popup')) window.SheetDrag.buka('catalog-popup');
+      else if (window.SheetDrag.isMinimized('catalog-popup')) window.SheetDrag.restore('catalog-popup');
+      if (sheet.__updateMinimizeIcon) sheet.__updateMinimizeIcon();
+    } else sheet.classList.add('is-open');
+    sheet.setAttribute('aria-hidden', 'false');
+    window.clearTimeout(catalogPopupCenterTimer);
+    if (latlng) catalogPopupCenterTimer = window.setTimeout(function () {
+      if (!sheet.classList.contains('is-open') || sheet.classList.contains('is-minimized')) return;
+      if (typeof map.invalidateSize === 'function') map.invalidateSize({ pan: false });
+      map.panTo(latlng, { animate: true, duration: 0.45 });
+    }, 420);
+    return true;
+  }
+
   map.on('popupopen', function(e) {
     map.eachLayer(function(layer) {
       if (layer !== e.popup._source && layer._popup && layer._popup !== e.popup) {
         layer.closePopup();
       }
     });
+    showCatalogPopupInSheet(e.popup);
   });
 
 L.control.scale({
@@ -2718,7 +2862,7 @@ const SAWAH_COLOR = '#87cf15';
       if (!bhumiPersilSheet || !bhumiPersilSheet.classList.contains('is-open') ||
           (window.SheetDrag && window.SheetDrag.isMinimized('bhumi-persil'))) return;
       if (typeof map.invalidateSize === 'function') map.invalidateSize({ pan: false });
-      map.panTo(latlng, { animate: false });
+      map.panTo(latlng, { animate: true, duration: 0.45 });
     }, 420);
     return sheet;
   }

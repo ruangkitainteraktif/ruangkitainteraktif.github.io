@@ -124,6 +124,21 @@
         const layer = await window.showGeoidBoundary(selected.code);
         if (!layer) throw new Error('Polygon tidak ditemukan atau batas BIG belum tersedia.');
         if (typeof layer.openPopup === 'function') layer.openPopup();
+        // Popup membuka unified sheet dan memicu resize/pan pada map. Fit
+        // kembali setelah transisi sheet serta popup auto-pan selesai.
+        if (typeof layer.getBounds === 'function') {
+          const bounds = layer.getBounds();
+          const map = window.map;
+          if (map && bounds && bounds.isValid && bounds.isValid()) {
+            const maxZoomByLevel = [8, 10, 12, 15];
+            const maxZoom = maxZoomByLevel[selected.level] || 15;
+            window.setTimeout(() => {
+              if (!map.hasLayer(layer) || !bounds.isValid()) return;
+              if (typeof map.invalidateSize === 'function') map.invalidateSize({ pan: false });
+              map.flyToBounds(bounds.pad(0.08), { maxZoom, duration: 1 });
+            }, 560);
+          }
+        }
         if (searchInput) searchInput.value = selected.name;
         setStatus(`Polygon ${selected.name} ditampilkan.`);
       } catch (error) {

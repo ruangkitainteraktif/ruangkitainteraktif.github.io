@@ -170,18 +170,13 @@
     var badgeColor = count > 500 ? '#991b1b' : count > 200 ? '#ef4444' : count > 100 ? '#f97316' : count > 50 ? '#fbbf24' : '#10b981';
 
     var listHtml = '';
-    var showItems = items.slice(0, 20);
-    for (var i = 0; i < showItems.length; i++) {
-      var it = showItems[i];
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
       listHtml += '<div class="sppgd-popup-item">' +
         '<span class="sppgd-popup-item-name">' + esc(it.name) + '</span>' +
         '<span class="sppgd-popup-item-sub">' + esc(it.subDistrict || '') + (it.village ? ', ' + esc(it.village) : '') + '</span>' +
       '</div>';
     }
-    if (items.length > 20) {
-      listHtml += '<div class="sppgd-popup-more">+' + (items.length - 20) + ' lainnya...</div>';
-    }
-
     return '<div class="sppgd-popup">' +
       '<div class="sppgd-popup-header">' +
         '<div class="sppgd-popup-badge" style="background:' + badgeColor + '">' + count + ' SPPG</div>' +

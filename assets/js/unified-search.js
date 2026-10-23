@@ -248,6 +248,22 @@
           console.warn('[UnifiedSearch] Gagal membuka popup batas:', e);
         }
       }
+      // Opening the unified detail sheet resizes the map, and its popup
+      // handler briefly pans to the popup anchor. Fit the searched boundary
+      // after that layout/pan settles so the whole selected area is visible.
+      if (layer && typeof layer.getBounds === 'function') {
+        const bounds = layer.getBounds();
+        const _m = window.map;
+        if (_m && bounds && bounds.isValid && bounds.isValid()) {
+          const maxZoomByLevel = { 1: 8, 2: 10, 3: 12, 4: 15 };
+          const maxZoom = maxZoomByLevel[String(item.kode || '').split('.').length] || 15;
+          window.setTimeout(() => {
+            if (!_m.hasLayer(layer) || !bounds.isValid()) return;
+            if (typeof _m.invalidateSize === 'function') _m.invalidateSize({ pan: false });
+            _m.flyToBounds(bounds.pad(0.08), { maxZoom, duration: 1 });
+          }, 560);
+        }
+      }
     }
   }
 
