@@ -604,7 +604,6 @@ var generasi = 0;
       '<ins class="adsbygoogle" style="display:block" data-ad-format="fluid" ' +
       'data-ad-layout-key="-fb+5w+4e-db+86" data-ad-client="ca-pub-7501816933195235" ' +
       'data-ad-slot="5975101505"></ins></div>';
-    h += '<button type="button" id="geotani-sls-export" class="geotani-btn-print" style="margin-top:8px;width:100%;">Ekspor SHP (.zip)</button>';
     return h;
   }
 
