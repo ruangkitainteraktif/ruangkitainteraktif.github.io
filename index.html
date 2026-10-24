@@ -2509,10 +2509,38 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     </div>
                   </details>
 
+               <details class="geotani-kta-card geotani-sls-card" id="geotani-sls-card" aria-labelledby="geotani-sls-title">
+                    <summary class="gt-card-head">
+                      <span class="gt-card-icon" aria-hidden="true">&#129517;</span>
+                      <span>
+                        <b id="geotani-sls-title">RTRW Nasional </b>
+                        <small>Batas Wilayah RT/RW/dusun &mdash; Indonesia</small>
+                      </span>
+                    </summary>
+                    <div>
+                      <p class="geotani-sls-desc">
+                        Menampilkan batas <b>RT/RW/dusun</b> di dalam desa yang dipilih.
+                      </p>
+                      <div class="geotani-sls-search">
+                        <label class="geotani-form-label" for="geotaniSlsVillageSearch">Cari nama desa</label>
+                        <input type="text" id="geotaniSlsVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
+                        <div id="geotaniSlsVillageResults" class="geotani-sls-results" hidden></div>
+                        <div id="geotaniSlsVillageSelected" class="geotani-sls-picked" hidden></div>
+                      </div>
+                      <button id="geotani-sls-load" class="geotani-btn-print" type="button">Tampilkan SLS Desa</button>
+                      <button id="geotani-sls-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon SLS" aria-label="Reset polygon SLS">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        Reset Polygon
+                      </button>
+                      <div id="geotani-sls-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                      <div id="geotani-sls-output"></div>
+                    </div>
+                  </details>
+
                <details class="georaster-card" aria-labelledby="persilCardTitle">
                  <summary class="gt-card-head">
                    <span class="gt-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></span>
-                   <span><b id="persilCardTitle">Clip PERSIL Nasional</b><small>Pilih batas desa untuk memotong raster persil BHUMI.</small></span>
+                   <span><b id="persilCardTitle">PERSIL Nasional</b><small>Pilih batas desa untuk memotong raster persil BHUMI.</small></span>
                  </summary>
                  <div class="georaster-card-body">
                    <div class="demnas-clip-box">
@@ -2549,7 +2577,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
               <summary class="gt-card-head">
                 <span class="gt-card-icon" aria-hidden="true">&#128506;</span>
                 <span>
-                  <b id="georasterCardTitle">Unduh DEMNAS</b>
+                  <b id="georasterCardTitle">DEMNAS Nasional</b>
                   <small>Clip batas wilayah, lalu unduh TIFF tanpa token</small>
                 </span>
               </summary>
@@ -2743,34 +2771,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     </div>
                   </details>
 
-                  <details class="geotani-kta-card geotani-sls-card" id="geotani-sls-card" aria-labelledby="geotani-sls-title">
-                    <summary class="gt-card-head">
-                      <span class="gt-card-icon" aria-hidden="true">&#129517;</span>
-                      <span>
-                        <b id="geotani-sls-title">SLS Desa <span class="geotani-sls-badge">BPS</span></b>
-                        <small>Satuan Lingkungan Setempat RT/RW/dusun &mdash; BPS</small>
-                      </span>
-                    </summary>
-                    <div>
-                      <p class="geotani-sls-desc">
-                        Menampilkan batas <b>Satuan Lingkungan Setempat</b> (RT/RW/dusun) di dalam desa
-                        yang dipilih, sebagai acuan kerja lapangan.
-                      </p>
-                      <div class="geotani-sls-search">
-                        <label class="geotani-form-label" for="geotaniSlsVillageSearch">Cari nama desa</label>
-                        <input type="text" id="geotaniSlsVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
-                        <div id="geotaniSlsVillageResults" class="geotani-sls-results" hidden></div>
-                        <div id="geotaniSlsVillageSelected" class="geotani-sls-picked" hidden></div>
-                      </div>
-                      <button id="geotani-sls-load" class="geotani-btn-print" type="button">Tampilkan SLS Desa</button>
-                      <button id="geotani-sls-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon SLS" aria-label="Reset polygon SLS">
-                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                        Reset Polygon
-                      </button>
-                      <div id="geotani-sls-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
-                      <div id="geotani-sls-output"></div>
-                    </div>
-                  </details>
+                  
 
                   <details class="geotani-kta-card geotani-sls-card" id="geotani-building-card" aria-labelledby="geotani-building-title">
                     <summary class="gt-card-head">
