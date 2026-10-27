@@ -2447,6 +2447,7 @@ const SAWAH_COLOR = '#87cf15';
         tileGagal = 0;
       });
       bhumiPersilNasionalLayer.addTo(map);
+      showMapToast('Klik pada peta untuk melihat zona wilayah.', 'info');
       zoomToPersilDetail();
       refreshPersilLegend();
     } else {
@@ -2887,6 +2888,13 @@ const SAWAH_COLOR = '#87cf15';
   function bhumiPersilStatusCard(title, message, canRetry) {
     return bhumiPersilCard(title, 'Persil Nasional', [['Status', message]]) +
       (canRetry ? '<div class="bhumi-persil-retry-wrap"><button type="button" class="bhumi-persil-retry">Coba lagi</button></div>' : '');
+  }
+
+  function bhumiPersilLoadingCard(title) {
+    return '<div class="agol-popup"><div class="agol-popup-header agol-geo-persil">' +
+      '<div class="agol-popup-title">' + bhumiPersilEsc(title) + '</div>' +
+      '<div class="agol-popup-subtitle">Persil Nasional</div></div>' +
+      '<div class="agol-popup-body bhumi-persil-loading"><span class="bhumi-persil-spinner" role="status" aria-label="Memuat"></span></div></div>';
   }
 
   function bhumiPersilEnsureSheet() {
@@ -3343,7 +3351,7 @@ const SAWAH_COLOR = '#87cf15';
     if (!host) return;
     var node = document.createElement('div');
     node.className = 'bhumi-persil-gistaru';
-    node.innerHTML = bhumiPersilStatusCard('RDTR GISTARU ATR/BPN', 'Memuat informasi zonasi dari koordinat klik…');
+    node.innerHTML = bhumiPersilLoadingCard('RDTR GISTARU ATR/BPN');
     host.insertBefore(node, host.firstChild);
     /* Fallback ditangani sendiri supaya kegagalannya TIDAK jatuh ke catch
        wilayah di bawah -- kalau jatuh, pengguna akan diberi tahu bahwa
@@ -3606,7 +3614,6 @@ const SAWAH_COLOR = '#87cf15';
   }
 
   function bhumiPersilRenderResult(latlng, layers, results) {
-    if (!bhumiPersilNasionalLayer || !map.hasLayer(bhumiPersilNasionalLayer)) return;
     bhumiPersilClearMapSelection();
     var groups = layers.map(function (layer, i) {
       var r = results[i];
@@ -3642,9 +3649,11 @@ const SAWAH_COLOR = '#87cf15';
     bhumiPersilOpenSheet(latlng, cards, true);
   }
 
-  function bhumiPersilIdentify(e) {
-    if (!bhumiPersilNasionalLayer || !map.hasLayer(bhumiPersilNasionalLayer)) return;
+  function bhumiPersilIdentify(e, force) {
     if (!e.latlng) return;
+    if (e.__bhumiPersilIdentifyHandled) return;
+    if (!force && (!bhumiPersilNasionalLayer || !map.hasLayer(bhumiPersilNasionalLayer))) return;
+    e.__bhumiPersilIdentifyHandled = true;
     var seq = ++bhumiPersilClickSeq;
     var size = map.getSize();
     var pt = map.latLngToContainerPoint(e.latlng);
@@ -3658,8 +3667,7 @@ const SAWAH_COLOR = '#87cf15';
       url: '/expapi/getPersil',
       service: '/bhumigs/umum'
     };
-    bhumiPersilOpenSheet(e.latlng, bhumiPersilStatusCard('Data Pertanahan',
-      'Mencari data persil & ZNT\u2026'));
+    bhumiPersilOpenSheet(e.latlng, bhumiPersilLoadingCard('Data Pertanahan'));
     var settled = function (p) {
       return p.then(function (fc) { return { ok: true, fc: fc }; },
         function (err) {
@@ -3705,6 +3713,9 @@ const SAWAH_COLOR = '#87cf15';
       });
   }
   map.on('click', bhumiPersilIdentify);
+  window.identifyBhumiPersilAt = function (event) {
+    if (event && event.latlng) bhumiPersilIdentify(event, true);
+  };
 
   /* ── Heatmap Sebaran Transaksi Jual Beli Tanah 2023 (BHUMI) ──
      GeoJSON dari /expapi/get-sebarantransaksi lewat proxy. Endpoint

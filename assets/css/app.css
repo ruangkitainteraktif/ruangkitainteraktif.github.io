@@ -6679,6 +6679,9 @@
     #catalog-popup-sheet .catalog-popup-sheet-card .gp-popup-body { overflow: visible; flex: 0 0 auto; }
     .catalog-popup-sheet-card.bhumi-persil-detail-card .bhumi-persil-coordinates { margin: 0; border-right: 0; border-bottom: 0; border-left: 0; border-radius: 0; }
     .bhumi-persil-retry-wrap { display: flex; justify-content: flex-end; padding: 10px 12px; border-top: 1px solid var(--border-color); }
+    .bhumi-persil-loading { display: grid; min-height: 72px; place-items: center; }
+    .bhumi-persil-spinner { width: 24px; height: 24px; border: 3px solid var(--border-color); border-top-color: #b45309; border-radius: 50%; animation: bhumi-persil-spin .75s linear infinite; }
+    @keyframes bhumi-persil-spin { to { transform: rotate(360deg); } }
     .bhumi-persil-retry { min-height: 34px; padding: 7px 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; }
     .catalog-popup-sheet-card .sppgd-popup { width: 100% !important; min-width: 0; max-width: none; max-height: none !important; overflow: visible; }
     .catalog-popup-sheet-card.sppgd-leaflet-popup .leaflet-popup-content-wrapper { max-height: none !important; overflow: visible !important; }
@@ -11171,6 +11174,10 @@ details[open] > .gt-card-head::after {
     .geoportal-modal-body { flex: 1; min-height: 0; overflow-y: auto; padding: 14px; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #b7c7d6 transparent; }
     .geoportal-modal-body::-webkit-scrollbar { width: 6px; }
     .geoportal-modal-body::-webkit-scrollbar-thumb { border-radius: 999px; background: #b7c7d6; }
+    @media (max-width: 768px) {
+      .geoportal-modal { align-items: flex-end; padding: 0; }
+      .geoportal-modal-dialog { width: 100%; max-width: none; max-height: 86vh; max-height: 86dvh; border-right: 0; border-bottom: 0; border-left: 0; border-radius: 16px 16px 0 0; }
+    }
     .geoportal-properties { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; align-content: start; }
     .geoportal-properties h4 { grid-column: 1 / -1; margin: 3px 0 0; color: #0879bf; font-size: 14px; }
     .geoportal-properties .geoportal-feature-card { width: 100%; max-width: none; max-height: none; overflow: hidden; border: 1px solid var(--border-color); border-radius: 0; box-shadow: none; }

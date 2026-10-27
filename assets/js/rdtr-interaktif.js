@@ -12,8 +12,6 @@
   var active = new Map();
   var extentCache = new Map();
   var page = 0;
-  var detailMarker = null;
-  var identifySequence = 0;
 
   function normalize(value) {
     return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('id-ID').trim();
@@ -138,38 +136,15 @@
     if (!entry) return;
     if (window.map && window.map.hasLayer(entry.layer)) window.map.removeLayer(entry.layer);
     active.delete(key);
-    if (!active.size && detailMarker && window.map) {
-      window.map.removeLayer(detailMarker);
-      detailMarker = null;
-    }
     setStatus(active.size + ' overlay aktif dari ' + catalog.length + ' RDTR.', false);
   }
 
-  // Identifikasi fitur dari overlay RDTR aktif dan tampilkan pada panel detail Geoportal.
+  // Klik overlay RDTR memakai panel identifikasi Persil Nasional yang sama.
   function identifyRdtrAtClick(event) {
     if (!active.size || !event || !event.latlng || !window.map) return;
-    var sequence = ++identifySequence;
-    var latlng = event.latlng;
-    var entries = Array.from(active.entries()).reverse();
-    var point = { x: latlng.lng, y: latlng.lat, spatialReference: { wkid: 4326 } };
-    function tryEntry(index) {
-      if (index >= entries.length || sequence !== identifySequence) return;
-      var entry = entries[index][1];
-      var url = GISTARU_SERVICES + entry.item.url_mapserver + '/' + entry.item.sublayer +
-        '/query?geometry=' + encodeURIComponent(JSON.stringify(point)) +
-        '&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects' +
-        '&distance=8&units=esriSRUnit_Meter&outFields=*&returnGeometry=false&f=json';
-      fetchArcGISMetadata(url).then(function (data) {
-        var feature = data && data.features && data.features[0];
-        if (!feature) return tryEntry(index + 1);
-        if (window.showGeoportalFeatureDetails) {
-          window.showGeoportalFeatureDetails(entry.item.rtr || 'RDTR Interaktif', feature.attributes || {}, latlng);
-        }
-        if (detailMarker) window.map.removeLayer(detailMarker);
-        detailMarker = window.L.marker(latlng, { keyboard: false, title: 'Lokasi detail RDTR' }).addTo(window.map);
-      }).catch(function () { tryEntry(index + 1); });
-    }
-    tryEntry(0);
+    if (event.__bhumiPersilIdentifyHandled) return;
+    if (typeof window.identifyBhumiPersilAt !== 'function') return;
+    window.identifyBhumiPersilAt(event);
   }
 
   function esriExtentBounds(extent, fallbackSpatialReference) {
@@ -254,6 +229,12 @@
       }
     }).catch(function (error) {
       console.warn('[RDTR Interaktif] Gagal membaca extent:', item.rtr, error);
+      if (active.has(key) && item.fallbackView && item.fallbackView.center) {
+        var center = item.fallbackView.center;
+        window.map.setView(center, item.fallbackView.zoom || 14, { animate: true });
+        setStatus('Overlay aktif. Bounds resmi tidak tersedia; peta diarahkan ke titik fokus perkiraan.', false);
+        return;
+      }
       if (active.has(key)) setStatus('Overlay aktif, tetapi bounds ' + (item.rtr || 'RDTR') + ' gagal dibaca: ' + ((error && error.message) || 'metadata tidak tersedia') + '.', true);
     });
   }
@@ -269,10 +250,10 @@
     var target = service + '?bbox=' + bbox +
       '&bboxSR=102100&imageSR=102100&size=' + tileSize + ',' + tileSize +
       '&dpi=96&format=png32&transparent=true&layers=show%3A' + encodeURIComponent(item.sublayer) + '&f=image';
-    /* Gunakan jalur yang sama dengan overlay RDTR Takengon di map-core:
-       gistaru-proxy sebagai upstream, dibungkus proxy gambar agar browser
-       dapat merender respons image/png lintas-origin. */
-    return GISTARU_CORS_PROXY + encodeURIComponent(GISTARU_PROXY + target);
+    /* Tile hanya ditampilkan sebagai elemen <img>; CORS tidak diperlukan
+       untuk merender gambar lintas-origin. Lewati proxy gambar aplikasi,
+       yang menolak request export ArcGIS ini, dan gunakan proxy resmi GISTARU. */
+    return GISTARU_PROXY + target;
   }
 
   function createOverlay(item, map) {

@@ -3171,7 +3171,11 @@
                      "id_rtr":  "001",
                      "url_mapserver":  "062_RDTR_PROVINSI_NUSA_TENGGARA_TIMUR/_RDTR_53A7_PERKOTAAN_BOKING/MapServer",
                      "sublayer":  0,
-                     "integration_date":  "2022-10-03"
+                     "integration_date":  "2022-10-03",
+                     "fallbackView":  {
+                                         "center":  [-9.824804, 124.7409293],
+                                         "zoom":  14
+                                     }
                  },
                  {
                      "wilayah":  "5303000000",
@@ -5027,7 +5031,11 @@
                      "id_rtr":  "001",
                      "url_mapserver":  "084_RDTR_PROVINSI_PAPUA_PEGUNUNGAN/_RDTR_95A3_PERKOTAAN_OKSIBIL/MapServer",
                      "sublayer":  0,
-                     "integration_date":  "2025-11-04"
+                     "integration_date":  "2025-11-04",
+                     "fallbackView":  {
+                                         "center":  [-4.9078139, 140.6281194],
+                                         "zoom":  14
+                                     }
                  },
                  {
                      "wilayah":  "9505000000",
