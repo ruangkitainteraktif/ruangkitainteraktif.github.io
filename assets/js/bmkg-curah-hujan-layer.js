@@ -21,6 +21,27 @@
     });
   }
 
+  /* Template .agol-popup yang sama dengan card lain di panel Detail Layer. */
+  function rainPopupHtml(bodyHtml, footerText) {
+    return '<div class="agol-popup">'
+      + '<div class="agol-popup-header agol-geo-kttht">'
+      + '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#93c5fd;"></span>BMKG</div>'
+      + '<div class="agol-popup-title">Data Iklim</div>'
+      + '</div>'
+      + '<div class="agol-popup-body">' + bodyHtml + '</div>'
+      + '<div class="agol-popup-footer"><span>' + esc(footerText) + '</span></div>'
+      + '</div>';
+  }
+
+  function rainStatusPopupHtml(statusText, footerText) {
+    return rainPopupHtml(
+      '<div class="agol-popup-fields"><div class="agol-popup-field">'
+      + '<span class="agol-popup-field-label">Status</span>'
+      + '<span class="agol-popup-field-value">' + esc(statusText) + '</span>'
+      + '</div></div>',
+      footerText);
+  }
+
   function updateLegend() {
     if (!window.addUnifiedLegend) return;
     var selected = Object.keys(enabled).filter(function (key) { return enabled[key]; });
@@ -107,7 +128,7 @@
     if (!selected.length) return;
     var currentRequest = ++requestId;
     var popup = L.popup({ maxWidth: 360 }).setLatLng(event.latlng)
-      .setContent('<div class="bmkg-rain-popup"><strong>Data Iklim BMKG</strong><div>Memuat data pada koordinat ini…</div></div>')
+      .setContent(rainStatusPopupHtml('Memuat data pada koordinat ini…', 'Sumber: BMKG'))
       .openOn(map);
     var bounds = map.getBounds();
     var sw = bounds.getSouthWest();
@@ -131,26 +152,30 @@
       });
     })).then(function (groups) {
       if (currentRequest !== requestId || !map.hasLayer(popup)) return;
-      var html = '<div class="bmkg-rain-popup"><strong>Data Iklim BMKG</strong>';
-      var found = false;
+      var body = '';
       groups.forEach(function (group) {
         if (!group.results.length) return;
-        found = true;
-        html += '<h4>' + esc(group.label) + '</h4><table>';
+        var rows = '';
         Object.keys(group.results[0].attributes || {}).forEach(function (field) {
           var value = group.results[0].attributes[field];
           if (value == null || value === '') return;
-          html += '<tr><th>' + esc(field) + '</th><td>' + esc(value) + '</td></tr>';
+          rows += '<div class="agol-popup-field"><span class="agol-popup-field-label">' + esc(field)
+            + '</span><span class="agol-popup-field-value">' + esc(value) + '</span></div>';
         });
-        html += '</table>';
+        if (!rows) return;
+        body += '<div class="agol-popup-meta">' + esc(group.label) + '</div>'
+          + '<div class="agol-popup-fields">' + rows + '</div>';
       });
-      if (!found) html += '<div>Tidak ada fitur pada koordinat ini.</div>';
-      html += '<small>Koordinat: ' + event.latlng.lat.toFixed(5) + ', ' + event.latlng.lng.toFixed(5) + ' · Sumber: BMKG</small></div>';
-      popup.setContent(html);
+      if (!body) body += '<div class="agol-popup-fields"><div class="agol-popup-field">'
+        + '<span class="agol-popup-field-label">Status</span>'
+        + '<span class="agol-popup-field-value">Tidak ada fitur pada koordinat ini.</span></div></div>';
+      popup.setContent(rainPopupHtml(body,
+        'Koordinat: ' + event.latlng.lat.toFixed(5) + ', ' + event.latlng.lng.toFixed(5) + ' · Sumber: BMKG'));
     }).catch(function (error) {
       console.warn('[Data Iklim BMKG] Gagal mengambil atribut:', error);
       if (currentRequest === requestId && map.hasLayer(popup)) {
-        popup.setContent('<div class="bmkg-rain-popup"><strong>Data Iklim BMKG</strong><div>Atribut gagal dimuat. Layanan BMKG mungkin sedang tidak tersedia.</div><small>Koordinat: ' + event.latlng.lat.toFixed(5) + ', ' + event.latlng.lng.toFixed(5) + '</small></div>');
+        popup.setContent(rainStatusPopupHtml('Atribut gagal dimuat.',
+          'Koordinat: ' + event.latlng.lat.toFixed(5) + ', ' + event.latlng.lng.toFixed(5) + ' · Layanan BMKG mungkin sedang tidak tersedia.'));
       }
     });
   }

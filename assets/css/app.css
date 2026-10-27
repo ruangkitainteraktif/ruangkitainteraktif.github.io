@@ -6671,13 +6671,21 @@
     .catalog-popup-sheet-card.fsva-leaflet-popup .leaflet-popup-content-wrapper,
     .catalog-popup-sheet-card.fsva-leaflet-popup .leaflet-popup-content { min-width: 0 !important; max-height: none !important; overflow: visible !important; }
     .catalog-popup-sheet-card .agol-popup { width: 100% !important; min-width: 0; max-width: none; max-height: none; overflow: visible; border: 0; border-radius: 0 !important; box-shadow: none; }
+    /* Popup PIHPS awalnya dirancang untuk popup Leaflet 320px dan memakai
+       dua area gulir. Di template Detail Layer, lebar serta scrolling
+       menjadi tanggung jawab sheet agar perilakunya sama dengan sumber lain. */
+    #catalog-popup-sheet .catalog-popup-sheet-card.gp-leaflet-popup { max-width: none !important; }
+    #catalog-popup-sheet .catalog-popup-sheet-card .gp-popup { width: 100%; min-width: 0; max-width: none; max-height: none; overflow: visible; }
+    #catalog-popup-sheet .catalog-popup-sheet-card .gp-popup-body { overflow: visible; flex: 0 0 auto; }
     .catalog-popup-sheet-card.bhumi-persil-detail-card .bhumi-persil-coordinates { margin: 0; border-right: 0; border-bottom: 0; border-left: 0; border-radius: 0; }
     .bhumi-persil-retry-wrap { display: flex; justify-content: flex-end; padding: 10px 12px; border-top: 1px solid var(--border-color); }
     .bhumi-persil-retry { min-height: 34px; padding: 7px 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; }
     .catalog-popup-sheet-card .sppgd-popup { width: 100% !important; min-width: 0; max-width: none; max-height: none !important; overflow: visible; }
     .catalog-popup-sheet-card.sppgd-leaflet-popup .leaflet-popup-content-wrapper { max-height: none !important; overflow: visible !important; }
     .catalog-popup-sheet-card .sppgd-popup-body { max-height: none !important; overflow: visible !important; }
-    .catalog-popup-sheet-card .sppgd-popup-list { max-height: min(45vh, 360px); overflow-y: auto; overscroll-behavior: contain; }
+    /* Semua detail memakai satu area gulir, yaitu body sheet. Daftar SPPGD
+       tetap dipaginasi, jadi tidak perlu scroll kedua di dalam kartu. */
+    .catalog-popup-sheet-card .sppgd-popup-list { max-height: none; overflow: visible; }
     .catalog-popup-sheet-card .sppgd-popup-pagination { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 9px 10px; border-top: 1px solid var(--border-color); background: var(--bg-primary); }
     .catalog-popup-sheet-card .sppgd-popup-pagination span { color: var(--text-tertiary); font-size: 10px; text-align: center; }
     .catalog-popup-sheet-card .sppgd-popup-page-btn { min-height: 30px; padding: 5px 8px; border: 1px solid var(--border-color); border-radius: 0; background: var(--bg-secondary); color: var(--text-primary); font: inherit; font-size: 10px; font-weight: 600; cursor: pointer; }
@@ -6760,6 +6768,7 @@
     .bhumi-persil-gistaru-activity-head span { flex: 0 0 auto; padding: 3px 7px; border-radius: 99px; background: var(--bg-tertiary); color: var(--text-secondary); font-size: 9px; font-weight: 600; }
     .bhumi-persil-gistaru-activity-group ul { display: grid; gap: 5px; margin: 0; padding: 9px 12px 9px 28px; color: var(--text-primary); font-size: 11px; line-height: 1.45; }
     .bhumi-persil-gistaru-empty { margin: 0; padding: 10px; color: var(--text-tertiary); font-size: 11px; }
+    .bhumi-persil-gistaru-fallback-note { margin: 0; padding: 10px 12px; border-top: 1px solid var(--border-color); color: var(--text-tertiary); font-size: 10px; line-height: 1.45; }
     .bhumi-persil-gistaru-activity-rule { padding: 0 10px 9px; }
     .bhumi-persil-gistaru-activity-rule summary { color: var(--text-secondary); font-size: 10px; font-weight: 600; cursor: pointer; }
     .bhumi-persil-gistaru-activity-rule ul { padding-top: 7px; }
@@ -6775,7 +6784,13 @@
       #catalog-popup-sheet.is-minimized { top: auto; bottom: 68px; height: 52px; max-height: 52px; }
     }
     @media (max-width: 768px) {
-      .bhumi-persil-sheet { top: auto; right: 0; bottom: 0; left: 0; width: 100%; height: 50dvh; max-height: 50dvh; box-sizing: border-box; border-radius: 18px 18px 0 0; padding-bottom: env(safe-area-inset-bottom); transform: translateY(24px); }
+      .bhumi-persil-sheet {
+        top: auto; right: 0; bottom: 0; left: 0; width: 100%;
+        height: var(--sheet-h, 50vh); height: var(--sheet-h, 50dvh);
+        max-height: 90vh; max-height: 90dvh;
+        box-sizing: border-box; border-radius: 18px 18px 0 0;
+        padding-bottom: env(safe-area-inset-bottom); transform: translateY(24px);
+      }
       /* Detail popup RDTR lives in the catalog sheet; keep its mobile frame
          edge-to-edge just like the Persil detail sheet. */
       #catalog-popup-sheet { right: 0; left: 0; width: 100%; max-width: none; box-sizing: border-box; }

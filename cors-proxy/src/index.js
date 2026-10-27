@@ -265,6 +265,79 @@ function respons429(origin, k) {
   );
 }
 
+/* ══ Sesi BHUMI ══
+   Endpoint persil BHUMI (/mprx/service WMS dan /expapi/*) menolak permintaan
+   yang tidak membawa cookie sesi yang diterbitkan F5 saat halaman BHUMI
+   dimuat -- balasannya 403 "Forbidden" dari nginx, terlihat oleh klien sebagai
+   layer yang diam kosong.
+
+   Cookie itu TIDAK bisa diambil dari browser: Set-Cookie tidak pernah
+   diekspos ke JavaScript lintas origin, dan bhm_gt (satu-satunya cookie yang
+   cukup untuk /mprx) ber-SameSite=Lax sehingga tidak dikirim pada request
+   <img> lintas situs. Satu-satunya tempat yang bisa memegang sesi adalah
+   Worker ini.
+
+   Caranya: sekali memuat halaman BHUMI untuk mengambil cookie, menyimpannya
+   di KV selama 30 menit, lalu menyertakannya di setiap request lanjutan.
+   Kalau upstream tetap menolak, sesi dianggap kedaluwarsa: dibuang, dibuat
+   baru, dan request dicoba ulang satu kali. */
+const BHUMI_SESI_KEY = "bhumi:sesi";
+const BHUMI_SESI_TTL = 30 * 60;
+const UA_BROWSER =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+
+async function bacaSesiBhumi(env) {
+  const kv = env && env.RATE_KV;
+  if (kv) {
+    try {
+      const tersimpan = await kv.get(BHUMI_SESI_KEY);
+      if (tersimpan) return tersimpan;
+    } catch {
+      /* KV bermasalah: sesi dibuat ulang, bukan gagal total. */
+    }
+  }
+  return "";
+}
+
+async function buatSesiBhumi(env) {
+  const kv = env && env.RATE_KV;
+  const res = await fetch("https://bhumi.atrbpn.go.id/peta", {
+    headers: {
+      "User-Agent": UA_BROWSER,
+      "Accept": "text/html,application/xhtml+xml",
+      "Referer": "https://bhumi.atrbpn.go.id/",
+      "Origin": "https://bhumi.atrbpn.go.id"
+    },
+    cf: { cacheTtl: 0 }
+  });
+  const daftar =
+    typeof res.headers.getSetCookie === "function" ? res.headers.getSetCookie() : [];
+  const cookie = daftar
+    .map((baris) => baris.split(";")[0].trim())
+    .filter(Boolean)
+    .join("; ");
+  if (!cookie) return "";
+  if (kv) {
+    try {
+      await kv.put(BHUMI_SESI_KEY, cookie, { expirationTtl: BHUMI_SESI_TTL });
+    } catch {
+      /* Gagal menyimpan tidak menggagalkan request: sesi tetap dipakai
+         untuk request ini, hanya tidak dipakai ulang di request berikutnya. */
+    }
+  }
+  return cookie;
+}
+
+async function hapusSesiBhumi(env) {
+  const kv = env && env.RATE_KV;
+  if (!kv) return;
+  try {
+    await kv.delete(BHUMI_SESI_KEY);
+  } catch {
+    /* Aman diabaikan: sesi lama akan tergantikan oleh sesi baru. */
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -374,6 +447,16 @@ export default {
     if (isBhumiMprx || isBhumiExpapi) {
       fwdHeaders["Referer"] = "https://bhumi.atrbpn.go.id/peta";
       fwdHeaders["Origin"] = "https://bhumi.atrbpn.go.id";
+      /* Tanpa cookie sesi BHUMI, nginx membalas 403 "Forbidden" dan seluruh
+         layer persil jadi kosong tanpa keterangan apa pun. */
+      try {
+        let sesi = await bacaSesiBhumi(env);
+        if (!sesi) sesi = await buatSesiBhumi(env);
+        if (sesi) fwdHeaders["Cookie"] = sesi;
+      } catch {
+        /* Sesi gagal dibuat: request tetap diteruskan, jadi kalau suatu saat
+           layanan BHUMI tidak lagi menuntut cookie, semuanya tetap jalan. */
+      }
     }
     if (isGistaruRdtrExport || isGistaruInteractiveApi || isGistaruArcgisService || isGistaruDirectArcgisService || isGistaruTresArcgisService) {
       fwdHeaders["Referer"] = isGistaruInteractiveApi
@@ -417,17 +500,40 @@ export default {
       body = await request.arrayBuffer();
     }
 
+    const opsiUpstream = {
+      method,
+      headers: fwdHeaders,
+      body: method === "POST" ? body : undefined,
+      redirect: "follow",
+      // Tile persil BHUMI bersifat publik dan nyaris tidak berubah; di-cache
+      // di edge supaya pemetaan (ratusan tile per layar) tidak membebani
+      // maupun menghafal ulang permintaan ke server ATR/BPN.
+      cf: { cacheTtl: isBhumiMprx ? 86400 : isGistaruRdtrExport ? 3600 : isGistaruInteractiveApi ? 300 : 0 }
+    };
+
     try {
-      const upstream = await fetch(target.toString(), {
-        method,
-        headers: fwdHeaders,
-        body: method === "POST" ? body : undefined,
-        redirect: "follow",
-        // Tile persil BHUMI bersifat publik dan nyaris tidak berubah; di-cache
-        // di edge supaya pemetaan (ratusan tile per layar) tidak membebani
-        // maupun menghafal ulang permintaan ke server ATR/BPN.
-        cf: { cacheTtl: isBhumiMprx ? 86400 : isGistaruRdtrExport ? 3600 : isGistaruInteractiveApi ? 300 : 0 }
-      });
+      let upstream = await fetch(target.toString(), opsiUpstream);
+
+      /* Cookie sesi BHUMI kedaluwarsa (atau tidak pernah terbentuk): buat
+         yang baru dan ulangi persis satu kali. Tanpa langkah ini layer persil
+         akan tetap kosong selama sisa masa berlaku sesi lama. */
+      const perluSesiUlang =
+        (isBhumiMprx || isBhumiExpapi) &&
+        (upstream.status === 403 || upstream.status === 401) &&
+        Boolean(fwdHeaders.Cookie);
+      if (perluSesiUlang) {
+        try {
+          if (upstream.body) await upstream.body.cancel();
+        } catch {
+          /* Body lama tidak terpakai; membatalkannya hanya rapi-rapi. */
+        }
+        await hapusSesiBhumi(env);
+        const sesiBaru = await buatSesiBhumi(env).catch(() => "");
+        if (sesiBaru) {
+          fwdHeaders.Cookie = sesiBaru;
+          upstream = await fetch(target.toString(), opsiUpstream);
+        }
+      }
 
       const outHeaders = new Headers(corsHeaders(origin));
       const ct = upstream.headers.get("Content-Type");

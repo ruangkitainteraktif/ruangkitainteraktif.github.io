@@ -249,10 +249,19 @@
       }),
       onEachFeature: (feature, layer) => {
         if (feature.properties && Object.keys(feature.properties).length) {
-          const props = Object.entries(feature.properties)
-            .map(([k, v]) => `<div class="alat-popup-row"><b>${escapeBMKGHTML(k)}</b><span>${escapeBMKGHTML(v)}</span></div>`)
+          const rows = Object.entries(feature.properties)
+            .map(([k, v]) => `<div class="agol-popup-field"><span class="agol-popup-field-label">${escapeBMKGHTML(k)}</span><span class="agol-popup-field-value">${escapeBMKGHTML(v)}</span></div>`)
             .join('');
-          layer.bindPopup(`<div class="alat-popup">${props}</div>`, { maxWidth: 260, className: 'alat-leaflet-popup' });
+          layer.bindPopup(
+            `<div class="agol-popup">`
+            + `<div class="agol-popup-header agol-modul">`
+            + `<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#93c5fd;"></span>${escapeBMKGHTML(type || 'Alat')}</div>`
+            + `<div class="agol-popup-title">${escapeBMKGHTML(name)}</div>`
+            + `</div>`
+            + `<div class="agol-popup-body"><div class="agol-popup-fields">${rows}</div></div>`
+            + `<div class="agol-popup-footer"><span>Sumber: GeoJSON yang dimuat pengguna</span></div>`
+            + `</div>`,
+            { maxWidth: 260, className: 'alat-leaflet-popup' });
         }
       }
     });

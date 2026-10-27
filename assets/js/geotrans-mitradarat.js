@@ -166,8 +166,25 @@
     }
   }
 
+  const KIND_LABEL = { route: 'Rute', stop: 'Halte', operator: 'Operator', location: 'Lokasi' };
+
   function popupContent(item) {
-    return `<div class="geotrans-popup"><strong>${escapeHtml(item.name)}</strong></div>`;
+    const rows = (item.details || []).map(([key, value]) =>
+      '<div class="agol-popup-field"><span class="agol-popup-field-label">' + escapeHtml(key) +
+      '</span><span class="agol-popup-field-value">' + escapeHtml(value) + '</span></div>'
+    ).join('');
+    const subtitle = [item.operator, item.area].filter(Boolean).join(' · ');
+    return '<div class="agol-popup">'
+      + '<div class="agol-popup-header agol-modul">'
+      + '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#93c5fd;"></span>' + escapeHtml(KIND_LABEL[item.kind] || 'Lokasi') + '</div>'
+      + '<div class="agol-popup-title">' + escapeHtml(item.name) + '</div>'
+      + (subtitle ? '<div class="agol-popup-subtitle">' + escapeHtml(subtitle) + '</div>' : '')
+      + '</div>'
+      + '<div class="agol-popup-body"><div class="agol-popup-fields">'
+      + (rows || '<div class="agol-popup-field"><span class="agol-popup-field-value">Tidak ada atribut tambahan.</span></div>')
+      + '</div></div>'
+      + '<div class="agol-popup-footer"><span>Sumber: Data transportasi darat terpadu</span></div>'
+      + '</div>';
   }
 
   function hideRouteDetail() {

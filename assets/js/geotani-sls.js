@@ -525,14 +525,25 @@ var generasi = 0;
     return true;
   }
 
+  function slsField(label, value) {
+    return '<div class="agol-popup-field"><span class="agol-popup-field-label">' + escapeHtml(label) +
+      '</span><span class="agol-popup-field-value">' + escapeHtml(value) + '</span></div>';
+  }
+
   function slsPopupHtml(it) {
     var luas = it.luasHa === null
       ? 'tidak tersedia'
       : it.luasHa.toLocaleString('id-ID', { maximumFractionDigits: 3 }) + ' ha';
-    return '<div class="geotani-sls-popup">' +
-      '<div class="geotani-sls-popup-title">' + escapeHtml(it.nmsls) + '</div>' +
-      '<div class="geotani-sls-popup-row"><span>Kode SLS</span><b>' + escapeHtml(it.idsls) + '</b></div>' +
-      '<div class="geotani-sls-popup-row"><span>Luas (dihitung)</span><b>' + luas + '</b></div>' +
+    return '<div class="agol-popup">' +
+      '<div class="agol-popup-header agol-geo-tanah">' +
+      '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#fcd34d;"></span>SLS</div>' +
+      '<div class="agol-popup-title">' + escapeHtml(it.nmsls) + '</div>' +
+      '</div>' +
+      '<div class="agol-popup-body"><div class="agol-popup-fields">' +
+      slsField('Kode SLS', it.idsls) +
+      slsField('Luas (dihitung)', luas) +
+      '</div></div>' +
+      '<div class="agol-popup-footer"><span>Sumber: InaRISK BNPB · BPS SLS 2019</span></div>' +
       '</div>';
   }
 

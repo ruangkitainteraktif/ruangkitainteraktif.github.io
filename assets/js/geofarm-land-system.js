@@ -363,29 +363,34 @@
       ['m_ltype', 'Tipe bentang lahan'], ['g_litho', 'Litologi'],
       ['m_region', 'Region'], ['area', 'Luas']
     ];
-    var rows = '<div class="geotani-sls-popup-row"><span>Kabupaten/Kota</span><b>' +
-      escapeHtml(district ? district.label : '-') + '</b></div>';
+    var rows = '<div class="agol-popup-field"><span class="agol-popup-field-label">Kabupaten/Kota</span><span class="agol-popup-field-value">' +
+      escapeHtml(district ? district.label : '-') + '</span></div>';
     var shown = Object.create(null);
     fields.forEach(function (field) {
       var value = propertyValue(p, field[0]);
       if (value == null || value === '' || typeof value === 'object') return;
       shown[field[0].toLowerCase()] = true;
-      rows += '<div class="geotani-sls-popup-row"><span>' + field[1] +
-        '</span><b>' + escapeHtml(value) + '</b></div>';
+      rows += '<div class="agol-popup-field"><span class="agol-popup-field-label">' + field[1] +
+        '</span><span class="agol-popup-field-value">' + escapeHtml(value) + '</span></div>';
     });
     Object.keys(p).filter(function (key) {
       return !shown[key.toLowerCase()] && key.charAt(0) !== '_' &&
         p[key] != null && typeof p[key] !== 'object';
     }).slice(0, 12).forEach(function (key) {
-      rows += '<div class="geotani-sls-popup-row"><span>' + escapeHtml(key) +
-        '</span><b>' + escapeHtml(p[key]) + '</b></div>';
+      rows += '<div class="agol-popup-field"><span class="agol-popup-field-label">' + escapeHtml(key) +
+        '</span><span class="agol-popup-field-value">' + escapeHtml(p[key]) + '</span></div>';
     });
     var title = propertyValue(p, 'm_lsysnam') || propertyValue(p, 'namobj') ||
       propertyValue(p, 'fcode') || propertyValue(p, 'objectid') || 'Sistem Lahan';
-    return '<div class="geotani-sls-popup"><div class="geotani-sls-popup-title">' +
-      escapeHtml(title) + '</div>' + rows +
-      '<div class="geotani-lbslsd-credit"><b>Sumber:</b> Badan Informasi Geospasial (BIG) · ' +
-      '<a href="' + SOURCE + '" target="_blank" rel="noopener noreferrer">InaLand Sistem Lahan</a></div></div>';
+    return '<div class="agol-popup">' +
+      '<div class="agol-popup-header agol-geo-kawasan">' +
+      '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#86efac;"></span>Sistem Lahan</div>' +
+      '<div class="agol-popup-title">' + escapeHtml(title) + '</div>' +
+      '</div>' +
+      '<div class="agol-popup-body"><div class="agol-popup-fields">' + rows + '</div></div>' +
+      '<div class="agol-popup-footer"><span>Sumber: Badan Informasi Geospasial (BIG) · ' +
+      '<a href="' + SOURCE + '" target="_blank" rel="noopener noreferrer">InaLand Sistem Lahan</a></span></div>' +
+      '</div>';
   }
 
   function categoryColor(feature) {

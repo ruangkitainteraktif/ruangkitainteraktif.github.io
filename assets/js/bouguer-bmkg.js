@@ -16,6 +16,27 @@
     });
   }
 
+  /* Template .agol-popup dipakai semua card di panel Detail Layer. */
+  function bouguerPopupHtml(bodyHtml, footerText) {
+    return '<div class="agol-popup">'
+      + '<div class="agol-popup-header agol-geo-geostruktur">'
+      + '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#93c5fd;"></span>BMKG</div>'
+      + '<div class="agol-popup-title">Anomali Bouguer</div>'
+      + '</div>'
+      + '<div class="agol-popup-body">' + bodyHtml + '</div>'
+      + '<div class="agol-popup-footer"><span>' + escapeHtml(footerText) + '</span></div>'
+      + '</div>';
+  }
+
+  function bouguerStatusPopupHtml(statusText, footerText) {
+    return bouguerPopupHtml(
+      '<div class="agol-popup-fields"><div class="agol-popup-field">'
+      + '<span class="agol-popup-field-label">Status</span>'
+      + '<span class="agol-popup-field-value">' + escapeHtml(statusText) + '</span>'
+      + '</div></div>',
+      footerText);
+  }
+
   function identify(event) {
     var map = window.map;
     var L = window.L;
@@ -38,7 +59,7 @@
     });
     var popup = L.popup({ maxWidth: 360 })
       .setLatLng(event.latlng)
-      .setContent('<div class="bouguer-popup"><strong>Anomali Bouguer · BMKG</strong><div>Memuat atribut titik…</div></div>')
+      .setContent(bouguerStatusPopupHtml('Memuat atribut titik…', 'Sumber: BMKG'))
       .openOn(map);
 
     fetch(SERVICE_URL + '/identify?' + params.toString()).then(function (response) {
@@ -49,22 +70,27 @@
       if (data.error) throw new Error(data.error.message || 'Layanan BMKG mengembalikan error.');
       var results = data.results || [];
       if (!results.length) {
-        popup.setContent('<div class="bouguer-popup"><strong>Anomali Bouguer · BMKG</strong><div>Tidak ada fitur pada koordinat ini.</div><small>' + event.latlng.lat.toFixed(5) + ', ' + event.latlng.lng.toFixed(5) + '</small></div>');
+        popup.setContent(bouguerStatusPopupHtml('Tidak ada fitur pada koordinat ini.',
+          'Koordinat: ' + event.latlng.lat.toFixed(5) + ', ' + event.latlng.lng.toFixed(5) + ' · Sumber: BMKG'));
         return;
       }
       var attributes = results[0].attributes || {};
-      var html = '<div class="bouguer-popup"><strong>Anomali Bouguer · BMKG</strong><table>';
+      var rows = '';
       Object.keys(attributes).forEach(function (key) {
         var value = attributes[key];
         if (value == null || value === '') return;
-        html += '<tr><th>' + escapeHtml(key) + '</th><td>' + escapeHtml(value) + '</td></tr>';
+        rows += '<div class="agol-popup-field"><span class="agol-popup-field-label">' + escapeHtml(key)
+          + '</span><span class="agol-popup-field-value">' + escapeHtml(value) + '</span></div>';
       });
-      html += '</table><small>Koordinat: ' + event.latlng.lat.toFixed(5) + ', ' + event.latlng.lng.toFixed(5) + ' · Sumber: BMKG</small></div>';
-      popup.setContent(html);
+      popup.setContent(bouguerPopupHtml(
+        '<div class="agol-popup-fields">'
+        + (rows || '<div class="agol-popup-field"><span class="agol-popup-field-value">Tidak ada atribut.</span></div>')
+        + '</div>',
+        'Koordinat: ' + event.latlng.lat.toFixed(5) + ', ' + event.latlng.lng.toFixed(5) + ' · Sumber: BMKG'));
     }).catch(function (error) {
       console.warn('[Anomali Bouguer BMKG] Gagal mengambil informasi titik:', error);
       if (map.hasLayer(popup)) {
-        popup.setContent('<div class="bouguer-popup"><strong>Anomali Bouguer · BMKG</strong><div>Data atribut gagal dimuat. Layanan mungkin sedang tidak tersedia.</div><small>Sumber: BMKG</small></div>');
+        popup.setContent(bouguerStatusPopupHtml('Data atribut gagal dimuat.', 'Layanan mungkin sedang tidak tersedia. Sumber: BMKG'));
       }
     });
   }

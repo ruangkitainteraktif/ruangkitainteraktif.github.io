@@ -5,6 +5,19 @@
   var EKOREGION_URL = 'https://services-ap1.arcgis.com/zddIc5NlxDyZbzsT/arcgis/rest/services/Unit_Ekoregion/FeatureServer/0';
   var ekoregionLayer = null;
 
+  // Escaping wajib: nama ekoregion datang dari layanan ArcGIS pihak ketiga
+  // dan langsung disisipkan ke HTML popup.
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function field(label, value) {
+    return '<div class="agol-popup-field"><span class="agol-popup-field-label">' + escapeHtml(label)
+      + '</span><span class="agol-popup-field-value">' + escapeHtml(value) + '</span></div>';
+  }
+
   // Symbology dari sumber ArcGIS: color [76,129,205,191] = #4C81CD alpha 191/255 ≈ 0.749
   // outline [0,0,0,255] = hitam, width 0.75
   var EKO_FILL_COLOR = '#4C81CD';
@@ -50,15 +63,19 @@
             var luasStr = luas ? Number(luas).toLocaleString('id-ID') + ' ha' : '-';
 
             layer.bindPopup(
-              '<div class="ekoregion-popup">' +
-              '<strong>Bentang Lahan Indonesia</strong><br>' +
-              'Nama: ' + nama + '<br>' +
-              'Provinsi: ' + provinsi + '<br>' +
-              'Kab/Kota: ' + kabkota + '<br>' +
-              'Pulau: ' + pulau + '<br>' +
-              'Morfologi: ' + morfologi + '<br>' +
-              'Iklim: ' + iklim + '<br>' +
-              'Luas: ' + luasStr +
+              '<div class="agol-popup">' +
+              '<div class="agol-popup-header agol-geo-kawasan">' +
+              '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#93c5fd;"></span>Bentang Lahan</div>' +
+              '<div class="agol-popup-title">' + escapeHtml(nama) + '</div>' +
+              '<div class="agol-popup-subtitle">' + escapeHtml(provinsi) + ' · ' + escapeHtml(kabkota) + '</div>' +
+              '</div>' +
+              '<div class="agol-popup-body"><div class="agol-popup-fields">' +
+              field('Pulau', pulau) +
+              field('Morfologi', morfologi) +
+              field('Iklim', iklim) +
+              field('Luas', luasStr) +
+              '</div></div>' +
+              '<div class="agol-popup-footer"><span>Sumber: ArcGIS Feature Service — Bentang Lahan</span></div>' +
               '</div>',
               { maxWidth: 300 }
             );

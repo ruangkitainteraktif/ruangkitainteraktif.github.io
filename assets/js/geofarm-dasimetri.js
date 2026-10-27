@@ -437,11 +437,19 @@
         var estimate = el.metric.value === 'yield' ? value : value * area / (totalSawahHa || 1);
         var unit = el.metric.value === 'yield' ? metric.unit : (el.metric.value === 'harvest' ? 'ha estimasi' : 'ton GKG estimasi');
         var allocationLabel = el.metric.value === 'yield' ? 'Produktivitas BPS kabupaten' : 'Alokasi berbobot luas';
-        layer.bindPopup('<div class="gf-dasimetri-popup"><b>' + escapeHtml(row.name) + '</b><br>'
-          + 'Area polygon sawah: <strong>' + area.toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' ha</strong><br>'
-          + escapeHtml(metric.label) + ' BPS: <strong>' + value.toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' ' + escapeHtml(metric.unit) + '</strong><br>'
-          + escapeHtml(allocationLabel) + ': <strong>' + estimate.toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' ' + escapeHtml(unit) + '</strong><br>'
-          + '<small>Estimasi alokasi statistik kabupaten ke polygon berdasarkan proporsi luas LBS; bukan pengukuran hasil per petak.</small></div>');
+        layer.bindPopup('<div class="agol-popup">'
+          + '<div class="agol-popup-header agol-geo-kawasan">'
+          + '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#86efac;"></span>Dasimetri Sawah</div>'
+          + '<div class="agol-popup-title">' + escapeHtml(row.name) + '</div>'
+          + '<div class="agol-popup-subtitle">' + escapeHtml(metric.label) + '</div>'
+          + '</div>'
+          + '<div class="agol-popup-body"><div class="agol-popup-fields">'
+          + '<div class="agol-popup-field"><span class="agol-popup-field-label">Area polygon sawah</span><span class="agol-popup-field-value">' + area.toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' ha</span></div>'
+          + '<div class="agol-popup-field"><span class="agol-popup-field-label">' + escapeHtml(metric.label) + ' BPS</span><span class="agol-popup-field-value">' + value.toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' ' + escapeHtml(metric.unit) + '</span></div>'
+          + '<div class="agol-popup-field"><span class="agol-popup-field-label">' + escapeHtml(allocationLabel) + '</span><span class="agol-popup-field-value">' + estimate.toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' ' + escapeHtml(unit) + '</span></div>'
+          + '</div></div>'
+          + '<div class="agol-popup-footer"><span>Estimasi alokasi statistik kabupaten ke polygon berdasarkan proporsi luas LBS; bukan pengukuran hasil per petak.</span></div>'
+          + '</div>');
       }
     }).addTo(window.map);
     boundaryLayer = L.geoJSON(adminFeature, { style: { color: '#17324d', weight: 2, opacity: 0.9, fillOpacity: 0 } }).addTo(window.map);

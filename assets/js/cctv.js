@@ -20,7 +20,20 @@
     markerItems.forEach(item => {
       const icon = L.divIcon({ className: 'cctv-leaflet-icon', html: '<div class="cctv-map-icon"><img src="https://cdn-icons-png.flaticon.com/512/2709/2709318.png" alt="CCTV"></div>', iconSize: [40, 40], iconAnchor: [20, 20], popupAnchor: [0, -20] });
       L.marker([item.lat, item.lon], { icon, title: item.name })
-        .bindPopup(`<div class="cctv-popup"><div class="cctv-popup-label"></div><strong>${escapeBMKGHTML(item.name)}</strong><span>${escapeBMKGHTML(item.area)}</span><button type="button" onclick="openCctvModal('${escapeBMKGHTML(item.id)}')">▶ Buka tayangan</button></div>`, { maxWidth: 260, className: 'cctv-leaflet-popup' })
+        .bindPopup(
+          `<div class="agol-popup">`
+          + `<div class="agol-popup-header agol-geo-kttht">`
+          + `<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#93c5fd;"></span>CCTV</div>`
+          + `<div class="agol-popup-title">${escapeBMKGHTML(item.name)}</div>`
+          + `<div class="agol-popup-subtitle">${escapeBMKGHTML(item.area)}</div>`
+          + `</div>`
+          + `<div class="agol-popup-body">`
+          + (item.mode ? `<div class="agol-popup-fields"><div class="agol-popup-field"><span class="agol-popup-field-label">Mode</span><span class="agol-popup-field-value">${escapeBMKGHTML(item.mode)}</span></div></div>` : ``)
+          + `<div class="cctv-popup"><button type="button" onclick="openCctvModal('${escapeBMKGHTML(item.id)}')">▶ Buka tayangan</button></div>`
+          + `</div>`
+          + `<div class="agol-popup-footer"><span>Klik untuk membuka tayangan penuh.</span></div>`
+          + `</div>`,
+          { maxWidth: 260, className: 'cctv-leaflet-popup' })
         .on('click', () => map.flyTo([item.lat, item.lon], 16, { duration: .45 }))
         .addTo(cctvMarkersGroup);
     });

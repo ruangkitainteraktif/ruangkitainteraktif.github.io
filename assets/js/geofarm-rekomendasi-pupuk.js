@@ -251,9 +251,18 @@
         onEachFeature: function (feature, layer) {
           var p = feature.properties || {};
           var name = p.nmkab || p.NAMOBJ || p.name || 'Kabupaten/kota';
-          layer.bindPopup('<div class="gfpr-popup"><b>' + escapeHtml(name) + '</b><br>'
-            + escapeHtml(commodityName) + ' · ' + escapeHtml(fertilizerName) + ': <b>' + formatNumber(p._gfpr_dose, 1) + ' kg/ha</b><br>'
-            + '<small>Rata-rata ' + formatNumber(p._gfpr_kec, 0) + ' kecamatan dari dosis e-RDKK 2027</small></div>');
+          layer.bindPopup('<div class="agol-popup">'
+            + '<div class="agol-popup-header agol-geo-kawasan">'
+            + '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#86efac;"></span>Pupuk Subsidi 2027</div>'
+            + '<div class="agol-popup-title">' + escapeHtml(name) + '</div>'
+            + '<div class="agol-popup-subtitle">' + escapeHtml(commodityName) + ' · ' + escapeHtml(fertilizerName) + '</div>'
+            + '</div>'
+            + '<div class="agol-popup-body"><div class="agol-popup-fields">'
+            + '<div class="agol-popup-field"><span class="agol-popup-field-label">Dosis rata-rata</span><span class="agol-popup-field-value">' + formatNumber(p._gfpr_dose, 1) + ' kg/ha</span></div>'
+            + '<div class="agol-popup-field"><span class="agol-popup-field-label">Kecamatan</span><span class="agol-popup-field-value">' + formatNumber(p._gfpr_kec, 0) + ' kecamatan</span></div>'
+            + '</div></div>'
+            + '<div class="agol-popup-footer"><span>Rata-rata dosis dari e-RDKK 2027</span></div>'
+            + '</div>');
         }
       }).addTo(window.map);
       el.reset.disabled = false;
@@ -291,10 +300,18 @@
           color: '#14532d', weight: 2.5, fillColor: '#22c55e', fillOpacity: 0.38
         });
         var attributes = feature.attributes || {};
-        polygon.bindPopup('<div class="gfpr-popup"><b>' + escapeHtml(attributes.NAMOBJ || result.name) + '</b><br>'
-          + 'Kode BIG: ' + escapeHtml(attributes.KDCPUM || bigCode) + '<br>'
-          + escapeHtml(commodityName) + ' · ' + escapeHtml(fertilizerName) + ': <b>' + formatNumber(result.dose, 1) + ' kg/ha</b><br>'
-          + '<small>Acuan dosis subsidi 2027 · Sumber batas: BIG</small></div>');
+        polygon.bindPopup('<div class="agol-popup">'
+          + '<div class="agol-popup-header agol-geo-kawasan">'
+          + '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#86efac;"></span>Pupuk Subsidi 2027</div>'
+          + '<div class="agol-popup-title">' + escapeHtml(attributes.NAMOBJ || result.name) + '</div>'
+          + '<div class="agol-popup-subtitle">' + escapeHtml(commodityName) + ' · ' + escapeHtml(fertilizerName) + '</div>'
+          + '</div>'
+          + '<div class="agol-popup-body"><div class="agol-popup-fields">'
+          + '<div class="agol-popup-field"><span class="agol-popup-field-label">Dosis</span><span class="agol-popup-field-value">' + formatNumber(result.dose, 1) + ' kg/ha</span></div>'
+          + '<div class="agol-popup-field"><span class="agol-popup-field-label">Kode BIG</span><span class="agol-popup-field-value">' + escapeHtml(attributes.KDCPUM || bigCode) + '</span></div>'
+          + '</div></div>'
+          + '<div class="agol-popup-footer"><span>Acuan dosis subsidi 2027 · Sumber batas: BIG</span></div>'
+          + '</div>');
         layers.push(polygon);
       });
       if (!layers.length) throw new Error('Geometri batas kecamatan BIG tidak valid.');
@@ -325,11 +342,20 @@
         var marker = L.circleMarker([coords[1], coords[0]], {
           radius: 7, color: '#fff', weight: 2, fillColor: '#16a34a', fillOpacity: 0.95
         });
-        marker.bindPopup('<div class="gfpr-popup"><b>' + escapeHtml(props['Nama SPPG'] || props.NAMOBJ || 'Titik SPPG') + '</b><br>'
-          + escapeHtml(props.Alamat || props['Kelurahan'] || '') + '<br>'
-          + '<small>Titik lokasi SPPG · Kode kecamatan BIG: ' + escapeHtml(props.KDCPUM || bigCode) + '</small><br>'
-          + escapeHtml(commodityName) + ' · ' + escapeHtml(fertilizerName) + ': <b>' + formatNumber(result.dose, 1) + ' kg/ha</b><br>'
-          + '<small>Dosis berlaku untuk kecamatan terpilih; titik ini bukan batas atau centroid kecamatan.</small></div>');
+        marker.bindPopup('<div class="agol-popup">'
+          + '<div class="agol-popup-header agol-geo-kawasan">'
+          + '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#86efac;"></span>Titik SPPG</div>'
+          + '<div class="agol-popup-title">' + escapeHtml(props['Nama SPPG'] || props.NAMOBJ || 'Titik SPPG') + '</div>'
+          + '<div class="agol-popup-subtitle">' + escapeHtml(props.Alamat || props['Kelurahan'] || '-') + '</div>'
+          + '</div>'
+          + '<div class="agol-popup-body"><div class="agol-popup-fields">'
+          + '<div class="agol-popup-field"><span class="agol-popup-field-label">Dosis</span><span class="agol-popup-field-value">' + formatNumber(result.dose, 1) + ' kg/ha</span></div>'
+          + '<div class="agol-popup-field"><span class="agol-popup-field-label">Komoditas</span><span class="agol-popup-field-value">' + escapeHtml(commodityName) + '</span></div>'
+          + '<div class="agol-popup-field"><span class="agol-popup-field-label">Pupuk</span><span class="agol-popup-field-value">' + escapeHtml(fertilizerName) + '</span></div>'
+          + '<div class="agol-popup-field"><span class="agol-popup-field-label">Kode kecamatan BIG</span><span class="agol-popup-field-value">' + escapeHtml(props.KDCPUM || bigCode) + '</span></div>'
+          + '</div></div>'
+          + '<div class="agol-popup-footer"><span>Dosis berlaku untuk kecamatan terpilih; titik ini bukan batas atau centroid kecamatan.</span></div>'
+          + '</div>');
         return marker;
       });
       boundaryLayer = L.featureGroup(markers).addTo(window.map);

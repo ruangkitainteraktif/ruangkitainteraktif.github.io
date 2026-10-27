@@ -116,13 +116,33 @@
     return (number <= 1 ? number * 100 : number).toFixed(1) + '%';
   }
 
+  /* Template .agol-popup dipakai semua card di panel Detail Layer. */
+  function wrbField(label, value) {
+    return '<div class="agol-popup-field"><span class="agol-popup-field-label">' + escapeHtml(label)
+      + '</span><span class="agol-popup-field-value">' + escapeHtml(value) + '</span></div>';
+  }
+
+  function wrbPopupHtml(bodyHtml, footerText) {
+    return '<div class="agol-popup">'
+      + '<div class="agol-popup-header agol-geo-tanah">'
+      + '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#fcd34d;"></span>ISRIC</div>'
+      + '<div class="agol-popup-title">SoilGrids · Kelas WRB</div>'
+      + '</div>'
+      + '<div class="agol-popup-body">' + bodyHtml + '</div>'
+      + '<div class="agol-popup-footer"><span>' + escapeHtml(footerText) + '</span></div>'
+      + '</div>';
+  }
+
+  function wrbStatusPopupHtml(statusText, footerText) {
+    return wrbPopupHtml('<div class="agol-popup-fields">' + wrbField('Status', statusText) + '</div>', footerText);
+  }
+
   function renderClassification(data, latlng) {
     var className = data && (data.wrb_class_name || data.class_name || data.name);
     var probabilities = data && (data.wrb_class_probability || data.probabilities || data.classes);
-    var html = '<div class="isric-wrb-popup"><strong>SoilGrids · Kelas WRB</strong>';
-    if (className) html += '<div class="isric-wrb-main-class">Kelas paling mungkin: ' + escapeHtml(className) + '</div>';
+    var fields = '';
+    if (className) fields += wrbField('Kelas paling mungkin', className);
     if (Array.isArray(probabilities) && probabilities.length) {
-      html += '<table><thead><tr><th>Kelas tanah</th><th>Probabilitas</th></tr></thead><tbody>';
       probabilities.slice(0, 5).forEach(function (item, index) {
         var label = item && typeof item === 'object'
           ? (item.class_name || item.wrb_class_name || item.name || item.class || item.label || ('Kelas ' + (index + 1)))
@@ -130,15 +150,12 @@
         var probability = item && typeof item === 'object'
           ? (item.probability != null ? item.probability : (item.probability_percent != null ? item.probability_percent : item.value))
           : (typeof item === 'number' ? item : null);
-        html += '<tr><td>' + escapeHtml(label) + '</td><td>' + (probability == null ? '—' : formatProbability(probability)) + '</td></tr>';
+        fields += wrbField(label, probability == null ? '—' : formatProbability(probability));
       });
-      html += '</tbody></table>';
     }
-    if (!className && !Array.isArray(probabilities)) {
-      html += '<div>Data kelas tanah tidak tersedia pada titik ini.</div>';
-    }
-    html += '<small>' + Number(latlng.lat).toFixed(5) + ', ' + Number(latlng.lng).toFixed(5) + ' · SoilGrids 250 m · ISRIC</small></div>';
-    return html;
+    if (!fields) fields += wrbField('Status', 'Data kelas tanah tidak tersedia pada titik ini.');
+    return wrbPopupHtml('<div class="agol-popup-fields">' + fields + '</div>',
+      Number(latlng.lat).toFixed(5) + ', ' + Number(latlng.lng).toFixed(5) + ' · SoilGrids 250 m · ISRIC');
   }
 
   function identifyWrb(event) {
@@ -149,7 +166,7 @@
     var requestId = ++identifyRequestId;
     var popup = L.popup({ maxWidth: 340, className: 'isric-wrb-leaflet-popup' })
       .setLatLng(event.latlng)
-      .setContent('<div class="isric-wrb-popup"><strong>SoilGrids · Kelas WRB</strong><div>Memuat informasi kelas tanah…</div></div>')
+      .setContent(wrbStatusPopupHtml('Memuat informasi kelas tanah…', 'Sumber: SoilGrids · ISRIC'))
       .openOn(map);
     var url = new URL('https://rest.isric.org/soilgrids/v2.0/classification/query');
     url.search = new URLSearchParams({ lon: event.latlng.lng, lat: event.latlng.lat, number_classes: 5 }).toString();
@@ -162,7 +179,8 @@
     }).catch(function (error) {
       if (requestId !== identifyRequestId || selectedKey !== 'wrb') return;
       console.warn('[SoilGrids WRB] Gagal mengambil data titik:', error);
-      popup.setContent('<div class="isric-wrb-popup"><strong>SoilGrids · Kelas WRB</strong><div>Informasi titik tidak dapat dimuat. Coba klik kembali beberapa saat lagi.</div><small>Data identifikasi berasal dari API SoilGrids ISRIC.</small></div>');
+      popup.setContent(wrbStatusPopupHtml('Informasi titik tidak dapat dimuat. Coba klik kembali beberapa saat lagi.',
+        'Data identifikasi berasal dari API SoilGrids ISRIC.'));
     });
   }
 

@@ -101,34 +101,78 @@
      ATR/BPN -- padahal penyebabnya halaman dibuka dari file://, atau path
      salah. Itu kesalahan yang menyesatkan karena mengarahkan perbaikan ke
      tempat yang salah. */
+  /* ── Pintu masuk ArcGIS GISTARU ────────────────────────────────────────
+     Ada dua pintu, dan keduanya tidak bisa dipakai apa adanya dari browser:
+
+       1. gistaru.atrbpn.go.id/tres/proxy.ashx   (pintu resmi)
+          Menerima request HANYA kalau Referer-nya berasal dari origin
+          GISTARU sendiri ("Unsupported referer" untuk origin lain) dan tidak
+          mengirim Access-Control-Allow-Origin sama sekali. Referer halaman
+          ini tidak bisa dipalsukan dari JavaScript, jadi fetch selalu berakhir
+          "Failed to fetch" -- inilah penyebab pesan "Fallback zona: Failed to
+          fetch" yang muncul sebelumnya.
+
+       2. gistaru-proxy.atrbpn.go.id/proxy.ashx   (pintu kedua)
+          Menerima URL tujuan apa pun, tetapi menolak request tanpa Referer
+          ("Request Rejected"). Karena itu ia dibungkus oleh kta-cors-proxy
+          yang menyuntikkan Referer GISTARU di server -- jalur inilah yang
+          terbukti membalas 200 berisi GeoJSON dari browser.
+
+     Urutan kandidat di bawah: pintu kedua lewat worker dulu, lalu URL asli,
+     lalu worker membungkus URL asli. Pintu 2 tanpa worker tetap dicoba sebagai
+     cadangan kalau suatu saat worker sendiri yang bermasalah. */
+  var GISTARU_ORIGIN = 'https://gistaru.atrbpn.go.id/';
+  var GISTARU_PROXY_PREFIX = 'https://gistaru-proxy.atrbpn.go.id/proxy.ashx?';
+
+  function urlKandidat(url) {
+    var daftar = [];
+    function tambah(u, lewatWorker) {
+      if (!u) return;
+      for (var i = 0; i < daftar.length; i++) if (daftar[i].url === u) return;
+      daftar.push({ url: u, worker: !!lewatWorker });
+    }
+    if (url.indexOf(GISTARU_ORIGIN) === 0) {
+      tambah(CORS_PROXY + encodeURIComponent(GISTARU_PROXY_PREFIX + url), true);
+      tambah(GISTARU_PROXY_PREFIX + url, false);
+    }
+    tambah(url, false);
+    tambah(CORS_PROXY + encodeURIComponent(url), true);
+    return daftar;
+  }
+
   async function fetchJsonSekali(url) {
     var ctrl = new AbortController();
     var timer = setTimeout(function () { ctrl.abort(); }, REQUEST_TIMEOUT_MS);
+    var kandidat = urlKandidat(url);
+    var gagal = null;
+    var gagalStatus = null;
     try {
-      var res = await fetch(url, { signal: ctrl.signal });
-      if (!res.ok) {
-        var e = new Error('HTTP ' + res.status);
-        e.sumber = 'arcgis';
-        e.status = res.status;
-        throw e;
+      for (var i = 0; i < kandidat.length; i++) {
+        try {
+          var res = await fetch(kandidat[i].url, { signal: ctrl.signal });
+          if (!res.ok) {
+            var e = new Error('HTTP ' + res.status);
+            e.sumber = 'arcgis';
+            e.status = res.status;
+            throw e;
+          }
+          return await res.json();
+        } catch (err) {
+          if (err && err.name === 'AbortError') {
+            err.sumber = 'arcgis';
+            throw err;
+          }
+          if (!err.sumber) err.sumber = 'arcgis';
+          err.lewatWorker = kandidat[i].worker;
+          if (!gagal) gagal = err;
+          /* Error dengan kode HTTP jauh lebih berguna daripada "Failed to fetch"
+             yang tidak menyebut apa pun. Tapi kode dari worker (522/530 berarti
+             Cloudflare tidak bisa menghubungi origin) menutupi penyebab
+             sebenarnya, jadi hanya kode dari jalur langsung yang diprioritaskan. */
+          if (!gagalStatus && typeof err.status === 'number' && !err.lewatWorker) gagalStatus = err;
+        }
       }
-      return await res.json();
-    } catch (err) {
-      if (err && err.name === 'AbortError') {
-        err.sumber = 'arcgis';
-        throw err;
-      }
-      try {
-        var res2 = await fetch(CORS_PROXY + encodeURIComponent(url), { signal: ctrl.signal });
-        if (!res2.ok) throw new Error('HTTP ' + res2.status);
-        return await res2.json();
-      } catch (e) {
-        /* Error ASLI yang dilempar, bukan error worker. Worker membalas 522
-           untuk gistaru.atrbpn.go.id, jadi pursue error worker hanya
-           menyembunyikan penyebab sebenarnya. */
-        if (!err.sumber) err.sumber = 'arcgis';
-        throw err;
-      }
+      throw gagalStatus || gagal || new Error('Tidak ada jalur request yang bisa dipakai.');
     } finally {
       clearTimeout(timer);
     }

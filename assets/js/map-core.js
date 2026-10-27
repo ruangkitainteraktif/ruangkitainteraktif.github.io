@@ -204,6 +204,14 @@
     }
     content.innerHTML = '';
     content.appendChild(card);
+    /* Sheet dipakai ulang untuk semua popup. Tanpa reset ini, card baru
+       bisa terbuka pada posisi scroll card sebelumnya sehingga bagian atas
+       popup terlihat terpotong. */
+    var sheetBody = sheet.querySelector('.bhumi-persil-sheet-content');
+    if (sheetBody) {
+      sheetBody.scrollTop = 0;
+      sheetBody.scrollLeft = 0;
+    }
     map.closePopup(popup);
     if (window.SheetDrag) {
       if (!window.SheetDrag.isOpen('catalog-popup')) window.SheetDrag.buka('catalog-popup');
@@ -211,6 +219,15 @@
       if (sheet.__updateMinimizeIcon) sheet.__updateMinimizeIcon();
     } else sheet.classList.add('is-open');
     sheet.setAttribute('aria-hidden', 'false');
+    /* Popup PIHPS membuat grafik saat event popupopen. Event awal terjadi
+       sebelum node dipindahkan dari popup Leaflet ke Detail Layer, sehingga
+       Chart.js dapat mengukur canvas yang sudah tidak terlihat. Jalankan
+       ulang listener layer setelah card berada di sheet yang terbuka. */
+    if (card.classList.contains('gp-leaflet-popup') && popup._source && popup._source.fire) {
+      window.requestAnimationFrame(function () {
+        popup._source.fire('popupopen', { popup: popup }, false);
+      });
+    }
     if (!catalogPopupAdRequested) {
       window.clearTimeout(catalogPopupAdTimer);
       catalogPopupAdTimer = window.setTimeout(function () {
@@ -2409,6 +2426,26 @@ const SAWAH_COLOR = '#87cf15';
         attribution: 'ATR/BPN - BHUMI'
       });
       bhumiPersilNasionalLayer.getTileUrl = bhumiPersilNasionalTileUrl;
+      /* Layanan BHUMI menolak permintaan tanpa sesi (403), dan penolakan itu
+         tidak terlihat oleh Leaflet -- layernya hanya diam kosong, yang
+         terbaca sebagai "layer rusak" tanpa keterangan. Tile yang gagal
+         dihitung dulu; hanya setelah beberapa kali berturut-turut barulah
+         pengguna diberi tahu, supaya satu tile yang kebetulan gagal tidak
+         memunculkan peringatan palsu. */
+      var tileGagal = 0;
+      var tileBerhasil = false;
+      bhumiPersilNasionalLayer.on('tileerror', function () {
+        if (tileBerhasil) return;
+        tileGagal++;
+        if (tileGagal === 3 && typeof showMapToast === 'function') {
+          showMapToast('Tile Persil Nasional gagal dimuat — layanan BHUMI menolak permintaan. ' +
+            'Layer mungkin tampil kosong.', 'error');
+        }
+      });
+      bhumiPersilNasionalLayer.on('tileload', function () {
+        tileBerhasil = true;
+        tileGagal = 0;
+      });
       bhumiPersilNasionalLayer.addTo(map);
       zoomToPersilDetail();
       refreshPersilLegend();
@@ -2858,6 +2895,12 @@ const SAWAH_COLOR = '#87cf15';
   }
 
   var gistaruKabupatenPromise = null;
+  /* API Interaktif GISTARU hanya menerima permintaan dari IP terdaftar
+     (balasannya 403 "Akses hanya dari alamat IP terdaftar"). Sekali ditolak,
+     permintaan berikutnya dilewati selama 10 menit supaya setiap klik peta
+     tidak membayar satu ronde jaringan yang sudah pasti gagal -- langsung
+     jatuh ke fallback zona yang datanya justru lebih lengkap. */
+  var bhumiPersilGistaruApiDitolakSampai = 0;
   var GISTARU_PROXY_BASE = 'https://gistaru-proxy.atrbpn.go.id/proxy.ashx?';
   var GISTARU_API_BASE = 'https://gistaru.atrbpn.go.id/rdtrinteraktif/api/interactive/';
 
@@ -2898,7 +2941,10 @@ const SAWAH_COLOR = '#87cf15';
     var target = GISTARU_PROXY_BASE + GISTARU_API_BASE + path + '?' + query;
     var url = BHUMI_PERSIL_NASIONAL_PROXY + encodeURIComponent(target);
     return fetch(url, { headers: { Accept: 'application/json' } }).then(function (response) {
-      if (!response.ok) throw new Error('HTTP ' + response.status);
+      if (!response.ok) {
+        if (response.status === 403) bhumiPersilGistaruApiDitolakSampai = Date.now() + 10 * 60 * 1000;
+        throw new Error('HTTP ' + response.status);
+      }
       return response.json();
     }).then(function (json) {
       if (!json || Number(json.status) !== 200 || !json.data) {
@@ -3039,6 +3085,259 @@ const SAWAH_COLOR = '#87cf15';
       '<div class="agol-popup-footer"><span>Sumber: GISTARU ATR/BPN · RDTR Interaktif</span></div></div>';
   }
 
+  /* Label field layer ArcGIS RDTR, disamakan dengan alias yang dipakai
+     GISTARU sendiri. Field yang tidak dikenal tetap ditampilkan dengan kode
+     aslinya supaya tidak ada informasi yang hilang diam-diam. */
+  var bhumiPersilArcgisLabel = {
+    NAMOBJ: 'Nama objek', NAMZON: 'Nama zona', KODZON: 'Kode zona',
+    NAMSZN: 'Nama sub-zona', KODSZN: 'Kode sub-zona',
+    JNSRPR: 'Jenis rencana pola ruang', KODEWP: 'Kode WP', KODSWP: 'Kode SWP',
+    KODBLK: 'Kode blok', KODSBL: 'Kode sub-blok', KODUNK: 'Kode unsur',
+    WADMPR: 'Provinsi', WADMKK: 'Kabupaten/Kota', WADMKC: 'Kecamatan',
+    WADMKD: 'Kelurahan/Desa',
+    KKOP_1: 'Keselamatan operasi penerbangan',
+    LP2B_2: 'Lahan pertanian pangan berkelanjutan',
+    KRB_03: 'Kawasan rawan bencana', TOD_04: 'Kawasan berorientasi transit',
+    TEB_05: 'Tempat evakuasi bencana', PUSLIT: 'Pusat penelitian',
+    CAGBUD: 'Kawasan cagar budaya', RESAIR: 'Kawasan resapan air',
+    KSMPDN: 'Kawasan sempadan', HANKAM: 'Pertahanan dan keamanan',
+    KKARST: 'Kawasan karst', PTBGMB: 'Pertambangan mineral dan batubara',
+    MGRSAT: 'Kawasan migrasi satwa', RDBUMI: 'Ruang dalam bumi',
+    TPZ_00: 'Teknik pengaturan zonasi', REMARK: 'Catatan',
+    PP: 'Peta Perda', BA: 'Berita acara', CT: 'Dokumen verifikasi',
+    BT: 'Batang tubuh peraturan', NOTHPR: 'Nomor dan tahun peraturan',
+    KDB: 'KDB · koefisien dasar bangunan',
+    KLB: 'KLB · koefisien lantai bangunan',
+    KDH: 'KDH · koefisien dasar hijau', GSB: 'GSB · garis sempadan',
+    KTB: 'KTB · jarak bangunan', KTGBGN: 'Ketinggian bangunan',
+    KETRGN: 'Keterangan zonasi'
+  };
+
+  /* Pengelompokan baris kartu fallback. Grup ketiga (intensitas) sering tidak
+     ada di layer ArcGIS -- hanya API Interaktif yang memilikinya -- jadi
+     kosongnya grup itu bukan kegagalan, cukup tidak ditampilkan. */
+  var bhumiPersilArcgisGrup = [
+    ['Lokasi', ['WADMPR', 'WADMKK', 'WADMKC', 'WADMKD'], false],
+    ['Zona dan subzona', ['NAMOBJ', 'NAMZON', 'KODZON', 'NAMSZN', 'KODSZN',
+      'JNSRPR', 'KODEWP', 'KODSWP', 'KODBLK', 'KODSBL', 'KODUNK'], false],
+    ['Intensitas pemanfaatan ruang', ['KDB', 'KLB', 'KDH', 'GSB', 'KTB',
+      'KTGBGN', 'KETRGN'], false],
+    ['Kendala dan peruntukan', ['KKOP_1', 'LP2B_2', 'KRB_03', 'TOD_04',
+      'TEB_05', 'PUSLIT', 'CAGBUD', 'RESAIR', 'KSMPDN', 'HANKAM', 'KKARST',
+      'PTBGMB', 'MGRSAT', 'RDBUMI', 'TPZ_00'], true],
+    ['Peraturan dan dokumen', ['NOTHPR', 'PP', 'BA', 'CT', 'BT', 'REMARK'], false]
+  ];
+
+  /* "Tidak Ada" pada field kendala berarti tidak ada kendala, jadi
+     menampilkannya hanya memenuhi kartu tanpa informasi apa pun. */
+  function bhumiPersilArcgisPakai(kunci, nilai, sembunyikanKosong) {
+    if (nilai == null) return false;
+    var teks = String(nilai).trim();
+    if (!teks) return false;
+    if (sembunyikanKosong && teks.toLowerCase() === 'tidak ada') return false;
+    return !!kunci;
+  }
+
+  function bhumiPersilArcgisNilai(nilai) {
+    var teks = String(nilai).trim();
+    if (/^https?:\/\//i.test(teks)) {
+      return '<a href="' + bhumiPersilEsc(teks) + '" target="_blank" rel="noopener noreferrer">' +
+        bhumiPersilEsc(teks.replace(/^https?:\/\/[^/]+/i, '')) + '</a>';
+    }
+    return bhumiPersilEsc(teks);
+  }
+
+  function bhumiPersilArcgisRows(keys, p, sembunyikanKosong) {
+    return keys.map(function (kunci) {
+      if (!bhumiPersilArcgisPakai(kunci, p[kunci], sembunyikanKosong)) return null;
+      return [bhumiPersilArcgisLabel[kunci] || kunci,
+        bhumiPersilArcgisNilai(p[kunci]), true];
+    }).filter(Boolean);
+  }
+
+  /* Sisa field yang tidak masuk kelompok mana pun. Dicatat sebagai "atribut
+     lain" supaya perubahan skema di sisi ATR/BPN tidak membuat data hilang
+     tanpa jejak. */
+  function bhumiPersilArcgisSisa(p, terpakai) {
+    return Object.keys(p).filter(function (kunci) {
+      if (terpakai.indexOf(kunci) !== -1) return false;
+      if (kunci === 'OBJECTID' || kunci === 'SHAPE' || kunci.indexOf('SHAPE_') === 0) return false;
+      return bhumiPersilArcgisPakai(kunci, p[kunci], false);
+    }).map(function (kunci) {
+      return [bhumiPersilArcgisLabel[kunci] || kunci, bhumiPersilArcgisNilai(p[kunci]), true];
+    });
+  }
+
+  /* Daftar kegiatan dari berkas lokal assets/data/geooss/activities. API
+     Interaktif menolak permintaan dari luar daftar IP terdaftar, tetapi
+     daftar kegiatan per RDTR sudah diunduh ke repo, jadi kartu fallback tetap
+     bisa menjawab "kegiatan apa yang boleh di zona ini". Mengembalikan
+     { status, pasti, nama } dan TIDAK pernah melempar: gagal memuat daftar
+     hanya menghilangkan satu bagian kartu, bukan seluruhnya. */
+  function bhumiPersilKegiatanZonaDariData(geoOss, rdtr, p, data) {
+    var kode = (p && (p.KODSZN || p.KODZON)) || '';
+    var zona = (data && data.zona) || [];
+    var daftar = (data && data.kegiatan) || [];
+    if (!kode || !zona.length || !daftar.length) return { status: 'takada', nama: [], pasti: false };
+    var indeks = [];
+    var pasti = false;
+    for (var i = 0; i < zona.length; i++) {
+      var hasil = geoOss && typeof geoOss.cocokZona === 'function'
+        ? geoOss.cocokZona(kode, zona[i])
+        : (String(zona[i]).toUpperCase() === String(kode).toUpperCase() ? 'pasti' : 'tidak');
+      if (hasil === 'pasti') { indeks = [i]; pasti = true; break; }
+      if (hasil === 'awalan') indeks.push(i);
+    }
+    if (!indeks.length) return { status: 'zonatakada', nama: [], pasti: false };
+    var dipakai = Object.create(null);
+    indeks.forEach(function (i) { dipakai[i] = true; });
+    var nama = [];
+    daftar.forEach(function (k) {
+      if (!k || !k.nama) return;
+      var z = k.z || [];
+      for (var j = 0; j < z.length; j++) {
+        if (dipakai[z[j]]) { nama.push(k.nama); return; }
+      }
+    });
+    return { status: nama.length ? 'ok' : 'kosong', pasti: pasti, nama: nama };
+  }
+
+  function bhumiPersilGistaruFallbackSections(rdtr, region, p, kegiatan) {
+    var terpakai = [];
+    bhumiPersilArcgisGrup.forEach(function (grup) {
+      terpakai = terpakai.concat(grup[1]);
+    });
+    var html = '';
+    bhumiPersilArcgisGrup.forEach(function (grup) {
+      var rows = bhumiPersilArcgisRows(grup[1], p, grup[2]);
+      if (grup[0] === 'Lokasi' && !rows.length) {
+        rows = [['Wilayah', bhumiPersilEsc(region.name || ''), true]];
+      }
+      if (grup[0] === 'Zona dan subzona' && !rows.length && rdtr.rtr) {
+        rows = [['Rencana', bhumiPersilEsc(rdtr.rtr), true]];
+      }
+      html += bhumiPersilGistaruSection(grup[0], rows);
+    });
+    var sisa = bhumiPersilArcgisSisa(p, terpakai);
+    if (sisa.length) html += bhumiPersilGistaruSection('Atribut lainnya', sisa);
+    if (kegiatan && kegiatan.status === 'ok') {
+      var batas = 80;
+      var teks = kegiatan.nama.slice(0, batas);
+      if (kegiatan.nama.length > batas) {
+        teks.push('… dan ' + (kegiatan.nama.length - batas) + ' kegiatan lainnya');
+      }
+      html += '<section class="bhumi-persil-gistaru-section">' +
+        '<h3>Kegiatan yang diizinkan di zona ini</h3>' +
+        bhumiPersilGistaruListHtml(teks) +
+        '<p class="bhumi-persil-gistaru-fallback-note">Daftar kegiatan dari berkas lokal GISTARU ' +
+        (kegiatan.pasti ? '— kode zona cocok persis.' :
+          '— pencocokan kode zona tidak persis, periksa kembali kode di atas.') + '</p></section>';
+    } else if (kegiatan && kegiatan.status === 'kosong') {
+      html += '<section class="bhumi-persil-gistaru-section">' +
+        '<h3>Kegiatan yang diizinkan di zona ini</h3>' +
+        '<p class="bhumi-persil-gistaru-empty">Tidak ada kegiatan terdaftar untuk kode zona ini.</p></section>';
+    } else if (kegiatan && kegiatan.status === 'zonatakada') {
+      html += '<section class="bhumi-persil-gistaru-section">' +
+        '<h3>Kegiatan yang diizinkan di zona ini</h3>' +
+        '<p class="bhumi-persil-gistaru-empty">Kode zona pada titik ini tidak ditemukan dalam daftar kegiatan RDTR.</p></section>';
+    } else if (kegiatan) {
+      html += '<section class="bhumi-persil-gistaru-section">' +
+        '<h3>Kegiatan yang diizinkan di zona ini</h3>' +
+        '<p class="bhumi-persil-gistaru-empty">Daftar kegiatan untuk RDTR ini belum tersedia di repo.</p></section>';
+    }
+    html += '<p class="bhumi-persil-gistaru-fallback-note">Ketentuan intensitas (KDB, KLB, KDH) hanya tersedia lewat ' +
+      'API RDTR Interaktif yang sedang menolak permintaan dari luar daftar IP terdaftar. ' +
+      'Data di atas diambil langsung dari layer ArcGIS GISTARU.</p>';
+    return html;
+  }
+
+  function bhumiPersilGistaruFallbackCard(rdtr, region, properties, kegiatan) {
+    var p = properties || {};
+    var judul = p.NAMZON || p.NAMSZN || p.NAMOBJ || 'Detail Informasi RDTR';
+    var subjudul = [p.KODZON, p.KODSZN].filter(Boolean).join(' · ') ||
+      rdtr.rtr || 'Rencana Detail Tata Ruang';
+    var sections = bhumiPersilGistaruFallbackSections(rdtr, region, p, kegiatan);
+    return '<div class="agol-popup"><div class="agol-popup-header agol-geo-persil">' +
+      '<div class="agol-popup-title">' + bhumiPersilEsc(judul) + '</div>' +
+      '<div class="agol-popup-subtitle">' + bhumiPersilEsc(subjudul) + '</div></div>' +
+      '<div class="agol-popup-body bhumi-persil-gistaru-body">' + sections + '</div>' +
+      '<div class="agol-popup-footer"><span>Sumber: GISTARU ATR/BPN · ArcGIS</span></div></div>';
+  }
+
+  function bhumiPersilLoadGistaruFallback(latlng) {
+    var geoOss = window.GeoOss;
+    if (!geoOss || !geoOss.muatRdtr || !geoOss.queryZona) {
+      return Promise.reject(new Error('Fallback RDTR belum siap.'));
+    }
+    return bhumiPersilGistaruRegion(latlng).then(function (region) {
+      return geoOss.muatRdtr(region.id).then(function (rdtrList) {
+        var point = window.turf && window.turf.point ? window.turf.point([Number(latlng.lng), Number(latlng.lat)]) : null;
+        function tryRdtr(index, lastError) {
+          if (index >= rdtrList.length) {
+            return Promise.reject(lastError || new Error('Tidak ada zona RDTR pada titik ini.'));
+          }
+          var rdtr = rdtrList[index];
+          var pointBox = [Number(latlng.lng), Number(latlng.lat), Number(latlng.lng), Number(latlng.lat)];
+          function featureAtPoint(features) {
+            var feature = features.find(function (item) {
+              return !point || !window.turf.booleanPointInPolygon || window.turf.booleanPointInPolygon(point, item);
+            });
+            return feature || null;
+          }
+          function queryArcGis() {
+            return geoOss.queryZona(rdtr, '*', pointBox).then(function (result) {
+              return featureAtPoint((result && result.fitur) || []);
+            });
+          }
+          var localZones = geoOss.muatZonaLokal && geoOss.zonaLokalKeFitur
+            ? geoOss.muatZonaLokal(region.id, rdtr.id_rtr).then(function (data) {
+              return featureAtPoint(geoOss.zonaLokalKeFitur(data));
+            }).catch(function () { return null; })
+            : Promise.resolve(null);
+          return localZones.then(function (feature) {
+            return feature || queryArcGis();
+          }).then(function (feature) {
+            if (!feature) return tryRdtr(index + 1, lastError);
+            /* Daftar kegiatan diambil dari berkas lokal: API Interaktif
+               menolak permintaan dari luar daftar IP terdaftar, tetapi
+               daftar kegiatan per RDTR sudah diunduh ke repo. Gagal memuatnya
+               tidak boleh menggagalkan kartu -- hanya bagian kegiatan yang
+               hilang. */
+            var kegiatanPromise = typeof geoOss.muatKegiatan === 'function'
+              ? geoOss.muatKegiatan(region.id, rdtr.id_rtr).then(function (data) {
+                return bhumiPersilKegiatanZonaDariData(geoOss, rdtr, feature.properties, data);
+              }).catch(function () { return undefined; })
+              : Promise.resolve(undefined);
+            return kegiatanPromise.then(function (kegiatan) {
+              return bhumiPersilGistaruFallbackCard(rdtr, region, feature.properties, kegiatan);
+            });
+          }).catch(function (error) {
+            return tryRdtr(index + 1, error);
+          });
+        }
+        return tryRdtr(0, null);
+      });
+    });
+  }
+
+  /* Pesan error dari jaringan sangat teknis ("Failed to fetch", "HTTP 403")
+     dan tidak menyebut apa pun yang bisa ditindaklanjuti pengguna. Diterjemahkan
+     dulu ke bahasa yang menjelaskan penyebab sekaligus batasannya. */
+  function bhumiPersilJelaskanError(err) {
+    if (!err) return 'tidak tersedia';
+    var pesan = String(err.message || err);
+    if (/HTTP\s*403/i.test(pesan)) return 'HTTP 403 — layanan hanya menerima permintaan dari IP terdaftar';
+    if (/HTTP\s*401/i.test(pesan)) return 'HTTP 401 — sesi ditolak';
+    if (/HTTP\s*404/i.test(pesan)) return 'HTTP 404 — layanan atau layer tidak ditemukan';
+    if (/HTTP\s*5\d\d/.test(pesan)) return pesan + ' — layanan ATR/BPN sedang terganggu';
+    if (/Failed to fetch|NetworkError|Load failed/i.test(pesan)) {
+      return 'koneksi ke layanan ArcGIS GISTARU diblokir atau terputus';
+    }
+    if (/berkas tidak ada/i.test(pesan)) return pesan;
+    if (pesan.length > 140) pesan = pesan.slice(0, 140) + '…';
+    return pesan;
+  }
+
   function bhumiPersilLoadGistaru(latlng, seq) {
     var host = bhumiPersilSheet && bhumiPersilSheet.querySelector('.catalog-popup-sheet-cards');
     if (!host) return;
@@ -3046,7 +3345,29 @@ const SAWAH_COLOR = '#87cf15';
     node.className = 'bhumi-persil-gistaru';
     node.innerHTML = bhumiPersilStatusCard('RDTR GISTARU ATR/BPN', 'Memuat informasi zonasi dari koordinat klik…');
     host.insertBefore(node, host.firstChild);
+    /* Fallback ditangani sendiri supaya kegagalannya TIDAK jatuh ke catch
+       wilayah di bawah -- kalau jatuh, pengguna akan diberi tahu bahwa
+       "wilayah tidak dapat ditentukan" padahal wilayahnya benar. */
+    function tampilkanFallback(apiError) {
+      return bhumiPersilLoadGistaruFallback(latlng).then(function (html) {
+        if (seq !== bhumiPersilClickSeq || !node.isConnected) return;
+        node.innerHTML = html;
+      }).catch(function (fallbackError) {
+        if (seq !== bhumiPersilClickSeq || !node.isConnected) return;
+        node.innerHTML = bhumiPersilStatusCard('RDTR GISTARU ATR/BPN',
+          'Data RDTR belum bisa dimuat. API Interaktif: ' + bhumiPersilJelaskanError(apiError) +
+          '. Fallback zona: ' + bhumiPersilJelaskanError(fallbackError) + '.', true);
+      });
+    }
     bhumiPersilGistaruRegion(latlng).then(function (region) {
+      /* API sudah ditolak 403 pada klik sebelumnya: langsung ke fallback
+         supaya satu request jaringan yang hasilnya sudah diketahui tidak
+         dibayar berulang-ulang. */
+      if (Date.now() < bhumiPersilGistaruApiDitolakSampai) {
+        var ditolak = new Error('HTTP 403');
+        ditolak.dilewati = true;
+        return tampilkanFallback(ditolak);
+      }
       return bhumiPersilGistaruRequest('data', {
         id_wilayah: region.id,
         latitude: Number(latlng.lat).toFixed(7),
@@ -3060,11 +3381,14 @@ const SAWAH_COLOR = '#87cf15';
           if (seq !== bhumiPersilClickSeq || !node.isConnected) return;
           node.innerHTML = bhumiPersilGistaruCard(data, region.name, activities);
         });
+      }).catch(function (apiError) {
+        return tampilkanFallback(apiError);
       });
-    }).catch(function (error) {
+    }).catch(function (regionError) {
       if (seq !== bhumiPersilClickSeq || !node.isConnected) return;
       node.innerHTML = bhumiPersilStatusCard('RDTR GISTARU ATR/BPN',
-        'Data RDTR untuk titik ini tidak berhasil dimuat melalui proxy. ' + ((error && error.message) || 'Periksa koneksi atau cakupan RDTR.'));
+        'Wilayah tidak dapat ditentukan dari koordinat klik: ' +
+        bhumiPersilJelaskanError(regionError) + '.', true);
     });
   }
 
@@ -3808,6 +4132,30 @@ const SAWAH_COLOR = '#87cf15';
   var SIGAP_WMS_URL = 'https://sigap.kehutanan.go.id/sigap-forge-geoserver-2026/sigap/wms';
   var sigapEsc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
 
+  /* Semua popup SIGAP memakai template .agol-popup yang sama dengan layer
+     lain di panel Detail Layer: header badge/judul, body berisi baris atribut,
+     lalu footer sumber. */
+  function sigapPopupHtml(layerName, bodyHtml, footerText) {
+    var title = String(layerName || '').split(':')[1] || layerName || 'SIGAP';
+    return '<div class="agol-popup">'
+      + '<div class="agol-popup-header agol-geo-kawasan">'
+      + '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#86efac;"></span>SIGAP</div>'
+      + '<div class="agol-popup-title">' + sigapEsc(title) + '</div>'
+      + '</div>'
+      + '<div class="agol-popup-body">' + bodyHtml + '</div>'
+      + '<div class="agol-popup-footer"><span>' + sigapEsc(footerText) + '</span></div>'
+      + '</div>';
+  }
+
+  function sigapStatusPopupHtml(layerName, statusText, footerText) {
+    return sigapPopupHtml(layerName,
+      '<div class="agol-popup-fields"><div class="agol-popup-field">'
+      + '<span class="agol-popup-field-label">Status</span>'
+      + '<span class="agol-popup-field-value">' + sigapEsc(statusText) + '</span>'
+      + '</div></div>',
+      footerText || 'Sumber: KLHK SIGAP');
+  }
+
   function sigapGetFeatureInfo(layerName, e) {
     var b = map.getBounds();
     var nw = map.project(b.getNorthWest(), map.getZoom());
@@ -3831,7 +4179,7 @@ const SAWAH_COLOR = '#87cf15';
         if (r.status === 401 || r.status === 403) {
           L.popup({ maxWidth: 320, className: 'sigap-leaflet-popup' })
             .setLatLng(e.latlng)
-            .setContent('<div class="sigap-popup"><strong>SIGAP — ' + layerName.split(':')[1] + '</strong><br>Data memerlukan autentikasi dari server KLHK SIGAP.</div>')
+            .setContent(sigapStatusPopupHtml(layerName, 'Memerlukan autentikasi', 'Data memerlukan autentikasi dari server KLHK SIGAP.'))
             .openOn(map);
           return null;
         }
@@ -3841,13 +4189,18 @@ const SAWAH_COLOR = '#87cf15';
         if (!data) return;
         if (data.features && data.features.length > 0) {
           var props = data.features[0].properties || {};
-          var html = '<div class="sigap-popup"><strong>SIGAP — ' + layerName.split(':')[1] + '</strong><br>';
+          var rows = '';
           for (var k in props) {
             if (props[k] != null && props[k] !== '') {
-              html +='<strong>' + sigapEsc(k) + ':</strong> ' + sigapEsc(String(props[k])) + '<br>';
+              rows += '<div class="agol-popup-field"><span class="agol-popup-field-label">' + sigapEsc(k)
+                + '</span><span class="agol-popup-field-value">' + sigapEsc(String(props[k])) + '</span></div>';
             }
           }
-          html += '</div>';
+          var html = sigapPopupHtml(layerName,
+            '<div class="agol-popup-fields">'
+            + (rows || '<div class="agol-popup-field"><span class="agol-popup-field-value">Tidak ada atribut.</span></div>')
+            + '</div>',
+            'Sumber: KLHK SIGAP');
           L.popup({ maxWidth: 320, className: 'sigap-leaflet-popup' })
             .setLatLng(e.latlng)
             .setContent(html)
@@ -3855,7 +4208,7 @@ const SAWAH_COLOR = '#87cf15';
         } else {
           L.popup({ maxWidth: 320, className: 'sigap-leaflet-popup' })
             .setLatLng(e.latlng)
-            .setContent('<div class="sigap-popup"><strong>SIGAP — ' + layerName.split(':')[1] + '</strong><br>Tidak ada data di lokasi ini.</div>')
+            .setContent(sigapStatusPopupHtml(layerName, 'Tidak ada data', 'Tidak ada fitur pada lokasi ini.'))
             .openOn(map);
         }
       })
@@ -3863,7 +4216,7 @@ const SAWAH_COLOR = '#87cf15';
         console.warn('[SIGAP] GetFeatureInfo gagal:', err.message);
         L.popup({ maxWidth: 320, className: 'sigap-leaflet-popup' })
           .setLatLng(e.latlng)
-          .setContent('<div class="sigap-popup"><strong>SIGAP — ' + layerName.split(':')[1] + '</strong><br>Gagal memuat data fitur.</div>')
+          .setContent(sigapStatusPopupHtml(layerName, 'Gagal memuat', 'Gagal memuat data fitur.'))
           .openOn(map);
       });
   }
@@ -4538,37 +4891,10 @@ const SAWAH_COLOR = '#87cf15';
      Layer Catalog Dropdown
      ═══════════════════════════════════════ */
 
-  /* Direktori layer resmi BHUMI (Directus: /panel/items/layers).
-     74 rekaman → 25 layer tematik yang bisa di-query klik (umum:*)
-     + Persil (entri tile sendiri). Entri yang tidak dapat diakses
-     (45 entri "(tidak tersedia)" + heatmap tanpa data) sudah dihapus
-     dari katalog; 2 rekaman duplikat persis disatukan. */
+  /* Katalog ATR/BPN hanya menyajikan Zona Nilai Tanah untuk identifikasi
+     klik. Persil Nasional memakai entri tile terpisah. */
   var BHUMI_IDENTIFY_TEMPLAYERS = [
-    { layer: "umum:PIPPIB_2022_1", label: "Peta Indikatif Penghentian Pemberian Izin Baru (PIPPIB) Tahun 2022 Periode I" },
-    { layer: "umum:PersilBerdasarkanPengakuanTanah", label: "Persil Berdasarkan Status Pendaftaran" },
-    { layer: "umum:toponimi", label: "Toponim" },
-    { layer: "umum:lahanbakusawah_new", label: "Lahan Baku Sawah 2024" },
-    { layer: "umum:HGUPelepasanHutan", label: "HGU Pelepasan Hutan" },
-    { layer: "umum:PengumumanYuridis", label: "Pengumuman Yuridis" },
-    { layer: "umum:lokasiptsl", label: "Lokasi PTSL" },
-    { layer: "umum:lsd_merge", label: "Lahan Sawah Dilindungi 12 Provinsi" },
-    { layer: "umum:ZNTRANGE", label: "Zona Nilai Tanah" },
-    { layer: "umum:nbt3", label: "Peta Nilai Bidang Tanah" },
-    { layer: "umum:PenggunaanTanah", label: "Penggunaan Tanah" },
-    { layer: "umum:PENUNJUKAN_KAWASAN_HUTAN", label: "Kawasan Hutan0" },
-    { layer: "umum:garis_pantai", label: "Garis Pantai" },
-    { layer: "umum:tanahulayatnew", label: "Tanah Ulayat" },
-    { layer: "umum:LahanBakuSawah", label: "Lahan Baku Sawah 2019" },
-    { layer: "umum:PTSL2025", label: "Bidang Tanah PTSL 2025" },
-    { layer: "umum:lsd_merge_8_provinsi", label: "Lahan Sawah Dilindungi 8 Provinsi" },
-    { layer: "umum:penunjukan_kawasan_hutan", label: "Kawasan Hutan" },
-    { layer: "umum:pippib_2025", label: "Peta PIPPIB Tahun 2025 – Hutan Alam Primer dan Lahan Gambut" },
-    { layer: "umum:area_penggunaan_lain", label: "Area Penggunaan Lain" },
-    { layer: "umum:detaildatabthgu", label: "Hak Guna Usaha" },
-    { layer: "umum:persil_hktgg", label: "Hak Tanggungan" },
-    { layer: "pippib_baru_2021", label: "Peta Indikatif Penghentian Pemberian Izin Baru (PIPPIB) Tahun 2021" },
-    { layer: "umum:kawasan_hutan", label: "Kawasan Hutan00" },
-    { layer: "umum:persil_sbts", label: "Sebaran Transaksi" }
+    { layer: "umum:ZNTRANGE", label: "Zona Nilai Tanah" }
   ];
   /* Tidak mengaktifkan layer identifikasi tematik secara otomatis.
      Pengguna dapat memilih layer yang dibutuhkan dari katalog; pilihan
@@ -5263,7 +5589,7 @@ const SAWAH_COLOR = '#87cf15';
     'Geologi & Tanah': 'Informasi batuan, struktur bumi, jenis tanah, dan sifat tanah.',
     'Transportasi': 'Jaringan jalan dan rute transportasi umum.',
     'Pertanian & Ketahanan Pangan': 'Lahan pertanian, komoditas, serta organisme pengganggu tanaman (OPT), yaitu hama dan penyakit tanaman, juga kondisi dan layanan pangan.',
-      'ATRBPN': 'Direktori layer resmi BHUMI (ATR/BPN). "Peta Pertanahan": batas persil nasional + heatmap transaksi 2023 — saat persil menyala, klik peta untuk atribut di titik tersebut. "Identifikasi klik": 25 layer tematik (zona nilai tanah, nilai bidang, toponim, kawasan hutan, sawah, PIPPIB, dll.) yang ikut diperiksa saat klik — aktifkan layer yang ingin dicari. Entri "(tidak tersedia)" berasal dari direktori BHUMI tetapi sumbernya tidak dapat diakses.',
+      'ATRBPN': 'Layer resmi BHUMI (ATR/BPN): Persil Nasional dan Zona Nilai Tanah. Saat aktif, klik peta untuk melihat atribut pada titik tersebut.',
     'SITR Jawa Timur': 'Sistem Informasi Tata Ruang Provinsi Jawa Timur (Pemprov Jatim). 93 layer perencanaan tata ruang — pola ruang RTRW/Perda, jaringan transportasi, energi, telekomunikasi, sumber daya air, permukiman, dan persampahan — dalam enam kelompok. Klik layer untuk menampilkan; peta otomatis menuju Jawa Timur.',
     'Bencana & Risiko': 'Kejadian bencana, sumber bahaya, pemantauan, dan informasi kesiapsiagaan.',
     'Lingkungan & Laut': 'Ekosistem, kondisi perairan, dan indikator kualitas lingkungan.',
@@ -5364,7 +5690,10 @@ const SAWAH_COLOR = '#87cf15';
     'st2023:utp_ihk_12', 'st2023:utp_ihk_13', 'st2023:utp_ihk_14', 'st2023:utp_ihk_15',
     'st2023:utp_ihk_16', 'st2023:utp_ihk_17'
   ];
-  _pinnedLayers = _pinnedLayers.filter(function (id) { return removedCatalogLayerIds.indexOf(id) === -1; });
+  _pinnedLayers = _pinnedLayers.filter(function (id) {
+    return removedCatalogLayerIds.indexOf(id) === -1 &&
+      (id.indexOf('bhumi-identify:') !== 0 || id === 'bhumi-identify:umum:ZNTRANGE');
+  });
   savePinnedLayers();
   // Layer utama selalu diprioritaskan dalam pin bawaan katalog.
   var _defaultPinnedLayers = [

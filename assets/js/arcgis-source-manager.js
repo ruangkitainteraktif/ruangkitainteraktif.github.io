@@ -578,10 +578,19 @@
       return !isGeometryField(key) && properties[key] !== null && properties[key] !== undefined && properties[key] !== '';
     }).slice(0, 60);
     fields.forEach(function (key) {
-      rows += '<div class="arcgis-popup-row"><span>' + escapeHtml(key) + '</span><strong>' + escapeHtml(formatValue(properties[key])) + '</strong></div>';
+      rows += '<div class="agol-popup-field"><span class="agol-popup-field-label">' + escapeHtml(key)
+        + '</span><span class="agol-popup-field-value">' + escapeHtml(formatValue(properties[key])) + '</span></div>';
     });
-    if (!rows) rows = '<div class="arcgis-popup-row"><span>Atribut</span><strong>-</strong></div>';
-    return '<div class="arcgis-popup"><div class="arcgis-popup-title">' + escapeHtml(title || 'ArcGIS REST') + '</div><div class="arcgis-popup-source">' + escapeHtml(source || '') + '</div><div class="arcgis-popup-body">' + rows + '</div></div>';
+    if (!rows) rows = '<div class="agol-popup-field"><span class="agol-popup-field-label">Atribut</span><span class="agol-popup-field-value">-</span></div>';
+    return '<div class="agol-popup">'
+      + '<div class="agol-popup-header agol-geo-geostruktur">'
+      + '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#93c5fd;"></span>ArcGIS REST</div>'
+      + '<div class="agol-popup-title">' + escapeHtml(title || 'ArcGIS REST') + '</div>'
+      + (source ? '<div class="agol-popup-subtitle">' + escapeHtml(source) + '</div>' : '')
+      + '</div>'
+      + '<div class="agol-popup-body"><div class="agol-popup-fields">' + rows + '</div></div>'
+      + '<div class="agol-popup-footer"><span>Sumber: ArcGIS REST Service</span></div>'
+      + '</div>';
   }
 
   function openPopup(latlng, html) {
