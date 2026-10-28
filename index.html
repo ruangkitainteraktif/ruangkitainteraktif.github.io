@@ -451,7 +451,7 @@
       <div id="unifiedSearchResults" class="unified-search-results"></div>
       <section id="geonusaUnifiedPanel" class="geonusa-unified-panel" aria-label="Pencarian batas administrasi BIG" hidden>
         <div class="geonusa-unified-heading"><strong>Cari Wilayah</strong><span id="geonusaUnifiedStatus" role="status" aria-live="polite">Pilih provinsi untuk memulai.</span></div>
-        <label>Provinsi<select id="geonusaProvince" disabled><option value="">Memuat provinsiâ€¦</option></select></label>
+        <label>Provinsi<select id="geonusaProvince" disabled><option value="">Memuat provinsi</option></select></label>
         <label>Kabupaten/Kota<select id="geonusaKabupaten" disabled><option value="">Pilih provinsi dahulu</option></select></label>
         <label>Kecamatan<select id="geonusaKecamatan" disabled><option value="">Pilih kabupaten/kota dahulu</option></select></label>
         <label>Desa/Kelurahan<select id="geonusaDesa" disabled><option value="">Pilih kecamatan dahulu</option></select></label>
@@ -1300,19 +1300,19 @@
               <div class="geonusa-card-body">
                 <div id="geoidSummaryCards" class="geoid-summary-cards">
                   <div class="geoid-summary-box geoid-summary-prov">
-                    <span class="geoid-summary-count" id="geoidCountProv" style="font-size:20px;font-weight:700;line-height:1;">â€“</span>
+                    <span class="geoid-summary-count" id="geoidCountProv" style="font-size:20px;font-weight:700;line-height:1;">-“</span>
                     <span class="geoid-summary-label">Provinsi</span>
                   </div>
                   <div class="geoid-summary-box geoid-summary-kab">
-                    <span class="geoid-summary-count" id="geoidCountKab" style="font-size:20px;font-weight:700;line-height:1;">â€“</span>
+                    <span class="geoid-summary-count" id="geoidCountKab" style="font-size:20px;font-weight:700;line-height:1;">-“</span>
                     <span class="geoid-summary-label">Kab/Kota</span>
                   </div>
                   <div class="geoid-summary-box geoid-summary-kec">
-                    <span class="geoid-summary-count" id="geoidCountKec" style="font-size:20px;font-weight:700;line-height:1;">â€“</span>
+                    <span class="geoid-summary-count" id="geoidCountKec" style="font-size:20px;font-weight:700;line-height:1;">-“</span>
                     <span class="geoid-summary-label">Kecamatan</span>
                   </div>
                   <div class="geoid-summary-box geoid-summary-desa">
-                    <span class="geoid-summary-count" id="geoidCountDesa" style="font-size:20px;font-weight:700;line-height:1;">â€“</span>
+                    <span class="geoid-summary-count" id="geoidCountDesa" style="font-size:20px;font-weight:700;line-height:1;">-“</span>
                     <span class="geoid-summary-label">Desa/Kel</span>
                   </div>
                 </div>
@@ -1622,7 +1622,7 @@
      menyembunyikannya secara permanen.
 
      <canvas> HNT dan histori tetap berada di dalam pembungkus
-     <div style="height:â€¦"> di dalam badan kartu. Wajib: Chart.js
+     <div style="height:"> di dalam badan kartu. Wajib: Chart.js
      memasang ResizeObserver pada induk canvas, dan pembungkus tinggi tetap
      itulah yang membuat grafik menggambar ulang saat kartu dibuka lagi.
 
@@ -2403,11 +2403,11 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     <div class="geonusa-card-body">
                     <div class="gd-controls">
                       <label for="gd-province-select">Pilih provinsi</label>
-                      <select id="gd-province-select"><option value="">Memuat daftar provinsiâ€¦</option></select>
+                      <select id="gd-province-select"><option value="">Memuat daftar provinsi</option></select>
                       <button id="gd-run" type="button" disabled>Analisis Water Risk</button>
                       <label class="gd-map-toggle"><input id="gd-map-layer-toggle" type="checkbox" disabled><span>Tampilkan hasil Water Risk di peta</span></label>
                       <button id="gd-reset-polygon" type="button" disabled>Reset Polygon</button>
-                      <div id="gd-status" role="status" aria-live="polite">Memuat daftar provinsiâ€¦</div>
+                      <div id="gd-status" role="status" aria-live="polite">Memuat daftar provinsi</div>
                     </div>
                     <div id="gd-results" hidden>
                       <div class="gd-summary" id="gd-summary"></div>
@@ -2423,27 +2423,6 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                   <h4 style="font-size:15px; margin-bottom:4px;">GeoPortal Hub</h4>
                   <p class="geotools-desc" style="margin-bottom:20px;">Pilih wilayah untuk ditampilkan di peta</p>
 
-                  <details class="geotani-kta-card" id="rdtrInteraktifCard" aria-labelledby="rdtrInteraktifTitle">
-                    <summary class="gt-card-head">
-                      <span class="gt-card-icon" aria-hidden="true">&#127758;</span>
-                      <span><b id="rdtrInteraktifTitle">RDTR Interaktif</b><small>Overlay rencana detail tata ruang ATR/BPN</small></span>
-                    </summary>
-                    <div class="rdtr-catalog-body">
-                      <label class="geotani-form-label" for="rdtrCatalogSearch">Cari RDTR atau kabupaten/kota</label>
-                      <input id="rdtrCatalogSearch" class="geotani-form-input-search" type="search" placeholder="Contoh: RDTR Takengon, Cilacap..." autocomplete="off" />
-                      <div class="rdtr-catalog-toolbar">
-                        <span id="rdtrCatalogStatus" role="status" aria-live="polite">Memuat katalog RDTR...</span>
-                        <button id="rdtrCatalogClear" type="button" class="geotani-btn-reset">Hapus overlay aktif</button>
-                      </div>
-                      <div id="rdtrCatalogResults" class="rdtr-catalog-results" aria-live="polite"></div>
-                      <div class="rdtr-catalog-pager">
-                        <button id="rdtrCatalogPrev" type="button" class="geotools-btn" disabled>Sebelumnya</button>
-                        <span id="rdtrCatalogPage" aria-live="polite"></span>
-                        <button id="rdtrCatalogNext" type="button" class="geotools-btn" disabled>Berikutnya</button>
-                      </div>
-                      <small class="rdtr-catalog-note">Katalog snapshot 30 September 2026. Overlay dimuat dari layanan ArcGIS GISTARU saat diaktifkan. Ketersediaan tiap layanan bergantung pada server sumber.</small>
-                    </div>
-                  </details>
 
                   <details class="geotani-kta-card" id="geotani-geospasial-card" aria-labelledby="geotani-geospasial-title">
                     <summary class="gt-card-head">
@@ -2509,7 +2488,208 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     </div>
                   </details>
 
-               <details class="geotani-kta-card geotani-sls-card" id="geotani-sls-card" aria-labelledby="geotani-sls-title">
+                  <details class="geoportal-card" id="geoportalHubCard" aria-labelledby="geoportalHubTitle">
+                    <summary class="gt-card-head">
+                      <span class="gt-card-icon" aria-hidden="true">&#127760;</span>
+                      <span>
+                        <b id="geoportalHubTitle">GeoPortal Hub</b>
+                        <small>Pilih wilayah untuk ditampilkan di peta</small>
+                      </span>
+                    </summary>
+                    <div class="geoportal-card-body">
+                      <div class="geoportal-sticky-header">
+                        <div class="geoportal-search-container">
+                          <div class="geoportal-search-input-wrapper">
+                            <span class="search-icon">&#128269;</span>
+                            <input type="text" id="geoportalSearchInput" class="geoportal-search-input with-icon" placeholder="Cari layer..." autocomplete="off" />
+                          </div>
+                        </div>
+                      </div>
+                      <div id="geoportalLayerList"></div>
+                    </div>
+                  </details>
+
+                  <details class="geotani-kta-card geotani-sls-card" id="geotani-building-card" aria-labelledby="geotani-building-title">
+                    <summary class="gt-card-head">
+                      <span class="gt-card-icon" aria-hidden="true">&#127959;</span>
+                      <span>
+                        <b id="geotani-building-title">OpenBuilding Indonesia</b>
+                        <small>Jejak bangunan OpenBuilding</small>
+                      </span>
+                    </summary>
+                    <div>
+                      <p class="geotani-sls-desc">
+                        Cari desa untuk menampilkan jejak bangunan yang berada di dalam batas desa.
+                      </p>
+                      <div class="geotani-sls-search">
+                        <label class="geotani-form-label" for="geotaniBuildingVillageSearch">Cari nama desa</label>
+                        <input type="text" id="geotaniBuildingVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
+                        <div id="geotaniBuildingVillageResults" class="geotani-sls-results" hidden></div>
+                        <div id="geotaniBuildingVillageSelected" class="geotani-sls-picked" hidden></div>
+                      </div>
+                      <button id="geotani-building-load" class="geotani-btn-print" type="button">Tampilkan</button>
+                      <button id="geotani-building-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset jejak bangunan" aria-label="Reset jejak bangunan">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 7 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        Reset Bangunan
+                      </button>
+                      <div id="geotani-building-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                      <div id="geotani-building-output" class="geotani-sls-desc" aria-live="polite"></div>
+                    </div>
+                  </details>
+
+            <details class="georaster-card" aria-labelledby="georasterCardTitle">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#128506;</span>
+                <span>
+                  <b id="georasterCardTitle">DEMNAS Nasional</b>
+                  <small>Clip batas wilayah, lalu unduh TIFF tanpa token</small>
+                </span>
+              </summary>
+              <div class="georaster-card-body">
+                <p class="georaster-card-note">
+                  Pilih index raster DEMNAS untuk memuat wilayah yang dapat direkomendasikan,
+                  lalu clip dan unduh TIFF tanpa token.
+                </p>
+
+                <label class="geotani-form-label" for="demnasSearchInput">Cari DEMNAS</label>
+                <input id="demnasSearchInput" class="geotani-form-input" type="search" placeholder="Ketik Nama atau OBJECTID" autocomplete="off" />
+                <div id="demnasSearchCount" style="margin-top:5px;font-size:10px;color:#64748b;"></div>
+
+                <label class="geotani-form-label" for="demnasNamobjSelect" style="margin-top:8px;">Index DEMNAS (OBJECTID / Name)</label>
+                <select id="demnasNamobjSelect" class="geotani-form-input" size="1">
+                  <option value="">Memuat katalog DEMNAS</option>
+                </select>
+                <div id="demnasIndexSelected" style="display:none;margin-top:8px;padding:6px 8px;font-size:10px;color:#166534;background:#f0fdf4;border-radius:4px;"></div>
+
+                <div id="demnasRecommendationBox" class="demnas-recommendation-box" hidden>
+                  <div class="demnas-recommendation-heading"><strong>Rekomendasi wilayah clip</strong><span id="demnasRecommendationCount"></span></div>
+                  <div id="demnasRecommendationStatus" class="demnas-recommendation-status"></div>
+                  <select id="demnasRecommendedSelect" class="geotani-form-input" size="1">
+                    <option value="">Pilih rekomendasi wilayah</option>
+                  </select>
+                </div>
+
+                <div class="demnas-clip-box">
+                  <div class="demnas-clip-heading"><strong>Clip Batas Wilayah</strong><span>Opsional</span></div>
+                  <label class="geotani-form-label" for="demnasAdminLevel">Tingkat Wilayah</label>
+                  <select id="demnasAdminLevel" class="geotani-form-input">
+                    <option value="">Tanpa clip</option>
+                    <option value="4">Desa/Kelurahan</option>
+                    <option value="3">Kecamatan</option>
+                    <option value="2">Kabupaten/Kota</option>
+                  </select>
+                  <div id="demnasAdminSearchWrap" class="demnas-admin-search-wrap" hidden>
+                    <label class="geotani-form-label" for="demnasAdminSearch">Cari Kode atau Nama</label>
+                    <input id="demnasAdminSearch" class="geotani-form-input" type="search" placeholder="Contoh: 33.01.10.2001" autocomplete="off" />
+                    <select id="demnasAdminSelect" class="geotani-form-input" size="1">
+                      <option value="">Pilih wilayah</option>
+                    </select>
+                    <div id="demnasAdminSearchCount" class="demnas-admin-search-count"></div>
+                  </div>
+                  <div id="demnasAdminSelected" class="demnas-admin-selected" hidden></div>
+                  <div class="demnas-clip-actions">
+                    <button id="demnasClipRefreshBtn" class="demnas-clip-refresh-btn" type="button" hidden>Perbarui Preview</button>
+                    <button id="demnasClipResetBtn" class="demnas-clip-reset-btn" type="button" hidden>Reset Polygon</button>
+                  </div>
+                  <div id="demnasPreviewStatus" class="demnas-preview-status" aria-live="polite"></div>
+                  <div id="demnasElevationLegend" class="demnas-elevation-legend" hidden>
+                    <strong>Elevasi (mdpl)</strong>
+                    <div class="demnas-elevation-bar"></div>
+                    <div class="demnas-elevation-labels"><span>0</span><span>500</span><span>1.000</span><span>1.500</span><span>2.000+</span></div>
+                  </div>
+                </div>
+
+                <button id="demnasDownloadBtn" class="geotools-btn" type="button" style="margin-top:12px;width:100%;">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Unduh DEMNAS TIFF
+                </button>
+
+                <div id="demnasStatus" class="cctv-message" style="display:none; margin-top:12px;"></div>
+                <div id="demnasLoadingLayer" class="demnas-loading-layer" hidden aria-live="polite">
+                  <div class="demnas-loading-head">
+                    <span class="demnas-loading-spinner" aria-hidden="true"></span>
+                    <div>
+                      <strong id="demnasLoadingTitle">Menyiapkan GeoTIFF DEMNAS</strong>
+                      <small id="demnasLoadingMessage">Menyiapkan permintaan raster</small>
+                    </div>
+                  </div>
+                  <div class="demnas-loading-track"><span id="demnasLoadingBar"></span></div>
+                  <div class="demnas-loading-meta"><span id="demnasLoadingStage">Menyiapkan</span><strong id="demnasLoadingPercent">0%</strong></div>
+                </div>
+              </div>
+            </details>
+
+            <div class="lc-adsense sheet-adsense geotools-inline-adsense geotools-inline-adsense--geoportal" aria-label="Iklan">
+              <ins class="adsbygoogle" style="display:block"
+                data-ad-format="fluid"
+                data-ad-layout-key="-fb+5w+4e-db+86"
+                data-ad-client="ca-pub-7501816933195235"
+                data-ad-slot="5975101505"></ins>
+            </div>
+
+                  <details class="geotani-kta-card geojogja-card" id="geojogja-card" aria-labelledby="geojogja-title">
+                    <summary class="gt-card-head">
+                      <span class="gt-card-icon" aria-hidden="true">&#127759;</span>
+                      <span>
+                        <b id="geojogja-title">GeoJogja</b>
+                        <small>Pilih layer tematik dari Geoportal DIY</small>
+                      </span>
+                    </summary>
+                    <div class="geojogja-body">
+                      <label class="geojogja-layer-label" for="geojogjaLayerSelect">Layer GeoJogja</label>
+                      <select id="geojogjaLayerSelect" class="geotani-form-select" aria-label="Pilih layer GeoJogja">
+                        <option value="soil">Jenis Tanah</option>
+                        <option value="landuse">Tata Guna Lahan</option>
+                        <option value="lsd">Lahan Sawah Dilindungi</option>
+                        <option value="rdtrYia">Pola Ruang RDTR YIA 2022</option>
+                      </select>
+                      <div class="geojogja-toolbar">
+                        <button id="geojogjaLoadBtn" class="geotools-btn geotools-btn--green" type="button">Tampilkan layer &amp; tabel</button>
+                        <button id="geojogjaHideBtn" class="geotools-btn" type="button" hidden>Sembunyikan layer</button>
+                      </div>
+                      <p id="geojogjaStatus" class="geojogja-status" role="status">Sumber: Geoportal DIY &middot; Jenis tanah</p>
+                      <div id="geojogjaTableWrap" class="geojogja-table-wrap" hidden>
+                        <table class="geojogja-table">
+                          <thead><tr><th>No.</th><th>Jenis tanah</th><th>Tekstur</th><th>Infiltrasi</th><th>Luas</th></tr></thead>
+                          <tbody id="geojogjaTableBody"></tbody>
+                        </table>
+                      </div>
+                      <div id="geojogjaPagination" class="geojogja-pagination" hidden>
+                        <button id="geojogjaPrevPage" class="geotools-btn" type="button">Sebelumnya</button>
+                        <span id="geojogjaPageInfo" aria-live="polite"></span>
+                        <button id="geojogjaNextPage" class="geotools-btn" type="button">Berikutnya</button>
+                      </div>
+                    </div>
+                  </details>
+
+                  <details class="geotani-kta-card geojakarta-card" id="geojakarta-card" aria-labelledby="geojakarta-title">
+                    <summary class="gt-card-head">
+                      <span class="gt-card-icon" aria-hidden="true">&#127961;</span>
+                      <span>
+                        <b id="geojakarta-title">GeoJakarta</b>
+                        <small>Cari batas administrasi hingga tingkat RT</small>
+                      </span>
+                    </summary>
+                    <div class="geojakarta-body">
+                      <p class="geojakarta-desc">Pilih wilayah berurutan. Batas RT terpilih akan ditampilkan pada peta.</p>
+                      <label class="geojakarta-label" for="geojakarta-kota">Kota/Kabupaten</label>
+                      <select id="geojakarta-kota" class="geotani-form-select" aria-label="Pilih kota atau kabupaten Jakarta" disabled><option value="">Memuat kota/kabupaten</option></select>
+                      <label class="geojakarta-label" for="geojakarta-kecamatan">Kecamatan</label>
+                      <select id="geojakarta-kecamatan" class="geotani-form-select" aria-label="Pilih kecamatan" disabled><option value="">Pilih kota/kabupaten dahulu</option></select>
+                      <label class="geojakarta-label" for="geojakarta-kelurahan">Kelurahan</label>
+                      <select id="geojakarta-kelurahan" class="geotani-form-select" aria-label="Pilih kelurahan" disabled><option value="">Pilih kecamatan dahulu</option></select>
+                      <label class="geojakarta-label" for="geojakarta-rw">RW</label>
+                      <select id="geojakarta-rw" class="geotani-form-select" aria-label="Pilih RW" disabled><option value="">Pilih kelurahan dahulu</option></select>
+                      <label class="geojakarta-label" for="geojakarta-rt">RT</label>
+                      <select id="geojakarta-rt" class="geotani-form-select" aria-label="Pilih RT" disabled><option value="">Pilih RW dahulu</option></select>
+                      <div class="geojakarta-actions">
+                        <button id="geojakarta-clear" class="geotools-btn" type="button" disabled>Hapus batas dari peta</button>
+                      </div>
+                      <p id="geojakarta-status" class="geojakarta-status" role="status" aria-live="polite">Sumber: Batas Administrasi DKI Jakarta &middot; RT</p>
+                    </div>
+                  </details>
+
+                  <details class="geotani-kta-card geotani-sls-card" id="geotani-sls-card" aria-labelledby="geotani-sls-title">
                     <summary class="gt-card-head">
                       <span class="gt-card-icon" aria-hidden="true">&#129517;</span>
                       <span>
@@ -2573,180 +2753,40 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                  </div>
                </details>
 
-            <details class="georaster-card" aria-labelledby="georasterCardTitle">
-              <summary class="gt-card-head">
-                <span class="gt-card-icon" aria-hidden="true">&#128506;</span>
-                <span>
-                  <b id="georasterCardTitle">DEMNAS Nasional</b>
-                  <small>Clip batas wilayah, lalu unduh TIFF tanpa token</small>
-                </span>
-              </summary>
-              <div class="georaster-card-body">
-                <p class="georaster-card-note">
-                  Pilih index raster DEMNAS untuk memuat wilayah yang dapat direkomendasikan,
-                  lalu clip dan unduh TIFF tanpa token.
-                </p>
-
-                <label class="geotani-form-label" for="demnasSearchInput">Cari DEMNAS</label>
-                <input id="demnasSearchInput" class="geotani-form-input" type="search" placeholder="Ketik Nama atau OBJECTIDâ€¦" autocomplete="off" />
-                <div id="demnasSearchCount" style="margin-top:5px;font-size:10px;color:#64748b;"></div>
-
-                <label class="geotani-form-label" for="demnasNamobjSelect" style="margin-top:8px;">Index DEMNAS (OBJECTID / Name)</label>
-                <select id="demnasNamobjSelect" class="geotani-form-input" size="1">
-                  <option value="">Memuat katalog DEMNASâ€¦</option>
-                </select>
-                <div id="demnasIndexSelected" style="display:none;margin-top:8px;padding:6px 8px;font-size:10px;color:#166534;background:#f0fdf4;border-radius:4px;"></div>
-
-                <div id="demnasRecommendationBox" class="demnas-recommendation-box" hidden>
-                  <div class="demnas-recommendation-heading"><strong>Rekomendasi wilayah clip</strong><span id="demnasRecommendationCount"></span></div>
-                  <div id="demnasRecommendationStatus" class="demnas-recommendation-status"></div>
-                  <select id="demnasRecommendedSelect" class="geotani-form-input" size="1">
-                    <option value="">Pilih rekomendasi wilayahâ€¦</option>
-                  </select>
-                </div>
-
-                <div class="demnas-clip-box">
-                  <div class="demnas-clip-heading"><strong>Clip Batas Wilayah</strong><span>Opsional</span></div>
-                  <label class="geotani-form-label" for="demnasAdminLevel">Tingkat Wilayah</label>
-                  <select id="demnasAdminLevel" class="geotani-form-input">
-                    <option value="">Tanpa clip</option>
-                    <option value="4">Desa/Kelurahan</option>
-                    <option value="3">Kecamatan</option>
-                    <option value="2">Kabupaten/Kota</option>
-                  </select>
-                  <div id="demnasAdminSearchWrap" class="demnas-admin-search-wrap" hidden>
-                    <label class="geotani-form-label" for="demnasAdminSearch">Cari Kode atau Nama</label>
-                    <input id="demnasAdminSearch" class="geotani-form-input" type="search" placeholder="Contoh: 33.01.10.2001" autocomplete="off" />
-                    <select id="demnasAdminSelect" class="geotani-form-input" size="1">
-                      <option value="">Pilih wilayahâ€¦</option>
-                    </select>
-                    <div id="demnasAdminSearchCount" class="demnas-admin-search-count"></div>
-                  </div>
-                  <div id="demnasAdminSelected" class="demnas-admin-selected" hidden></div>
-                  <div class="demnas-clip-actions">
-                    <button id="demnasClipRefreshBtn" class="demnas-clip-refresh-btn" type="button" hidden>Perbarui Preview</button>
-                    <button id="demnasClipResetBtn" class="demnas-clip-reset-btn" type="button" hidden>Reset Polygon</button>
-                  </div>
-                  <div id="demnasPreviewStatus" class="demnas-preview-status" aria-live="polite"></div>
-                  <div id="demnasElevationLegend" class="demnas-elevation-legend" hidden>
-                    <strong>Elevasi (mdpl)</strong>
-                    <div class="demnas-elevation-bar"></div>
-                    <div class="demnas-elevation-labels"><span>0</span><span>500</span><span>1.000</span><span>1.500</span><span>2.000+</span></div>
-                  </div>
-                </div>
-
-                <button id="demnasDownloadBtn" class="geotools-btn" type="button" style="margin-top:12px;width:100%;">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  Unduh DEMNAS TIFF
-                </button>
-
-                <div id="demnasStatus" class="cctv-message" style="display:none; margin-top:12px;"></div>
-                <div id="demnasLoadingLayer" class="demnas-loading-layer" hidden aria-live="polite">
-                  <div class="demnas-loading-head">
-                    <span class="demnas-loading-spinner" aria-hidden="true"></span>
-                    <div>
-                      <strong id="demnasLoadingTitle">Menyiapkan GeoTIFF DEMNAS</strong>
-                      <small id="demnasLoadingMessage">Menyiapkan permintaan rasterâ€¦</small>
-                    </div>
-                  </div>
-                  <div class="demnas-loading-track"><span id="demnasLoadingBar"></span></div>
-                  <div class="demnas-loading-meta"><span id="demnasLoadingStage">Menyiapkan</span><strong id="demnasLoadingPercent">0%</strong></div>
-                </div>
-              </div>
-            </details>
-
-            <div class="lc-adsense sheet-adsense geotools-inline-adsense geotools-inline-adsense--geoportal" aria-label="Iklan">
-              <ins class="adsbygoogle" style="display:block"
-                data-ad-format="fluid"
-                data-ad-layout-key="-fb+5w+4e-db+86"
-                data-ad-client="ca-pub-7501816933195235"
-                data-ad-slot="5975101505"></ins>
-            </div>
-
-                  <details class="geoportal-card" id="geoportalHubCard" aria-labelledby="geoportalHubTitle">
+                  <details class="geotani-kta-card" id="rdtrInteraktifCard" aria-labelledby="rdtrInteraktifTitle">
                     <summary class="gt-card-head">
-                      <span class="gt-card-icon" aria-hidden="true">&#127760;</span>
-                      <span>
-                        <b id="geoportalHubTitle">GeoPortal Hub</b>
-                        <small>Pilih wilayah untuk ditampilkan di peta</small>
-                      </span>
+                      <span class="gt-card-icon" aria-hidden="true">&#127758;</span>
+                      <span><b id="rdtrInteraktifTitle">RDTR Interaktif</b><small>Overlay rencana detail tata ruang ATR/BPN</small></span>
                     </summary>
-                    <div class="geoportal-card-body">
-                      <div class="geoportal-sticky-header">
-                        <div class="geoportal-search-container">
-                          <div class="geoportal-search-input-wrapper">
-                            <span class="search-icon">&#128269;</span>
-                            <input type="text" id="geoportalSearchInput" class="geoportal-search-input with-icon" placeholder="Cari layer..." autocomplete="off" />
-                          </div>
-                        </div>
+                    <div class="rdtr-catalog-body">
+                      <label class="geotani-form-label" for="rdtrCatalogSearch">Cari RDTR atau kabupaten/kota</label>
+                      <input id="rdtrCatalogSearch" class="geotani-form-input-search" type="search" placeholder="Contoh: RDTR Takengon, Cilacap..." autocomplete="off" />
+                      <div class="rdtr-catalog-toolbar">
+                        <span id="rdtrCatalogStatus" role="status" aria-live="polite">Memuat katalog RDTR...</span>
+                        <button id="rdtrCatalogClear" type="button" class="geotani-btn-reset">Hapus overlay aktif</button>
                       </div>
-                      <div id="geoportalLayerList"></div>
+                      <div id="rdtrCatalogResults" class="rdtr-catalog-results" aria-live="polite"></div>
+                      <div class="rdtr-catalog-pager">
+                        <button id="rdtrCatalogPrev" type="button" class="geotools-btn" disabled>Sebelumnya</button>
+                        <span id="rdtrCatalogPage" aria-live="polite"></span>
+                        <button id="rdtrCatalogNext" type="button" class="geotools-btn" disabled>Berikutnya</button>
+                      </div>
+                      <small class="rdtr-catalog-note">Katalog snapshot 30 September 2026. Overlay dimuat dari layanan ArcGIS GISTARU saat diaktifkan. Ketersediaan tiap layanan bergantung pada server sumber.</small>
                     </div>
                   </details>
 
-                  <details class="geotani-kta-card geojogja-card" id="geojogja-card" aria-labelledby="geojogja-title">
-                    <summary class="gt-card-head">
-                      <span class="gt-card-icon" aria-hidden="true">&#127759;</span>
-                      <span>
-                        <b id="geojogja-title">GeoJogja</b>
-                        <small>Pilih layer tematik dari Geoportal DIY</small>
-                      </span>
-                    </summary>
-                    <div class="geojogja-body">
-                      <label class="geojogja-layer-label" for="geojogjaLayerSelect">Layer GeoJogja</label>
-                      <select id="geojogjaLayerSelect" class="geotani-form-select" aria-label="Pilih layer GeoJogja">
-                        <option value="soil">Jenis Tanah</option>
-                        <option value="landuse">Tata Guna Lahan</option>
-                        <option value="lsd">Lahan Sawah Dilindungi</option>
-                        <option value="rdtrYia">Pola Ruang RDTR YIA 2022</option>
-                      </select>
-                      <div class="geojogja-toolbar">
-                        <button id="geojogjaLoadBtn" class="geotools-btn geotools-btn--green" type="button">Tampilkan layer &amp; tabel</button>
-                        <button id="geojogjaHideBtn" class="geotools-btn" type="button" hidden>Sembunyikan layer</button>
-                      </div>
-                      <p id="geojogjaStatus" class="geojogja-status" role="status">Sumber: Geoportal DIY &middot; Jenis tanah</p>
-                      <div id="geojogjaTableWrap" class="geojogja-table-wrap" hidden>
-                        <table class="geojogja-table">
-                          <thead><tr><th>No.</th><th>Jenis tanah</th><th>Tekstur</th><th>Infiltrasi</th><th>Luas</th></tr></thead>
-                          <tbody id="geojogjaTableBody"></tbody>
-                        </table>
-                      </div>
-                      <div id="geojogjaPagination" class="geojogja-pagination" hidden>
-                        <button id="geojogjaPrevPage" class="geotools-btn" type="button">Sebelumnya</button>
-                        <span id="geojogjaPageInfo" aria-live="polite"></span>
-                        <button id="geojogjaNextPage" class="geotools-btn" type="button">Berikutnya</button>
-                      </div>
-                    </div>
-                  </details>
-
-                  <details class="geotani-kta-card geojakarta-card" id="geojakarta-card" aria-labelledby="geojakarta-title">
-                    <summary class="gt-card-head">
-                      <span class="gt-card-icon" aria-hidden="true">&#127961;</span>
-                      <span>
-                        <b id="geojakarta-title">GeoJakarta</b>
-                        <small>Cari batas administrasi hingga tingkat RT</small>
-                      </span>
-                    </summary>
-                    <div class="geojakarta-body">
-                      <p class="geojakarta-desc">Pilih wilayah berurutan. Batas RT terpilih akan ditampilkan pada peta.</p>
-                      <label class="geojakarta-label" for="geojakarta-kota">Kota/Kabupaten</label>
-                      <select id="geojakarta-kota" class="geotani-form-select" aria-label="Pilih kota atau kabupaten Jakarta" disabled><option value="">Memuat kota/kabupatenâ€¦</option></select>
-                      <label class="geojakarta-label" for="geojakarta-kecamatan">Kecamatan</label>
-                      <select id="geojakarta-kecamatan" class="geotani-form-select" aria-label="Pilih kecamatan" disabled><option value="">Pilih kota/kabupaten dahulu</option></select>
-                      <label class="geojakarta-label" for="geojakarta-kelurahan">Kelurahan</label>
-                      <select id="geojakarta-kelurahan" class="geotani-form-select" aria-label="Pilih kelurahan" disabled><option value="">Pilih kecamatan dahulu</option></select>
-                      <label class="geojakarta-label" for="geojakarta-rw">RW</label>
-                      <select id="geojakarta-rw" class="geotani-form-select" aria-label="Pilih RW" disabled><option value="">Pilih kelurahan dahulu</option></select>
-                      <label class="geojakarta-label" for="geojakarta-rt">RT</label>
-                      <select id="geojakarta-rt" class="geotani-form-select" aria-label="Pilih RT" disabled><option value="">Pilih RW dahulu</option></select>
-                      <div class="geojakarta-actions">
-                        <button id="geojakarta-clear" class="geotools-btn" type="button" disabled>Hapus batas dari peta</button>
-                      </div>
-                      <p id="geojakarta-status" class="geojakarta-status" role="status" aria-live="polite">Sumber: Batas Administrasi DKI Jakarta &middot; RT</p>
-                    </div>
-                  </details>
-
-                  <details class="geotani-kta-card geotani-sls-card" id="geotani-cek-nib-card" aria-labelledby="geotani-cek-nib-title">
+                  <!-- FITUR CEBOL SEMBUNYI SEMENTARA (2026-10-27).
+                       Endpoint WFS GISTARU yang dipakai kartu ini masih ada di
+                       kode, tapi layanannya sudah tidak bisa diandalkan:
+                       atlas.atrbpn.go.id/geoserver membalas 404 dan
+                       gistaru.atrbpn.go.id/geoserver membalas 503. Menampilkan
+                       kartu yang sudah pasti gagal hanya membingungkan
+                       pengguna.
+                       Sembunyi, BUKAN dihapus: cukup hapus atribut hidden dan
+                       gaya display:none di bawah, plus lepas komentar pada
+                       tag <script> geotani-cek-nib.js di akhir berkas, untuk
+                       menampilkan kembali kartu ini. -->
+                  <details class="geotani-kta-card geotani-sls-card" id="geotani-cek-nib-card" aria-labelledby="geotani-cek-nib-title" hidden style="display:none;">
                     <summary class="gt-card-head">
                       <span class="gt-card-icon" aria-hidden="true">&#128269;</span>
                       <span>
@@ -2771,35 +2811,6 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     </div>
                   </details>
 
-                  
-
-                  <details class="geotani-kta-card geotani-sls-card" id="geotani-building-card" aria-labelledby="geotani-building-title">
-                    <summary class="gt-card-head">
-                      <span class="gt-card-icon" aria-hidden="true">&#127959;</span>
-                      <span>
-                        <b id="geotani-building-title">Bangunan Desa <span class="geotani-sls-badge">BNPB</span></b>
-                        <small>Jejak bangunan OpenBuilding</small>
-                      </span>
-                    </summary>
-                    <div>
-                      <p class="geotani-sls-desc">
-                        Cari desa untuk menampilkan jejak bangunan yang berada di dalam batas desa.
-                      </p>
-                      <div class="geotani-sls-search">
-                        <label class="geotani-form-label" for="geotaniBuildingVillageSearch">Cari nama desa</label>
-                        <input type="text" id="geotaniBuildingVillageSearch" placeholder="Ketik nama desa..." autocomplete="off" class="geotani-form-input-search" />
-                        <div id="geotaniBuildingVillageResults" class="geotani-sls-results" hidden></div>
-                        <div id="geotaniBuildingVillageSelected" class="geotani-sls-picked" hidden></div>
-                      </div>
-                      <button id="geotani-building-load" class="geotani-btn-print" type="button">Tampilkan Bangunan Desa</button>
-                      <button id="geotani-building-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset jejak bangunan" aria-label="Reset jejak bangunan">
-                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 7 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                        Reset Bangunan
-                      </button>
-                      <div id="geotani-building-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
-                      <div id="geotani-building-output" class="geotani-sls-desc" aria-live="polite"></div>
-                    </div>
-                  </details>
 
                 </div>
 
@@ -3084,7 +3095,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                   <label for="gfDasimetriProvince">Provinsi</label>
                   <select id="gfDasimetriProvince"><option value="33">Jawa Tengah</option></select>
                   <label for="gfDasimetriDistrict">Kabupaten/kota</label>
-                  <select id="gfDasimetriDistrict"><option value="">Memuat batas kabupatenâ€¦</option></select>
+                  <select id="gfDasimetriDistrict"><option value="">Memuat batas kabupaten</option></select>
                   <label for="gfDasimetriMetric">Indikator</label>
                   <select id="gfDasimetriMetric">
                     <option value="harvest">Luas panen (ha)</option>
@@ -3399,7 +3410,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                 <div class="gf-ebook-content">
                 <section class="gf-press-catalog" aria-labelledby="gfPressTitle">
                   <div class="gf-press-heading"><div><h4 id="gfPressTitle">Katalog Pertanian Press</h4><p id="gfPressStatus">Halaman 2 &middot; 25 judul. PDF dibuka di pembaca GeoFarm bila tersedia.</p></div>
-                    <input type="search" id="gfPressSearch" aria-label="Cari buku Pertanian Press" placeholder="Cari judul bukuâ€¦" autocomplete="off" />
+                    <input type="search" id="gfPressSearch" aria-label="Cari buku Pertanian Press" placeholder="Cari judul buku" autocomplete="off" />
                   </div>
                   <div class="gf-press-list" id="gfPressList" aria-live="polite"></div>
                   <nav class="gf-press-pagination" id="gfPressPagination" aria-label="Halaman katalog e-book"></nav>
@@ -3499,7 +3510,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                 </summary>
                 <div class="geofarm-ref-body geofarm-pupuk-rekom-body">
                   <div class="gfpr-filter-grid">
-                    <label>Provinsi<select id="gfprProvinsi"><option value="">Memuat daftar wilayahâ€¦</option></select></label>
+                    <label>Provinsi<select id="gfprProvinsi"><option value="">Memuat daftar wilayah</option></select></label>
                     <label>Kabupaten / kota<select id="gfprKabupaten" disabled><option value="">Semua kabupaten/kota</option></select></label>
                     <label>Kecamatan<select id="gfprKecamatan" disabled><option value="">Semua kecamatan</option></select></label>
                     <label>Komoditas<select id="gfprKomoditas" disabled><option value="">Pilih komoditas</option></select></label>
@@ -3834,7 +3845,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
       <div id="gpxExportSpinner" class="gpx-export-spinner">
         <div class="gpx-export-spinner-inner">
           <svg class="gpx-export-spinner-svg" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="90 150" stroke-dashoffset="0"/></svg>
-          <span class="gpx-export-spinner-text">Export MP4â€¦</span>
+          <span class="gpx-export-spinner-text">Export MP4</span>
         </div>
       </div>
       <div id="gpxAnimControls" class="alat-card" style="display:none">
@@ -4071,7 +4082,10 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
        (kartu PDF membaca window._geotaniSlsData). -->
   <script src="assets/js/geotani-sls.js?v=20261023-sls-fluid-ad"></script>
   <script src="assets/js/geotani-buildings.js?v=20261023-arcgis-json-query2"></script>
-  <script src="assets/js/geotani-cek-nib.js?v=20261012-gistaru-wfs"></script>
+  <!-- "Cek NIB Tanah" disembunyikan sementara bersama kartunya di atas:
+       layanan WFS GISTARU-nya sudah tidak bisa diandalkan (404/503).
+       Aktifkan kembali dengan melepas komentar pada baris berikut. -->
+  <!-- <script src="assets/js/geotani-cek-nib.js?v=20261012-gistaru-wfs"></script> -->
   <!-- LBS & LSD (BIG SatuPeta): butuh geodesic-area untuk luas, dan
        geoid-wilayah untuk seksi PDF. -->
   <script src="assets/js/geotani-lbs-lsd.js"></script>
