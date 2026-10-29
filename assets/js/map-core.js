@@ -4974,7 +4974,7 @@ const SAWAH_COLOR = '#87cf15';
           { id: 'toggleSebaranPasar', label: 'Sebaran Pasar Indonesia' },
           { id: 'toggleSppgSebaranLayer', label: 'Sebaran SPPG Indonesia' },
           { id: 'toggleSppgDistrictLayer', label: 'SPPG per Kabupaten/Kota' },
-          { id: 'toggleSppgLayer', label: 'SPPG Indonesia' }
+          { id: 'toggleSppgLayer', label: 'SPPG Indonesia (SISMONBGN)' }
          ]}
        ]
      },
@@ -5279,7 +5279,7 @@ const SAWAH_COLOR = '#87cf15';
           { id: 'toggleGeostruktur', label: 'Geologi Geostruktur (BIG)' },
           { id: 'togglePatahanAktif', label: 'Patahan Aktif 1:50K (BIG)' },
           { id: 'toggleLikuifaksi', label: 'Kerentanan Likuifaksi (BIG)' },
-{ id: 'toggleKarst', label: 'Kawasan Bentang Alam Karst (BIG)' },
+          { id: 'toggleKarst', label: 'Kawasan Bentang Alam Karst (BIG)' },
           { id: 'toggleEkoregion', label: 'Bentang Lahan Indonesia' },
           { id: 'toggleBouguerBMKG', label: 'Anomali Bouguer Indonesia (BMKG)' }
         ]},
@@ -5328,13 +5328,13 @@ const SAWAH_COLOR = '#87cf15';
         { subcat: 'Peta Pertanahan', layers: [
           { id: 'toggleBhumiPersilNasionalLayer', label: 'Persil Nasional (BHUMI)' }
         ]},
-        { subcat: 'Identifikasi klik — layer tematik BHUMI', layers: BHUMI_IDENTIFY_TEMPLAYERS.map(function(t) {
+        { subcat: 'Layer Tematik BHUMI', layers: BHUMI_IDENTIFY_TEMPLAYERS.map(function(t) {
           return { id: 'bhumi-identify:' + t.layer, label: t.label };
         })}
       ]
     },
     {
-      cat: 'SITR Jawa Timur',
+      cat: 'SITR JAWA TIMUR',
       subcats: [
         { subcat: 'Pola ruang & kawasan', layers: [
           { id: 'sitr-wms-5', label: 'Batas Administrasi Area' },
@@ -5444,7 +5444,7 @@ const SAWAH_COLOR = '#87cf15';
       ]
     },
     {
-      cat: 'Citra Udara & Peta BIG',
+      cat: 'Citra Udara (BIG)',
       subcats: (function () {
         var g = (typeof window.getFuCatalogGroups === 'function')
           ? window.getFuCatalogGroups()
@@ -5517,8 +5517,8 @@ const SAWAH_COLOR = '#87cf15';
     {
       cat: 'Elevasi & Tutupan Lahan',
       layers: [
-        { id: 'toggleHillshade', label: 'Relief permukaan (HILLSHADE)' },
-        { id: 'toggleBatnas', label: 'Kedalaman laut (BATNAS)' },
+        { id: 'toggleHillshade', label: 'Relief Permukaan (HILLSHADE)' },
+        { id: 'toggleBatnas', label: 'Kedalaman Laut (BATNAS)' },
         { id: 'toggleProvinceBoundary', label: 'Batas Provinsi (PBF)' },
         { id: 'toggleBmkgTimezone', label: 'Batas Wilayah Waktu (BMKG)' },
         { id: 'toggleTollRoad', label: 'Jalan Tol Pulau Jawa' },
