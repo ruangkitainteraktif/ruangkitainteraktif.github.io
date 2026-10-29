@@ -5323,7 +5323,7 @@ const SAWAH_COLOR = '#87cf15';
       ]
     },
     {
-      cat: 'Persil Nasional - ATRBPN',
+      cat: 'Persil Nasional (ATRBPN)',
       subcats: [
         { subcat: 'Peta Pertanahan', layers: [
           { id: 'toggleBhumiPersilNasionalLayer', label: 'Persil Nasional (BHUMI)' }
@@ -5468,7 +5468,6 @@ const SAWAH_COLOR = '#87cf15';
       cat: 'Lahan Baku Sawah',
       layers: [
         { id: 'toggleSawahGislinerLayer', label: 'Lahan Sawah Dilindungi (ATR/BPN)' },
-        { id: 'bps-lbs-2024', label: 'Lahan Baku Sawah Nasional 2024' },
         { id: 'toggleSawahDilindungi', label: 'Lahan Sawah Dilindungi 50K (BIG)' },
         { id: 'toggleSawahNasional50k', label: 'Lahan Baku Sawah 50K (BIG)' },
         { id: 'arcgis-vt-lbs-2024', label: 'Lahan Baku Sawah 2024 (Vektor)' },
@@ -5518,8 +5517,7 @@ const SAWAH_COLOR = '#87cf15';
     {
       cat: 'Elevasi & Tutupan Lahan',
       layers: [
-        { id: 'toggleDemnasOverlay', label: 'Ketinggian permukaan (DEMNAS / SRTM)' },
-        { id: 'toggleHillshade', label: 'Relief permukaan (hillshade)' },
+        { id: 'toggleHillshade', label: 'Relief permukaan (HILLSHADE)' },
         { id: 'toggleBatnas', label: 'Kedalaman laut (BATNAS)' },
         { id: 'toggleProvinceBoundary', label: 'Batas Provinsi (PBF)' },
         { id: 'toggleBmkgTimezone', label: 'Batas Wilayah Waktu (BMKG)' },
@@ -5567,7 +5565,7 @@ const SAWAH_COLOR = '#87cf15';
     'Geologi & Tanah': 'Informasi batuan, struktur bumi, jenis tanah, dan sifat tanah.',
     'Transportasi': 'Jaringan jalan dan rute transportasi umum.',
     'Pertanian & Ketahanan Pangan': 'Lahan pertanian, komoditas, serta organisme pengganggu tanaman (OPT), yaitu hama dan penyakit tanaman, juga kondisi dan layanan pangan.',
-      'ATRBPN': 'Layer resmi BHUMI (ATR/BPN): Persil Nasional dan Zona Nilai Tanah. Saat aktif, klik peta untuk melihat atribut pada titik tersebut.',
+    'ATRBPN': 'Layer resmi BHUMI (ATR/BPN): Persil Nasional dan Zona Nilai Tanah. Saat aktif, klik peta untuk melihat atribut pada titik tersebut.',
     'SITR Jawa Timur': 'Sistem Informasi Tata Ruang Provinsi Jawa Timur (Pemprov Jatim). 93 layer perencanaan tata ruang — pola ruang RTRW/Perda, jaringan transportasi, energi, telekomunikasi, sumber daya air, permukiman, dan persampahan — dalam enam kelompok. Klik layer untuk menampilkan; peta otomatis menuju Jawa Timur.',
     'Bencana & Risiko': 'Kejadian bencana, sumber bahaya, pemantauan, dan informasi kesiapsiagaan.',
     'Lingkungan & Laut': 'Ekosistem, kondisi perairan, dan indikator kualitas lingkungan.',
