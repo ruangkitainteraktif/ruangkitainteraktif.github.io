@@ -438,15 +438,20 @@ var generasi = 0;
       : it.luasIrisanHa.toLocaleString('id-ID', { maximumFractionDigits: 3 }) + ' ha';
     var barisAtrib = '';
     if (it.luasAtribIrisanHa !== null) {
-      barisAtrib = '<div class="geotani-sls-popup-row"><span>Luas atribut BIG</span><b>' +
-        it.luasAtribIrisanHa.toLocaleString('id-ID', { maximumFractionDigits: 3 }) + ' ha</b></div>';
+      barisAtrib = '<div class="agol-popup-field"><span class="agol-popup-field-label">Luas atribut BIG</span><span class="agol-popup-field-value">' +
+        it.luasAtribIrisanHa.toLocaleString('id-ID', { maximumFractionDigits: 3 }) + ' ha</span></div>';
     }
-    return '<div class="geotani-sls-popup">' +
-      '<div class="geotani-sls-popup-title">' + escapeHtml(it.nama) + '</div>' +
-      '<div class="geotani-sls-popup-row"><span>Layer</span><b>' + escapeHtml(layer.nama) + '</b></div>' +
-      '<div class="geotani-sls-popup-row"><span>Luas di desa</span><b>' + luas + '</b></div>' +
+    return '<div class="agol-popup">' +
+      '<div class="agol-popup-header agol-geo-kawasan">' +
+      '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#86efac;"></span>' + escapeHtml(layer.nama) + '</div>' +
+      '<div class="agol-popup-title">' + escapeHtml(it.nama) + '</div>' +
+      '</div>' +
+      '<div class="agol-popup-body"><div class="agol-popup-fields">' +
+      '<div class="agol-popup-field"><span class="agol-popup-field-label">Luas di desa</span><span class="agol-popup-field-value">' + luas + '</span></div>' +
       barisAtrib +
-      (it.terpotong ? '<div class="geotani-sls-popup-row"><span>Status</span><b>terpotong batas desa</b></div>' : '') +
+      (it.terpotong ? '<div class="agol-popup-field"><span class="agol-popup-field-label">Status</span><span class="agol-popup-field-value">terpotong batas desa</span></div>' : '') +
+      '</div></div>' +
+      '<div class="agol-popup-footer"><span>Sumber: BIG SatuPeta</span></div>' +
       '</div>';
   }
 

@@ -460,8 +460,8 @@
     var a = it.attrs || {};
     var baris = '';
     function tambah(label, nilai) {
-      baris += '<div class="geotani-sls-popup-row"><span>' + escapeHtml(label) +
-        '</span><b>' + escapeHtml(nilai) + '</b></div>';
+      baris += '<div class="agol-popup-field"><span class="agol-popup-field-label">' + escapeHtml(label) +
+        '</span><span class="agol-popup-field-value">' + escapeHtml(nilai) + '</span></div>';
     }
     tambah('Provinsi', a.WADMPR || '-');
     tambah('Kab/Kota', a.WADMKK || '-');
@@ -472,11 +472,17 @@
     if (it.luasAtribIrisanHa !== null) {
       tambah('Luas atribut ATR/BPN', fmtLuas(it.luasAtribIrisanHa));
     }
-    return '<div class="geotani-sls-popup">' +
-      '<div class="geotani-sls-popup-title">' + escapeHtml(it.namaPenuh || it.nama) + '</div>' +
-      '<div class="geotani-sls-popup-row"><span>Luas di desa</span><b>' + escapeHtml(luas) + '</b></div>' +
+    return '<div class="agol-popup">' +
+      '<div class="agol-popup-header agol-geo-persil">' +
+      '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#fcd34d;"></span>LSD ATR/BPN</div>' +
+      '<div class="agol-popup-title">' + escapeHtml(it.namaPenuh || it.nama) + '</div>' +
+      '</div>' +
+      '<div class="agol-popup-body"><div class="agol-popup-fields">' +
+      '<div class="agol-popup-field"><span class="agol-popup-field-label">Luas di desa</span><span class="agol-popup-field-value">' + escapeHtml(luas) + '</span></div>' +
       baris +
-      (it.terpotong ? '<div class="geotani-sls-popup-row"><span>Status</span><b>terpotong batas desa</b></div>' : '') +
+      (it.terpotong ? '<div class="agol-popup-field"><span class="agol-popup-field-label">Status</span><span class="agol-popup-field-value">terpotong batas desa</span></div>' : '') +
+      '</div></div>' +
+      '<div class="agol-popup-footer"><span>Sumber: ATR/BPN GISTARU</span></div>' +
       '</div>';
   }
 

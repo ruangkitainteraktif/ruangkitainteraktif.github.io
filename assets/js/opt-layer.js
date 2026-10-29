@@ -9,6 +9,7 @@
 
   var optLayers = {};
   var optPopup = null;
+  var optHighlight = null;
   var activePests = {};
   var optClickBound = false;
 
@@ -20,7 +21,10 @@
     Mei_P: 'Mei (P)', Jun_P: 'Jun (P)', Jul_P: 'Jul (P)', Agt_P: 'Agt (P)',
     'Jan_Agt_2026 T': 'Jan-Agt 2026 (T)', 'Jan_Agt_2026 P': 'Jan-Agt 2026 (P)',
     'Jan-Agt 2026 T': 'Jan-Agt 2026 (T)', 'Jan-Agt 2026 P': 'Jan-Agt 2026 (P)',
-    'Jan_Agt_20': 'Jan-Agt 20 (T)', 'Jan_Agt_21': 'Jan-Agt 21 (T)'
+    'Jan_Agt_20': 'Jan-Agt 20 (T)', 'Jan_Agt_21': 'Jan-Agt 21 (T)',
+    /* Identify GISTARU/SIPERDITAN membalas nama field apa adanya untuk
+       bulan September, sementara bulan-bulan lain sudah punya label. */
+    Sep_T: 'Sep (T)', Sep_P: 'Sep (P)'
   };
 
   function optFieldLabel(k) {
@@ -113,6 +117,10 @@
         window.map.removeLayer(optPopup);
         optPopup = null;
       }
+      if (optHighlight && window.map) {
+        window.map.removeLayer(optHighlight);
+        optHighlight = null;
+      }
     }
   }
 
@@ -145,10 +153,16 @@
       + '&geometryType=esriGeometryPoint'
       + '&sr=4326'
       + '&layers=' + encodeURIComponent('visible:' + layerIds.join(','))
-      + '&tolerance=4'
+      /* tolerance=0: hanya fitur yang menutup titik klik yang dibalas.
+         Server identify SIPERDITAN membalas ratusan fitur se-Indonesia
+         saat tolerance dinaikkan, yang membanjiri panel dan sorotan peta.
+         maxAllowableOffset menyederhanakan geometri (~55 m) agar payload
+         ringan — cukup untuk sorotan, bukan untuk analisis. */
+      + '&tolerance=0'
       + '&mapExtent=' + [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()].join(',')
       + '&imageDisplay=' + size.x + ',' + size.y + ',96'
-      + '&returnGeometry=false'
+      + '&returnGeometry=true'
+      + '&maxAllowableOffset=0.0005'
       + '&f=json';
 
     fetch(url)
@@ -161,8 +175,93 @@
       .catch(function () { /* silent */ });
   }
 
+  function optEsc(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+    });
+  }
+
+  /* Template .agol-popup dipakai semua card di panel Detail Layer: header
+     badge/judul, body berisi baris atribut, lalu footer sumber. Panel Detail
+     Layer mengubah .agol-popup-fields menjadi tabel dua kolom, jadi atribut
+     tidak boleh dirender sebagai <table> lebar yang mengharuskan pengguna
+     menggeser horizontal. */
+  function optPopupCard(cfg, attrs) {
+    var fields = '';
+    Object.keys(attrs).forEach(function (k) {
+      var val = attrs[k];
+      if (val == null || val === '') return;
+      if (typeof val === 'number') val = val.toLocaleString('id-ID');
+      fields += '<div class="agol-popup-field">'
+        + '<span class="agol-popup-field-label">' + optEsc(optFieldLabel(k)) + '</span>'
+        + '<span class="agol-popup-field-value">' + optEsc(String(val)) + '</span>'
+        + '</div>';
+    });
+    if (!fields) {
+      fields = '<div class="agol-popup-field"><span class="agol-popup-field-value">Tidak ada atribut.</span></div>';
+    }
+    return '<div class="agol-popup">'
+      + '<div class="agol-popup-header agol-geo-kawasan">'
+      + '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:' + optEsc(cfg.color) + ';"></span>KEMENTAN</div>'
+      + '<div class="agol-popup-title">' + optEsc(cfg.label + ' (' + cfg.parentLabel + ')') + '</div>'
+      + '</div>'
+      + '<div class="agol-popup-body"><div class="agol-popup-fields">' + fields + '</div></div>'
+      + '<div class="agol-popup-footer"><span>Sumber: KEMENTAN / siperditan &mdash; Laporan Serangan OPT</span></div>'
+      + '</div>';
+  }
+
+  /* ── Sorot polygon fitur yang sedang dilihat ──
+     Identify membalas geometri ring Esri ([x,y] = [lng,lat], wkid 4326).
+     Konversinya memakai L.esri.Util.arcgisToGeoJSON (esri-leaflet sudah
+     dimuat) dengan fallback manual ke L.polygon. Gaya putus-putus oranye
+     mengikuti sorotan persil di map-core.js agar konsisten. */
+  function optHighlightStyle() {
+    return { color: '#FFAA00', weight: 2, fill: false, dashArray: '4 3' };
+  }
+
+  function clearOptHighlight() {
+    if (optHighlight && window.map) window.map.removeLayer(optHighlight);
+    optHighlight = null;
+  }
+
+  function drawOptHighlight(latlng, results) {
+    clearOptHighlight();
+    if (!window.map || typeof L === 'undefined') return;
+    var group = null;
+    results.forEach(function (r) {
+      var geometry = r && r.geometry;
+      if (!geometry || !geometry.rings || !geometry.rings.length) return;
+      if (!group) group = L.featureGroup();
+      try {
+        if (L.esri && L.esri.Util && typeof L.esri.Util.arcgisToGeoJSON === 'function') {
+          var feature = L.esri.Util.arcgisToGeoJSON({ geometry: geometry, attributes: r.attributes || {} });
+          if (feature && feature.type === 'Feature') {
+            L.geoJSON(feature, { style: optHighlightStyle() }).addTo(group);
+            return;
+          }
+        }
+      } catch (err) { /* geometri tidak valid: pakai fallback di bawah */ }
+      try {
+        L.polygon(geometry.rings.map(function (ring) {
+          return ring.map(function (p) { return [p[1], p[0]]; });
+        }), optHighlightStyle()).addTo(group);
+      } catch (err2) { /* ring tidak valid: abaikan fitur ini */ }
+    });
+    if (group && group.getLayers().length) {
+      group.addTo(window.map);
+      optHighlight = group;
+      return;
+    }
+    /* Tanpa geometri (layanan kadang tidak mengirimnya): tetap tampilkan
+       marker di titik klik agar pengguna tahu lokasi detail yang dibuka. */
+    optHighlight = L.circleMarker(latlng, {
+      radius: 8, color: '#FFAA00', weight: 2, fillColor: '#FFAA00', fillOpacity: 0.35
+    }).addTo(window.map);
+  }
+
   function showOPTPopup(latlng, results) {
     if (optPopup) { window.map.removeLayer(optPopup); optPopup = null; }
+    drawOptHighlight(latlng, results);
     var grouped = {};
     results.forEach(function (r) {
       var key = optLayerIdToKey(r.layerId);
@@ -170,52 +269,33 @@
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(r);
     });
-    var h = '<div style="font-size:11px;max-height:280px;overflow:auto;">';
+    var cards = [];
     Object.keys(grouped).forEach(function (key) {
       var cfg = OPT_PESTS[key];
       grouped[key].forEach(function (r) {
-        h += '<div style="margin-top:6px;">';
-        h += '<strong style="font-size:12px;color:#1e293b;">' + cfg.label + ' (' + cfg.parentLabel + ')</strong>';
         var attrs = r.attributes || {};
-        var row = {};
+        var clean = {};
         Object.keys(attrs).forEach(function (k) {
-          if (k.toLowerCase().indexOf('shape') === -1) row[k] = attrs[k];
+          if (k.toLowerCase().indexOf('shape') === -1) clean[k] = attrs[k];
         });
-        h += makeOPTDetailTable([row]);
-        h += '</div>';
+        cards.push(optPopupCard(cfg, clean));
       });
     });
-    h += '</div>';
+    if (!cards.length) return;
+    var h = cards.join('');
+    /* Satu klik bisa menyentuh lebih dari satu hama; bungkus dengan daftar
+       persil supaya kartu terpisah rapi, persis pola map-core.js. */
+    if (cards.length > 1) h = '<div class="bhumi-persil-list">' + h + '</div>';
     optPopup = L.popup({ maxWidth: 360, closeButton: true })
       .setLatLng(latlng)
       .setContent(h)
       .addTo(window.map);
   }
 
-  function makeOPTDetailTable(rows) {
-    if (!rows.length) return '<em style="font-size:11px;">Tidak ada data.</em>';
-    var keys = Object.keys(rows[0]);
-    var h = '<table style="width:100%;border-collapse:collapse;font-size:11px;">';
-    h += '<thead><tr>';
-    keys.forEach(function (k) {
-      h += '<th style="text-align:left;padding:5px 6px;border-bottom:2px solid #e5e7eb;color:#64748b;font-weight:600;white-space:nowrap;">' + optFieldLabel(k) + '</th>';
-    });
-    h += '</tr></thead><tbody>';
-    rows.forEach(function (r, i) {
-      h += '<tr style="background:' + (i % 2 ? '#f9fafb' : '#fff') + ';">';
-      keys.forEach(function (k) {
-        var val = r[k] != null ? r[k] : '-';
-        if (typeof val === 'number') val = val.toLocaleString('id-ID');
-        h += '<td style="padding:4px 6px;border-bottom:1px solid #f1f5f9;color:#334155;">' + val + '</td>';
-      });
-      h += '</tr>';
-    });
-    h += '</tbody></table>';
-    return h;
-  }
-
   /* ── Expose toggle functions globally ── */
   window.toggleOPTPest = toggleOPTPest;
+  /* Panel Detail Layer memanggil cleanup ini saat ditutup (map-core.js). */
+  (window.catalogHighlightCleanups = window.catalogHighlightCleanups || []).push(clearOptHighlight);
   Object.keys(OPT_PESTS).forEach(function (key) {
     window['toggleOPT' + key.charAt(0).toUpperCase() + key.slice(1)] = function (v) { toggleOPTPest(key, v); };
   });

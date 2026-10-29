@@ -6664,13 +6664,24 @@
     .catalog-popup-sheet-ad-slot { display: block; width: 100%; min-width: 0; overflow: hidden; }
     .catalog-popup-sheet-ad-slot .adsbygoogle { display: block; width: 100%; min-width: 0; }
     .catalog-popup-sheet-cards { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 12px; min-width: 0; }
-    .catalog-popup-sheet-card { display: block; width: 100% !important; min-width: 0; max-width: none; box-sizing: border-box; overflow: visible; }
+    /* max-width harus !important. Setiap class popup (agol-, quake-, geoid-,
+       geotani-, kta-, ndvi-, landcover-, irisan-, bmkg-, sppgd-, dst.)
+       membawa max-width: 320/340px !important untuk popup Leaflet di peta.
+       Karena class itu ikut disalin ke card, aturan tanpa !important selalu
+       kalah dan card tidak pernah selebar sheet. */
+    .catalog-popup-sheet-card { display: block; width: 100% !important; min-width: 0; max-width: none !important; box-sizing: border-box; overflow: visible; }
     .catalog-popup-sheet-card.boundary-leaflet-popup { width: 100% !important; min-width: 0 !important; max-width: none !important; }
     .catalog-popup-sheet-card .leaflet-popup-content-wrapper { width: 100% !important; max-width: none !important; box-sizing: border-box; padding: 0 !important; border: 1px solid var(--border-color); border-radius: 0 !important; background: var(--bg-primary); box-shadow: none; overflow: hidden; }
     .catalog-popup-sheet-card .leaflet-popup-content { width: 100% !important; max-width: 100% !important; max-height: none !important; box-sizing: border-box; margin: 0 !important; overflow: visible !important; }
     .catalog-popup-sheet-card.fsva-leaflet-popup .leaflet-popup-content-wrapper,
     .catalog-popup-sheet-card.fsva-leaflet-popup .leaflet-popup-content { min-width: 0 !important; max-height: none !important; overflow: visible !important; }
     .catalog-popup-sheet-card .agol-popup { width: 100% !important; min-width: 0; max-width: none; max-height: none; overflow: visible; border: 0; border-radius: 0 !important; box-shadow: none; }
+    /* Akar popup lain (quake-popup, geoid-popup, wind-popup, kta-popup,
+       ndvi-popup, isee-soil-popup, isric-wrb-popup, bmkg-popup, ...) juga
+       memakai lebar/pembatas tetap 310-320px agar pas dengan popup Leaflet
+       di peta. Di dalam card mereka harus mengisi lebar card, jadi semua
+       elemen langsung anak .leaflet-popup-content dibuat selebar card. */
+    .catalog-popup-sheet-card .leaflet-popup-content > * { width: 100% !important; max-width: none !important; box-sizing: border-box; }
     /* Popup PIHPS awalnya dirancang untuk popup Leaflet 320px dan memakai
        dua area gulir. Di template Detail Layer, lebar serta scrolling
        menjadi tanggung jawab sheet agar perilakunya sama dengan sumber lain. */

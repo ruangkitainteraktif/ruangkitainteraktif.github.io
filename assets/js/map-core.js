@@ -14,40 +14,6 @@
   }).setView(INITIAL_CENTER, INITIAL_ZOOM);
   window.map = map;
 
-  // Snapshot ekspor RDTR Kawasan Perkotaan Takengon dari GISTARU.
-  // Cakupan sumber diberikan dalam EPSG:3857 dan diproyeksikan ke WGS84
-  // untuk Leaflet imageOverlay.
-  var rdtrTakengonBounds = L.latLngBounds(
-    [4.5810011934, 96.8174639376],
-    [4.6820027874, 96.8697645802]
-  );
-  var rdtrTakengonExportUrl = 'https://gistaru-proxy.atrbpn.go.id/proxy.ashx?https://gistaru.atrbpn.go.id/arcgis/rest/services/044_RDTR_PROVINSI_ACEH/_RDTR_11A3_KAWASAN_PERKOTAAN_TAKENGON/MapServer/export?bbox=10777670.785429507%2C510498.91036893707%2C10783492.866328474%2C521779.19211067737&bboxSR=102100&imageSR=102100&size=1620%2C3138&dpi=270&format=png32&transparent=true&layers=show%3A0&f=image';
-  var rdtrTakengonImageUrl = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=' +
-    encodeURIComponent(rdtrTakengonExportUrl);
-  var rdtrTakengonOverlay = L.imageOverlay(
-    rdtrTakengonImageUrl,
-    rdtrTakengonBounds,
-    {
-      opacity: 0.9,
-      pane: 'overlayPane',
-      interactive: false,
-      alt: 'RDTR Kawasan Perkotaan Takengon',
-      attribution: 'GISTARU ATR/BPN — RDTR Kawasan Perkotaan Takengon'
-    }
-  );
-  window.rdtrTakengonOverlay = rdtrTakengonOverlay;
-  window.toggleRdtrTakengon = function (show) {
-    if (show) {
-      if (!map.hasLayer(rdtrTakengonOverlay)) rdtrTakengonOverlay.addTo(map);
-      map.flyToBounds(rdtrTakengonBounds, { padding: [12, 12], maxZoom: 16, duration: 1.2 });
-    } else if (map.hasLayer(rdtrTakengonOverlay)) {
-      map.removeLayer(rdtrTakengonOverlay);
-    }
-  };
-  window.isRdtrTakengonActive = function () {
-    return map.hasLayer(rdtrTakengonOverlay);
-  };
-
   // Keep one map popup at a time, then present feature details in a single
   // responsive sheet instead of anchoring the content to a Leaflet popup.
   var catalogPopupSheet = null;
@@ -90,6 +56,13 @@
     sheet.querySelector('.bhumi-persil-sheet-close').addEventListener('click', function () {
       window.clearTimeout(catalogPopupCenterTimer);
       window.clearTimeout(catalogPopupAdTimer);
+      /* Sorotan polygon dari layer katalog (mis. OPT Pertanian) ikut dihapus
+         saat card Detail Layer ditutup, supaya tidak ada highlight yatim
+         yang tersisa di peta tanpa kartu penjelas. Dijalankan sebelum cabang
+         persil karena kedua isi sheet memakai kartu yang sama. */
+      (window.catalogHighlightCleanups || []).forEach(function (fn) {
+        try { fn(); } catch (err) { /* abaikan cleanup yang gagal */ }
+      });
       if (sheet.querySelector('.bhumi-persil-detail-card')) {
         bhumiPersilClearHighlight();
         return;
@@ -5361,12 +5334,6 @@ const SAWAH_COLOR = '#87cf15';
       ]
     },
     {
-      cat: 'RDTR GISTARU ATRBPN',
-      layers: [
-        { id: 'toggleRdtrTakengon', label: 'RDTR Kawasan Perkotaan Takengon' }
-      ]
-    },
-    {
       cat: 'SITR Jawa Timur',
       subcats: [
         { subcat: 'Pola ruang & kawasan', layers: [
@@ -5825,8 +5792,6 @@ function syncLayerCatalogState() {
         cb.checked = window.isBumiPersilLayerActive();
       } else if (cb.dataset.layerId === 'toggleGistaruPersilLayer' && typeof window.isGistaruPersilLayerActive === 'function') {
         cb.checked = window.isGistaruPersilLayerActive();
-      } else if (cb.dataset.layerId === 'toggleRdtrTakengon' && typeof window.isRdtrTakengonActive === 'function') {
-        cb.checked = window.isRdtrTakengonActive();
       } else if (_layerCatalogState.hasOwnProperty(id)) {
         cb.checked = _layerCatalogState[id];
       }
@@ -6257,7 +6222,6 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
           (id === 'toggleNonTollRoad' && typeof window.toggleNonTollRoadLayer === 'function') ||
           (id === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') ||
           (id === 'toggleGistaruPersilLayer' && typeof window.toggleGistaruPersilLayer === 'function') ||
-          (id === 'toggleRdtrTakengon' && typeof window.toggleRdtrTakengon === 'function') ||
           (id === 'toggleBhumiPersilNasionalLayer' && typeof window.toggleBhumiPersilNasionalLayer === 'function') ||
           (id === 'toggleSawahGislinerLayer' && typeof window.toggleSawahGislinerLayer === 'function') ||
           (id === 'toggleJenisTanahJateng' && typeof window.toggleJenisTanahJateng === 'function') ||
@@ -6370,9 +6334,6 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
         }
         if (id === 'toggleGistaruPersilLayer' && typeof window.toggleGistaruPersilLayer === 'function') {
           window.toggleGistaruPersilLayer(cb.checked);
-        }
-        if (id === 'toggleRdtrTakengon' && typeof window.toggleRdtrTakengon === 'function') {
-          window.toggleRdtrTakengon(cb.checked);
         }
         if (id === 'toggleBhumiPersilNasionalLayer' && typeof window.toggleBhumiPersilNasionalLayer === 'function') {
           window.toggleBhumiPersilNasionalLayer(cb.checked);

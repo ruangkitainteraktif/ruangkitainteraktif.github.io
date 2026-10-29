@@ -25,6 +25,7 @@
   var renderedLayers = {};
   var activeLayers = {};
   var popup = null;
+  var highlight = null;
   var clickBound = false;
 
   function esc(value) {
@@ -81,6 +82,10 @@
         window.map.removeLayer(popup);
         popup = null;
       }
+      if (highlight && window.map) {
+        window.map.removeLayer(highlight);
+        highlight = null;
+      }
     }
   }
 
@@ -106,8 +111,11 @@
     var geometry = JSON.stringify({ x: e.latlng.lng, y: e.latlng.lat, spatialReference: { wkid: 4326 } });
     var url = SERVICE_URL + '/identify?geometry=' + encodeURIComponent(geometry)
       + '&geometryType=esriGeometryPoint&sr=4326&layers=' + encodeURIComponent('visible:' + layerIds.join(','))
-      + '&tolerance=4&mapExtent=' + [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()].join(',')
-      + '&imageDisplay=' + size.x + ',' + size.y + ',96&returnGeometry=false&f=json';
+      /* tolerance=0: server identify SIPERDITAN membalas ratusan fitur
+         se-Indonesia bila tolerance dinaikkan. maxAllowableOffset
+         menyederhanakan geometri (~55 m) supaya payload ringan. */
+      + '&tolerance=0&mapExtent=' + [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()].join(',')
+      + '&imageDisplay=' + size.x + ',' + size.y + ',96&returnGeometry=true&maxAllowableOffset=0.0005&f=json';
     fetch(url)
       .then(function (r) { return r.json(); })
       .then(function (data) {
@@ -116,8 +124,80 @@
       .catch(function () { /* silent */ });
   }
 
+  function fieldLabel(k) {
+    var known = { FID: 'FID', PROV: 'Provinsi', KABKOT: 'Kab/Kota', PB: 'Kategori' };
+    return known[k] || String(k).replace(/_/g, ' ');
+  }
+
+  /* Template .agol-popup dipakai semua card di panel Detail Layer: header
+     badge/judul, body berisi baris atribut, lalu footer sumber. Panel Detail
+     Layer mengubah .agol-popup-fields menjadi tabel dua kolom, jadi atribut
+     tidak boleh dirender sebagai <table> yang digulir sendiri di dalam popup. */
+  function optPopupCard(cfg, attrs) {
+    var fields = '';
+    Object.keys(attrs).forEach(function (k) {
+      var val = attrs[k];
+      if (val == null || val === '') return;
+      if (typeof val === 'number') val = val.toLocaleString('id-ID');
+      fields += '<div class="agol-popup-field">'
+        + '<span class="agol-popup-field-label">' + esc(fieldLabel(k)) + '</span>'
+        + '<span class="agol-popup-field-value">' + esc(String(val)) + '</span>'
+        + '</div>';
+    });
+    if (!fields) {
+      fields = '<div class="agol-popup-field"><span class="agol-popup-field-value">Tidak ada atribut.</span></div>';
+    }
+    return '<div class="agol-popup">'
+      + '<div class="agol-popup-header agol-geo-kawasan">'
+      + '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:' + esc(cfg.color) + ';"></span>KEMENTAN</div>'
+      + '<div class="agol-popup-title">' + esc(cfg.label + ' (' + cfg.parentLabel + ')') + '</div>'
+      + '</div>'
+      + '<div class="agol-popup-body"><div class="agol-popup-fields">' + fields + '</div></div>'
+      + '<div class="agol-popup-footer"><span>Sumber: KEMENTAN / siperditan &mdash; Laporan Serangan OPT Horti</span></div>'
+      + '</div>';
+  }
+
+  /* ── Sorot polygon fitur yang sedang dilihat ──
+     Geometri ring Esri dikonversi via L.esri.Util.arcgisToGeoJSON dengan
+     fallback manual; gaya oranye putus-putus mengikuti sorotan persil. */
+  function drawHighlight(latlng, results) {
+    if (highlight && window.map) { window.map.removeLayer(highlight); highlight = null; }
+    if (!window.map || typeof L === 'undefined') return;
+    var style = { color: '#FFAA00', weight: 2, fill: false, dashArray: '4 3' };
+    var group = null;
+    results.forEach(function (r) {
+      var geometry = r && r.geometry;
+      if (!geometry || !geometry.rings || !geometry.rings.length) return;
+      if (!group) group = L.featureGroup();
+      try {
+        if (L.esri && L.esri.Util && typeof L.esri.Util.arcgisToGeoJSON === 'function') {
+          var feature = L.esri.Util.arcgisToGeoJSON({ geometry: geometry, attributes: r.attributes || {} });
+          if (feature && feature.type === 'Feature') {
+            L.geoJSON(feature, { style: style }).addTo(group);
+            return;
+          }
+        }
+      } catch (err) { /* geometri tidak valid: pakai fallback di bawah */ }
+      try {
+        L.polygon(geometry.rings.map(function (ring) {
+          return ring.map(function (p) { return [p[1], p[0]]; });
+        }), style).addTo(group);
+      } catch (err2) { /* ring tidak valid: abaikan fitur ini */ }
+    });
+    if (group && group.getLayers().length) {
+      group.addTo(window.map);
+      highlight = group;
+      return;
+    }
+    /* Tanpa geometri: pasang marker di titik klik sebagai penanda lokasi. */
+    highlight = L.circleMarker(latlng, {
+      radius: 8, color: '#FFAA00', weight: 2, fillColor: '#FFAA00', fillOpacity: 0.35
+    }).addTo(window.map);
+  }
+
   function showPopup(latlng, results) {
     if (popup && window.map) window.map.removeLayer(popup);
+    drawHighlight(latlng, results);
     var grouped = {};
     results.forEach(function (r) {
       var cfg = configByLayerId(r.layerId);
@@ -125,28 +205,23 @@
       if (!grouped[r.layerId]) grouped[r.layerId] = { cfg: cfg, rows: [] };
       grouped[r.layerId].rows.push(r);
     });
-    var html = '<div style="font-size:11px;max-height:280px;overflow:auto;">';
+    var cards = [];
     Object.keys(grouped).forEach(function (lid) {
       var g = grouped[lid];
-      html += '<div style="margin-top:6px;">';
-      html += '<strong style="font-size:12px;color:#1e293b;">' + esc(g.cfg.label) + ' (' + esc(g.cfg.parentLabel) + ')</strong>';
       g.rows.forEach(function (r) {
         var attrs = r.attributes || {};
-        var keys = Object.keys(attrs).filter(function (k) { return k.toLowerCase().indexOf('shape') === -1; });
-        if (!keys.length) return;
-        html += '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:3px;">';
-        keys.forEach(function (k, i) {
-          var val = attrs[k];
-          if (typeof val === 'number') val = val.toLocaleString('id-ID');
-          html += '<tr style="background:' + (i % 2 ? '#f9fafb' : '#fff') + ';">'
-            + '<td style="padding:3px 6px;color:#64748b;white-space:nowrap;">' + esc(k) + '</td>'
-            + '<td style="padding:3px 6px;color:#334155;">' + esc(val) + '</td></tr>';
+        var clean = {};
+        Object.keys(attrs).forEach(function (k) {
+          if (k.toLowerCase().indexOf('shape') === -1) clean[k] = attrs[k];
         });
-        html += '</table>';
+        cards.push(optPopupCard(g.cfg, clean));
       });
-      html += '</div>';
     });
-    html += '</div>';
+    if (!cards.length) return;
+    var html = cards.join('');
+    /* Satu klik bisa menyentuh lebih dari satu OPT; bungkus dengan daftar
+       persil supaya kartu terpisah rapi, persis pola map-core.js. */
+    if (cards.length > 1) html = '<div class="bhumi-persil-list">' + html + '</div>';
     popup = L.popup({ maxWidth: 360, closeButton: true }).setLatLng(latlng).setContent(html).addTo(window.map);
   }
 
@@ -188,4 +263,8 @@
   window.OPTH_ATTR_DATA = OPTH_ATTR_DATA;
   window.OPTH_LAYER_IDS = Object.keys(OPTH_LAYERS);
   window.toggleOPTHorti = toggleOPTHorti;
+  /* Panel Detail Layer memanggil cleanup ini saat ditutup (map-core.js). */
+  (window.catalogHighlightCleanups = window.catalogHighlightCleanups || []).push(function () {
+    if (highlight && window.map) { window.map.removeLayer(highlight); highlight = null; }
+  });
 })();

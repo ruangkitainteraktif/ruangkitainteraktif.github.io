@@ -810,10 +810,9 @@
     var a = it.attrs || {};
     var baris = '';
     function tambah(label, nilai) {
-      baris += '<div class="geotani-sls-popup-row"><span>' + escapeHtml(label) +
-        '</span><b>' + escapeHtml(nilai) + '</b></div>';
+      baris += '<div class="agol-popup-field"><span class="agol-popup-field-label">' + escapeHtml(label) +
+        '</span><span class="agol-popup-field-value">' + escapeHtml(nilai) + '</span></div>';
     }
-    tambah('Kelas tutupan', it.kelas.nama);
     tambah('Luas di desa', fmtLuas(it.luasIrisanHa));
     if (it.kelas.id !== null) tambah('Kode kelas', String(it.kelas.id));
 
@@ -831,12 +830,19 @@
     }
 
     if (!it.kelas.dikenal) {
-      baris += '<div class="geotani-sls-popup-row"><span>Status</span><b>kelas di luar daftar 2024</b></div>';
+      baris += '<div class="agol-popup-field"><span class="agol-popup-field-label">Status</span><span class="agol-popup-field-value">kelas di luar daftar 2024</span></div>';
     }
-    return '<div class="geotani-sls-popup">' +
-      '<div class="geotani-sls-popup-title">' + escapeHtml(it.kelas.nama) + '</div>' +
+    return '<div class="agol-popup">' +
+      '<div class="agol-popup-header agol-geo-kawasan">' +
+      '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#86efac;"></span>Tutupan Lahan</div>' +
+      '<div class="agol-popup-title">' + escapeHtml(it.kelas.nama) + '</div>' +
+      '<div class="agol-popup-subtitle">Tahun ' + escapeHtml(it.tahun) + '</div>' +
+      '</div>' +
+      '<div class="agol-popup-body"><div class="agol-popup-fields">' +
       baris +
-      (it.terpotong ? '<div class="geotani-sls-popup-row"><span>Status</span><b>terpotong batas desa</b></div>' : '') +
+      (it.terpotong ? '<div class="agol-popup-field"><span class="agol-popup-field-label">Status</span><span class="agol-popup-field-value">terpotong batas desa</span></div>' : '') +
+      '</div></div>' +
+      '<div class="agol-popup-footer"><span>Sumber: BNPB · PL_KLHK ' + escapeHtml(it.tahun) + '</span></div>' +
       '</div>';
   }
 
