@@ -4892,7 +4892,7 @@ const SAWAH_COLOR = '#87cf15';
       type: 'basemap',
       groups: [
         {
-          group: 'Peta jalan & referensi',
+          group: 'Peta Vector',
           layers: [
             { id: 'google-maps', label: 'Google Maps' },
             { id: 'osm', label: 'Open Street Map' },
@@ -4907,7 +4907,7 @@ const SAWAH_COLOR = '#87cf15';
           ]
         },
         {
-          group: 'Citra satelit',
+          group: 'Citra Satelit',
           layers: [
             { id: 'esri-satellite', label: 'Esri Satellite' },
             { id: 'google-satellite-kh', label: 'Google Satellite' },
@@ -4950,12 +4950,12 @@ const SAWAH_COLOR = '#87cf15';
      * modul dan panel kendali sendiri. */
       cat: 'Transportasi',
       layers: [
-        { id: 'toggleTransjakarta', label: 'Koridor Transportasi Umum — TransJakarta Network' },
-        { id: 'toggleTransjogja', label: 'Jaringan Rute Trans Jogja — Geoportal DIY' }
+        { id: 'toggleTransjakarta', label: 'TransJakarta Network' },
+        { id: 'toggleTransjogja', label: 'TransJogja Network' }
       ]
     },
     {
-      cat: 'Pertanian & Ketahanan Pangan',
+      cat: 'Ketahanan Pangan',
       subcats: [
         { subcat: 'Kerawanan pangan', layers: [
           { id: 'toggleFsvaLayer', label: 'FSVA 2025 (Badan Pangan)' }
