@@ -4979,7 +4979,7 @@ const SAWAH_COLOR = '#87cf15';
        ]
      },
       {
-        cat: 'Pertanian',
+        cat: 'OPT Pertanian',
       subcats: [
           { subcat: 'Rekap Serangan OPT — Padi', layers: [
             { id: 'opt-padi-penggerek', label: 'Penggerek Batang' },
@@ -5253,7 +5253,7 @@ const SAWAH_COLOR = '#87cf15';
     {
       /* Seluruh layer overlay SIGAP (GeoServer KLHK) dibangkitkan dari
        * SIGAP_LAYER_REGISTRY agar id, label, dan nama WMS selalu sinkron. */
-      cat: 'Peta Kehutanan & Lahan (SIGAP)',
+      cat: 'Kehutanan & Lahan (SIGAP)',
       subcats: (function () {
         var order = [], groups = {};
         Object.keys(SIGAP_LAYER_REGISTRY).forEach(function (id) {
@@ -5323,7 +5323,7 @@ const SAWAH_COLOR = '#87cf15';
       ]
     },
     {
-      cat: 'ATRBPN',
+      cat: 'Persil Nasional - ATR/BPN',
       subcats: [
         { subcat: 'Peta Pertanahan', layers: [
           { id: 'toggleBhumiPersilNasionalLayer', label: 'Persil Nasional (BHUMI)' }
@@ -5465,20 +5465,20 @@ const SAWAH_COLOR = '#87cf15';
       })()
     },
 {
-      cat: 'Tutupan Lahan & Vegetasi',
+      cat: 'Lahan Baku Sawah',
       layers: [
         { id: 'toggleSawahGislinerLayer', label: 'Lahan Sawah Dilindungi (ATR/BPN)' },
-        { id: 'toggleSawahDilindungi', label: 'LSD 50K' },
-        { id: 'toggleSawahNasional50k', label: 'LBS 50K' },
+        { id: 'bps-lbs-2024', label: 'Lahan Baku Sawah Nasional 2024' }
+        { id: 'toggleSawahDilindungi', label: 'Lahan Sawah Dilindungi 50K (BIG)' },
+        { id: 'toggleSawahNasional50k', label: 'Lahan Baku Sawah 50K (BIG)' },
         { id: 'arcgis-vt-lbs-2024', label: 'LBS 2024 (Vektor)' },
-        { id: 'arcgis-vt-lbs-2019', label: 'LBS 2019 (Vektor)' },
         { id: 'arcgis-sawah-2023', label: 'LBS 2023' },
+        { id: 'arcgis-vt-lbs-2019', label: 'LBS 2019 (Vektor)' },
         { id: 'arcgis-sawah-2019', label: 'LBS 2019' },
-        { id: 'bps-lbs-2024', label: 'LBS Nasional 2024' }
         ]
     },
     {
-      cat: 'Tutupan Lahan Global (UMD GLAD)',
+      cat: 'Tutupan Lahan Global',
       subcats: [
         { subcat: 'Komposit tutupan lahan', layers: [
           { id: 'glcluc-composite2020', label: 'Komposit tutupan lahan 2020' },
@@ -5518,7 +5518,6 @@ const SAWAH_COLOR = '#87cf15';
     {
       cat: 'Elevasi & Tutupan Lahan',
       layers: [
-        { id: 'toggleDemnasOverlay', label: 'Ketinggian permukaan (DEMNAS / SRTM)' },
         { id: 'toggleHillshade', label: 'Relief permukaan (hillshade)' },
         { id: 'toggleBatnas', label: 'Kedalaman laut (BATNAS)' },
         { id: 'toggleProvinceBoundary', label: 'Batas Provinsi (PBF)' },
