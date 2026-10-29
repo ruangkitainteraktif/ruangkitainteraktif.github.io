@@ -5323,7 +5323,7 @@ const SAWAH_COLOR = '#87cf15';
       ]
     },
     {
-      cat: 'Persil Nasional - ATR/BPN',
+      cat: 'Persil Nasional - ATRBPN',
       subcats: [
         { subcat: 'Peta Pertanahan', layers: [
           { id: 'toggleBhumiPersilNasionalLayer', label: 'Persil Nasional (BHUMI)' }
@@ -5468,13 +5468,13 @@ const SAWAH_COLOR = '#87cf15';
       cat: 'Lahan Baku Sawah',
       layers: [
         { id: 'toggleSawahGislinerLayer', label: 'Lahan Sawah Dilindungi (ATR/BPN)' },
-        { id: 'bps-lbs-2024', label: 'Lahan Baku Sawah Nasional 2024' }
+        { id: 'bps-lbs-2024', label: 'Lahan Baku Sawah Nasional 2024' },
         { id: 'toggleSawahDilindungi', label: 'Lahan Sawah Dilindungi 50K (BIG)' },
         { id: 'toggleSawahNasional50k', label: 'Lahan Baku Sawah 50K (BIG)' },
-        { id: 'arcgis-vt-lbs-2024', label: 'LBS 2024 (Vektor)' },
-        { id: 'arcgis-sawah-2023', label: 'LBS 2023' },
-        { id: 'arcgis-vt-lbs-2019', label: 'LBS 2019 (Vektor)' },
-        { id: 'arcgis-sawah-2019', label: 'LBS 2019' },
+        { id: 'arcgis-vt-lbs-2024', label: 'Lahan Baku Sawah 2024 (Vektor)' },
+        { id: 'arcgis-sawah-2023', label: 'Lahan Baku Sawah 2023' },
+        { id: 'arcgis-vt-lbs-2019', label: 'Lahan Baku Sawah 2019 (Vektor)' },
+        { id: 'arcgis-sawah-2019', label: 'Lahan Baku Sawah 2019' },
         ]
     },
     {
@@ -5518,6 +5518,7 @@ const SAWAH_COLOR = '#87cf15';
     {
       cat: 'Elevasi & Tutupan Lahan',
       layers: [
+        { id: 'toggleDemnasOverlay', label: 'Ketinggian permukaan (DEMNAS / SRTM)' },
         { id: 'toggleHillshade', label: 'Relief permukaan (hillshade)' },
         { id: 'toggleBatnas', label: 'Kedalaman laut (BATNAS)' },
         { id: 'toggleProvinceBoundary', label: 'Batas Provinsi (PBF)' },
