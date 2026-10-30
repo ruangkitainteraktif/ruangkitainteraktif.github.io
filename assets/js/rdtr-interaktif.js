@@ -7,7 +7,14 @@
   var GISTARU_PROXY = 'https://gistaru-proxy.atrbpn.go.id/proxy.ashx?';
   var GISTARU_METADATA_PROXY = 'https://gistaru.atrbpn.go.id/tres/proxy.ashx?';
   var GISTARU_SERVICES = 'https://gistaru.atrbpn.go.id/arcgis/rest/services/';
-  var GISTARU_CORS_PROXY = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=';
+  /* Jalur utama overlay: relay PHP di hosting sendiri. Hanya di sanalah
+     User-Agent Chrome dan Referer GISTARU benar-benar bisa disisipkan.
+     Browser dilarang mengaturnya pada request <img>/fetch, sementara
+     Cloudflare Workers dan Netlify Functions sama-sama membuang header
+     Referer pada subrequest -- teruji 2026-10-30: set header identik dari
+     Node/curl -> 200 image/png, dari kedua platform itu -> 403
+     "Akses Tidak Sah." Tanpa jalur ini seluruh tile gagal. */
+  var GISTARU_PHP_PROXY = 'https://proxy.ruangkita.net/proxy-gistaru.php?url=';
   var catalog = [];
   var active = new Map();
   var extentCache = new Map();
@@ -170,13 +177,12 @@
   }
 
   function fetchArcGISMetadata(url) {
-    /* Kandidat pertama melewati kta-cors-proxy: hanya di sanalah User-Agent
-       Chrome dan Referer GISTARU bisa disisipkan, dan tanpa keduanya
-       /proxy.ashx membalas 403 "Akses Tidak Sah." Dua kandidat berikutnya
-       disimpan sebagai cadangan kalau Worker tidak terjangkau. Urutan ini
-       juga yang membuat zoom tidak membuang satu request gagal di awal. */
+    /* Kandidat pertama lewat relay PHP: hanya di sanalah User-Agent Chrome
+       dan Referer GISTARU bisa disisipkan, dan tanpa keduanya /proxy.ashx
+       membalas 403 "Akses Tidak Sah." Dua kandidat berikutnya disimpan
+       sebagai cadangan kalau hosting relay sedang tidak terjangkau. */
     var candidates = [
-      GISTARU_CORS_PROXY + encodeURIComponent(GISTARU_PROXY + url),
+      GISTARU_PHP_PROXY + encodeURIComponent(GISTARU_PROXY + url),
       GISTARU_PROXY + url,
       GISTARU_METADATA_PROXY + url
     ];
@@ -258,11 +264,12 @@
     /* /proxy.ashx milik GISTARU menolak tile yang Referer-nya bukan situs
        mereka -- balasannya 403 "Akses Tidak Sah.", sehingga overlay tidak
        pernah tampil sama sekali. Browser DILARANG mengganti User-Agent dan
-       Referer pada request <img>, jadi keduanya harus disisipkan oleh
-       kta-cors-proxy di server. Lewati langsung ke proxy resmi GISTARU dari
-       browser tidak akan pernah berhasil; jalur inilah satu-satunya yang
-       membalas 200 image/png. */
-    return GISTARU_CORS_PROXY + encodeURIComponent(target);
+       Referer pada request <img>, jadi keduanya harus disisipkan oleh relay
+       PHP di server. Memuat langsung /proxy.ashx dari browser tidak akan
+       pernah berhasil; jalur inilah yang membalas 200 image/png. Relay juga
+       menyetel Cache-Control, sehingga tile tersimpan di browser dan
+       panning/zoom terasa lancar. */
+    return GISTARU_PHP_PROXY + encodeURIComponent(target);
   }
 
   function createOverlay(item, map) {

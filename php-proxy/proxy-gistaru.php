@@ -28,6 +28,13 @@
 // sebenarnya tak menuntut CORS, tetapi metadata dibaca lewat fetch.
 header('Access-Control-Allow-Origin: *');
 
+// Keterangan jelas, bukan layar 500 kosong, bila hosting menonaktifkan cURL.
+if (!function_exists('curl_init')) {
+    http_response_code(500);
+    header('Content-Type: text/plain; charset=utf-8');
+    exit('Ekstensi cURL tidak aktif di hosting ini.');
+}
+
 $url = isset($_GET['url']) ? $_GET['url'] : '';
 
 // Hanya layanan GISTARU. Bentuk proxy resmi (gistaru-proxy.atrbpn.go.id)
