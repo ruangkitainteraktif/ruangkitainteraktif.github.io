@@ -170,9 +170,14 @@
   }
 
   function fetchArcGISMetadata(url) {
+    /* Kandidat pertama melewati kta-cors-proxy: hanya di sanalah User-Agent
+       Chrome dan Referer GISTARU bisa disisipkan, dan tanpa keduanya
+       /proxy.ashx membalas 403 "Akses Tidak Sah." Dua kandidat berikutnya
+       disimpan sebagai cadangan kalau Worker tidak terjangkau. Urutan ini
+       juga yang membuat zoom tidak membuang satu request gagal di awal. */
     var candidates = [
-      GISTARU_PROXY + url,
       GISTARU_CORS_PROXY + encodeURIComponent(GISTARU_PROXY + url),
+      GISTARU_PROXY + url,
       GISTARU_METADATA_PROXY + url
     ];
     function tryCandidate(index, lastError) {
@@ -247,13 +252,17 @@
     var southEastMeters = map.options.crs.project(southEast);
     var bbox = [northWestMeters.x, southEastMeters.y, southEastMeters.x, northWestMeters.y].join(',');
     var service = GISTARU_SERVICES + item.url_mapserver + '/export';
-    var target = service + '?bbox=' + bbox +
+    var target = GISTARU_PROXY + service + '?bbox=' + bbox +
       '&bboxSR=102100&imageSR=102100&size=' + tileSize + ',' + tileSize +
       '&dpi=96&format=png32&transparent=true&layers=show%3A' + encodeURIComponent(item.sublayer) + '&f=image';
-    /* Tile hanya ditampilkan sebagai elemen <img>; CORS tidak diperlukan
-       untuk merender gambar lintas-origin. Lewati proxy gambar aplikasi,
-       yang menolak request export ArcGIS ini, dan gunakan proxy resmi GISTARU. */
-    return GISTARU_PROXY + target;
+    /* /proxy.ashx milik GISTARU menolak tile yang Referer-nya bukan situs
+       mereka -- balasannya 403 "Akses Tidak Sah.", sehingga overlay tidak
+       pernah tampil sama sekali. Browser DILARANG mengganti User-Agent dan
+       Referer pada request <img>, jadi keduanya harus disisipkan oleh
+       kta-cors-proxy di server. Lewati langsung ke proxy resmi GISTARU dari
+       browser tidak akan pernah berhasil; jalur inilah satu-satunya yang
+       membalas 200 image/png. */
+    return GISTARU_CORS_PROXY + encodeURIComponent(target);
   }
 
   function createOverlay(item, map) {
