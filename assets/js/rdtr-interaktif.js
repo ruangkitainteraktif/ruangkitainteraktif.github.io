@@ -300,6 +300,10 @@
   function init() {
     var root = document.getElementById('rdtrInteraktifCard');
     if (!root || root.dataset.rdtrReady) return;
+    /* Kartu sedang disembunyikan dari GeoPortal (hidden di index.html):
+       jangan unduh katalog dan jangan pasang listener klik peta sama sekali.
+       Melepas atribut hidden di HTML otomatis mengaktifkan modul kembali. */
+    if (root.hidden) return;
     root.dataset.rdtrReady = '1';
 
     if (window.map && !window.map.__rdtrIdentifyBound) {

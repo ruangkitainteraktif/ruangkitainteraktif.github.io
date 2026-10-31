@@ -7,7 +7,15 @@
   var PAGE_SIZE = 500;
   var MAX_FEATURES = 10000;
   var REQUEST_TIMEOUT_MS = 45000;
+  /* WKT .prj yang sama dengan modul GeoTani lain. Query keluar memakai
+     outSR=4326, jadi koordinat SHP memang WGS 84. Catatan: bundle shp-write
+     yang dimuat halaman (0.4.3) menulis .prj miliknya sendiri dan mengabaikan
+     opsi `prj` -- isinya ESRI WKT untuk WGS 84, setara EPSG:4326 dan tetap
+     dibaca benar oleh QGIS/ArcGIS. Opsi ini tetap dikirim supaya ikut berlaku
+     bila pustakanya diperbarui ke versi yang menghormatinya. */
+  var WGS84_PRJ = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]';
   var selectedKode = null;
+  var selectedNama = null;
   var activeLayer = null;
   var inFlight = new Map();
   var cache = new Map();
@@ -216,6 +224,7 @@
     clearLayer();
     if (clearSelection) {
       selectedKode = null;
+      selectedNama = null;
       var input = document.getElementById('geotaniBuildingVillageSearch');
       var picked = document.getElementById('geotaniBuildingVillageSelected');
       if (input) input.value = '';
@@ -225,6 +234,7 @@
     var output = document.getElementById('geotani-building-output');
     if (status) { status.className = 'geotani-sls-status'; status.textContent = ''; }
     if (output) output.textContent = '';
+    syncExportButton();
   }
 
   function daftarDesa() {
@@ -244,7 +254,9 @@
   function setSelected(kode, nama) {
     generation += 1;
     selectedKode = kode ? String(kode) : null;
+    selectedNama = selectedKode ? (nama || null) : null;
     clearLayer();
+    syncExportButton();
     var picked = document.getElementById('geotaniBuildingVillageSelected');
     if (!picked) return;
     picked.textContent = selectedKode ? '✓ ' + (nama || selectedKode) + ' (' + selectedKode + ')' : '';
@@ -291,6 +303,111 @@
     return result;
   }
 
+  /* ── Ekspor SHP ──
+     Bangunan datang sebagai MultiPolygon (rings ArcGIS), jadi penulis SHP
+     memakai tipe "polygon". Pada shp-write, opsi `types` HANYA menentukan nama
+     berkas keluaran: geojson.multipolygon() melaporkan type "POLYGON", sehingga
+     kuncinya memang "polygon" dan hasilnya polygons.shp + .shx + .dbf + .prj. */
+
+  /* Nama kolom DBF dibatasi 10 karakter. Tanpa pemotongan ini shpwrite
+     menulis "Shape_Length" apa adanya dan pembaca seperti QGIS salah memetakan
+     kolom sesudahnya. */
+  function shpSafeProperties(properties) {
+    var safe = {};
+    Object.keys(properties || {}).forEach(function (key) {
+      var base = String(key || 'field').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 10) || 'field';
+      var field = base, suffix = 1;
+      while (Object.prototype.hasOwnProperty.call(safe, field)) {
+        var tail = String(suffix++);
+        field = base.slice(0, 10 - tail.length) + tail;
+      }
+      var value = properties[key];
+      safe[field] = value == null || (typeof value === 'number' && !Number.isFinite(value)) ? ''
+        : typeof value === 'boolean' ? (value ? 1 : 0)
+          : typeof value === 'object' ? JSON.stringify(value) : value;
+    });
+    return safe;
+  }
+
+  /* Nama berkas dijaga ASCII: karakter non-ASCII pada nama shapefile sering
+     membuat ArcGIS/QGIS keliru membaca berkasnya. */
+  function exportFileBase(kode, nama) {
+    var base = 'openbuilding-' + (nama || kode || 'desa');
+    if (base.normalize) base = base.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return base.replace(/[^a-z0-9_-]+/gi, '_').replace(/^_+|_+$/g, '').slice(0, 60)
+      || 'openbuilding';
+  }
+
+  /* Nama desa untuk nama berkas. Daftar resmi diutamakan; selectedNama hanya
+     cadangan bila katalog belum termuat. Tanpa urutan ini nama desa lama bisa
+     terbawa ke berkas desa lain -- clear() mereset keduanya, tetapi kode desa
+     juga bisa datang dari panel lain tanpa melewati setSelected(). */
+  function namaDesaUntuk(kode) {
+    var found = daftarDesa().find(function (item) { return String(item.kode) === String(kode); });
+    if (found) return found.nama;
+    return (selectedNama && String(selectedKode) === String(kode)) ? selectedNama : '';
+  }
+
+  /* Tombol ekspor aktif begitu ada desa terpilih. Kalau datanya belum pernah
+     dimuat, ekspor yang mengambilnya -- satu langkah saja bagi pengguna. */
+  function syncExportButton() {
+    var btn = document.getElementById('geotani-building-export');
+    if (!btn) return;
+    btn.disabled = !(selectedKode || kodeDariPanelLain());
+  }
+
+  /**
+   * Ekspor bangunan desa terpilih sebagai satu ZIP berisi .shp + .shx + .dbf +
+   * .prj. Mengembalikan { ok, message } dan tidak melempar, supaya tombol bisa
+   * menampilkan pesannya sendiri.
+   */
+  async function exportShp() {
+    var kode = selectedKode || kodeDariPanelLain();
+    if (!kode) return { ok: false, message: 'Pilih desa terlebih dahulu.' };
+    kode = String(kode);
+
+    var writer = window.shpwrite || (typeof shpwrite !== 'undefined' ? shpwrite : null);
+    if (!writer || typeof writer.zip !== 'function') {
+      return { ok: false, message: 'Modul pembuat SHP belum siap. Muat ulang halaman lalu coba kembali.' };
+    }
+
+    /* Bangunan yang sedang tampil diambil dari cache; bila belum pernah dimuat,
+       ambil dulu supaya tombol ini tetap bekerja tanpa langkah tambahan. */
+    var result = cache.get(kode);
+    if (!result) result = await loadBuildings(kode);
+
+    var features = (result.buildings || [])
+      .filter(function (feature) {
+        return feature && feature.geometry && feature.geometry.type && Array.isArray(feature.geometry.coordinates);
+      })
+      .map(function (feature) {
+        return { type: 'Feature', geometry: feature.geometry, properties: shpSafeProperties(feature.properties) };
+      });
+    if (!features.length) return { ok: false, message: 'Tidak ada geometri bangunan yang bisa diekspor.' };
+
+    var fileName = exportFileBase(kode, namaDesaUntuk(kode));
+    var archive = await writer.zip({ type: 'FeatureCollection', features: features }, {
+      folder: fileName,
+      filename: fileName,
+      outputType: 'blob',
+      types: { polygon: 'polygons' },
+      prj: WGS84_PRJ
+    });
+    var blob = archive instanceof Blob ? archive : new Blob([archive], { type: 'application/zip' });
+    var objectUrl = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = fileName + '.zip';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(function () { URL.revokeObjectURL(objectUrl); }, 1000);
+
+    var message = features.length.toLocaleString('id-ID') + ' bangunan diekspor ke ' + fileName + '.zip.';
+    if (result.truncated) message += ' Data mencapai batas 10.000 fitur, jadi mungkin belum lengkap.';
+    return { ok: true, message: message };
+  }
+
   function init() {
     var card = document.getElementById('geotani-building-card');
     if (!card || card.__geotaniBuildingBound) return;
@@ -299,6 +416,7 @@
     var results = document.getElementById('geotaniBuildingVillageResults');
     var button = document.getElementById('geotani-building-load');
     var reset = document.getElementById('geotani-building-reset');
+    var exportBtn = document.getElementById('geotani-building-export');
 
     var inheritedKode = kodeDariPanelLain();
     if (inheritedKode) {
@@ -350,13 +468,32 @@
       }
     });
     if (reset) reset.addEventListener('click', function () { clear(true); });
+
+    if (exportBtn) exportBtn.addEventListener('click', async function () {
+      var kode = selectedKode || kodeDariPanelLain();
+      if (!kode) { setStatus('Pilih desa terlebih dahulu.'); if (input) input.focus(); return; }
+      selectedKode = String(kode);
+      exportBtn.disabled = true;
+      setStatus(cache.has(selectedKode) ? 'Menyiapkan berkas SHP...' : 'Mengambil data bangunan...');
+      try {
+        var result = await exportShp();
+        setStatus(result.message);
+      } catch (error) {
+        setStatus('Gagal mengekspor SHP: ' + (error && error.message ? error.message : String(error)));
+      } finally {
+        syncExportButton();
+      }
+    });
+
+    syncExportButton();
   }
 
   window.GeoTaniBuildings = {
     init: init,
     clear: clear,
     loadBuildings: loadBuildings,
-    showBuildings: showBuildings
+    showBuildings: showBuildings,
+    exportShp: exportShp
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

@@ -5323,7 +5323,12 @@ const SAWAH_COLOR = '#87cf15';
       ]
     },
     {
+      /* Persil Nasional (ATRBPN). Sembunyikan dari Katalog Layer per
+       * permintaan 2026-10-31 -- kartu PERSIL Nasional di GeoTools > GeoPortal
+       * juga ikut disembunyikan pada hari yang sama. Hidden: kategori ini
+       * belum ditampilkan; hapus flagnya untuk mengunculkan kembali. */
       cat: 'Persil Nasional (ATRBPN)',
+      hidden: true,
       subcats: [
         { subcat: 'Peta Pertanahan', layers: [
           { id: 'toggleBhumiPersilNasionalLayer', label: 'Persil Nasional (BHUMI)' }
@@ -5515,7 +5520,7 @@ const SAWAH_COLOR = '#87cf15';
       ]
     },
     {
-      cat: 'Elevasi & Tutupan Lahan',
+      cat: 'Elevasi & Relief',
       layers: [
         { id: 'toggleHillshade', label: 'Relief Permukaan (HILLSHADE)' },
         { id: 'toggleBatnas', label: 'Kedalaman Laut (BATNAS)' },
@@ -5552,9 +5557,13 @@ const SAWAH_COLOR = '#87cf15';
     }
     var transport = LAYER_CATALOG_DATA.find(function (category) { return category.cat === 'Transportasi'; });
     if (transport && roads.length) transport.layers = transport.layers.concat(roads);
+    /* Kategori "Batas & Referensi Wilayah" diminta diletakkan paling bawah
+       (2026-10-31), bukan lagi tepat setelah "Foto Udara & Peta BIG".
+       Kategori dinamis (IGTPR, GeoPortal Hub) di-push ke akhir array saat
+       katalog pertama dibuka, jadi buildLayerCatalog() mengulang penataan
+       ini setiap kali katalog dirender. */
     if (boundaries.length) {
-      var bigPosition = LAYER_CATALOG_DATA.findIndex(function (category) { return category.cat === 'Foto Udara & Peta BIG'; });
-      LAYER_CATALOG_DATA.splice(bigPosition + 1, 0, { cat: 'Batas & Referensi Wilayah', layers: boundaries });
+      LAYER_CATALOG_DATA.push({ cat: 'Batas & Referensi Wilayah', layers: boundaries });
     }
   })();
 
@@ -5649,6 +5658,10 @@ const SAWAH_COLOR = '#87cf15';
   }
   loadPinnedLayers();
   var removedCatalogLayerIds = [
+    // 2026-10-31: kategori Persil Nasional (ATRBPN) disembunyikan dari
+    // Katalog Layer; pin tersimpan pengguna dibersihkan agar tidak membuang
+    // slot. Kembalikan ke _defaultPinnedLayers untuk mengunculkan lagi.
+    'toggleBhumiPersilNasionalLayer',
     'toggleRtrwTmsLayer', 'toggleLsdTmsLayer',
     'toggleLbsTmsLayer', 'toggleDiTmsLayer', 'toggleSaluranIrTmsLayer',
     'atrbpn-wms-lsd-umum', 'atrbpn-wms-lahanbakusawah-new-sawah',
@@ -5672,9 +5685,11 @@ const SAWAH_COLOR = '#87cf15';
   });
   savePinnedLayers();
   // Layer utama selalu diprioritaskan dalam pin bawaan katalog.
+  /* toggleBhumiPersilNasionalLayer dikeluarkan dari pin bawaan 2026-10-31:
+     kategorinya disembunyikan dari Katalog Layer, jadi pin bawaan hanya
+     membuang slot. Masukkan lagi untuk mengunculkan kembali. */
   var _defaultPinnedLayers = [
     'petadasar-bpn',
-    'toggleBhumiPersilNasionalLayer',
     'isee-soil-orders',
     'toggleHwsdIndonesia',
     'toggleFsvaLayer',
@@ -5905,7 +5920,25 @@ function syncLayerCatalogState() {
     return LAYER_CATALOG_DATA.filter(function (cat) { return !cat.hidden; });
   }
 
+  /* Kategori "Batas & Referensi Wilayah" selalu diletakkan paling bawah
+     (permintaan 2026-10-31). Kategori dinamis -- IGTPR ATR/BPN dan sumber
+     GeoPortal Hub -- di-push ke akhir LAYER_CATALOG_DATA lewat
+     registerDynamicLayerCategory()/registerGeoportalCatalogLayers() saat
+     katalog dibuka pertama kali, sehingga kategori batas ini bisa terdorong
+     ke tengah. Fungsi ini menariknya kembali ke akhir daftar setiap kali
+     katalog dirender. Idempoten: bila sudah paling bawah, tidak terjadi
+     apa-apa. */
+  function pindahkanKategoriBatasKeBawah() {
+    var idx = -1;
+    for (var i = 0; i < LAYER_CATALOG_DATA.length; i++) {
+      if (LAYER_CATALOG_DATA[i].cat === 'Batas & Referensi Wilayah') { idx = i; break; }
+    }
+    if (idx < 0 || idx === LAYER_CATALOG_DATA.length - 1) return;
+    LAYER_CATALOG_DATA.push(LAYER_CATALOG_DATA.splice(idx, 1)[0]);
+  }
+
   function buildLayerCatalog(container) {
+    pindahkanKategoriBatasKeBawah();
     var html = '<div class="lc-donation-banner">' +
       '<div class="lc-donation-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg></div>' +
       '<div class="lc-donation-copy"><span class="lc-donation-eyebrow">DUKUNG PETA INDONESIA</span><strong class="lc-donation-text">Bantu RUANGKITA terus berkembang</strong><span class="lc-donation-note">Donasi Anda membantu biaya server, data, dan fitur baru.</span></div>' +

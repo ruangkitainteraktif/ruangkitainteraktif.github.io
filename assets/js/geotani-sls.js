@@ -781,6 +781,13 @@ var generasi = 0;
   function init(root) {
     var host = root || document.getElementById('geotani-sls-card');
     if (!host) return null;
+    /* Kartu RTRW Nasional sedang disembunyikan dari GeoPortal (hidden di
+       index.html): jangan pasang listener UI sama sekali. Mengembalikan api
+       (truthy) supaya loop boot() berhenti mengulang tiap 300 ms. API modul
+       tetap tersedia di window.GeoTaniSls untuk modul lain. Melepas atribut
+       hidden di HTML dan penjaga ini lalu muat ulang halaman untuk
+       menampilkan kembali kartu ini. */
+    if (host.hidden) return api;
     var btn = document.getElementById('geotani-sls-load');
     var out = document.getElementById('geotani-sls-output');
     var status = document.getElementById('geotani-sls-status');

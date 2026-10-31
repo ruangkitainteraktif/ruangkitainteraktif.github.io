@@ -2532,6 +2532,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 7 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
                         Reset Bangunan
                       </button>
+                      <button id="geotani-building-export" class="geotani-btn-print" type="button" style="margin-top:4px;" disabled>Export SHP</button>
                       <div id="geotani-building-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
                       <div id="geotani-building-output" class="geotani-sls-desc" aria-live="polite"></div>
                     </div>
@@ -2689,7 +2690,16 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     </div>
                   </details>
 
-                  <details class="geotani-kta-card geotani-sls-card" id="geotani-sls-card" aria-labelledby="geotani-sls-title">
+                  <!-- FITUR CEBOL SEMBUNYI SEMENTARA (2026-10-31): kartu RTRW
+                       Nasional (batas RT/RW/dusun SLS) diminta disembunyikan
+                       dari GeoPortal.
+                       Sembunyi, BUKAN dihapus: cukup hapus atribut hidden dan
+                       gaya display:none di bawah, lalu lepas penjaga
+                       "host.hidden" di init() pada assets/js/geotani-sls.js,
+                       untuk menampilkan kembali kartu ini. Modul tetap dimuat
+                       dan window.GeoTaniSls tetap dipakai modul lain
+                       (OpenBuilding, geoid-wilayah). -->
+                  <details class="geotani-kta-card geotani-sls-card" id="geotani-sls-card" aria-labelledby="geotani-sls-title" hidden style="display:none;">
                     <summary class="gt-card-head">
                       <span class="gt-card-icon" aria-hidden="true">&#129517;</span>
                       <span>
@@ -2717,7 +2727,13 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                     </div>
                   </details>
 
-               <details class="georaster-card" aria-labelledby="persilCardTitle">
+               <!-- FITUR CEBOL SEMBUNYI SEMENTARA (2026-10-31): kartu PERSIL
+                    Nasional diminta disembunyikan dari GeoPortal.
+                    Sembunyi, BUKAN dihapus: cukup hapus atribut hidden dan
+                    gaya display:none di bawah untuk menampilkan kembali
+                    kartu ini; skrip persil-geotiff-export.js tetap dimuat
+                    dan siap dipakai ulang. -->
+               <details class="georaster-card" aria-labelledby="persilCardTitle" hidden style="display:none;">
                  <summary class="gt-card-head">
                    <span class="gt-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></span>
                    <span><b id="persilCardTitle">PERSIL Nasional</b><small>Pilih batas desa untuk memotong raster persil BHUMI.</small></span>
@@ -2753,7 +2769,13 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                  </div>
                </details>
 
-                  <details class="geotani-kta-card" id="rdtrInteraktifCard" aria-labelledby="rdtrInteraktifTitle">
+                  <!-- FITUR CEBOL SEMBUNYI SEMENTARA (2026-10-31): modul RDTR
+                       Interaktif diminta disembunyikan dari GeoPortal.
+                       Sembunyi, BUKAN dihapus: cukup hapus atribut hidden dan
+                       gaya display:none di bawah, lalu lepas penjaga "root.hidden"
+                       di init() pada assets/js/rdtr-interaktif.js, untuk
+                       menampilkan kembali modul ini. -->
+                  <details class="geotani-kta-card" id="rdtrInteraktifCard" aria-labelledby="rdtrInteraktifTitle" hidden style="display:none;">
                     <summary class="gt-card-head">
                       <span class="gt-card-icon" aria-hidden="true">&#127758;</span>
                       <span><b id="rdtrInteraktifTitle">RDTR Interaktif</b><small>Overlay rencana detail tata ruang ATR/BPN</small></span>
@@ -4081,7 +4103,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <!-- SLS GeoTani: setelah geodesic-area (untuk luas) dan geoid-wilayah
        (kartu PDF membaca window._geotaniSlsData). -->
   <script src="assets/js/geotani-sls.js?v=20261023-sls-fluid-ad"></script>
-  <script src="assets/js/geotani-buildings.js?v=20261023-arcgis-json-query2"></script>
+  <script src="assets/js/geotani-buildings.js?v=20261030-building-shp-export"></script>
   <!-- "Cek NIB Tanah" disembunyikan sementara bersama kartunya di atas:
        layanan WFS GISTARU-nya sudah tidak bisa diandalkan (404/503).
        Aktifkan kembali dengan melepas komentar pada baris berikut. -->
