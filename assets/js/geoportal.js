@@ -2063,7 +2063,7 @@
       hiddenEls.push({ restore: () => sidebar.classList.remove('collapsed') });
     }
 
-    const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .geoportal-print-btn, .geoportal-legend, .basemap-btn, .basemap-control-wrap, .leaflet-control-scale, .detail-panel-btn, #detail-panel, .draw-fab-wrap, .legend-wrap, .zoom-control-wrap, .geoid-marker-wrap, .leaflet-control-mouse-position, .wind-legend, .himawari-legend, .maritime-legend, .leaflet-control-legend, .quick-layer-bar, .petadasar-export-block, #print-error-overlay, .print-area-buttons, .print-area-frame, .print-area-vignette, .print-instruction, .map-fab-item, .map-fab-menu, .map-fab-overlay, .map-fab-btn, .layer-catalog-dropdown, .layer-catalog-btn, #geotools-sheet, .unified-slider-container, .unified-legend-container');
+    const overlays = document.querySelectorAll('.unified-search, .map-insight-cards, .leaflet-control-zoom, .leaflet-control-locate, .reset-layers-btn, .geoportal-print-btn, .geoportal-legend, .basemap-btn, .basemap-control-wrap, .leaflet-control-scale, .detail-panel-btn, #detail-panel, .draw-fab-wrap, .legend-wrap, .zoom-control-wrap, .geoid-marker-wrap, .leaflet-control-mouse-position, .wind-legend, .himawari-legend, .maritime-legend, .leaflet-control-legend, .quick-layer-bar, .petadasar-export-block, #print-error-overlay, .print-area-buttons, .print-area-frame, .print-area-vignette, .print-instruction, .map-fab-item, .map-fab-menu, .map-fab-overlay, .map-fab-btn, .layer-catalog-dropdown, .layer-catalog-btn, #geotools-sheet, .al-sidebar, .unified-slider-container, .unified-legend-container');
     overlays.forEach(el => {
       if (el && getComputedStyle(el).display !== 'none') {
         const prev = el.style.display;
@@ -2385,7 +2385,7 @@
     '#print-error-overlay',
     '.print-area-buttons', '.print-area-frame', '.print-area-vignette', '.print-instruction',
     '.map-fab-wrap', '.map-fab-item', '.map-fab-menu', '.map-fab-overlay', '.map-fab-btn',
-    '.layer-catalog-dropdown', '.layer-catalog-btn', '#geotools-sheet',
+    '.layer-catalog-dropdown', '.layer-catalog-btn', '#geotools-sheet', '.al-sidebar',
     '.unified-slider-container', '.unified-legend-container',
     '.modis-time-slider-wrap', '.bmkg-time-slider-wrap', '.sentinel2-time-slider-wrap',
     '.ze-time-slider-wrap', '.ghrsst-time-slider-wrap',

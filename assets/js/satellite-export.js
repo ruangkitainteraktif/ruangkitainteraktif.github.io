@@ -489,7 +489,7 @@
         '.draw-fab-wrap',
         '.map-fab-item', '.map-fab-menu', '.map-fab-overlay', '.map-fab-btn',
         '.layer-catalog-dropdown', '.layer-catalog-btn',
-        '#geotools-sheet'
+        '#geotools-sheet', '.al-sidebar'
       ];
       selectors.forEach(function (sel) {
         document.querySelectorAll(sel).forEach(function (el) {

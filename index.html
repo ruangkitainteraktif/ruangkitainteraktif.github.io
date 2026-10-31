@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=20261027-rdtr-fallback-zone">
+  <link rel="stylesheet" href="assets/css/app.css?v=20261031-active-layers-panel">
     <link rel="stylesheet" href="assets/css/rdtr-interaktif.css?v=20261024-catalog-pager3">
   <link rel="stylesheet" href="assets/css/geodisaster.css?v=5">
 
@@ -1114,6 +1114,34 @@
         </div>
       </div>
       <div class="lg-sidebar-body" id="legendSidebarBody"></div>
+    </div>
+
+    <!-- ACTIVE LAYERS SIDEBAR
+         Panel khusus daftar layer yang sedang aktif (dicentang di peta).
+         Sebelumnya daftar ini menumpuk sebagai grup "Layer Aktif" di dalam
+         Katalog Layer; dipindah ke sheet sendiri (2026-10-31) agar katalog
+         lebih ringkas dan daftar layer aktif bisa tetap terbuka sambil
+         user menambah layer. Isi daftar dirender map-core.js
+         (renderActiveLayersPanel). -->
+    <div id="activeLayersSidebar" class="al-sidebar">
+      <div class="sheet-drag-handle"></div>
+      <div class="al-sidebar-head">
+        <span class="al-sidebar-title" onclick="if(document.getElementById('activeLayersSidebar').classList.contains('al-sidebar-minimized')) restoreActiveLayersSidebar()">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          <span>Layer Aktif</span>
+          <span class="al-sidebar-count" id="activeLayersCount" hidden>0</span>
+        </span>
+        <div class="al-sidebar-actions">
+          <button class="al-clear-all lc-clear-all" type="button" id="alClearAll" hidden>Matikan Semua</button>
+          <button class="al-sidebar-minimize" type="button" aria-label="Minimalkan" onclick="minimizeActiveLayersSidebar()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <button class="al-sidebar-close" type="button" aria-label="Tutup" onclick="closeActiveLayersSidebar()">&#xd7;</button>
+        </div>
+      </div>
+      <div class="al-sidebar-body" id="activeLayersSidebarBody">
+        <p class="al-empty" id="activeLayersEmpty">Belum ada layer aktif &mdash; aktifkan layer dari Katalog Layer.</p>
+      </div>
     </div>
 
     <!-- GEOFARM ANALYSIS PANEL (sheet kanan di desktop, bottom sheet di mobile) -->
@@ -3973,8 +4001,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <!-- sheet-drag.js SEQBELUM map-core.js: map-core, hotspot,
          geopangan, attribute-table, ai-analysis, dan polygon-analysis
          semuanya mendaftarkan sheet ke window.SheetDrag saat dimuat. -->
-    <script src="assets/js/sheet-drag.js?v=20261023-detail-sheet-resize"></script>
-    <script src="assets/js/map-core.js?v=20261029-opt-focus-highlight"></script>
+    <script src="assets/js/sheet-drag.js?v=20261031-active-layers-panel"></script>
+    <script src="assets/js/map-core.js?v=20261031-active-layers-panel"></script>
     <script src="assets/js/isric-soil-layers.js?v=20261007-wrb-clip"></script>
     <script src="assets/js/isee-global-soils.js?v=20261010-soil-temperature-legend"></script>
     <script src="assets/js/layer-loading.js?v=20261012-persil-gistaru"></script>
@@ -4003,11 +4031,11 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/nowcoast-visible-imagery-slider.js"></script>
     <script src="assets/js/gsmap-time-slider.js"></script>
     <script src="assets/js/sentinel1-rtc-slider.js"></script>
-    <script src="assets/js/satellite-export.js"></script>
+    <script src="assets/js/satellite-export.js?v=20261031-active-layers-panel"></script>
     <script src="assets/js/petadasar-export.js"></script>
     <script src="assets/js/persil-geotiff-export.js?v=20261026-village-geotiff-progress"></script>
 
-    <script src="assets/js/geoportal.js?v=20261022-remove-bps-landcover"></script>
+    <script src="assets/js/geoportal.js?v=20261031-active-layers-panel"></script>
     <script src="assets/js/rdtr-interaktif.js?v=20261030-php-relay"></script>
     <script src="assets/js/geojogja.js?v=20261007"></script>
     <script src="assets/js/geojakarta.js?v=20261007-rt-search"></script>

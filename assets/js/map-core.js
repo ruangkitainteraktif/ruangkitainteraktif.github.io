@@ -1530,6 +1530,36 @@ L.control.scale({
   window.minimizeLegendSidebar = minimizeLegendSidebar;
   window.restoreLegendSidebar = restoreLegendSidebar;
 
+  /* ── Active Layers Sidebar ──
+     Sheet kanan (desktop) / bottom sheet (mobile) khusus daftar layer yang
+     sedang aktif. Sebelumnya daftar ini menumpuk sebagai grup "Layer Aktif"
+     di dalam Katalog Layer dan hilang begitu katalog menutup diri saat
+     checkbox diubah (2026-10-31). Struktur dan perilaku mengikuti Legend
+     Sidebar persis: estado sheet milik sheet-drag.js, isi dirender di
+     sini. */
+  window.SheetDrag && window.SheetDrag.register('al', {
+    el: 'activeLayersSidebar',
+    openClass: 'al-sidebar-open',
+    minClass: 'al-sidebar-minimized',
+    bodyOpen: 'al-sidebar-open',
+    bodyMin: 'al-sidebar-minimized',
+    handle: '.sheet-drag-handle',
+    header: '.al-sidebar-head',
+    minButton: '.al-sidebar-minimize',
+    labelMin: 'Minimalkan',
+    labelOpen: 'Perluas Layer Aktif',
+    onOpen: function () { renderActiveLayersPanel(); }
+  });
+
+  function openActiveLayersSidebar() { if (window.SheetDrag) window.SheetDrag.buka('al'); }
+  function closeActiveLayersSidebar() { if (window.SheetDrag) window.SheetDrag.close('al'); }
+  function minimizeActiveLayersSidebar() { if (window.SheetDrag) window.SheetDrag.toggleMinimize('al'); }
+  function restoreActiveLayersSidebar() { if (window.SheetDrag) window.SheetDrag.restore('al'); }
+  window.openActiveLayersSidebar = openActiveLayersSidebar;
+  window.closeActiveLayersSidebar = closeActiveLayersSidebar;
+  window.minimizeActiveLayersSidebar = minimizeActiveLayersSidebar;
+  window.restoreActiveLayersSidebar = restoreActiveLayersSidebar;
+
   // Legend sidebar title click to restore when minimized
   (function() {
     var sb = document.getElementById('legendSidebar');
@@ -2166,6 +2196,7 @@ L.control.scale({
     moveToFAB('.draw-fab-wrap', 'Alat');
     createAttrTableFAB();
     createLegendFAB();
+    createActiveLayersFAB();
 
     /* ── Zoom Control di bawah tengah ── */
     var zoomWrap = document.querySelector('.zoom-control-wrap');
@@ -4856,6 +4887,25 @@ const SAWAH_COLOR = '#87cf15';
     });
   }
 
+  /* ── Active Layers FAB Button ──
+     Tombol pembuka panel Layer Aktif; ditempel tepat setelah Legenda karena
+     keduanya menampilkan "isi peta" -- satu legenda, satu daftar layer yang
+     menyala. Badge angka di pojok tombol menunjukkan jumlah layer aktif. */
+  function createActiveLayersFAB() {
+    if (!__fabItems) __fabItems = document.querySelector('.map-fab-items');
+    if (!__fabItems) return;
+    var item = L.DomUtil.create('button', 'map-fab-item al-fab');
+    item.title = 'Layer Aktif';
+    item.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><span class="al-fab-count" id="alFabCount" hidden>0</span>';
+    __fabItems.appendChild(item);
+    item.addEventListener('click', function (e) {
+      e.stopPropagation();
+      closeFAB();
+      openActiveLayersSidebar();
+    });
+    updateActiveLayersBadge();
+  }
+
   /* ── Attribute Table Picker FAB Button ── */
   function createAttrTableFAB() {
     if (!__fabItems) __fabItems = document.querySelector('.map-fab-items');
@@ -4888,7 +4938,7 @@ const SAWAH_COLOR = '#87cf15';
 
   var LAYER_CATALOG_DATA = [
     {
-      cat: 'Peta Dasar',
+      cat: 'Basemap',
       type: 'basemap',
       groups: [
         {
@@ -5910,6 +5960,7 @@ function syncLayerCatalogState() {
     });
     var dropdown = document.getElementById('layerCatalogDropdown');
     if (dropdown) delete dropdown.dataset.built;
+    scheduleActiveLayersRefresh();
   };
 
   /* Kategori bertanda `hidden` tidak dirender di Katalog Layer. Dipakai untuk
@@ -5919,6 +5970,196 @@ function syncLayerCatalogState() {
   function visibleCatalogCategories() {
     return LAYER_CATALOG_DATA.filter(function (cat) { return !cat.hidden; });
   }
+
+  /* ═══════════════════════════════════════════
+     Panel Layer Aktif (sheet #activeLayersSidebar)
+     ═══════════════════════════════════════════
+     Daftar layer yang sedang dicentang user. Dulu menumpuk sebagai grup
+     "Layer Aktif" di dalam Katalog Layer (2026-10-31 dipindah ke sheet
+     sendiri) supaya katalog lebih ringkas dan daftar bisa tetap terbuka
+     sambil user menambah layer. Ikon pin dan tombol Tabel Atribut sengaja
+     disertakan supaya panel ini cukup untuk mengelola layer tanpa membuka
+     katalog lagi. */
+  var PIN_ICON_OUTLINE = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2z"/></svg>';
+  var PIN_ICON_FILLED = '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2z"/></svg>';
+  var ATTR_ICON = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
+
+  /* Kumpulkan layer aktif dari data katalog, berurutan sesuai urutan
+     kategori. Logika ini dulu tertanam di buildLayerCatalog() untuk grup
+     "Layer Aktif" dan kini dipakai ulang oleh panel. */
+  function collectActiveCatalogLayers() {
+    var active = [];
+    visibleCatalogCategories().forEach(function (cat) {
+      var allLayers = cat.layers || [];
+      if (cat.subcats) {
+        cat.subcats.forEach(function (sc) { allLayers = allLayers.concat(sc.layers || []); });
+      }
+      allLayers.forEach(function (l) {
+        var el = findLayerById(l.id);
+        var isChecked = el ? el.checked : (_layerCatalogState[l.id] || false);
+        if (l.id === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') {
+          isChecked = isHujanLayerActive();
+        }
+        /* Basemap sengaja tidak disertakan (grup "Layer Aktif" lama juga
+           tidak): peta selalu punya satu basemap, bukan "layer aktif". */
+        if (isChecked && cat.type !== 'basemap') active.push(l);
+      });
+    });
+    return active;
+  }
+
+  function activeLayersPanelOpen() {
+    return !!(window.SheetDrag && window.SheetDrag.isOpen && window.SheetDrag.isOpen('al'));
+  }
+
+  /* Nyalakan/matikan layer dari panel: lewat checkbox katalog agar semua
+     handler (legend terpadu, tabel atribut, dsb.) ikut berjalan. Bila
+     katalog belum pernah dirender, render dulu tanpa membukanya. */
+  function setLayerActiveFromPanel(id, on) {
+    var dropdown = document.getElementById('layerCatalogDropdown');
+    if (!dropdown) return;
+    if (!dropdown.querySelector('.lc-item')) {
+      buildLayerCatalog(dropdown);
+      dropdown.dataset.built = '1';
+    }
+    var cb = dropdown.querySelector('.lc-item input[type="checkbox"][data-layer-id="' + id + '"]');
+    if (!cb) return;
+    if (cb.checked === !!on) return;
+    cb.checked = !!on;
+    cb.dispatchEvent(new Event('change'));
+  }
+
+  function renderActiveLayersPanel() {
+    var body = document.getElementById('activeLayersSidebarBody');
+    var empty = document.getElementById('activeLayersEmpty');
+    if (!body) return;
+    var items = collectActiveCatalogLayers();
+
+    var countEl = document.getElementById('activeLayersCount');
+    if (countEl) {
+      countEl.textContent = String(items.length);
+      countEl.hidden = items.length === 0;
+    }
+    var clearBtn = document.getElementById('alClearAll');
+    if (clearBtn) clearBtn.hidden = items.length === 0;
+
+    /* Buang daftar lama; empty-state dipertahankan sebagai elemen terpisah
+       supaya teksnya tidak ikut terhapus. */
+    Array.prototype.slice.call(body.querySelectorAll('.al-item')).forEach(function (n) { n.remove(); });
+
+    items.forEach(function (l) {
+      var el = document.createElement('div');
+      el.className = 'lc-item al-item';
+
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = true;
+      cb.dataset.layerId = l.id;
+      cb.id = 'al_active_' + l.id;
+
+      var label = document.createElement('label');
+      label.setAttribute('for', cb.id);
+      label.textContent = l.label;
+
+      var actions = document.createElement('div');
+      actions.className = 'lc-item-actions';
+
+      if (typeof hasAttrSupport === 'function' && hasAttrSupport(l.id)) {
+        var attrBtn = document.createElement('button');
+        attrBtn.type = 'button';
+        attrBtn.className = 'lc-attr-btn lc-attr-btn-show';
+        attrBtn.dataset.layerId = l.id;
+        attrBtn.title = 'Buka Tabel Atribut';
+        attrBtn.innerHTML = ATTR_ICON;
+        attrBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (typeof isWmsAttrLayer === 'function' && isWmsAttrLayer(l.id)) {
+            if (typeof openWmsAttrTable === 'function') openWmsAttrTable(l.id);
+          } else if (typeof openAttrTableForLayer === 'function') {
+            openAttrTableForLayer(l.id);
+          }
+        });
+        actions.appendChild(attrBtn);
+      }
+
+      var pinned = isPinnedLayer(l.id);
+      var pinBtn = document.createElement('button');
+      pinBtn.type = 'button';
+      pinBtn.className = 'lc-pin-btn' + (pinned ? ' lc-pin-btn-active' : '');
+      pinBtn.dataset.layerId = l.id;
+      pinBtn.title = pinned ? 'Hapus Pin' : 'Pin Layer';
+      pinBtn.innerHTML = pinned ? PIN_ICON_FILLED : PIN_ICON_OUTLINE;
+      pinBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        togglePinLayer(l.id);
+        /* Tandai katalog perlu dirender ulang supaya ikon pin di dalamnya
+           ikut menyesuaikan saat katalog dibuka lagi. */
+        var dd = document.getElementById('layerCatalogDropdown');
+        if (dd) delete dd.dataset.built;
+        renderActiveLayersPanel();
+      });
+      actions.appendChild(pinBtn);
+
+      el.appendChild(cb);
+      el.appendChild(label);
+      el.appendChild(actions);
+      body.appendChild(el);
+    });
+
+    if (empty) empty.hidden = items.length > 0;
+
+    body.querySelectorAll('.al-item input[type="checkbox"]').forEach(function (panelCb) {
+      panelCb.addEventListener('change', function () {
+        setLayerActiveFromPanel(panelCb.dataset.layerId, panelCb.checked);
+        renderActiveLayersPanel();
+      });
+    });
+    updateActiveLayersBadge();
+  }
+
+  /* Badge jumlah layer aktif di tombol FAB. Dipanggil dari render panel,
+     dari handler katalog, dan dari penyegaran saat layer bertambah/hilang
+     di peta supaya angkanya tetap hidup walau panel tertutup. */
+  function updateActiveLayersBadge() {
+    var badge = document.getElementById('alFabCount');
+    if (!badge) return;
+    var n = collectActiveCatalogLayers().length;
+    badge.textContent = String(n);
+    badge.hidden = n === 0;
+  }
+
+  var _timerActiveLayers = 0;
+  function scheduleActiveLayersRefresh() {
+    clearTimeout(_timerActiveLayers);
+    _timerActiveLayers = setTimeout(function () {
+      updateActiveLayersBadge();
+      if (activeLayersPanelOpen()) renderActiveLayersPanel();
+    }, 300);
+  }
+
+  /* Penyegaran hidup: setiap layer masuk/keluar peta (termasuk toggle dari
+     quick-layer-bar, panel GeoTani, dll.) badge diperbarui; panel dirender
+     ulang hanya bila sedang terbuka. */
+  if (typeof map !== 'undefined' && map && typeof map.on === 'function') {
+    map.on('layeradd', scheduleActiveLayersRefresh);
+    map.on('layerremove', scheduleActiveLayersRefresh);
+  }
+
+  /* "Matikan Semua" di kepala panel: lewat checkbox katalog per layer
+     (setLayerActiveFromPanel) supaya semua handler berjalan, persis cara
+     kerja tombol lama di katalog. */
+  (function bindAlClearAll() {
+    var btn = document.getElementById('alClearAll');
+    if (!btn || btn.__alBound) return;
+    btn.__alBound = true;
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      collectActiveCatalogLayers().forEach(function (l) {
+        setLayerActiveFromPanel(l.id, false);
+      });
+      renderActiveLayersPanel();
+    });
+  })();
 
   /* Kategori "Batas & Referensi Wilayah" selalu diletakkan paling bawah
      (permintaan 2026-10-31). Kategori dinamis -- IGTPR ATR/BPN dan sumber
@@ -6016,44 +6257,11 @@ function syncLayerCatalogState() {
         html += '</div></div>';
       }
 
-      var activeLayers = [];
-      visibleCatalogCategories().forEach(function(cat) {
-        var allLayers = cat.layers || [];
-        if (cat.subcats) {
-          cat.subcats.forEach(function(sc) { allLayers = allLayers.concat(sc.layers || []); });
-        }
-        allLayers.forEach(function(l) {
-          var el = findLayerById(l.id);
-          var isChecked = el ? el.checked : (_layerCatalogState[l.id] || false);
-          if (l.id === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') {
-            isChecked = isHujanLayerActive();
-          }
-          if (isChecked) activeLayers.push(l);
-        });
-      });
-
-    /* Grup "Layer Aktif" sengaja TIDAK diberi open: semua kategori tertutup
-       kecuali Layer Dipin, dan grup ini ikut tertutup supaya aturannya
-       seragam. Yang aktif tetap kelihatan lewat badge jumlah di header. */
-    if (activeLayers.length > 0) {
-      html += '<div class="lc-category lc-active-group open">';
-      html += '<div class="lc-active-header">';
-      html += '<button class="lc-cat-header lc-active-header-btn" type="button">';
-      html += '<svg class="lc-cat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
-      html += '<span class="lc-cat-title lc-active-title">Layer Aktif</span>';
-      html += '<span class="lc-cat-count">' + activeLayers.length + '</span>';
-      html += '</button>';
-      html += '<button class="lc-clear-all" type="button" id="lcClearAll">Matikan Semua</button>';
-      html += '</div>';
-      html += '<div class="lc-items">';
-      activeLayers.forEach(function(l) {
-        html += '<div class="lc-item lc-active-item">';
-        html += '<input type="checkbox" id="lc_active_' + l.id + '" data-layer-id="' + l.id + '" checked />';
-        html += '<label for="lc_active_' + l.id + '">' + l.label + '</label>';
-        html += '</div>';
-      });
-      html += '</div></div>';
-    }
+      /* Grup "Layer Aktif" lama (kumpulkan layer tercentang + tombol
+         "Matikan Semua") dipindahkan ke sheet khusus #activeLayersSidebar
+         pada 2026-10-31 -- lihat collectActiveCatalogLayers() dan
+         renderActiveLayersPanel(). Katalog kini murni donasi + cari +
+         Layer Dipin + daftar kategori. */
 
     visibleCatalogCategories().forEach(function(cat, ci) {
       var allLayers = cat.layers || [];
@@ -6167,19 +6375,9 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
     container.innerHTML = html;
     container.classList.remove('lc-search-active');
 
-    var clearAllBtn = document.getElementById('lcClearAll');
-    if (clearAllBtn) {
-      clearAllBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        container.querySelectorAll('.lc-active-item input[type="checkbox"]').forEach(function(cb) {
-          if (cb.checked) {
-            cb.checked = false;
-            cb.dispatchEvent(new Event('change'));
-          }
-        });
-        buildLayerCatalog(container);
-      });
-    }
+    /* Tombol "Matikan Semua" kini milik panel Layer Aktif (#alClearAll di
+       index.html), bukan lagi #lcClearAll di katalog; wiring-nya ada di
+       blok panel Active Layers Sidebar. */
 
     var unpinAllBtn = document.getElementById('lcUnpinAll');
     if (unpinAllBtn) {
@@ -6506,6 +6704,9 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
         }
         delete container.dataset.built;
         closeLayerCatalog();
+        /* Panel Layer Aktif (kalau terbuka) dan badge FAB ikut menyesuaikan
+           setiap kali user mengubah checkbox layer di katalog. */
+        scheduleActiveLayersRefresh();
       });
     });
 
@@ -6561,7 +6762,7 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
           });
           cat.style.display = hasVisibleItem || !q ? '' : 'none';
           if (q) cat.classList.add('open');
-          else if (!cat.classList.contains('lc-pinned-group') && !cat.classList.contains('lc-active-group')) cat.classList.remove('open');
+          else if (!cat.classList.contains('lc-pinned-group')) cat.classList.remove('open');
         });
       });
     }

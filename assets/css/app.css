@@ -316,11 +316,14 @@
        celah aneh antara banner dan kotak, margin bawahnya lebih longgar
        supaya tidak menempel grup Layer Dipin di bawahnya. */
     .lc-search-top { margin: 0 8px 10px; }
-    .lc-active-group { border-left: 3px solid #2563eb; margin: 0 8px 8px; border-radius: 0 8px 8px 0; background: rgba(37,99,235,.03); }
-    .lc-active-header { display: flex; align-items: center; justify-content: space-between; }
-    .lc-active-header .lc-cat-header { flex: 1; }
-    .lc-active-title { color: #2563eb !important; font-weight: 700; }
-    .lc-active-item { background: rgba(37,99,235,.04); }
+    /* Grup "Layer Aktif" lama di katalog dihapus 2026-10-31 dan dipindah ke
+       sheet #activeLayersSidebar; gaya di bawah untuk panel barunya. */
+    .al-sidebar-count { margin-left: 2px; min-width: 18px; text-align: center; padding: 1px 6px; border-radius: 9px; background: #2563eb; color: #fff; font-size: 10px; font-weight: 700; line-height: 1.4; font-variant-numeric: tabular-nums; }
+    .al-empty { margin: 4px 0 8px; padding: 10px 12px; border: 1px dashed var(--border-color); border-radius: 10px; color: var(--text-tertiary); font-size: 11px; line-height: 1.5; text-align: center; }
+    /* Warna biru warisan grup "Layer Aktif" lama di katalog. */
+    .al-item { background: rgba(37,99,235,.04); }
+    /* Badge jumlah layer aktif di tombol FAB -- pola sama dengan .ql-badge. */
+    .al-fab-count { position: absolute; top: -3px; right: -4px; min-width: 15px; padding: 1px 4px; box-sizing: border-box; text-align: center; font-size: 8px; font-weight: 700; color: #fff; background: #2563eb; border-radius: 8px; line-height: 1.3; pointer-events: none; }
     .lc-clear-all { margin-right: 8px; padding: 3px 8px; border: 1px solid #ef4444; border-radius: 6px; background: #fff; color: #ef4444; font-size: 10px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
     .lc-clear-all:hover { background: #ef4444; color: #fff; }
     .lc-pinned-group { border-left: 3px solid #f59e0b; margin: 0 8px 8px; border-radius: 0 8px 8px 0; background: rgba(245,158,11,.04); }
@@ -1132,6 +1135,9 @@
       flex-direction: row;
       margin: 0 !important;
       gap: 2px;
+      /* Agar pill ikut mengalir halus saat sheet kanan terbuka maupun
+         ditutup (kiri dihitung dari lebar sheet yang tersisa). (2026-10-31) */
+      transition: left .3s ease;
       border-radius: 24px;
       overflow: hidden;
       box-shadow: 0 4px 14px rgba(8,63,102,.18);
@@ -7285,7 +7291,14 @@
     [data-theme="dark"] :is(#transjakarta-sheet, #transjogja-sheet) .tj-sheet-head { border-bottom-color: var(--border-color); }
     /* â”€â”€ GeoTools Bottom Sheet (Desktop) â”€â”€ */
     #geotools-sheet {
-      --desktop-sheet-width: 37vw;
+      /* Dulu sheet ini mendeklarasikan lebar sendiri `--desktop-sheet-width:
+         37vw`, sehingga tidak sama dengan sheet lain (legenda, GeoData,
+         tabel atribut, dll. memakai nilai standar 30vw), dan peta ikut
+         salah hitung karena #map membaca var dari body, bukan dari sheet.
+         Dihapus pada 2026-10-31 agar lebar GeoTools ikut standar 30vw --
+         samakan dengan sheet legenda. Kembalikan deklarasi
+         `--desktop-sheet-width: 37vw;` di baris ini bila GeoTools perlu
+         lebih lebar lagi. */
       position: fixed; top: 120px; right: 12px; bottom: 12px;
       width: min(380px, calc(100vw - 106px));
       border-radius: 16px; z-index: 1100;
@@ -7478,6 +7491,7 @@
     #ai-sheet .ais-sheet-minimize svg,
     .dm-sidebar-minimize svg,
     .lg-sidebar-minimize svg,
+    .al-sidebar-minimize svg,
     .pa-minimize svg {
       display: block;
       width: 14px;
@@ -7747,8 +7761,12 @@
       color: var(--text-primary);
     }
     .lg-sidebar.lg-sidebar-open { transform: translateX(0); visibility: visible; }
-    /* GeoFarm analysis panel: right sheet on desktop, bottom sheet on mobile. */
-    .pa-panel {
+    /* GeoFarm analysis panel: right sheet on desktop, bottom sheet on mobile.
+       .al-sidebar (panel Layer Aktif) sengaja dibagi blok ini persis seperti
+       lembar Legenda/GeoFarm dulu -- satu panel kanan polos, perilaku
+       ditentukan kelas min/open masing-masing. */
+    .pa-panel,
+    .al-sidebar {
       position: fixed; top: 120px; right: 12px; bottom: 12px;
       width: min(320px, calc(100vw - 106px));
       border-radius: 16px; z-index: 1100;
@@ -7760,7 +7778,8 @@
       display: flex; flex-direction: column; overflow: hidden;
       color: var(--text-primary);
     }
-    .pa-panel.pa-open { transform: translateX(0); visibility: visible; }
+    .pa-panel.pa-open,
+    .al-sidebar.al-sidebar-open { transform: translateX(0); visibility: visible; }
 
     /* â”€â”€ Handle geser pada mode chip â”€â”€
        Handle cuma berguna saat sheet sedang mengembang. Di mode chip yang
@@ -7777,13 +7796,15 @@
        hanya handle milik sheet itu yang ikut hilang. */
     .dm-sidebar-minimized > .sheet-drag-handle,
     .lg-sidebar-minimized > .sheet-drag-handle,
-    .pa-panel.pa-min > .sheet-drag-handle { display: none; }
+    .pa-panel.pa-min > .sheet-drag-handle,
+    .al-sidebar.al-sidebar-minimized > .sheet-drag-handle { display: none; }
 
     /* Mode minimal: panel jadi chip 36px di bawah tengah. Butuh aturan ini
        sendiri karena .lg-sidebar-minimized tidak ikut terselector .pa-min. */
     /* Angka 68px: lihat catatan "Pita bawah tengah" di blok
        .zoom-control-wrap. */
-    .pa-panel.pa-min {
+    .pa-panel.pa-min,
+    .al-sidebar.al-sidebar-minimized {
       top: auto; right: auto; bottom: 68px; left: 50%;
       width: min(220px, calc(100vw - 48px));
       height: 36px;
@@ -7793,20 +7814,26 @@
     /* Padding vertikal 4px, bukan 6px: tombol di kepala 28px, jadi 4 + 28
        + 4 = 36px dan pas mengisi chip. Dengan 6px isinya cuma 24px sehingga
        tombol terpotong 2px di atas dan bawah. */
-    .pa-panel.pa-min .pa-head {
+    .pa-panel.pa-min .pa-head,
+    .al-sidebar.al-sidebar-minimized .al-sidebar-head {
       min-height: 36px; box-sizing: border-box;
       padding: 4px 14px; border-bottom: 0;
     }
-    .pa-panel.pa-min .pa-list { display: none; }
+    .pa-panel.pa-min .pa-list,
+    .al-sidebar.al-sidebar-minimized .al-sidebar-body { display: none; }
     /* Kontrol export di kepala juga disembunyikan: panel minimal hanya 36px,
        dan tombolnya tidak ada artinya tanpa daftar polygon. */
     .pa-panel.pa-min .pa-export { display: none; }
-    .pa-panel.pa-min .pa-title { cursor: pointer; font-size: 11px; }
-    .lg-sidebar-head, .pa-head {
+    .pa-panel.pa-min .pa-title,
+    .al-sidebar.al-sidebar-minimized .al-sidebar-title { cursor: pointer; font-size: 11px; }
+    /* Di mode chip, badge jumlah dan tombol "Matikan Semua" tidak muat. */
+    .al-sidebar.al-sidebar-minimized .al-sidebar-count,
+    .al-sidebar.al-sidebar-minimized .al-clear-all { display: none; }
+    .lg-sidebar-head, .pa-head, .al-sidebar-head {
       display: flex; align-items: center; justify-content: space-between;
       padding: 14px 16px 10px; border-bottom: 1px solid var(--border-color); flex-shrink: 0;
     }
-    .lg-sidebar-title, .pa-title {
+    .lg-sidebar-title, .pa-title, .al-sidebar-title {
       display: flex; align-items: center; gap: 6px;
       color: var(--text-primary); font-size: 13px; font-weight: 700;
     }
@@ -7815,19 +7842,21 @@
     .pa-title { min-width: 0; gap: 7px; }
     .pa-title > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .pa-title .pa-count { flex: 0 0 auto; white-space: nowrap; font-variant-numeric: tabular-nums; }
-    .lg-sidebar-actions { display: flex; align-items: center; gap: 6px; }
-    .lg-sidebar-close, .pa-close {
+    .lg-sidebar-actions, .al-sidebar-actions { display: flex; align-items: center; gap: 6px; }
+    .lg-sidebar-close, .pa-close, .al-sidebar-close {
       display: grid; width: 28px; height: 28px; place-items: center;
       border: 0; border-radius: 50%; background: var(--bg-tertiary); color: var(--text-tertiary);
       cursor: pointer; font-size: 16px;
     }
-    .lg-sidebar-minimize {
+    .lg-sidebar-minimize,
+    .al-sidebar-minimize {
       display: grid; width: 28px; height: 28px; place-items: center;
       border: 0; border-radius: 50%; background: var(--bg-tertiary); color: var(--text-tertiary);
       cursor: pointer; transition: background .15s;
     }
-    .lg-sidebar-minimize:hover { background: var(--border-color); }
-    .lg-sidebar-body, .pa-list {
+    .lg-sidebar-minimize:hover,
+    .al-sidebar-minimize:hover { background: var(--border-color); }
+    .lg-sidebar-body, .pa-list, .al-sidebar-body {
       flex: 1 1 auto; min-height: 0; overflow-y: auto;
       padding: 12px 16px 16px; -webkit-overflow-scrolling: touch;
       scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent;
@@ -7847,7 +7876,8 @@
     /* Angka 68px disamakan dengan chip GeoFarm dan Draw & Ukur; lihat
        catatan "Pita bawah tengah" di blok .zoom-control-wrap. */
     .lg-sidebar.dm-sidebar-minimized,
-    .lg-sidebar.lg-sidebar-minimized {
+    .lg-sidebar.lg-sidebar-minimized,
+    .al-sidebar.al-sidebar-minimized {
       top: auto; right: auto; bottom: 68px; left: 50%;
       width: min(220px, calc(100vw - 48px));
       height: 36px;
@@ -7856,14 +7886,18 @@
       visibility: visible;
       z-index: 100;
     }
-    .lg-sidebar.lg-sidebar-minimized .lg-sidebar-body { display: none; }
+    .lg-sidebar.lg-sidebar-minimized .lg-sidebar-body,
+    .al-sidebar.al-sidebar-minimized .al-sidebar-body { display: none; }
     /* Padding 4px supaya tombol 28px + 4 + 4 pas di chip 36px. */
-    .lg-sidebar.lg-sidebar-minimized .lg-sidebar-head {
+    .lg-sidebar.lg-sidebar-minimized .lg-sidebar-head,
+    .al-sidebar.al-sidebar-minimized .al-sidebar-head {
       min-height: 36px; box-sizing: border-box;
       padding: 4px 14px; border-bottom: 0;
     }
-    .lg-sidebar.lg-sidebar-minimized .lg-sidebar-title { cursor: pointer; font-size: 11px; }
-    [data-theme="dark"] .lg-sidebar { background: var(--bg-primary); color: var(--text-primary); }
+    .lg-sidebar.lg-sidebar-minimized .lg-sidebar-title,
+    .al-sidebar.al-sidebar-minimized .al-sidebar-title { cursor: pointer; font-size: 11px; }
+    [data-theme="dark"] .lg-sidebar,
+    [data-theme="dark"] .al-sidebar { background: var(--bg-primary); color: var(--text-primary); }
 
     /* â”€â”€ Attribute Table Sheet (Desktop: kanan) â”€â”€ */
     #attr-table-sheet {
@@ -8492,9 +8526,11 @@
       /* Samakan jarak handle resize dan judul dengan template bottom sheet
          GeoTools/GeoData: handle 8px + pill 4px + ruang 6px, lalu header 4px. */
       .dm-sidebar > .sheet-drag-handle,
-      .lg-sidebar > .sheet-drag-handle { padding: 8px 0 6px; }
+      .lg-sidebar > .sheet-drag-handle,
+      .al-sidebar > .sheet-drag-handle { padding: 8px 0 6px; }
       .dm-sidebar .dm-sidebar-head,
-      .lg-sidebar .lg-sidebar-head { padding: 4px 16px 10px; }
+      .lg-sidebar .lg-sidebar-head,
+      .al-sidebar .al-sidebar-head { padding: 4px 16px 10px; }
       .dm-sidebar.dm-sidebar-minimized {
         top: auto; right: auto;         bottom: calc(98px + env(safe-area-inset-bottom, 0px)); left: 50%;
         width: min(260px, calc(100vw - 48px)); height: 36px;
@@ -8508,14 +8544,15 @@
       }
 
       /* â”€â”€ Legend Sidebar (Mobile) â”€â”€ */
-      .lg-sidebar, .pa-panel {
+      .lg-sidebar, .pa-panel, .al-sidebar {
         top: auto; right: 0; bottom: 0; left: 0;
         width: 100%; height: var(--sheet-h, 50vh); height: var(--sheet-h, 50dvh);
         border-radius: 18px 18px 0 0;
         transform: translateY(100%);
       }
-      .lg-sidebar.lg-sidebar-open, .pa-panel.pa-open { transform: translateY(0); visibility: visible; }
-      .lg-sidebar.lg-sidebar-minimized {
+      .lg-sidebar.lg-sidebar-open, .pa-panel.pa-open, .al-sidebar.al-sidebar-open { transform: translateY(0); visibility: visible; }
+      .lg-sidebar.lg-sidebar-minimized,
+      .al-sidebar.al-sidebar-minimized {
         top: auto; right: auto;         bottom: calc(98px + env(safe-area-inset-bottom, 0px)); left: 50%;
         width: min(260px, calc(100vw - 48px)); height: 36px;
         border-radius: 14px; transform: translateX(-50%);
@@ -8526,8 +8563,10 @@
         -webkit-backdrop-filter: blur(12px);
         z-index: 100;
       }
-      .lg-sidebar.lg-sidebar-minimized .lg-sidebar-body { display: none; }
-      .lg-sidebar.lg-sidebar-minimized .lg-sidebar-head {
+      .lg-sidebar.lg-sidebar-minimized .lg-sidebar-body,
+      .al-sidebar.al-sidebar-minimized .al-sidebar-body { display: none; }
+      .lg-sidebar.lg-sidebar-minimized .lg-sidebar-head,
+      .al-sidebar.al-sidebar-minimized .al-sidebar-head {
         min-height: 36px; padding: 4px 12px; border-bottom: 0;
       }
       .pa-panel.pa-min {
@@ -8728,6 +8767,7 @@
       body.hotspot-sheet-open:not(.hotspot-sheet-minimized) .map-fab-wrap,
       body.dm-sidebar-open:not(.dm-sidebar-minimized) .map-fab-wrap,
       body.lg-sidebar-open:not(.lg-sidebar-minimized) .map-fab-wrap,
+      body.al-sidebar-open:not(.al-sidebar-minimized) .map-fab-wrap,
       body.pa-panel-open:not(.pa-panel-minimized) .map-fab-wrap,
       body.attr-table-sheet-open:not(.attr-table-sheet-minimized) .map-fab-wrap,
       /* #ai-sheet tidak pernah memasang body class sebelumnya, jadi bar
@@ -16494,6 +16534,17 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
     transition: left .3s ease;
   }
 
+  /* Pill zoom (bawah tengah) juga ikut bergeser mengikuti bidang peta
+     yang tersisa, bukan tetap di tengah viewport penuh -- dulu hanya sheet
+     Katalog yang menggesernya (aturan khusus di bawah). map-core.js
+     memasang left:50% sebagai inline style pada elemen ini, jadi perlu
+     !important. Saat sheet diminimalkan jadi chip, body.sheet-terbuka
+     dilepas dan zoom kembali ke tengah otomatis. (2026-10-31) */
+  body.sheet-terbuka .zoom-control-wrap {
+    left: calc((100vw - var(--desktop-sheet-width, 30vw)) / 2) !important;
+    transition: left .3s ease;
+  }
+
   body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized) #map {
     flex: 0 0 calc(100vw - var(--desktop-sheet-width, 30vw)) !important;
     width: calc(100vw - var(--desktop-sheet-width, 30vw)) !important;
@@ -16522,8 +16573,9 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
     #ai-sheet,
     .dm-sidebar,
     .lg-sidebar,
+    .al-sidebar,
     .pa-panel
-  ):not(.sheet-minimized):not(.gs-sheet-minimized):not(.geodata-sheet-minimized):not(.attr-table-sheet-minimized):not(.ais-sheet-minimized):not(.dm-sidebar-minimized):not(.lg-sidebar-minimized):not(.pa-min) {
+  ):not(.sheet-minimized):not(.gs-sheet-minimized):not(.geodata-sheet-minimized):not(.attr-table-sheet-minimized):not(.ais-sheet-minimized):not(.dm-sidebar-minimized):not(.lg-sidebar-minimized):not(.al-sidebar-minimized):not(.pa-min) {
     box-sizing: border-box;
     top: 0;
     right: 0;
@@ -16553,7 +16605,7 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
     border-radius: 0;
   }
 
-  :is(#catalog-popup-sheet,#hotspot-sheet,#geopangan-sheet,#transjakarta-sheet,#transjogja-sheet,#geotools-sheet,#geodata-sheet,#attr-table-sheet,#ai-sheet,.dm-sidebar,.lg-sidebar,.pa-panel):not(.sheet-minimized):not(.gs-sheet-minimized):not(.geodata-sheet-minimized):not(.attr-table-sheet-minimized):not(.ais-sheet-minimized):not(.dm-sidebar-minimized):not(.lg-sidebar-minimized):not(.pa-min)::before {
+  :is(#catalog-popup-sheet,#hotspot-sheet,#geopangan-sheet,#transjakarta-sheet,#transjogja-sheet,#geotools-sheet,#geodata-sheet,#attr-table-sheet,#ai-sheet,.dm-sidebar,.lg-sidebar,.al-sidebar,.pa-panel):not(.sheet-minimized):not(.gs-sheet-minimized):not(.geodata-sheet-minimized):not(.attr-table-sheet-minimized):not(.ais-sheet-minimized):not(.dm-sidebar-minimized):not(.lg-sidebar-minimized):not(.al-sidebar-minimized):not(.pa-min)::before {
     content: "";
     position: absolute;
     z-index: 20;
@@ -16566,7 +16618,7 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
     background: linear-gradient(90deg, transparent 0 4px, color-mix(in srgb, var(--border-color) 65%, transparent) 4px 6px, transparent 6px);
   }
 
-  :is(#catalog-popup-sheet,#hotspot-sheet,#geopangan-sheet,#transjakarta-sheet,#transjogja-sheet,#geotools-sheet,#geodata-sheet,#attr-table-sheet,#ai-sheet,.dm-sidebar,.lg-sidebar,.pa-panel).desktop-sheet-resizing {
+  :is(#catalog-popup-sheet,#hotspot-sheet,#geopangan-sheet,#transjakarta-sheet,#transjogja-sheet,#geotools-sheet,#geodata-sheet,#attr-table-sheet,#ai-sheet,.dm-sidebar,.lg-sidebar,.al-sidebar,.pa-panel).desktop-sheet-resizing {
     transition: none !important;
     user-select: none;
   }
