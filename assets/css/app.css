@@ -322,6 +322,21 @@
     .al-empty { margin: 4px 0 8px; padding: 10px 12px; border: 1px dashed var(--border-color); border-radius: 10px; color: var(--text-tertiary); font-size: 11px; line-height: 1.5; text-align: center; }
     /* Warna biru warisan grup "Layer Aktif" lama di katalog. */
     .al-item { background: rgba(37,99,235,.04); }
+    /* Baris yang disembunyikan lewat ikon mata (2026-11-01): label pudar
+       supaya jelas layer masih terdaftar tapi tak tampil di peta. */
+    .al-item-hidden label { opacity: .45; text-decoration: line-through; }
+    /* Tombol mata: memakai tampilan .lc-attr-btn-show; warna merah saat
+       layer sedang disembunyikan (mata tercoret). */
+    .al-eye-btn { color: #94a3b8; }
+    .al-eye-btn:hover { color: #2563eb; background: rgba(37,99,235,.08); }
+    .al-item-hidden .al-eye-btn { color: #ef4444; }
+    .al-item-hidden .al-eye-btn:hover { color: #ef4444; background: rgba(239,68,68,.1); }
+    /* Tombol geser urutan ▲/▼ (2026-11-01): arah yang tidak mungkin
+       (baris pertama/terakhir) dinonaktifkan supaya jelas batasnya. */
+    .al-move-btn { color: #64748b; }
+    .al-move-btn:hover { color: #2563eb; background: rgba(37,99,235,.08); }
+    .al-move-btn:disabled { opacity: .3; cursor: default; }
+    .al-move-btn:disabled:hover { color: #64748b; background: transparent; }
     /* Badge jumlah layer aktif di tombol FAB -- pola sama dengan .ql-badge. */
     .al-fab-count { position: absolute; top: -3px; right: -4px; min-width: 15px; padding: 1px 4px; box-sizing: border-box; text-align: center; font-size: 8px; font-weight: 700; color: #fff; background: #2563eb; border-radius: 8px; line-height: 1.3; pointer-events: none; }
     .lc-clear-all { margin-right: 8px; padding: 3px 8px; border: 1px solid #ef4444; border-radius: 6px; background: #fff; color: #ef4444; font-size: 10px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
@@ -16486,6 +16501,13 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   }
   .map-fab-item.rk-auth-account img { width: 22px; height: 22px; }
 }
+/* FITUR CEBOL SEMBUNYI SEMENTARA (2026-11-01): avatar akun (foto/inisial
+   pengguna Google) di menu FAB disembunyikan atas permintaan user.
+   Hapus aturan ini untuk mengunculkan kembali -- tombol, renderAccountButton(),
+   dan alur keluar akun di firebase-auth-gate.js tetap utuh. !important +
+   ditaruh SETELAH blok @media 768px agar display:grid !important di mobile
+   ikut terkalahkan. */
+.map-fab-item.rk-auth-account { display: none !important; }
 @media (max-width: 700px) {
   .rk-auth-card { display: block; width: min(430px, 100%); height: auto; min-height: 0; border-radius: 18px; }
   .rk-auth-visual { min-height: 82px; padding: 17px 20px; }
@@ -16542,6 +16564,35 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
      dilepas dan zoom kembali ke tengah otomatis. (2026-10-31) */
   body.sheet-terbuka .zoom-control-wrap {
     left: calc((100vw - var(--desktop-sheet-width, 30vw)) / 2) !important;
+    transition: left .3s ease;
+  }
+
+  /* Chip mode minimal ikut bergeser sejajar pill zoom saat ada sheet kanan
+     terbuka (2026-11-01): keduanya satu "pita bawah tengah" (lihat catatan
+     Pita bawah tengah di blok .zoom-control-wrap), dan tanpa aturan ini chip
+     tetap di 50% viewport sehingga tidak sejajar dengan zoom yang sudah
+     bergeser ke tengah bidang peta. Posisi left chip murni dari CSS (JS
+     hanya mengatur bottom secara inline), jadi cukup menang spesifisitas,
+     tanpa !important. Saat semua sheet ditutup/diminimalkan,
+     body.sheet-terbuka dilepas dan keduanya sama-sama kembali ke tengah. */
+  body.sheet-terbuka :is(
+    #hotspot-sheet.sheet-minimized,
+    #geopangan-sheet.sheet-minimized,
+    :is(#transjakarta-sheet, #transjogja-sheet).sheet-minimized,
+    #ai-sheet.ais-sheet-minimized,
+    #geotools-sheet.gs-sheet-minimized,
+    #geodata-sheet.geodata-sheet-minimized,
+    #attr-table-sheet.attr-table-sheet-minimized,
+    #detail-panel.detail-panel-minimized,
+    #catalog-popup-sheet.is-minimized,
+    .bhumi-persil-sheet.is-minimized,
+    .dm-sidebar.dm-sidebar-minimized,
+    .lg-sidebar.lg-sidebar-minimized,
+    .lg-sidebar.dm-sidebar-minimized,
+    .pa-panel.pa-min,
+    .al-sidebar.al-sidebar-minimized
+  ) {
+    left: calc((100vw - var(--desktop-sheet-width, 30vw)) / 2);
     transition: left .3s ease;
   }
 

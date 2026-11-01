@@ -2194,9 +2194,12 @@ L.control.scale({
      * dua tombol ini sebaiknya bersebelahan di barisan FAB. */
     createGeoDataFAB();
     moveToFAB('.draw-fab-wrap', 'Alat');
+    /* Layer Aktif sengaja ditempel tepat di kiri "Semua Tabel" (permintaan
+     * 2026-11-01): keduanya mengelola isi layer -- satu daftar layer aktif,
+     * satu tabel atributnya -- jadi bersebelahan. */
+    createActiveLayersFAB();
     createAttrTableFAB();
     createLegendFAB();
-    createActiveLayersFAB();
 
     /* ── Zoom Control di bawah tengah ── */
     var zoomWrap = document.querySelector('.zoom-control-wrap');
@@ -4888,9 +4891,10 @@ const SAWAH_COLOR = '#87cf15';
   }
 
   /* ── Active Layers FAB Button ──
-     Tombol pembuka panel Layer Aktif; ditempel tepat setelah Legenda karena
-     keduanya menampilkan "isi peta" -- satu legenda, satu daftar layer yang
-     menyala. Badge angka di pojok tombol menunjukkan jumlah layer aktif. */
+     Tombol pembuka panel Layer Aktif; ditempel tepat di kiri tombol
+     "Semua Tabel" karena keduanya mengelola isi layer (permintaan
+     2026-11-01). Badge angka di pojok tombol menunjukkan jumlah layer
+     aktif. */
   function createActiveLayersFAB() {
     if (!__fabItems) __fabItems = document.querySelector('.map-fab-items');
     if (!__fabItems) return;
@@ -4961,7 +4965,11 @@ const SAWAH_COLOR = '#87cf15';
           layers: [
             { id: 'esri-satellite', label: 'Esri Satellite' },
             { id: 'google-satellite-kh', label: 'Google Satellite' },
-            { id: 'petadasar-bpn', label: 'Peta Dasar ATR/BPN' },
+            /* Peta Dasar ATR/BPN disembunyikan dari Katalog Layer 2026-11-01
+               (permintaan user). Layer-nya masih didefinisikan dan bisa
+               ditampilkan lagi -- hapus flagnya, pulihkan juga entri pin
+               di _defaultPinnedLayers dan removedCatalogLayerIds. */
+            { id: 'petadasar-bpn', label: 'Peta Dasar ATR/BPN', hidden: true },
             { id: 'landsat-agriculture', label: 'Landsat Agriculture' },
             { id: 'landsat-agriculture-v2', label: 'Landsat Agriculture (v2)' },
             { id: 'bmkg-himawari', label: 'Himawari-9 IR (BMKG)' },
@@ -5707,11 +5715,28 @@ const SAWAH_COLOR = '#87cf15';
     savePinnedLayers();
   }
   loadPinnedLayers();
+  /* 2026-11-01: "Anomali Bouguer Indonesia (BMKG)" dikeluarkan dari pin
+     atas permintaan user. Cleanup sekali jalan -- dijalankan hanya bila
+     penanda migrasi belum ada -- supaya pin lama di localStorage ikut
+     terlepas, tetapi user masih bebas mem-pin ulang layer ini secara
+     manual di lain waktu (berbeda dengan removedCatalogLayerIds yang
+     membuang pin di setiap muat). */
+  try {
+    if (!localStorage.getItem('ruangkita-pins-migrated-20261101')) {
+      var idxBouguer = _pinnedLayers.indexOf('toggleBouguerBMKG');
+      if (idxBouguer >= 0) _pinnedLayers.splice(idxBouguer, 1);
+      localStorage.setItem('ruangkita-pins-migrated-20261101', '1');
+    }
+  } catch (e) {}
   var removedCatalogLayerIds = [
     // 2026-10-31: kategori Persil Nasional (ATRBPN) disembunyikan dari
     // Katalog Layer; pin tersimpan pengguna dibersihkan agar tidak membuang
     // slot. Kembalikan ke _defaultPinnedLayers untuk mengunculkan lagi.
     'toggleBhumiPersilNasionalLayer',
+    // 2026-11-01: basemap "Peta Dasar ATR/BPN" disembunyikan dari Katalog
+    // Layer (flag hidden pada entri petadasar-bpn). Kembalikan ke
+    // _defaultPinnedLayers untuk mengunculkan lagi.
+    'petadasar-bpn',
     'toggleRtrwTmsLayer', 'toggleLsdTmsLayer',
     'toggleLbsTmsLayer', 'toggleDiTmsLayer', 'toggleSaluranIrTmsLayer',
     'atrbpn-wms-lsd-umum', 'atrbpn-wms-lahanbakusawah-new-sawah',
@@ -5738,14 +5763,18 @@ const SAWAH_COLOR = '#87cf15';
   /* toggleBhumiPersilNasionalLayer dikeluarkan dari pin bawaan 2026-10-31:
      kategorinya disembunyikan dari Katalog Layer, jadi pin bawaan hanya
      membuang slot. Masukkan lagi untuk mengunculkan kembali. */
+  /* petadasar-bpn dikeluarkan dari pin bawaan 2026-11-01: entri katalognya
+     disembunyikan (flag hidden). Masukkan lagi untuk mengunculkan kembali. */
+  /* 2026-11-01 (permintaan user): toggleBouguerBMKG dikeluarkan dari pin
+     bawaan, dan hanya toggleSppgDistrictLayer di antara layer SPPG yang
+     dipasang. Masukkan lagi toggleBouguerBMKG untuk mengunculkan. */
   var _defaultPinnedLayers = [
-    'petadasar-bpn',
     'isee-soil-orders',
     'toggleHwsdIndonesia',
     'toggleFsvaLayer',
     'toggleFaultLayerNew',
     'toggleTransjakarta',
-    'toggleBouguerBMKG'
+    'toggleSppgDistrictLayer'
   ];
   _defaultPinnedLayers.forEach(function (id) {
     var idx = _pinnedLayers.indexOf(id);
@@ -5971,6 +6000,14 @@ function syncLayerCatalogState() {
     return LAYER_CATALOG_DATA.filter(function (cat) { return !cat.hidden; });
   }
 
+  /* Entri layer bertanda `hidden` tidak dirender di Katalog Layer. Pola sama
+     dengan flag `hidden` kategori (visibleCatalogCategories): menyembunyikan
+     satu layer tanpa menghapus definisinya. Dipakai pertama kali 2026-11-01
+     untuk basemap "Peta Dasar ATR/BPN". Hapus flagnya untuk mengunculkan. */
+  function visibleLayerEntries(layers) {
+    return (layers || []).filter(function (l) { return !l.hidden; });
+  }
+
   /* ═══════════════════════════════════════════
      Panel Layer Aktif (sheet #activeLayersSidebar)
      ═══════════════════════════════════════════
@@ -5983,6 +6020,139 @@ function syncLayerCatalogState() {
   var PIN_ICON_OUTLINE = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2z"/></svg>';
   var PIN_ICON_FILLED = '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 11l-4 4h14l-4-4V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2z"/></svg>';
   var ATTR_ICON = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="2" y1="9" x2="14" y2="9"/><line x1="5.5" y1="2" x2="5.5" y2="14"/><line x1="9" y1="2" x2="9" y2="14"/></svg>';
+  /* Ikon mata (tampil) dan mata tercoret (sembunyi) untuk tombol hide/show
+     per layer di panel (permintaan 2026-11-01). Gaya feather-icons. */
+  var EYE_ICON = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var EYE_OFF_ICON = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+  /* Chevron naik/turun untuk tombol geser urutan baris (2026-11-01). */
+  var CHEVRON_UP = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>';
+  var CHEVRON_DOWN = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+
+  /* Layer yang disembunyikan lewat ikon mata: id => true. Berbeda dengan
+     checkbox (yang mematikan layer DAN mengeluarkannya dari daftar), status
+     ini hanya menyembunyikan layer dari peta sementara -- barisnya tetap
+     terdaftar (pudar) sehingga bisa ditampilkan lagi kapan saja. Layer
+     dinyalakan ulang dari katalog akan otomatis dibersihkan dari set ini. */
+  var _alHiddenIds = {};
+
+  /* Susunan urutan baris yang disusun user sendiri lewat tombol ▲/▼
+     (permintaan 2026-11-01). Tersimpan di localStorage supaya tidak hilang
+     saat muat ulang. Sejak 2026-11-01 urutan INI JUGA mengatur tumpukan
+     layer di peta (semantik ArcGIS Pro: baris teratas = paling atas);
+     terapkan lewat applyAlMapOrder() di bawah. */
+  var _alOrderStorageKey = 'ruangkita-active-layers-order';
+  var _alOrder = [];
+  try {
+    var _rawAlOrder = localStorage.getItem(_alOrderStorageKey);
+    if (_rawAlOrder) {
+      var _arrAlOrder = JSON.parse(_rawAlOrder);
+      if (Array.isArray(_arrAlOrder)) {
+        _alOrder = _arrAlOrder.filter(function (id) { return typeof id === 'string'; });
+      }
+    }
+  } catch (e) { _alOrder = []; }
+  function saveAlOrder() {
+    try { localStorage.setItem(_alOrderStorageKey, JSON.stringify(_alOrder)); } catch (e) {}
+  }
+
+  /* Terapkan urutan user: id yang pernah disusun tampil sesuai urutan
+     tersimpan, id baru (belum pernah disusun) menyusul di bawah dengan
+     urutan katalognya. Layer aktif yang tidak ada di daftar tersimpan
+     (mis. baru dinyalakan) otomatis turun ke bawah, bukan menyelanya. */
+  function sortActiveByUserOrder(items) {
+    var idx = {};
+    _alOrder.forEach(function (id, i) { idx[id] = i; });
+    var ordered = [], rest = [];
+    items.forEach(function (l) { (idx[l.id] !== undefined ? ordered : rest).push(l); });
+    ordered.sort(function (a, b) { return idx[a.id] - idx[b.id]; });
+    return ordered.concat(rest);
+  }
+
+  /* ================= REGISTRY LAYER + URUTAN PETA (2026-11-01) ============
+     Semantik ArcGIS Pro: baris paling ATAS di daftar Layer Aktif = layer
+     paling ATAS di peta. Agar bisa mengatur tumpukan, panel perlu tahu
+     objek Leaflet milik tiap id katalog -- yang selama ini tidak ada
+     (toggle tersebar di banyak handler, sebagian menambah layer asinkron).
+
+     _alLayerRegistry memetakan id katalog -> daftar objek Leaflet yang
+     ditambahkan ke peta saat id itu dinyalakan. Dikisi otomatis lewat
+     mekanisme "capture": saat checkbox katalog dicentang, listener
+     layeradd mencatat setiap layer yang muncul (dalam jendela 4 detik)
+     ke id yang sedang di-toggle. Menonaktifkan id membersihkan registry
+     id tsb.
+
+     BATASAN (disengaja, demi stabilitas -- lihat studi kelayakan):
+     1. Hanya layer TILE/WMS/marker (punya setZIndex) yang urutannya bisa
+        diatur tumpukannya. Layer VEKTOR (GeoJSON/canvas) TIDAK di-re-add
+        ulang karena berisiko flicker & merusak state; urutannya tetap
+        mengikuti pane masing-masing.
+     2. Layer yang tidak pernah lewat checkbox katalog (mis. hasil panel
+        geoproses) tidak terekam -> tumpukannya tidak bisa diatur.
+     3. Layer di pane custom (transjakarta, halte, labels, batnas) tetap
+        mengikuti urutan pane-nya; setZIndex hanya mengurutkan DI DALAM
+        satu pane (tilePane = tempat mayoritas overlay tile/WMS). */
+  var _alLayerRegistry = {};   // id katalog -> array objek Leaflet
+  var _alCaptureCtx = null;    // { id, timer } saat sedang menangkap layer
+
+  /* Mulai "menangkap" layer Leaflet yang muncul akibat menyalakan id ini.
+     Dipanggil di awal handler checkbox katalog (lihat blok pembuatan
+     katalog); listener layeradd di bawah akan mendaftarkan layer tsb. */
+  function startAlLayerCapture(id) {
+    if (_alCaptureCtx && _alCaptureCtx.timer) clearTimeout(_alCaptureCtx.timer);
+    _alCaptureCtx = { id: id, timer: 0 };
+    /* Sebagian handler menambah layer secara asinkron (fetch dulu);
+       jendela 4 detik menutup kemungkinan telat. */
+    _alCaptureCtx.timer = setTimeout(function () { _alCaptureCtx = null; }, 4000);
+  }
+
+  /* Catat objek Leaflet ke registry saat sedang dalam jendela capture.
+     Guard _alRegisteredId mencegah layer yang sama tercatat dua kali
+     (mis. saat remove/re-add oleh handler lain). */
+  map.on('layeradd', function (e) {
+    if (!_alCaptureCtx || !e || !e.layer) return;
+    if (e.layer._alRegisteredId) return;
+    e.layer._alRegisteredId = _alCaptureCtx.id;
+    (_alLayerRegistry[_alCaptureCtx.id] = _alLayerRegistry[_alCaptureCtx.id] || []).push(e.layer);
+  });
+
+  /* Terapkan urutan tumpukan peta sesuai urutan daftar panel: baris
+     teratas -> z tertinggi. Hanya menyentuh layer bertipe tile/WMS/marker
+     (punya setZIndex) yang terdaftar di registry; vektor & layer tak
+     dikenal dilewatkan (lihat batasan di atas). Dipanggil tiap render
+     panel dan setiap ▲/▼ ditekan. */
+  function applyAlMapOrder() {
+    if (typeof L === 'undefined' || typeof map === 'undefined') return;
+    var items = sortActiveByUserOrder(collectActiveCatalogLayers());
+    var n = items.length;
+    for (var i = 0; i < n; i++) {
+      var reg = _alLayerRegistry[items[i].id];
+      if (!reg) continue;
+      /* Baris teratas (i=0) z paling tinggi; dasar 10 agar selalu di atas
+         basemap tile (z default 1) namun tetap di dalam rentang aman. */
+      var lvl = 10 + (n - i);
+      for (var r = 0; r < reg.length; r++) {
+        var ly = reg[r];
+        if (!ly || typeof ly.setZIndex !== 'function') continue; // vektor dsb.
+        if (!map.hasLayer(ly)) continue;
+        ly.setZIndex(lvl);
+      }
+    }
+  }
+
+  /* Geser satu baris naik/turun: tukar posisi dalam daftar aktif, simpan
+     seluruh urutan (sekalian menangkap posisi baris yang belum pernah
+     disusun), lalu render ulang. */
+  function alMoveLayer(id, dir) {
+    var list = sortActiveByUserOrder(collectActiveCatalogLayers());
+    var i = -1;
+    for (var k = 0; k < list.length; k++) { if (list[k].id === id) { i = k; break; } }
+    var j = i + dir;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    var tmp = list[i]; list[i] = list[j]; list[j] = tmp;
+    _alOrder = list.map(function (l) { return l.id; });
+    saveAlOrder();
+    renderActiveLayersPanel();
+  }
 
   /* Kumpulkan layer aktif dari data katalog, berurutan sesuai urutan
      kategori. Logika ini dulu tertanam di buildLayerCatalog() untuk grup
@@ -5990,9 +6160,9 @@ function syncLayerCatalogState() {
   function collectActiveCatalogLayers() {
     var active = [];
     visibleCatalogCategories().forEach(function (cat) {
-      var allLayers = cat.layers || [];
+      var allLayers = visibleLayerEntries(cat.layers);
       if (cat.subcats) {
-        cat.subcats.forEach(function (sc) { allLayers = allLayers.concat(sc.layers || []); });
+        cat.subcats.forEach(function (sc) { allLayers = allLayers.concat(visibleLayerEntries(sc.layers)); });
       }
       allLayers.forEach(function (l) {
         var el = findLayerById(l.id);
@@ -6000,9 +6170,14 @@ function syncLayerCatalogState() {
         if (l.id === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') {
           isChecked = isHujanLayerActive();
         }
+        /* Self-heal: bila layer dinyalakan ulang dari katalog, status
+           sembunyi lewat ikon mata tidak berlaku lagi. */
+        if (isChecked) delete _alHiddenIds[l.id];
         /* Basemap sengaja tidak disertakan (grup "Layer Aktif" lama juga
-           tidak): peta selalu punya satu basemap, bukan "layer aktif". */
-        if (isChecked && cat.type !== 'basemap') active.push(l);
+           tidak): peta selalu punya satu basemap, bukan "layer aktif".
+           Layer yang disembunyikan lewat ikon mata tetap disertakan agar
+           barisnya tetap terdaftar di panel. */
+        if ((isChecked || _alHiddenIds[l.id]) && cat.type !== 'basemap') active.push(l);
       });
     });
     return active;
@@ -6033,7 +6208,9 @@ function syncLayerCatalogState() {
     var body = document.getElementById('activeLayersSidebarBody');
     var empty = document.getElementById('activeLayersEmpty');
     if (!body) return;
-    var items = collectActiveCatalogLayers();
+    /* Urutan baris mengikuti susunan user (tombol ▲/▼), bukan urutan
+       katalog; lihat sortActiveByUserOrder(). */
+    var items = sortActiveByUserOrder(collectActiveCatalogLayers());
 
     var countEl = document.getElementById('activeLayersCount');
     if (countEl) {
@@ -6047,13 +6224,16 @@ function syncLayerCatalogState() {
        supaya teksnya tidak ikut terhapus. */
     Array.prototype.slice.call(body.querySelectorAll('.al-item')).forEach(function (n) { n.remove(); });
 
-    items.forEach(function (l) {
+    items.forEach(function (l, li) {
+      var isHidden = !!_alHiddenIds[l.id];
       var el = document.createElement('div');
-      el.className = 'lc-item al-item';
+      el.className = 'lc-item al-item' + (isHidden ? ' al-item-hidden' : '');
 
       var cb = document.createElement('input');
       cb.type = 'checkbox';
-      cb.checked = true;
+      /* Checkbox baris mengikuti visibilitas layer: baris tersembunyi lewat
+         ikon mata tampil belum dicentang; mencentangnya menampilkan lagi. */
+      cb.checked = !isHidden;
       cb.dataset.layerId = l.id;
       cb.id = 'al_active_' + l.id;
 
@@ -6064,6 +6244,27 @@ function syncLayerCatalogState() {
       var actions = document.createElement('div');
       actions.className = 'lc-item-actions';
 
+      /* Tombol mata paling kiri: aksi paling sering dipakai. Menyembunyikan
+         layer dari peta tanpa mengeluarkannya dari daftar panel. */
+      var eyeBtn = document.createElement('button');
+      eyeBtn.type = 'button';
+      eyeBtn.className = 'lc-attr-btn lc-attr-btn-show al-eye-btn';
+      eyeBtn.dataset.layerId = l.id;
+      eyeBtn.title = isHidden ? 'Tampilkan layer' : 'Sembunyikan layer';
+      eyeBtn.innerHTML = isHidden ? EYE_OFF_ICON : EYE_ICON;
+      eyeBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (_alHiddenIds[l.id]) {
+          delete _alHiddenIds[l.id];
+          setLayerActiveFromPanel(l.id, true);
+        } else {
+          _alHiddenIds[l.id] = true;
+          setLayerActiveFromPanel(l.id, false);
+        }
+        renderActiveLayersPanel();
+      });
+      actions.appendChild(eyeBtn);
+
       if (typeof hasAttrSupport === 'function' && hasAttrSupport(l.id)) {
         var attrBtn = document.createElement('button');
         attrBtn.type = 'button';
@@ -6073,6 +6274,13 @@ function syncLayerCatalogState() {
         attrBtn.innerHTML = ATTR_ICON;
         attrBtn.addEventListener('click', function (e) {
           e.stopPropagation();
+          /* Panel Layer Aktif langsung diminimalkan jadi chip sebelum sheet
+             tabel dibuka (permintaan 2026-11-01): keduanya sheet kanan dan
+             panel menutupi sheet tabel atribut. Minimize, bukan tutup, supaya
+             user bisa langsung memunculkannya lagi dari chip di pita bawah. */
+          if (window.SheetDrag && window.SheetDrag.isOpen('al') && !window.SheetDrag.isMinimized('al')) {
+            window.SheetDrag.minimize('al');
+          }
           if (typeof isWmsAttrLayer === 'function' && isWmsAttrLayer(l.id)) {
             if (typeof openWmsAttrTable === 'function') openWmsAttrTable(l.id);
           } else if (typeof openAttrTableForLayer === 'function') {
@@ -6100,6 +6308,34 @@ function syncLayerCatalogState() {
       });
       actions.appendChild(pinBtn);
 
+      /* Tombol geser urutan ▲/▼ paling kanan: baris pertama tak bisa naik,
+         baris terakhir tak bisa turun. Hanya menyusun daftar di panel ini. */
+      var upBtn = document.createElement('button');
+      upBtn.type = 'button';
+      upBtn.className = 'lc-attr-btn lc-attr-btn-show al-move-btn';
+      upBtn.dataset.layerId = l.id;
+      upBtn.title = 'Naikkan urutan';
+      upBtn.innerHTML = CHEVRON_UP;
+      upBtn.disabled = li === 0;
+      upBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        alMoveLayer(l.id, -1);
+      });
+      actions.appendChild(upBtn);
+
+      var downBtn = document.createElement('button');
+      downBtn.type = 'button';
+      downBtn.className = 'lc-attr-btn lc-attr-btn-show al-move-btn';
+      downBtn.dataset.layerId = l.id;
+      downBtn.title = 'Turunkan urutan';
+      downBtn.innerHTML = CHEVRON_DOWN;
+      downBtn.disabled = li === items.length - 1;
+      downBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        alMoveLayer(l.id, 1);
+      });
+      actions.appendChild(downBtn);
+
       el.appendChild(cb);
       el.appendChild(label);
       el.appendChild(actions);
@@ -6110,11 +6346,18 @@ function syncLayerCatalogState() {
 
     body.querySelectorAll('.al-item input[type="checkbox"]').forEach(function (panelCb) {
       panelCb.addEventListener('change', function () {
+        /* Mencentang baris yang sedang tersembunyi = menampilkan lagi:
+           status sembunyi dibersihkan sebelum layer dinyalakan. */
+        if (panelCb.checked) delete _alHiddenIds[panelCb.dataset.layerId];
         setLayerActiveFromPanel(panelCb.dataset.layerId, panelCb.checked);
         renderActiveLayersPanel();
       });
     });
     updateActiveLayersBadge();
+    /* Sinkronkan tumpukan peta dengan urutan daftar (semantik ArcGIS Pro):
+       baris teratas = layer paling atas di peta. Murah dan idempoten,
+       jadi aman dipanggil di setiap render panel. */
+    applyAlMapOrder();
   }
 
   /* Badge jumlah layer aktif di tombol FAB. Dipanggil dari render panel,
@@ -6157,6 +6400,10 @@ function syncLayerCatalogState() {
       collectActiveCatalogLayers().forEach(function (l) {
         setLayerActiveFromPanel(l.id, false);
       });
+      /* Baris yang tadinya hanya disembunyikan lewat ikon mata (sudah tak
+         dicentang di katalog) juga dibersihkan supaya daftar benar-benar
+         kosong. */
+      _alHiddenIds = {};
       renderActiveLayersPanel();
     });
   })();
@@ -6200,12 +6447,12 @@ function syncLayerCatalogState() {
       var pinnedItems = [];
       if (_pinnedLayers.length > 0) {
         visibleCatalogCategories().forEach(function(cat) {
-          var allLayers = cat.layers || [];
+          var allLayers = visibleLayerEntries(cat.layers);
           if (cat.subcats) {
-            cat.subcats.forEach(function(sc) { allLayers = allLayers.concat(sc.layers || []); });
+            cat.subcats.forEach(function(sc) { allLayers = allLayers.concat(visibleLayerEntries(sc.layers)); });
           }
           if (cat.type === 'basemap' && cat.groups) {
-            cat.groups.forEach(function(grp) { allLayers = allLayers.concat(grp.layers || []); });
+            cat.groups.forEach(function(grp) { allLayers = allLayers.concat(visibleLayerEntries(grp.layers)); });
           }
           allLayers.forEach(function(l) {
             var pi = _pinnedLayers.indexOf(l.id);
@@ -6264,9 +6511,9 @@ function syncLayerCatalogState() {
          Layer Dipin + daftar kategori. */
 
     visibleCatalogCategories().forEach(function(cat, ci) {
-      var allLayers = cat.layers || [];
+      var allLayers = visibleLayerEntries(cat.layers);
       if (cat.subcats) {
-        cat.subcats.forEach(function(sc) { allLayers = allLayers.concat(sc.layers || []); });
+        cat.subcats.forEach(function(sc) { allLayers = allLayers.concat(visibleLayerEntries(sc.layers)); });
       }
       var totalCount = allLayers.length;
       var checked = allLayers.filter(function(l) {
@@ -6295,7 +6542,7 @@ function syncLayerCatalogState() {
       if (cat.type === 'basemap' && cat.groups) {
         cat.groups.forEach(function(grp) {
           html += '<div class="lc-basemap-group">' + grp.group + '</div>';
-          grp.layers.forEach(function(l) {
+          visibleLayerEntries(grp.layers).forEach(function(l) {
             var isActive = (l.id === currentBasemapName);
             var bmPinned = isPinnedLayer(l.id);
             html += '<div class="lc-item lc-basemap-item' + (isActive ? ' lc-basemap-active' : '') + '" data-basemap-id="' + l.id + '">';
@@ -6310,7 +6557,7 @@ function syncLayerCatalogState() {
       } else if (cat.subcats) {
         cat.subcats.forEach(function(sc) {
           html += '<div class="lc-subcat-header">' + sc.subcat + '</div>';
-          (sc.layers || []).forEach(function(l) {
+          visibleLayerEntries(sc.layers).forEach(function(l) {
             if (l.href) {
               html += '<div class="lc-item"><a href="' + l.href + '" target="_blank" rel="noopener noreferrer" style="padding:8px 10px;color:#2563eb;font-size:12px;font-weight:600;text-decoration:none;">' + l.label + ' ↗</a></div>';
               return;
@@ -6436,6 +6683,11 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
     container.querySelectorAll('.lc-item input[type="checkbox"]').forEach(function(cb) {
       cb.addEventListener('change', function() {
         var id = cb.dataset.layerId;
+        /* Registry urutan peta (2026-11-01): rekam objek Leaflet yang muncul
+           saat id dicentang; bersihkan saat id dicentang keluar. Lihat blok
+           _alLayerRegistry di panel Layer Aktif. */
+        if (cb.checked) startAlLayerCapture(id);
+        else delete _alLayerRegistry[id];
         var hasWindowToggle = !!cb.dataset.geoportalKey || !!cb.dataset.dynamicKey ||
           (id === 'toggleSignificantMarkers' && typeof window.toggleSignificantMarkers === 'function') ||
           (id === 'toggleFeltMarkers' && typeof window.toggleFeltMarkers === 'function') ||
