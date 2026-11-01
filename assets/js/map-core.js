@@ -6425,6 +6425,102 @@ function syncLayerCatalogState() {
     LAYER_CATALOG_DATA.push(LAYER_CATALOG_DATA.splice(idx, 1)[0]);
   }
 
+  /* ── Pratinjau miniatur basemap ala ArcGIS (2026-11-01) ─────────────
+     Kategori Basemap dirender sebagai kartu bergrid; tiap kartu memakai
+     SATU tile asli dari layanan basemap tersebut pada titik/zoom tetap
+     (Jawa, z6) sehingga thumbnail selalu mencerminkan tampilan layer
+     sungguhan, persis seperti gallery basemap di ArcGIS Pro.
+
+     Hanya bekerja untuk layer dengan template tile XYZ (URL mengandung
+     {z}). Layer WMS (nowcoast, petadasar) dan image layer (Landsat)
+     mengembalikan null -> kartu memakai placeholder lc-bm-thumb-ph. */
+  var BM_PV = { z: 6, lat: -7, lng: 109 };
+
+  /* ── Pratinjau lokal (2026-11-01) ────────────────────────────────
+     Thumbnail basemap statis sudah diunduh ke assets/img/basemap-preview
+     oleh tools/gen-basemap-preview.mjs. Dengan memakai file lokal,
+     membuka Katalog -> Basemap TIDAK lagi menarik tile remote (hemat
+     kuota, tampil instan). Entri di bawah = id -> nama berkas.
+
+     Layer real-time (BMKG Himawari/GK2A, NOAA GOES IR) TIDAK disimpan
+     lokal karena thumbnail statis tidak mencerminkan kondisi terkini --
+     kami biarkan memakai URL live (lihat basemapLivePreviewUrl).
+
+     Untuk menambah/memperbarui: jalankan node tools/gen-basemap-preview.mjs
+     lalu perbarui daftar BM_PV_LOCAL ini agar cocok dengan manifest. */
+  var BM_PV_LOCAL = {
+    'google-maps': 'google-maps.png',
+    'osm': 'osm.png',
+    'rupabumi': 'rupabumi.png',
+    'esri-dark-gray': 'esri-dark-gray.jpg',
+    'esri-topo': 'esri-topo.jpg',
+    'esri-terrain': 'esri-terrain.jpg',
+    'esri-street': 'esri-street.jpg',
+    'esri-shaded-relief': 'esri-shaded-relief.jpg',
+    'esri-physical': 'esri-physical.jpg',
+    'esri-natgeo': 'esri-natgeo.jpg',
+    'esri-satellite': 'esri-satellite.jpg',
+    'google-satellite-kh': 'google-satellite-kh.jpg',
+    'modis-terra': 'modis-terra.jpg',
+    'modis-aqua': 'modis-aqua.jpg',
+    'viirs-noaa20': 'viirs-noaa20.jpg',
+    'viirs-noaa21': 'viirs-noaa21.jpg',
+    'viirs-snpp': 'viirs-snpp.jpg',
+    'oci-pace': 'oci-pace.jpg',
+    'noaa-true-color': 'noaa-true-color.jpg',
+    'noaa-goes-ir': 'noaa-goes-ir.jpg',
+    'sentinel2': 'sentinel2.jpg',
+    'eox-s2cloudless-2024': 'eox-s2cloudless-2024.jpg',
+    'eox-blackmarble': 'eox-blackmarble.png',
+    'eox-terrain-light': 'eox-terrain-light.jpg'
+  };
+
+  /* Generator thumbnail live (dipakai untuk layer yang tidak punya berkas
+     lokal, mis. BMKG real-time). */
+  function basemapLivePreviewUrl(id) {
+    try {
+      if (typeof baseTileLayers === 'undefined') return null;
+      var ly = baseTileLayers[id];
+      if (!ly || typeof ly._url !== 'string' || ly._url.indexOf('{z}') === -1) return null;
+      var opts = ly.options || {};
+      if (typeof opts.minZoom === 'number' && BM_PV.z < opts.minZoom) return null;
+      if (typeof opts.maxZoom === 'number' && BM_PV.z > opts.maxZoom) return null;
+      var n = Math.pow(2, BM_PV.z);
+      var x = Math.floor((BM_PV.lng + 180) / 360 * n);
+      var latR = BM_PV.lat * Math.PI / 180;
+      var y = Math.floor((1 - Math.log(Math.tan(latR) + 1 / Math.cos(latR)) / Math.PI) / 2 * n);
+      /* Layer BMKG memakai skema TMS -> sumbu y dibalik. */
+      if (opts.tms) y = n - 1 - y;
+      var subs = opts.subdomains || 'abc';
+      var s = (typeof subs === 'string') ? subs.charAt(0) : String(subs[0]);
+      var data = { z: BM_PV.z, x: x, y: y, s: s, r: '' };
+      /* Token tambahan dari options: {Time} pada layer GIBS NASA, dll.
+         L.Util.template melempar error bila ada token tak terisi -- sudah
+         ditangkap try/catch sehingga kartu jatuh ke placeholder. */
+      for (var k in opts) {
+        if (typeof opts[k] === 'string' || typeof opts[k] === 'number') data[k] = opts[k];
+      }
+      var url = L.Util.template(ly._url, data);
+      /* BMKG: URL bawaan diakhiri "baserun=" tanpa nilai; isi dengan
+         modelrun terakhir bila pernah di-cache. Kalau kosong biarkan --
+         tile kemungkinan gagal dan onerror kartu menampilkan placeholder. */
+      var mm = url.match(/modelname=([^&]+)/);
+      if (/baserun=$/.test(url) && mm && window._bmkgModelrunCache &&
+          window._bmkgModelrunCache[mm[1]] && window._bmkgModelrunCache[mm[1]].length) {
+        var arr = window._bmkgModelrunCache[mm[1]];
+        url += encodeURIComponent(arr[arr.length - 1]);
+      }
+      return url;
+    } catch (e) { return null; }
+  }
+
+  /* Pilih sumber thumbnail: berkas lokal bila tersedia (hemat & instan),
+     selain itu pakai URL live (layer real-time BMKG/GOES). */
+  function basemapPreviewUrl(id) {
+    if (BM_PV_LOCAL[id]) return 'assets/img/basemap-preview/' + BM_PV_LOCAL[id];
+    return basemapLivePreviewUrl(id);
+  }
+
   function buildLayerCatalog(container) {
     pindahkanKategoriBatasKeBawah();
     var html = '<div class="lc-donation-banner">' +
@@ -6462,7 +6558,14 @@ function syncLayerCatalogState() {
         pinnedItems.sort(function (a, b) { return a.order - b.order; });
       }
 
-      if (pinnedItems.length > 0) {
+      /* ══ FITUR CEBOL SEMBUNYI SEMENTARA (2026-11-01) ══
+         Grup "Layer Dipin" disembunyikan atas permintaan. Pengumpulan
+         pinnedItems() TETAP dijalankan sehingga jumlah pin & batas
+         (PINNED_MAX) tidak terpengaruh -- hanya rendering yang dibungkus.
+         Untuk menampilkan lagi: kembalikan kondisi di bawah jadi
+         `if (pinnedItems.length > 0) {`. */
+      var TAMPILKAN_LAYER_DIPIN = false;
+      if (TAMPILKAN_LAYER_DIPIN && pinnedItems.length > 0) {
         html += '<div class="lc-category lc-pinned-group open">';
         html += '<div class="lc-pinned-header">';
         html += '<button class="lc-cat-header lc-pinned-header-btn" type="button">';
@@ -6524,8 +6627,10 @@ function syncLayerCatalogState() {
         }
         return isOn;
       }).length;
-      /* Semua kategori mulai tertutup agar katalog lebih ringan dirender. */
-      html += '<div class="lc-category" data-ci="' + ci + '">';
+      /* Semua kategori mulai tertutup agar katalog lebih ringan dirender.
+         Kecuali Basemap -- selalu terbuka (lihat di bawah). */
+      var isOpenCat = (cat.type === 'basemap');
+      html += '<div class="lc-category' + (isOpenCat ? ' open' : '') + '" data-ci="' + ci + '"' + (cat.type === 'basemap' ? ' data-lc-always-open="1"' : '') + '>';
       html += '<button class="lc-cat-header" type="button">';
       html += '<svg class="lc-cat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
       html += '<span class="lc-cat-title">' + cat.cat + '</span>';
@@ -6542,17 +6647,30 @@ function syncLayerCatalogState() {
       if (cat.type === 'basemap' && cat.groups) {
         cat.groups.forEach(function(grp) {
           html += '<div class="lc-basemap-group">' + grp.group + '</div>';
+          /* GRID KARTU BASEMAP ALA ARCGIS (2026-11-01): tiap basemap jadi
+             kartu dengan thumbnail peta asli (basemapPreviewUrl) + nama.
+             Radio tetap "lc-basemap" supaya handler pemilihan basemap
+             lama tetap berlaku; kartu bisa diklik di mana pun lewat label. */
+          html += '<div class="lc-bm-grid">';
           visibleLayerEntries(grp.layers).forEach(function(l) {
             var isActive = (l.id === currentBasemapName);
             var bmPinned = isPinnedLayer(l.id);
-            html += '<div class="lc-item lc-basemap-item' + (isActive ? ' lc-basemap-active' : '') + '" data-basemap-id="' + l.id + '">';
+            var pv = basemapPreviewUrl(l.id);
+            html += '<div class="lc-item lc-bm-card' + (isActive ? ' lc-basemap-active' : '') + '" data-basemap-id="' + l.id + '">';
             html += '<input type="radio" name="lc-basemap" id="lc_bm_' + l.id + '" data-basemap-id="' + l.id + '"' + (isActive ? ' checked' : '') + ' />';
-            html += '<label for="lc_bm_' + l.id + '">' + l.label + '</label>';
-            html += '<div class="lc-item-actions">';
+            html += '<label for="lc_bm_' + l.id + '">';
+            html += '<span class="lc-bm-thumb' + (pv ? '' : ' lc-bm-thumb-ph') + '">';
+            /* & pada URL query (mis. Google lyrs=m&x=...) di-escape agar
+               valid sebagai atribut HTML. */
+            if (pv) html += '<img src="' + pv.replace(/&/g, '&amp;') + '" alt="" loading="lazy" />';
+            html += '</span>';
+            html += '<span class="lc-bm-name">' + l.label + '</span>';
+            html += '</label>';
             if (isActive) html += '<span class="lc-basemap-badge">Aktif</span>';
             html += '<button type="button" class="lc-pin-btn' + (bmPinned ? ' lc-pin-btn-active' : '') + '" data-layer-id="' + l.id + '" title="' + (bmPinned ? 'Hapus Pin' : 'Pin Layer') + '">' + (bmPinned ? pinIconFilled : pinIconOutline) + '</button>';
-            html += '</div></div>';
+            html += '</div>';
           });
+          html += '</div>';
         });
       } else if (cat.subcats) {
         cat.subcats.forEach(function(sc) {
@@ -6622,6 +6740,17 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
     container.innerHTML = html;
     container.classList.remove('lc-search-active');
 
+    /* Thumbnail basemap yang tile-nya gagal dimuat (mis. BMKG tanpa
+       baserun, layanan sedang turun) diganti placeholder grid peta --
+       kartu tetap utuh dan tetap bisa diklik. */
+    container.querySelectorAll('.lc-bm-thumb img').forEach(function(img) {
+      img.addEventListener('error', function () {
+        var th = img.closest('.lc-bm-thumb');
+        if (th) th.classList.add('lc-bm-thumb-ph');
+        img.remove();
+      });
+    });
+
     /* Tombol "Matikan Semua" kini milik panel Layer Aktif (#alClearAll di
        index.html), bukan lagi #lcClearAll di katalog; wiring-nya ada di
        blok panel Active Layers Sidebar. */
@@ -6647,7 +6776,10 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
 
     container.querySelectorAll('.lc-cat-header').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        btn.closest('.lc-category').classList.toggle('open');
+        var cat = btn.closest('.lc-category');
+        /* Kategori Basemap selalu terbuka -- abaikan klik penutup (2026-11-01). */
+        if (cat.hasAttribute('data-lc-always-open')) return;
+        cat.classList.toggle('open');
       });
     });
 
@@ -7014,6 +7146,8 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
           });
           cat.style.display = hasVisibleItem || !q ? '' : 'none';
           if (q) cat.classList.add('open');
+          /* Kategori Basemap (always-open) tidak ditutup saat pencarian dikosongkan. */
+          else if (cat.hasAttribute('data-lc-always-open')) cat.classList.add('open');
           else if (!cat.classList.contains('lc-pinned-group')) cat.classList.remove('open');
         });
       });

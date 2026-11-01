@@ -292,6 +292,60 @@
       margin-left: auto; font-size: 9px; font-weight: 700; color: #fff;
       background: #2563eb; border-radius: 8px; padding: 1px 6px; flex-shrink: 0;
     }
+    /* ══ GRID KARTU BASEMAP ALA ARCGIS (2026-11-01) ══
+       Kategori Basemap dirender jadi kartu thumbnail (grid) ala basemap
+       gallery ArcGIS Pro, bukan baris radio. Thumbnail = tile asli dari
+       layanan (basemapPreviewUrl); kalau gagal dimuat, .lc-bm-thumb-ph
+       menampilkan pola grid peta sebagai gantinya. Radio tetap ada di
+       dalam kartu (opsional, disembunyikan) supaya handler lama jalan. */
+    .lc-bm-grid {
+      /* GRID BASEMAP 3 KOLOM TETAP (2026-11-01) -- sebelumnya 4 kolom. */
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 8px; padding: 4px 8px 10px;
+    }
+    .lc-item.lc-bm-card {
+      position: relative; display: block; padding: 0;
+      border: 1px solid var(--border-color); border-radius: 10px;
+      overflow: hidden; background: #fff; transition: border-color .15s, box-shadow .15s, transform .15s;
+    }
+    .lc-item.lc-bm-card:hover { background: #fff; box-shadow: 0 4px 12px rgba(15,23,42,.12); transform: translateY(-1px); }
+    .lc-item.lc-bm-card input[type="radio"] {
+      position: absolute; width: 1px; height: 1px; margin: 0; padding: 0;
+      opacity: 0; pointer-events: none;
+    }
+    .lc-bm-card label { display: block; flex: none; padding: 0; margin: 0; cursor: pointer; }
+    .lc-bm-thumb {
+      display: block; position: relative; width: 100%; aspect-ratio: 16 / 10;
+      overflow: hidden;
+      /* Placeholder "grid peta" -- tampil bila tak ada thumbnail atau
+         tile gagal dimuat (onerror di buildLayerCatalog). */
+      background:
+        repeating-linear-gradient(0deg, #e2e8f0 0 1px, transparent 1px 18px),
+        repeating-linear-gradient(90deg, #e2e8f0 0 1px, transparent 1px 18px),
+        #f8fafc;
+    }
+    .lc-bm-thumb img {
+      display: block; width: 100%; height: 100%; object-fit: cover;
+      transition: transform .2s;
+    }
+    .lc-bm-card:hover .lc-bm-thumb img { transform: scale(1.05); }
+    .lc-bm-name {
+      display: block; padding: 6px 8px; font-size: 11px; font-weight: 600;
+      color: #334155; line-height: 1.3;
+    }
+    .lc-item.lc-bm-card.lc-basemap-active { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,.35); }
+    .lc-bm-card .lc-basemap-badge {
+      position: absolute; top: 6px; left: 6px; margin: 0;
+      box-shadow: 0 1px 4px rgba(0,0,0,.25);
+    }
+    .lc-bm-card .lc-pin-btn {
+      position: absolute; top: 4px; right: 4px; padding: 3px 5px;
+      background: rgba(255,255,255,.85); border-radius: 6px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.18);
+    }
+    .lc-bm-card input[type="radio"]:focus-visible + label {
+      outline: 2px solid #2563eb; outline-offset: -2px; border-radius: 8px;
+    }
     .lc-subcat-header {
       font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase;
       letter-spacing: .05em; padding: 8px 8px 2px 28px;
@@ -341,6 +395,15 @@
     .al-fab-count { position: absolute; top: -3px; right: -4px; min-width: 15px; padding: 1px 4px; box-sizing: border-box; text-align: center; font-size: 8px; font-weight: 700; color: #fff; background: #2563eb; border-radius: 8px; line-height: 1.3; pointer-events: none; }
     .lc-clear-all { margin-right: 8px; padding: 3px 8px; border: 1px solid #ef4444; border-radius: 6px; background: #fff; color: #ef4444; font-size: 10px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
     .lc-clear-all:hover { background: #ef4444; color: #fff; }
+    /* ═══════════════════════════════════════════════════════════════════
+       FITUR CEBOL SEMBUNYI SEMENTARA (2026-11-01)
+       Grup "Layer Dipin" pada Katalog Layer disembunyikan atas permintaan.
+       KODE TIDAK DIHAPUS -- hanya disembunyikan lewat CSS sehingga mudah
+       dikembalikan. Untuk menampilkan lagi: hapus/bungkus baris .lc-pinned-group
+       di bawah dengan komentar /* SEMBUNYIKAN-LAYER-DIPIN ... */ atau hapus
+       properti display:none pada rule .lc-pinned-group.
+       ═══════════════════════════════════════════════════════════════════ */
+    .lc-pinned-group { display: none !important; }
     .lc-pinned-group { border-left: 3px solid #f59e0b; margin: 0 8px 8px; border-radius: 0 8px 8px 0; background: rgba(245,158,11,.04); }
     .lc-pinned-header { display: flex; align-items: center; justify-content: space-between; }
     .lc-pinned-header .lc-cat-header { flex: 1; }
@@ -13602,6 +13665,20 @@ details[open] > .gt-card-head::after {
     [data-theme="dark"] .lc-subcat-header { color: #64748b; }
     [data-theme="dark"] .lc-item.lc-basemap-active { background: rgba(37,99,235,.15); border-left-color: #3b82f6; }
     [data-theme="dark"] .lc-basemap-badge { background: #3b82f6; }
+    /* Kartu basemap (grid ala ArcGIS) di tema gelap. */
+    [data-theme="dark"] .lc-item.lc-bm-card { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.12); }
+    [data-theme="dark"] .lc-item.lc-bm-card:hover { background: rgba(255,255,255,.07); box-shadow: 0 4px 14px rgba(0,0,0,.45); }
+    [data-theme="dark"] .lc-bm-name { color: #e2e8f0; }
+    [data-theme="dark"] .lc-bm-thumb {
+      background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.1) 0 1px, transparent 1px 18px),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.1) 0 1px, transparent 1px 18px),
+        #1e293b;
+    }
+    [data-theme="dark"] .lc-item.lc-bm-card.lc-basemap-active {
+      background: rgba(37,99,235,.15); border-color: #3b82f6;
+    }
+    [data-theme="dark"] .lc-bm-card .lc-pin-btn { background: rgba(15,23,42,.85); }
     [data-theme="dark"] .lc-pinned-group { border-left-color: #f59e0b; background: rgba(245,158,11,.08); }
     [data-theme="dark"] .lc-pinned-title { color: #fbbf24 !important; }
     [data-theme="dark"] .lc-item-pinned { background: rgba(245,158,11,.1); }
