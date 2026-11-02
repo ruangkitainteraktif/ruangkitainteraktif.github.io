@@ -6838,6 +6838,7 @@ function syncLayerCatalogState() {
     clearTimeout(_timerActiveLayers);
     _timerActiveLayers = setTimeout(function () {
       updateActiveLayersBadge();
+      refreshMapCatalogAddButtons();
       if (activeLayersPanelOpen()) renderActiveLayersPanel();
     }, 300);
   }
@@ -7356,6 +7357,7 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
           if (el) el.checked = cb.checked;
         }
         if (id.indexOf('bhumi-identify:') === 0) bhumiIdentifySaveState();
+        refreshMapCatalogAddButtons();
         if (id === 'toggleSignificantMarkers' && typeof window.toggleSignificantMarkers === 'function') {
           window.toggleSignificantMarkers(cb.checked);
         }
@@ -7652,6 +7654,61 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
         return;
       }
       if (list) list.appendChild(category);
+    });
+    decorateMapCatalogAddButtons();
+  }
+
+  function decorateMapCatalogAddButtons() {
+    var list = document.getElementById('mapCatalogList');
+    if (!list) return;
+    if (!list.dataset.addButtonsBound) {
+      list.dataset.addButtonsBound = '1';
+      list.addEventListener('click', function (event) {
+        var button = event.target.closest('.geoportal-add-layer');
+        if (!button || !list.contains(button)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        var checkbox = button.closest('.lc-item') && button.closest('.lc-item').querySelector('input[type="checkbox"]');
+        if (!checkbox || checkbox.disabled || checkbox.checked) return;
+        checkbox.checked = true;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+        updateMapCatalogAddButton(button, checkbox);
+      });
+    }
+    list.querySelectorAll('.lc-item').forEach(function (row) {
+      var checkbox = row.querySelector(':scope > input[type="checkbox"]');
+      if (!checkbox) return;
+      var button = row.querySelector(':scope > .geoportal-add-layer');
+      if (!button) {
+        button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'geoportal-add-layer';
+        button.dataset.layerId = checkbox.dataset.layerId || '';
+        row.appendChild(button);
+      }
+      updateMapCatalogAddButton(button, checkbox);
+    });
+  }
+
+  function updateMapCatalogAddButton(button, checkbox) {
+    if (!button || !checkbox) return;
+    var added = checkbox.checked;
+    button.classList.toggle('is-added', added);
+    button.disabled = added || checkbox.disabled;
+    button.title = added ? 'Sudah ada di Layer Aktif' : 'Tambahkan ke Layer Aktif';
+    button.setAttribute('aria-label', button.title);
+    button.innerHTML = added
+      ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>'
+      : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+  }
+
+  function refreshMapCatalogAddButtons() {
+    var list = document.getElementById('mapCatalogList');
+    if (!list) return;
+    list.querySelectorAll('.lc-item').forEach(function (row) {
+      var checkbox = row.querySelector(':scope > input[type="checkbox"]');
+      var button = row.querySelector(':scope > .geoportal-add-layer');
+      if (checkbox && button) updateMapCatalogAddButton(button, checkbox);
     });
   }
 

@@ -17436,7 +17436,7 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
 #geoportalLayerList .jstree-anchor:hover { background:#eff6ff; color:#0f4c81; }
 #geoportalLayerList .jstree-node[data-level="0"] > .jstree-anchor { min-height:40px; font-size:12px; font-weight:700; color:#172554; }
 #geoportalLayerList .jstree-node[data-level="0"] > .jstree-anchor .layer-count-badge { margin-left:8px; color:#315a87; background:#e6f0fb; }
-#geoportalLayerList .jstree-node[data-hub-key] > .jstree-anchor { width:calc(100% - 4px); gap:7px; padding-right:38px; }
+#geoportalLayerList .jstree-node[data-hub-key] > .jstree-anchor { width:calc(100% - 4px); gap:7px; padding-left:38px; padding-right:38px; }
 #geoportalLayerList .jstree-node[data-hub-key] > .jstree-anchor .jstree-themeicon { display:none; }
 #geoportalLayerList .geoportal-add-layer { position:absolute; z-index:2; top:4px; right:3px; display:grid; width:27px; height:27px; padding:0; place-items:center; border:1px solid #cbdcf0; border-radius:8px; color:#1266ad; background:#fff; cursor:pointer; transition:background .16s,border-color .16s,color .16s,transform .16s; }
 #geoportalLayerList .geoportal-add-layer:hover:not(:disabled), #geoportalLayerList .geoportal-add-layer:focus-visible { transform:translateY(-1px); border-color:#60a5fa; color:#0756a4; background:#eff6ff; outline:none; }
@@ -17447,6 +17447,25 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
 [data-theme="dark"] #geoportalLayerList .jstree-node[data-level="0"] > .jstree-anchor { color:#f1f5f9; }
 [data-theme="dark"] #geoportalLayerList .geoportal-add-layer { color:#93c5fd; border-color:#334155; background:#172033; }
 [data-theme="dark"] #geoportalLayerList .geoportal-add-layer.is-added { color:#6ee7b7; border-color:#065f46; background:#052e2b; }
+
+/* The GeoData sheet catalog uses the same add-to-active-layer affordance as Hub. */
+#mapCatalogList .lc-item { position:relative; padding:10px 8px 10px 64px; }
+#mapCatalogList .lc-item > input[type="checkbox"] { display:none !important; }
+#mapCatalogList .lc-item > label { pointer-events:none; padding-right:0; }
+#mapCatalogList .lc-item-actions .lc-pin-btn { display:none !important; }
+#mapCatalogList .geoportal-add-layer {
+  position:absolute; z-index:2; top:50%; left:28px; right:auto; display:grid;
+  width:27px; height:27px; padding:0; place-items:center;
+  border:1px solid #cbdcf0; border-radius:8px; color:#1266ad;
+  background:#fff; cursor:pointer; transform:translateY(-50%);
+}
+#mapCatalogList .geoportal-add-layer:hover:not(:disabled),
+#mapCatalogList .geoportal-add-layer:focus-visible { border-color:#60a5fa; color:#0756a4; background:#eff6ff; outline:none; }
+#mapCatalogList .geoportal-add-layer.is-added { color:#047857; border-color:#a7f3d0; background:#ecfdf5; cursor:default; }
+#mapCatalogList .geoportal-add-layer:disabled { opacity:1; }
+#mapCatalogList .geoportal-add-layer svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+[data-theme="dark"] #mapCatalogList .geoportal-add-layer { color:#93c5fd; border-color:#334155; background:#172033; }
+[data-theme="dark"] #mapCatalogList .geoportal-add-layer.is-added { color:#6ee7b7; border-color:#065f46; background:#052e2b; }
 
 /* GeoData: pisahkan Hub dari alat impor, lalu tampilkan katalog sebagai
    tree yang tenang dan mudah dipindai. */
@@ -17565,7 +17584,7 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
 #geoportalLayerList .jstree-node[data-level="0"] > .jstree-children { margin-left:3px; }
 #geoportalLayerList .jstree-ocl { display:none !important; }
 #geoportalLayerList .geoportal-add-layer { left:4px; }
-#geoportalLayerList .jstree-node[data-hub-key] > .jstree-anchor { padding-left:32px; }
+#geoportalLayerList .jstree-node[data-hub-key] > .jstree-anchor { padding-left:44px; }
 
 /* Submenu impor GeoData menjadi kartu lipat yang seragam dengan Hub. */
 #geotoolsTabMuatData > .geodata-tool-card + .geodata-tool-card { margin-top:10px; }
