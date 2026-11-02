@@ -797,6 +797,25 @@
     }
   };
 
+  /* ── Registry dinamis (2026-11-02) ──────────────────────
+     Konfigurasi tabel yang didaftarkan dari luar berkas ini: baris layer
+     unggahan di sheet Layer Aktif (SHP/GeoJSON/GPX/KMZ, WFS GeoServer, dan
+     ArcGIS REST yang ditambahkan lewat panel GeoData). Layer unggahan tidak
+     punya id di katalog, jadi tidak bisa memakai ATTR_LAYER_REGISTRY statis
+     di atas. Cara pakai: registerDynamicAttrTable(id, config) lalu
+     openAttrTableForLayer(id) -- config memakai bentuk yang sama dengan
+     entri registry biasa (lihat type 'vector' di loadFeatures). */
+  var DYNAMIC_ATTR_REGISTRY = {};
+  function registerDynamicAttrTable(id, config) {
+    if (!id || !config) return;
+    DYNAMIC_ATTR_REGISTRY[id] = config;
+  }
+  function unregisterDynamicAttrTable(id) {
+    if (id) delete DYNAMIC_ATTR_REGISTRY[id];
+  }
+  window.registerDynamicAttrTable = registerDynamicAttrTable;
+  window.unregisterDynamicAttrTable = unregisterDynamicAttrTable;
+
   /* ── WMS GetFeatureInfo Layers ── */
   var WMS_ATTR_REGISTRY = {
     toggleFaultLayer: { name: 'Patahan Indonesia (BNPB)' },
@@ -923,6 +942,7 @@
     var sheet = document.getElementById('attr-table-sheet');
     if (!sheet) return;
     sheet.classList.toggle('at-soil-table-mode', toggleId === 'toggleJenisTanahJateng');
+    sheet.classList.remove('at-table-scroll-mode');
     var config = ATTR_LAYER_REGISTRY[toggleId];
     // Support dynamic OPT pest toggles via window.OPT_ATTR_DATA
     if (!config && toggleId.indexOf('opt-') === 0 && window.OPT_ATTR_DATA && window.OPT_ATTR_DATA[toggleId]) {
@@ -942,6 +962,9 @@
       var fuDef = window.getFuLayerDefs()[toggleId];
       if (fuDef) config = { name: fuDef.label, type: 'raster' };
     }
+    // Layer unggahan (GeoData: ArcGIS REST, WFS GeoServer, SHP/GeoJSON/…)
+    // didaftarkan lewat registerDynamicAttrTable; lihat catatannya di atas.
+    if (!config) config = DYNAMIC_ATTR_REGISTRY[toggleId];
     if (!config) return;
 
     _currentLayer = { id: toggleId, config: config };
@@ -970,6 +993,7 @@
 
     var sheet = document.getElementById('attr-table-sheet');
     if (!sheet) return;
+    sheet.classList.remove('at-table-scroll-mode');
 
     setAttrSheetTitle();
     var backBtn = document.getElementById('atSheetBackBtn');
@@ -1205,10 +1229,10 @@
             _currentFeatures = allFeats;
             _currentPage = 1;
             renderAttrContent();
-            if ((total > allFeats.length || paginationWarning) && arcContent) {
+            if (total > allFeats.length && !paginationWarning && arcContent) {
               var info = document.createElement('div');
               info.className = 'at-info-bar';
-              info.textContent = paginationWarning || ('Menampilkan ' + allFeats.length.toLocaleString('id-ID') + ' dari ' + total.toLocaleString('id-ID') + ' data.');
+              info.textContent = 'Menampilkan ' + allFeats.length.toLocaleString('id-ID') + ' dari ' + total.toLocaleString('id-ID') + ' data.';
               arcContent.insertBefore(info, arcContent.firstChild);
             }
           });
@@ -1270,6 +1294,8 @@
   function renderAttrContent() {
     var content = document.getElementById('at-sheet-content');
     if (!content) return;
+    var sheet = document.getElementById('attr-table-sheet');
+    if (sheet) sheet.classList.add('at-table-scroll-mode');
 
     var all = getFilteredFeatures(_currentFeatures);
     var totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
@@ -1593,6 +1619,8 @@
   function renderWmsResults(features) {
     var content = document.getElementById('at-sheet-content');
     if (!content) return;
+    var sheet = document.getElementById('attr-table-sheet');
+    if (sheet) sheet.classList.add('at-table-scroll-mode');
     var allProps = {};
     features.forEach(function (f) {
       var attrs = f.attributes || f.properties || {};
@@ -1689,6 +1717,7 @@
   function openAttrTablePicker() {
     var sheet = document.getElementById('attr-table-sheet');
     if (!sheet) return;
+    sheet.classList.remove('at-table-scroll-mode');
     _loadToken++;
     releasePickerLayer();
     disableWmsClick();
@@ -1879,6 +1908,8 @@
     if (toggleId.indexOf('opth-') === 0 && window.OPTH_ATTR_DATA && window.OPTH_ATTR_DATA[toggleId]) return true;
     if (window.KATEGORI_OPT_ATTR_DATA && window.KATEGORI_OPT_ATTR_DATA[toggleId]) return true;
     if (toggleId.indexOf('toggleFu') === 0 && window.getFuLayerDefs && window.getFuLayerDefs()[toggleId]) return true;
+    // Entri hasil registerDynamicAttrTable (layer unggahan GeoData).
+    if (DYNAMIC_ATTR_REGISTRY[toggleId]) return true;
     return !!(ATTR_LAYER_REGISTRY[toggleId] || WMS_ATTR_REGISTRY[toggleId]);
   }
   window.hasAttrSupport = hasAttrSupport;

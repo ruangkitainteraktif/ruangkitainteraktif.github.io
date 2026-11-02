@@ -979,7 +979,7 @@
       html += '</div>';
     }
     table.innerHTML = html;
-    setAttributeStatus('Menampilkan ' + (start + 1) + '–' + (start + visibleRows.length) + ' dari ' + total + ' fitur cocok · ' + descriptor.name + (descriptor.paginationWarning ? ' · ' + descriptor.paginationWarning : ''));
+    setAttributeStatus('Menampilkan ' + (start + 1) + '–' + (start + visibleRows.length) + ' dari ' + total + ' fitur cocok · ' + descriptor.name);
     bindAttributeFilters(table, record);
     table.querySelectorAll('[data-arcgis-attribute-page]').forEach(function (button) {
       button.addEventListener('click', function () {
@@ -1247,8 +1247,7 @@
       link.click();
       link.remove();
       window.setTimeout(function () { URL.revokeObjectURL(objectUrl); }, 1000);
-      var partial = data && data.paginationWarning ? ' (data mungkin belum lengkap: server tidak mendukung pagination)' : '';
-      return { ok: true, message: features.length.toLocaleString('id-ID') + ' fitur diekspor ke ' + fileName + '.zip' + partial + '.' };
+      return { ok: true, message: features.length.toLocaleString('id-ID') + ' fitur diekspor ke ' + fileName + '.zip.' };
     } catch (error) {
       return { ok: false, message: 'Gagal mengekspor SHP: ' + (error && error.message ? error.message : String(error)) };
     }
@@ -1406,6 +1405,20 @@
     addSelected: addSelected,
     countSelected: countSelected,
     exportShapefile: exportShapefile,
+    getFeatureData: async function (key) {
+      var record = state.active[key];
+      if (!record || !record.descriptor) throw new Error('Layer ArcGIS tidak ditemukan.');
+      var descriptor = record.descriptor;
+      if (!descriptor.layerId) throw new Error('Layer ini tidak menyediakan daftar fitur.');
+      if (!descriptor.featureData) {
+        var data = await fetchFeatureGeoJson(descriptor);
+        descriptor.featureData = data;
+        descriptor.featureTotal = data.paginationWarning ? data.features.length : (data.total || data.features.length);
+        descriptor.featureCount = data.features.length;
+        descriptor.paginationWarning = data.paginationWarning || '';
+      }
+      return descriptor.featureData;
+    },
     remove: removeLayer,
     clear: clearDynamicLayers,
     getActive: function () { return state.active; }

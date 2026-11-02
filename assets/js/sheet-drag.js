@@ -360,7 +360,7 @@
       aturPosisiChipMinim();
       var m = window.map;
       if (m && typeof m.invalidateSize === 'function') {
-        m.invalidateSize({ pan: false });
+        m.invalidateSize({ pan: true });
         sinkronkanPusatPetaMobile(m);
       }
     }, 340);
@@ -374,7 +374,7 @@
     var run = function () {
       var m = window.map || window._map;
       if (!m || !bounds || !bounds.isValid || !bounds.isValid()) return;
-      if (typeof m.invalidateSize === 'function') m.invalidateSize({ pan: false });
+      if (typeof m.invalidateSize === 'function') m.invalidateSize({ pan: true });
       m.flyToBounds(bounds, options || {});
     };
     if (document.body.classList.contains('sheet-terbuka')) {

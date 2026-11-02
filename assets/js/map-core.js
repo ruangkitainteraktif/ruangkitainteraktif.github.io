@@ -1,4 +1,4 @@
-  // EPSG:54034 (World Mollweide) for Pertanian Sawah layer
+﻿  // EPSG:54034 (World Mollweide) for Pertanian Sawah layer
   if (typeof proj4 !== 'undefined') {
     proj4.defs('EPSG:54034', '+proj=moll +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs');
   }
@@ -1510,14 +1510,27 @@ L.control.scale({
       var body = document.getElementById('legendSidebarBody');
       var legendBody = document.querySelector('.legend-body');
       if (body && legendBody && legendBody.children.length > 0) {
-        while (legendBody.firstChild) body.appendChild(legendBody.firstChild);
+        Array.prototype.slice.call(legendBody.childNodes).forEach(function (node) {
+          if (node.nodeType === 1 && node.classList.contains('sheet-donation-banner')) {
+            var donation = body.querySelector(':scope > .sheet-donation-banner');
+            if (!donation) body.insertBefore(node, body.firstChild);
+            else node.remove();
+            return;
+          }
+          body.appendChild(node);
+        });
       }
     },
     onClose: function () {
       var body = document.getElementById('legendSidebarBody');
       if (!body) return;
       var legendBody = document.querySelector('.legend-body');
-      if (legendBody) while (body.firstChild) legendBody.appendChild(body.firstChild);
+            if (legendBody) {
+        Array.prototype.slice.call(body.childNodes).forEach(function (node) {
+          if (node.nodeType === 1 && node.classList.contains('sheet-donation-banner')) return;
+          legendBody.appendChild(node);
+        });
+      }
     }
   });
 
@@ -2203,12 +2216,15 @@ L.control.scale({
 
     /* ── Zoom Control di bawah tengah ── */
     var zoomWrap = document.querySelector('.zoom-control-wrap');
-    if (zoomWrap) {
-      zoomWrap.style.position = 'fixed';
-      zoomWrap.style.bottom = '30px';
-      zoomWrap.style.left = '50%';
-      zoomWrap.style.transform = 'translateX(-50%)';
-      zoomWrap.style.zIndex = '999';
+    var fabItems = document.querySelector('.map-fab-items');
+    if (zoomWrap && fabItems && window.innerWidth > 768) {
+      /* Desktop memakai satu dock agar zoom menyatu dengan tombol FAB. */
+      fabItems.appendChild(zoomWrap);
+      zoomWrap.style.position = 'static';
+      zoomWrap.style.bottom = 'auto';
+      zoomWrap.style.left = 'auto';
+      zoomWrap.style.transform = 'none';
+      zoomWrap.style.zIndex = 'auto';
       zoomWrap.style.flexDirection = 'row';
       zoomWrap.style.gap = '2px';
     }
@@ -6260,6 +6276,9 @@ function syncLayerCatalogState() {
      Hapus pada kartu "Layer Dimuat" lama). */
   function hapusLayerUnggahan(entry) {
     if (!entry || !entry.ref) return;
+    /* Konfigurasi tabel dinamis baris ini ikut dibuang supaya tidak ada
+       sisa entri untuk id yang sudah tidak ada di daftar. */
+    if (typeof window.unregisterDynamicAttrTable === 'function') window.unregisterDynamicAttrTable(entry.id);
     if (entry.kind === 'arcgis') {
       var mgr = window.ArcGISRestSourceManager;
       if (mgr && typeof mgr.remove === 'function') mgr.remove(entry.ref.descriptor.key);
@@ -6309,10 +6328,106 @@ function syncLayerCatalogState() {
     });
   }
 
+  /* ── Tabel fitur untuk baris layer unggahan (2026-11-02) ────────
+     Layer yang ditambahkan lewat panel GeoData ("Tambahkan data dari
+     ArcGIS" dan "Tambahkan data dari GeoServer") serta unggahan
+     SHP/GeoJSON/GPX/KMZ tidak punya id di katalog, sehingga tombol Tabel
+     Atribut bawaan tidak pernah muncul untuk barisnya -- padahal daftar
+     fiturnya sudah tersimpan di memori (geojson milik unggahan, atau
+     descriptor.featureData milik ArcGIS REST). Ikon tabel pada baris ini
+     membuka sheet Tabel yang sama: konfigurasinya didaftarkan sebentar ke
+     attribute-table.js lewat registerDynamicAttrTable(). */
+  function uploadedFeatureCollection(entry) {
+    if (!entry || !entry.ref) return null;
+    if (entry.kind === 'arcgis') {
+      var desc = entry.ref.descriptor;
+      /* Layer ArcGIS ber-renderMode dynamic/image/vector tidak punya
+         featureData -- memang tidak ada daftar fitur untuk ditampilkan. */
+      return (desc && desc.featureData && Array.isArray(desc.featureData.features)) ? desc.featureData : null;
+    }
+    var geo = entry.ref.geojson;
+    return (geo && Array.isArray(geo.features)) ? geo : null;
+  }
+
+  /* Titik acuan satu geometri GeoJSON (koordinat pertamanya) agar klik
+     baris di tabel bisa menerbangkan peta ke lokasi fitur. */
+  function uploadedFeatureLatLng(geometry) {
+    if (!geometry || !geometry.coordinates) return null;
+    var c = geometry.coordinates;
+    try {
+      switch (geometry.type) {
+        case 'Point': return [c[1], c[0]];
+        case 'MultiPoint':
+        case 'LineString': return c.length ? [c[0][1], c[0][0]] : null;
+        case 'MultiLineString':
+        case 'Polygon': return (c.length && c[0].length) ? [c[0][0][1], c[0][0][0]] : null;
+        case 'MultiPolygon': return (c.length && c[0].length && c[0][0].length) ? [c[0][0][0][1], c[0][0][0][0]] : null;
+      }
+    } catch (e) { /* geometri tidak lazim: tanpa titik sorot */ }
+    return null;
+  }
+
+  /* Ratakan fitur GeoJSON jadi objek datar untuk tabel atribut. Nilai
+     berupa objek diubah jadi JSON -- attribute-table.js hanya menyalin
+     nilai primitif, jadi tanpa langkah ini kolomnya hilang begitu saja. */
+  function flattenUploadedFeatures(entry) {
+    var fc = uploadedFeatureCollection(entry);
+    if (!fc) return [];
+    return fc.features.map(function (feat) {
+      var props = (feat && feat.properties) || {};
+      var row = {};
+      for (var k in props) {
+        if (!Object.prototype.hasOwnProperty.call(props, k)) continue;
+        var v = props[k];
+        row[k] = (v !== null && typeof v === 'object') ? JSON.stringify(v) : v;
+      }
+      row._ll = uploadedFeatureLatLng(feat && feat.geometry);
+      return row;
+    });
+  }
+
+  /* Buka sheet Tabel berisi SELURUH fitur satu baris unggahan. */
+  async function bukaTabelFiturUnggahan(entry) {
+    var fc = uploadedFeatureCollection(entry);
+    /* ArcGIS dynamic map layers dirender sebagai gambar, jadi saat layer
+       pertama dimuat belum memiliki GeoJSON. Ambil seluruh halaman fitur
+       hanya ketika tabel diminta, lalu gunakan jalur tabel yang sama. */
+    if (!fc && entry && entry.kind === 'arcgis') {
+      var mgr = window.ArcGISRestSourceManager;
+      if (mgr && typeof mgr.getFeatureData === 'function') {
+        try {
+          fc = await mgr.getFeatureData(entry.ref.descriptor.key);
+        } catch (err) {
+          if (window.showToast) window.showToast('Gagal memuat fitur ArcGIS: ' + (err && err.message ? err.message : String(err)), 'error');
+          return;
+        }
+      }
+    }
+    if (!fc || !fc.features.length) {
+      if (window.showToast) window.showToast('Layer ini tidak memiliki daftar fitur.', 'info');
+      return;
+    }
+    if (typeof window.registerDynamicAttrTable !== 'function' || typeof window.openAttrTableForLayer !== 'function') {
+      if (window.showToast) window.showToast('Modul tabel atribut belum siap. Muat ulang halaman lalu coba lagi.', 'error');
+      return;
+    }
+    window.registerDynamicAttrTable(entry.id, {
+      name: entry.label,
+      type: 'vector',
+      getFeatures: function () { return flattenUploadedFeatures(entry); },
+      getLatLng: function (item) { return item && item._ll ? item._ll : null; }
+    });
+    /* Sheet Layer Aktif diminimalkan dulu supaya tidak menutupi sheet Tabel
+       -- perilaku yang sama dengan tombol tabel pada baris katalog. */
+    if (window.SheetDrag && window.SheetDrag.isOpen('al') && !window.SheetDrag.isMinimized('al')) {
+      window.SheetDrag.minimize('al');
+    }
+    window.openAttrTableForLayer(entry.id);
+  }
+
   function activeLayersPanelOpen() {
     return !!(window.SheetDrag && window.SheetDrag.isOpen && window.SheetDrag.isOpen('al'));
   }
-
   /* Nyalakan/matikan layer dari panel: lewat checkbox katalog agar semua
      handler (legend terpadu, tabel atribut, dsb.) ikut berjalan. Bila
      katalog belum pernah dirender, render dulu tanpa membukanya. */
@@ -6374,7 +6489,10 @@ function syncLayerCatalogState() {
       var label = document.createElement('label');
       label.setAttribute('for', cb.id);
       label.textContent = l.label;
-      if (l.subtitle) label.title = l.subtitle; /* tooltip: jenis · jumlah fitur */
+      /* Tooltip memuat nama lengkap + jenis & jumlah fitur. Perlu nama
+         lengkap di sini karena CSS .al-item label memangkas nama panjang
+         dengan elipsis supaya baris tetap satu baris. */
+      label.title = l.subtitle ? (l.label + ' \u2014 ' + l.subtitle) : l.label;
 
       var actions = document.createElement('div');
       actions.className = 'lc-item-actions';
@@ -6404,7 +6522,36 @@ function syncLayerCatalogState() {
       });
       actions.appendChild(eyeBtn);
 
-      if (typeof hasAttrSupport === 'function' && hasAttrSupport(l.id)) {
+      /* Ikon tabel khusus baris unggahan (2026-11-02): layer yang berasal
+         dari panel GeoData ("Tambahkan data dari ArcGIS/GeoServer") dan
+         unggahan SHP/GeoJSON/GPX/KMZ tidak punya id katalog, sehingga tombol
+         Tabel Atribut bawaan tidak pernah muncul untuk barisnya. Daftar
+         fiturnya sudah tersimpan di memori, jadi satu klik di ikon ini
+         membuka seluruh fiturnya di sheet Tabel. */
+      if (isUploaded) {
+        var fcUnggahan = uploadedFeatureCollection(l);
+        var arcgisDynamic = l.kind === 'arcgis' && l.ref && l.ref.descriptor && l.ref.descriptor.renderMode === 'dynamic';
+        if ((fcUnggahan && fcUnggahan.features.length) || arcgisDynamic) {
+          var tabelBtn = document.createElement('button');
+          tabelBtn.type = 'button';
+          tabelBtn.className = 'lc-attr-btn lc-attr-btn-show al-table-btn';
+          tabelBtn.dataset.layerId = l.id;
+          tabelBtn.title = fcUnggahan && fcUnggahan.features.length
+            ? 'Lihat daftar fitur (' + fcUnggahan.features.length.toLocaleString('id-ID') + ' fitur)'
+            : 'Muat dan lihat daftar fitur';
+          tabelBtn.innerHTML = ATTR_ICON;
+          tabelBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            bukaTabelFiturUnggahan(l);
+          });
+          actions.appendChild(tabelBtn);
+        }
+      }
+
+      /* Baris unggahan sudah memiliki tombol tabel khusus di atas. Setelah
+         tabel dinamis didaftarkan, hasAttrSupport juga menjadi true untuk id
+         unggahan; cegah tombol umum kedua muncul saat panel dirender ulang. */
+      if (!isUploaded && typeof hasAttrSupport === 'function' && hasAttrSupport(l.id)) {
         var attrBtn = document.createElement('button');
         attrBtn.type = 'button';
         attrBtn.className = 'lc-attr-btn lc-attr-btn-show';
