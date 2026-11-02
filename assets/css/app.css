@@ -17439,19 +17439,22 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   box-sizing:border-box;
   max-height:min(48vh, 520px);
   min-height:180px;
-  overflow:auto;
+  overflow-y:auto;
+  overflow-x:hidden;
   padding:8px;
   border:1px solid #e2eaf3;
   border-radius:12px;
   background:#f8fafc;
   scrollbar-gutter:stable;
 }
-#geoportalLayerList .jstree-container-ul { padding:0 2px; }
-#geoportalLayerList .jstree-node { padding-left:18px; margin:2px 0; }
-#geoportalLayerList .jstree-anchor { box-sizing:border-box; min-height:32px; }
+#geoportalHubCard,
+#geoportalHubCard > .geoportal-card-body { box-sizing:border-box; min-width:0; max-width:100%; overflow-x:hidden; }
+#geoportalLayerList .jstree-container-ul { box-sizing:border-box; width:100%; max-width:100%; padding:0 2px; }
+#geoportalLayerList .jstree-node { box-sizing:border-box; max-width:100%; padding-left:18px; margin:2px 0; }
+#geoportalLayerList .jstree-anchor { box-sizing:border-box; min-height:32px; max-width:100%; }
 #geoportalLayerList .jstree-node[data-level="0"] { padding-left:0; margin:3px 0; }
 #geoportalLayerList .jstree-node[data-level="0"] > .jstree-anchor {
-  width:calc(100% - 2px);
+  width:calc(100% - 26px);
   min-height:38px;
   padding:6px 9px;
   border:1px solid #e3ebf4;
@@ -17467,12 +17470,13 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   font-weight:600;
 }
 #geoportalLayerList .jstree-node[data-hub-key] > .jstree-anchor {
+  width:calc(100% - 28px);
   min-height:34px;
   padding-left:34px;
   padding-right:7px;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
+  overflow-wrap:anywhere;
+  white-space:normal;
+  line-height:1.4;
 }
 #geoportalLayerList .jstree-node > .jstree-children {
   margin-left:10px;
@@ -17501,7 +17505,7 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
 
 /* Pindahkan navigasi format GeoData ke kiri judul sheet. Tampil sebagai
    deret ikon ringkas dengan tooltip agar tetap muat di desktop dan mobile. */
-#geoportalLayerList .geoportal-add-layer { left:25px; right:auto; }
+#geoportalLayerList .geoportal-add-layer { top:7px; left:25px; right:auto; }
 
 /* Submenu impor GeoData menjadi kartu lipat yang seragam dengan Hub. */
 #geotoolsTabMuatData > .geodata-tool-card + .geodata-tool-card { margin-top:10px; }
