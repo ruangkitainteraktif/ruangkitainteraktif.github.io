@@ -6105,6 +6105,26 @@ function syncLayerCatalogState() {
      terdaftar (pudar) sehingga bisa ditampilkan lagi kapan saja. Layer
      dinyalakan ulang dari katalog akan otomatis dibersihkan dari set ini. */
   var _alHiddenIds = {};
+  var _geoportalHubActiveEntries = Object.create(null);
+
+  window.addGeoportalHubLayerToActive = function (key, meta) {
+    if (!key || _geoportalHubActiveEntries[key]) return false;
+    meta = meta || {};
+    _geoportalHubActiveEntries[key] = { key: key, meta: meta };
+    window.dispatchEvent(new CustomEvent('geoportal-hub-active-change', { detail: { key: key, added: true } }));
+    scheduleActiveLayersRefresh();
+    if (window.showToast) window.showToast((meta.label || 'Layer GeoPortal') + ' ditambahkan ke Layer Aktif.', 'success');
+    return true;
+  };
+  window.isGeoportalHubLayerAdded = function (key) { return !!_geoportalHubActiveEntries[key]; };
+  window.removeGeoportalHubLayerFromActive = function (key) {
+    if (!_geoportalHubActiveEntries[key]) return false;
+    if (typeof window.toggleGeoportalHubLayer === 'function') window.toggleGeoportalHubLayer(key, false);
+    delete _geoportalHubActiveEntries[key];
+    window.dispatchEvent(new CustomEvent('geoportal-hub-active-change', { detail: { key: key, added: false } }));
+    scheduleActiveLayersRefresh();
+    return true;
+  };
 
   /* Susunan urutan baris yang disusun user sendiri lewat tombol ▲/▼
      (permintaan 2026-11-01). Tersimpan di localStorage supaya tidak hilang
@@ -6264,6 +6284,11 @@ function syncLayerCatalogState() {
      lain. Dipakai bersama collectActivePanelItems() di bawah. */
   function collectUploadedLayerEntries() {
     var out = [];
+    Object.keys(_geoportalHubActiveEntries).forEach(function (key) {
+      var entry = _geoportalHubActiveEntries[key];
+      var meta = entry && entry.meta || {};
+      out.push({ id: 'geoportal-hub-' + encodeURIComponent(key), label: meta.label || meta.layerName || key, subtitle: 'GeoPortal Hub · ' + (meta.category || 'Layer') + ' · ' + (meta.type || 'WMS').toUpperCase(), uploaded: true, kind: 'geoportal-hub', ref: entry });
+    });
     try {
       if (typeof alatLayers !== 'undefined' && Array.isArray(alatLayers)) {
         alatLayers.forEach(function (item) {
@@ -6314,9 +6339,14 @@ function syncLayerCatalogState() {
      baris keduanya menampilkan/menyembunyikan layer tanpa menghapus data;
      penghapusan total lewat tombol Hapus. */
   function isUploadedLayerOnMap(entry) {
+    if (entry && entry.kind === 'geoportal-hub') return !!(typeof window.isGeoportalHubLayerVisible === 'function' && window.isGeoportalHubLayerVisible(entry.ref.key));
     return !!(entry && entry.leafletLayer && typeof map !== 'undefined' && map && map.hasLayer(entry.leafletLayer));
   }
   function setUploadedLayerOnMap(entry, show) {
+    if (entry && entry.kind === 'geoportal-hub') {
+      if (typeof window.toggleGeoportalHubLayer === 'function') window.toggleGeoportalHubLayer(entry.ref.key, !!show);
+      return;
+    }
     if (!entry || !entry.leafletLayer || typeof map === 'undefined' || !map) return;
     if (show) { if (!map.hasLayer(entry.leafletLayer)) entry.leafletLayer.addTo(map); }
     else if (map.hasLayer(entry.leafletLayer)) map.removeLayer(entry.leafletLayer);
@@ -6326,6 +6356,7 @@ function syncLayerCatalogState() {
      Hapus pada kartu "Layer Dimuat" lama). */
   function hapusLayerUnggahan(entry) {
     if (!entry || !entry.ref) return;
+    if (entry.kind === 'geoportal-hub') { window.removeGeoportalHubLayerFromActive(entry.ref.key); return; }
     /* Konfigurasi tabel dinamis baris ini ikut dibuang supaya tidak ada
        sisa entri untuk id yang sudah tidak ada di daftar. */
     if (typeof window.unregisterDynamicAttrTable === 'function') window.unregisterDynamicAttrTable(entry.id);

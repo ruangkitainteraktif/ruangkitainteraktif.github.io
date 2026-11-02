@@ -85,6 +85,7 @@
 
   // CacheKey layer yang dirender sebagai marker cluster titik (bukan WMS raster).
   const geoportalPointLayerKeys = new Set();
+  const geoportalHubPanelVisibility = new Map();
 
   // ===================== Deteksi server WMS bermasalah =====================
   // Melacak kegagalan tile per wmsUrl (mis. sertifikat SSL kedaluwarsa /
@@ -293,20 +294,22 @@
     return layer;
   }
 
-  async function toggleGeoportalLayer(layerName, visible, wmsUrl = GEOPORTAL_WMS_URL) {
+  async function toggleGeoportalLayer(layerName, visible, wmsUrl = GEOPORTAL_WMS_URL, fromActiveSheet = false) {
 
     const cacheKey = `${wmsUrl}::${layerName}`;
     const layer = geoportalLayers.get(cacheKey);
 
     if (!layer) {
       // Belum pernah dimuat: buat WMS raster secara synchronus agar popup
-      // langsung aktif; di latar belakang coba upgrade ke marker cluster
-      // bila layer adalah titik (WFS).
+      // langsung aktif; capabilities dan percobaan upgrade ke marker
+      // cluster berjalan di latar belakang agar server lambat tidak membuat
+      // toggle di Sheet Layer Aktif terasa tidak merespons.
       if (!visible) return;
-      await loadGeoportalCaps(wmsUrl).catch(() => {});
+      loadGeoportalCaps(wmsUrl).catch(() => {});
       const raster = makeGeoportalRasterLayer(layerName, wmsUrl);
       geoportalLayers.set(cacheKey, raster);
-      if (isGeoportalCheckboxActive(layerName, wmsUrl) && !map.hasLayer(raster)) {
+      const shouldShow = fromActiveSheet ? geoportalHubPanelVisibility.get(cacheKey) === true : isGeoportalCheckboxActive(layerName, wmsUrl);
+      if (shouldShow && !map.hasLayer(raster)) {
         raster.addTo(map);
         flyToGeoportalLayer(raster, wmsUrl, layerName);
       }
@@ -320,7 +323,8 @@
           }
           geoportalLayers.set(cacheKey, clusterLayer);
           geoportalPointLayerKeys.add(cacheKey);
-          if (isGeoportalCheckboxActive(layerName, wmsUrl) && !map.hasLayer(clusterLayer)) {
+          const shouldKeepVisible = fromActiveSheet ? geoportalHubPanelVisibility.get(cacheKey) === true : isGeoportalCheckboxActive(layerName, wmsUrl);
+          if (shouldKeepVisible && !map.hasLayer(clusterLayer)) {
             clusterLayer.addTo(map);
             flyToGeoportalLayer(clusterLayer, wmsUrl, layerName);
           }
@@ -337,6 +341,30 @@
     }
     scheduleRenderGeoportalLegend();
   }
+
+  window.toggleGeoportalHubLayer = function (key, visible) {
+    const separator = String(key || '').lastIndexOf('::');
+    if (separator < 0) return Promise.resolve(false);
+    const wmsUrl = key.slice(0, separator);
+    const layerName = key.slice(separator + 2);
+    if (ARCGIS_SAWAH_CONFIG[layerName] || LBS_VT_CONFIG[layerName]) {
+      geoportalHubPanelVisibility.set(key, !!visible);
+      toggleArcgisSawah(layerName, !!visible);
+      return Promise.resolve(true);
+    }
+    geoportalHubPanelVisibility.set(key, !!visible);
+    return toggleGeoportalLayer(layerName, !!visible, wmsUrl, true).then(() => true);
+  };
+  window.isGeoportalHubLayerVisible = function (key) {
+    const separator = String(key || '').lastIndexOf('::');
+    if (separator >= 0) {
+      const layerName = key.slice(separator + 2);
+      const arcgisLayer = arcgisSawahLayers[layerName] || lbsVtLayers[layerName];
+      if (arcgisLayer) return map.hasLayer(arcgisLayer);
+    }
+    const layer = geoportalLayers.get(key);
+    return !!(layer && map.hasLayer(layer));
+  };
 
   window.isGeoportalCatalogLayerActive = function (key) {
     const separator = key.lastIndexOf('::');
@@ -650,6 +678,14 @@
     if (window.currentActiveTab === 'tab-geoportal') return 'geoportal';
     if (window.currentActiveTab === 'tab-geotani') return 'geotani';
     var dd = document.querySelector('.geotools-dropdown');
+    if (dd && dd.value === 'geotoolsTabGeoTani') return 'geotani';
+    /* GeoPortal Hub kini berada di sheet GeoData. Layer yang ditambahkan
+       dari sana tetap membutuhkan GetFeatureInfo dan legenda GeoPortal,
+       walaupun dropdown GeoTools sedang berada di menu lain. */
+    var hasActiveHubLayer = Array.from(geoportalHubPanelVisibility.entries()).some(function (entry) {
+      return entry[1] && typeof window.isGeoportalHubLayerVisible === 'function' && window.isGeoportalHubLayerVisible(entry[0]);
+    });
+    if (hasActiveHubLayer) return 'geoportal';
     if (dd && dd.value) return GEO_TOOLS_SECTIONS[dd.value] || '';
     return '';
   }
@@ -1132,20 +1168,13 @@
       });
     });
 
-    // Daftarkan layer WMS GeoPortal Hub ke katalog yang menjadi sumber
-    // sheet Layer Aktif. Tanpa ini, event centang di Hub hanya mengubah peta
-    // dan status katalog tidak pernah memiliki baris untuk ditampilkan.
-    if (typeof window.registerGeoportalCatalogLayers === 'function') {
-      window.registerGeoportalCatalogLayers(GEOPORTAL_LAYER_DATA.filter(item => item.type !== 'arcgis'));
-    }
-
     function layerNode(cat, layer, wmsUrl, folderId) {
       const isArcgis = layer.type === 'arcgis';
       const nodeId = isArcgis ? layer.id : (folderId ? `${cat.id}::${folderId}::${layer.id}` : `${cat.id}::${layer.id}`);
       return {
         id: nodeId,
         text: layer.label,
-        li_attr: { 'data-level': folderId ? '2' : '1', 'data-wms-url': wmsUrl, 'data-layer-name': isArcgis ? '' : layer.id }
+        li_attr: { 'data-level': folderId ? '2' : '1', 'data-wms-url': wmsUrl, 'data-layer-name': isArcgis ? '' : layer.id, 'data-hub-key': wmsUrl + '::' + layer.id, 'data-hub-label': layer.label || layer.id, 'data-hub-category': cat.title + (folderId ? ' · ' + (((folderById.get(cat.id + '::' + folderId) || {}).folder || {}).label || folderId) : ''), 'data-hub-type': layer.type || 'wms' }
       };
     }
 
@@ -1206,17 +1235,11 @@
         data: function (node, callback) {
           callback(searchQuery ? (node.id === '#' ? makeSearchTree(searchQuery) : []) : getChildren(node.id));
         },
-        themes: { dots: true, icons: true },
+        themes: { dots: false, icons: true },
         check_callback: true,
         animation: 120
       },
-      checkbox: {
-        keep_selected_style: false,
-        three_state: false,
-        whole_node: true,
-        tie_selection: false
-      },
-      plugins: ['checkbox', 'search'],
+      plugins: ['search'],
       search: {
         show_only_matches: true,
         show_only_matches_children: true,
@@ -1224,6 +1247,52 @@
         fuzzy: false
       }
     });
+
+    function decorateGeoportalLayerButtons() {
+      container.querySelectorAll('li[data-hub-key]').forEach(function (li) {
+        const anchor = li.querySelector(':scope > a.jstree-anchor');
+        if (!anchor) return;
+        let button = li.querySelector(':scope > .geoportal-add-layer');
+        if (!button) {
+          button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'geoportal-add-layer';
+          button.dataset.layerKey = li.getAttribute('data-hub-key');
+          button.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const meta = {
+              label: li.getAttribute('data-hub-label') || 'Layer GeoPortal',
+              category: li.getAttribute('data-hub-category') || 'GeoPortal Hub',
+              type: li.getAttribute('data-hub-type') || 'wms',
+              wmsUrl: li.getAttribute('data-wms-url') || GEOPORTAL_WMS_URL,
+              layerName: li.getAttribute('data-layer-name') || ''
+            };
+            if (typeof window.addGeoportalHubLayerToActive === 'function') {
+              window.addGeoportalHubLayerToActive(button.dataset.layerKey, meta);
+              updateGeoportalLayerButton(button);
+            }
+          });
+          li.appendChild(button);
+        }
+        updateGeoportalLayerButton(button);
+      });
+    }
+
+    function updateGeoportalLayerButton(button) {
+      if (!button) return;
+      const added = typeof window.isGeoportalHubLayerAdded === 'function' && window.isGeoportalHubLayerAdded(button.dataset.layerKey);
+      button.classList.toggle('is-added', added);
+      button.disabled = added;
+      button.title = added ? 'Sudah ada di Layer Aktif' : 'Tambahkan ke Layer Aktif';
+      button.setAttribute('aria-label', button.title);
+      button.innerHTML = added
+        ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>'
+        : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+    }
+    $(container).on('redraw.jstree open_node.jstree search.jstree', decorateGeoportalLayerButtons);
+    window.addEventListener('geoportal-hub-active-change', decorateGeoportalLayerButtons);
+    window.setTimeout(decorateGeoportalLayerButtons, 0);
 
     // Input pencarian sudah ada di GeoPortal Hub, tetapi sebelumnya tidak
     // pernah memanggil plugin search sehingga katalog tampak kosong.
@@ -1253,39 +1322,6 @@
       scheduleUpdateGeoportalServerBadges();
     });
 
-    $(container).on('check_node.jstree', function (e, data) {
-      const node = data.node;
-      if (node.children && node.children.length) return;
-      scheduleUpdateGeoportalServerBadges();
-      const wmsUrl = node.li_attr['data-wms-url'] || GEOPORTAL_WMS_URL;
-      const layerName = node.li_attr['data-layer-name'] || node.id;
-
-      if (ARCGIS_SAWAH_CONFIG[node.id]) {
-        toggleArcgisSawah(node.id, true);
-      } else {
-        toggleGeoportalLayer(layerName, true, wmsUrl);
-      }
-      if (typeof window.setGeoportalCatalogLayerState === 'function') {
-        window.setGeoportalCatalogLayerState(wmsUrl + '::' + layerName, true);
-      }
-    });
-
-    $(container).on('uncheck_node.jstree', function (e, data) {
-      const node = data.node;
-      if (node.children && node.children.length) return;
-      scheduleUpdateGeoportalServerBadges();
-      const wmsUrl = node.li_attr['data-wms-url'] || GEOPORTAL_WMS_URL;
-      const layerName = node.li_attr['data-layer-name'] || node.id;
-
-      if (ARCGIS_SAWAH_CONFIG[node.id]) {
-        toggleArcgisSawah(node.id, false);
-      } else {
-        toggleGeoportalLayer(layerName, false, wmsUrl);
-      }
-      if (typeof window.setGeoportalCatalogLayerState === 'function') {
-        window.setGeoportalCatalogLayerState(wmsUrl + '::' + layerName, false);
-      }
-    });
   }
 
   fetch('assets/data/geoportal-layers.json')

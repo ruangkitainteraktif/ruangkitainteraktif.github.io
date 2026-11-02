@@ -221,6 +221,67 @@
     if (typeof map !== 'undefined' && map) setTimeout(function () { map.invalidateSize(); }, 200);
   }
 
+  function initGeodataToolCards() {
+    var host = document.getElementById('geotoolsTabMuatData');
+    var nav = host && host.querySelector('.geotools-upload-tabs');
+    if (!host || !nav || nav.dataset.cardsReady === '1') return;
+    var cards = [
+      ['alat-tab-shp', 'Impor SHP', 'Muat shapefile ke peta.'],
+      ['alat-tab-geojson', 'Impor GeoJSON', 'Muat data GeoJSON atau Esri JSON ke peta.'],
+      ['alat-tab-gpx', 'Impor GPX / KML', 'Tampilkan jejak dan geometri dari GPS.'],
+      ['alat-tab-kmz', 'Impor KMZ', 'Muat file KMZ dari Google Earth.'],
+      ['alat-tab-arcgis-rest', 'ArcGIS REST', 'Telusuri layanan dan tambahkan layer ke peta.'],
+      ['alat-tab-geoserver', 'GeoServer', 'Telusuri workspace dan layer WFS.'],
+      ['alat-tab-timeline', 'Timeline', 'Muat dan animasikan ekspor Google Maps Timeline.']
+    ];
+    var firstPanel = document.getElementById(cards[0][0]);
+    if (!firstPanel || firstPanel.parentElement !== host) return;
+    var marker = document.createComment('GeoData import cards');
+    host.insertBefore(marker, firstPanel);
+    nav.dataset.cardsReady = '1';
+    nav.remove();
+
+    var fragment = document.createDocumentFragment();
+    cards.forEach(function (spec) {
+      var panel = document.getElementById(spec[0]);
+      if (!panel) return;
+      var oldButton = nav.querySelector('[data-subtab="' + spec[0] + '"]');
+      var card = document.createElement('details');
+      card.className = 'geoportal-card geodata-tool-card';
+      var summary = document.createElement('summary');
+      summary.className = 'gt-card-head';
+      var icon = document.createElement('span');
+      icon.className = 'gt-card-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      var sourceIcon = oldButton && oldButton.querySelector('svg');
+      if (sourceIcon) icon.appendChild(sourceIcon.cloneNode(true));
+      var label = document.createElement('span');
+      var title = document.createElement('b');
+      title.textContent = spec[1];
+      var description = document.createElement('small');
+      description.textContent = spec[2];
+      label.appendChild(title);
+      label.appendChild(description);
+      summary.appendChild(icon);
+      summary.appendChild(label);
+
+      var content = document.createElement('div');
+      content.className = 'geoportal-card-body';
+      panel.classList.remove('active');
+      content.appendChild(panel);
+      card.appendChild(summary);
+      card.appendChild(content);
+      fragment.appendChild(card);
+    });
+    marker.parentNode.replaceChild(fragment, marker);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGeodataToolCards, { once: true });
+  } else {
+    initGeodataToolCards();
+  }
+
   window.openGempaSubtabById = openGempaSubtabById;
   window.openGempaSubtab = openGempaSubtab;
   window.openGeoidSubtab = openGeoidSubtab;
@@ -237,7 +298,11 @@
     if (!tabId) return;
     var activePanel = document.querySelector('.geotools-main-tab-panel.active');
     if (activePanel && activePanel.id !== tabId && typeof window.resetAllLayers === 'function') {
-      window.resetAllLayers();
+      /* Reset layer adalah pembersihan tambahan, bukan prasyarat navigasi.
+       * Jika satu handler layer gagal saat reset, dropdown tetap harus bisa
+       * membuka panel tujuan agar pengguna tidak terkunci di tab sebelumnya. */
+      try { window.resetAllLayers(); }
+      catch (err) { console.warn('[GeoTools] Reset layer gagal saat berpindah menu:', err); }
     }
     var panels = document.querySelectorAll('.geotools-main-tab-panel');
     for (var j = 0; j < panels.length; j++) panels[j].classList.remove('active');
