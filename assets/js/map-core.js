@@ -44,10 +44,17 @@
     var sheet = document.createElement('section');
     sheet.id = 'catalog-popup-sheet';
     sheet.className = 'bhumi-persil-sheet catalog-popup-sheet';
+    var resizeHandle = document.createElement('div');
+    resizeHandle.className = 'sheet-resize-handle';
+    resizeHandle.dataset.sheetResize = 'left';
+    resizeHandle.setAttribute('role', 'separator');
+    resizeHandle.setAttribute('aria-orientation', 'vertical');
+    resizeHandle.setAttribute('aria-label', 'Ubah lebar panel detail layer');
     sheet.setAttribute('role', 'region');
     sheet.setAttribute('aria-label', 'Detail layer peta');
     sheet.setAttribute('aria-hidden', 'true');
     sheet.innerHTML = '<div class="bhumi-persil-sheet-handle" aria-hidden="true"></div><div class="bhumi-persil-sheet-head"><div class="bhumi-persil-sheet-title">Detail Layer</div><div class="bhumi-persil-sheet-actions"><button type="button" class="bhumi-persil-sheet-minimize" aria-label="Minimalkan detail layer" title="Minimalkan panel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button><button type="button" class="bhumi-persil-sheet-close" aria-label="Tutup detail layer" title="Tutup">&times;</button></div></div><div class="bhumi-persil-sheet-content catalog-popup-sheet-content"><div class="catalog-popup-sheet-ad-slot"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-7501816933195235" data-ad-slot="1306506445" data-ad-format="auto" data-full-width-responsive="true"></ins></div><div class="catalog-popup-sheet-cards"></div></div>';
+    sheet.insertBefore(resizeHandle, sheet.firstChild);
     document.body.appendChild(sheet);
     var minimizeButton = sheet.querySelector('.bhumi-persil-sheet-minimize');
     function updateIcon() {
@@ -1499,7 +1506,11 @@ L.control.scale({
     labelOpen: 'Perluas Alat'
   });
 
-  function openDrawSidebar() { if (window.SheetDrag) window.SheetDrag.buka('dm'); }
+  function openDrawSidebar() {
+    muatKategoriDinamis();
+    buildLayerCatalogIfNeeded();
+    if (window.SheetDrag) window.SheetDrag.buka('dm');
+  }
   function closeDrawSidebar() { if (window.SheetDrag) window.SheetDrag.close('dm'); }
   // toggleMinimize, bukan minimize: fungsi inilah yang terikat ke tombol
   // minimize. Kalau minimize() (idempoten) yang dipakai, sekali sheet jadi
@@ -6556,7 +6567,8 @@ function syncLayerCatalogState() {
       buildLayerCatalog(dropdown);
       dropdown.dataset.built = '1';
     }
-    var cb = dropdown.querySelector('.lc-item input[type="checkbox"][data-layer-id="' + id + '"]');
+    var cb = dropdown.querySelector('.lc-item input[type="checkbox"][data-layer-id="' + id + '"]') ||
+      document.querySelector('#mapCatalogList .lc-item input[type="checkbox"][data-layer-id="' + id + '"]');
     if (!cb) return;
     if (cb.checked === !!on) return;
     cb.checked = !!on;
@@ -7590,13 +7602,15 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
     if (searchInput) {
       searchInput.addEventListener('input', function() {
         var q = searchInput.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-        container.classList.toggle('lc-search-active', !!q);
-        container.querySelectorAll('.lc-item').forEach(function(item) {
+        document.querySelectorAll('#layerCatalogDropdown, #mapCatalogList, #drawBasemapHost').forEach(function(root) {
+          root.classList.toggle('lc-search-active', !!q);
+        });
+        document.querySelectorAll('#layerCatalogDropdown .lc-item, #mapCatalogList .lc-item, #drawBasemapHost .lc-item').forEach(function(item) {
           var label = item.querySelector('label');
           var text = (label ? label.textContent : item.textContent).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
           item.style.display = text.indexOf(q) !== -1 ? '' : 'none';
         });
-        container.querySelectorAll('.lc-category').forEach(function(cat) {
+        document.querySelectorAll('#layerCatalogDropdown .lc-category, #mapCatalogList .lc-category, #drawBasemapHost .lc-category').forEach(function(cat) {
           var hasVisibleItem = Array.prototype.some.call(cat.querySelectorAll('.lc-item'), function(item) {
             return item.style.display !== 'none';
           });
@@ -7608,6 +7622,37 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
         });
       });
     }
+
+    mountMapCatalogCategories(container);
+  }
+
+  function mountMapCatalogCategories(source) {
+    var list = document.getElementById('mapCatalogList');
+    var searchHost = document.getElementById('mapCatalogSearchHost');
+    var basemapHost = document.getElementById('drawBasemapHost');
+    if (!source) return;
+    if (list) {
+      list.replaceChildren();
+      list.classList.remove('lc-search-active');
+    }
+    var search = source.querySelector('.lc-search');
+    if (search && searchHost) {
+      var searchWrap = document.createElement('div');
+      searchWrap.className = 'geoportal-search-input-wrapper';
+      var searchIcon = document.createElement('span');
+      searchIcon.className = 'search-icon';
+      searchIcon.setAttribute('aria-hidden', 'true');
+      searchIcon.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>';
+      searchWrap.append(searchIcon, search);
+      searchHost.replaceChildren(searchWrap);
+    }
+    Array.from(source.querySelectorAll('.lc-category')).forEach(function (category) {
+      if (category.hasAttribute('data-lc-always-open')) {
+        if (basemapHost) basemapHost.replaceChildren(category);
+        return;
+      }
+      if (list) list.appendChild(category);
+    });
   }
 
   function updateCatCount(catEl) {
@@ -7621,6 +7666,17 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
   document.addEventListener('DOMContentLoaded', function() {
     var btn = document.getElementById('layerCatalogBtn');
     if (btn) btn.addEventListener('click', function(e) { e.stopPropagation(); toggleLayerCatalog(); });
+
+    var mapCatalogCard = document.getElementById('mapCatalogCard');
+    if (mapCatalogCard) {
+      mapCatalogCard.addEventListener('toggle', function () {
+        if (!mapCatalogCard.open) return;
+        muatKategoriDinamis();
+        buildLayerCatalogIfNeeded();
+        var dropdown = document.getElementById('layerCatalogDropdown');
+        if (dropdown) syncLayerCatalogState();
+      });
+    }
 
     document.addEventListener('click', function(e) {
       if (_layerCatalogOpen && !e.target.closest('.layer-catalog-dropdown') && !e.target.closest('.layer-catalog-btn')) {

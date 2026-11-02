@@ -16784,6 +16784,28 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
     background: linear-gradient(90deg, transparent 0 4px, color-mix(in srgb, var(--border-color) 65%, transparent) 4px 6px, transparent 6px);
   }
 
+  /* Sheet Tabel, Legenda, dan Detail Layer didock di kiri; sisi resize-nya
+     berada di tepi kanan yang berbatasan dengan peta. */
+  :is(#catalog-popup-sheet, #attr-table-sheet, #legendSidebar):not(.is-minimized):not(.attr-table-sheet-minimized):not(.lg-sidebar-minimized)::before {
+    right: 0;
+    left: auto;
+    background: linear-gradient(270deg, transparent 0 4px, color-mix(in srgb, var(--border-color) 65%, transparent) 4px 6px, transparent 6px);
+  }
+  :is(#catalog-popup-sheet, #attr-table-sheet, #legendSidebar) > .sheet-resize-handle {
+    position: absolute;
+    z-index: 1201;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 12px;
+    cursor: ew-resize;
+    touch-action: none;
+    background: linear-gradient(270deg, transparent 0 5px, color-mix(in srgb, var(--border-color) 65%, transparent) 5px 7px, transparent 7px);
+  }
+  :is(#catalog-popup-sheet, #attr-table-sheet, #legendSidebar).is-minimized > .sheet-resize-handle,
+  #attr-table-sheet.attr-table-sheet-minimized > .sheet-resize-handle,
+  #legendSidebar.lg-sidebar-minimized > .sheet-resize-handle { display: none; }
+
   :is(#catalog-popup-sheet,#hotspot-sheet,#geopangan-sheet,#transjakarta-sheet,#transjogja-sheet,#geotools-sheet,#geodata-sheet,#attr-table-sheet,#ai-sheet,.dm-sidebar,.lg-sidebar,.al-sidebar,.pa-panel).desktop-sheet-resizing {
     transition: none !important;
     user-select: none;
@@ -17434,6 +17456,28 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
 #geodataSheetBody > .geodata-panel + .geodata-panel { margin-top:14px; }
 #geodataGeoportalHubPanel > #geoportalHubCard { margin:0; }
 #geoportalHubCard > .geoportal-card-body { padding:12px; }
+#geodataMapCatalogPanel > #mapCatalogCard { margin:0; }
+#mapCatalogCard > .geoportal-card-body { padding:12px; }
+#mapCatalogSearchHost { margin-bottom:10px; }
+#mapCatalogList {
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  max-height:min(58vh, 640px);
+  min-height:180px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:8px;
+  border:1px solid #e2eaf3;
+  border-radius:12px;
+  background:#f8fafc;
+  scrollbar-gutter:stable;
+}
+#mapCatalogList .lc-category { flex:0 0 auto; margin:0; }
+#mapCatalogList .lc-cat-header { width:100%; }
+#mapCatalogList .lc-items { max-height:none; }
+[data-theme="dark"] #mapCatalogList { border-color:#334155; background:#111827; }
 #geoportalHubCard .geoportal-sticky-header { margin-bottom:10px; }
 #geoportalLayerList {
   box-sizing:border-box;
@@ -17548,7 +17592,110 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
 #geotoolsTabMuatData > .geodata-tool-card .geoid-subtab-panel { display:block !important; margin:0; }
 #geotoolsTabMuatData > .geodata-tool-card[open] .geoid-subtab-panel { animation:geodata-card-in .16s ease-out; }
 #geotoolsTabMuatData > .geodata-tool-card .alat-card { margin:0; }
+#geotoolsTabMuatData .xy-table-import { display:grid; grid-template-columns:minmax(0,1fr); grid-auto-flow:row; gap:9px; }
+#geotoolsTabMuatData .xy-table-import > .geotani-form-label { margin:0; }
+#geotoolsTabMuatData .xy-table-import input[type="file"] { box-sizing:border-box; min-width:0; width:100%; height:36px; padding:4px 7px; font-size:11px; }
+#geotoolsTabMuatData .xy-table-import input[type="file"]::file-selector-button { height:26px; margin-right:8px; padding:0 9px; border:1px solid #cbdcf0; border-radius:6px; color:#315a87; background:#f8fafc; font-family:inherit; font-size:10px; font-weight:600; cursor:pointer; }
+#geotoolsTabMuatData .xy-table-help { margin-top:-4px; color:#64748b; font-size:10px; line-height:1.5; }
+#geotoolsTabMuatData .xy-table-sample-link { justify-self:start; color:#1266ad; font-size:11px; font-weight:700; text-decoration:none; }
+#geotoolsTabMuatData .xy-table-sample-link:hover { text-decoration:underline; }
+#geotoolsTabMuatData .xy-table-fields { display:grid; grid-template-columns:minmax(0,1fr); gap:9px; }
+#geotoolsTabMuatData .xy-table-fields label { display:grid; gap:5px; min-width:0; }
+#geotoolsTabMuatData .xy-table-fields select,
+#geotoolsTabMuatData #xyTableCrs { box-sizing:border-box; width:100%; min-width:0; height:36px; }
+#geotoolsTabMuatData .geotools-btn,
+#geotoolsTabMuatData .arcgis-source-action-btn { box-sizing:border-box; width:100%; min-height:36px; height:36px; padding:0 12px; border-radius:8px; font-size:11px; }
+#geotoolsTabMuatData .xy-table-preview { padding:9px 10px; border:1px solid #dbe5f0; border-radius:9px; color:#475569; background:#f8fafc; font-size:11px; line-height:1.5; }
+#geotoolsTabMuatData .xy-table-status { min-height:0; color:#047857; font-size:11px; line-height:1.45; }
+#geotoolsTabMuatData .xy-table-status:empty { display:none; }
+#geotoolsTabMuatData .xy-table-status.is-error { color:#b91c1c; }
+[data-theme="dark"] #geotoolsTabMuatData .xy-table-help { color:#94a3b8; }
+[data-theme="dark"] #geotoolsTabMuatData .xy-table-sample-link { color:#93c5fd; }
+[data-theme="dark"] #geotoolsTabMuatData .xy-table-preview { color:#cbd5e1; border-color:#334155; background:#111827; }
 @keyframes geodata-card-in {
   from { opacity:0; transform:translateY(-3px); }
   to { opacity:1; transform:translateY(0); }
+}
+
+/* Basemap gallery now lives in the first Draw & Measure tool card. */
+#drawBasemapHost { padding:12px 13px !important; }
+#drawBasemapHost .lc-category { margin:0; padding:0; }
+#drawBasemapHost .lc-category + .lc-category { margin:0; padding:0; border:0; }
+#drawBasemapHost .lc-cat-header { display:none; }
+#drawBasemapHost .lc-items { display:block; padding:0; }
+#drawBasemapHost .lc-basemap-group { padding:8px 8px 2px; }
+#drawBasemapHost .lc-bm-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding:6px 8px 2px; }
+#drawBasemapHost .lc-bm-name { min-height:30px; }
+#drawBasemapHost .lc-pin-btn { display:none !important; }
+[data-theme="dark"] #drawBasemapHost .lc-bm-card { background:var(--bg-card); }
+
+/* Shared search field treatment for GeoPortal Hub and Katalog Peta. */
+#geoportalHubCard .geoportal-sticky-header {
+  margin-right:-12px;
+  margin-left:-12px;
+  padding:0 12px;
+  border:0;
+  background:transparent;
+}
+#geoportalHubCard .geoportal-search-input,
+#mapCatalogSearchHost .lc-search {
+  box-sizing:border-box;
+  display:block;
+  width:100%;
+  height:38px;
+  margin:0;
+  padding:0 12px 0 36px;
+  border:1px solid #e1ebf2;
+  border-radius:9px;
+  outline:none;
+  background-color:#fff;
+  color:#234b6d;
+  font:inherit;
+  font-size:12px;
+  line-height:normal;
+  transition:border-color .2s,box-shadow .2s;
+}
+#geoportalHubCard .geoportal-search-input:focus,
+#mapCatalogSearchHost .lc-search:focus {
+  border-color:#70b9dd;
+  background-color:#fff;
+  box-shadow:0 0 0 3px rgba(112,185,221,.15);
+}
+#geoportalHubCard .geoportal-search-input::placeholder,
+#mapCatalogSearchHost .lc-search::placeholder { color:#9fb3c8; }
+#geoportalHubCard .geoportal-search-input-wrapper .search-icon,
+#mapCatalogSearchHost .geoportal-search-input-wrapper .search-icon {
+  left:12px;
+  display:flex;
+  align-items:center;
+  color:#9fb3c8;
+}
+[data-theme="dark"] #geoportalHubCard .geoportal-search-input,
+[data-theme="dark"] #mapCatalogSearchHost .lc-search {
+  border-color:var(--border-color);
+  background-color:var(--bg-input);
+  color:var(--text-primary);
+}
+[data-theme="dark"] #geoportalHubCard .geoportal-search-input::placeholder,
+[data-theme="dark"] #mapCatalogSearchHost .lc-search::placeholder { color:var(--text-muted); }
+
+/* Keep map controls centered in the visible map area beside the standalone
+   TransJakarta route planner, which is not managed by SheetDrag. */
+@media (min-width: 769px) {
+  body.tj-routing-open { --right-sheet-width: var(--desktop-sheet-width, 30vw); }
+  body.tj-routing-open .unified-search,
+  body.tj-routing-open .quick-layer-bar,
+  body.tj-routing-open .petadasar-export-block,
+  body.tj-routing-open #map .map-fab-wrap {
+    left: calc((100vw + var(--left-sheet-width, 0px) - var(--right-sheet-width, 30vw)) / 2) !important;
+    transition: left .3s ease;
+  }
+  body.tj-routing-open .unified-search,
+  body.tj-routing-open .quick-layer-bar,
+  body.tj-routing-open .petadasar-export-block {
+    max-width: calc(100vw - var(--left-sheet-width, 0px) - var(--right-sheet-width, 30vw) - 24px) !important;
+  }
+  body.tj-routing-open #map .leaflet-bottom.leaflet-right {
+    right: calc(var(--right-sheet-width, 30vw) + 12px) !important;
+  }
 }

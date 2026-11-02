@@ -228,6 +228,7 @@
     var cards = [
       ['alat-tab-arcgis-rest', 'ArcGIS REST', 'Telusuri layanan dan tambahkan layer ke peta.'],
       ['alat-tab-geoserver', 'GeoServer', 'Telusuri workspace dan layer WFS.'],
+      ['alat-tab-xy-table', 'Impor Tabel X,Y', 'Buat titik peta dari kolom koordinat pada tabel.'],
       ['alat-tab-shp', 'Impor SHP', 'Muat shapefile ke peta.'],
       ['alat-tab-geojson', 'Impor GeoJSON', 'Muat data GeoJSON atau Esri JSON ke peta.'],
       ['alat-tab-gpx', 'Impor GPX / KML', 'Tampilkan jejak dan geometri dari GPS.'],

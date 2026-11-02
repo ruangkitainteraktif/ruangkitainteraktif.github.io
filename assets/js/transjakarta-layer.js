@@ -1473,12 +1473,14 @@ function tampilkanHalte(v) {
       + '<div class="tj-routing-actions"><button type="button" data-tj-routing-swap aria-label="Tukar halte asal dan tujuan" title="Tukar halte">↕</button>'
       + '<button type="button" class="tj-routing-submit" data-tj-routing-submit>Hitung &amp; bandingkan</button></div>';
     panel.hidden = false;
+    document.body.classList.add('tj-routing-open');
   }
 
   function tutupRouting(pulihkanSheet) {
     routingKoridor = null;
     var panel = routingEl();
     if (panel) { panel.hidden = true; panel.classList.remove('is-minimized'); panel.innerHTML = ''; }
+    document.body.classList.remove('tj-routing-open');
     var el = sheetEl();
     if (el) { el.classList.remove('tj-routing-mode'); el.style.removeProperty('--sheet-h'); }
     if (pulihkanSheet && el && el.classList.contains('sheet-open')) document.body.classList.add('transjakarta-sheet-open');
@@ -1709,6 +1711,7 @@ function tampilkanHalte(v) {
       var minimize = e.target.closest && e.target.closest('[data-tj-routing-minimize]');
       if (minimize) {
         var minimized = panelRouting.classList.toggle('is-minimized');
+        document.body.classList.toggle('tj-routing-open', !minimized && !panelRouting.hidden);
         minimize.setAttribute('aria-label', minimized ? 'Perluas panel routing' : 'Minimalkan panel routing');
         minimize.setAttribute('title', minimized ? 'Perluas panel' : 'Minimalkan panel');
         minimize.innerHTML = minimized

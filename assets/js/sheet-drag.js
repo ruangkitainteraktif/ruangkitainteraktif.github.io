@@ -48,24 +48,35 @@
   var SELECTOR_SHEET_DESKTOP = '#catalog-popup-sheet,#hotspot-sheet,#geopangan-sheet,#transjakarta-sheet,#transjogja-sheet,#geotools-sheet,#geodata-sheet,#attr-table-sheet,#ai-sheet,.dm-sidebar,.lg-sidebar,.al-sidebar,.pa-panel';
   document.addEventListener('pointerdown', function (e) {
     if (window.innerWidth <= BATAS_MOBILE || e.button !== 0) return;
-    var sheet = e.target.closest && e.target.closest(SELECTOR_SHEET_DESKTOP);
-    if (!sheet || e.clientX - sheet.getBoundingClientRect().left > 10) return;
+    var handle = e.target.closest && e.target.closest('[data-sheet-resize="left"]');
+    var sheet = handle ? handle.closest(SELECTOR_SHEET_DESKTOP) : (e.target.closest && e.target.closest(SELECTOR_SHEET_DESKTOP));
+    if (!sheet) return;
+    var rect = sheet.getBoundingClientRect();
+    var panelKiri = sheet.id === 'catalog-popup-sheet' || sheet.id === 'attr-table-sheet' || sheet.id === 'legendSidebar';
+    var tepiResize = panelKiri ? rect.right - e.clientX : e.clientX - rect.left;
+    if (!handle && (tepiResize < 0 || tepiResize > 12)) return;
     if (sheet.classList.contains('sheet-minimized') || sheet.classList.contains('gs-sheet-minimized') || sheet.classList.contains('geodata-sheet-minimized') || sheet.classList.contains('attr-table-sheet-minimized') || sheet.classList.contains('ais-sheet-minimized') || sheet.classList.contains('dm-sidebar-minimized') || sheet.classList.contains('lg-sidebar-minimized') || sheet.classList.contains('pa-min')) return;
-    desktopResize = { sheet: sheet, x: e.clientX, width: sheet.getBoundingClientRect().width };
+    desktopResize = { sheet: sheet, x: e.clientX, width: rect.width, direction: panelKiri ? 1 : -1, panelKiri: panelKiri };
     sheet.classList.add('desktop-sheet-resizing');
     try { sheet.setPointerCapture(e.pointerId); } catch (_) {}
     e.preventDefault();
   });
   window.addEventListener('pointermove', function (e) {
     if (!desktopResize) return;
-    var width = Math.max(240, Math.min(window.innerWidth * 0.5, desktopResize.width + desktopResize.x - e.clientX));
+    var width = Math.max(240, Math.min(window.innerWidth * 0.5, desktopResize.width + (e.clientX - desktopResize.x) * desktopResize.direction));
     desktopResize.sheet.style.setProperty('--desktop-sheet-width', width + 'px');
-    document.body.style.setProperty('--desktop-sheet-width', width + 'px');
+    /* Lebar stylesheet dual-sheet memakai !important, jadi tulis ukuran
+       aktual pada elemen agar pegangan resize tetap berpengaruh. */
+    desktopResize.sheet.style.setProperty('width', width + 'px', 'important');
+    desktopResize.sheet.style.setProperty('max-width', '50vw', 'important');
+    if (desktopResize.panelKiri) document.body.style.setProperty('--left-sheet-width', width + 'px');
+    else document.body.style.setProperty('--desktop-sheet-width', width + 'px');
   });
   function selesaiResizeDesktop() {
     if (!desktopResize) return;
     desktopResize.sheet.classList.remove('desktop-sheet-resizing');
     desktopResize = null;
+    sinkronkanLebarSheetKiri();
     sinkronkanPeta();
   }
   window.addEventListener('pointerup', selesaiResizeDesktop);
@@ -138,6 +149,17 @@
     if (!cfg) return false;
     var e = elDari(cfg);
     return !!(e && e.classList && e.classList.contains(cfg.minClass));
+  }
+
+  function sinkronkanLebarSheetKiri() {
+    var kiri = ['catalog-popup', 'attr', 'lg'];
+    var aktif = null;
+    for (var i = 0; i < kiri.length; i++) {
+      var id = kiri[i];
+      if (isOpen(id) && !isMinimized(id)) { aktif = elDari(DAFTAR[id]); break; }
+    }
+    if (aktif) document.body.style.setProperty('--left-sheet-width', aktif.getBoundingClientRect().width + 'px');
+    else document.body.style.removeProperty('--left-sheet-width');
   }
 
   /* Lepaskan semua stop non-default: `--sheet-h` dihapus supaya CSS
@@ -246,6 +268,7 @@
     document.body.classList.remove('sheet-dragging');
     labelkan(cfg);
     if (cfg.onClose) { try { cfg.onClose(); } catch (err) { lapis(id, 'onClose', err); } }
+    sinkronkanLebarSheetKiri();
     sinkronkanPeta();
   }
 
@@ -257,23 +280,38 @@
     if (!isOpen(id)) { if (!(opsi && opsi.paksa)) return; buka(id, { jaga: true }); }
     keTengah(cfg);
     if (e.classList) e.classList.remove('is-dragging');
+    if (id === 'catalog-popup' || id === 'attr' || id === 'lg') {
+      e.style.removeProperty('width');
+      e.style.removeProperty('max-width');
+    }
     /* Kelas open sengaja TIDAK dimatikan; lihat catatan konvensi di
        kepala file. Yang dimatikan hanya kelas min. */
     kelas(cfg, cfg.minClass, true);
     setBody(cfg, cfg.bodyMin, true);
     labelkan(cfg);
     if (cfg.onMinimize) { try { cfg.onMinimize(true); } catch (err) { lapis(id, 'onMinimize', err); } }
+    sinkronkanLebarSheetKiri();
     sinkronkanPeta();
   }
 
   function restore(id) {
     var cfg = DAFTAR[id];
     if (!cfg) return;
+    var e = elDari(cfg);
+    if (!e) return;
     if (!isOpen(id)) { buka(id); return; }
     kelas(cfg, cfg.minClass, false);
     setBody(cfg, cfg.bodyMin, false);
+    if (id === 'catalog-popup' || id === 'attr' || id === 'lg') {
+      var resizedWidth = parseFloat(e.style.getPropertyValue('--desktop-sheet-width'));
+      if (isFinite(resizedWidth) && resizedWidth >= 240) {
+        e.style.setProperty('width', resizedWidth + 'px', 'important');
+        e.style.setProperty('max-width', '50vw', 'important');
+      }
+    }
     labelkan(cfg);
     if (cfg.onMinimize) { try { cfg.onMinimize(false); } catch (err) { lapis(id, 'onMinimize', err); } }
+    sinkronkanLebarSheetKiri();
     sinkronkanPeta();
   }
 

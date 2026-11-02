@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=20261102-geodata-tree-compact-controls">
+  <link rel="stylesheet" href="assets/css/app.css?v=20261102-catalog-search-shared-v1">
     <link rel="stylesheet" href="assets/css/rdtr-interaktif.css?v=20261024-catalog-pager3">
   <link rel="stylesheet" href="assets/css/geodisaster.css?v=5">
 
@@ -443,9 +443,6 @@
         </button>
         <button type="button" id="aiAnalysisBtn" class="ai-trigger-btn" title="AI Geospatial Analysis (Beta)">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/><polyline points="2 15.5 12 8.5 22 15.5"/><line x1="12" y1="2" x2="12" y2="8.5"/></svg>
-        </button>
-        <button type="button" id="layerCatalogBtn" class="layer-catalog-btn" title="Tambah Layer">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
       </div>
       <div id="unifiedSearchResults" class="unified-search-results"></div>
@@ -751,6 +748,7 @@
 
     <!-- ATTRIBUTE TABLE BOTTOM SHEET -->
     <div id="attr-table-sheet">
+      <div class="sheet-resize-handle" data-sheet-resize="left" role="separator" aria-orientation="vertical" aria-label="Ubah lebar panel tabel"></div>
       <div class="at-sheet-handle" onclick="toggleAttrTableSheet()"></div>
       <div class="at-sheet-head">
         <div class="at-sheet-title" onclick="if(document.getElementById('attr-table-sheet').classList.contains('attr-table-sheet-minimized')) restoreAttrTableSheet()">
@@ -851,6 +849,16 @@
         </div>
       </div>
       <div class="dm-sidebar-body">
+        <details id="dmBasemapCard" class="dm-card">
+          <summary class="gt-card-head">
+            <span class="gt-card-icon" aria-hidden="true">&#127758;</span>
+            <span>
+              <b>Basemap</b>
+              <small>Pilih tampilan peta dasar</small>
+            </span>
+          </summary>
+          <div class="dm-card-body" id="drawBasemapHost"></div>
+        </details>
         <!-- Cek Lokasi: koordinat -> nama wilayah (kecamatan ke bawah).
              Sheet TIDAK ditutup saat tombol ditekan, karena hasilnya harus
              langsung terbaca. Di desktop sidebar 380px di kanan, jadi peta
@@ -1100,6 +1108,7 @@
 
      <!-- LEGEND SIDEBAR -->
     <div id="legendSidebar" class="lg-sidebar">
+      <div class="sheet-resize-handle" data-sheet-resize="left" role="separator" aria-orientation="vertical" aria-label="Ubah lebar panel legenda"></div>
       <div class="sheet-drag-handle"></div>
       <div class="lg-sidebar-head">
         <span class="lg-sidebar-title" onclick="if(document.querySelector('.lg-sidebar').classList.contains('lg-sidebar-minimized')) restoreLegendSidebar()">
@@ -1140,7 +1149,7 @@
         </div>
       </div>
       <div class="al-sidebar-body" id="activeLayersSidebarBody">
-        <p class="al-empty" id="activeLayersEmpty">Belum ada layer aktif &mdash; aktifkan layer dari Katalog Layer.</p>
+        <p class="al-empty" id="activeLayersEmpty">Belum ada layer aktif &mdash; aktifkan layer dari Katalog Peta.</p>
       </div>
     </div>
 
@@ -3627,12 +3636,27 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
         <div class="geoportal-sticky-header">
           <div class="geoportal-search-container">
             <div class="geoportal-search-input-wrapper">
-              <span class="search-icon">&#128269;</span>
+              <span class="search-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></span>
               <input type="text" id="geoportalSearchInput" class="geoportal-search-input with-icon" placeholder="Cari layer atau kategori..." autocomplete="off" />
             </div>
           </div>
         </div>
         <div id="geoportalLayerList"></div>
+      </div>
+    </details>
+  </div>
+  <div id="geodataMapCatalogPanel" class="geodata-panel">
+    <details class="geoportal-card" id="mapCatalogCard" aria-labelledby="mapCatalogTitle">
+      <summary class="gt-card-head">
+        <span class="gt-card-icon" aria-hidden="true">&#128203;</span>
+        <span>
+          <b id="mapCatalogTitle">Katalog Peta</b>
+          <small>Jelajahi dan aktifkan layer peta tematik</small>
+        </span>
+      </summary>
+      <div class="geoportal-card-body">
+        <div id="mapCatalogSearchHost"></div>
+        <div id="mapCatalogList" aria-label="Daftar kategori layer peta"></div>
       </div>
     </details>
   </div>
@@ -3656,6 +3680,9 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
       </button>
       <button class="geoid-subtab-btn" data-subtab="alat-tab-geoserver" type="button" title="GeoServer" aria-label="GeoServer" onclick="openGeoidSubtab(this)">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg><span>GeoServer</span>
+      </button>
+      <button class="geoid-subtab-btn" data-subtab="alat-tab-xy-table" type="button" title="Impor Tabel X,Y" aria-label="Impor Tabel X,Y" onclick="openGeoidSubtab(this)">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16M15 4v16"/><circle cx="12" cy="13" r="1.4"/></svg><span>Tabel X,Y</span>
       </button>
       <button class="geoid-subtab-btn" data-subtab="alat-tab-timeline" type="button" title="Timeline" aria-label="Timeline" onclick="openGeoidSubtab(this)">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg><span>Timeline</span>
@@ -3849,6 +3876,38 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                </div>
              </div>
 
+            <!-- XY Table Panel -->
+            <div id="alat-tab-xy-table" class="geoid-subtab-panel">
+              <div class="alat-card">
+                <div class="alat-card-head">
+                  <span class="gt-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16M15 4v16"/><circle cx="12" cy="13" r="1.4"/></svg></span>
+                  <span><b>Impor Tabel X,Y</b><small>Buat titik dari kolom koordinat pada tabel CSV.</small></span>
+                </div>
+                <div class="alat-card-body xy-table-import">
+                  <label class="geotani-form-label" for="xyTableFile">File tabel</label>
+                  <input id="xyTableFile" class="geotani-form-input" type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" />
+                  <div class="xy-table-help">Baris pertama harus berisi nama kolom. Pemisah koma, titik koma, atau tab akan dideteksi otomatis.</div>
+                  <a class="xy-table-sample-link" href="assets/data/contoh-tabel-xy.csv" download="contoh-tabel-xy.csv">Unduh file contoh CSV</a>
+                  <div class="xy-table-fields">
+                    <label class="geotani-form-label">Kolom X / Longitude
+                      <select id="xyTableXField" class="geotani-form-input" disabled><option value="">Pilih file tabel dahulu</option></select>
+                    </label>
+                    <label class="geotani-form-label">Kolom Y / Latitude
+                      <select id="xyTableYField" class="geotani-form-input" disabled><option value="">Pilih file tabel dahulu</option></select>
+                    </label>
+                  </div>
+                  <label class="geotani-form-label" for="xyTableCrs">Sistem koordinat tabel</label>
+                  <select id="xyTableCrs" class="geotani-form-input">
+                    <option value="EPSG:4326">WGS 84 (longitude/latitude, EPSG:4326)</option>
+                    <option value="EPSG:3857">Web Mercator (EPSG:3857)</option>
+                  </select>
+                  <div id="xyTablePreview" class="xy-table-preview" aria-live="polite">Belum ada file tabel yang dipilih.</div>
+                  <button id="xyTableImportBtn" class="geotools-btn geotools-btn--green" type="button" disabled>Tampilkan titik di peta</button>
+                  <div id="xyTableStatus" class="xy-table-status" role="status" aria-live="polite"></div>
+                </div>
+              </div>
+            </div>
+
              <div id="alatStatus" class="cctv-message"></div>
             <div id="alatLayerInfo" class="alat-layer-info"></div>
 
@@ -4008,8 +4067,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <!-- sheet-drag.js SEQBELUM map-core.js: map-core, hotspot,
          geopangan, attribute-table, ai-analysis, dan polygon-analysis
          semuanya mendaftarkan sheet ke window.SheetDrag saat dimuat. -->
-    <script src="assets/js/sheet-drag.js?v=20261031-active-layers-panel"></script>
-    <script src="assets/js/map-core.js?v=20261102-geoportal-hub-storage"></script>
+    <script src="assets/js/sheet-drag.js?v=20261102-left-sheet-resize-v3"></script>
+    <script src="assets/js/map-core.js?v=20261102-catalog-search-shared-v1"></script>
     <script src="assets/js/isric-soil-layers.js?v=20261007-wrb-clip"></script>
     <script src="assets/js/isee-global-soils.js?v=20261010-soil-temperature-legend"></script>
     <script src="assets/js/layer-loading.js?v=20261012-persil-gistaru"></script>
@@ -4049,7 +4108,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/admin-boundary-fallback.js?v=20261010-big-bnpb-boundary-fallback"></script>
     <script src="assets/js/demnas-download.js?v=20261010-village-boundary-fallbacks"></script>
     <script src="assets/js/geoportal-search.js"></script>
-    <script src="assets/js/sidebar.js?v=20261102-geodata-service-cards-first"></script>
+    <script src="assets/js/sidebar.js?v=20261102-xy-table-import"></script>
     <script src="assets/js/earthquake.js"></script>
     <script src="assets/js/attribute-table.js?v=20261022-ad-placements"></script>
     <script src="assets/js/katalog-gempa.js?v=20261006-attr-table"></script>
@@ -4068,6 +4127,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/geotrans-mitradarat.js?v=20261010-geonusa-no-auto-layer"></script>
     <script src="assets/js/detail-subtab.js"></script>
      <script src="assets/js/alat-layers.js?v=20261101-layer-dimuat-merge"></script>
+     <script src="assets/js/xy-table-import.js?v=20261102-v1"></script>
      <script src="assets/js/geoprocessing.js?v=20261010-village-boundary-fallbacks"></script>
      <script src="assets/js/arcgis-source-manager.js?v=20261011-shp-label"></script>
       <script src="assets/js/geoserver-source-manager.js?v=20261026-village-search-single"></script>
@@ -4214,7 +4274,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/sppg-district.js"></script>
   <script src="assets/js/water-need.js?v=2"></script>
   <script src="assets/js/ai-analysis.js?v=20261012-persil-gistaru"></script>
-    <script src="assets/js/sheet-donation-ads.js?v=20261102-legend-single-card"></script>
+    <script src="assets/js/sheet-donation-ads.js?v=20261102-donation-top"></script>
 
 
   <script src="assets/js/population-chart.js"></script>
