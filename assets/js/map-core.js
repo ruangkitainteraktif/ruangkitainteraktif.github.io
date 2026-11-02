@@ -6106,11 +6106,37 @@ function syncLayerCatalogState() {
      dinyalakan ulang dari katalog akan otomatis dibersihkan dari set ini. */
   var _alHiddenIds = {};
   var _geoportalHubActiveEntries = Object.create(null);
+  var _geoportalHubStorageKey = 'ruangkita-geoportal-hub-active-v1';
+  try {
+    var _savedGeoportalHubEntries = JSON.parse(localStorage.getItem(_geoportalHubStorageKey) || '[]');
+    if (Array.isArray(_savedGeoportalHubEntries)) {
+      _savedGeoportalHubEntries.forEach(function (saved) {
+        if (!saved || typeof saved.key !== 'string' || !saved.key || typeof saved.meta !== 'object') return;
+        _geoportalHubActiveEntries[saved.key] = {
+          key: saved.key,
+          meta: saved.meta || {},
+          visible: saved.visible === true
+        };
+      });
+    }
+  } catch (e) { _geoportalHubActiveEntries = Object.create(null); }
+
+  function saveGeoportalHubActiveEntries() {
+    try {
+      localStorage.setItem(_geoportalHubStorageKey, JSON.stringify(
+        Object.keys(_geoportalHubActiveEntries).map(function (key) {
+          var entry = _geoportalHubActiveEntries[key];
+          return { key: key, meta: entry.meta || {}, visible: entry.visible === true };
+        })
+      ));
+    } catch (e) { /* storage penuh/terblokir: layer tetap berfungsi selama sesi ini */ }
+  }
 
   window.addGeoportalHubLayerToActive = function (key, meta) {
     if (!key || _geoportalHubActiveEntries[key]) return false;
     meta = meta || {};
-    _geoportalHubActiveEntries[key] = { key: key, meta: meta };
+    _geoportalHubActiveEntries[key] = { key: key, meta: meta, visible: false };
+    saveGeoportalHubActiveEntries();
     window.dispatchEvent(new CustomEvent('geoportal-hub-active-change', { detail: { key: key, added: true } }));
     scheduleActiveLayersRefresh();
     if (window.showToast) window.showToast((meta.label || 'Layer GeoPortal') + ' ditambahkan ke Layer Aktif.', 'success');
@@ -6121,9 +6147,18 @@ function syncLayerCatalogState() {
     if (!_geoportalHubActiveEntries[key]) return false;
     if (typeof window.toggleGeoportalHubLayer === 'function') window.toggleGeoportalHubLayer(key, false);
     delete _geoportalHubActiveEntries[key];
+    saveGeoportalHubActiveEntries();
     window.dispatchEvent(new CustomEvent('geoportal-hub-active-change', { detail: { key: key, added: false } }));
     scheduleActiveLayersRefresh();
     return true;
+  };
+  window.restoreGeoportalHubActiveLayers = function () {
+    Object.keys(_geoportalHubActiveEntries).forEach(function (key) {
+      var entry = _geoportalHubActiveEntries[key];
+      if (!entry || entry.visible !== true) return;
+      if (typeof window.toggleGeoportalHubLayer === 'function') window.toggleGeoportalHubLayer(key, true);
+    });
+    scheduleActiveLayersRefresh();
   };
 
   /* Susunan urutan baris yang disusun user sendiri lewat tombol ▲/▼
@@ -6344,6 +6379,8 @@ function syncLayerCatalogState() {
   }
   function setUploadedLayerOnMap(entry, show) {
     if (entry && entry.kind === 'geoportal-hub') {
+      entry.ref.visible = !!show;
+      saveGeoportalHubActiveEntries();
       if (typeof window.toggleGeoportalHubLayer === 'function') window.toggleGeoportalHubLayer(entry.ref.key, !!show);
       return;
     }

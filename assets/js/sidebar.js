@@ -226,12 +226,12 @@
     var nav = host && host.querySelector('.geotools-upload-tabs');
     if (!host || !nav || nav.dataset.cardsReady === '1') return;
     var cards = [
+      ['alat-tab-arcgis-rest', 'ArcGIS REST', 'Telusuri layanan dan tambahkan layer ke peta.'],
+      ['alat-tab-geoserver', 'GeoServer', 'Telusuri workspace dan layer WFS.'],
       ['alat-tab-shp', 'Impor SHP', 'Muat shapefile ke peta.'],
       ['alat-tab-geojson', 'Impor GeoJSON', 'Muat data GeoJSON atau Esri JSON ke peta.'],
       ['alat-tab-gpx', 'Impor GPX / KML', 'Tampilkan jejak dan geometri dari GPS.'],
       ['alat-tab-kmz', 'Impor KMZ', 'Muat file KMZ dari Google Earth.'],
-      ['alat-tab-arcgis-rest', 'ArcGIS REST', 'Telusuri layanan dan tambahkan layer ke peta.'],
-      ['alat-tab-geoserver', 'GeoServer', 'Telusuri workspace dan layer WFS.'],
       ['alat-tab-timeline', 'Timeline', 'Muat dan animasikan ekspor Google Maps Timeline.']
     ];
     var firstPanel = document.getElementById(cards[0][0]);

@@ -17507,6 +17507,25 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
    deret ikon ringkas dengan tooltip agar tetap muat di desktop dan mobile. */
 #geoportalLayerList .geoportal-add-layer { top:7px; left:25px; right:auto; }
 
+/* Kategori Hub dibuka dengan klik pada barisnya, tanpa kontrol panah terpisah. */
+#geoportalLayerList .jstree-node[data-level="0"] > .jstree-ocl { display:none !important; }
+#geoportalLayerList .jstree-node[data-level="0"] > .jstree-anchor {
+  width:100%;
+  cursor:pointer;
+}
+#geoportalLayerList .jstree-node[data-level="0"] > .jstree-anchor:focus-visible {
+  outline:2px solid #60a5fa;
+  outline-offset:1px;
+}
+#geoportalLayerList { padding:5px; }
+#geoportalLayerList .jstree-container-ul { padding:0; }
+#geoportalLayerList .jstree-node { padding-left:0; }
+#geoportalLayerList .jstree-node > .jstree-children { margin-left:3px; padding-left:5px; }
+#geoportalLayerList .jstree-node[data-level="0"] > .jstree-children { margin-left:3px; }
+#geoportalLayerList .jstree-ocl { display:none !important; }
+#geoportalLayerList .geoportal-add-layer { left:4px; }
+#geoportalLayerList .jstree-node[data-hub-key] > .jstree-anchor { padding-left:32px; }
+
 /* Submenu impor GeoData menjadi kartu lipat yang seragam dengan Hub. */
 #geotoolsTabMuatData > .geodata-tool-card + .geodata-tool-card { margin-top:10px; }
 #geotoolsTabMuatData > .geodata-tool-card > summary { cursor:pointer; list-style:none; }

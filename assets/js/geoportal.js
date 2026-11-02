@@ -1248,6 +1248,18 @@
       }
     });
 
+    // Klik baris kategori/folder menjadi kontrol buka/tutup, tanpa tombol
+    // tree terpisah di sisi kiri.
+    $(container).on('activate_node.jstree', function (event, data) {
+      const node = data && data.node;
+      const tree = $(container).jstree(true);
+      const level = node && node.li_attr && node.li_attr['data-level'];
+      const isCategoryOrFolder = level === '0' || (level === '1' && !node.li_attr['data-hub-key']);
+      if (!node || !tree || !isCategoryOrFolder) return;
+      if (tree.is_open(node)) tree.close_node(node);
+      else tree.open_node(node);
+    });
+
     function decorateGeoportalLayerButtons() {
       container.querySelectorAll('li[data-hub-key]').forEach(function (li) {
         const anchor = li.querySelector(':scope > a.jstree-anchor');
@@ -1315,6 +1327,9 @@
     }
 
     window.__geoportalTreeReady = true;
+    if (typeof window.restoreGeoportalHubActiveLayers === 'function') {
+      window.restoreGeoportalHubActiveLayers();
+    }
     setTimeout(updateGeoportalServerBadges, 600);
     setTimeout(updateGeoportalServerBadges, 2500);
 
