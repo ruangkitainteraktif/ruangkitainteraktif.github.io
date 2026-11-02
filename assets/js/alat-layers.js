@@ -192,6 +192,16 @@
   function renderAlatLayerList() {
     const list = document.getElementById('alatLayerList');
     if (!list) return;
+    /* KARTU "LAYER DIMUAT" DISSEMBUNYIKAN (2026-11-01) -- daftar layer
+       unggahan kini menjadi baris di sheet Layer Aktif (lihat map-core.js:
+       collectUploadedLayerEntries). Selama kartu tersembunyi, lewati render
+       DOM ini supaya tidak ada kerja terbuang; data di alatLayers & seluruh
+       API (addAlatLayer, removeAlatGeoJSONLayer, clearAlatLayers, dll.)
+       TETAP berjalan normal. Untuk menampilkan kartu lagi: hapus penyembunyian
+       di index.html, lalu panggil renderAlatLayerList() sekali (atau muat
+       ulang halaman). */
+    const card = list.closest('.alat-card');
+    if (card && (card.hidden || getComputedStyle(card).display === 'none')) return;
     const cards = alatLayers.map(createAlatLayerCard);
     if (window.ArcGISRestSourceManager && typeof window.ArcGISRestSourceManager.getActive === 'function') {
       const active = window.ArcGISRestSourceManager.getActive();

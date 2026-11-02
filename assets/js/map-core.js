@@ -6027,6 +6027,11 @@ function syncLayerCatalogState() {
   /* Chevron naik/turun untuk tombol geser urutan baris (2026-11-01). */
   var CHEVRON_UP = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>';
   var CHEVRON_DOWN = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+  /* Ikon tempat sampah (Hapus) & unduh (Export SHP) untuk baris layer
+     unggahan di panel (merge "Layer Dimuat" GeoData, 2026-11-01). */
+  var TRASH_ICON = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2l-1-14"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+  var DOWNLOAD_ICON = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+  var LOADING_ICON = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" stroke-dasharray="14 40"/></svg>';
 
   /* Layer yang disembunyikan lewat ikon mata: id => true. Berbeda dengan
      checkbox (yang mematikan layer DAN mengeluarkannya dari daftar), status
@@ -6122,7 +6127,7 @@ function syncLayerCatalogState() {
      panel dan setiap ▲/▼ ditekan. */
   function applyAlMapOrder() {
     if (typeof L === 'undefined' || typeof map === 'undefined') return;
-    var items = sortActiveByUserOrder(collectActiveCatalogLayers());
+    var items = collectActivePanelItems();
     var n = items.length;
     for (var i = 0; i < n; i++) {
       var reg = _alLayerRegistry[items[i].id];
@@ -6143,7 +6148,7 @@ function syncLayerCatalogState() {
      seluruh urutan (sekalian menangkap posisi baris yang belum pernah
      disusun), lalu render ulang. */
   function alMoveLayer(id, dir) {
-    var list = sortActiveByUserOrder(collectActiveCatalogLayers());
+    var list = collectActivePanelItems();
     var i = -1;
     for (var k = 0; k < list.length; k++) { if (list[k].id === id) { i = k; break; } }
     var j = i + dir;
@@ -6183,6 +6188,127 @@ function syncLayerCatalogState() {
     return active;
   }
 
+  /* ── Layer unggahan digabung ke panel Layer Aktif (2026-11-01) ──────
+     Kartu "Layer Dimuat" di panel GeoData disembunyikan; daftarnya kini
+     menjadi baris di sheet Layer Aktif agar pengelolaan layer konsisten.
+     Dua sumber: alatLayers (unggahan SHP/GeoJSON/GPX/KML/KMZ/WFS dari
+     GeoData) dan ArcGISRestSourceManager (layer ArcGIS REST/GeoServer).
+     Entri pseudo memakai id sendiri ('alat-<n>' / 'arcgis-<key>') sehingga
+     tidak bentrok dengan id katalog, dan ikut urutan ▲/▼ seperti baris
+     lain. Dipakai bersama collectActivePanelItems() di bawah. */
+  function collectUploadedLayerEntries() {
+    var out = [];
+    try {
+      if (typeof alatLayers !== 'undefined' && Array.isArray(alatLayers)) {
+        alatLayers.forEach(function (item) {
+          if (!item || !item.layer) return;
+          var nFitur = item.geojson && item.geojson.features ? item.geojson.features.length : 0;
+          out.push({
+            id: 'alat-' + item.id,
+            label: item.name,
+            subtitle: item.type + ' · ' + nFitur + ' fitur',
+            uploaded: true,
+            kind: 'alat',
+            ref: item,
+            leafletLayer: item.layer
+          });
+        });
+      }
+      var mgr = window.ArcGISRestSourceManager;
+      if (mgr && typeof mgr.getActive === 'function') {
+        var active = mgr.getActive() || {};
+        Object.keys(active).forEach(function (key) {
+          var rec = active[key];
+          if (!rec || !rec.layer || !rec.descriptor) return;
+          var fc = rec.descriptor.featureCount;
+          out.push({
+            id: 'arcgis-' + key,
+            label: rec.descriptor.name,
+            subtitle: rec.descriptor.type + ' · ' + (fc == null ? 'ArcGIS REST' : fc + ' fitur'),
+            uploaded: true,
+            kind: 'arcgis',
+            ref: rec,
+            leafletLayer: rec.layer
+          });
+        });
+      }
+    } catch (e) { /* jangan sampai merusak render panel */ }
+    return out;
+  }
+
+  /* Seluruh baris panel: entri unggahan + layer katalog, diurutkan lewat
+     sortActiveByUserOrder sehingga id baru (termasuk unggahan) mengikuti
+     aturan yang sama dengan layer katalog baru. */
+  function collectActivePanelItems() {
+    return sortActiveByUserOrder(collectUploadedLayerEntries().concat(collectActiveCatalogLayers()));
+  }
+
+  /* Entri unggahan: visibilitas = layer ada di peta atau tidak (berbeda
+     dengan layer katalog yang dicentang di katalog). Mata dan checkbox
+     baris keduanya menampilkan/menyembunyikan layer tanpa menghapus data;
+     penghapusan total lewat tombol Hapus. */
+  function isUploadedLayerOnMap(entry) {
+    return !!(entry && entry.leafletLayer && typeof map !== 'undefined' && map && map.hasLayer(entry.leafletLayer));
+  }
+  function setUploadedLayerOnMap(entry, show) {
+    if (!entry || !entry.leafletLayer || typeof map === 'undefined' || !map) return;
+    if (show) { if (!map.hasLayer(entry.leafletLayer)) entry.leafletLayer.addTo(map); }
+    else if (map.hasLayer(entry.leafletLayer)) map.removeLayer(entry.leafletLayer);
+  }
+
+  /* Hapus total satu baris unggahan dari peta & daftar (pengganti tombol
+     Hapus pada kartu "Layer Dimuat" lama). */
+  function hapusLayerUnggahan(entry) {
+    if (!entry || !entry.ref) return;
+    if (entry.kind === 'arcgis') {
+      var mgr = window.ArcGISRestSourceManager;
+      if (mgr && typeof mgr.remove === 'function') mgr.remove(entry.ref.descriptor.key);
+      return;
+    }
+    var item = entry.ref;
+    if (typeof window.removeAlatGeoJSONLayer === 'function') window.removeAlatGeoJSONLayer(item);
+    else if (typeof map !== 'undefined' && map && item.layer && map.hasLayer(item.layer)) map.removeLayer(item.layer);
+    if (item.type === 'GPX' || item.type === 'KML') {
+      if (typeof resetGpxAnimationControls === 'function') resetGpxAnimationControls();
+    }
+  }
+
+  /* Export SHP untuk baris unggahan (dipertahankan saat merge 2026-11-01):
+     GeoServer WFS lewat exportGeoServerShapefile, ArcGIS REST lewat
+     manager.exportShapefile -- keduanya di belakang login Google, persis
+     perilaku kartu "Layer Dimuat" lama. */
+  function eksporSHPUnggahan(entry, btn) {
+    var laporkan = function (msg, isError) {
+      if (window.showToast) window.showToast(msg, isError ? 'error' : 'info');
+      if (typeof setAlatStatus === 'function') setAlatStatus(msg, !!isError);
+    };
+    if (typeof window.RKRequireGoogleLogin !== 'function') {
+      laporkan('Login Google belum siap. Muat ulang halaman lalu coba kembali.', true);
+      return;
+    }
+    window.RKRequireGoogleLogin(async function () {
+      var ikonAsli = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = LOADING_ICON;
+      try {
+        var result;
+        if (entry.kind === 'arcgis') {
+          var mgr = window.ArcGISRestSourceManager;
+          if (!mgr || typeof mgr.exportShapefile !== 'function') throw new Error('Fitur ekspor SHP belum siap.');
+          result = await mgr.exportShapefile(entry.ref.descriptor.key);
+        } else {
+          if (typeof exportGeoServerShapefile !== 'function') throw new Error('Modul ekspor SHP belum siap.');
+          result = await exportGeoServerShapefile(entry.ref);
+        }
+        laporkan(result && result.message ? result.message : 'SHP siap diunduh.', !(result && result.ok));
+      } catch (err) {
+        laporkan('Gagal mengekspor SHP: ' + (err && err.message ? err.message : String(err)), true);
+      }
+      btn.disabled = false;
+      btn.innerHTML = ikonAsli;
+    });
+  }
+
   function activeLayersPanelOpen() {
     return !!(window.SheetDrag && window.SheetDrag.isOpen && window.SheetDrag.isOpen('al'));
   }
@@ -6209,8 +6335,13 @@ function syncLayerCatalogState() {
     var empty = document.getElementById('activeLayersEmpty');
     if (!body) return;
     /* Urutan baris mengikuti susunan user (tombol ▲/▼), bukan urutan
-       katalog; lihat sortActiveByUserOrder(). */
-    var items = sortActiveByUserOrder(collectActiveCatalogLayers());
+       katalog; lihat sortActiveByUserOrder(). Termasuk baris layer
+       unggahan (SHP/GeoJSON/GPX/KMZ + ArcGIS REST) hasil merge kartu
+       "Layer Dimuat" GeoData (2026-11-01). */
+    var items = collectActivePanelItems();
+    /* Id entri unggahan -> entri, dipakai handler checkbox/mata/hapus. */
+    var uploadedById = {};
+    items.forEach(function (it) { if (it.uploaded) uploadedById[it.id] = it; });
 
     var countEl = document.getElementById('activeLayersCount');
     if (countEl) {
@@ -6225,7 +6356,10 @@ function syncLayerCatalogState() {
     Array.prototype.slice.call(body.querySelectorAll('.al-item')).forEach(function (n) { n.remove(); });
 
     items.forEach(function (l, li) {
-      var isHidden = !!_alHiddenIds[l.id];
+      /* Baris unggahan: "sembunyi" = tidak ada di peta (bukan _alHiddenIds);
+         datanya tetap tersimpan sampai ditekan tombol Hapus. */
+      var isUploaded = !!l.uploaded;
+      var isHidden = isUploaded ? !isUploadedLayerOnMap(l) : !!_alHiddenIds[l.id];
       var el = document.createElement('div');
       el.className = 'lc-item al-item' + (isHidden ? ' al-item-hidden' : '');
 
@@ -6240,6 +6374,7 @@ function syncLayerCatalogState() {
       var label = document.createElement('label');
       label.setAttribute('for', cb.id);
       label.textContent = l.label;
+      if (l.subtitle) label.title = l.subtitle; /* tooltip: jenis · jumlah fitur */
 
       var actions = document.createElement('div');
       actions.className = 'lc-item-actions';
@@ -6254,7 +6389,11 @@ function syncLayerCatalogState() {
       eyeBtn.innerHTML = isHidden ? EYE_OFF_ICON : EYE_ICON;
       eyeBtn.addEventListener('click', function (e) {
         e.stopPropagation();
-        if (_alHiddenIds[l.id]) {
+        if (l.uploaded) {
+          /* Entri unggahan: mata = tampilkan/sembunyikan di peta, baris
+             tetap ada di daftar (data tidak dihapus). */
+          setUploadedLayerOnMap(l, !isUploadedLayerOnMap(l));
+        } else if (_alHiddenIds[l.id]) {
           delete _alHiddenIds[l.id];
           setLayerActiveFromPanel(l.id, true);
         } else {
@@ -6290,23 +6429,61 @@ function syncLayerCatalogState() {
         actions.appendChild(attrBtn);
       }
 
-      var pinned = isPinnedLayer(l.id);
-      var pinBtn = document.createElement('button');
-      pinBtn.type = 'button';
-      pinBtn.className = 'lc-pin-btn' + (pinned ? ' lc-pin-btn-active' : '');
-      pinBtn.dataset.layerId = l.id;
-      pinBtn.title = pinned ? 'Hapus Pin' : 'Pin Layer';
-      pinBtn.innerHTML = pinned ? PIN_ICON_FILLED : PIN_ICON_OUTLINE;
-      pinBtn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        togglePinLayer(l.id);
-        /* Tandai katalog perlu dirender ulang supaya ikon pin di dalamnya
-           ikut menyesuaikan saat katalog dibuka lagi. */
-        var dd = document.getElementById('layerCatalogDropdown');
-        if (dd) delete dd.dataset.built;
-        renderActiveLayersPanel();
-      });
-      actions.appendChild(pinBtn);
+      /* Pin hanya untuk layer katalog -- grup "Layer Dipin" membaca
+         katalog, jadi baris unggahan tidak diberi tombol pin. */
+      if (!l.uploaded) {
+        var pinned = isPinnedLayer(l.id);
+        var pinBtn = document.createElement('button');
+        pinBtn.type = 'button';
+        pinBtn.className = 'lc-pin-btn' + (pinned ? ' lc-pin-btn-active' : '');
+        pinBtn.dataset.layerId = l.id;
+        pinBtn.title = pinned ? 'Hapus Pin' : 'Pin Layer';
+        pinBtn.innerHTML = pinned ? PIN_ICON_FILLED : PIN_ICON_OUTLINE;
+        pinBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          togglePinLayer(l.id);
+          /* Tandai katalog perlu dirender ulang supaya ikon pin di dalamnya
+             ikut menyesuaikan saat katalog dibuka lagi. */
+          var dd = document.getElementById('layerCatalogDropdown');
+          if (dd) delete dd.dataset.built;
+          renderActiveLayersPanel();
+        });
+        actions.appendChild(pinBtn);
+      }
+
+      /* Baris unggahan (merge "Layer Dimuat", 2026-11-01): tombol Hapus
+         untuk menghapus total layer, dan Export SHP (dipertahankan sesuai
+         permintaan) untuk GeoServer WFS & ArcGIS REST. */
+      if (isUploaded) {
+        var hapusBtn = document.createElement('button');
+        hapusBtn.type = 'button';
+        hapusBtn.className = 'lc-attr-btn lc-attr-btn-show al-hapus-btn';
+        hapusBtn.dataset.layerId = l.id;
+        hapusBtn.title = 'Hapus layer';
+        hapusBtn.innerHTML = TRASH_ICON;
+        hapusBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          hapusLayerUnggahan(l);
+          renderActiveLayersPanel();
+        });
+        actions.appendChild(hapusBtn);
+
+        var bisaEkspor = l.kind === 'arcgis' ||
+          (l.kind === 'alat' && l.ref && l.ref.type === 'GeoServer WFS');
+        if (bisaEkspor) {
+          var eksBtn = document.createElement('button');
+          eksBtn.type = 'button';
+          eksBtn.className = 'lc-attr-btn lc-attr-btn-show al-export-btn';
+          eksBtn.dataset.layerId = l.id;
+          eksBtn.title = 'Export SHP';
+          eksBtn.innerHTML = DOWNLOAD_ICON;
+          eksBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            eksporSHPUnggahan(l, eksBtn);
+          });
+          actions.appendChild(eksBtn);
+        }
+      }
 
       /* Tombol geser urutan ▲/▼ paling kanan: baris pertama tak bisa naik,
          baris terakhir tak bisa turun. Hanya menyusun daftar di panel ini. */
@@ -6346,10 +6523,18 @@ function syncLayerCatalogState() {
 
     body.querySelectorAll('.al-item input[type="checkbox"]').forEach(function (panelCb) {
       panelCb.addEventListener('change', function () {
+        var idCb = panelCb.dataset.layerId;
+        /* Baris unggahan: checkbox menampilkan/menyembunyikan layer di peta;
+           data tetap tersimpan (hapus total lewat tombol Hapus). */
+        if (uploadedById[idCb]) {
+          setUploadedLayerOnMap(uploadedById[idCb], panelCb.checked);
+          renderActiveLayersPanel();
+          return;
+        }
         /* Mencentang baris yang sedang tersembunyi = menampilkan lagi:
            status sembunyi dibersihkan sebelum layer dinyalakan. */
-        if (panelCb.checked) delete _alHiddenIds[panelCb.dataset.layerId];
-        setLayerActiveFromPanel(panelCb.dataset.layerId, panelCb.checked);
+        if (panelCb.checked) delete _alHiddenIds[idCb];
+        setLayerActiveFromPanel(idCb, panelCb.checked);
         renderActiveLayersPanel();
       });
     });
@@ -6366,7 +6551,7 @@ function syncLayerCatalogState() {
   function updateActiveLayersBadge() {
     var badge = document.getElementById('alFabCount');
     if (!badge) return;
-    var n = collectActiveCatalogLayers().length;
+    var n = collectActivePanelItems().length;
     badge.textContent = String(n);
     badge.hidden = n === 0;
   }
@@ -6397,7 +6582,13 @@ function syncLayerCatalogState() {
     btn.__alBound = true;
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
-      collectActiveCatalogLayers().forEach(function (l) {
+      collectActivePanelItems().forEach(function (l) {
+        if (l.uploaded) {
+          /* Entri unggahan ikut dimatikan (disembunyikan dari peta) tapi
+             datanya tidak dihapus -- hapus total per baris lewat tombol Hapus. */
+          setUploadedLayerOnMap(l, false);
+          return;
+        }
         setLayerActiveFromPanel(l.id, false);
       });
       /* Baris yang tadinya hanya disembunyikan lewat ikon mata (sudah tak
