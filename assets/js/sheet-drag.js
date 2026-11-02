@@ -350,7 +350,8 @@
     chips.forEach(function (chip, index) {
       var bottom = mobile() ? 72 : 68;
       if (mobile() && activeTop !== Infinity) {
-        bottom = Math.max(bottom, window.innerHeight - activeTop + 8);
+        /* Keep minimized-sheet chips clear of the mobile FAB dock. */
+        bottom = Math.max(bottom, window.innerHeight - activeTop + 80);
       }
       chip.style.setProperty('bottom', (bottom + index * 44) + 'px', 'important');
     });

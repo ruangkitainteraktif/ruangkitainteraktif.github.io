@@ -8889,11 +8889,7 @@
       /* #ai-sheet tidak pernah memasang body class sebelumnya, jadi bar
          input chat-nya berada persis di atas navigasi bawah. */
       body.ai-sheet-open:not(.ai-sheet-minimized) .map-fab-wrap {
-        bottom: calc(var(--map-h, 50dvh) + 8px + env(safe-area-inset-bottom, 0px)) !important;
-        transform: translateX(-50%) !important;
-        opacity: 1;
-        pointer-events: auto;
-        transition: bottom 0.3s cubic-bezier(0.32,0.72,0,1), opacity 0.25s ease !important;
+        display: none !important;
       }
 
       /* â”€â”€ Attribute Table Sheet (Mobile: bottom 50vh) â”€â”€ */
@@ -17703,4 +17699,54 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
 .rk-guide-fab { color:#087eaa !important; }
 .rk-guide-overlay[hidden]{display:none}.rk-guide-overlay{position:fixed;inset:0;z-index:12010;background:transparent}.rk-guide-spotlight{display:none;position:fixed;z-index:1;border:2px solid #13b8d4;border-radius:14px;box-shadow:0 0 0 9999px #0b1c2b70,0 0 0 5px #13b8d433;pointer-events:none;transition:all .2s ease}.rk-guide-spotlight.is-visible{display:block}.rk-guide-card{position:fixed;z-index:2;left:50%;bottom:28px;transform:translateX(-50%);width:min(520px,calc(100vw - 28px));padding:20px 22px 16px;border:1px solid #d7e4f1;border-radius:18px;background:#fff;color:#18283d;box-shadow:0 16px 48px #06172e40}.rk-guide-top{display:flex;align-items:center;justify-content:space-between}.rk-guide-kicker{color:#0784a5;font-size:10px;font-weight:800;letter-spacing:.12em}.rk-guide-close{width:30px;height:30px;border:0;border-radius:50%;background:#eff4f9;color:#52647b;font-size:22px;cursor:pointer}.rk-guide-progress{height:4px;margin:10px 0 16px;border-radius:4px;background:#08a7bd;transition:width .2s}.rk-guide-card h2{margin:0 0 8px;font-size:19px}.rk-guide-copy{min-height:48px;margin:0;color:#53657d;font-size:14px;line-height:1.55}.rk-guide-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px}.rk-guide-actions button{min-height:38px;padding:0 16px;border:1px solid #d7e2ee;border-radius:10px;background:#f7f9fc;color:#24364b;font-weight:650;cursor:pointer}.rk-guide-actions .rk-guide-next{border-color:#087eaa;background:#087eaa;color:#fff}.rk-guide-actions button:disabled{opacity:.42;cursor:default}.rk-guide-count{color:#72839a;font-size:12px;font-weight:600}
 @media(max-width:767px){.rk-guide-card{bottom:calc(env(safe-area-inset-bottom,0px) + 14px);padding:16px;border-radius:16px}.rk-guide-card h2{font-size:17px}.rk-guide-copy{font-size:13px;min-height:54px}.rk-guide-spotlight{max-width:calc(100vw - 8px)}}
-@media(max-width:767px){#map .map-fab-items .attr-table-fab{display:none!important}}
+@media(max-width:767px){
+  #map .map-fab-items .attr-table-fab{display:flex!important}
+  #map .map-fab-items .rk-guide-fab{display:none!important}
+}
+
+/* Keep the attribute-table chip consistent with the other mobile sheet chips,
+   and hide it while another sheet is expanded. */
+@media (max-width: 768px) {
+  body.sheet-terbuka :is(
+    #hotspot-sheet.sheet-minimized,
+    #geopangan-sheet.sheet-minimized,
+    #transjakarta-sheet.sheet-minimized,
+    #transjogja-sheet.sheet-minimized,
+    #ai-sheet.ais-sheet-minimized,
+    #geotools-sheet.gs-sheet-minimized,
+    #geodata-sheet.geodata-sheet-minimized,
+    #catalog-popup-sheet.is-open.is-minimized,
+    #attr-table-sheet.attr-table-sheet-minimized,
+    #legendSidebar.lg-sidebar-minimized,
+    #detail-panel.detail-panel-minimized,
+    .bhumi-persil-sheet.is-minimized,
+    .dm-sidebar.dm-sidebar-minimized,
+    .al-sidebar.al-sidebar-minimized,
+    .pa-panel.pa-min
+  ) {
+    display: none !important;
+  }
+
+  #attr-table-sheet.attr-table-sheet-minimized {
+    width: min(220px, calc(100vw - 48px)) !important;
+    min-height: 36px !important;
+    height: 36px !important;
+    max-height: 36px !important;
+    box-sizing: border-box !important;
+    border-radius: 18px !important;
+  }
+  #attr-table-sheet.attr-table-sheet-minimized > .sheet-resize-handle,
+  #attr-table-sheet.attr-table-sheet-minimized .at-sheet-handle,
+  #attr-table-sheet.attr-table-sheet-minimized .at-sheet-body {
+    display: none !important;
+  }
+  #attr-table-sheet.attr-table-sheet-minimized .at-sheet-head {
+    min-height: 36px !important;
+    box-sizing: border-box !important;
+    padding: 4px 14px !important;
+    border-bottom: 0 !important;
+  }
+  body.sheet-terbuka #attr-table-sheet.attr-table-sheet-minimized {
+    display: none !important;
+  }
+}
