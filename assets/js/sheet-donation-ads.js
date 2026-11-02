@@ -1,4 +1,4 @@
-/* Add the RUANGKITA donation card to application sheets. */
+﻿/* Add the RUANGKITA donation card to application sheets. */
 (function () {
   'use strict';
 
@@ -52,15 +52,27 @@
   function addDonationBanners() {
     SHEET_CONTENTS.forEach(function (selector) {
       document.querySelectorAll(selector).forEach(function (content) {
-        var banner = content.querySelector(':scope > .sheet-donation-banner');
-        if (!banner) {
-          banner = createDonationBanner();
-          content.insertBefore(banner, content.firstChild);
+        var banner = null;
+        if (selector === '#legendSidebarBody') {
+          /* Legend content moves between the sidebar and .legend-body. Treat
+             both locations as one slot so resize/open cycles cannot duplicate it. */
+          var legendBody = document.querySelector('.legend-body');
+          var candidates = Array.prototype.slice.call(content.querySelectorAll('.sheet-donation-banner'));
+          if (legendBody) candidates = candidates.concat(Array.prototype.slice.call(legendBody.querySelectorAll('.sheet-donation-banner')));
+          banner = candidates.shift() || null;
+          candidates.forEach(function (duplicate) { duplicate.remove(); });
+          if (!banner) banner = createDonationBanner();
+          if (banner.parentNode !== content) content.insertBefore(banner, content.firstChild);
+        } else {
+          banner = content.querySelector(':scope > .sheet-donation-banner');
+          if (!banner) {
+            banner = createDonationBanner();
+            content.insertBefore(banner, content.firstChild);
+          }
         }
       });
     });
   }
-
   /* Unit fluid di antara kartu pada empat tab GeoTools.
 
 Penempatan memakai iterasi children panel, bukan selektor :scope, karena
