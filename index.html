@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=20261102-catalog-search-shared-v1">
+  <link rel="stylesheet" href="assets/css/app.css?v=20261102-guide-v5">
     <link rel="stylesheet" href="assets/css/rdtr-interaktif.css?v=20261024-catalog-pager3">
   <link rel="stylesheet" href="assets/css/geodisaster.css?v=5">
 
@@ -284,6 +284,9 @@
 
         <!-- Footer -->
         <div class="welcome-modal-footer">
+          <button class="welcome-btn welcome-btn-secondary" type="button" onclick="startRuangKitaWalkthrough()">
+            Panduan penggunaan
+          </button>
           <button class="welcome-btn welcome-btn-primary" onclick="closeWelcomeModal()" type="button">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
             Mulai Jelajahi
@@ -999,7 +1002,7 @@
           </div>
         </details>
 
-        <details class="dm-card">
+        <details id="dmDrawCard" class="dm-card">
           <summary class="gt-card-head">
             <span class="gt-card-icon" aria-hidden="true">&#9999;&#65039;</span>
             <span>
@@ -1032,7 +1035,7 @@
         </div>
           </div>
         </details>
-        <details class="dm-card">
+        <details id="dmMeasureCard" class="dm-card">
           <summary class="gt-card-head">
             <span class="gt-card-icon" aria-hidden="true">&#128207;</span>
             <span>
@@ -4278,6 +4281,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
 
 
   <script src="assets/js/population-chart.js"></script>
+  <script src="assets/js/app-walkthrough.js?v=20261102-guide-v6"></script>
 
   <script type="module" src="assets/js/firebase-auth-gate.js?v=6"></script>
 
