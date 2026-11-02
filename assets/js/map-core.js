@@ -20,6 +20,25 @@
   var catalogPopupCenterTimer = 0;
   var catalogPopupAdTimer = 0;
   var catalogPopupAdRequested = false;
+  var catalogPopupMovedContent = null;
+  function restoreCatalogPopupContent() {
+    var moved = catalogPopupMovedContent;
+    if (!moved) return;
+    if (moved.wrapper && moved.container && !moved.container.contains(moved.wrapper)) {
+      var tip = moved.container.querySelector('.leaflet-popup-tip-container');
+      moved.container.insertBefore(moved.wrapper, tip || moved.container.firstChild);
+    }
+    if (moved.popupContent) {
+      if (moved.popupContentStyle == null) moved.popupContent.removeAttribute('style');
+      else moved.popupContent.setAttribute('style', moved.popupContentStyle);
+    }
+    if (moved.wrapper) {
+      if (moved.popupWrapperStyle == null) moved.wrapper.removeAttribute('style');
+      else moved.wrapper.setAttribute('style', moved.popupWrapperStyle);
+    }
+    catalogPopupMovedContent = null;
+  }
+
   function ensureCatalogPopupSheet() {
     if (catalogPopupSheet) return catalogPopupSheet;
     var sheet = document.createElement('section');
@@ -54,6 +73,7 @@
       updateIcon();
     });
     sheet.querySelector('.bhumi-persil-sheet-close').addEventListener('click', function () {
+      restoreCatalogPopupContent();
       window.clearTimeout(catalogPopupCenterTimer);
       window.clearTimeout(catalogPopupAdTimer);
       /* Sorotan polygon dari layer katalog (mis. OPT Pertanian) ikut dihapus
@@ -98,13 +118,20 @@
 
   function showCatalogPopupInSheet(popup) {
     if (!popup || (popup.options && popup.options.catalogSheet === false)) return false;
+    // Konten Leaflet yang sebelumnya dipindah ke sheet harus dikembalikan
+    // sebelum popup dipakai lagi, termasuk saat polygon yang sama diklik ulang.
+    restoreCatalogPopupContent();
     var latlng = (popup.getLatLng && popup.getLatLng()) || popup._latlng ||
       (popup._source && popup._source.getLatLng && popup._source.getLatLng());
     var popupContainer = popup._container;
     var popupContent = popupContainer && popupContainer.querySelector('.leaflet-popup-content');
     if (!popupContent) return false;
     var popupWrapper = popupContainer.querySelector('.leaflet-popup-content-wrapper') || popupContent;
+    var popupContentStyle = popupContent.getAttribute('style');
+    var popupWrapperStyle = popupWrapper.getAttribute('style');
     var sheet = ensureCatalogPopupSheet();
+    var sheetTitle = sheet.querySelector('.bhumi-persil-sheet-title');
+    if (sheetTitle) sheetTitle.textContent = popupContent.querySelector('.boundary-popup') ? 'Detail Administrasi' : 'Detail Layer';
     var content = sheet.querySelector('.catalog-popup-sheet-cards');
     var card = document.createElement('div');
     card.className = 'catalog-popup-sheet-card';
@@ -168,6 +195,7 @@
     popupContent.style.margin = '0';
     popupWrapper.style.width = '100%';
     popupWrapper.style.maxWidth = '100%';
+    catalogPopupMovedContent = { popup: popup, container: popupContainer, wrapper: popupWrapper, popupContent: popupContent, popupContentStyle: popupContentStyle, popupWrapperStyle: popupWrapperStyle };
     card.appendChild(popupWrapper);
     var persilCard = content.querySelector('.bhumi-persil-detail-card');
     if (persilCard) {
@@ -223,6 +251,28 @@
     return true;
   }
 
+  // Reuse the single Detail Layer sheet for details originating outside
+  // Leaflet popups (for example, GeoPortal Hub GetFeatureInfo).
+  window.showDetailLayerInMainSheet = function (contentNode, title) {
+    if (!contentNode) return false;
+    var sheet = ensureCatalogPopupSheet();
+    var titleEl = sheet.querySelector('.bhumi-persil-sheet-title');
+    if (titleEl) titleEl.textContent = title || 'Detail Layer';
+    var cards = sheet.querySelector('.catalog-popup-sheet-cards');
+    var card = document.createElement('div');
+    card.className = 'catalog-popup-sheet-card';
+    while (contentNode.firstChild) card.appendChild(contentNode.firstChild);
+    cards.replaceChildren(card);
+    var sheetBody = sheet.querySelector('.bhumi-persil-sheet-content');
+    if (sheetBody) { sheetBody.scrollTop = 0; sheetBody.scrollLeft = 0; }
+    if (window.SheetDrag) {
+      if (!window.SheetDrag.isOpen('catalog-popup')) window.SheetDrag.buka('catalog-popup');
+      else if (window.SheetDrag.isMinimized('catalog-popup')) window.SheetDrag.restore('catalog-popup');
+      if (sheet.__updateMinimizeIcon) sheet.__updateMinimizeIcon();
+    } else sheet.classList.add('is-open');
+    sheet.setAttribute('aria-hidden', 'false');
+    return true;
+  };
   map.on('popupopen', function(e) {
     map.eachLayer(function(layer) {
       if (layer !== e.popup._source && layer._popup && layer._popup !== e.popup) {

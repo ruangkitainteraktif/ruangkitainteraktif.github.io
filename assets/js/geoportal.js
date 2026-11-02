@@ -411,6 +411,8 @@
         empty.innerHTML = '<span>📂</span><p>Aktifkan layer dari panel Geoportal.</p><small>Centang layer di panel sebelah kiri, lalu klik pada peta untuk melihat properti fitur.</small>';
       }
       container.appendChild(empty);
+      if (typeof window.showDetailLayerInMainSheet === 'function') window.showDetailLayerInMainSheet(container);
+      else openGeoportalModal();
       return;
     }
 
@@ -462,6 +464,8 @@
       }
       container.appendChild(card);
     });
+    if (typeof window.showDetailLayerInMainSheet === 'function') window.showDetailLayerInMainSheet(container);
+    else openGeoportalModal();
   }
 
   // Dipakai katalog tematik khusus GeoPortal agar popup mengikuti template
@@ -471,7 +475,6 @@
     if (coordsEl && latlng) coordsEl.textContent = `(${latlng.lng.toFixed(5)}, ${latlng.lat.toFixed(5)})`;
     const titleEl = document.getElementById('geoportalModalTitle');
     if (titleEl) titleEl.textContent = title || 'Detail Layer';
-    openGeoportalModal();
     renderGeoportalDetails([{ layerName: title || 'GeoPortal', properties: properties || {} }]);
   };
 
@@ -838,7 +841,6 @@
 
       const coordsEl = document.getElementById('geoportalModalCoords');
       if (coordsEl) coordsEl.innerText = `(${e.latlng.lng.toFixed(5)}, ${e.latlng.lat.toFixed(5)})`;
-      openGeoportalModal();
       renderGeoportalDetails(features);
       return true;
     } catch (err) {
@@ -1111,14 +1113,14 @@
           totalCount += (folder.children || []).length;
           (folder.children || []).forEach(child => {
             const nodeId = `${cat.id}::${folder.id}::${child.id}`;
-            GEOPORTAL_LAYER_DATA.push({ id: child.id, label: child.label, category: cat.title, wmsUrl });
+            GEOPORTAL_LAYER_DATA.push({ id: child.id, label: child.label, category: cat.title, wmsUrl, type: child.type || 'wms' });
             geoportalNodeIndex.set(`${wmsUrl}::${child.id}`, nodeId);
           });
         });
       } else {
         totalCount = cat.layers.length;
         cat.layers.forEach(layer => {
-          GEOPORTAL_LAYER_DATA.push({ id: layer.id, label: layer.label, category: cat.title, wmsUrl });
+          GEOPORTAL_LAYER_DATA.push({ id: layer.id, label: layer.label, category: cat.title, wmsUrl, type: layer.type || 'wms' });
           if (layer.type !== 'arcgis') geoportalNodeIndex.set(`${wmsUrl}::${layer.id}`, `${cat.id}::${layer.id}`);
         });
       }
@@ -1129,6 +1131,13 @@
         li_attr: { 'data-level': '0', 'data-wms-url': wmsUrl }
       });
     });
+
+    // Daftarkan layer WMS GeoPortal Hub ke katalog yang menjadi sumber
+    // sheet Layer Aktif. Tanpa ini, event centang di Hub hanya mengubah peta
+    // dan status katalog tidak pernah memiliki baris untuk ditampilkan.
+    if (typeof window.registerGeoportalCatalogLayers === 'function') {
+      window.registerGeoportalCatalogLayers(GEOPORTAL_LAYER_DATA.filter(item => item.type !== 'arcgis'));
+    }
 
     function layerNode(cat, layer, wmsUrl, folderId) {
       const isArcgis = layer.type === 'arcgis';

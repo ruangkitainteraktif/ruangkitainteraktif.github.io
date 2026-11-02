@@ -455,9 +455,9 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
       // bukan dari fitur batas provinsi yang geometri/luasnya degeneratif.
       const includeArea = !(level === 1 && kdp === '');
       if (geomType === 'polyline') {
-        layers.push(L.polyline(g, { color: isGeotaniMode ? '#16a34a' : '#2563eb', weight: 3, opacity: 0.95, dashArray: '7 5' }).addTo(_m));
+        layers.push(L.polyline(g, { color: isGeotaniMode ? '#16a34a' : '#2563eb', weight: 3, opacity: 0.95 }).addTo(_m));
       } else {
-        layers.push(L.polygon(g, { color: isGeotaniMode ? '#16a34a' : '#2563eb', weight: 3, opacity: 0.95, fillColor: isGeotaniMode ? '#4ade80' : '#60a5fa', fillOpacity: fFill, dashArray: '7 5' }).addTo(_m));
+        layers.push(L.polygon(g, { color: isGeotaniMode ? '#16a34a' : '#2563eb', weight: 3, opacity: 0.95, fillColor: isGeotaniMode ? '#4ade80' : '#60a5fa', fillOpacity: fFill }).addTo(_m));
         if (includeArea) {
           const lw = (a.luaswh != null && !isNaN(parseFloat(a.luaswh))) ? parseFloat(a.luaswh) * 100 : computePolygonAreaHa(g);
           luasHa += lw;
@@ -744,8 +744,8 @@ async function showGeoidBoundary(kode, zoom, options = {}) {
       geoidBoundaryLayer.bindPopup(boundaryPopupHtml, { maxWidth: 300, className: 'boundary-leaflet-popup' });
     }
 
-    // Pastikan klik pada poligon batas selalu membuka popup batas dan tidak
-    // diteruskan ke handler klik peta (yang dapat memulai geocoding).
+    // Klik polygon batas membuka kartu administrasi melalui handler popup
+    // global, yang memindahkannya ke sheet Detail Layer utama.
     geoidBoundaryLayer.on('click', event => {
       if (event.originalEvent) L.DomEvent.stopPropagation(event.originalEvent);
       geoidBoundaryLayer.openPopup(event.latlng);

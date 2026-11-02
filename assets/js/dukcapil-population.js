@@ -34,10 +34,10 @@
     return { ...totals, records: matched.length, source: 'DKB Tahun 2024 Semester 1' };
   }
 
-  function renderDetail(data, kode) {
-    const panelBody = document.querySelector('#detail-panel .panel-body');
+  function renderDetail(data, kode, target) {
+    const panelBody = target || document.querySelector('#detail-panel .panel-body');
     if (!panelBody) return;
-    let section = document.getElementById('dukcapilPopulationDetail');
+    let section = target || document.getElementById('dukcapilPopulationDetail');
     if (!section) {
       section = document.createElement('section');
       section.id = 'dukcapilPopulationDetail';
@@ -110,17 +110,23 @@
     if (!insights) return data;
     insights.prepend(card);
     card.querySelector('[data-dukcapil-detail]')?.addEventListener('click', () => {
-      if (typeof toggleDetailPanel === 'function') toggleDetailPanel(true);
-      document.getElementById('dukcapilPopulationDetail')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.showDukcapilDetail(kode);
     });
     return data;
   };
 
   window.showDukcapilDetail = async function (kode) {
     const data = await getDukcapilPopulation(kode);
-    renderDetail(data, kode);
-    if (typeof toggleDetailPanel === 'function') toggleDetailPanel(true);
-    document.getElementById('dukcapilPopulationDetail')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const detail = document.createElement('section');
+    detail.className = 'dukcapil-main-detail';
+    renderDetail(data, kode, detail);
+    if (typeof window.showDetailLayerInMainSheet === 'function') {
+      window.showDetailLayerInMainSheet(detail, 'Detail Administrasi · Data Penduduk');
+    } else {
+      renderDetail(data, kode);
+      if (typeof toggleDetailPanel === 'function') toggleDetailPanel(true);
+      document.getElementById('dukcapilPopulationDetail')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   window.getDukcapilPopulation = getDukcapilPopulation;
