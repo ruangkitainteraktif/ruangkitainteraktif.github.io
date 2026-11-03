@@ -3091,7 +3091,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                 </span>
               </summary>
               <div class="geotani-lbslsd-body">
-                <p class="geotani-sls-desc">Pilih provinsi untuk menghitung luas sawah dan melihat overlay LBS yang difilter per provinsi. Overlay peta menggunakan LBS 2024, sedangkan statistik memakai data 2023. Setelah semua provinsi dihitung, tampilkan statistik nasional.</p>
+                <p class="geotani-sls-desc">Klik Hitung Nasional untuk menghitung semua provinsi satu per satu dan menampilkan tabel nasional, termasuk rincian per kabupaten/kota. Overlay peta menggunakan LBS 2024, sedangkan statistik memakai data 2023. Tiap provinsi juga dapat dihitung atau ditampilkan batasnya sendiri.</p>
                 <div id="geofarm-sawah-island-steps" class="gf-forest-island-steps"></div>
                 <button id="geofarm-sawah-run" class="geotani-btn-print" type="button" disabled>Hitung Nasional</button>
                 <button id="geofarm-sawah-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" disabled>Reset Peta</button>
@@ -4260,8 +4260,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
        luasnya cuma ada satu implementasi. BNPB mengirim header CORS yang
        echo origin, jadi request diambil langsung tanpa worker proxy. -->
   <script src="assets/js/geotani-tutupan-lahan.js"></script>
-  <script src="assets/js/geofarm-forest-analysis.js?v=20261103-forest-island-image-v10"></script>
-  <script src="assets/js/geofarm-sawah-analysis.js?v=20261103-district-wms-overlay-v7"></script>
+  <script src="assets/js/geofarm-forest-analysis.js?v=20261103-forest-area-orientation-fix-v12"></script>
+  <script src="assets/js/geofarm-sawah-analysis.js?v=20261103-zero-count-regions-v11"></script>
   <!-- KKPR / NIB (ATR/BPN GISTARU): hanya butuh Leaflet dan peta, jadi
        tidak bergantung geodesic-area maupun geoid-wilayah. -->
   <script src="assets/js/geotani-kkpr.js"></script>

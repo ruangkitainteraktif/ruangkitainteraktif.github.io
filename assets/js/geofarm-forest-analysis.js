@@ -9,7 +9,7 @@
   /* Halaman kecil lebih stabil pada service ESDM; halaman adaptif mengecil
      lagi bila server gagal memproses geometri yang kompleks. */
   var CHUNK = 200;
-  var CACHE_KEY = 'geofarm-forest-statistics-esdm-20251018-v4-local';
+  var CACHE_KEY = 'geofarm-forest-statistics-esdm-20251018-v5-geodesic-corrected';
   var FOREST_CLASSES = [
     'Kawasan Konservasi', 'Hutan Lindung', 'Hutan Produksi Tetap',
     'Hutan Produksi Terbatas', 'Hutan Produksi Yang Dapat Dikonversi'
@@ -99,7 +99,18 @@
 
   function geometryAreaHa(geometry) {
     if (!geometry || !Array.isArray(geometry.rings) || !geometry.rings.length || !window.geoArea) return 0;
-    try { return window.geoArea.areaHaFromRings(geometry.rings, true) || 0; }
+    try {
+      /* ArcGIS stores rings as [longitude, latitude], while geoArea expects
+         [latitude, longitude]. Preserve ring winding so multipart exteriors
+         are added and interior holes are subtracted correctly. */
+      var latLngRings = geometry.rings.map(function (ring) {
+        return ring.map(function (point) { return [Number(point[1]), Number(point[0])]; });
+      });
+      if (typeof window.geoArea.areaM2FromRings === 'function') {
+        return window.geoArea.areaM2FromRings(latLngRings, true) / 10000 || 0;
+      }
+      return window.geoArea.areaHaFromRings(latLngRings) || 0;
+    }
     catch (_) { return 0; }
   }
 
@@ -245,7 +256,7 @@
       var mapLoaded = !!forestMapLayers[island.name];
       return '<div class="gf-forest-island-step"><div class="gf-forest-island-meta"><strong>' + esc((index + 1) + '. ' + island.name) + '</strong>' +
         '<small id="gf-forest-island-status-' + index + '">' + (saved ? 'Data tersedia · ' + count + ' poligon' + (mapLoaded ? ' · peta aktif' : ' · peta belum dimuat') : 'Siap dihitung') + '</small></div>' +
-        '<button class="gf-forest-island-button" type="button" data-island-index="' + index + '">' + (saved ? (mapLoaded ? 'Muat ulang peta' : 'Muat peta') : 'Hitung pulau') + '</button></div>';
+        '<button class="gf-forest-island-button" type="button" data-island-index="' + index + '">' + (saved ? (mapLoaded ? 'Muat ulang peta' : 'Muat peta') : 'Hitung luas') + '</button></div>';
     }).join('');
     btn.disabled = !allIslandsReady() || busy;
     if (resetBtn) resetBtn.disabled = busy || !Object.keys(forestMapLayers).some(function (name) { return !!forestMapLayers[name]; });
@@ -453,7 +464,7 @@
       html += '<tr class="gf-forest-grand"><th>' + esc(row.name) + '</th><td>Total pulau</td><td>' + formatHa(row.total) + '</td><td>' + formatHa(row.total / 100) + '</td><td>' + formatPct(totalHa ? row.total / totalHa * 100 : 0) + '</td><td>' + row.polygons.toLocaleString('id-ID') + '</td></tr>';
     });
     html += '<tr class="gf-forest-grand"><th>' + (isNational ? 'Indonesia' : esc(rows[0].name)) + '</th><td>Total ' + (isNational ? 'nasional' : 'pulau') + '</td><td>' + formatHa(totalHa) + '</td><td>' + formatHa(totalHa / 100) + '</td><td>100%</td><td>' + totalPolygons.toLocaleString('id-ID') + '</td></tr></tbody></table></div>';
-    html += '<p class="gf-forest-note">Luas dihitung geodesik dari geometri yang digeneralisasi sekitar 55 m sesuai skala 1:250.000. Grafik menampilkan luas per fungsi; arahkan kursor untuk melihat luas, porsi pulau, dan jumlah poligon. Peta memakai gambar layanan yang difilter per pulau; klik peta untuk melihat informasi objek jika tersedia. Ringkasan statistik tersimpan di browser. Sumber: ESDM, Kawasan Hutan 2025.</p>';
+    html += '<p class="gf-forest-note">Luas dihitung geodesik dari geometri yang digeneralisasi sekitar 55 m sesuai skala 1:250.000. Angka ini adalah luas kawasan berdasarkan fungsi/status, bukan luas tutupan hutan aktual; karena itu tidak sebanding langsung dengan FAO FRA 2025 yang melaporkan sekitar 95,97 juta ha tutupan hutan. Grafik menampilkan luas per fungsi; arahkan kursor untuk melihat luas, porsi pulau, dan jumlah poligon. Peta memakai gambar layanan yang difilter per pulau; klik peta untuk melihat informasi objek jika tersedia. Ringkasan statistik tersimpan di browser. Sumber: ESDM, Kawasan Hutan 2025.</p>';
     output.innerHTML = html;
     if (chart) chart.destroy();
     var canvas = document.getElementById('geofarm-forest-chart');
@@ -559,7 +570,7 @@
   });
 
   var style = document.createElement('style');
-  style.textContent = '.gf-forest-total{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border-radius:12px;background:#ecfdf5;border:1px solid #a7f3d0;color:#064e3b}.gf-forest-total span{font-size:12px;font-weight:600}.gf-forest-total strong{font-size:24px;line-height:1.2}.gf-forest-total small,.gf-forest-note{font-size:11px;color:#64748b}.gf-forest-heading{margin:18px 0 8px;font-size:13px}.gf-forest-table-wrap{overflow-x:auto;border:1px solid #e2e8f0;border-radius:9px}.gf-forest-table{border-collapse:collapse;width:100%;min-width:850px;font-size:11px}.gf-forest-table th,.gf-forest-table td{padding:8px;text-align:right;border-bottom:1px solid #e2e8f0;white-space:nowrap}.gf-forest-table thead th{background:#f8fafc;color:#475569;font-weight:600}.gf-forest-table th:first-child{text-align:left}.gf-forest-table tbody th{font-weight:600}.gf-forest-table .gf-forest-grand{background:#f0fdf4;font-weight:700}.gf-forest-note{line-height:1.5;margin:10px 0 0}.gf-forest-loading{display:flex;align-items:flex-start;gap:10px;padding:10px 2px}.gf-forest-spinner{width:17px;height:17px;flex:0 0 17px;border:2px solid #bbf7d0;border-top-color:#15803d;border-radius:50%;animation:gfForestSpin .75s linear infinite;margin-top:2px}.gf-forest-loading-copy{min-width:0;flex:1}.gf-forest-loading-copy strong{display:block;font-size:12px;color:#334155}.gf-forest-loading-copy small{display:block;margin-top:3px;font-size:11px;color:#64748b}.gf-forest-progress{height:4px;margin-top:8px;background:#e2e8f0;border-radius:9px;overflow:hidden}.gf-forest-progress i{display:block;height:100%;background:#16a34a;border-radius:9px;transition:width .2s ease}.gf-forest-progress-indeterminate i{width:35%;animation:gfForestProgress 1.2s ease-in-out infinite}.gf-forest-error{color:#b91c1c;font-size:12px}.gf-forest-done{color:#166534;font-size:12px}@keyframes gfForestSpin{to{transform:rotate(360deg)}}@keyframes gfForestProgress{0%{transform:translateX(-110%)}100%{transform:translateX(310%)}}';
+  style.textContent = '.geotani-sls-status#geofarm-forest-status{margin-bottom:12px}.gf-forest-total{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border-radius:12px;background:#ecfdf5;border:1px solid #a7f3d0;color:#064e3b}.gf-forest-total span{font-size:12px;font-weight:600}.gf-forest-total strong{font-size:24px;line-height:1.2}.gf-forest-total small,.gf-forest-note{font-size:11px;color:#64748b}.gf-forest-heading{margin:18px 0 8px;font-size:13px}.gf-forest-table-wrap{overflow-x:auto;border:1px solid #e2e8f0;border-radius:9px}.gf-forest-table{border-collapse:collapse;width:100%;min-width:850px;font-size:11px}.gf-forest-table th,.gf-forest-table td{padding:8px;text-align:right;border-bottom:1px solid #e2e8f0;white-space:nowrap}.gf-forest-table thead th{background:#f8fafc;color:#475569;font-weight:600}.gf-forest-table th:first-child{text-align:left}.gf-forest-table tbody th{font-weight:600}.gf-forest-table .gf-forest-grand{background:#f0fdf4;font-weight:700}.gf-forest-note{line-height:1.5;margin:10px 0 0}.gf-forest-loading{display:flex;align-items:flex-start;gap:10px;padding:10px 2px}.gf-forest-spinner{width:17px;height:17px;flex:0 0 17px;border:2px solid #bbf7d0;border-top-color:#15803d;border-radius:50%;animation:gfForestSpin .75s linear infinite;margin-top:2px}.gf-forest-loading-copy{min-width:0;flex:1}.gf-forest-loading-copy strong{display:block;font-size:12px;color:#334155}.gf-forest-loading-copy small{display:block;margin-top:3px;font-size:11px;color:#64748b}.gf-forest-progress{height:4px;margin-top:8px;background:#e2e8f0;border-radius:9px;overflow:hidden}.gf-forest-progress i{display:block;height:100%;background:#16a34a;border-radius:9px;transition:width .2s ease}.gf-forest-progress-indeterminate i{width:35%;animation:gfForestProgress 1.2s ease-in-out infinite}.gf-forest-error{color:#b91c1c;font-size:12px}.gf-forest-done{color:#166534;font-size:12px}@keyframes gfForestSpin{to{transform:rotate(360deg)}}@keyframes gfForestProgress{0%{transform:translateX(-110%)}100%{transform:translateX(310%)}}';
   document.head.appendChild(style);
   var stepStyle = document.createElement('style');
   stepStyle.textContent = '.gf-forest-island-steps{display:grid;gap:7px;margin:12px 0}.gf-forest-island-step{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border:1px solid #e2e8f0;border-radius:9px;background:#fff}.gf-forest-island-meta{display:flex;flex-direction:column;gap:3px;min-width:0}.gf-forest-island-meta strong{font-size:12px;color:#334155}.gf-forest-island-meta small{font-size:10px;color:#64748b}.gf-forest-island-button{flex:0 0 auto;padding:6px 9px;border:1px solid #bbf7d0;border-radius:7px;background:#f0fdf4;color:#166534;font-size:10px;font-weight:600;cursor:pointer}.gf-forest-island-button:disabled,#geofarm-forest-run:disabled{opacity:.55;cursor:wait}.gf-forest-map-legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0;font-size:10px;color:#475569}.gf-forest-map-legend span{display:flex;align-items:center;gap:4px}.gf-forest-map-legend i,.gf-forest-class-dot{display:inline-block;width:9px;height:9px;border-radius:50%;flex:0 0 auto}.gf-forest-class-dot{margin-right:6px}.gf-forest-detail-table{min-width:700px}.gf-forest-popup{font:12px/1.45 system-ui,sans-serif}.gf-forest-popup dl{display:grid;grid-template-columns:100px 1fr;gap:3px 7px;margin:8px 0 0}.gf-forest-popup dt{font-weight:600;color:#64748b}.gf-forest-popup dd{margin:0;overflow-wrap:anywhere}';
