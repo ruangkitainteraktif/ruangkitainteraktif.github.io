@@ -39,6 +39,52 @@
     catalogPopupMovedContent = null;
   }
 
+  /* ── Penjaga lebar slot iklan Detail Layer ──
+
+     AdSense menulis lebar dalam piksel (sering + !important) pada <ins>,
+     host, dan iframe pada detik unit dirender. Lebar sheet bisa berubah
+     SETELAH itu: handle resize desktop, minimize/restore, ganti orientasi,
+     dan mode dua sheet yang memaksa #catalog-popup-sheet menjadi
+     clamp(240px, 26vw, 360px) selama sheet kanan terbuka. Karena lebar
+     iklan membeku, iklannya jadi lebih sempit dari slot (tidak full) atau
+     lebih lebar lalu terpotong overflow: hidden pada slot.
+
+     Dua observer dipasang: ResizeObserver menangkap setiap perubahan lebar
+     slot, MutationObserver menangkap penulisan gaya baru dari AdSense
+     (termasuk ketika unit selesai dirender). Keduanya memanggil
+     samakanLebarIklan, yang hanya menyentuh elemen yang punya lebar inline
+     DAN masih berbeda dari lebar slot. Setelah diperbaiki lebarnya sama,
+     jadi tidak ada tulisan berikutnya -- pengamat tidak bisa berputar. */
+  function samakanLebarIklan(slot) {
+    var ins = slot.querySelector('ins');
+    if (!ins) return;
+    var lebarSlot = slot.clientWidth;
+    /* Slot nol berarti sheet sedang tersembunyi (diminimalkan). Tunggu
+       ResizeObserver memanggil lagi saat slot kembali terlihat. */
+    if (!lebarSlot) return;
+    var nodes = [ins].concat(Array.prototype.slice.call(ins.querySelectorAll('*')));
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (!node || !node.style) continue;
+      /* Hanya elemen yang dilebarkan AdSense; sisanya sudah mengikuti CSS. */
+      if (!node.style.getPropertyValue('width')) continue;
+      if (Math.abs(node.getBoundingClientRect().width - lebarSlot) <= 1) continue;
+      node.style.setProperty('width', '100%', 'important');
+    }
+  }
+
+  function jagaLebarIklan(sheet) {
+    var slot = sheet.querySelector('.catalog-popup-sheet-ad-slot');
+    if (!slot || slot.__jagaLebarIklan) return;
+    slot.__jagaLebarIklan = true;
+    var perbaiki = function () { samakanLebarIklan(slot); };
+    if ('ResizeObserver' in window) new ResizeObserver(perbaiki).observe(slot);
+    if ('MutationObserver' in window) {
+      new MutationObserver(perbaiki).observe(slot, { subtree: true, attributes: true, attributeFilter: ['style'] });
+    }
+    perbaiki();
+  }
+
   function ensureCatalogPopupSheet() {
     if (catalogPopupSheet) return catalogPopupSheet;
     var sheet = document.createElement('section');
@@ -56,6 +102,7 @@
     sheet.innerHTML = '<div class="bhumi-persil-sheet-handle" aria-hidden="true"></div><div class="bhumi-persil-sheet-head"><div class="bhumi-persil-sheet-title">Detail Layer</div><div class="bhumi-persil-sheet-actions"><button type="button" class="bhumi-persil-sheet-minimize" aria-label="Minimalkan detail layer" title="Minimalkan panel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button><button type="button" class="bhumi-persil-sheet-close" aria-label="Tutup detail layer" title="Tutup">&times;</button></div></div><div class="bhumi-persil-sheet-content catalog-popup-sheet-content"><div class="catalog-popup-sheet-ad-slot"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-7501816933195235" data-ad-slot="1306506445" data-ad-format="auto" data-full-width-responsive="true"></ins></div><div class="catalog-popup-sheet-cards"></div></div>';
     sheet.insertBefore(resizeHandle, sheet.firstChild);
     document.body.appendChild(sheet);
+    jagaLebarIklan(sheet);
     var minimizeButton = sheet.querySelector('.bhumi-persil-sheet-minimize');
     function updateIcon() {
       var minimized = sheet.classList.contains('is-minimized');

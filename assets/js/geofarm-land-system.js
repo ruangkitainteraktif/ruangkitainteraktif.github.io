@@ -1,19 +1,19 @@
-/* InaLand BIG national Land System polygons in GeoFarm. */
+/* Desa-level Land System polygons from BIG SatuPeta in GeoFarm. */
 (function () {
   'use strict';
 
-  var API = 'https://inaland.big.go.id/panel/items/sistemlahan';
-  var SOURCE = 'https://inaland.big.go.id/map';
-  var REQUESTED_PAGE_SIZE = 500;
-  var FALLBACK_PAGE_SIZE = 20;
+  var QUERY = 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/28/query';
+  var SOURCE = 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/28';
+  var QUERY_BATCH_SIZE = 100;
+  var QUERY_CONCURRENCY = 3;
   var REQUEST_TIMEOUT_MS = 45000;
-  var MAX_PAGES = 10000;
+  var SERVICE_EXTENT = { xmin: 94.971951812, ymin: -11.007615377, xmax: 127.163453355, ymax: 6.076768401 };
   var controller = null;
   var generation = 0;
   var layer = null;
   var loading = false;
-  var selectedDistrict = null;
-  var cachedDistricts = null;
+  var selectedVillage = null;
+  var cachedVillages = null;
 
   function byId(id) { return document.getElementById(id); }
 
@@ -32,42 +32,43 @@
     return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
   }
 
-  function districtEntries() {
-    if (cachedDistricts) return cachedDistricts;
+  function villageEntries() {
+    if (cachedVillages) return cachedVillages;
     var all = window.KODE_WILAYAH_DATA || [];
     var byCode = Object.create(null);
     all.forEach(function (item) {
       if (item && item.kode) byCode[String(item.kode)] = item.nama || item.kode;
     });
-    cachedDistricts = all.filter(function (item) {
-      return item && item.kode && String(item.kode).split('.').length === 2;
+    cachedVillages = all.filter(function (item) {
+      return item && item.kode && String(item.kode).split('.').length === 4;
     }).map(function (item) {
       var parts = String(item.kode).split('.');
-      var province = byCode[parts[0]] || '';
+      var context = [byCode[parts.slice(0, 3).join('.')], byCode[parts.slice(0, 2).join('.')], byCode[parts[0]]]
+        .filter(function (name) { return !!name; }).join(', ');
       return {
         kode: String(item.kode),
         nama: String(item.nama || item.kode),
-        provinsi: province,
-        label: String(item.nama || item.kode) + (province ? ', ' + province : '')
+        provinsi: byCode[parts[0]] || '',
+        label: String(item.nama || item.kode) + (context ? ', ' + context : '')
       };
     });
-    return cachedDistricts;
+    return cachedVillages;
   }
 
-  function findDistricts(query) {
+  function findVillages(query) {
     var q = normalizeSearch(query);
     if (q.length < 2) return [];
-    return districtEntries().filter(function (item) {
+    return villageEntries().filter(function (item) {
       return normalizeSearch(item.label + ' ' + item.kode).indexOf(q) >= 0;
     }).slice(0, 20);
   }
 
-  function setSelectedDistrict(item) {
-    selectedDistrict = item || null;
+  function setSelectedVillage(item) {
+    selectedVillage = item || null;
     if (item) setStatus('');
-    var input = byId('geotaniLandSystemDistrictSearch');
-    var results = byId('geotaniLandSystemDistrictResults');
-    var selected = byId('geotaniLandSystemDistrictSelected');
+    var input = byId('geotaniLandSystemVillageSearch');
+    var results = byId('geotaniLandSystemVillageResults');
+    var selected = byId('geotaniLandSystemVillageSelected');
     if (input) input.value = item ? item.label : '';
     if (results) { results.hidden = true; results.innerHTML = ''; }
     if (selected) {
@@ -76,10 +77,10 @@
     }
   }
 
-  function showDistrictResults(query) {
-    var results = byId('geotaniLandSystemDistrictResults');
+  function showVillageResults(query) {
+    var results = byId('geotaniLandSystemVillageResults');
     if (!results) return;
-    var matches = findDistricts(query);
+    var matches = findVillages(query);
     results.innerHTML = '';
     if (!matches.length) { results.hidden = true; return; }
     matches.forEach(function (item) {
@@ -88,7 +89,7 @@
       option.textContent = item.label + ' (' + item.kode + ')';
       option.addEventListener('mousedown', function (event) {
         event.preventDefault();
-        setSelectedDistrict(item);
+        setSelectedVillage(item);
       });
       results.appendChild(option);
     });
@@ -108,7 +109,7 @@
         if (!response.ok) throw new Error('HTTP ' + response.status);
         return response.json();
       }).then(function (data) {
-        if (data && data.error) throw new Error(data.error.message || 'InaLand BIG mengembalikan error.');
+        if (data && data.error) throw new Error(data.error.message || 'BIG SatuPeta mengembalikan error.');
         return data;
       }).finally(function () {
         clearTimeout(timeout);
@@ -122,36 +123,63 @@
     });
   }
 
-  function firstArray(payload, depth) {
-    if (Array.isArray(payload)) return payload;
-    if (!payload || typeof payload !== 'object' || depth > 4) return null;
-    var keys = ['features', 'items', 'records', 'rows', 'results', 'result', 'data', 'list', 'geojson', 'geo_json'];
-    for (var i = 0; i < keys.length; i++) {
-      var value = payload[keys[i]];
-      if (Array.isArray(value)) return value;
-      if (value && typeof value === 'object') {
-        var nested = firstArray(value, depth + 1);
-        if (nested) return nested;
-      }
+  async function fetchSpatialFeatures(bounds, village, signal) {
+    if (bounds[0] > SERVICE_EXTENT.xmax || bounds[2] < SERVICE_EXTENT.xmin ||
+        bounds[1] > SERVICE_EXTENT.ymax || bounds[3] < SERVICE_EXTENT.ymin) {
+      throw new Error('Desa ini berada di luar cakupan layer BIG SatuPeta (sekitar 95°–127° BT).');
     }
-    return null;
-  }
+    var geometry = JSON.stringify({
+      xmin: bounds[0], ymin: bounds[1], xmax: bounds[2], ymax: bounds[3],
+      spatialReference: { wkid: 4326 }
+    });
+    var idParams = new URLSearchParams({
+      where: '1=1', geometry: geometry, geometryType: 'esriGeometryEnvelope',
+      spatialRel: 'esriSpatialRelIntersects', inSR: '4326', returnIdsOnly: 'true', f: 'json'
+    });
+    setStatus('Mencari poligon di sekitar ' + village.nama + '…');
+    var idResponse = await fetchJson(QUERY + '?' + idParams.toString(), signal);
+    var ids = idResponse.objectIds || [];
+    if (!ids.length) return [];
 
-  function firstNumber(payload, keys, depth) {
-    if (!payload || typeof payload !== 'object' || depth > 4) return null;
-    for (var i = 0; i < keys.length; i++) {
-      var value = Number(payload[keys[i]]);
-      if (payload[keys[i]] != null && isFinite(value) && value >= 0) return value;
+    var batches = [];
+    for (var i = 0; i < ids.length; i += QUERY_BATCH_SIZE) {
+      batches.push(ids.slice(i, i + QUERY_BATCH_SIZE));
     }
-    var nestedKeys = ['pagination', 'meta', 'page', 'data', 'result'];
-    for (var j = 0; j < nestedKeys.length; j++) {
-      var nested = payload[nestedKeys[j]];
-      if (nested && typeof nested === 'object') {
-        var found = firstNumber(nested, keys, depth + 1);
-        if (found != null) return found;
-      }
+    var results = new Array(batches.length);
+    var next = 0;
+    var completed = 0;
+    var spatialController = new AbortController();
+    var abortSpatial = function () { spatialController.abort(); };
+    if (signal) {
+      if (signal.aborted) spatialController.abort();
+      else signal.addEventListener('abort', abortSpatial, { once: true });
     }
-    return null;
+    function worker() {
+      if (spatialController.signal.aborted) return Promise.resolve();
+      if (next >= batches.length) return Promise.resolve();
+      var index = next++;
+      var params = new URLSearchParams({
+        objectIds: batches[index].join(','),
+        outFields: 'objectid,fcode,namobj,metadata,area,g_litho,m_lsysnam,m_relcls,m_dompro,m_ltype,m_region',
+        returnGeometry: 'true', outSR: '4326', f: 'json'
+      });
+      return fetchJson(QUERY + '?' + params.toString(), spatialController.signal).then(function (data) {
+        if (spatialController.signal.aborted) return;
+        results[index] = data.features || [];
+        completed += results[index].length;
+        setStatus('Mengambil polygon ' + completed.toLocaleString('id-ID') + ' dari ' + ids.length.toLocaleString('id-ID') + ' untuk ' + village.nama + '…');
+        return worker();
+      }).catch(function (error) {
+        if (!spatialController.signal.aborted) spatialController.abort();
+        throw error;
+      });
+    }
+    try {
+      await Promise.all(Array.from({ length: Math.min(QUERY_CONCURRENCY, batches.length) }, worker));
+      return [].concat.apply([], results);
+    } finally {
+      if (signal) signal.removeEventListener('abort', abortSpatial);
+    }
   }
 
   function parseJsonValue(value) {
@@ -278,59 +306,27 @@
     value.forEach(function (part) { ringsFromBoundaryPath(part, output); });
   }
 
-  async function loadDistrictBoundary(district, signal) {
-    var codeVariants = [district.kode, district.kode.replace('.', '')];
-    var lastError = null;
-    for (var i = 0; i < codeVariants.length; i++) {
-      var query = new URLSearchParams({
-        where: "KDPKAB='" + codeVariants[i].replace(/'/g, "''") + "'",
-        f: 'json', returnGeometry: 'true', outSR: '4326', outFields: '*', geometryPrecision: '5'
-      });
-      var url = 'https://geoservices.big.go.id/rbi/rest/services/BATASWILAYAH/BATAS_KABKOTA_AR/MapServer/0/query?' + query.toString();
-      try {
-        var response = await fetchJson(url, signal);
-        if (response && response.error) throw new Error(response.error.message || 'Batas BIG gagal dimuat.');
-        var boundary = combinePolygonGeometries(response && response.features);
-        if (boundary) {
-          boundary.properties = { nama: district.nama, kode: district.kode, provinsi: district.provinsi };
-          return boundary;
-        }
-      } catch (error) {
-        if (signal && signal.aborted) throw error;
-        lastError = error;
-      }
-    }
-
-    if (signal && signal.aborted) throw new Error('Pemuatan dibatalkan.');
-    try {
-      var fallbackUrl = 'https://wilayah.smartartstudio.my.id/api/boundaries/' + encodeURIComponent(district.kode);
-      var fallback = await fetchJson(fallbackUrl, signal);
-      var rings = [];
-      ringsFromBoundaryPath(fallback && fallback.path, rings);
-      if (rings.length) {
-        return {
-          type: 'Feature',
-          properties: { nama: district.nama, kode: district.kode, provinsi: district.provinsi },
-          geometry: { type: 'Polygon', coordinates: rings }
-        };
-      }
-    } catch (error) {
-      if (signal && signal.aborted) throw error;
-      lastError = lastError || error;
-    }
-    throw new Error(lastError && lastError.message
-      ? 'Batas ' + district.nama + ' tidak dapat dimuat: ' + lastError.message
-      : 'Batas ' + district.nama + ' tidak ditemukan.');
+  async function loadVillageBoundary(village, signal) {
+    var url = 'https://wilayah.smartartstudio.my.id/api/boundaries/' + encodeURIComponent(village.kode);
+    var data = await fetchJson(url, signal);
+    var rings = [];
+    ringsFromBoundaryPath(data && data.path, rings);
+    if (!rings.length) throw new Error('Batas desa/kelurahan ' + village.nama + ' tidak ditemukan.');
+    return {
+      type: 'Feature',
+      properties: { nama: village.nama, kode: village.kode, provinsi: village.provinsi },
+      geometry: { type: 'Polygon', coordinates: rings }
+    };
   }
 
-  function clipToDistrict(feature, districtFeature) {
+  function clipToVillage(feature, villageFeature) {
     if (!window.turf || typeof window.turf.intersect !== 'function') {
       throw new Error('Library pemotong polygon belum siap. Muat ulang halaman.');
     }
     try {
       var clipped = window.turf.intersect(window.turf.featureCollection([
         feature,
-        districtFeature
+        villageFeature
       ]));
       if (!clipped || !clipped.geometry) return null;
       clipped.properties = feature.properties || {};
@@ -340,22 +336,7 @@
     }
   }
 
-  function pageUrl(page, pageSize) {
-    return API + '?limit=' + pageSize + '&sort=objectid&page=' + page;
-  }
-
-  async function fetchPage(page, signal, pageSizeState) {
-    try {
-      return await fetchJson(pageUrl(page, pageSizeState.value), signal);
-    } catch (error) {
-      if ((signal && signal.aborted) || pageSizeState.value === FALLBACK_PAGE_SIZE) throw error;
-      pageSizeState.value = FALLBACK_PAGE_SIZE;
-      setStatus('Ukuran halaman besar ditolak layanan; melanjutkan dengan 20 record per halaman…');
-      return fetchJson(pageUrl(page, pageSizeState.value), signal);
-    }
-  }
-
-  function popupHtml(feature, district) {
+  function popupHtml(feature, village) {
     var p = feature.properties || {};
     var fields = [
       ['namobj', 'Nama objek'], ['m_lsysnam', 'Nama sistem lahan'],
@@ -363,8 +344,8 @@
       ['m_ltype', 'Tipe bentang lahan'], ['g_litho', 'Litologi'],
       ['m_region', 'Region'], ['area', 'Luas']
     ];
-    var rows = '<div class="agol-popup-field"><span class="agol-popup-field-label">Kabupaten/Kota</span><span class="agol-popup-field-value">' +
-      escapeHtml(district ? district.label : '-') + '</span></div>';
+    var rows = '<div class="agol-popup-field"><span class="agol-popup-field-label">Desa/Kelurahan</span><span class="agol-popup-field-value">' +
+      escapeHtml(village ? village.label : '-') + '</span></div>';
     var shown = Object.create(null);
     fields.forEach(function (field) {
       var value = propertyValue(p, field[0]);
@@ -389,7 +370,7 @@
       '</div>' +
       '<div class="agol-popup-body"><div class="agol-popup-fields">' + rows + '</div></div>' +
       '<div class="agol-popup-footer"><span>Sumber: Badan Informasi Geospasial (BIG) · ' +
-      '<a href="' + SOURCE + '" target="_blank" rel="noopener noreferrer">InaLand Sistem Lahan</a></span></div>' +
+      '<a href="' + SOURCE + '" target="_blank" rel="noopener noreferrer">BIG SatuPeta</a></span></div>' +
       '</div>';
   }
 
@@ -404,17 +385,17 @@
     return palette[Math.abs(hash) % palette.length];
   }
 
-  function makeLayer(features, district) {
+  function makeLayer(features, village) {
     var options = {
       style: function (feature) {
         var color = categoryColor(feature);
         return { color: '#394b39', weight: 0.35, opacity: 0.7, fillColor: color, fillOpacity: 0.58 };
       },
       onEachFeature: function (feature, polygon) {
-        polygon.bindPopup(popupHtml(feature, district), { maxWidth: 340, className: 'agol-leaflet-popup' });
+        polygon.bindPopup(popupHtml(feature, village), { maxWidth: 340, className: 'agol-leaflet-popup' });
       }
     };
-    /* Canvas keeps county layers usable when the service returns many
+    /* Canvas keeps village layers usable when the service returns many
        polygons. Leaflet Canvas paths remain clickable. */
     if (typeof L.canvas === 'function') options.renderer = L.canvas({ padding: 0.5 });
     return L.geoJSON({ type: 'FeatureCollection', features: features }, {
@@ -424,7 +405,7 @@
     });
   }
 
-  function fitCountyBounds(bounds) {
+  function fitVillageBounds(bounds) {
     if (!bounds || !bounds.isValid()) return;
     var map = window.map || window._map;
     if (!map) return;
@@ -438,102 +419,48 @@
 
   async function loadAll() {
     var thisGeneration = generation;
-    var district = selectedDistrict;
-    if (!district) throw new Error('Pilih kabupaten/kota terlebih dahulu.');
+    var village = selectedVillage;
+    if (!village) throw new Error('Pilih desa/kelurahan terlebih dahulu.');
     controller = new AbortController();
     var signal = controller.signal;
-    setStatus('Memuat batas ' + district.label + '…');
-    var districtFeature = await loadDistrictBoundary(district, signal);
+    setStatus('Memuat batas ' + village.label + '…');
+    var villageFeature = await loadVillageBoundary(village, signal);
     if (thisGeneration !== generation) return;
-    var districtBounds = featureBounds(districtFeature);
-    if (!districtBounds) throw new Error('Geometri batas kabupaten/kota tidak valid.');
-    var pages = 0;
-    var total = null;
-    var lastPage = null;
-    var recordsRead = 0;
+    var villageBounds = featureBounds(villageFeature);
+    if (!villageBounds) throw new Error('Geometri batas desa/kelurahan tidak valid.');
+
+    var rows = await fetchSpatialFeatures(villageBounds, village, signal);
+    if (thisGeneration !== generation) return;
+    setStatus('Memotong ' + rows.length.toLocaleString('id-ID') + ' poligon ke batas ' + village.nama + '…');
     var features = [];
     var seenIds = new Set();
-    var pageSignatures = new Set();
-    var pageSizeState = { value: REQUESTED_PAGE_SIZE };
-
-    for (var page = 1; page <= MAX_PAGES; page++) {
-      if (thisGeneration !== generation) return;
-      setStatus('Mencari poligon ' + district.nama + ' · halaman ' + page + '…');
-      var payload = await fetchPage(page, signal, pageSizeState);
-      if (thisGeneration !== generation) return;
-
-      var rows = firstArray(payload, 0) || [];
-      if (page === 1) {
-        /* Avoid the ambiguous `count` key: several APIs use it for this page,
-           which would otherwise stop pagination after page one. */
-        total = firstNumber(payload, ['total', 'totalItems', 'total_items', 'recordsTotal', 'totalRecords'], 0);
-        lastPage = firstNumber(payload, ['last_page', 'lastPage', 'total_pages', 'totalPages', 'pages'], 0);
+    rows.forEach(function (row) {
+      var feature = toFeature(row);
+      if (!feature || !feature.geometry) return;
+      var type = feature.geometry.type;
+      if (type !== 'Polygon' && type !== 'MultiPolygon') return;
+      var id = propertyValue(feature.properties, 'objectid');
+      if (id != null) {
+        var key = String(id);
+        if (seenIds.has(key)) return;
+        seenIds.add(key);
       }
-      if (!rows.length) break;
-      var rowIds = rows.map(function (row) {
-        var properties = getPropertyBag(row);
-        var id = propertyValue(row, 'objectid');
-        if (id == null) id = propertyValue(row, 'id');
-        if (id == null) id = propertyValue(row, 'fid');
-        if (id == null) id = propertyValue(row, 'ogc_fid');
-        if (id == null) id = propertyValue(properties, 'objectid');
-        if (id == null) id = propertyValue(properties, 'id');
-        if (id == null) id = propertyValue(properties, 'fid');
-        if (id == null) id = propertyValue(properties, 'ogc_fid');
-        return id == null ? null : String(id);
-      });
-      if (rowIds.length && rowIds.every(function (id) { return id != null; })) {
-        var signature = rowIds.join('|');
-        if (pageSignatures.has(signature)) {
-          throw new Error('Paginasi InaLand mengembalikan halaman yang sama berulang kali; data dihentikan agar tidak menggambar duplikat.');
-        }
-        pageSignatures.add(signature);
-      }
-      pages = page;
-      recordsRead += rows.length;
-      rows.forEach(function (row) {
-        var feature = toFeature(row);
-        if (!feature || !feature.geometry) return;
-        var type = feature.geometry.type;
-        if (type !== 'Polygon' && type !== 'MultiPolygon') return;
-        var id = propertyValue(feature.properties, 'objectid');
-        if (id == null) id = propertyValue(feature.properties, 'id');
-        if (id == null) id = propertyValue(feature.properties, 'fid');
-        if (id == null) id = propertyValue(feature.properties, 'ogc_fid');
-        if (id != null) {
-          var key = String(id);
-          if (seenIds.has(key)) return;
-          seenIds.add(key);
-        }
-        if (!boundsOverlap(featureBounds(feature), districtBounds)) return;
-        var clipped = clipToDistrict(feature, districtFeature);
-        if (clipped) features.push(clipped);
-      });
-
-      var progress = total != null && total > 0
-        ? ' · ' + Math.min(100, Math.round(recordsRead / total * 100)) + '%'
-        : '';
-      setStatus('Memeriksa ' + recordsRead.toLocaleString('id-ID') +
-        (total != null ? ' / ' + total.toLocaleString('id-ID') : '') +
-        ' record nasional · ' + features.length.toLocaleString('id-ID') +
-        ' poligon ' + district.nama + progress);
-
-      if (lastPage != null && lastPage > 0 && page >= lastPage) break;
-      if (page === MAX_PAGES) throw new Error('Batas halaman aman tercapai sebelum semua halaman selesai dimuat.');
-      if (page % 10 === 0) await new Promise(function (resolve) { setTimeout(resolve, 80); });
-    }
+      if (!boundsOverlap(featureBounds(feature), villageBounds)) return;
+      var clipped = clipToVillage(feature, villageFeature);
+      if (clipped) features.push(clipped);
+    });
 
     if (thisGeneration !== generation) return;
     if (!features.length) {
-      throw new Error('Tidak ada poligon Sistem Lahan yang beririsan dengan ' + district.label + '.');
+      throw new Error('Tidak ada poligon Sistem Lahan yang beririsan dengan ' + village.label + '.');
     }
     if (!window.map || !window.L) throw new Error('Peta RuangKita belum siap.');
 
-    var nextLayer = makeLayer(features, district);
+    var nextLayer = makeLayer(features, village);
     if (layer && window.map.hasLayer(layer)) window.map.removeLayer(layer);
     layer = nextLayer.addTo(window.map);
-    var boundaryBounds = L.geoJSON(districtFeature).getBounds();
-    fitCountyBounds(boundaryBounds && boundaryBounds.isValid() ? boundaryBounds : layer.getBounds());
+    var boundaryBounds = L.geoJSON(villageFeature).getBounds();
+    fitVillageBounds(boundaryBounds && boundaryBounds.isValid() ? boundaryBounds : layer.getBounds());
 
     var output = byId('geotani-land-system-output');
     if (output) {
@@ -545,15 +472,14 @@
         if (name != null && name !== '') uniqueSystems[String(name)] = true;
       });
       output.innerHTML = '<div class="geotani-lbslsd-summary">' +
-        '<div><span>Kabupaten/Kota</span><b>' + escapeHtml(district.nama) + '</b></div>' +
+        '<div><span>Desa/Kelurahan</span><b>' + escapeHtml(village.nama) + '</b></div>' +
         '<div><span>Poligon Sistem Lahan</span><b>' + features.length.toLocaleString('id-ID') + '</b></div>' +
         '<div><span>Nama sistem lahan</span><b>' + Object.keys(uniqueSystems).length.toLocaleString('id-ID') + '</b></div>' +
-        '</div><div class="geotani-lbslsd-credit"><b>Sumber data:</b> Sistem Lahan 1:50.000, Badan Informasi Geospasial (BIG). ' +
-        '<a href="' + SOURCE + '" target="_blank" rel="noopener noreferrer">InaLand BIG</a></div>';
+        '</div><div class="geotani-lbslsd-credit"><b>Sumber data:</b> Sistem Lahan BIG SatuPeta. ' +
+        '<a href="' + SOURCE + '" target="_blank" rel="noopener noreferrer">BIG SatuPeta</a></div>';
     }
-    setStatus('Data ' + district.label + ' selesai dimuat. Klik poligon untuk melihat atribut.');
+    setStatus('Data ' + village.label + ' selesai dimuat. Klik poligon untuk melihat atribut.');
   }
-
   function clearLayer() {
     generation++;
     if (controller) controller.abort();
@@ -565,9 +491,9 @@
     var output = byId('geotani-land-system-output');
     if (output) output.innerHTML = '';
     setStatus('');
-    setSelectedDistrict(null);
-    var search = byId('geotaniLandSystemDistrictSearch');
-    var results = byId('geotaniLandSystemDistrictResults');
+    setSelectedVillage(null);
+    var search = byId('geotaniLandSystemVillageSearch');
+    var results = byId('geotaniLandSystemVillageResults');
     if (search) search.value = '';
     if (search) search.disabled = false;
     if (results) { results.hidden = true; results.innerHTML = ''; }
@@ -579,16 +505,16 @@
     var card = byId('geotani-land-system-card');
     var loadButton = byId('geotani-land-system-load');
     var resetButton = byId('geotani-land-system-reset');
-    var search = byId('geotaniLandSystemDistrictSearch');
-    var results = byId('geotaniLandSystemDistrictResults');
+    var search = byId('geotaniLandSystemVillageSearch');
+    var results = byId('geotaniLandSystemVillageResults');
     if (!card || !loadButton || loadButton.__landSystemBound) return;
     loadButton.__landSystemBound = true;
     if (search && results) {
       search.addEventListener('input', function () {
-        selectedDistrict = null;
-        var selected = byId('geotaniLandSystemDistrictSelected');
+        selectedVillage = null;
+        var selected = byId('geotaniLandSystemVillageSelected');
         if (selected) { selected.textContent = ''; selected.hidden = true; }
-        showDistrictResults(search.value);
+        showVillageResults(search.value);
       });
       document.addEventListener('click', function (event) {
         if (!results.contains(event.target) && event.target !== search) {
@@ -599,8 +525,8 @@
     }
     loadButton.addEventListener('click', function () {
       if (loading) return;
-      if (!selectedDistrict) {
-        setStatus('Pilih kabupaten/kota terlebih dahulu.');
+      if (!selectedVillage) {
+        setStatus('Pilih desa/kelurahan terlebih dahulu.');
         if (search) search.focus();
         return;
       }

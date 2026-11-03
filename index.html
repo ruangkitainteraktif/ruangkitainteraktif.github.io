@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 
 <head>
@@ -170,7 +170,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=20261102-geodata-add-v5">
+  <link rel="stylesheet" href="assets/css/app.css?v=20261103-detail-ad-fullwidth-v1">
     <link rel="stylesheet" href="assets/css/rdtr-interaktif.css?v=20261024-catalog-pager3">
   <link rel="stylesheet" href="assets/css/geodisaster.css?v=5">
 
@@ -1380,7 +1380,7 @@
                 <summary class="gt-card-head">
                   <span class="gt-card-icon" aria-hidden="true">&#128249;</span>
                   <span>
-                    <b id="geowatchCctvTitle">Pencarian CCTV</b>
+                    <b id="geowatchCctvTitle">CCTV Indonesia</b>
                     <small>Ketik lokasi atau pilih wilayah</small>
                   </span>
                 </summary>
@@ -1405,7 +1405,7 @@
                 <span class="gt-card-icon" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17V6a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v11M5 12h14M7 17l-2 4M17 17l2 4M8 21h8"/><circle cx="8" cy="16" r="1"/><circle cx="16" cy="16" r="1"/><path d="M8 7h8v3H8z"/></svg>
                 </span>
-                <span><b id="geotransPageTitle">GeoTrans</b><small>Informasi transportasi bus &middot; Data lokal</small></span>
+                <span><b id="geotransPageTitle">GeoTrans Indonesia</b><small>Informasi transportasi bus &middot; Data lokal</small></span>
               </summary>
               <div class="geotrans-card-body">
               <section class="geotrans-app" aria-label="Informasi operator, rute, dan halte">
@@ -2476,6 +2476,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                       <div class="satupeta-layer-picker">
                         <label class="geotani-form-label" for="satupetaInputLayer">Layer data</label>
                         <select id="satupetaInputLayer" class="geotani-form-select" aria-describedby="satupetaCatalogStatus">
+                          <option value="lbs-2023">LBS 2023</option>
                           <option value="lsd-50k" selected>LSD 50K (BIG)</option>
                           <option value="lbs-50k">LBS 50K (BIG)</option>
                           <option value="likuifaksi-big">Kerentanan Likuifaksi (BIG)</option>
@@ -2524,7 +2525,6 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
                         Reset Polygon
                       </button>
-                      <button id="btnDetailSatupeta" style="margin-top:4px;display:none;width:100%;padding:7px 14px;font-size:11px;font-weight:600;color:#16a34a;background:#fff;border:1px solid #16a34a;border-radius:4px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">Detail</button>
                     </div>
                   </details>
 
@@ -3064,6 +3064,23 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
               </div>
             </details>
 
+            <details class="geotani-lbslsd" id="geofarm-forest-analysis-card" aria-labelledby="geofarm-forest-analysis-title">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#127795;</span>
+                <span>
+                  <b id="geofarm-forest-analysis-title">Kawasan Hutan Indonesia</b>
+                  <small>Luas nasional, per pulau, dan per fungsi kawasan &mdash; ESDM</small>
+                </span>
+              </summary>
+              <div class="geotani-lbslsd-body">
+                <p class="geotani-sls-desc">Pilih pulau untuk menghitung luas dan menampilkan poligonnya di peta. Klik poligon untuk melihat atribut. Setelah semua pulau dihitung, tampilkan statistik nasional.</p>
+                <div id="geofarm-forest-island-steps" class="gf-forest-island-steps"></div>
+                <button id="geofarm-forest-run" class="geotani-btn-print" type="button" disabled>Hitung Nasional</button>
+                <div id="geofarm-forest-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                <div id="geofarm-forest-output"></div>
+              </div>
+            </details>
+
             <!-- LBS & LSD: dipindahkan dari GeoTani agar menjadi bagian dari
                  workflow GeoFarm yang lebih relevan dengan analisis lahan. -->
             <details class="geotani-lbslsd" id="geotani-lbslsd-card" aria-labelledby="geotani-lbslsd-title">
@@ -3101,21 +3118,21 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                 <span class="gt-card-icon" aria-hidden="true">&#127758;</span>
                 <span>
                   <b id="geotani-land-system-title">Land System Indonesia (BIG)</b>
-                  <small>Sistem Lahan skala 1:50.000 &mdash; pilih kabupaten/kota</small>
+                  <small>Sistem Lahan skala 1:50.000 &mdash; BIG SatuPeta, cakupan sekitar 95&deg;&ndash;127&deg; BT</small>
                 </span>
               </summary>
               <div class="geotani-lbslsd-body">
                 <p class="geotani-sls-desc">
-                  Pilih satu kabupaten/kota untuk menampilkan poligon Sistem Lahan BIG
-                  yang berada di dalam batas wilayah tersebut.
+                  Pilih satu desa/kelurahan. Poligon dicari langsung berdasarkan batas desa,
+                  lalu dipotong mengikuti batas tersebut. Layer ini tidak mencakup seluruh Indonesia.
                 </p>
                 <div class="geotani-sls-search">
-                  <label class="geotani-form-label" for="geotaniLandSystemDistrictSearch">Cari kabupaten/kota</label>
-                  <input type="text" id="geotaniLandSystemDistrictSearch" placeholder="Ketik nama kabupaten/kota..." autocomplete="off" class="geotani-form-input-search" />
-                  <div id="geotaniLandSystemDistrictResults" class="geotani-sls-results" hidden></div>
-                  <div id="geotaniLandSystemDistrictSelected" class="geotani-sls-picked" hidden></div>
+                  <label class="geotani-form-label" for="geotaniLandSystemVillageSearch">Cari desa/kelurahan</label>
+                  <input type="text" id="geotaniLandSystemVillageSearch" placeholder="Ketik nama desa/kelurahan..." autocomplete="off" class="geotani-form-input-search" />
+                  <div id="geotaniLandSystemVillageResults" class="geotani-sls-results" hidden></div>
+                  <div id="geotaniLandSystemVillageSelected" class="geotani-sls-picked" hidden></div>
                 </div>
-                <button id="geotani-land-system-load" class="geotani-btn-print" type="button">Tampilkan Sistem Lahan Kabupaten</button>
+                <button id="geotani-land-system-load" class="geotani-btn-print" type="button">Tampilkan Sistem Lahan Desa</button>
                 <button id="geotani-land-system-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" title="Reset polygon Land System Indonesia" aria-label="Reset polygon Land System Indonesia">
                   <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
                   Reset Polygon
@@ -4071,7 +4088,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
          geopangan, attribute-table, ai-analysis, dan polygon-analysis
          semuanya mendaftarkan sheet ke window.SheetDrag saat dimuat. -->
     <script src="assets/js/sheet-drag.js?v=20261102-left-sheet-resize-v3"></script>
-    <script src="assets/js/map-core.js?v=20261102-geodata-add-v1"></script>
+    <script src="assets/js/map-core.js?v=20261103-detail-ad-fullwidth-v1"></script>
     <script src="assets/js/isric-soil-layers.js?v=20261007-wrb-clip"></script>
     <script src="assets/js/isee-global-soils.js?v=20261010-soil-temperature-legend"></script>
     <script src="assets/js/layer-loading.js?v=20261012-persil-gistaru"></script>
@@ -4209,8 +4226,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <!-- LBS & LSD (BIG SatuPeta): butuh geodesic-area untuk luas, dan
        geoid-wilayah untuk seksi PDF. -->
   <script src="assets/js/geotani-lbs-lsd.js"></script>
-  <!-- Land System BIG: memuat paginasi nasional InaLand saat kartu digunakan. -->
-  <script src="assets/js/geofarm-land-system.js?v=20261006-kabupaten"></script>
+  <!-- Land System BIG: kueri spasial per batas desa ke BIG SatuPeta. -->
+  <script src="assets/js/geofarm-land-system.js?v=20261103-direct-spatial-query"></script>
   <script src="assets/js/geofarm-wosis.js?v=20261007-hwsd-district"></script>
   <!-- LSD 12 Provinsi (ATR/BPN GISTARU). WAJIB setelah geotani-lbs-lsd.js:
        modul ini memakai villageMeta, clipKeDesa, dan bboxDariRings dari
@@ -4224,6 +4241,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
        luasnya cuma ada satu implementasi. BNPB mengirim header CORS yang
        echo origin, jadi request diambil langsung tanpa worker proxy. -->
   <script src="assets/js/geotani-tutupan-lahan.js"></script>
+  <script src="assets/js/geofarm-forest-analysis.js?v=20261103-forest-labels-v8"></script>
   <!-- KKPR / NIB (ATR/BPN GISTARU): hanya butuh Leaflet dan peta, jadi
        tidak bergantung geodesic-area maupun geoid-wilayah. -->
   <script src="assets/js/geotani-kkpr.js"></script>

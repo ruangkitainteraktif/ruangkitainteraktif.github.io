@@ -2,6 +2,33 @@
   'use strict';
 
   var LAYER_SOURCES = {
+    'lbs-2023': {
+      label: 'LBS 2023',
+      query: 'https://sig02.pertanian.go.id/server/rest/services/Sawah/Sawah2023/MapServer/0/query',
+      nameField: 'Qname_2023',
+      titleField: 'Qname_2023',
+      areaField: 'Luas_Ha',
+      areaUnit: 'ha',
+      dateField: null,
+      nameLabel: 'Nama',
+      emptyMessage: 'Tidak ada polygon LBS 2023 di wilayah ini.',
+      loadingMessage: 'Memuat data LBS 2023...',
+      source: 'Kementerian Pertanian - LBS 2023',
+      tableFields: [
+        { key: 'Qname_2023', label: 'Nama' },
+        { key: 'Luas_Ha', label: 'Luas', type: 'ha' },
+        { key: 'WADMKK', label: 'Kab/Kota' },
+        { key: 'WADMPR', label: 'Provinsi' }
+      ],
+      extraFields: [
+        { key: 'Jenis_Lahan_Sawah', label: 'Jenis lahan sawah' },
+        { key: 'Cetak_Sawah', label: 'Cetak sawah' },
+        { key: 'WIADKK', label: 'Kode kabupaten' }
+      ],
+      colors: {
+        'Sawah': '#74b273'
+      }
+    },
     'lsd-50k': {
       label: 'LSD 50K (BIG)',
       query: 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/59/query',
@@ -1117,47 +1144,80 @@
   function fetchNationalFeaturePage(ids, page, signal) {
     var pageIds = ids.slice(page * NATIONAL_PAGE_SIZE, (page + 1) * NATIONAL_PAGE_SIZE);
     if (!pageIds.length) return Promise.resolve([]);
-    var params = new URLSearchParams({
-      objectIds: pageIds.join(','),
-      outFields: '*',
-      returnGeometry: 'true',
-      outSR: '4326',
-      f: 'json'
-    });
-    return fetch(currentSource().query + '?' + params.toString(), { signal: signal }).then(function (response) {
-      if (!response.ok) throw new Error('HTTP ' + response.status + ' dari SatuPeta BIG');
-      return response.json();
-    }).then(function (data) {
-      if (data && data.error) throw new Error(data.error.message || 'Gagal mengambil halaman fitur dari BIG.');
-      return data.features || [];
-    });
+    return fetchFeaturesByIds(pageIds, signal);
   }
 
   function fetchFeaturesByIds(ids, signal, progress) {
-    var batchSize = 200;
+    /* Terapkan batch kecil untuk semua sumber ArcGIS agar respons geometri
+       besar tidak mudah terputus. */
+    var batchSize = 100;
     var batches = [];
     for (var i = 0; i < ids.length; i += batchSize) batches.push(ids.slice(i, i + batchSize));
     var results = new Array(batches.length), next = 0, completed = 0;
-    function worker() {
-      if (next >= batches.length) return Promise.resolve();
-      var index = next++, batch = batches[index];
+    var groupController = new AbortController();
+    var abortGroup = function () { groupController.abort(); };
+    if (signal) {
+      if (signal.aborted) groupController.abort();
+      else signal.addEventListener('abort', abortGroup, { once: true });
+    }
+    function fetchBatch(batch, attempt) {
+      var requestController = new AbortController();
+      var timedOut = false;
+      var timeout = setTimeout(function () {
+        timedOut = true;
+        requestController.abort();
+      }, 45000);
+      var abortParent = function () { requestController.abort(); };
+      if (groupController.signal.aborted) requestController.abort();
+      else groupController.signal.addEventListener('abort', abortParent, { once: true });
       var params = new URLSearchParams({ objectIds: batch.join(','), outFields: '*', returnGeometry: 'true', outSR: '4326', f: 'json' });
-      return fetch(currentSource().query + '?' + params.toString(), { signal: signal })
+      return fetch(currentSource().query + '?' + params.toString(), { signal: requestController.signal })
         .then(function (response) {
-          if (!response.ok) throw new Error('HTTP ' + response.status + ' dari SatuPeta BIG');
+          if (!response.ok) throw new Error('HTTP ' + response.status + ' dari layanan data');
           return response.json();
         })
         .then(function (data) {
-          if (data && data.error) throw new Error(data.error.message || 'Gagal mengambil fitur dari BIG.');
-          results[index] = data.features || [];
-          completed += batch.length;
-          if (progress) progress(Math.min(completed, ids.length), ids.length);
-          return worker();
+          if (data && data.error) throw new Error(data.error.message || 'Layanan gagal mengirim geometri.');
+          var features = data.features || [];
+          if (features.length !== batch.length) {
+            throw new Error('Layanan hanya mengembalikan ' + features.length + ' dari ' + batch.length + ' polygon pada satu batch.');
+          }
+          return features;
+        })
+        .catch(function (error) {
+          if (groupController.signal.aborted) throw error;
+          if (attempt < 2) {
+            clearTimeout(timeout);
+            groupController.signal.removeEventListener('abort', abortParent);
+            return fetchBatch(batch, attempt + 1);
+          }
+          if (timedOut) throw new Error('Layanan terlalu lama mengirim satu batch geometri (45 detik). Coba lagi atau pilih wilayah yang lebih kecil.');
+          throw error;
+        })
+        .finally(function () {
+          clearTimeout(timeout);
+          groupController.signal.removeEventListener('abort', abortParent);
         });
     }
-    return Promise.all([worker(), worker(), worker(), worker()]).then(function () {
-      return [].concat.apply([], results);
-    });
+    function worker() {
+      if (groupController.signal.aborted || next >= batches.length) return Promise.resolve();
+      var index = next++, batch = batches[index];
+      return fetchBatch(batch, 0)
+        .then(function (features) {
+          if (groupController.signal.aborted) return;
+          results[index] = features;
+          completed += features.length;
+          if (progress) progress(Math.min(completed, ids.length), ids.length);
+          return worker();
+        })
+        .catch(function (error) {
+          if (!groupController.signal.aborted) groupController.abort();
+          throw error;
+        });
+    }
+    return Promise.all([worker(), worker(), worker()])
+      .then(function () { return [].concat.apply([], results); })
+      .finally(function () { if (signal) signal.removeEventListener('abort', abortGroup); });
   }
 
   function fetchAllNationalFeatures(signal, progress) {
