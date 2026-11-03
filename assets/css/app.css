@@ -6766,8 +6766,8 @@
     #bhumi-persil-sheet .bhumi-persil-sheet-minimize,
     #bhumi-persil-sheet .bhumi-persil-sheet-close { appearance: none; flex: 0 0 28px; width: 28px; height: 28px; margin: 0; padding: 0; border: 0; border-radius: 50%; background: var(--bg-tertiary); color: var(--text-tertiary); font: 16px/1 Arial, sans-serif; }
     .bhumi-persil-sheet-handle { display: none; }
-    .bhumi-persil-sheet-content { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 12px 12px 16px; -webkit-overflow-scrolling: touch; }
-    .catalog-popup-sheet-content { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 12px; min-width: 0; }
+    .bhumi-persil-sheet-content { flex: 1 1 auto; min-width: 0; width: 100%; box-sizing: border-box; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 12px 12px 16px; -webkit-overflow-scrolling: touch; }
+    .catalog-popup-sheet-content { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 12px; width: 100%; min-width: 0; box-sizing: border-box; }
     /* Slot iklan Detail Layer. AdSense menulis lebar dalam piksel secara
        inline (sering + !important) pada <ins>, host, dan iframe tepat saat
        unit dirender, sehingga lebar itu membeku. Sheet-nya sendiri masih bisa
@@ -6780,15 +6780,16 @@
        Semua lapisan karena itu dipaksa selebar slot. Nilai inline !important
        tidak bisa dikalahkan CSS, jadi ditangani penjaga di map-core.js
        (jagaLebarIklan) yang menulis ulang lebar begitu slot berubah. */
-    .catalog-popup-sheet-ad-slot { display: block; width: 100%; min-width: 0; box-sizing: border-box; overflow: hidden; }
+    .catalog-popup-sheet-ad-slot { display: block; grid-column: 1 / -1; width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; overflow: visible; }
+    .catalog-popup-sheet-ad-slot > ins.adsbygoogle { display: block !important; width: 100% !important; min-width: 0 !important; max-width: 100% !important; box-sizing: border-box !important; }
     .catalog-popup-sheet-ad-slot .adsbygoogle,
     .catalog-popup-sheet-ad-slot .adsbygoogle > div,
     .catalog-popup-sheet-ad-slot .adsbygoogle > div > div,
     .catalog-popup-sheet-ad-slot .adsbygoogle iframe {
       display: block; width: 100% !important; max-width: 100% !important;
-      min-width: 0; box-sizing: border-box; margin: 0;
+      min-width: 0 !important; box-sizing: border-box !important; margin: 0;
     }
-    .catalog-popup-sheet-ad-slot .adsbygoogle[data-ad-status="unfilled"] { display: none; }
+    .catalog-popup-sheet-ad-slot .adsbygoogle[data-ad-status="unfilled"] { display: none !important; }
     .catalog-popup-sheet-cards { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 12px; min-width: 0; }
     /* max-width harus !important. Setiap class popup (agol-, quake-, geoid-,
        geotani-, kta-, ndvi-, landcover-, irisan-, bmkg-, sppgd-, dst.)
@@ -8731,7 +8732,8 @@
          & legenda calc(106px + env) = 8px di atas chip. */
       .map-fab-wrap {
         position: fixed !important;
-        bottom: 30px !important;
+        /* Sisakan ruang untuk iklan anchor yang menempel di bawah layar HP. */
+        bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
         left: 50% !important;
         right: auto !important;
         transform: translateX(-50%) !important;
@@ -9290,6 +9292,17 @@
   background: var(--bg-primary); box-shadow: 0 4px 12px rgba(0, 0, 0, .12);
 }
 .geotani-sls-results[hidden] { display: none; }
+/* Hasil cari Land System ikut menambah tinggi kartu. Posisi dropdown absolute
+   sebelumnya menimpa pilihan dan tombol di bawahnya saat daftar terbuka. */
+#geotani-land-system-card .geotani-sls-search { min-width: 0; }
+#geotani-land-system-card .geotani-sls-results:not([hidden]) {
+  position: relative; top: auto; right: auto; left: auto; z-index: 1;
+  max-height: 180px; margin-top: 4px; overflow-y: auto;
+  border-top: 1px solid var(--border-color); border-radius: 6px;
+}
+#geotani-land-system-card .geotani-sls-search .geotani-form-input-search {
+  display: block; min-width: 0; box-sizing: border-box;
+}
 .geotani-sls-result {
   padding: 7px 10px; font-size: 11px; color: var(--text-secondary);
   cursor: pointer; border-bottom: 1px solid var(--border-color);

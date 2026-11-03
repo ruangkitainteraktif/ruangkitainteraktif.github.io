@@ -62,12 +62,21 @@
     /* Slot nol berarti sheet sedang tersembunyi (diminimalkan). Tunggu
        ResizeObserver memanggil lagi saat slot kembali terlihat. */
     if (!lebarSlot) return;
+    /* <ins> nol berarti unit sedang disembunyikan (mis. aturan unfilled).
+       Menyentuh isinya di keadaan ini hanya membuat pengamat berputar:
+       lebar yang ditulis tidak pernah berubah karena elemennya tidak
+       dirender sama sekali. */
+    if (!ins.getBoundingClientRect().width) return;
     var nodes = [ins].concat(Array.prototype.slice.call(ins.querySelectorAll('*')));
     for (var i = 0; i < nodes.length; i++) {
       var node = nodes[i];
       if (!node || !node.style) continue;
       /* Hanya elemen yang dilebarkan AdSense; sisanya sudah mengikuti CSS. */
-      if (!node.style.getPropertyValue('width')) continue;
+      var lebar = node.style.getPropertyValue('width');
+      if (!lebar) continue;
+      /* Berhenti kalau sudah 100% -- menulis nilai yang sama berulang bisa
+         memicu MutationObserver tanpa henti. */
+      if (lebar === '100%' && node.style.getPropertyPriority('width') === 'important') continue;
       if (Math.abs(node.getBoundingClientRect().width - lebarSlot) <= 1) continue;
       node.style.setProperty('width', '100%', 'important');
     }
@@ -77,11 +86,29 @@
     var slot = sheet.querySelector('.catalog-popup-sheet-ad-slot');
     if (!slot || slot.__jagaLebarIklan) return;
     slot.__jagaLebarIklan = true;
-    var perbaiki = function () { samakanLebarIklan(slot); };
+    var lebarTerakhir = 0;
+    var perbaiki = function () {
+      /* Cek murah dulu. Selama lebar slot tidak berubah, cukup clientWidth
+         yang dibaca -- tidak ada query maupun getBoundingClientRect yang
+         memaksa layout, jadi jangkar ini tetap ringan walau berjalan terus. */
+      var lebar = slot.clientWidth;
+      if (lebar === lebarTerakhir) return;
+      lebarTerakhir = lebar;
+      samakanLebarIklan(slot);
+    };
     if ('ResizeObserver' in window) new ResizeObserver(perbaiki).observe(slot);
     if ('MutationObserver' in window) {
-      new MutationObserver(perbaiki).observe(slot, { subtree: true, attributes: true, attributeFilter: ['style'] });
+      new MutationObserver(function () { samakanLebarIklan(slot); })
+        .observe(slot, { subtree: true, attributes: true, attributeFilter: ['style'] });
     }
+    /* Cadangan bila pengiriman ResizeObserver tertahan (tab latar belakang
+       atau webview yang tidak menggambar): pemeriksaan berkala selama sheet
+       terbuka. Callback-nya hanya membaca clientWidth, jadi tidak ada kerja
+       sama sekali ketika lebar tidak berubah. */
+    window.setInterval(function () {
+      if (!sheet.classList.contains('is-open') || sheet.classList.contains('is-minimized')) return;
+      perbaiki();
+    }, 700);
     perbaiki();
   }
 

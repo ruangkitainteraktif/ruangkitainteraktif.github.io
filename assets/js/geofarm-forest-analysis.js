@@ -22,6 +22,7 @@
     { name: 'Papua', file: 'papua', codes: [91,92,93,94,95,96] }
   ];
   var btn = document.getElementById('geofarm-forest-run');
+  var resetBtn = document.getElementById('geofarm-forest-reset');
   var status = document.getElementById('geofarm-forest-status');
   var output = document.getElementById('geofarm-forest-output');
   var islandSteps = document.getElementById('geofarm-forest-island-steps');
@@ -264,6 +265,7 @@
         '<button class="gf-forest-island-button" type="button" data-island-index="' + index + '">' + (saved ? (mapLoaded ? 'Muat ulang' : 'Muat poligon') : 'Hitung pulau') + '</button></div>';
     }).join('');
     btn.disabled = !allIslandsReady() || busy;
+    if (resetBtn) resetBtn.disabled = busy || !Object.keys(forestMapLayers).some(function (name) { return !!forestMapLayers[name]; });
   }
 
   async function loadLocalIslandStatistics(island, stagingLayer, data) {
@@ -541,6 +543,18 @@
       });
       if (bounds.isValid()) window.map.fitBounds(bounds.pad(0.04), { maxZoom: 5, animate: true });
     }
+  });
+
+  if (resetBtn) resetBtn.addEventListener('click', function () {
+    if (busy) return;
+    var map = window.map || window._map;
+    Object.keys(forestMapLayers).forEach(function (name) {
+      var layer = forestMapLayers[name];
+      if (layer && map && map.hasLayer(layer)) map.removeLayer(layer);
+      delete forestMapLayers[name];
+    });
+    status.textContent = 'Semua poligon kawasan hutan dihapus dari peta. Ringkasan statistik tetap tersedia.';
+    updateIslandSteps();
   });
 
   var style = document.createElement('style');

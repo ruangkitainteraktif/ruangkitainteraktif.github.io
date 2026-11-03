@@ -3076,8 +3076,27 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
                 <p class="geotani-sls-desc">Pilih pulau untuk menghitung luas dan menampilkan poligonnya di peta. Klik poligon untuk melihat atribut. Setelah semua pulau dihitung, tampilkan statistik nasional.</p>
                 <div id="geofarm-forest-island-steps" class="gf-forest-island-steps"></div>
                 <button id="geofarm-forest-run" class="geotani-btn-print" type="button" disabled>Hitung Nasional</button>
+                <button id="geofarm-forest-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" disabled>Reset Polygon</button>
                 <div id="geofarm-forest-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
                 <div id="geofarm-forest-output"></div>
+              </div>
+            </details>
+
+            <details class="geotani-lbslsd" id="geofarm-sawah-analysis-card" aria-labelledby="geofarm-sawah-analysis-title">
+              <summary class="gt-card-head">
+                <span class="gt-card-icon" aria-hidden="true">&#127793;</span>
+                <span>
+                  <b id="geofarm-sawah-analysis-title">Sawah Nasional</b>
+                  <small>Luas sawah 2023 per pulau dan jenis &mdash; Kementan</small>
+                </span>
+              </summary>
+              <div class="geotani-lbslsd-body">
+                <p class="geotani-sls-desc">Pilih pulau untuk menghitung luas dan menampilkan poligon sawah di peta. Klik poligon untuk melihat atribut. Setelah semua pulau dihitung, tampilkan statistik nasional.</p>
+                <div id="geofarm-sawah-island-steps" class="gf-forest-island-steps"></div>
+                <button id="geofarm-sawah-run" class="geotani-btn-print" type="button" disabled>Hitung Nasional</button>
+                <button id="geofarm-sawah-reset" class="geotani-btn-reset" type="button" style="margin-top:4px;" disabled>Reset Polygon</button>
+                <div id="geofarm-sawah-status" class="geotani-sls-status" role="status" aria-live="polite"></div>
+                <div id="geofarm-sawah-output"></div>
               </div>
             </details>
 
@@ -4241,7 +4260,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
        luasnya cuma ada satu implementasi. BNPB mengirim header CORS yang
        echo origin, jadi request diambil langsung tanpa worker proxy. -->
   <script src="assets/js/geotani-tutupan-lahan.js"></script>
-  <script src="assets/js/geofarm-forest-analysis.js?v=20261103-forest-labels-v8"></script>
+  <script src="assets/js/geofarm-forest-analysis.js?v=20261103-forest-reset-v9"></script>
+  <script src="assets/js/geofarm-sawah-analysis.js?v=20261103-sawah-reset-v5"></script>
   <!-- KKPR / NIB (ATR/BPN GISTARU): hanya butuh Leaflet dan peta, jadi
        tidak bergantung geodesic-area maupun geoid-wilayah. -->
   <script src="assets/js/geotani-kkpr.js"></script>
