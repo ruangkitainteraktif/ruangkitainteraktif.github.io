@@ -290,7 +290,7 @@
     html += '<tr class="gf-forest-grand"><th>' + (isNational ? 'Indonesia' : 'Total provinsi') + '</th>';
     types.forEach(function (type) { html += '<td>' + fmt(rows.reduce(function (sum, row) { return sum + row.values[type]; }, 0)) + '</td>'; });
     html += '<td>' + fmt(national) + '</td><td>100%</td><td>' + report.featureCount.toLocaleString('id-ID') + '</td></tr></tbody></table></div>';
-    html += '<p class="gf-forest-note">Luas merupakan penjumlahan atribut hektare pada data sumber. Peta menampilkan batas provinsi dan overlay LBS 2024 yang difilter per provinsi agar tetap ringan; tahun overlay berbeda dari statistik LBS 2023. Statistik dan jumlah poligon tersimpan di browser.</p>';
+    html += '<p class="gf-forest-note">Statistik memakai data LBS 2023 Kementan: luas dijumlahkan dari atribut Luas_Ha dan jumlah poligon dihitung dari fitur yang diterima. Ringkasan tersimpan di penyimpanan lokal browser. Peta menampilkan batas provinsi dengan overlay LBS 2024 BPS untuk visualisasi; overlay disaring per provinsi, sehingga tahunnya berbeda dari data statistik.</p>';
     if (isNational) {
       var papuaReference = { 'Papua Barat Daya': 472, 'Papua Selatan': 43037, 'Papua Tengah': 2370, 'Papua Pegunungan': 949 };
       var missingPapua = Object.keys(papuaReference).filter(function (name) {

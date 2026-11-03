@@ -579,10 +579,10 @@
       }
     },
     toggleSawahNasional50k: {
-      name: 'Sawah Nasional 50K (BIG)',
+      name: 'Sawah Nasional (Kementan LBS 2019)',
       type: 'featureLayer',
       getLayer: function () { return window.sawahNasionalLayerObj || null; },
-      props: ['q_name19', 'wadmpr', 'wadmkk', 'luas_polyg'],
+      props: [],
       getLatLng: function (m) {
         var ll = m.getLatLng ? m.getLatLng() : null;
         return ll ? [ll.lat, ll.lng] : null;

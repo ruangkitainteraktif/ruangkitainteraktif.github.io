@@ -913,7 +913,7 @@
   // ArcGIS REST Layer: Lahan Baku Sawah & Kawasan Pertanian
   const ARCGIS_SAWAH_CONFIG = {
     'arcgis-sawah-2023': { url: 'https://sig02.pertanian.go.id/server/rest/services/Sawah/Sawah2023/MapServer', layers: [0] },
-    'arcgis-sawah-2019': { url: 'https://sig02.pertanian.go.id/server/rest/services/Sawah/LBS2019/MapServer', layers: [23] },
+    'arcgis-sawah-2019': { url: 'https://sig02.pertanian.go.id/server/rest/services/Sawah/LBS2019/MapServer', layers: Array.from({ length: 34 }, (_, id) => id) },
     'arcgis-kawasan-padi': { url: 'https://sig02.pertanian.go.id/server/rest/services/Kawasan/Peta_Kawasan_Padi/MapServer', layers: [0] },
     'arcgis-kawasan-jagung': { url: 'https://sig02.pertanian.go.id/server/rest/services/Kawasan/Peta_Kawasan_Jagung/MapServer', layers: [0] },
     'arcgis-kawasan-kedelai': { url: 'https://sig02.pertanian.go.id/server/rest/services/Kawasan/Peta_Kawasan_Kedelai/MapServer', layers: [0] }

@@ -2,9 +2,11 @@
   const SAWAH_DILINDUNGI_URL = 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/59';
   let sawahDilindungiLayer = null;
 
-  // Lahan Baku Sawah Nasional 50K Layer
-  const SAWAH_NASIONAL_URL = 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/36';
+  // LBS 2019 nasional disajikan sebagai 34 sublayer provinsi.
+  const SAWAH_NASIONAL_URL = 'https://sig02.pertanian.go.id/server/rest/services/Sawah/LBS2019/MapServer';
+  const SAWAH_NASIONAL_LAYERS = Array.from({ length: 34 }, (_, id) => id);
   let sawahNasionalLayer = null;
+  let sawahNasionalClickHandler = null;
 
   function escapeSawahHtml(value) {
     return String(value || '').replace(/[&<>"']/g, char => ({
@@ -37,22 +39,18 @@
   }
 
   function createSawahNasionalPopup(properties) {
-    const qName = properties.q_name19 || '-';
-    const wadmpr = properties.wadmpr || '-';
-    const wadmkk = properties.wadmkk || '-';
-    const luasPolyg = properties.luas_polyg;
-    const luasStr = luasPolyg ? `${Number(luasPolyg).toLocaleString('id-ID')} ha` : '-';
+    const rows = Object.entries(properties || {}).filter(([key, value]) =>
+      !/^objectid$/i.test(key) && value !== null && value !== ''
+    ).slice(0, 8).map(([key, value]) => `
+      <div class="sawah-popup-row"><span>${escapeSawahHtml(key)}</span><b>${escapeSawahHtml(value)}</b></div>`).join('');
 
     return `
       <div class="sawah-popup">
         <div class="sawah-popup-header" style="background: linear-gradient(135deg, #1976d2, #42a5f5);">
-          <strong>🌾 Lahan Baku Sawah Nasional 50K</strong>
+          <strong>🌾 Lahan Baku Sawah Nasional (Kementan LBS 2019)</strong>
         </div>
         <div class="sawah-popup-body">
-          <div class="sawah-popup-row"><span>Nama</span><b>${escapeSawahHtml(qName)}</b></div>
-          <div class="sawah-popup-row"><span>Provinsi</span><b>${escapeSawahHtml(wadmpr)}</b></div>
-          <div class="sawah-popup-row"><span>Kab/Kota</span><b>${escapeSawahHtml(wadmkk)}</b></div>
-          <div class="sawah-popup-row"><span>Luas</span><b>${escapeSawahHtml(luasStr)}</b></div>
+          ${rows || '<div class="sawah-popup-row">Atribut tidak tersedia</div>'}
         </div>
       </div>`;
   }
@@ -104,34 +102,34 @@
       if (sawahNasionalLayer && map.hasLayer(sawahNasionalLayer)) {
         map.removeLayer(sawahNasionalLayer);
       }
+      if (sawahNasionalClickHandler) {
+        map.off('click', sawahNasionalClickHandler);
+        sawahNasionalClickHandler = null;
+      }
       return;
     }
 
     try {
-      sawahNasionalLayer = L.esri.featureLayer({
+      sawahNasionalLayer = L.esri.dynamicMapLayer({
         url: SAWAH_NASIONAL_URL,
-        where: '1=1',
-        outFields: ['q_name19', 'wadmpr', 'wadmkk', 'luas_polyg'],
-        style: function() {
-          return { color: '#6e6e6e', weight: 0.4, fillColor: '#e6fcc0', fillOpacity: 0.6 };
-        },
-        onEachFeature: function(feature, layer) {
-          if (feature.properties) {
-            layer.bindPopup(createSawahNasionalPopup(feature.properties), {
-              maxWidth: 320,
-              className: 'sawah-leaflet-popup'
-            });
-          }
-        }
+        layers: SAWAH_NASIONAL_LAYERS,
+        opacity: 0.72,
+        format: 'png32',
+        transparent: true
       }).addTo(map);
 
-      sawahNasionalLayer.on('load', function() {
-        if (sawahNasionalLayer.getBounds().isValid()) {
-          map.flyToBounds(sawahNasionalLayer.getBounds().pad(0.1), { maxZoom: 10, duration: 0.8 });
-        }
-      });
+      if (sawahNasionalClickHandler) map.off('click', sawahNasionalClickHandler);
+      sawahNasionalClickHandler = function(event) {
+        L.esri.identifyFeatures({ url: SAWAH_NASIONAL_URL }).on(map).at(event.latlng).layers('visible')
+          .run(function(error, collection) {
+            if (error || !collection || !collection.features || !collection.features.length) return;
+            L.popup({ maxWidth: 320, className: 'sawah-leaflet-popup' }).setLatLng(event.latlng)
+              .setContent(createSawahNasionalPopup(collection.features[0].properties)).openOn(map);
+          });
+      };
+      map.on('click', sawahNasionalClickHandler);
     } catch (err) {
-      console.warn('Gagal memuat Lahan Baku Sawah Nasional 50K:', err);
+      console.warn('Gagal memuat Lahan Baku Sawah Nasional LBS 2019:', err);
     }
   }
 

@@ -6191,6 +6191,17 @@ function syncLayerCatalogState() {
      dinyalakan ulang dari katalog akan otomatis dibersihkan dari set ini. */
   var _alHiddenIds = {};
   var _geoportalHubActiveEntries = Object.create(null);
+  var _catalogActiveEntries = Object.create(null);
+  var _catalogActiveStorageKey = 'ruangkita-map-catalog-active-v1';
+  try {
+    var _savedCatalogActiveEntries = JSON.parse(localStorage.getItem(_catalogActiveStorageKey) || '[]');
+    if (Array.isArray(_savedCatalogActiveEntries)) {
+      _savedCatalogActiveEntries.forEach(function (saved) {
+        if (!saved || typeof saved.id !== 'string' || !saved.id) return;
+        _catalogActiveEntries[saved.id] = { id: saved.id, label: saved.label || saved.id, subtitle: saved.subtitle || 'Katalog Peta' };
+      });
+    }
+  } catch (e) { _catalogActiveEntries = Object.create(null); }
   var _geoportalHubStorageKey = 'ruangkita-geoportal-hub-active-v1';
   try {
     var _savedGeoportalHubEntries = JSON.parse(localStorage.getItem(_geoportalHubStorageKey) || '[]');
@@ -6216,6 +6227,31 @@ function syncLayerCatalogState() {
       ));
     } catch (e) { /* storage penuh/terblokir: layer tetap berfungsi selama sesi ini */ }
   }
+
+  function saveCatalogActiveEntries() {
+    try {
+      localStorage.setItem(_catalogActiveStorageKey, JSON.stringify(Object.keys(_catalogActiveEntries).map(function (id) {
+        return _catalogActiveEntries[id];
+      })));
+    } catch (e) { /* storage penuh/terblokir: daftar tetap berlaku selama sesi ini */ }
+  }
+  window.isMapCatalogLayerAdded = function (id) { return !!_catalogActiveEntries[id]; };
+  window.addMapCatalogLayerToActive = function (id, label, subtitle) {
+    if (!id || _catalogActiveEntries[id]) return false;
+    _catalogActiveEntries[id] = { id: id, label: label || id, subtitle: subtitle || 'Katalog Peta' };
+    saveCatalogActiveEntries();
+    scheduleActiveLayersRefresh();
+    if (window.showToast) window.showToast((_catalogActiveEntries[id].label || 'Layer') + ' ditambahkan ke Layer Aktif.', 'success');
+    return true;
+  };
+  window.removeMapCatalogLayerFromActive = function (id) {
+    if (!_catalogActiveEntries[id]) return false;
+    setLayerActiveFromPanel(id, false);
+    delete _catalogActiveEntries[id];
+    saveCatalogActiveEntries();
+    scheduleActiveLayersRefresh();
+    return true;
+  };
 
   window.addGeoportalHubLayerToActive = function (key, meta) {
     if (!key || _geoportalHubActiveEntries[key]) return false;
@@ -6376,6 +6412,9 @@ function syncLayerCatalogState() {
         cat.subcats.forEach(function (sc) { allLayers = allLayers.concat(visibleLayerEntries(sc.layers)); });
       }
       allLayers.forEach(function (l) {
+        /* Layer katalog yang sudah ditambahkan memakai baris pseudo khusus,
+           agar tidak muncul dua kali di Layer Aktif saat dinyalakan. */
+        if (_catalogActiveEntries[l.id]) return;
         var el = findLayerById(l.id);
         var isChecked = el ? el.checked : (_layerCatalogState[l.id] || false);
         if (l.id === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') {
@@ -6404,6 +6443,11 @@ function syncLayerCatalogState() {
      lain. Dipakai bersama collectActivePanelItems() di bawah. */
   function collectUploadedLayerEntries() {
     var out = [];
+    Object.keys(_catalogActiveEntries).forEach(function (id) {
+      var entry = _catalogActiveEntries[id];
+      out.push({ id: 'catalog-' + encodeURIComponent(id), label: entry.label, subtitle: entry.subtitle,
+        uploaded: true, kind: 'catalog', ref: entry, catalogLayerId: id });
+    });
     Object.keys(_geoportalHubActiveEntries).forEach(function (key) {
       var entry = _geoportalHubActiveEntries[key];
       var meta = entry && entry.meta || {};
@@ -6460,6 +6504,10 @@ function syncLayerCatalogState() {
      penghapusan total lewat tombol Hapus. */
   function isUploadedLayerOnMap(entry) {
     if (entry && entry.kind === 'geoportal-hub') return !!(typeof window.isGeoportalHubLayerVisible === 'function' && window.isGeoportalHubLayerVisible(entry.ref.key));
+    if (entry && entry.kind === 'catalog') {
+      var checkbox = getCatalogCheckbox(entry.catalogLayerId);
+      return !!(checkbox && checkbox.checked);
+    }
     return !!(entry && entry.leafletLayer && typeof map !== 'undefined' && map && map.hasLayer(entry.leafletLayer));
   }
   function setUploadedLayerOnMap(entry, show) {
@@ -6469,6 +6517,7 @@ function syncLayerCatalogState() {
       if (typeof window.toggleGeoportalHubLayer === 'function') window.toggleGeoportalHubLayer(entry.ref.key, !!show);
       return;
     }
+    if (entry && entry.kind === 'catalog') { setLayerActiveFromPanel(entry.catalogLayerId, !!show); return; }
     if (!entry || !entry.leafletLayer || typeof map === 'undefined' || !map) return;
     if (show) { if (!map.hasLayer(entry.leafletLayer)) entry.leafletLayer.addTo(map); }
     else if (map.hasLayer(entry.leafletLayer)) map.removeLayer(entry.leafletLayer);
@@ -6479,6 +6528,7 @@ function syncLayerCatalogState() {
   function hapusLayerUnggahan(entry) {
     if (!entry || !entry.ref) return;
     if (entry.kind === 'geoportal-hub') { window.removeGeoportalHubLayerFromActive(entry.ref.key); return; }
+    if (entry.kind === 'catalog') { window.removeMapCatalogLayerFromActive(entry.catalogLayerId); return; }
     /* Konfigurasi tabel dinamis baris ini ikut dibuang supaya tidak ada
        sisa entri untuk id yang sudah tidak ada di daftar. */
     if (typeof window.unregisterDynamicAttrTable === 'function') window.unregisterDynamicAttrTable(entry.id);
@@ -6631,18 +6681,22 @@ function syncLayerCatalogState() {
   function activeLayersPanelOpen() {
     return !!(window.SheetDrag && window.SheetDrag.isOpen && window.SheetDrag.isOpen('al'));
   }
+  function getCatalogCheckbox(id) {
+    var dropdown = document.getElementById('layerCatalogDropdown');
+    if (dropdown && !dropdown.querySelector('.lc-item')) {
+      buildLayerCatalog(dropdown);
+      dropdown.dataset.built = '1';
+    }
+    return (dropdown && dropdown.querySelector('.lc-item input[type="checkbox"][data-layer-id="' + id + '"]')) ||
+      document.querySelector('#mapCatalogList .lc-item input[type="checkbox"][data-layer-id="' + id + '"]');
+  }
   /* Nyalakan/matikan layer dari panel: lewat checkbox katalog agar semua
      handler (legend terpadu, tabel atribut, dsb.) ikut berjalan. Bila
      katalog belum pernah dirender, render dulu tanpa membukanya. */
   function setLayerActiveFromPanel(id, on) {
     var dropdown = document.getElementById('layerCatalogDropdown');
     if (!dropdown) return;
-    if (!dropdown.querySelector('.lc-item')) {
-      buildLayerCatalog(dropdown);
-      dropdown.dataset.built = '1';
-    }
-    var cb = dropdown.querySelector('.lc-item input[type="checkbox"][data-layer-id="' + id + '"]') ||
-      document.querySelector('#mapCatalogList .lc-item input[type="checkbox"][data-layer-id="' + id + '"]');
+    var cb = getCatalogCheckbox(id);
     if (!cb) return;
     if (cb.checked === !!on) return;
     cb.checked = !!on;
@@ -7742,10 +7796,14 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
         if (!button || !list.contains(button)) return;
         event.preventDefault();
         event.stopPropagation();
-        var checkbox = button.closest('.lc-item') && button.closest('.lc-item').querySelector('input[type="checkbox"]');
-        if (!checkbox || checkbox.disabled || checkbox.checked) return;
-        checkbox.checked = true;
-        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+        var row = button.closest('.lc-item');
+        var checkbox = row && row.querySelector('input[type="checkbox"]');
+        if (!checkbox || checkbox.disabled || typeof window.addMapCatalogLayerToActive !== 'function') return;
+        var label = row.querySelector('label');
+        var category = row.closest('.lc-category');
+        var categoryLabel = category && category.querySelector('.lc-cat-title, .lc-cat-header, summary');
+        window.addMapCatalogLayerToActive(checkbox.dataset.layerId, label ? label.textContent.trim() : checkbox.dataset.layerId,
+          categoryLabel ? categoryLabel.textContent.trim() : 'Katalog Peta');
         updateMapCatalogAddButton(button, checkbox);
       });
     }
@@ -7766,7 +7824,7 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
 
   function updateMapCatalogAddButton(button, checkbox) {
     if (!button || !checkbox) return;
-    var added = checkbox.checked;
+    var added = typeof window.isMapCatalogLayerAdded === 'function' && window.isMapCatalogLayerAdded(checkbox.dataset.layerId);
     button.classList.toggle('is-added', added);
     button.disabled = added || checkbox.disabled;
     button.title = added ? 'Sudah ada di Layer Aktif' : 'Tambahkan ke Layer Aktif';
