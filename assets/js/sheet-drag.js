@@ -362,6 +362,40 @@
      selesai: tinggi di mobile dan lebar di desktop sama-sama berubah. */
   var _timerSinkron = 0;
   var _mobileSheetPanY = 0;
+  var _desktopSheetPanX = 0;
+  function lebarSheetSisi() {
+    var kiri = 0;
+    var kanan = 0;
+    var idKiri = { 'catalog-popup': true, attr: true, lg: true };
+    for (var i = 0; i < URUT.length; i++) {
+      var id = URUT[i];
+      if (!isOpen(id) || isMinimized(id)) continue;
+      var sheet = elDari(DAFTAR[id]);
+      if (!sheet) continue;
+      var width = sheet.getBoundingClientRect().width || 0;
+      if (idKiri[id]) kiri = Math.max(kiri, width);
+      else kanan = Math.max(kanan, width);
+    }
+    return { kiri: kiri, kanan: kanan };
+  }
+  function sinkronkanPusatPetaDesktop(m) {
+    var targetOffset = 0;
+    if (!mobile() && m && typeof m.panBy === 'function') {
+      var mapEl = document.getElementById('map');
+      var mapRect = mapEl && mapEl.getBoundingClientRect();
+      if (mapRect && mapRect.width) {
+        var widths = lebarSheetSisi();
+        /* Sheet menimpa peta. Geser pusat geografis ke tengah area yang
+           masih terlihat, termasuk saat sheet aktif pada kedua sisi. */
+        targetOffset = (widths.kiri - widths.kanan) / 2;
+      }
+    }
+    var delta = targetOffset - _desktopSheetPanX;
+    if (Math.abs(delta) > 1 && m && typeof m.panBy === 'function') {
+      m.panBy([-delta, 0], { animate: false });
+    }
+    _desktopSheetPanX = targetOffset;
+  }
   function sinkronkanPusatPetaMobile(m) {
     var targetPanY = 0;
     if (mobile()) {
@@ -400,6 +434,7 @@
       var m = window.map;
       if (m && typeof m.invalidateSize === 'function') {
         m.invalidateSize({ pan: true });
+        sinkronkanPusatPetaDesktop(m);
         sinkronkanPusatPetaMobile(m);
       }
     }, 340);
@@ -414,7 +449,15 @@
       var m = window.map || window._map;
       if (!m || !bounds || !bounds.isValid || !bounds.isValid()) return;
       if (typeof m.invalidateSize === 'function') m.invalidateSize({ pan: true });
-      m.flyToBounds(bounds, options || {});
+      var fitOptions = Object.assign({}, options || {});
+      if (!mobile()) {
+        var widths = lebarSheetSisi();
+        var topLeft = fitOptions.paddingTopLeft || [0, 0];
+        var bottomRight = fitOptions.paddingBottomRight || [0, 0];
+        fitOptions.paddingTopLeft = [widths.kiri + (topLeft[0] || 0), topLeft[1] || 0];
+        fitOptions.paddingBottomRight = [widths.kanan + (bottomRight[0] || 0), bottomRight[1] || 0];
+      }
+      m.flyToBounds(bounds, fitOptions);
     };
     if (document.body.classList.contains('sheet-terbuka')) {
       setTimeout(run, 380);

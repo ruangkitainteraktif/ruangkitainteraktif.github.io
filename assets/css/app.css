@@ -8733,7 +8733,7 @@
       .map-fab-wrap {
         position: fixed !important;
         /* Sisakan ruang untuk iklan anchor yang menempel di bawah layar HP. */
-        bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+        bottom: calc(48px + env(safe-area-inset-bottom, 0px)) !important;
         left: 50% !important;
         right: auto !important;
         transform: translateX(-50%) !important;

@@ -2,8 +2,10 @@
 (function () {
   'use strict';
 
-  var LAYER = 'https://geoportal.esdm.go.id/gis1/rest/services/Kawasan_Hutan/MapServer/0';
+  var SERVICE = 'https://geoportal.esdm.go.id/gis1/rest/services/Kawasan_Hutan/MapServer';
+  var LAYER = SERVICE + '/0';
   var PROXY = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=';
+  var FOREST_WHERE = "deskripsi IN ('Kawasan Konservasi','Hutan Lindung','Hutan Produksi Tetap','Hutan Produksi Terbatas','Hutan Produksi Yang Dapat Dikonversi')";
   /* Halaman kecil lebih stabil pada service ESDM; halaman adaptif mengecil
      lagi bila server gagal memproses geometri yang kompleks. */
   var CHUNK = 200;
@@ -13,13 +15,13 @@
     'Hutan Produksi Terbatas', 'Hutan Produksi Yang Dapat Dikonversi'
   ];
   var ISLANDS = [
-    { name: 'Sumatera', file: 'sumatera', codes: [11,12,13,14,15,16,17,18,19,21] },
-    { name: 'Jawa', file: 'jawa', codes: [31,32,33,34,35,36] },
-    { name: 'Bali & Nusa Tenggara', file: 'bali-nusa-tenggara', codes: [51,52,53] },
-    { name: 'Kalimantan', file: 'kalimantan', codes: [61,62,63,64,65] },
-    { name: 'Sulawesi', file: 'sulawesi', codes: [71,72,73,74,75,76] },
-    { name: 'Maluku', file: 'maluku', codes: [81,82] },
-    { name: 'Papua', file: 'papua', codes: [91,92,93,94,95,96] }
+    { name: 'Sumatera', file: 'sumatera', codes: [11,12,13,14,15,16,17,18,19,21], bounds: [[-6,95],[6,107]] },
+    { name: 'Jawa', file: 'jawa', codes: [31,32,33,34,35,36], bounds: [[-9,104],[ -5,115]] },
+    { name: 'Bali & Nusa Tenggara', file: 'bali-nusa-tenggara', codes: [51,52,53], bounds: [[-12,113],[-7,126]] },
+    { name: 'Kalimantan', file: 'kalimantan', codes: [61,62,63,64,65], bounds: [[-5,108],[5,120]] },
+    { name: 'Sulawesi', file: 'sulawesi', codes: [71,72,73,74,75,76], bounds: [[-7,117],[3,126]] },
+    { name: 'Maluku', file: 'maluku', codes: [81,82], bounds: [[-9,123],[3,136]] },
+    { name: 'Papua', file: 'papua', codes: [91,92,93,94,95,96], bounds: [[-11,129],[1,142]] }
   ];
   var btn = document.getElementById('geofarm-forest-run');
   var resetBtn = document.getElementById('geofarm-forest-reset');
@@ -152,7 +154,7 @@
     var fields = [
       ['Pulau', island.name], ['Fungsi kawasan', category],
       ['Nama objek', propertyValue(p, 'namobj')], ['Kode provinsi', propertyValue(p, 'kode_prov')],
-      ['Nomor SK', propertyValue(p, 'noskkws')], ['Luas geodesik', formatHa(Number(p._forestAreaHa) || 0) + ' ha'],
+      ['Nomor SK', propertyValue(p, 'noskkws')],
       ['Luas menurut SK', propertyValue(p, 'lskkws') ? formatHa(Number(propertyValue(p, 'lskkws'))) + ' ha' : '—']
     ].filter(function (row) { return row[1] !== '' && row[1] !== null && row[1] !== undefined; });
     var fieldHtml = fields.map(function (row) {
@@ -169,35 +171,18 @@
       + '</div>';
   }
 
-  function addFeaturesToMap(features, island, stagingLayer) {
-    if (!window.map || !window.L || !L.geoJSON || !L.esri || !L.esri.Util || !stagingLayer) return;
-    var converted = [];
-    features.forEach(function (feature) {
-      try {
-        var geoFeature = L.esri.Util.arcgisToGeoJSON(feature);
-        if (!geoFeature || !geoFeature.geometry) return;
-        var attrs = feature.attributes || {};
-        var category = categoryName(attrs);
-        geoFeature.properties = Object.assign({}, geoFeature.properties || attrs, attrs, {
-          _forestAreaHa: Number(feature._computedAreaHa) || geometryAreaHa(feature.geometry),
-          _forestCategory: category
-        });
-        converted.push(geoFeature);
-      } catch (error) { console.warn('[GeoFarm Kawasan Hutan] Gagal mengubah geometri:', error); }
+  function createIslandImageLayer(island) {
+    if (!window.L || !L.esri || !L.esri.dynamicMapLayer) throw new Error('Layer gambar server tidak tersedia.');
+    var where = 'kode_prov IN (' + island.codes.join(',') + ') AND ' + FOREST_WHERE;
+    var layer = L.esri.dynamicMapLayer({
+      url: SERVICE, layers: [0], layerDefs: { 0: where }, opacity: 0.82,
+      format: 'png32', transparent: true, f: 'image'
     });
-    if (!converted.length) return;
-    var renderer = typeof L.canvas === 'function' ? L.canvas({ padding: 0.4 }) : undefined;
-    var chunkLayer = L.geoJSON({ type: 'FeatureCollection', features: converted }, {
-      renderer: renderer,
-      style: function (feature) {
-        var color = forestColor(feature.properties && feature.properties._forestCategory);
-        return { color: color, weight: 0.65, opacity: 0.9, fillColor: color, fillOpacity: 0.28 };
-      },
-      onEachFeature: function (feature, layer) {
-        layer.bindPopup(popupHtml(feature, island), { maxWidth: 320, className: 'gf-forest-leaflet-popup' });
-      }
-    });
-    chunkLayer.addTo(stagingLayer);
+    if (typeof layer.bindPopup === 'function') layer.bindPopup(function (error, collection) {
+      var feature = collection && collection.features && collection.features[0];
+      return error || !feature ? false : popupHtml(feature, island);
+    }, { maxWidth: 320, className: 'gf-forest-leaflet-popup' });
+    return layer;
   }
 
   function readIslandCache() {
@@ -239,7 +224,7 @@
     throw new Error('Data ' + island.name + ' gagal dimuat setelah 3 percobaan: ' + (lastError && lastError.message || 'format data tidak valid.'));
   }
 
-  function accumulateFeatures(features, island, stagingLayer, categories, categoryCounts) {
+  function accumulateFeatures(features, island, categories, categoryCounts) {
     features.forEach(function (feature) {
       var attrs = feature.attributes || feature.properties || {};
       var geometry = feature.geometry || (feature.type ? feature : null);
@@ -247,12 +232,10 @@
       var province = parseInt(attrs.kode_prov || attrs.KODE_PROV, 10);
       if (!Number.isFinite(province) || island.codes.indexOf(province) < 0) return;
       var ha = geometryAreaHa(geometry);
-      feature._computedAreaHa = ha;
       if (!Number.isFinite(ha) || ha <= 0) return;
       categories[category] = (categories[category] || 0) + ha;
       categoryCounts[category] = (categoryCounts[category] || 0) + 1;
     });
-    addFeaturesToMap(features, island, stagingLayer);
   }
 
   function updateIslandSteps() {
@@ -262,21 +245,21 @@
       var mapLoaded = !!forestMapLayers[island.name];
       return '<div class="gf-forest-island-step"><div class="gf-forest-island-meta"><strong>' + esc((index + 1) + '. ' + island.name) + '</strong>' +
         '<small id="gf-forest-island-status-' + index + '">' + (saved ? 'Data tersedia · ' + count + ' poligon' + (mapLoaded ? ' · peta aktif' : ' · peta belum dimuat') : 'Siap dihitung') + '</small></div>' +
-        '<button class="gf-forest-island-button" type="button" data-island-index="' + index + '">' + (saved ? (mapLoaded ? 'Muat ulang' : 'Muat poligon') : 'Hitung pulau') + '</button></div>';
+        '<button class="gf-forest-island-button" type="button" data-island-index="' + index + '">' + (saved ? (mapLoaded ? 'Muat ulang peta' : 'Muat peta') : 'Hitung pulau') + '</button></div>';
     }).join('');
     btn.disabled = !allIslandsReady() || busy;
     if (resetBtn) resetBtn.disabled = busy || !Object.keys(forestMapLayers).some(function (name) { return !!forestMapLayers[name]; });
   }
 
-  async function loadLocalIslandStatistics(island, stagingLayer, data) {
+  async function loadLocalIslandStatistics(island, data) {
     var features = data.features;
     var categories = Object.create(null);
     var categoryCounts = Object.create(null);
     for (var offset = 0; offset < features.length; offset += CHUNK) {
       var page = features.slice(offset, offset + CHUNK);
-      setLoading('2/3', 'Menghitung dan menampilkan poligon', offset / features.length * 100,
+      setLoading('2/3', 'Menghitung luas kawasan', offset / features.length * 100,
         island.name + ' · poligon ' + (offset + 1).toLocaleString('id-ID') + ' dari ' + features.length.toLocaleString('id-ID') + '.');
-      accumulateFeatures(page, island, stagingLayer, categories, categoryCounts);
+      accumulateFeatures(page, island, categories, categoryCounts);
       await new Promise(function (resolve) { requestAnimationFrame(resolve); });
     }
     setLoading('3/3', 'Menyimpan ringkasan', 100,
@@ -296,11 +279,17 @@
     return result;
   }
 
-  async function loadIslandStatistics(island, stagingLayer) {
+  async function loadIslandStatistics(island) {
+    if (islandCache[island.name]) return islandCache[island.name];
     setLoading('1/3', 'Memuat data pulau', null, 'Menyiapkan poligon ' + island.name + '.');
-    var localData = await readLocalIslandData(island);
-    if (localData) return loadLocalIslandStatistics(island, stagingLayer, localData);
-    var where = 'kode_prov IN (' + island.codes.join(',') + ')';
+    var localData = null;
+    try { localData = await readLocalIslandData(island); }
+    catch (localError) {
+      console.warn('[GeoFarm Kawasan Hutan] Data lokal gagal dimuat; mencoba query layanan:', island.name, localError);
+      setLoading('1/3', 'Mencoba sumber data lain', null, 'Data ' + island.name + ' akan dimuat bertahap dari layanan peta.');
+    }
+    if (localData) return loadLocalIslandStatistics(island, localData);
+    var where = 'kode_prov IN (' + island.codes.join(',') + ') AND ' + FOREST_WHERE;
     var countUrl = LAYER + '/query?where=' + encodeURIComponent(where) + '&returnCountOnly=true&f=json';
     setLoading('1/3', 'Menghubungi layanan ESDM', null, 'Memeriksa jumlah poligon ' + island.name + '.');
     var countData = await fetchJson(countUrl);
@@ -317,7 +306,7 @@
       var page;
       var omitOrder = false;
       while (!page) {
-        setLoading('2/3', 'Mengambil dan menghitung geometri', processed / totalCount * 100,
+        setLoading('2/3', 'Menghitung luas kawasan', processed / totalCount * 100,
           island.name + ' · poligon ' + (processed + 1).toLocaleString('id-ID') + ' dari ' + totalCount.toLocaleString('id-ID') + ' · halaman ' + pageSize + ' poligon.');
         try {
           page = await fetchJson(apiUrl(offset, pageSize, where, omitOrder));
@@ -345,12 +334,10 @@
         if (!Number.isFinite(province)) return;
         if (island.codes.indexOf(province) < 0) return;
         var ha = geometryAreaHa(geometry);
-        feature._computedAreaHa = ha;
         if (!Number.isFinite(ha) || ha <= 0) return;
         categories[category] = (categories[category] || 0) + ha;
         categoryCounts[category] = (categoryCounts[category] || 0) + 1;
       });
-      addFeaturesToMap(features, island, stagingLayer);
       processed += features.length;
       offset += features.length;
     }
@@ -466,7 +453,7 @@
       html += '<tr class="gf-forest-grand"><th>' + esc(row.name) + '</th><td>Total pulau</td><td>' + formatHa(row.total) + '</td><td>' + formatHa(row.total / 100) + '</td><td>' + formatPct(totalHa ? row.total / totalHa * 100 : 0) + '</td><td>' + row.polygons.toLocaleString('id-ID') + '</td></tr>';
     });
     html += '<tr class="gf-forest-grand"><th>' + (isNational ? 'Indonesia' : esc(rows[0].name)) + '</th><td>Total ' + (isNational ? 'nasional' : 'pulau') + '</td><td>' + formatHa(totalHa) + '</td><td>' + formatHa(totalHa / 100) + '</td><td>100%</td><td>' + totalPolygons.toLocaleString('id-ID') + '</td></tr></tbody></table></div>';
-    html += '<p class="gf-forest-note">Luas dihitung geodesik dari geometri yang digeneralisasi sekitar 55 m sesuai skala 1:250.000. Grafik menampilkan luas per fungsi; arahkan kursor untuk melihat luas, porsi pulau, dan jumlah poligon. Klik poligon di peta untuk melihat nama objek, kode provinsi, nomor SK, dan luas menurut SK. Ringkasan statistik tersimpan di browser. Sumber: ESDM, Kawasan Hutan 2025.</p>';
+    html += '<p class="gf-forest-note">Luas dihitung geodesik dari geometri yang digeneralisasi sekitar 55 m sesuai skala 1:250.000. Grafik menampilkan luas per fungsi; arahkan kursor untuk melihat luas, porsi pulau, dan jumlah poligon. Peta memakai gambar layanan yang difilter per pulau; klik peta untuk melihat informasi objek jika tersedia. Ringkasan statistik tersimpan di browser. Sumber: ESDM, Kawasan Hutan 2025.</p>';
     output.innerHTML = html;
     if (chart) chart.destroy();
     var canvas = document.getElementById('geofarm-forest-chart');
@@ -499,30 +486,37 @@
     updateIslandSteps();
     islandSteps.querySelectorAll('button').forEach(function (item) { item.disabled = true; });
     var map = window.map || window._map;
-    var stagingLayer = map && window.L && L.featureGroup ? L.featureGroup().addTo(map) : null;
     try {
-      var saved = await loadIslandStatistics(island, stagingLayer);
-      var previousLayer = forestMapLayers[island.name];
-      var polygonShown = !!(stagingLayer && stagingLayer.getLayers && stagingLayer.getLayers().length);
-      if (polygonShown) {
-        if (previousLayer && map && map.hasLayer(previousLayer)) map.removeLayer(previousLayer);
-        forestMapLayers[island.name] = stagingLayer;
-      } else if (stagingLayer && map && map.hasLayer(stagingLayer)) {
-        map.removeLayer(stagingLayer);
+      var saved = await loadIslandStatistics(island);
+      var imageShown = false;
+      if (map && window.L && L.esri && L.esri.dynamicMapLayer) {
+        Object.keys(forestMapLayers).forEach(function (name) {
+          var activeLayer = forestMapLayers[name];
+          if (activeLayer && map.hasLayer(activeLayer)) map.removeLayer(activeLayer);
+          delete forestMapLayers[name];
+        });
+        var imageLayer = createIslandImageLayer(island);
+        imageLayer.addTo(map);
+        forestMapLayers[island.name] = imageLayer;
+        imageShown = true;
       }
       var index = ISLANDS.indexOf(island);
       var rowStatus = document.getElementById('gf-forest-island-status-' + index);
       if (rowStatus) rowStatus.textContent = 'Data tersedia · ' + Number(saved.featureCount).toLocaleString('id-ID') + ' poligon';
       output.innerHTML = '';
       renderDetailed(buildReportFromLocal([island]), [island]);
-      if (polygonShown && stagingLayer.getBounds && stagingLayer.getBounds().isValid()) {
-        map.fitBounds(stagingLayer.getBounds().pad(0.04), { maxZoom: 8, animate: true });
+      if (imageShown && island.bounds) {
+        var islandBounds = L.latLngBounds(island.bounds).pad(0.04);
+        if (window.SheetDrag && typeof window.SheetDrag.flyToBoundsInVisibleMap === 'function') {
+          window.SheetDrag.flyToBoundsInVisibleMap(islandBounds, { maxZoom: 7, duration: 0.8 });
+        } else {
+          map.fitBounds(islandBounds, { maxZoom: 7, animate: true });
+        }
       }
-      status.innerHTML += polygonShown
-        ? '<br><span class="gf-forest-done">Poligon ' + esc(island.name) + ' ditampilkan di peta; ringkasan tersimpan di browser.</span>'
-        : '<br><span class="gf-forest-error">Perhitungan ' + esc(island.name) + ' berhasil, tetapi geometri belum dapat ditampilkan di peta.</span>';
+      status.innerHTML += imageShown
+        ? '<br><span class="gf-forest-done">Peta kawasan hutan ' + esc(island.name) + ' ditampilkan sebagai gambar layanan yang difilter per pulau; ringkasan tersimpan di browser.</span>'
+        : '<br><span class="gf-forest-error">Perhitungan ' + esc(island.name) + ' berhasil, tetapi layer peta tidak tersedia.</span>';
     } catch (error) {
-      if (stagingLayer && map && map.hasLayer(stagingLayer)) map.removeLayer(stagingLayer);
       console.error('[GeoFarm Kawasan Hutan]', error);
       status.innerHTML = '<span class="gf-forest-error">Pemrosesan data ' + esc(island.name) + ' gagal: ' + esc(error.message || 'data tidak dapat dimuat.') + '</span>';
     } finally {
@@ -539,9 +533,16 @@
       var bounds = L.latLngBounds([]);
       ISLANDS.forEach(function (island) {
         var layer = forestMapLayers[island.name];
-        if (layer && layer.getBounds && layer.getBounds().isValid()) bounds.extend(layer.getBounds());
+        if (layer && island.bounds) bounds.extend(L.latLngBounds(island.bounds));
       });
-      if (bounds.isValid()) window.map.fitBounds(bounds.pad(0.04), { maxZoom: 5, animate: true });
+      if (bounds.isValid()) {
+        var nationalBounds = bounds.pad(0.04);
+        if (window.SheetDrag && typeof window.SheetDrag.flyToBoundsInVisibleMap === 'function') {
+          window.SheetDrag.flyToBoundsInVisibleMap(nationalBounds, { maxZoom: 5, duration: 0.8 });
+        } else {
+          window.map.fitBounds(nationalBounds, { maxZoom: 5, animate: true });
+        }
+      }
     }
   });
 
@@ -553,7 +554,7 @@
       if (layer && map && map.hasLayer(layer)) map.removeLayer(layer);
       delete forestMapLayers[name];
     });
-    status.textContent = 'Semua poligon kawasan hutan dihapus dari peta. Ringkasan statistik tetap tersedia.';
+    status.textContent = 'Semua layer peta kawasan hutan dihapus. Ringkasan statistik tetap tersedia.';
     updateIslandSteps();
   });
 
