@@ -1,23 +1,25 @@
-/* GeoFarm: statistik luas LBS 2023 per provinsi dari layanan Kementan. */
+/* GeoFarm: statistik luas LBS 2019 per provinsi dari layanan Kementan. */
 (function () {
   'use strict';
 
-  var SERVICE = 'https://sig02.pertanian.go.id/server/rest/services/Sawah/Sawah2023/MapServer';
-  var LAYER = SERVICE + '/0';
+  var SERVICE = 'https://sig02.pertanian.go.id/server/rest/services/Sawah/LBS2019/MapServer';
   var PROXY = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=';
   var PROVINCE_GEOJSON_URL = 'assets/data/bps/geojson/provinsi.geojson';
   var LBS_WMS_URL = 'https://geoserver.bps.go.id/ksa/wms';
-  var CACHE_KEY = 'geofarm-sawah-statistics-2023-province-v2-refresh';
-  var PAGE_SIZE = 150;
+  var CACHE_KEY = 'geofarm-sawah-statistics-lbs2019-province-v1';
+  /* Layanan LBS 2019 tidak mendukung paginasi; query dibatasi maxRecordCount 1000.
+     Karena itu data dimuat per blok FID (0-999, 1000-1999, ...) sebanyak 1000 poligon. */
+  var PAGE_SIZE = 1000;
+  var PARALLEL = 4;
   var PROVINCES = [
-    ['11','Aceh'],['12','Sumatera Utara'],['13','Sumatera Barat'],['14','Riau'],['15','Jambi'],['16','Sumatera Selatan'],['17','Bengkulu'],['18','Lampung'],['19','Kepulauan Bangka Belitung'],['21','Kepulauan Riau'],
-    ['31','DKI Jakarta'],['32','Jawa Barat'],['33','Jawa Tengah'],['34','DI Yogyakarta'],['35','Jawa Timur'],['36','Banten'],
-    ['51','Bali'],['52','Nusa Tenggara Barat'],['53','Nusa Tenggara Timur'],
-    ['61','Kalimantan Barat'],['62','Kalimantan Tengah'],['63','Kalimantan Selatan'],['64','Kalimantan Timur'],['65','Kalimantan Utara'],
-    ['71','Sulawesi Utara'],['72','Sulawesi Tengah'],['73','Sulawesi Selatan'],['74','Sulawesi Tenggara'],['75','Gorontalo'],['76','Sulawesi Barat'],
-    ['81','Maluku'],['82','Maluku Utara'],
-    ['91','Papua Barat'],['92','Papua Barat Daya'],['94','Papua'],['95','Papua Selatan'],['96','Papua Tengah'],['97','Papua Pegunungan']
-  ].map(function (entry) { return { code: entry[0], name: entry[1] }; });
+    ['11','Aceh',33],['12','Sumatera Utara',0],['13','Sumatera Barat',2],['14','Riau',8],['15','Jambi',25],['16','Sumatera Selatan',1],['17','Bengkulu',29],['18','Lampung',15],['19','Kepulauan Bangka Belitung',32],['21','Kepulauan Riau',16],
+    ['31','DKI Jakarta',26],['32','Jawa Barat',24],['33','Jawa Tengah',23],['34','DI Yogyakarta',28],['35','Jawa Timur',22],['36','Banten',30],
+    ['51','Bali',31],['52','Nusa Tenggara Barat',12],['53','Nusa Tenggara Timur',11],
+    ['61','Kalimantan Barat',21],['62','Kalimantan Tengah',19],['63','Kalimantan Selatan',20],['64','Kalimantan Timur',18],['65','Kalimantan Utara',17],
+    ['71','Sulawesi Utara',3],['72','Sulawesi Tengah',5],['73','Sulawesi Selatan',6],['74','Sulawesi Tenggara',4],['75','Gorontalo',27],['76','Sulawesi Barat',7],
+    ['81','Maluku',14],['82','Maluku Utara',13],
+    ['91','Papua Barat',9],['94','Papua',10]
+  ].map(function (entry) { return { code: entry[0], name: entry[1], layer: entry[2] }; });
   var btn = document.getElementById('geofarm-sawah-run');
   var resetBtn = document.getElementById('geofarm-sawah-reset');
   var status = document.getElementById('geofarm-sawah-status');
@@ -30,6 +32,7 @@
   var sawahWmsLayer = null;
   var activeProvinceName = '';
   var provinceGeoJsonPromise = null;
+  var layerSchemaPromises = Object.create(null);
   var chart = null;
   var districtChart = null;
   var busy = false;
@@ -48,6 +51,14 @@
   function saveCache() {
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); return true; }
     catch (error) { console.warn('[GeoFarm Sawah] Ringkasan tidak dapat disimpan:', error); return false; }
+  }
+  function idle() {
+    return new Promise(function (resolve) {
+      var done = false;
+      function finish() { if (!done) { done = true; resolve(); } }
+      requestAnimationFrame(finish);
+      setTimeout(finish, 250);
+    });
   }
   function loadProvinceGeoJson() {
     if (!provinceGeoJsonPromise) provinceGeoJsonPromise = fetch(PROVINCE_GEOJSON_URL).then(function (response) {
@@ -109,22 +120,21 @@
     var key = Object.keys(attrs).find(function (name) { return name.toLowerCase() === field.toLowerCase(); });
     return key ? attrs[key] : '';
   }
-  function landType(attrs) { return String(getValue(attrs, 'Jenis_Lahan_Sawah') || getValue(attrs, 'Qname_2023') || 'Tidak diketahui').trim() || 'Tidak diketahui'; }
   function colorFor(label, index) {
     var colors = ['#15803d','#65a30d','#0f766e','#84cc16','#22c55e','#a3a13a','#047857','#4d7c0f'];
     var hash = 0; for (var i = 0; i < label.length; i++) hash = (hash * 31 + label.charCodeAt(i)) | 0;
     return colors[Math.abs(hash + index) % colors.length];
   }
-  function requestUrl(params) {
-    return LAYER + '/query?' + Object.keys(params).map(function (key) { return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]); }).join('&');
+  function requestUrl(layer, params) {
+    return SERVICE + '/' + layer + '/query?' + Object.keys(params).map(function (key) { return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]); }).join('&');
   }
-  async function fetchJson(url) {
+  async function fetchJson(url, attempts) {
     var last;
-    for (var attempt = 0; attempt < 2; attempt++) {
+    for (var attempt = 0; attempt < (attempts || 2); attempt++) {
       var controller = new AbortController();
       var timer = setTimeout(function () { controller.abort(); }, 90000);
       try {
-        var response = await fetch(attempt ? PROXY + encodeURIComponent(url) : url, { signal: controller.signal, cache: 'no-store' });
+        var response = await fetch(attempt % 2 ? PROXY + encodeURIComponent(url) : url, { signal: controller.signal, cache: 'no-store' });
         if (!response.ok) throw new Error('Layanan data mengembalikan HTTP ' + response.status + '.');
         var data = await response.json();
         if (data.error) throw new Error(data.error.message || 'Layanan data menolak permintaan.');
@@ -134,10 +144,51 @@
     }
     throw last || new Error('Layanan data tidak dapat dihubungi.');
   }
+  /* Skema tiap layer LBS 2019 berbeda-beda: nama field OID, luas, kabupaten, dan
+     jenis tidak seragam. Skema dibaca sekali per layer lalu dipakai untuk query. */
+  function layerSchema(province) {
+    if (!layerSchemaPromises[province.layer]) {
+      layerSchemaPromises[province.layer] = fetchJson(SERVICE + '/' + province.layer + '?f=json', 4).then(function (meta) {
+        var fields = Array.isArray(meta.fields) ? meta.fields : [];
+        var byLower = Object.create(null);
+        fields.forEach(function (field) { byLower[String(field.name).toLowerCase()] = field.name; });
+        var oid = (fields.find(function (field) { return field.type === 'esriFieldTypeOID'; }) || {}).name || 'FID';
+        var area = byLower['luas_cea'] || byLower['luas_ha'] || null;
+        var areaScale = 1;
+        if (!area && byLower['shape_area']) { area = byLower['shape_area']; areaScale = 0.0001; }
+        var district = byLower['wadmkk'] || byLower['wadmkk_1'] || null;
+        var type = byLower['qname_19'] || byLower['qname_2019'] || byLower['qname'] || byLower['q_name19'] || null;
+        if (!area) throw new Error('Atribut luas tidak ditemukan pada layer LBS 2019.');
+        return { oid: oid, area: area, areaScale: areaScale, district: district, type: type };
+      }).catch(function (error) { delete layerSchemaPromises[province.layer]; throw error; });
+    }
+    return layerSchemaPromises[province.layer];
+  }
+  function absorbPage(page, schema, province, groups, counts, districts) {
+    if (!page || !Array.isArray(page.features)) throw new Error('Format poligon dari layanan tidak valid.');
+    page.features.forEach(function (feature) {
+      var attrs = feature.attributes || {};
+      var ha = (Number(getValue(attrs, schema.area)) || 0) * schema.areaScale;
+      if (!Number.isFinite(ha) || ha <= 0) return;
+      var type = schema.type ? String(getValue(attrs, schema.type) || '').trim() : '';
+      type = type || 'Sawah';
+      groups[type] = (groups[type] || 0) + ha;
+      counts[type] = (counts[type] || 0) + 1;
+      var districtName = schema.district ? String(getValue(attrs, schema.district) || '').trim() : '';
+      districtName = districtName || 'Tidak diketahui';
+      var key = province.code + '|' + districtName;
+      if (!districts[key]) districts[key] = { code: '', name: districtName, groups: Object.create(null), counts: Object.create(null), featureCount: 0 };
+      districts[key].groups[type] = (districts[key].groups[type] || 0) + ha;
+      districts[key].counts[type] = (districts[key].counts[type] || 0) + 1;
+      districts[key].featureCount++;
+    });
+    return page.features.length;
+  }
   async function processProvince(province) {
     loading('1/3', 'Memuat data provinsi', null, 'Menyiapkan poligon sawah ' + province.name + '.');
-    var where = "WIADPR = '" + province.code + "'";
-    var count = await fetchJson(requestUrl({ where: where, returnCountOnly: 'true', f: 'json' }));
+    var schema = await layerSchema(province);
+    var outFields = [schema.oid, schema.area, schema.district, schema.type].filter(Boolean).join(',');
+    var count = await fetchJson(requestUrl(province.layer, { where: '1=1', returnCountOnly: 'true', f: 'json' }), 4);
     var total = Number(count.count);
     if (!Number.isFinite(total) || total < 0) throw new Error('Jumlah data sawah tidak valid untuk ' + province.name + '.');
     if (total === 0) {
@@ -146,111 +197,37 @@
       if (!saveCache()) { delete cache[province.name]; throw new Error('Hasil 0 ha tidak dapat disimpan untuk ' + province.name + '.'); }
       return cache[province.name];
     }
-    var groups = Object.create(null), counts = Object.create(null), districts = Object.create(null), processed = 0, offset = 0;
-    while (offset < total) {
-      var size = PAGE_SIZE, page;
-      while (!page) {
-        loading('2/3', 'Menghitung statistik sawah', processed / total * 100,
-          province.name + ' · poligon ' + (processed + 1).toLocaleString('id-ID') + ' dari ' + total.toLocaleString('id-ID') + ' · halaman ' + size + '.');
-        var params = { where: where, outFields: 'OBJECTID,WADMPR,WIADPR,WADMKK,WIADKK,Qname_2023,Jenis_Lahan_Sawah,Cetak_Sawah,Luas_Ha',
-          returnGeometry: 'false', orderByFields: 'OBJECTID', resultOffset: offset, resultRecordCount: size, f: 'json' };
-        try { page = await fetchJson(requestUrl(params)); }
-        catch (error) {
-          if (size <= 25) throw new Error('Gagal memuat poligon ke-' + offset.toLocaleString('id-ID') + ': ' + error.message);
-          size = Math.max(25, Math.floor(size / 2));
-        }
-      }
-      if (!Array.isArray(page.features)) throw new Error('Format poligon dari layanan tidak valid.');
-      if (!page.features.length) throw new Error('Data terhenti pada poligon ke-' + offset.toLocaleString('id-ID') + '.');
-      page.features.forEach(function (feature) {
-        var attrs = feature.attributes || {};
-        var provinceCode = String(getValue(attrs, 'WIADPR')).substring(0, 2);
-        if (provinceCode !== province.code) return;
-        var ha = Number(getValue(attrs, 'Luas_Ha')) || 0;
-        if (!Number.isFinite(ha) || ha <= 0) return;
-        var type = landType(attrs);
-        groups[type] = (groups[type] || 0) + ha;
-        counts[type] = (counts[type] || 0) + 1;
-        var districtCode = String(getValue(attrs, 'WIADKK') || '').trim();
-        var districtName = String(getValue(attrs, 'WADMKK') || '').trim() || (districtCode ? 'Kabupaten/Kota ' + districtCode : 'Tidak diketahui');
-        var districtKey = province.code + '|' + (districtCode || districtName);
-        if (!districts[districtKey]) districts[districtKey] = { code: districtCode, name: districtName, groups: Object.create(null), counts: Object.create(null), featureCount: 0 };
-        districts[districtKey].groups[type] = (districts[districtKey].groups[type] || 0) + ha;
-        districts[districtKey].counts[type] = (districts[districtKey].counts[type] || 0) + 1;
-        districts[districtKey].featureCount++;
+    var groups = Object.create(null), counts = Object.create(null), districts = Object.create(null), processed = 0;
+    var bandFrom = 0, emptyBands = 0, bandsDone = 0;
+    var maxBands = Math.ceil(total / PAGE_SIZE) + 2;
+    while (processed < total && emptyBands < 2 && bandsDone < maxBands) {
+      var needed = Math.ceil((total - processed) / PAGE_SIZE) + 1;
+      var size = Math.max(1, Math.min(PARALLEL, needed));
+      var froms = [];
+      for (var i = 0; i < size; i++) froms.push(bandFrom + i * PAGE_SIZE);
+      loading('2/3', 'Menghitung statistik sawah', Math.min(99, processed / total * 100),
+        province.name + ' · poligon ' + processed.toLocaleString('id-ID') + ' dari ' + total.toLocaleString('id-ID') + ' · blok ' + (bandsDone + 1) + '.');
+      var pages = await Promise.all(froms.map(function (from) {
+        var where = schema.oid + ' >= ' + from + ' AND ' + schema.oid + ' <= ' + (from + PAGE_SIZE - 1);
+        return fetchJson(requestUrl(province.layer, { where: where, outFields: outFields, returnGeometry: 'false', f: 'json' }), 4);
+      }));
+      var chunkEmpty = 0;
+      pages.forEach(function (page) {
+        var received = absorbPage(page, schema, province, groups, counts, districts);
+        if (!received) chunkEmpty++;
+        processed += received;
       });
-      processed += page.features.length;
-      offset += page.features.length;
-      await new Promise(function (resolve) { requestAnimationFrame(resolve); });
+      emptyBands = chunkEmpty >= size ? emptyBands + size : 0;
+      bandFrom += size * PAGE_SIZE;
+      bandsDone += size;
+      await idle();
     }
-    if (!Object.keys(groups).length) throw new Error('Kode provinsi pada data tidak cocok dengan ' + province.name + '.');
+    if (!processed) throw new Error('Poligon sawah ' + province.name + ' tidak dapat diambil dari layanan.');
+    if (processed < total) console.warn('[GeoFarm Sawah] ' + province.name + ': ' + processed.toLocaleString('id-ID') + ' dari ' + total.toLocaleString('id-ID') + ' poligon diterima.');
     loading('3/3', 'Menyimpan ringkasan', 100, 'Perhitungan selesai untuk ' + processed.toLocaleString('id-ID') + ' poligon.');
     cache[province.name] = { groups: groups, counts: counts, districts: districts, featureCount: processed, fetchedAt: new Date().toISOString() };
     if (!saveCache()) { delete cache[province.name]; throw new Error('Ringkasan berhasil dihitung, tetapi tidak dapat disimpan.'); }
     return cache[province.name];
-  }
-  async function processDistricts(province) {
-    loading('1/2', 'Merinci luas per kabupaten/kota', null, 'Memuat atribut sawah ' + province.name + '.');
-    var where = "WIADPR = '" + province.code + "'";
-    var count = await fetchJson(requestUrl({ where: where, returnCountOnly: 'true', f: 'json' }));
-    var total = Number(count.count);
-    if (!Number.isFinite(total) || total < 0) throw new Error('Jumlah data sawah tidak valid untuk ' + province.name + '.');
-    if (total === 0) {
-      var previousSummary = { groups: cache[province.name].groups, counts: cache[province.name].counts,
-        districts: cache[province.name].districts, featureCount: cache[province.name].featureCount };
-      cache[province.name].groups = Object.create(null);
-      cache[province.name].counts = Object.create(null);
-      cache[province.name].districts = Object.create(null);
-      cache[province.name].featureCount = 0;
-      if (!saveCache()) {
-        cache[province.name].groups = previousSummary.groups;
-        cache[province.name].counts = previousSummary.counts;
-        cache[province.name].districts = previousSummary.districts;
-        cache[province.name].featureCount = previousSummary.featureCount;
-        throw new Error('Rincian 0 poligon tidak dapat disimpan untuk ' + province.name + '.');
-      }
-      loading('2/2', 'Tidak ada rincian poligon', 100, province.name + ' dicatat dengan 0 kabupaten berpoligon sawah.');
-      return cache[province.name].districts;
-    }
-    var districts = Object.create(null), processed = 0, offset = 0;
-    while (offset < total) {
-      var size = PAGE_SIZE, page;
-      while (!page) {
-        loading('1/2', 'Merinci luas per kabupaten/kota', processed / total * 100,
-          province.name + ' · poligon ' + (processed + 1).toLocaleString('id-ID') + ' dari ' + total.toLocaleString('id-ID') + '.');
-        try {
-          page = await fetchJson(requestUrl({ where: where, outFields: 'OBJECTID,WIADPR,WADMKK,WIADKK,Qname_2023,Jenis_Lahan_Sawah,Luas_Ha',
-            returnGeometry: 'false', orderByFields: 'OBJECTID', resultOffset: offset, resultRecordCount: size, f: 'json' }));
-        } catch (error) {
-          if (size <= 25) throw new Error('Gagal memuat rincian pada poligon ke-' + offset.toLocaleString('id-ID') + ': ' + error.message);
-          size = Math.max(25, Math.floor(size / 2));
-        }
-      }
-      if (!Array.isArray(page.features) || !page.features.length) throw new Error('Data kabupaten terhenti pada poligon ke-' + offset.toLocaleString('id-ID') + '.');
-      page.features.forEach(function (feature) {
-        var attrs = feature.attributes || {};
-        if (String(getValue(attrs, 'WIADPR')).substring(0, 2) !== province.code) return;
-        var ha = Number(getValue(attrs, 'Luas_Ha')) || 0;
-        if (!Number.isFinite(ha) || ha <= 0) return;
-        var code = String(getValue(attrs, 'WIADKK') || '').trim();
-        var name = String(getValue(attrs, 'WADMKK') || '').trim() || (code ? 'Kabupaten/Kota ' + code : 'Tidak diketahui');
-        var key = province.code + '|' + (code || name);
-        var type = landType(attrs);
-        if (!districts[key]) districts[key] = { code: code, name: name, groups: Object.create(null), counts: Object.create(null), featureCount: 0 };
-        districts[key].groups[type] = (districts[key].groups[type] || 0) + ha;
-        districts[key].counts[type] = (districts[key].counts[type] || 0) + 1;
-        districts[key].featureCount++;
-      });
-      processed += page.features.length;
-      offset += page.features.length;
-      await new Promise(function (resolve) { requestAnimationFrame(resolve); });
-    }
-    if (!Object.keys(districts).length) throw new Error('Atribut kabupaten/kota tidak ditemukan pada data ' + province.name + '.');
-    var previous = cache[province.name].districts;
-    cache[province.name].districts = districts;
-    if (!saveCache()) { cache[province.name].districts = previous; throw new Error('Rincian kabupaten berhasil dihitung, tetapi tidak dapat disimpan.'); }
-    loading('2/2', 'Rincian tersimpan', 100, Object.keys(districts).length.toLocaleString('id-ID') + ' kabupaten/kota.');
-    return districts;
   }
   function collect(provinces) {
     var groups = Object.create(null), counts = Object.create(null), features = 0, types = Object.create(null);
@@ -290,19 +267,11 @@
     html += '<tr class="gf-forest-grand"><th>' + (isNational ? 'Indonesia' : 'Total provinsi') + '</th>';
     types.forEach(function (type) { html += '<td>' + fmt(rows.reduce(function (sum, row) { return sum + row.values[type]; }, 0)) + '</td>'; });
     html += '<td>' + fmt(national) + '</td><td>100%</td><td>' + report.featureCount.toLocaleString('id-ID') + '</td></tr></tbody></table></div>';
-    html += '<p class="gf-forest-note">Statistik memakai data LBS 2023 Kementan: luas dijumlahkan dari atribut Luas_Ha dan jumlah poligon dihitung dari fitur yang diterima. Ringkasan tersimpan di penyimpanan lokal browser. Peta menampilkan batas provinsi dengan overlay LBS 2024 BPS untuk visualisasi; overlay disaring per provinsi, sehingga tahunnya berbeda dari data statistik.</p>';
+    html += '<p class="gf-forest-note">Statistik memakai data LBS 2019 Kementan: luas dijumlahkan dari atribut luas (Luas_CEA/Luas_Ha) dan jumlah poligon dihitung dari fitur yang diterima. Ringkasan tersimpan di penyimpanan lokal browser. Peta menampilkan batas provinsi dengan overlay LBS 2024 BPS untuk visualisasi; overlay disaring per provinsi, sehingga tahunnya berbeda dari data statistik.</p>';
     if (isNational) {
-      var papuaReference = { 'Papua Barat Daya': 472, 'Papua Selatan': 43037, 'Papua Tengah': 2370, 'Papua Pegunungan': 949 };
-      var missingPapua = Object.keys(papuaReference).filter(function (name) {
-        return rows.some(function (row) { return row.name === name && row.featureCount === 0; });
-      });
-      var missingPapuaHa = missingPapua.reduce(function (sum, name) { return sum + papuaReference[name]; }, 0);
-      var officialTotal = 7356441;
+      var officialTotal = 7463948;
       var gap = Math.max(0, officialTotal - national);
-      var note = 'Catatan cakupan: total aplikasi dijumlahkan dari atribut luas pada poligon yang berhasil diterima; angka ini bukan angka resmi yang dipaksakan. Laporan Tahunan Kementan 2023 mencatat total LBS 7.356.441 ha sebagai pembanding. Metode dan cakupan layer layanan dapat berbeda.';
-      if (missingPapua.length) {
-        note += ' Data sumber saat ini tidak mengembalikan poligon untuk ' + missingPapua.join(', ') + '. Tabel Kementan mencatat luas gabungan ' + fmt(missingPapuaHa) + ' ha (Papua Barat Daya 472 ha, Papua Selatan 43.037 ha, Papua Tengah 2.370 ha, Papua Pegunungan 949 ha). Nilai 0 di aplikasi berarti poligon tidak tersedia dari query, bukan bukti bahwa sawah tidak ada.';
-      }
+      var note = 'Catatan cakupan: total aplikasi dijumlahkan dari atribut luas pada seluruh poligon LBS 2019 yang berhasil diterima; angka ini bukan angka resmi yang dipaksakan. Laporan Tahunan Kementan 2019 mencatat total LBS 7.463.948 ha sebagai pembanding. Metode dan cakupan layer layanan dapat berbeda.';
       if (gap > 0) note += ' Selisih terhadap angka pembanding Kementan sekitar ' + fmt(gap) + ' ha; hasil nasional perlu dianggap belum lengkap.';
       html += '<p class="gf-forest-note gf-sawah-coverage-note">' + esc(note) + '</p>';
     }
@@ -426,9 +395,10 @@
       ? showProvinceBoundary(province, map).catch(function (error) { return error; })
       : Promise.resolve(new Error('Peta tidak tersedia.'));
     try {
-      if (!cache[province.name]) await processProvince(province);
+      if (!cache[province.name] || !cache[province.name].districts) await processProvince(province);
       output.innerHTML = '';
       render(collect([province]), [province]);
+      renderDistrictDetails(province);
       output.scrollIntoView({ behavior: 'smooth', block: 'start' });
       var boundary = await boundaryPromise;
       if (!(boundary instanceof Error)) {
@@ -440,7 +410,6 @@
             map.fitBounds(boundaryBounds, { maxZoom: 8, animate: true });
           }
         }
-        status.innerHTML += '<br><span class="gf-forest-done">Batas ' + esc(province.name) + ' dan overlay LBS 2024 yang difilter per provinsi ditampilkan pada peta.</span>';
       } else {
         status.innerHTML += '<br><span class="gf-forest-error">Statistik siap, tetapi batas wilayah gagal dimuat: ' + esc(boundary.message || 'peta tidak tersedia.') + '</span>';
       }
@@ -459,8 +428,7 @@
       for (var i = 0; i < PROVINCES.length; i++) {
         var province = PROVINCES[i];
         try {
-          if (!cache[province.name]) await processProvince(province);
-          else if (!cache[province.name].districts) await processDistricts(province);
+          if (!cache[province.name] || !cache[province.name].districts) await processProvince(province);
         } catch (error) { failed.push(province.name + ': ' + (error.message || 'gagal memuat')); }
       }
       var allStatisticsAvailable = PROVINCES.every(function (province) { return !!cache[province.name]; });
