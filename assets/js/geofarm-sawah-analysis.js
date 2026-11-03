@@ -291,6 +291,21 @@
     types.forEach(function (type) { html += '<td>' + fmt(rows.reduce(function (sum, row) { return sum + row.values[type]; }, 0)) + '</td>'; });
     html += '<td>' + fmt(national) + '</td><td>100%</td><td>' + report.featureCount.toLocaleString('id-ID') + '</td></tr></tbody></table></div>';
     html += '<p class="gf-forest-note">Luas merupakan penjumlahan atribut hektare pada data sumber. Peta menampilkan batas provinsi dan overlay LBS 2024 yang difilter per provinsi agar tetap ringan; tahun overlay berbeda dari statistik LBS 2023. Statistik dan jumlah poligon tersimpan di browser.</p>';
+    if (isNational) {
+      var papuaReference = { 'Papua Barat Daya': 472, 'Papua Selatan': 43037, 'Papua Tengah': 2370, 'Papua Pegunungan': 949 };
+      var missingPapua = Object.keys(papuaReference).filter(function (name) {
+        return rows.some(function (row) { return row.name === name && row.featureCount === 0; });
+      });
+      var missingPapuaHa = missingPapua.reduce(function (sum, name) { return sum + papuaReference[name]; }, 0);
+      var officialTotal = 7356441;
+      var gap = Math.max(0, officialTotal - national);
+      var note = 'Catatan cakupan: total aplikasi dijumlahkan dari atribut luas pada poligon yang berhasil diterima; angka ini bukan angka resmi yang dipaksakan. Laporan Tahunan Kementan 2023 mencatat total LBS 7.356.441 ha sebagai pembanding. Metode dan cakupan layer layanan dapat berbeda.';
+      if (missingPapua.length) {
+        note += ' Data sumber saat ini tidak mengembalikan poligon untuk ' + missingPapua.join(', ') + '. Tabel Kementan mencatat luas gabungan ' + fmt(missingPapuaHa) + ' ha (Papua Barat Daya 472 ha, Papua Selatan 43.037 ha, Papua Tengah 2.370 ha, Papua Pegunungan 949 ha). Nilai 0 di aplikasi berarti poligon tidak tersedia dari query, bukan bukti bahwa sawah tidak ada.';
+      }
+      if (gap > 0) note += ' Selisih terhadap angka pembanding Kementan sekitar ' + fmt(gap) + ' ha; hasil nasional perlu dianggap belum lengkap.';
+      html += '<p class="gf-forest-note gf-sawah-coverage-note">' + esc(note) + '</p>';
+    }
     output.innerHTML = html;
     if (chart) chart.destroy();
     if (districtChart) { districtChart.destroy(); districtChart = null; }
