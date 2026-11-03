@@ -7,7 +7,7 @@
   var PROXY = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=';
   var PROVINCE_GEOJSON_URL = 'assets/data/bps/geojson/provinsi.geojson';
   var LBS_WMS_URL = 'https://geoserver.bps.go.id/ksa/wms';
-  var CACHE_KEY = 'geofarm-sawah-statistics-2023-province-v1';
+  var CACHE_KEY = 'geofarm-sawah-statistics-2023-province-v2-refresh';
   var PAGE_SIZE = 150;
   var PROVINCES = [
     ['11','Aceh'],['12','Sumatera Utara'],['13','Sumatera Barat'],['14','Riau'],['15','Jambi'],['16','Sumatera Selatan'],['17','Bengkulu'],['18','Lampung'],['19','Kepulauan Bangka Belitung'],['21','Kepulauan Riau'],
