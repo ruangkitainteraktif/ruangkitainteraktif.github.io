@@ -30,6 +30,7 @@
   var cache = readCache();
   var provinceBoundaryLayer = null;
   var sawahWmsLayer = null;
+  var nationalBoundaryLayer = null;
   var activeProvinceName = '';
   var provinceGeoJsonPromise = null;
   var layerSchemaPromises = Object.create(null);
@@ -78,6 +79,8 @@
     if (!feature) throw new Error('Batas wilayah ' + province.name + ' tidak tersedia.');
     if (sawahWmsLayer && map.hasLayer(sawahWmsLayer)) map.removeLayer(sawahWmsLayer);
     if (provinceBoundaryLayer && map.hasLayer(provinceBoundaryLayer)) map.removeLayer(provinceBoundaryLayer);
+    if (nationalBoundaryLayer && map.hasLayer(nationalBoundaryLayer)) map.removeLayer(nationalBoundaryLayer);
+    nationalBoundaryLayer = null;
     var wmsProvinceName = String(feature.properties && feature.properties.nmprov || province.name).trim().replace(/'/g, "''");
     sawahWmsLayer = L.tileLayer.wms(LBS_WMS_URL, {
       layers: 'ksa:lbs_2024', format: 'image/png', transparent: true, version: '1.1.1', tiled: true,
@@ -92,6 +95,40 @@
     }).addTo(map);
     activeProvinceName = province.name;
     return provinceBoundaryLayer;
+  }
+
+  /* Hitung Nasional: tampilkan batas wilayah 38 provinsi dari GeoJSON lokal
+     sebagai panduan membaca peta. Overlay sawah per provinsi tetap tersedia
+     lewat tombol "Tampilkan batas" di tiap langkah provinsi. */
+  async function showNationalSawah(map) {
+    if (sawahWmsLayer && map.hasLayer(sawahWmsLayer)) map.removeLayer(sawahWmsLayer);
+    if (provinceBoundaryLayer && map.hasLayer(provinceBoundaryLayer)) map.removeLayer(provinceBoundaryLayer);
+    if (nationalBoundaryLayer && map.hasLayer(nationalBoundaryLayer)) map.removeLayer(nationalBoundaryLayer);
+    sawahWmsLayer = null;
+    provinceBoundaryLayer = null;
+    var geojson = await loadProvinceGeoJson();
+    nationalBoundaryLayer = L.geoJSON(geojson, {
+      style: { color: '#047857', weight: 1.5, opacity: 0.9, fillColor: '#34d399', fillOpacity: 0.06 },
+      onEachFeature: function (feature, layer) {
+        /* Popup dibaca saat dibuka agar statistik terbaru dari proses
+           Hitung Nasional yang sedang berjalan ikut terlihat. */
+        layer.bindPopup(function () {
+          var props = feature.properties || {};
+          var province = PROVINCES.find(function (item) { return item.code === String(props.kdprov); });
+          var saved = province && cache[province.name];
+          var html = '<strong>Batas ' + esc(province ? province.name : (props.nmprov || 'Provinsi')) + '</strong>';
+          if (saved && Number(saved.featureCount) > 0) {
+            var total = Object.keys(saved.groups || {}).reduce(function (sum, type) { return sum + (Number(saved.groups[type]) || 0); }, 0);
+            html += '<br>Poligon sawah: ' + Number(saved.featureCount).toLocaleString('id-ID') + ' · ' + fmt(total) + ' ha';
+          } else {
+            html += '<br>Statistik provinsi ini belum tersedia.';
+          }
+          return html;
+        });
+      }
+    }).addTo(map);
+    activeProvinceName = '';
+    return nationalBoundaryLayer;
   }
   function loading(step, title, progress, detail) {
     var p = Number.isFinite(progress) ? Math.max(0, Math.min(100, progress)) : null;
@@ -112,7 +149,7 @@
         (saved ? 'Tampilkan batas' : 'Hitung provinsi') + '</button></div>';
     }).join('');
     btn.disabled = busy;
-    if (resetBtn) resetBtn.disabled = busy || (!provinceBoundaryLayer && !sawahWmsLayer);
+    if (resetBtn) resetBtn.disabled = busy || (!provinceBoundaryLayer && !sawahWmsLayer && !nationalBoundaryLayer);
   }
   function getValue(attrs, field) {
     if (!attrs) return '';
@@ -267,7 +304,7 @@
     html += '<tr class="gf-forest-grand"><th>' + (isNational ? 'Indonesia' : 'Total provinsi') + '</th>';
     types.forEach(function (type) { html += '<td>' + fmt(rows.reduce(function (sum, row) { return sum + row.values[type]; }, 0)) + '</td>'; });
     html += '<td>' + fmt(national) + '</td><td>100%</td><td>' + report.featureCount.toLocaleString('id-ID') + '</td></tr></tbody></table></div>';
-    html += '<p class="gf-forest-note">Statistik memakai data LBS 2019 Kementan: luas dijumlahkan dari atribut luas (Luas_CEA/Luas_Ha) dan jumlah poligon dihitung dari fitur yang diterima. Ringkasan tersimpan di penyimpanan lokal browser. Peta menampilkan batas provinsi dengan overlay LBS 2024 BPS untuk visualisasi; overlay disaring per provinsi, sehingga tahunnya berbeda dari data statistik.</p>';
+    html += '<p class="gf-forest-note">Statistik memakai data LBS 2019 Kementan: luas dijumlahkan dari atribut luas (Luas_CEA/Luas_Ha) dan jumlah poligon dihitung dari fitur yang diterima. Ringkasan tersimpan di penyimpanan lokal browser.</p>';
     if (isNational) {
       var officialTotal = 7463948;
       var gap = Math.max(0, officialTotal - national);
@@ -435,6 +472,24 @@
       var allDistrictsAvailable = PROVINCES.every(function (province) { return !!(cache[province.name] && cache[province.name].districts); });
       if (allStatisticsAvailable) render(collect(PROVINCES));
       var districtCount = allStatisticsAvailable && allDistrictsAvailable ? renderNationalDistrictDetails() : 0;
+      var map = window.map || window._map;
+      if (map && window.L && L.geoJSON) {
+        try {
+          var nationalLayer = await showNationalSawah(map);
+          var nationalBounds = nationalLayer.getBounds && nationalLayer.getBounds();
+          if (nationalBounds && nationalBounds.isValid()) {
+            var bounds = nationalBounds.pad(0.03);
+            if (window.SheetDrag && typeof window.SheetDrag.flyToBoundsInVisibleMap === 'function') {
+              window.SheetDrag.flyToBoundsInVisibleMap(bounds, { maxZoom: 7, duration: 0.8 });
+            } else {
+              map.fitBounds(bounds, { maxZoom: 7, animate: true });
+            }
+          }
+        } catch (mapError) {
+          console.error('[GeoFarm Sawah]', mapError);
+          status.innerHTML += '<br><span class="gf-forest-error">Statistik siap, tetapi batas provinsi gagal dimuat: ' + esc(mapError.message || 'peta tidak tersedia.') + '</span>';
+        }
+      }
       if (failed.length) {
         status.innerHTML += '<br><span class="gf-forest-error">Pemrosesan nasional belum lengkap untuk ' + esc(failed.join('; ')) + '. Klik Hitung Nasional lagi untuk mencoba ulang.</span>';
       } else if (!allStatisticsAvailable || !allDistrictsAvailable) {
@@ -453,14 +508,16 @@
     var map = window.map || window._map;
     if (provinceBoundaryLayer && map && map.hasLayer(provinceBoundaryLayer)) map.removeLayer(provinceBoundaryLayer);
     if (sawahWmsLayer && map && map.hasLayer(sawahWmsLayer)) map.removeLayer(sawahWmsLayer);
+    if (nationalBoundaryLayer && map && map.hasLayer(nationalBoundaryLayer)) map.removeLayer(nationalBoundaryLayer);
     provinceBoundaryLayer = null;
     sawahWmsLayer = null;
+    nationalBoundaryLayer = null;
     activeProvinceName = '';
     status.textContent = 'Batas wilayah dan overlay sawah dihapus dari peta. Ringkasan statistik tetap tersedia.';
     updateSteps();
   });
   var style = document.createElement('style');
-  style.textContent = '#geofarm-sawah-output .gf-forest-total{margin-top:12px}.gf-sawah-legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0;font-size:10px;color:#475569}.gf-sawah-legend span{display:flex;align-items:center;gap:4px}.gf-sawah-legend i{display:inline-block;width:9px;height:9px;border-radius:50%}.gf-sawah-table{min-width:760px}.gf-sawah-district-report{margin-top:18px;padding-top:2px;border-top:1px solid #e2e8f0}.gf-sawah-district-table-wrap{max-height:420px;overflow:auto}.gf-sawah-district-table-wrap thead{position:sticky;top:0;z-index:1}';
+  style.textContent = '#geofarm-sawah-output .gf-forest-total{margin-top:12px}.gf-sawah-legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0;font-size:10px;color:#475569}.gf-sawah-legend span{display:flex;align-items:center;gap:4px}.gf-sawah-legend i{display:inline-block;width:9px;height:9px;border-radius:50%}.gf-sawah-table{width:auto;min-width:0;table-layout:auto}.gf-sawah-table th,.gf-sawah-table td{padding:6px 7px}.gf-sawah-table thead th{padding-top:7px;padding-bottom:7px}.gf-sawah-district-report{margin-top:18px;padding-top:2px;border-top:1px solid #e2e8f0}.gf-sawah-district-table-wrap{max-height:420px;overflow:auto}.gf-sawah-district-table-wrap thead{position:sticky;top:0;z-index:1}';
   document.head.appendChild(style);
   updateSteps();
 })();

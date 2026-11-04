@@ -1181,6 +1181,7 @@
       display: flex;
       width: auto;
       transform: translateX(-50%);
+      transition: left .3s ease;
     }
     .leaflet-control-attribution { display: none !important; }
     .leaflet-control-scale { display: none !important; }
@@ -17120,9 +17121,12 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   body.sheet-terbuka .unified-search, body.sheet-terbuka .quick-layer-bar, body.sheet-terbuka .petadasar-export-block { left: calc((100vw + var(--left-sheet-width, 0px) - var(--right-sheet-width, 0px)) / 2) !important; max-width: calc(100vw - var(--left-sheet-width, 0px) - var(--right-sheet-width, 0px) - 24px); transition: left .3s ease; }
   :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.attr-table-sheet-open:not(.attr-table-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) .unified-search,
   :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.attr-table-sheet-open:not(.attr-table-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) .quick-layer-bar,
-  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.attr-table-sheet-open:not(.attr-table-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) .petadasar-export-block { left: calc((100vw + var(--left-sheet-width) - var(--right-sheet-width, 0px)) / 2) !important; }
-  body.sheet-terbuka #map .map-fab-wrap { left: calc((100vw + var(--left-sheet-width, 0px) - var(--right-sheet-width, 0px)) / 2) !important; }
-  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.attr-table-sheet-open:not(.attr-table-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) #map .map-fab-wrap { left: calc((100vw + var(--left-sheet-width) - var(--right-sheet-width, 0px)) / 2) !important; }
+  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.attr-table-sheet-open:not(.attr-table-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) .petadasar-export-block,
+  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.attr-table-sheet-open:not(.attr-table-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) #map .leaflet-bottom.leaflet-center { left: calc((100vw + var(--left-sheet-width) - var(--right-sheet-width, 0px)) / 2) !important; }
+  body.sheet-terbuka #map .map-fab-wrap,
+  body.sheet-terbuka #map .leaflet-bottom.leaflet-center { left: calc((100vw + var(--left-sheet-width, 0px) - var(--right-sheet-width, 0px)) / 2) !important; }
+  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.attr-table-sheet-open:not(.attr-table-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) #map .map-fab-wrap,
+  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.attr-table-sheet-open:not(.attr-table-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) #map .leaflet-bottom.leaflet-center { left: calc((100vw + var(--left-sheet-width) - var(--right-sheet-width, 0px)) / 2) !important; }
 }
 
 
@@ -17143,7 +17147,8 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   body.sheet-terbuka .unified-search,
   body.sheet-terbuka .quick-layer-bar,
   body.sheet-terbuka .petadasar-export-block,
-  body.sheet-terbuka #map .map-fab-wrap {
+  body.sheet-terbuka #map .map-fab-wrap,
+  body.sheet-terbuka #map .leaflet-bottom.leaflet-center {
     left: calc((100vw + var(--left-sheet-width, 0px) - var(--right-sheet-width, 0px)) / 2) !important;
   }
 }
@@ -17194,7 +17199,8 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   body.sheet-terbuka .unified-search,
   body.sheet-terbuka .quick-layer-bar,
   body.sheet-terbuka .petadasar-export-block,
-  body.sheet-terbuka #map .map-fab-wrap {
+  body.sheet-terbuka #map .map-fab-wrap,
+  body.sheet-terbuka #map .leaflet-bottom.leaflet-center {
     left: calc((100vw + var(--left-sheet-width, 0px) - var(--right-sheet-width, 0px)) / 2) !important;
   }
   body.sheet-terbuka .unified-search,
@@ -17734,7 +17740,8 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   body.tj-routing-open .unified-search,
   body.tj-routing-open .quick-layer-bar,
   body.tj-routing-open .petadasar-export-block,
-  body.tj-routing-open #map .map-fab-wrap {
+  body.tj-routing-open #map .map-fab-wrap,
+  body.tj-routing-open #map .leaflet-bottom.leaflet-center {
     left: calc((100vw + var(--left-sheet-width, 0px) - var(--right-sheet-width, 30vw)) / 2) !important;
     transition: left .3s ease;
   }
