@@ -349,9 +349,23 @@
 
     chips.forEach(function (chip, index) {
       var bottom = mobile() ? 72 : 68;
-      if (mobile() && activeTop !== Infinity) {
-        /* Keep minimized-sheet chips clear of the mobile FAB dock. */
-        bottom = Math.max(bottom, window.innerHeight - activeTop + 80);
+      if (mobile()) {
+        /* Dock FAB menu mobile memakai bottom: calc(48px + env); tinggi
+           aktual terukur 48px, jadi tepi atasnya 96px + env dari dasar
+           layar. Angka mati 72px lama jatuh di DALAM band itu sehingga
+           chip menumpuk ~24px di atas menu FAB. Ukur langsung dari elemen
+           dock lalu sisakan jarak 12px, supaya ikut benar walau tinggi
+           dock, safe-area (HP notch), atau aturan CSS berubah. */
+        var dock = document.querySelector('.map-fab-wrap');
+        if (dock) {
+          var r = dock.getBoundingClientRect();
+          /* display:none saat sheet terbuka -> rect nol, lewati. */
+          if (r.height > 0) bottom = Math.max(bottom, window.innerHeight - r.top + 12);
+        }
+        if (activeTop !== Infinity) {
+          /* Chip juga naik di atas sheet yang sedang terbuka. */
+          bottom = Math.max(bottom, window.innerHeight - activeTop + 80);
+        }
       }
       chip.style.setProperty('bottom', (bottom + index * 44) + 'px', 'important');
     });
