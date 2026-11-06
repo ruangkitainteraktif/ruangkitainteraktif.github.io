@@ -96,6 +96,10 @@
     "sigap": {
       "wmsUrl": "https://sigap.kehutanan.go.id/sigap-forge-geoserver-2026/sigap/wms",
       "label": "Kementerian Lingkungan Hidup dan Kehutanan (KLHK)"
+    },
+    "inarisk": {
+      "wmsUrl": "https://inarisk1.bnpb.go.id:8443/geoserver/wms",
+      "label": "Badan Nasional Penanggulangan Bencana (BNPB)"
     }
   },
   "categories": [
@@ -1018,6 +1022,900 @@
             {
               "id": "oceanaccounts:spatial_zonasi_kawasan_konservasi_2024",
               "label": "spatial zonasi kawasan konservasi 2024",
+              "swatch": "geo-boundary"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inarisk",
+      "title": "InaRisk BNPB",
+      "source": "inarisk",
+      "layers": [
+        {
+          "id": "batas-administrasi-wilayah",
+          "label": "Batas & Administrasi Wilayah",
+          "type": "folder",
+          "children": [
+            {
+              "id": "basemap:BATAS_ADMIN_KECAMATAN_2023",
+              "label": "BATAS_ADMIN_KECAMATAN_2023",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:Batas_Desa",
+              "label": "Batas_Desa",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "basemap:Batas_Desa_2013",
+              "label": "Batas_Desa_2013",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "basemap:Batas_Desa_2013p",
+              "label": "Batas_Desa_2013p",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "basemap:batas_desa",
+              "label": "batas_desa",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "basemap:batas_kabupaten",
+              "label": "batas_kabupaten",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "basemap:batas_kecamatan",
+              "label": "batas_kecamatan",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "basemap:batas_provinsi",
+              "label": "batas_provinsi",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "transportasi-jalan",
+          "label": "Transportasi & Jalan",
+          "type": "folder",
+          "children": [
+            {
+              "id": "basemap:BM_Tol_Konstruksi",
+              "label": "BM_Tol_Konstruksi",
+              "swatch": "geo-transport"
+            },
+            {
+              "id": "basemap:BPJT_GERBANG_TOL",
+              "label": "BPJT_GERBANG_TOL",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "basemap:BPJT_REST_AREA",
+              "label": "BPJT_REST_AREA",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "basemap:BPJT_TOL_JEMBATAN",
+              "label": "BPJT_TOL_JEMBATAN",
+              "swatch": "geo-transport"
+            },
+            {
+              "id": "basemap:BPJT_TOL_OVERPASS",
+              "label": "BPJT_TOL_OVERPASS",
+              "swatch": "geo-transport"
+            },
+            {
+              "id": "basemap:BPJT_TOL_Simpang_Susun",
+              "label": "BPJT_TOL_Simpang_Susun",
+              "swatch": "geo-transport"
+            },
+            {
+              "id": "basemap:BPJT_TOL_Underpass",
+              "label": "BPJT_TOL_Underpass",
+              "swatch": "geo-transport"
+            },
+            {
+              "id": "basemap:Jalan_Nasional",
+              "label": "Jalan_Nasional",
+              "swatch": "geo-transport"
+            },
+            {
+              "id": "raster:Jalan_Nasional_Gempa1",
+              "label": "Jalan_Nasional_Gempa1",
+              "swatch": "geo-transport"
+            },
+            {
+              "id": "raster:Jalan_Nasional_Gempa_klas1",
+              "label": "Jalan_Nasional_Gempa_klas1",
+              "swatch": "geo-transport"
+            },
+            {
+              "id": "basemap:tol_operasi",
+              "label": "tol_operasi",
+              "swatch": "geo-transport"
+            }
+          ]
+        },
+        {
+          "id": "fasilitas-pemukiman",
+          "label": "Fasilitas & Pemukiman",
+          "type": "folder",
+          "children": [
+            {
+              "id": "basemap:AOI_Pemukiman_MMI_6_500M_WGS_Admin",
+              "label": "AOI_Pemukiman_MMI_6_500M_WGS_Admin",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "basemap:Bangunan_hunian_bitung_w",
+              "label": "Bangunan_hunian_bitung_w",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "basemap:DATA_BSI",
+              "label": "DATA_BSI",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "basemap:Data_Point_BSI_Nov2024",
+              "label": "Data_Point_BSI_Nov2024",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "basemap:Destana_all_point",
+              "label": "Destana_all_point",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "basemap:OpenBuilding",
+              "label": "OpenBuilding",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "basemap:POINT_BMN_PALU",
+              "label": "POINT_BMN_PALU",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "basemap:POINT_BMN_SULTENG",
+              "label": "POINT_BMN_SULTENG",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "basemap:Point_Bangunan_hunian_bitung_w",
+              "label": "Point_Bangunan_hunian_bitung_w",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "basemap:building_footprint_palu",
+              "label": "building_footprint_palu",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "kependudukan-bangunan",
+          "label": "Kependudukan & Bangunan",
+          "type": "folder",
+          "children": [
+            {
+              "id": "raster:DisDisablitas",
+              "label": "DisDisablitas",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:DisLaki1",
+              "label": "DisLaki1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:DisMiskin1",
+              "label": "DisMiskin1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:DisUmur1",
+              "label": "DisUmur1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:DisWanita1",
+              "label": "DisWanita1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INARISKPOP_2020",
+              "label": "INARISKPOP_2020",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:KEPADATAN_BANGUNAN",
+              "label": "KEPADATAN_BANGUNAN",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:Population_Density20251",
+              "label": "Population_Density20251",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:Population_Density2025_30",
+              "label": "Population_Density2025_30",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "topografi-bayangan-bumi",
+          "label": "Topografi & Bayangan Bumi",
+          "type": "folder",
+          "children": [
+            {
+              "id": "raster:Hillshade_Indonesia",
+              "label": "Hillshade_Indonesia",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "riwayat-bencana-geologi",
+          "label": "Riwayat Bencana & Geologi",
+          "type": "folder",
+          "children": [
+            {
+              "id": "basemap:Faults2017_Rupture2018",
+              "label": "Faults2017_Rupture2018",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "basemap:Histori_banjir_kalbar_BWS",
+              "label": "Histori_banjir_kalbar_BWS",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "basemap:Historis_Banjir_2015-2021",
+              "label": "Historis_Banjir_2015-2021",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "basemap:Historis_Cuaca_Ekstrem",
+              "label": "Historis_Cuaca_Ekstrem",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "basemap:INA_Megathrust",
+              "label": "INA_Megathrust",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "basemap:historis_longsor_2015_2021",
+              "label": "historis_longsor_2015_2021",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "basemap:shakemap_myanmar28032025",
+              "label": "shakemap_myanmar28032025",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "tsunami-inundasi",
+          "label": "Tsunami & Inundasi",
+          "type": "folder",
+          "children": [
+            {
+              "id": "raster:Inun_7_8_Mw",
+              "label": "Inun_7_8_Mw",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:Inun_8_0_Mw",
+              "label": "Inun_8_0_Mw",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:Inun_8_2_Mw",
+              "label": "Inun_8_2_Mw",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:Inun_8_4_Mw",
+              "label": "Inun_8_4_Mw",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:Inun_8_6_Mw",
+              "label": "Inun_8_6_Mw",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:Inun_8_8_Mw",
+              "label": "Inun_8_8_Mw",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:Inun_9_0_Mw",
+              "label": "Inun_9_0_Mw",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:TSUNAMI INUNDATION1",
+              "label": "TSUNAMI INUNDATION1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:inund6_Mw77_2006Java1",
+              "label": "inund6_Mw77_2006Java1",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "multibahaya",
+          "label": "Multibahaya",
+          "type": "folder",
+          "children": [
+            {
+              "id": "raster:INDEKS_MULTIBAHAYA_ALL_30",
+              "label": "INDEKS_MULTIBAHAYA_ALL_30",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_MULTIBAHAYA_B_BB_L_30",
+              "label": "INDEKS_MULTIBAHAYA_B_BB_L_30",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_MULTI_BAHAYA1",
+              "label": "INDEKS_MULTI_BAHAYA1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:KELAS_MULTIBAHAYA_ALL_30",
+              "label": "KELAS_MULTIBAHAYA_ALL_30",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:KELAS_MULTIBAHAYA_B_BB_L_30",
+              "label": "KELAS_MULTIBAHAYA_B_BB_L_30",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "indeks-bahaya",
+          "label": "Indeks Bahaya",
+          "type": "folder",
+          "children": [
+            {
+              "id": "raster:INDEKS_BAHAYA_BALI_TSUNAMI1",
+              "label": "INDEKS_BAHAYA_BALI_TSUNAMI1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_BANJIR1",
+              "label": "INDEKS_BAHAYA_BANJIR1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_BANJIRBANDANG1",
+              "label": "INDEKS_BAHAYA_BANJIRBANDANG1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_BANJIR_30_SUMATERA",
+              "label": "INDEKS_BAHAYA_BANJIR_30_SUMATERA",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_COVID191",
+              "label": "INDEKS_BAHAYA_COVID191",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_CUACAEKSTRIM1",
+              "label": "INDEKS_BAHAYA_CUACAEKSTRIM1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_EPIDEMI_WP1",
+              "label": "INDEKS_BAHAYA_EPIDEMI_WP1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_GEA1",
+              "label": "INDEKS_BAHAYA_GEA1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_GEA1_30",
+              "label": "INDEKS_BAHAYA_GEA1_30",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_GEMPABUMI1",
+              "label": "INDEKS_BAHAYA_GEMPABUMI1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_GEMPABUMI30",
+              "label": "INDEKS_BAHAYA_GEMPABUMI30",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_GUNUNGAPI1",
+              "label": "INDEKS_BAHAYA_GUNUNGAPI1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_KARHUTLA1",
+              "label": "INDEKS_BAHAYA_KARHUTLA1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_KEKERINGAN1",
+              "label": "INDEKS_BAHAYA_KEKERINGAN1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_KEKERINGAN1_30",
+              "label": "INDEKS_BAHAYA_KEKERINGAN1_30",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_LIKUEFAKSI1",
+              "label": "INDEKS_BAHAYA_LIKUEFAKSI1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_MULTI1",
+              "label": "INDEKS_BAHAYA_MULTI1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_TANAHLONGSOR1",
+              "label": "INDEKS_BAHAYA_TANAHLONGSOR1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_TANAHLONGSOR_30",
+              "label": "INDEKS_BAHAYA_TANAHLONGSOR_30",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_TSUNAMI1",
+              "label": "INDEKS_BAHAYA_TSUNAMI1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_BAHAYA_TSUNAMI_30",
+              "label": "INDEKS_BAHAYA_TSUNAMI_30",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:indeks_bahaya_longsor_bogor",
+              "label": "indeks_bahaya_longsor_bogor",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "indeks-kerentanan",
+          "label": "Indeks Kerentanan",
+          "type": "folder",
+          "children": [
+            {
+              "id": "raster:INDEKS_KERENTANAN_BANJIR1",
+              "label": "INDEKS_KERENTANAN_BANJIR1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_KERENTANAN_BANJIR_BANDANG1",
+              "label": "INDEKS_KERENTANAN_BANJIR_BANDANG1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_KERENTANAN_COVID191",
+              "label": "INDEKS_KERENTANAN_COVID191",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_KERENTANAN_CUACA_EKSTRIM1",
+              "label": "INDEKS_KERENTANAN_CUACA_EKSTRIM1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_KERENTANAN_EPIDEMI_WABAH_PENYAKIT1",
+              "label": "INDEKS_KERENTANAN_EPIDEMI_WABAH_PENYAKIT1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_KERENTANAN_GELOMBANG_EKSTRIM_ABRASI1",
+              "label": "INDEKS_KERENTANAN_GELOMBANG_EKSTRIM_ABRASI1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_KERENTANAN_GEMPABUMI1",
+              "label": "INDEKS_KERENTANAN_GEMPABUMI1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_KERENTANAN_KEBAKARAN_HUTAN_LAHAN1",
+              "label": "INDEKS_KERENTANAN_KEBAKARAN_HUTAN_LAHAN1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_KERENTANAN_KEKERINGAN1",
+              "label": "INDEKS_KERENTANAN_KEKERINGAN1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_KERENTANAN_LETUSAN_GUNUNGAPI1",
+              "label": "INDEKS_KERENTANAN_LETUSAN_GUNUNGAPI1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_KERENTANAN_LIKUEFAKSI1",
+              "label": "INDEKS_KERENTANAN_LIKUEFAKSI1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_KERENTANAN_MULTI1",
+              "label": "INDEKS_KERENTANAN_MULTI1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_KERENTANAN_TANAH_LONGSOR1",
+              "label": "INDEKS_KERENTANAN_TANAH_LONGSOR1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_KERENTANAN_TSUNAMI1",
+              "label": "INDEKS_KERENTANAN_TSUNAMI1",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "indeks-risiko",
+          "label": "Indeks Risiko",
+          "type": "folder",
+          "children": [
+            {
+              "id": "raster:INDEKS_RISIKO_BANJIR1",
+              "label": "INDEKS_RISIKO_BANJIR1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_RISIKO_BANJIR_BANDANG1",
+              "label": "INDEKS_RISIKO_BANJIR_BANDANG1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_RISIKO_COVID191",
+              "label": "INDEKS_RISIKO_COVID191",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_RISIKO_CUACA_EKSTRIM1",
+              "label": "INDEKS_RISIKO_CUACA_EKSTRIM1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_RISIKO_EPIDEMI_WABAH_PENYAKIT1",
+              "label": "INDEKS_RISIKO_EPIDEMI_WABAH_PENYAKIT1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_RISIKO_GELOMBANG_EKSTRIM_ABRASI1",
+              "label": "INDEKS_RISIKO_GELOMBANG_EKSTRIM_ABRASI1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_RISIKO_GEMPABUMI1",
+              "label": "INDEKS_RISIKO_GEMPABUMI1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_RISIKO_KEBAKARAN_HUTAN_LAHAN1",
+              "label": "INDEKS_RISIKO_KEBAKARAN_HUTAN_LAHAN1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_RISIKO_KEKERINGAN1",
+              "label": "INDEKS_RISIKO_KEKERINGAN1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_RISIKO_LETUSAN_GUNUNGAPI1",
+              "label": "INDEKS_RISIKO_LETUSAN_GUNUNGAPI1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_RISIKO_LIKUEFAKSI1",
+              "label": "INDEKS_RISIKO_LIKUEFAKSI1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_RISIKO_MULTI1",
+              "label": "INDEKS_RISIKO_MULTI1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_RISIKO_TANAH_LONGSOR1",
+              "label": "INDEKS_RISIKO_TANAH_LONGSOR1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_RISIKO_TSUNAMI1",
+              "label": "INDEKS_RISIKO_TSUNAMI1",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "indeks-komponen-ka-ke-se-v",
+          "label": "Indeks Komponen (KA, KE, SE, V)",
+          "type": "folder",
+          "children": [
+            {
+              "id": "raster:INDEKS_KA1",
+              "label": "INDEKS_KA1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_KAPASITAS",
+              "label": "INDEKS_KAPASITAS",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_KAPASITAS_COVID191",
+              "label": "INDEKS_KAPASITAS_COVID191",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_KAPASITAS_EWP1",
+              "label": "INDEKS_KAPASITAS_EWP1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_KE1",
+              "label": "INDEKS_KE1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_SE1",
+              "label": "INDEKS_SE1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:INDEKS_V1",
+              "label": "INDEKS_V1",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "citra-satelit",
+          "label": "Citra Satelit",
+          "type": "folder",
+          "children": [
+            {
+              "id": "Citra:Post_Event_S2",
+              "label": "Post_Event_S2",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:Post_Event_S2_1",
+              "label": "Post_Event_S2_1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:Reo_Flores_260807",
+              "label": "Reo_Flores_260807",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:S2",
+              "label": "S2",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:S2_WestSumatera",
+              "label": "S2_WestSumatera",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:postFlood_1",
+              "label": "postFlood_1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:postFlood_2",
+              "label": "postFlood_2",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:postFlood_3",
+              "label": "postFlood_3",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:postFlood_4",
+              "label": "postFlood_4",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:postFlood_5",
+              "label": "postFlood_5",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:postFlood_6",
+              "label": "postFlood_6",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:postFlood_7",
+              "label": "postFlood_7",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:postFlood_8",
+              "label": "postFlood_8",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:preFlood_1",
+              "label": "preFlood_1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:preFlood_1",
+              "label": "preFlood_1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:preFlood_2",
+              "label": "preFlood_2",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:preFlood_3",
+              "label": "preFlood_3",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:preFlood_4",
+              "label": "preFlood_4",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:preFlood_5",
+              "label": "preFlood_5",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:preFlood_6",
+              "label": "preFlood_6",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:preFlood_7",
+              "label": "preFlood_7",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Citra:preFlood_8",
+              "label": "preFlood_8",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "unggahan-inarisk",
+          "label": "Unggahan InaRisk",
+          "type": "folder",
+          "children": [
+            {
+              "id": "inarisk_upload:Bangunan_Terdampak_20260927_024308_fd3afd59",
+              "label": "Bangunan_Terdampak_20260927_024308_fd3afd59",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "inarisk_upload:Bangunan_Terdampak_20260927_030310_f2978180",
+              "label": "Bangunan_Terdampak_20260927_030310_f2978180",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "inarisk_upload:Solok-Bupati-Tiff_20260925_200152_Solok-Bupati-Tiff_20260925_200152_98473688",
+              "label": "Solok-Bupati-Tiff_20260925_200152_Solok-Bupati-Tiff_20260925_200152_98473688",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "inarisk_upload:Solok-Perumahan_20260925_201246_Solok-Perumahan_20260925_201246_16c36263",
+              "label": "Solok-Perumahan_20260925_201246_Solok-Perumahan_20260925_201246_16c36263",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "tema-khusus",
+          "label": "Tema Khusus",
+          "type": "folder",
+          "children": [
+            {
+              "id": "Thematics:AOI_Pemukiman_PRIORITAS",
+              "label": "AOI_Pemukiman_PRIORITAS",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Thematics:Landslide_WestSumatra",
+              "label": "Landslide_WestSumatra",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "data-lokal",
+          "label": "Data Lokal",
+          "type": "folder",
+          "children": [
+            {
+              "id": "Faults_Indonesia",
+              "label": "Faults_Indonesia",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "Jalan_Tol_Operasi",
+              "label": "Jalan_Tol_Operasi",
+              "swatch": "geo-transport"
+            },
+            {
+              "id": "batas_admin",
+              "label": "batas_admin",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:drone_kalbar",
+              "label": "raster:drone_kalbar",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:drone_mempawah",
+              "label": "raster:drone_mempawah",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:mempawah_1",
+              "label": "mempawah_1",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:mempawah_10",
+              "label": "mempawah_10",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:mempawah_sejegi10",
+              "label": "mempawah_sejegi10",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:sanggau",
+              "label": "sanggau",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "raster:sodetan_benteng1",
+              "label": "sodetan_benteng1",
               "swatch": "geo-boundary"
             }
           ]
