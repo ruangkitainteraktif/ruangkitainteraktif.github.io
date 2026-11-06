@@ -88,9 +88,942 @@
     },
     "kuburaya": {
       "wmsUrl": "https://geoportal.kuburaya.go.id/geoserver/wms"
+    },
+    "sidako": {
+      "wmsUrl": "https://sidako.kkp.go.id/geoserver/wms",
+      "label": "Kementerian Kelautan dan Perikanan"
+    },
+    "sigap": {
+      "wmsUrl": "https://sigap.kehutanan.go.id/sigap-forge-geoserver-2026/sigap/wms",
+      "label": "Kementerian Lingkungan Hidup dan Kehutanan (KLHK)"
     }
   },
   "categories": [
+    {
+      "id": "sigap",
+      "title": "Kementerian Kehutanan",
+      "source": "sigap",
+      "layers": [
+        {
+          "id": "kawasan-hutan",
+          "label": "Kawasan Hutan",
+          "type": "folder",
+          "children": [
+            {
+              "id": "sigap:kwshutan_ar_250k_jun2026",
+              "label": "Kawasan Hutan (SIGAP 250K)",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:khg_ar_250k",
+              "label": "KHG 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:khg_ar_50k",
+              "label": "KHG 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:khkp_ar_50k_iden",
+              "label": "KHKP 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:khdtk_ar_50k_112024",
+              "label": "KHDTK 50K 11/2024",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:khdpk_ar_50k_122025_iden",
+              "label": "KHDPK 50K 12/2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:kphk_ar_250k_102025_iden",
+              "label": "KPHK 250K 10/2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:kphp_kphl_ar_250k_0925",
+              "label": "KPHP KPHL 250K 09/2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:blok_kk_ar_50k_iden",
+              "label": "Blok KK 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:daerah_penyangga_kk_ar_50k",
+              "label": "Daerah Penyangga KK 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:profil_kk_ar_50k",
+              "label": "Profil KK 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pkk_ar_50k_122025",
+              "label": "PKK 50K 12/2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pkk_ar_50k_iden",
+              "label": "PKK 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:tata_hutan_kph_ar_50k_iden",
+              "label": "Tata Hutan KPH 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:potensihutan_ar_250k",
+              "label": "Potensihutan 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:feg_ar_250k",
+              "label": "FEG 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:feg_ar_50k_24",
+              "label": "FEG 50K 2024",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pntpnkwshutan_ar_50k_072024",
+              "label": "PNTPNKWSHUTAN 50K 07/2024",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:rpkhdpk_ar_50k_122025_iden",
+              "label": "RPKHDPK 50K 12/2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:rpkhdpk_ar_50k_iden",
+              "label": "RPKHDPK 50K",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "penggunaan-lahan-pl",
+          "label": "Penggunaan Lahan (PL)",
+          "type": "folder",
+          "children": [
+            {
+              "id": "sigap:pl2025_ar_50k",
+              "label": "Areal Penggunaan Lain (SIGAP 50K 2025)",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pl2018_ar_250k_iden",
+              "label": "Penggunaan Lahan 2018 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pl2024_ar_250k",
+              "label": "Penggunaan Lahan 2024 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pl2024_ar_50k",
+              "label": "Penggunaan Lahan 2024 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:plskwshutan_ar_50k_iden",
+              "label": "PLSKWSHUTAN 50K",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "perizinan-pemanfaatan-hutan",
+          "label": "Perizinan & Pemanfaatan Hutan",
+          "type": "folder",
+          "children": [
+            {
+              "id": "sigap:paph_ar_250k_0825_iden",
+              "label": "PAPH 250K 08/2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:ph2024_ar_250k_iden",
+              "label": "PH2024 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pkspkh_ar_50k_0525",
+              "label": "PKSPKH 50K 05/2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pphd_ar_50k_122025",
+              "label": "PPHD 50K 12/2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pphd_ar_50k_iden",
+              "label": "PPHD 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pphkm_ar_50k_122025",
+              "label": "PPHKM 50K 12/2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pphkm_ar_50k_iden",
+              "label": "PPHKM 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pphtr_ar_50k_122025",
+              "label": "PPHTR 50K 12/2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pphtr_ar_50k_iden",
+              "label": "PPHTR 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:ppkh_ar_50k_0525",
+              "label": "PPKH 50K 05/2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:ppkh_ar_50k_jan2026_iden",
+              "label": "PPKH 50K Januari 2026",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:ppkh_eksplorasi_ar_50k_0525",
+              "label": "PPKH Eksplorasi 50K 05/2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:ppkh_eksplorasi_ar_50k_jan2026_iden",
+              "label": "PPKH Eksplorasi 50K Januari 2026",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:ppkspkh_ar_50k_052025",
+              "label": "PPKSPKH 50K 05/2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pptpkh_ar_250k",
+              "label": "PPTPKH 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pptpkh_ar_250k_rev_iv_iden",
+              "label": "PPTPKH 250K Revisi IV",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "hutan-sosial",
+          "label": "Hutan Sosial",
+          "type": "folder",
+          "children": [
+            {
+              "id": "sigap:hutan_adat_50k_092025",
+              "label": "Hutan Adat 50K 09/2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:hutan_adat_ar_50k_012026_iden",
+              "label": "Hutan Adat 50K 01/2026",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:hutan_hak_ar_50k_092025",
+              "label": "Hutan Hak 50K 09/2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:hutan_penelitian_ar_250k",
+              "label": "Hutan Penelitian 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pbph_ar_50k_0924",
+              "label": "PBPH 50K 09/2024",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:tbpbph_ln_50k",
+              "label": "TBPBPH 50K",
+              "swatch": "geo-admin"
+            }
+          ]
+        },
+        {
+          "id": "konservasi-biodiversitas",
+          "label": "Konservasi & Biodiversitas",
+          "type": "folder",
+          "children": [
+            {
+              "id": "sigap:kba_ar_250k",
+              "label": "KBA 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:kee_ar_50k",
+              "label": "KEE 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:kee_indikatif_ar_250k",
+              "label": "KEE Indikatif 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:kemitraan_konservasi_kk_ar_50k",
+              "label": "Kemitraan Konservasi KK 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:konflik_satwa_dan_manusia_pnt_50k",
+              "label": "Konflik Satwa Dan Manusia Titik 50K",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "sigap:kva_ar_250k",
+              "label": "KVA 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:zona_tn_ar_50k_iden",
+              "label": "Zona TN 50K",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "vegetasi-reforestasi",
+          "label": "Vegetasi & Reforestasi",
+          "type": "folder",
+          "children": [
+            {
+              "id": "sigap:mangrove_ar_25k_24",
+              "label": "Mangrove 25K 2024",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:perjumpaan_tumbuhan_alam_pada_kk_pnt_50k_2025",
+              "label": "Perjumpaan Tumbuhan Alam Pada KK Titik 50K 2025",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "sigap:persemaian_permanen_pnt_250k",
+              "label": "Persemaian Permanen Titik 250K",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "sigap:rhl_2019_ar_10k_iden",
+              "label": "RHL 2019 10K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:rurhl_ar_50k",
+              "label": "RURHL 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:sumber_benih_pnt_250k",
+              "label": "Sumber Benih Titik 250K",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "sigap:zona_benih_ar_250k",
+              "label": "Zona Benih 250K",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "kebakaran-hutan",
+          "label": "Kebakaran Hutan",
+          "type": "folder",
+          "children": [
+            {
+              "id": "sigap:rawan_karhutla_ar_250k_2025",
+              "label": "Rawan Karhutla 250K 2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:areal_karhutla_januari_maret_2026_ar_250k",
+              "label": "Areal Karhutla Januari-Maret 2026 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:areal_karhutla_januari_mei_2026_ar_50k_iden",
+              "label": "Areal Karhutla Januari-Mei 2026 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:sebaran_hotspot_januari_desember_2025_pnt_250k_iden",
+              "label": "Sebaran Hotspot Januari-Desember 2025 Titik 250K",
+              "swatch": "geo-admin"
+            }
+          ]
+        },
+        {
+          "id": "folu-redd-emisi",
+          "label": "FOLU, REDD+ & Emisi",
+          "type": "folder",
+          "children": [
+            {
+              "id": "sigap:arahan_folu_2030_ar_250k",
+              "label": "Arahan FOLU 2030 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:renja_folu_2030_ar_250k_051224_iden",
+              "label": "Renja FOLU 2030 250K 05/12/2024",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:redd_ar_250k",
+              "label": "REDD 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:beban_emisi_ar_250k_2022",
+              "label": "Beban Emisi 250K 2022",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:jlkarbon_ar_50k",
+              "label": "JLKARBON 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:nsdh_2025_ar_250k_iden",
+              "label": "NSDH 2025 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:nsdhkwshutan_2023_ar_250k_iden",
+              "label": "NSDHKWSHUTAN 2023 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:rktn_ar_250k",
+              "label": "RKTN 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:deforestasi_2023_2024_ar_250k_iden",
+              "label": "Deforestasi 2023-2024 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:reforestasi_2023_2024_ar_250k",
+              "label": "Reforestasi 2023-2024 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:reforestasi_2024_2025_ar_50k_iden",
+              "label": "Reforestasi 2024-2025 50K",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "das-ekoregion-lingkungan",
+          "label": "DAS, Ekoregion & Lingkungan",
+          "type": "folder",
+          "children": [
+            {
+              "id": "sigap:lahan_kritis_ar_50k_2024_iden",
+              "label": "Lahan Kritis (SIGAP 50K 2024)",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:addendum_andal_rkl_rpl_ar_50k",
+              "label": "Addendum Andal RKL RPL 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:amdal_ar_50k",
+              "label": "AMDAL 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:das_ar_50k_03_2025_iden",
+              "label": "DAS 50K 03/2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:dta_danau_ar_50k",
+              "label": "DTA Danau 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:ekoregion_darat_ar_500k",
+              "label": "Ekoregion Darat 500K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:ekoregion_laut_ar_500k",
+              "label": "Ekoregion Laut 500K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:indeks_kualitas_air_laut_pnt_250k",
+              "label": "Indeks Kualitas Air Laut Titik 250K",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "sigap:klasifikasi_das_ar_50k_iden",
+              "label": "Klasifikasi DAS 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:mata_air_pnt_250k",
+              "label": "Mata Air Titik 250K",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "sigap:pantau_sampah_laut_p_2020_ar_250k_iden",
+              "label": "Pantau Sampah Laut 2020 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pengelolaansampah_2020_ar_50k",
+              "label": "Pengelolaansampah 2020 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pmt_merkuri_pnt_50k",
+              "label": "PMT Merkuri Titik 50K",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "sigap:rehab_das_ar_50k",
+              "label": "Rehab DAS 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:ukl_upl_ar_50k",
+              "label": "UKL UPL 50K",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "perubahan-iklim",
+          "label": "Perubahan Iklim",
+          "type": "folder",
+          "children": [
+            {
+              "id": "sigap:kerentanan_perubahan_iklim_ar_250k",
+              "label": "Kerentanan Perubahan Iklim 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:lokasi_proklim_ar_250k",
+              "label": "Lokasi Proklim 250K",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "lainnya",
+          "label": "Lainnya",
+          "type": "folder",
+          "children": [
+            {
+              "id": "sigap:capaian_pe_ar_25k",
+              "label": "Capaian PE 25K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:iku_ar_250k",
+              "label": "IKU 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:iphps_ar_50k_122025",
+              "label": "IPHPS 50K 12/2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:ipl_ar_250k",
+              "label": "IPL 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:keslah_ar_50k_iden",
+              "label": "KESLAH 50K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:kl_ar_250k",
+              "label": "KL 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:klasterihn_pnt_250k_iden",
+              "label": "Klasterihn Titik 250K",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "sigap:penerapan_tkt_pnt_25k_20202024",
+              "label": "Penerapan TKT Titik 25K 2020-2024",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "sigap:piaps_rev_ix_ar_250k",
+              "label": "PIAPS Revisi IX 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:piaps_rev_x_ar_250k_wgs1984_iden",
+              "label": "PIAPS Revisi X 250K WGS84",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pippib_2026_i_250k",
+              "label": "PIPPIB 2026 I 250K",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:pippib_2026_i_250k_rev_iden",
+              "label": "PIPPIB 2026 I 250K Revisi",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "sigap:tipologi_lembaga_ar_250k",
+              "label": "Tipologi Lembaga 250K",
+              "swatch": "geo-boundary"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sidako",
+      "title": "Kementerian Kelautan & Perikanan",
+      "source": "sidako",
+      "layers": [
+        {
+          "id": "konservasi",
+          "label": "Konservasi",
+          "type": "folder",
+          "children": [
+            {
+              "id": "konservasi:batas_alki",
+              "label": "batas alki",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "konservasi:data_kk_2025",
+              "label": "data kk 2025",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "konservasi:data_lokasi_lautra_20_kk",
+              "label": "data lokasi lautra 20 kk",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "konservasi:igt_karang",
+              "label": "igt karang",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "konservasi:igt_makroalga",
+              "label": "igt makroalga",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "konservasi:igt_padanglamun",
+              "label": "igt padanglamun",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "konservasi:igt_substrat_dasar",
+              "label": "igt substrat dasar",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "konservasi:intervensi",
+              "label": "intervensi",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "konservasi:oecm",
+              "label": "oecm",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "konservasi:onemap_karang",
+              "label": "onemap karang",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "konservasi:potensi_karang",
+              "label": "potensi karang",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "konservasi:rancangan_kawasan_new",
+              "label": "rancangan kawasan new",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "konservasi:spatial_wilayah_kelola_laut_provinsi",
+              "label": "spatial wilayah kelola laut provinsi",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "konservasi:zonasi_kawasan_konservasi",
+              "label": "zonasi kawasan konservasi",
+              "swatch": "geo-boundary"
+            }
+          ]
+        },
+        {
+          "id": "oceanaccounts",
+          "label": "Ocean Accounts",
+          "type": "folder",
+          "children": [
+            {
+              "id": "oceanaccounts:administrative_coastlines",
+              "label": "administrative coastlines",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "oceanaccounts:administrative_districts",
+              "label": "administrative districts",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "oceanaccounts:administrative_provinces",
+              "label": "administrative provinces",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "oceanaccounts:administrative_subdistricts",
+              "label": "administrative subdistricts",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "oceanaccounts:grid_value_nasional",
+              "label": "grid value nasional",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "oceanaccounts:igt_neraca_hpbld_kkpn_gilimatra_ar50k",
+              "label": "igt neraca hpbld kkpn gilimatra ar50k",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:igt_neraca_hpbld_kkpn_kapoposang_ar50k",
+              "label": "igt neraca hpbld kkpn kapoposang ar50k",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:igt_neraca_hpbld_kkpn_kep_anambas_ar50k",
+              "label": "igt neraca hpbld kkpn kep anambas ar50k",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:igt_neraca_hpbld_kkpn_kep_raja_ampat_ar50k",
+              "label": "igt neraca hpbld kkpn kep raja ampat ar50k",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:igt_neraca_hpbld_kkpn_kep_waigeo_ar50k",
+              "label": "igt neraca hpbld kkpn kep waigeo ar50k",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:igt_neraca_hpbld_kkpn_laut_banda_ar50k",
+              "label": "igt neraca hpbld kkpn laut banda ar50k",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:igt_neraca_hpbld_kkpn_padaido_ar50k",
+              "label": "igt neraca hpbld kkpn padaido ar50k",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:igt_neraca_hpbld_kkpn_pieh_ar50k",
+              "label": "igt neraca hpbld kkpn pieh ar50k",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:igt_neraca_hpbld_padaido_ar50k",
+              "label": "igt neraca hpbld padaido ar50k",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:kpu",
+              "label": "kpu",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "oceanaccounts:ksn",
+              "label": "ksn",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "oceanaccounts:mangrove_2025",
+              "label": "spatial mangrove 2025",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:spatial_alur",
+              "label": "spatial alur",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "oceanaccounts:spatial_coral_2018",
+              "label": "spatial coral 2018",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:spatial_coral_2021",
+              "label": "spatial coral 2021",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:spatial_coral_2025",
+              "label": "spatial coral 2025",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:spatial_field_insights",
+              "label": "spatial field insights",
+              "swatch": "geo-admin"
+            },
+            {
+              "id": "oceanaccounts:spatial_kawasan_antar_wilayah_2025",
+              "label": "spatial kawasan antar wilayah 2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "oceanaccounts:spatial_kawasan_konservasi_2025",
+              "label": "spatial kawasan konservasi 2025",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "oceanaccounts:spatial_kawasan_pemanfaatan_umum_2021",
+              "label": "spatial kawasan pemanfaatan umum 2021",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "oceanaccounts:spatial_kawasan_strategis_nasional_2019",
+              "label": "spatial kawasan strategis nasional 2019",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "oceanaccounts:spatial_macroalgae_2025",
+              "label": "spatial macroalgae 2025",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:spatial_mangrove_2018",
+              "label": "spatial mangrove 2018",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:spatial_mangrove_2021",
+              "label": "spatial mangrove 2021",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:spatial_pelabuhan_perikanan_2024",
+              "label": "spatial pelabuhan perikanan 2024",
+              "swatch": "geo-transport"
+            },
+            {
+              "id": "oceanaccounts:spatial_pkkprl_rtrwp_2024",
+              "label": "spatial pkkprl rtrwp 2024",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "oceanaccounts:spatial_seagrass_2018",
+              "label": "spatial seagrass 2018",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:spatial_seagrass_2021",
+              "label": "spatial seagrass 2021",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:spatial_seagrass_2025",
+              "label": "spatial seagrass 2025",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:spatial_spesies_habitat_penting_2024",
+              "label": "spatial spesies habitat penting 2024",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:spatial_spesies_kemunculan_2024",
+              "label": "spatial spesies kemunculan 2024",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:spatial_spesies_keterancaman_2024",
+              "label": "spatial spesies keterancaman 2024",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:spatial_spesies_keterdamparan_2024",
+              "label": "spatial spesies keterdamparan 2024",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:spatial_spesies_records_2023",
+              "label": "spatial spesies records 2023",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:spatial_substrate_2025",
+              "label": "spatial substrate 2025",
+              "swatch": "geo-hydro"
+            },
+            {
+              "id": "oceanaccounts:spatial_wilayah_kelola_laut_provinsi",
+              "label": "spatial wilayah kelola laut provinsi",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "oceanaccounts:spatial_wilayah_kelola_mha_2024",
+              "label": "spatial wilayah kelola mha 2024",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "oceanaccounts:spatial_wilayah_pengelolaan_perikanan_2014",
+              "label": "spatial wilayah pengelolaan perikanan 2014",
+              "swatch": "geo-boundary"
+            },
+            {
+              "id": "oceanaccounts:spatial_zonasi_kawasan_konservasi_2024",
+              "label": "spatial zonasi kawasan konservasi 2024",
+              "swatch": "geo-boundary"
+            }
+          ]
+        }
+      ]
+    },
     {
       "id": "jatimprov",
       "title": "Provinsi Jawa Timur",

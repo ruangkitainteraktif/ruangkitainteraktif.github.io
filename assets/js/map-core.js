@@ -5460,21 +5460,6 @@ const SAWAH_COLOR = '#87cf15';
       ]
     },
     {
-      /* Seluruh layer overlay SIGAP (GeoServer KLHK) dibangkitkan dari
-       * SIGAP_LAYER_REGISTRY agar id, label, dan nama WMS selalu sinkron. */
-      cat: 'Kehutanan & Lahan (SIGAP)',
-      subcats: (function () {
-        var order = [], groups = {};
-        Object.keys(SIGAP_LAYER_REGISTRY).forEach(function (id) {
-          var def = SIGAP_LAYER_REGISTRY[id];
-          var sub = def.sub || 'Lainnya';
-          if (!groups[sub]) { groups[sub] = []; order.push(sub); }
-          groups[sub].push({ id: id, label: def.title });
-        });
-        return order.map(function (name) { return { subcat: name, layers: groups[name] }; });
-      })()
-    },
-    {
       cat: 'Geologi & Tanah',
       subcats: [
         { subcat: 'Geologi', layers: [
@@ -5789,7 +5774,6 @@ const SAWAH_COLOR = '#87cf15';
     'Lingkungan & Laut': 'Ekosistem, kondisi perairan, dan indikator kualitas lingkungan.',
     'Cuaca, Iklim & Kualitas Udara': 'Prakiraan dan pengamatan cuaca, pola iklim, kekeringan, serta polutan udara.',
     'Hutan, Lahan & Konservasi': 'Kawasan hutan, lahan gambut, perkebunan, dan kawasan lindung.',
-    'Peta Kehutanan & Lahan (SIGAP)': 'Data kehutanan dan lahan dari SIGAP KLHK: kawasan hutan, penggunaan lahan, perizinan, konservasi, kebakaran hutan, dan FOLU.',
     'Elevasi & Tutupan Lahan': 'Ketinggian dan bentuk permukaan bumi, kedalaman laut, serta jenis tutupan lahan.',
     'Tutupan Lahan Global (UMD GLAD)': 'Tutupan lahan global 30 m dari UMD GLAD Land & Carbon Lab (Landsat): komposit 2000 & 2020, hutan, lahan pertanian, permukiman, air, salju, perubahan tutupan lahan, serta kawasan alam NatLand.'
   };
