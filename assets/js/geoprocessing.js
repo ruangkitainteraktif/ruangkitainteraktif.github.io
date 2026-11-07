@@ -21,7 +21,11 @@
   var toolBody = document.querySelector('.dm-sidebar-body');
   var host = document.getElementById('gpToolList');
   if (!card || !host) return;
-  if (toolBody) toolBody.prepend(card);
+  if (toolBody) {
+    var locationCard = document.getElementById('dmCekLokasi');
+    if (locationCard && locationCard.parentNode === toolBody) locationCard.after(card);
+    else toolBody.prepend(card);
+  }
 
   var GPC = window.GPC;
   var esc = function (value) {

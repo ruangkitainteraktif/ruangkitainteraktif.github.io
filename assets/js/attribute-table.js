@@ -205,16 +205,6 @@
         return [ll.lat, ll.lng];
       }
     },
-    toggleSppgSebaranLayer: {
-      name: 'Sebaran SPPG Indonesia',
-      type: 'cluster',
-      getLayer: function () { return window.sppgSebaranLayer || null; },
-      props: ['Nama SPPG', 'Kode SPPG', 'Provinsi', 'Kab/Kota', 'Alamat'],
-      getLatLng: function (m) {
-        var ll = m.getLatLng();
-        return [ll.lat, ll.lng];
-      }
-    },
     toggleSppgLayer: {
       name: 'SPPG Indonesia',
       type: 'cluster',

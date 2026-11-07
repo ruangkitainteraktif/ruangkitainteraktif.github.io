@@ -17857,3 +17857,28 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
     display: none !important;
   }
 }
+
+
+/* Attribute table sheet docks on the right on desktop. */
+@media (min-width: 769px) {
+  #attr-table-sheet { left: auto !important; right: 0 !important; }
+  #attr-table-sheet:not(.attr-table-sheet-open):not(.attr-table-sheet-minimized) { transform: translateX(calc(100% + 24px)) !important; }
+  #attr-table-sheet.attr-table-sheet-open { transform: translateX(0) !important; }
+  #attr-table-sheet.attr-table-sheet-minimized { left: auto !important; right: 50% !important; transform: translateX(50%) !important; }
+  body.attr-table-sheet-open:not(.attr-table-sheet-minimized) {
+    --left-sheet-width: 0px !important;
+    --right-sheet-width: var(--desktop-sheet-width, 30vw) !important;
+  }
+  body.attr-table-sheet-open:not(.attr-table-sheet-minimized) #map {
+    margin-left: 0 !important;
+    left: 0 !important;
+  }
+  body.attr-table-sheet-open:not(.attr-table-sheet-minimized) #map .map-fab-wrap,
+  body.attr-table-sheet-open:not(.attr-table-sheet-minimized) #map .leaflet-bottom.leaflet-center,
+  body.attr-table-sheet-open:not(.attr-table-sheet-minimized) .zoom-control-wrap,
+  body.attr-table-sheet-open:not(.attr-table-sheet-minimized) .unified-search,
+  body.attr-table-sheet-open:not(.attr-table-sheet-minimized) .quick-layer-bar,
+  body.attr-table-sheet-open:not(.attr-table-sheet-minimized) .petadasar-export-block {
+    left: calc((100vw - var(--right-sheet-width)) / 2) !important;
+  }
+}
