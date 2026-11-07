@@ -10,6 +10,8 @@
   var _currentFeatures = [];
   var _currentPage = 1;
   var _searchQuery = '';
+  var _sortField = '';
+  var _sortDirection = 1;
   var _highlightMarker = null;
   var _highlightMarkerTimer = null;
   var _highlightedFeatureLayer = null;
@@ -832,17 +834,52 @@
 
   /* ── Get Filtered Features ── */
   function getFilteredFeatures(features) {
-    if (!_searchQuery) return features;
-    var q = _searchQuery.toLowerCase();
-    return features.filter(function (f) {
-      if (!f) return false;
-      if (typeof f === 'object') {
+    var result = features || [];
+    if (_searchQuery) {
+      var q = _searchQuery.toLowerCase();
+      result = result.filter(function (f) {
+        if (!f || typeof f !== 'object') return false;
         for (var k in f) {
-          if (f[k] && String(f[k]).toLowerCase().indexOf(q) !== -1) return true;
+          if (k.charAt(0) === '_' || f[k] == null) continue;
+          if (String(f[k]).toLowerCase().indexOf(q) !== -1) return true;
         }
-      }
-      return false;
+        return false;
+      });
+    }
+    if (_sortField) {
+      result = result.slice().sort(function (a, b) {
+        var av = a && a[_sortField], bv = b && b[_sortField];
+        if (av == null && bv == null) return 0;
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        var an = typeof av === 'number' ? av : (String(av).trim() !== '' ? Number(String(av).replace(',', '.')) : NaN);
+        var bn = typeof bv === 'number' ? bv : (String(bv).trim() !== '' ? Number(String(bv).replace(',', '.')) : NaN);
+        var cmp = isFinite(an) && isFinite(bn) ? an - bn : String(av).localeCompare(String(bv), 'id', { numeric: true, sensitivity: 'base' });
+        return cmp * _sortDirection;
+      });
+    }
+    return result;
+  }
+
+  function exportAttrCsv(features, props) {
+    var rows = [props];
+    features.forEach(function (feature) {
+      rows.push(props.map(function (prop) { return feature && feature[prop] != null ? feature[prop] : ''; }));
     });
+    var csv = '\uFEFF' + rows.map(function (row) {
+      return row.map(function (value) { return '"' + String(value == null ? '' : value).replace(/"/g, '""') + '"'; }).join(',');
+    }).join('\r\n');
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    var name = (_currentLayer && _currentLayer.config && _currentLayer.config.name || 'tabel-atribut')
+      .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'tabel-atribut';
+    link.href = url;
+    link.download = name + '.csv';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
 
   /* ── Extract features from geojson layer ── */
@@ -970,6 +1007,8 @@
     _currentLayer = { id: toggleId, config: config };
     _currentPage = 1;
     _searchQuery = '';
+    _sortField = '';
+    _sortDirection = 1;
 
     setAttrSheetTitle();
     var backBtn = document.getElementById('atSheetBackBtn');
@@ -990,6 +1029,10 @@
     if (!config) return;
 
     _currentLayer = { id: toggleId, config: config, isWms: true };
+    _currentPage = 1;
+    _searchQuery = '';
+    _sortField = '';
+    _sortDirection = 1;
 
     var sheet = document.getElementById('attr-table-sheet');
     if (!sheet) return;
@@ -1337,16 +1380,19 @@
 
     html += '<div class="at-controls">';
     html += '<input type="text" class="at-search" id="atSearchInput" placeholder="Cari fitur..." value="' + escAttr(_searchQuery) + '" />';
-    html += '<div class="at-info">' + all.length + ' fitur';
+    html += '<div class="at-controls-meta"><div class="at-info">' + all.length.toLocaleString('id-ID') + ' dari ' + _currentFeatures.length.toLocaleString('id-ID') + ' fitur';
     if (totalPages > 1) html += ' &middot; Halaman ' + _currentPage + ' / ' + totalPages;
-    html += '</div>';
+    html += '</div><button type="button" class="at-export-btn" id="atExportCsv">Unduh CSV</button></div>';
     html += '</div>';
 
     html += '<div class="at-table-wrap">';
     html += '<table class="at-table">';
     html += '<thead><tr>';
     html += '<th class="at-th-no">No</th>';
-    props.forEach(function (p) { html += '<th>' + escAttr(p) + '</th>'; });
+    props.forEach(function (p) {
+      var active = _sortField === p;
+      html += '<th class="at-sortable" data-sort-field="' + escAttr(p) + '" aria-sort="' + (active ? (_sortDirection === 1 ? 'ascending' : 'descending') : 'none') + '">' + escAttr(p) + (active ? (_sortDirection === 1 ? ' ▲' : ' ▼') : ' ↕') + '</th>';
+    });
     html += '</tr></thead>';
     html += '<tbody>';
 
@@ -1378,15 +1424,41 @@
     }
 
     content.innerHTML = html;
+    if (typeof window.RKEnsureAttrTableAd === 'function') window.RKEnsureAttrTableAd(content);
 
     var searchInput = document.getElementById('atSearchInput');
     if (searchInput) {
       searchInput.addEventListener('input', function () {
         _searchQuery = this.value;
+        var caret = this.selectionStart;
+        _currentPage = 1;
+        renderAttrContent();
+        var refreshedInput = document.getElementById('atSearchInput');
+        if (refreshedInput) { refreshedInput.focus(); refreshedInput.setSelectionRange(caret, caret); }
+      });
+    }
+
+    var exportButton = document.getElementById('atExportCsv');
+    if (exportButton) exportButton.addEventListener('click', function () {
+      if (typeof window.RKRequireGoogleLogin !== 'function') {
+        window.alert('Login Google belum siap. Muat ulang halaman lalu coba kembali.');
+        return;
+      }
+      window.RKRequireGoogleLogin(function () { exportAttrCsv(all, props); });
+    });
+    content.querySelectorAll('.at-sortable').forEach(function (header) {
+      header.tabIndex = 0;
+      header.addEventListener('click', function () {
+        var field = header.dataset.sortField;
+        _sortDirection = _sortField === field ? -_sortDirection : 1;
+        _sortField = field;
         _currentPage = 1;
         renderAttrContent();
       });
-    }
+      header.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); header.click(); }
+      });
+    });
 
     content.querySelectorAll('.at-row').forEach(function (row) {
       row.addEventListener('click', function () {
@@ -1647,6 +1719,7 @@
     html += '</tbody></table></div>';
 
     content.innerHTML = html;
+    if (typeof window.RKEnsureAttrTableAd === 'function') window.RKEnsureAttrTableAd(content);
 
     // GetFeatureInfo tidak mengembalikan geometri per fitur. Simpan lokasi
     // query agar barisnya tetap bisa mengarahkan peta dan menandai titiknya.

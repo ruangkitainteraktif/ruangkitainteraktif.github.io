@@ -197,6 +197,18 @@ Penempatan memakai iterasi children panel, bukan selektor :scope, karena
     }
   }
 
+  /* Slot khusus di atas tabel atribut; dipanggil setelah konten tabel dirender
+     agar slot tetap ada ketika pengguna mengganti layer atau hasil WMS. */
+  window.RKEnsureAttrTableAd = function (content) {
+    if (!content) return;
+    var table = content.querySelector('.at-table-wrap');
+    if (!table || (table.previousElementSibling && table.previousElementSibling.classList.contains('attr-table-ad-slot'))) return;
+    var ad = createAdUnit();
+    ad.classList.add('attr-table-ad-slot');
+    table.insertAdjacentElement('beforebegin', ad);
+    dorongSlotIklan(ad);
+  };
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
       addDonationBanners();

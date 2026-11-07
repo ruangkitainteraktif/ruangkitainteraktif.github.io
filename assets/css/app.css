@@ -3382,6 +3382,7 @@
        .lc-adsense tidak berlaku dan padding disetel sendiri agar sejajar
        dengan padding badan sheet (12px 16px 16px). */
     .lc-adsense.tool-sheet-adsense { margin: 0; padding: 10px 16px 14px; }
+    .lc-adsense.attr-table-ad-slot { min-width: 0; margin: 0 0 10px; flex: 0 0 auto; }
     .lc-adsense.tool-sheet-adsense--legenda { padding: 8px 16px 12px; }
     /* Mode tabel tanah mengubah .at-sheet-body menjadi kolom flex dengan
        overflow hidden, dan #at-sheet-content memakai flex: 1 1 auto. Unit
@@ -8176,6 +8177,9 @@
 
     /* â”€â”€ Attr Table Inner Styles â”€â”€ */
     .at-controls { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+    .at-controls-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .at-export-btn { flex: 0 0 auto; padding: 5px 9px; border: 1px solid var(--border-color); border-radius: 7px; background: var(--bg-secondary); color: var(--text-primary); font-size: 10px; font-weight: 700; cursor: pointer; }
+    .at-export-btn:hover { border-color: #2563eb; color: #2563eb; }
     .at-search {
       width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 8px;
       font-size: 12px; background: var(--bg-secondary); color: var(--text-primary);
@@ -8199,6 +8203,8 @@
       color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .3px;
       border-bottom: 2px solid var(--border-color); z-index: 4;
     }
+    .at-table th.at-sortable { cursor: pointer; user-select: none; }
+    .at-table th.at-sortable:hover, .at-table th.at-sortable:focus-visible { color: #2563eb; outline: none; }
     .at-table td {
       padding: 6px 8px; border-bottom: 1px solid var(--border-color);
       max-width: 180px; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary);

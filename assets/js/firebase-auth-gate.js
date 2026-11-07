@@ -347,7 +347,7 @@ window.RKRequireGoogleLogin = function (action) {
   }
   pendingGoogleAction = action;
   bukaDialog();
-  if (currentUser && statusEl) statusEl.textContent = 'Fitur Export SHP memerlukan akun Google. Pilih tombol Google untuk melanjutkan.';
+  if (currentUser && statusEl) statusEl.textContent = 'Fitur ini memerlukan akun Google. Pilih tombol Google untuk melanjutkan.';
   return false;
 };
 
