@@ -17473,6 +17473,47 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   box-shadow: var(--shadow-card);
 }
 
+/* Readable labels for the long Planologi forest legend in the sidebar. */
+#legendSidebarBody .kwshutan-planologi-legend {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+}
+#legendSidebarBody .kwshutan-planologi-legend .hotspot-legend-title {
+  margin-bottom: 8px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+#legendSidebarBody .kwshutan-planologi-legend .hotspot-legend-items { gap: 6px; }
+#legendSidebarBody .kwshutan-planologi-legend .hotspot-legend-item {
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  font-size: 11px;
+  line-height: 1.35;
+}
+#legendSidebarBody .kwshutan-planologi-legend .hotspot-legend-item > span:last-child {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+#legendSidebarBody .kwshutan-planologi-legend .hotspot-legend-dot {
+  display: grid;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 3px;
+}
+#legendSidebarBody .kwshutan-planologi-legend .hotspot-legend-dot img {
+  width: 16px !important;
+  height: 16px !important;
+  object-fit: contain;
+}
+
 /* GeoPortal Hub: kategori modern dengan aksi tambah ke Sheet Layer Aktif. */
 #geoportalLayerList { display:flex; flex-direction:column; gap:5px; padding:8px 2px 12px; }
 #geoportalLayerList .jstree-container-ul { width:100%; }
