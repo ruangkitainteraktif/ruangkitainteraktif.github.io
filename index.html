@@ -177,6 +177,7 @@
   <link rel="stylesheet" href="assets/css/geofarm-ebook.css?v=20261010-press-pages2-7">
   <link rel="stylesheet" href="assets/css/geotrans-mitradarat.css?v=20261010-geotrans-card-spacing">
   <link rel="stylesheet" href="assets/css/network-trip-planner.css?v=20261022-network-button-template">
+  <link rel="stylesheet" href="assets/css/geoprocessing.css?v=20261107-gp-pane-v2">
   <script>
     (function () {
       document.addEventListener('click', function (event) {
@@ -956,49 +957,78 @@
           </div>
         </details>
 
-        <details class="gp-tools-card dm-card">
+        <details class="gp-tools-card dm-card" open>
           <summary class="gt-card-head">
             <span class="gt-card-icon" aria-hidden="true">&#9881;&#65039;</span>
             <span>
               <b>Geoprocessing</b>
-              <small>Clip &middot; Buffer &middot; Intersect &middot; Union &middot; Merge &middot; Dissolve</small>
+              <small>Buffer &middot; Clip &middot; Intersect &middot; Union &middot; Merge &middot; Dissolve</small>
             </span>
           </summary>
           <div class="dm-card-body">
-            <details class="gp-guide" style="margin:0 0 10px;padding:8px 9px;border:1px solid #dbeafe;border-radius:8px;background:#eff6ff;">
-              <summary style="cursor:pointer;font-size:11px;font-weight:700;color:#1e40af;">Panduan singkat</summary>
-              <div style="font-size:10px;line-height:1.55;color:#334155;margin-top:7px;">
-                <ol style="margin:0;padding-left:17px;">
-                  <li>Aktifkan layer vektor dari Katalog Layer, lalu pilih operasi.</li>
-                  <li>Isi parameter input tiap operasi: Clip memakai <b>Input Features</b>/<b>Clip Features</b>; Intersect, Union, dan Merge menerima beberapa input.</li>
-                  <li>Atur jarak/dissolve/field bila tersedia, isi nama output, lalu jalankan. Hasil tampil sebagai layer baru.</li>
-                  <li>Gunakan tombol mata untuk menyembunyikan/menampilkan hasil, atau unduh GeoJSON.</li>
-                </ol>
-                <p style="margin:7px 0 0;"><b>Clip</b> memotong; <b>Buffer</b> membuat zona jarak (meter); <b>Intersect</b> mengambil irisan; <b>Union</b> menyatukan area; <b>Merge</b> menggabungkan fitur sejenis; <b>Dissolve</b> menggabungkan poligon menurut atribut.</p>
+            <div class="gp-pane">
+              <div class="gp-tabs" role="tablist" aria-label="Geoprocessing">
+                <button class="gp-tab is-active" type="button" role="tab" aria-selected="true" data-gp-tab="tools">Alat</button>
+                <button class="gp-tab" type="button" role="tab" aria-selected="false" data-gp-tab="history">Riwayat <span class="gp-tab-count" id="gpHistoryCount" hidden>0</span></button>
               </div>
-            </details>
-            <details class="gp-guide" style="margin:0 0 10px;padding:8px 9px;border:1px solid #cbd5e1;border-radius:8px;background:var(--bg-secondary,#f8fafc);">
-              <summary style="cursor:pointer;font-size:11px;font-weight:700;color:var(--text-primary,#334155);">Tambahkan sumber data</summary>
-              <div style="display:grid;gap:6px;margin-top:8px;">
-                <button class="geotools-btn gp-action-btn" type="button" onclick="document.getElementById('gpShpInput').click()">Upload SHP / ZIP</button>
-                <input id="gpShpInput" type="file" accept=".shp,.dbf,.shx,.prj,.zip" multiple hidden onchange="importGeoprocessingSHP(this.files)">
-                <button class="geotools-btn gp-action-btn" type="button" onclick="document.getElementById('gpGeoJSONInput').click()">Upload GeoJSON</button>
-                <input id="gpGeoJSONInput" type="file" accept=".geojson,.json,application/geo+json,application/json" hidden onchange="importGeoprocessingGeoJSON(this.files)">
-                <button class="geotools-btn gp-action-btn" type="button" onclick="startGeoprocessingPolygonDraw()">Gambar polygon</button>
-                <button class="geotools-btn gp-action-btn" type="button" onclick="resetGeoprocessingSources()">Reset layer sumber</button>
+
+              <div class="gp-panel" id="gpPanelTools">
+                <details class="gp-guide gp-guide--info">
+                  <summary>Panduan singkat</summary>
+                  <div class="gp-guide-body">
+                    <ol>
+                      <li>Tambahkan sumber data (SHP/GeoJSON/gambar polygon) atau pakai layer yang sudah ada di peta.</li>
+                      <li>Pilih tool dari daftar, isi parameter, lalu tekan <b>Jalankan</b>. Proses berjalan di latar belakang dan bisa dibatalkan.</li>
+                      <li>Hasil menumpuk sebagai layer baru &mdash; tidak pernah menimpa hasil sebelumnya.</li>
+                      <li>Setiap hasil bisa ditampilkan/disembunyikan, diunduh (GeoJSON/SHP/CSV), atau dibuka tabelnya.</li>
+                    </ol>
+                    <p>Semua operasi dihitung pada CRS proyeksi otomatis (UTM/AEQD) agar jarak presisi, lalu dikembalikan ke EPSG:4326. Geometri rusak diperbaiki otomatis; fitur yang tidak dapat dipulihkan dilaporkan sebagai dilewati.</p>
+                  </div>
+                </details>
+
+                <details class="gp-guide">
+                  <summary>Tambahkan sumber data</summary>
+                  <div class="gp-guide-body">
+                    <div class="gp-source-actions">
+                      <button class="geotools-btn gp-action-btn" type="button" onclick="document.getElementById('gpShpInput').click()">Upload SHP / ZIP</button>
+                      <input id="gpShpInput" type="file" accept=".shp,.dbf,.shx,.prj,.zip" multiple hidden onchange="importGeoprocessingSHP(this.files)">
+                      <button class="geotools-btn gp-action-btn" type="button" onclick="document.getElementById('gpGeoJSONInput').click()">Upload GeoJSON</button>
+                      <input id="gpGeoJSONInput" type="file" accept=".geojson,.json,application/geo+json,application/json" hidden onchange="importGeoprocessingGeoJSON(this.files)">
+                      <button class="geotools-btn gp-action-btn gp-action-btn--full" type="button" onclick="startGeoprocessingPolygonDraw()">Gambar polygon</button>
+                      <button class="geotools-btn gp-action-btn gp-action-btn--full" type="button" onclick="resetGeoprocessingSources()">Reset layer sumber</button>
+                    </div>
+                    <div id="gpImportStatus" role="status" aria-live="polite"></div>
+                  </div>
+                </details>
+
+                <div class="gp-search-wrap">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input class="gp-search" id="gpToolSearch" type="search" placeholder="Cari tool, misalnya buffer, clip, irisan..." aria-label="Cari tool geoprocessing">
+                </div>
+
+                <div id="gpToolList"></div>
+                <div id="gpToolForm" class="gp-tool-form" hidden></div>
+
+                <div class="gp-progress" id="gpProgress" hidden>
+                  <div class="gp-progress-track"><span class="gp-progress-fill" id="gpProgressFill"></span></div>
+                  <div class="gp-progress-meta">
+                    <span class="gp-progress-label" id="gpProgressLabel">Menyiapkan...</span>
+                    <button class="gp-btn-cancel" id="gpCancelBtn" type="button">Batalkan</button>
+                  </div>
+                </div>
+
+                <div id="gpStatus" role="status" aria-live="polite"></div>
+                <div class="gp-outputs" id="gpOutputs" hidden></div>
               </div>
-              <div id="gpImportStatus" role="status" aria-live="polite" style="font-size:10px;margin-top:6px;color:#64748b;"></div>
-            </details>
-            <label class="geotani-form-label" for="gpOperation">Operasi</label>
-            <select class="geotani-form-input" id="gpOperation" onchange="updateGeoprocessingForm()">
-              <option value="buffer" selected>Buffer &mdash; zona jarak</option><option value="clip">Clip &mdash; potong dengan batas poligon</option>
-              <option value="intersect">Intersect &mdash; irisan dua layer</option><option value="union">Union &mdash; gabungkan area poligon</option>
-              <option value="merge">Merge &mdash; gabungkan fitur sejenis</option><option value="dissolve">Dissolve &mdash; gabungkan menurut atribut</option>
-            </select>
-            <div id="gpLayerFields"></div>
-            <div id="gpStatus" role="status" aria-live="polite" style="font-size:11px;margin:10px 0;color:#64748b;"></div>
-            <button class="geotools-btn gp-action-btn" type="button" onclick="runGeoprocessing()">Jalankan geoprocessing</button>
-            <div id="gpResultActions" class="gp-result-actions"></div>
+
+              <div class="gp-panel" id="gpPanelHistory" hidden>
+                <div class="gp-history-head">
+                  <span id="gpHistoryInfo">Analisis yang pernah dijalankan disimpan di peramban ini.</span>
+                  <button class="gp-btn-ghost" id="gpHistoryClear" type="button">Bersihkan</button>
+                </div>
+                <div class="gp-history-list" id="gpHistoryList"></div>
+              </div>
+            </div>
           </div>
         </details>
 
@@ -4167,7 +4197,8 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
     <script src="assets/js/detail-subtab.js"></script>
      <script src="assets/js/alat-layers.js?v=20261101-layer-dimuat-merge"></script>
      <script src="assets/js/xy-table-import.js?v=20261102-v1"></script>
-     <script src="assets/js/geoprocessing.js?v=20261010-village-boundary-fallbacks"></script>
+     <script src="assets/js/geoprocessing-core.js?v=20261107-gp-phase2-v1"></script>
+     <script src="assets/js/geoprocessing.js?v=20261107-gp-pane-v2"></script>
      <script src="assets/js/arcgis-source-manager.js?v=20261011-shp-label"></script>
       <script src="assets/js/geoserver-source-manager.js?v=20261026-village-search-single"></script>
   <script src="assets/js/alat-draw-measure.js?v=20261009-remove-draw-layer"></script>
