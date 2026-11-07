@@ -129,6 +129,106 @@
     return results;
   }
 
+  /* Search index sources are the same metadata used by GeoPortal Hub and
+     Katalog Peta. Layer results are capped for a readable dropdown, while
+     the full source is scanned for every query. */
+  let geoportalConfigPromise = null;
+  function getGeoportalConfig() {
+    if (window.__geoportalLayersConfig) return Promise.resolve(window.__geoportalLayersConfig);
+    if (!geoportalConfigPromise) {
+      geoportalConfigPromise = fetch('assets/data/geoportal-layers.json')
+        .then(function (response) { if (!response.ok) throw new Error('HTTP ' + response.status); return response.json(); })
+        .then(function (config) { window.__geoportalLayersConfig = config; return config; })
+        .catch(function (error) { geoportalConfigPromise = null; throw error; });
+    }
+    return geoportalConfigPromise;
+  }
+
+  function searchGeoportalHubLayers(query, tokens, config) {
+    if (!config || !Array.isArray(config.categories)) return [];
+    const sources = config.sources || {};
+    const matches = [];
+    function addLayer(layer, category, wmsUrl, folder) {
+      if (!layer) return;
+      if (layer.type === 'folder' || Array.isArray(layer.children)) {
+        (layer.children || []).forEach(function (child) { addLayer(child, category, wmsUrl, layer.label || layer.id); });
+        return;
+      }
+      const name = layer.label || layer.id || '';
+      if (!layer.id || !wmsUrl) return;
+      const context = [name, layer.id, category, folder].filter(Boolean).join(' ');
+      const searchText = unifiedNormalize(context);
+      if (!name || !unifiedMatch(searchText, query, tokens)) return;
+      matches.push({
+        type: 'geoportal-layer', name: name, layerName: layer.id,
+        wmsUrl: wmsUrl, category: folder ? category + ' · ' + folder : category,
+        layerType: layer.type || 'wms'
+      });
+    }
+    config.categories.forEach(function (category) {
+      const source = sources[category.source] || {};
+      const wmsUrl = source.wmsUrl || config.wmsUrl || '';
+      (category.layers || []).forEach(function (layer) { addLayer(layer, category.title || category.label || category.id, wmsUrl, ''); });
+    });
+    return rankLayerResults(matches, query).slice(0, 8);
+  }
+
+  function searchMapCatalogLayers(query, tokens, categories) {
+    if (!Array.isArray(categories)) return [];
+    const matches = [], seen = Object.create(null);
+    function addLayer(layer, category, group) {
+      if (!layer || layer.hidden || !layer.id || !layer.label || seen[layer.id]) return;
+      const searchText = unifiedNormalize([layer.label, layer.id, category, group].filter(Boolean).join(' '));
+      if (!unifiedMatch(searchText, query, tokens)) return;
+      seen[layer.id] = true;
+      matches.push({ type: 'map-catalog-layer', name: layer.label, layerId: layer.id,
+        category: group ? category + ' · ' + group : category });
+    }
+    function visitLayers(layers, category, group) {
+      (layers || []).forEach(function (layer) {
+        if (!layer || layer.hidden) return;
+        if (Array.isArray(layer.children)) visitLayers(layer.children, category, group ? group + ' · ' + (layer.label || layer.id || '') : (layer.label || layer.id || ''));
+        else addLayer(layer, category, group);
+      });
+    }
+    function visitCategory(category) {
+      if (!category || category.hidden || category.type === 'basemap') return;
+      const title = category.cat || category.title || category.label || 'Katalog Peta';
+      visitLayers(category.layers, title, '');
+      (category.subcats || []).forEach(function (subcat) {
+        visitLayers(subcat.layers, title, subcat.subcat || subcat.title || '');
+      });
+      (category.groups || []).forEach(function (group) {
+        visitLayers(group.layers, title, group.group || group.title || '');
+      });
+    }
+    categories.forEach(visitCategory);
+    return rankLayerResults(matches, query).slice(0, 8);
+  }
+
+  function rankLayerResults(items, query) {
+    const q = unifiedNormalize(query);
+    return items.sort(function (a, b) {
+      const an = unifiedNormalize(a.name), bn = unifiedNormalize(b.name);
+      const ar = an === q ? 0 : an.indexOf(q) === 0 ? 1 : 2;
+      const br = bn === q ? 0 : bn.indexOf(q) === 0 ? 1 : 2;
+      return ar - br || an.localeCompare(bn);
+    });
+  }
+
+  async function searchAllLayerCatalogs(query, tokens) {
+    const dynamicReady = typeof window.ensureDynamicCatalogLoaded === 'function'
+      ? Promise.resolve().then(function () { return window.ensureDynamicCatalogLoaded(); }).catch(function () {})
+      : Promise.resolve();
+    const hubReady = getGeoportalConfig().catch(function () { return window.__geoportalLayersConfig || null; });
+    const settled = await Promise.all([dynamicReady, hubReady]);
+    const catalogData = typeof window.getLayerCatalogData === 'function' ? window.getLayerCatalogData() : [];
+    return {
+      geoportal: searchGeoportalHubLayers(query, tokens, settled[1]),
+      catalog: searchMapCatalogLayers(query, tokens, catalogData)
+    };
+  }
+
   function runUnifiedSearch(rawQuery) {
     var stripped = unifiedStripPrefix(rawQuery);
     var query = stripped.query;
@@ -143,12 +243,31 @@
     return [...provResults, ...kabkotResults, ...kecResults, ...desaResults, ...cctvResults];
   }
 
-  function renderUnifiedResults(items) {
+  let unifiedSearchSequence = 0;
+  async function performUnifiedSearch(query) {
+    const sequence = ++unifiedSearchSequence;
+    const stripped = unifiedStripPrefix(query);
+    const baseItems = runUnifiedSearch(query);
+    renderUnifiedResults(baseItems, !stripped.levelFilter && stripped.query.length >= 2);
+    if (stripped.levelFilter || stripped.query.length < 2) return;
+    try {
+      const layerItems = await searchAllLayerCatalogs(stripped.query, unifiedTokens(stripped.query));
+      const input = document.getElementById('unifiedSearchInput');
+      if (sequence !== unifiedSearchSequence || !input || unifiedNormalize(input.value.trim()) !== query) return;
+      renderUnifiedResults(baseItems.concat(layerItems.geoportal, layerItems.catalog));
+    } catch (error) {
+      console.warn('[UnifiedSearch] Gagal mencari katalog layer:', error);
+    }
+  }
+
+  function renderUnifiedResults(items, searchingLayers) {
     const container = document.getElementById('unifiedSearchResults');
     const clearBtn = document.getElementById('unifiedSearchClear');
 
     if (!items.length) {
-      container.innerHTML = '<div class="unified-ac-empty">Tidak ditemukan</div>';
+      container.innerHTML = '<div class="unified-ac-empty">' + (searchingLayers
+        ? 'Mencari layer di GeoPortal Hub dan Katalog Peta…'
+        : 'Tidak ditemukan') + '</div>';
       container.style.display = 'block';
       clearBtn.style.display = 'flex';
       return;
@@ -159,6 +278,8 @@
     const kecItems = items.filter(i => i.type === 'kecamatan');
     const desaItems = items.filter(i => i.type === 'desa');
     const cctvItems = items.filter(i => i.type === 'cctv');
+    const hubLayerItems = items.filter(i => i.type === 'geoportal-layer');
+    const catalogLayerItems = items.filter(i => i.type === 'map-catalog-layer');
     let html = '';
 
     const groupConfig = [
@@ -169,6 +290,9 @@
       { items: cctvItems, label: 'CCTV', icon: '🎥' }
     ];
 
+    groupConfig.push({ items: hubLayerItems, label: 'GeoPortal Hub', icon: 'G' });
+    groupConfig.push({ items: catalogLayerItems, label: 'Katalog Peta', icon: 'K' });
+    const visibleItems = [];
     for (const group of groupConfig) {
       if (!group.items.length) continue;
       html += `<div class="unified-ac-group"><span class="unified-ac-label">${group.label}</span>`;
@@ -184,8 +308,11 @@
           detail = `<small>${escapeGeoidHtml(item.kecamatan)}, ${escapeGeoidHtml(item.kabkot)}, ${escapeGeoidHtml(item.provinsi)}</small><small style="color:#999;font-size:10px">${escapeGeoidHtml(item.kode)}</small>`;
         } else if (item.type === 'cctv') {
           detail = `<small>${escapeGeoidHtml(item.area)}</small>`;
+        } else if (item.type === 'geoportal-layer' || item.type === 'map-catalog-layer') {
+          detail = `<small>${escapeGeoidHtml(item.category || '')}</small><small class="unified-ac-add-hint">+ Tambahkan ke Layer Aktif</small>`;
         }
-        html += `<button type="button" class="unified-ac-item" data-type="${item.type}"><span class="unified-ac-icon">${group.icon}</span><div><strong>${escapeGeoidHtml(item.name)}</strong>${detail}</div></button>`;
+        const itemIndex = visibleItems.push(item) - 1;
+        html += `<button type="button" class="unified-ac-item" data-type="${item.type}" data-result-index="${itemIndex}"><span class="unified-ac-icon">${group.icon}</span><div><strong>${escapeGeoidHtml(item.name)}</strong>${detail}</div></button>`;
       });
       html += '</div>';
     }
@@ -194,19 +321,45 @@
     container.style.display = 'block';
     clearBtn.style.display = 'flex';
 
-    const allItems = [...provItems, ...kabkotItems, ...kecItems, ...desaItems, ...cctvItems];
-    container.querySelectorAll('.unified-ac-item').forEach((btn, idx) => {
-      btn.addEventListener('click', () => selectUnifiedResult(allItems[idx]));
+    container.querySelectorAll('.unified-ac-item').forEach(btn => {
+      btn.addEventListener('click', () => selectUnifiedResult(visibleItems[Number(btn.dataset.resultIndex)]));
     });
+  }
+
+  function addLayerSearchResult(item) {
+    let added = false;
+    if (item.type === 'geoportal-layer') {
+      const key = item.wmsUrl + '::' + item.layerName;
+      const meta = { label: item.name, category: item.category, type: item.layerType,
+        wmsUrl: item.wmsUrl, layerName: item.layerName };
+      added = typeof window.isGeoportalHubLayerAdded === 'function' && window.isGeoportalHubLayerAdded(key);
+      if (!added && typeof window.addGeoportalHubLayerToActive === 'function') {
+        added = window.addGeoportalHubLayerToActive(key, meta) !== false;
+      }
+    } else if (item.type === 'map-catalog-layer') {
+      added = typeof window.isMapCatalogLayerAdded === 'function' && window.isMapCatalogLayerAdded(item.layerId);
+      if (!added && typeof window.addMapCatalogLayerToActive === 'function') {
+        added = window.addMapCatalogLayerToActive(item.layerId, item.name, item.category || 'Katalog Peta') !== false;
+      }
+    }
+    if (added && typeof window.openActiveLayersSidebar === 'function') window.openActiveLayersSidebar();
+    return added;
   }
 
   async function selectUnifiedResult(item) {
     const input = document.getElementById('unifiedSearchInput');
     const results = document.getElementById('unifiedSearchResults');
     const clearBtn = document.getElementById('unifiedSearchClear');
+    unifiedSearchSequence++;
     input.value = item.name;
     results.style.display = 'none';
     clearBtn.style.display = 'none';
+
+    if (item.type === 'geoportal-layer' || item.type === 'map-catalog-layer') {
+      const added = addLayerSearchResult(item);
+      if (!added && window.showToast) window.showToast('Layer tidak dapat ditambahkan. Coba lagi dari katalog sumber.', 'error');
+      return;
+    }
 
     if (item.type === 'cctv') {
       const _m = window.map;
@@ -275,12 +428,13 @@
 
     input.addEventListener('input', function () {
       clearTimeout(unifiedSearchTimer);
+      unifiedSearchSequence++;
       const query = unifiedNormalize(this.value.trim());
       if (query.length < 2) { results.style.display = 'none'; clearBtn.style.display = 'none'; return; }
 
       unifiedSearchTimer = setTimeout(async () => {
         if (!cctvLoaded && typeof loadCctvData === 'function') loadCctvData();
-        renderUnifiedResults(runUnifiedSearch(query));
+        await performUnifiedSearch(query);
       }, 80);
     });
 
@@ -288,7 +442,7 @@
       const query = unifiedNormalize(this.value.trim());
       if (query.length >= 2) {
         if (!cctvLoaded && typeof loadCctvData === 'function') loadCctvData();
-        renderUnifiedResults(runUnifiedSearch(query));
+        performUnifiedSearch(query);
       }
     });
 
@@ -297,6 +451,7 @@
     });
 
     clearBtn.addEventListener('click', function () {
+      unifiedSearchSequence++;
       input.value = '';
       results.style.display = 'none';
       this.style.display = 'none';

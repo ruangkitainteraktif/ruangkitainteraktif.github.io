@@ -11,6 +11,7 @@
     '#transjogja-sheet .tj-sheet-body',
     '#geotoolsSheetBody',
     '#geodataSheetBody',
+    '#activeLayersSidebarBody',
     '#attr-table-sheet .at-sheet-body',
     '#drawSidebar .dm-sidebar-body',
     '#legendSidebarBody',
@@ -125,23 +126,21 @@ Penempatan memakai iterasi children panel, bukan selektor :scope, karena
     });
   }
 
-  /* Satu unit di akhir sheet GeoData, terpisah dari tombol ekspor dan kontrol. */
-  var GEODATA_AD_PLACEMENTS = [
-    { key: 'display', anchor: '#geodataSheetBody', position: 'beforeend' }
+  /* Satu unit di akhir badan sheet, terpisah dari tombol dan kontrol. */
+  var SHEET_AD_PLACEMENTS = [
+    { key: 'display', anchor: '#geodataSheetBody', className: 'geodata-menu-adsense', position: 'beforeend' },
+    { key: 'layer-active', anchor: '#activeLayersSidebarBody', className: 'active-layers-menu-adsense', position: 'beforeend' }
   ];
 
-  function addGeoDataAds() {
-    GEODATA_AD_PLACEMENTS.forEach(function (placement) {
+  function addSheetAds() {
+    SHEET_AD_PLACEMENTS.forEach(function (placement) {
       var el = document.querySelector(placement.anchor);
       if (!el) return;
       var target = (placement.climb && el.closest) ? (el.closest(placement.climb) || el) : el;
       if (!target.parentNode) return;
-      var sibling = placement.position === 'beforebegin'
-        ? target.previousElementSibling
-        : target.nextElementSibling;
-      if (sibling && sibling.classList.contains('geodata-menu-adsense')) return;
+      if (target.querySelector(':scope > .' + placement.className)) return;
       var ad = createAdUnit();
-      ad.classList.add('geodata-menu-adsense', 'geodata-menu-adsense--' + placement.key);
+      ad.classList.add(placement.className, placement.className + '--' + placement.key);
       ad.setAttribute('aria-label', 'Iklan');
       target.insertAdjacentElement(placement.position, ad);
       dorongSlotIklan(ad);
@@ -202,12 +201,12 @@ Penempatan memakai iterasi children panel, bukan selektor :scope, karena
     document.addEventListener('DOMContentLoaded', function () {
       addDonationBanners();
       addGeoToolsInlineAds();
-      addGeoDataAds();
+      addSheetAds();
     }, { once: true });
   } else {
     addDonationBanners();
     addGeoToolsInlineAds();
-    addGeoDataAds();
+    addSheetAds();
   }
   window.addEventListener('resize', addDonationBanners, { passive: true });
 })();

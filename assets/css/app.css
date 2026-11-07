@@ -496,6 +496,7 @@
     .unified-ac-icon { font-size: 16px; width: 24px; text-align: center; flex-shrink: 0; }
     .unified-ac-item strong { display: block; font-size: 13px; color: #202124; font-weight: 500; }
     .unified-ac-item small { display: block; font-size: 11px; color: #5f6368; margin-top: 1px; }
+    .unified-ac-item .unified-ac-add-hint { color: #0879b8; font-weight: 600; }
     .unified-ac-empty { padding: 14px 16px; text-align: center; color: #5f6368; font-size: 12px; }
 
     /* Tombol lokasi saya (Leaflet Locate Control) */
@@ -3375,6 +3376,7 @@
     .lc-adsense.at-search-adsense { margin: 0 0 10px; }
     .lc-adsense.geotools-inline-adsense { margin: 16px 0; }
     .lc-adsense.geodata-menu-adsense { margin: 16px 0; }
+    .lc-adsense.active-layers-menu-adsense { margin: 16px 0; }
     /* Unit di sheet Draw & Ukur, Tabel Atribut, dan Legenda. Ketiganya
        ditambahkan sebagai anak terakhir badan sheet, sehingga margin bawaan
        .lc-adsense tidak berlaku dan padding disetel sendiri agar sejajar
