@@ -366,6 +366,18 @@
           /* Chip juga naik di atas sheet yang sedang terbuka. */
           bottom = Math.max(bottom, window.innerHeight - activeTop + 80);
         }
+      } else {
+        /* Di desktop dock FAB dibuat sebagai pita horizontal fixed dan
+           pembungkus Leaflet-nya sendiri setinggi 0px. Ukur pita anaknya,
+           bukan wrapper, supaya chip tidak bertumpuk dengan tombol peta. */
+        var dockItems = document.querySelector('.map-fab-wrap .map-fab-items');
+        if (dockItems) {
+          var dockRect = dockItems.getBoundingClientRect();
+          var dockStyle = window.getComputedStyle(dockItems);
+          if (dockRect.height > 0 && dockStyle.display !== 'none' && dockStyle.visibility !== 'hidden') {
+            bottom = Math.max(bottom, window.innerHeight - dockRect.top + 12);
+          }
+        }
       }
       chip.style.setProperty('bottom', (bottom + index * 44) + 'px', 'important');
     });
