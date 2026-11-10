@@ -265,32 +265,24 @@ function respons429(origin, k) {
   );
 }
 
-/* ══ Sesi BHUMI ══
-   Endpoint persil BHUMI (/mprx/service WMS dan /expapi/*) menolak permintaan
-   yang tidak membawa cookie sesi yang diterbitkan F5 saat halaman BHUMI
-   dimuat -- balasannya 403 "Forbidden" dari nginx, terlihat oleh klien sebagai
-   layer yang diam kosong.
-
-   Cookie itu TIDAK bisa diambil dari browser: Set-Cookie tidak pernah
-   diekspos ke JavaScript lintas origin, dan bhm_gt (satu-satunya cookie yang
-   cukup untuk /mprx) ber-SameSite=Lax sehingga tidak dikirim pada request
-   <img> lintas situs. Satu-satunya tempat yang bisa memegang sesi adalah
-   Worker ini.
-
-   Caranya: sekali memuat halaman BHUMI untuk mengambil cookie, menyimpannya
-   di KV selama 30 menit, lalu menyertakannya di setiap request lanjutan.
-   Kalau upstream tetap menolak, sesi dianggap kedaluwarsa: dibuang, dibuat
-   baru, dan request dicoba ulang satu kali. */
+/* Sesi WMS BHUMI mengikuti plugin QGIS: bootstrap halaman root dengan
+   CookieJar-style cookie set, lalu kirim cookie itu bersama header browser
+   pada permintaan /mprx/service. Cookie tidak bisa dibaca oleh JavaScript
+   lintas origin, jadi Worker menyimpan sesi singkat di KV. Sesi /expapi
+   disimpan terpisah karena endpoint itu memiliki kebutuhan header sendiri. */
 const BHUMI_SESI_KEY = "bhumi:sesi";
+const BHUMI_MPRX_SESI_KEY = "bhumi:mprx:sesi";
 const BHUMI_SESI_TTL = 30 * 60;
 const UA_BROWSER =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+const UA_BHUMI_MAP =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-async function bacaSesiBhumi(env) {
+async function bacaSesiBhumi(env, key = BHUMI_SESI_KEY) {
   const kv = env && env.RATE_KV;
   if (kv) {
     try {
-      const tersimpan = await kv.get(BHUMI_SESI_KEY);
+      const tersimpan = await kv.get(key);
       if (tersimpan) return tersimpan;
     } catch {
       /* KV bermasalah: sesi dibuat ulang, bukan gagal total. */
@@ -299,27 +291,77 @@ async function bacaSesiBhumi(env) {
   return "";
 }
 
-async function buatSesiBhumi(env) {
+function cookieBhumiMprx(setCookieHeaders) {
+  const host = "bhumi.atrbpn.go.id";
+  const requestPath = "/mprx/service";
+  const pairs = [];
+  for (const header of setCookieHeaders) {
+    const parts = header.split(";");
+    const pair = parts.shift().trim();
+    const equalsAt = pair.indexOf("=");
+    if (equalsAt <= 0) continue;
+    const attributes = new Map();
+    for (const part of parts) {
+      const splitAt = part.indexOf("=");
+      const name = (splitAt < 0 ? part : part.slice(0, splitAt)).trim().toLowerCase();
+      const value = splitAt < 0 ? "" : part.slice(splitAt + 1).trim();
+      attributes.set(name, value);
+    }
+    const domain = (attributes.get("domain") || host).replace(/^\./, "").toLowerCase();
+    if (host !== domain && !host.endsWith("." + domain)) continue;
+    const cookiePath = attributes.get("path") || "/";
+    if (!(requestPath === cookiePath || requestPath.startsWith(cookiePath.endsWith("/") ? cookiePath : cookiePath + "/"))) continue;
+    const maxAge = Number(attributes.get("max-age"));
+    if (Number.isFinite(maxAge) && maxAge <= 0) continue;
+    const expires = attributes.get("expires");
+    if (expires && Number.isFinite(Date.parse(expires)) && Date.parse(expires) <= Date.now()) continue;
+    pairs.push(pair);
+  }
+  return pairs.join("; ");
+}
+
+async function buatSesiBhumi(env, key = BHUMI_SESI_KEY, untukMprx = false) {
   const kv = env && env.RATE_KV;
-  const res = await fetch("https://bhumi.atrbpn.go.id/peta", {
-    headers: {
-      "User-Agent": UA_BROWSER,
-      "Accept": "text/html,application/xhtml+xml",
-      "Referer": "https://bhumi.atrbpn.go.id/",
-      "Origin": "https://bhumi.atrbpn.go.id"
-    },
+  const bootstrapUrl = untukMprx
+    ? "https://bhumi.atrbpn.go.id/"
+    : "https://bhumi.atrbpn.go.id/peta";
+  const bootstrapHeaders = untukMprx
+    ? {
+        "User-Agent": UA_BHUMI_MAP,
+        "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Referer": "https://bhumi.atrbpn.go.id/"
+      }
+    : {
+        "User-Agent": UA_BROWSER,
+        "Accept": "text/html,application/xhtml+xml",
+        "Referer": "https://bhumi.atrbpn.go.id/",
+        "Origin": "https://bhumi.atrbpn.go.id"
+      };
+  const res = await fetch(bootstrapUrl, {
+    headers: bootstrapHeaders,
     cf: { cacheTtl: 0 }
   });
   const daftar =
-    typeof res.headers.getSetCookie === "function" ? res.headers.getSetCookie() : [];
-  const cookie = daftar
-    .map((baris) => baris.split(";")[0].trim())
-    .filter(Boolean)
-    .join("; ");
+    typeof res.headers.getSetCookie === "function"
+      ? res.headers.getSetCookie()
+      : typeof res.headers.getAll === "function"
+        ? res.headers.getAll("Set-Cookie")
+        : [];
+  const cookie = untukMprx
+    ? cookieBhumiMprx(daftar)
+    : daftar.map((baris) => baris.split(";")[0].trim()).filter(Boolean).join("; ");
+  if (untukMprx) {
+    console.log("BHUMI_MPRX_SESSION", JSON.stringify({
+      bootstrapStatus: res.status,
+      setCookieCount: daftar.length,
+      acceptedCookieCount: cookie ? cookie.split("; ").length : 0
+    }));
+  }
   if (!cookie) return "";
   if (kv) {
     try {
-      await kv.put(BHUMI_SESI_KEY, cookie, { expirationTtl: BHUMI_SESI_TTL });
+      await kv.put(key, cookie, { expirationTtl: BHUMI_SESI_TTL });
     } catch {
       /* Gagal menyimpan tidak menggagalkan request: sesi tetap dipakai
          untuk request ini, hanya tidak dipakai ulang di request berikutnya. */
@@ -328,11 +370,11 @@ async function buatSesiBhumi(env) {
   return cookie;
 }
 
-async function hapusSesiBhumi(env) {
+async function hapusSesiBhumi(env, key = BHUMI_SESI_KEY) {
   const kv = env && env.RATE_KV;
   if (!kv) return;
   try {
-    await kv.delete(BHUMI_SESI_KEY);
+    await kv.delete(key);
   } catch {
     /* Aman diabaikan: sesi lama akan tergantikan oleh sesi baru. */
   }
@@ -409,13 +451,9 @@ export default {
     const contentType = request.headers.get("Content-Type");
     if (contentType) fwdHeaders["Content-Type"] = contentType;
 
-    // Endpoint WMS persil BHUMI (/mprx/service) dan API ekspor (/expapi:
-    // loginApi, getPersil) menolak permintaan yang Referer/Origin-nya bukan
-    // domainnya sendiri (balasannya 403 nginx / 401 aplikasi). Untuk /expapi
-    // Origin sendiri WAJIB ada dan bernilai domain bhumi -- tanpa Origin
-    // loginApi selalu 401 meski Referer benar. Browser DILARANG memalsukan
-    // kedua header ini, jadi hanya bisa diisi di server -- di sinilah
-    // tempatnya.
+    // WMS BHUMI mengikuti pola plugin QGIS: sesi dari halaman root, Referer
+    // root, dan header browser yang sama. /expapi punya persyaratan Origin
+    // sendiri dan tetap memakai jalur sesi lama.
     const isBhumiHost = target.hostname === "bhumi.atrbpn.go.id";
     const isBhumiMprx =
       isBhumiHost &&
@@ -444,11 +482,25 @@ export default {
       target.origin === "https://gistaru.atrbpn.go.id" &&
       target.pathname === "/tres/proxy.ashx" &&
       target.href.startsWith(GISTARU_TRES_ARCGIS_SERVICES_PREFIX);
-    if (isBhumiMprx || isBhumiExpapi) {
+    if (isBhumiMprx) {
+      fwdHeaders["User-Agent"] = UA_BHUMI_MAP;
+      fwdHeaders["Accept"] = "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8";
+      fwdHeaders["Accept-Language"] = "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7";
+      fwdHeaders["Referer"] = "https://bhumi.atrbpn.go.id/";
+      const sesiKey = BHUMI_MPRX_SESI_KEY;
+      /* Plugin QGIS membentuk CookieJar dari halaman root. Simpan sesi WMS
+         terpisah dari sesi /expapi agar aturan header kedua jalur tidak campur. */
+      try {
+        let sesi = await bacaSesiBhumi(env, sesiKey);
+        if (!sesi) sesi = await buatSesiBhumi(env, sesiKey, true);
+        if (sesi) fwdHeaders["Cookie"] = sesi;
+      } catch {
+        /* Teruskan request agar status upstream tetap bisa didiagnosis. */
+      }
+    }
+    if (isBhumiExpapi) {
       fwdHeaders["Referer"] = "https://bhumi.atrbpn.go.id/peta";
       fwdHeaders["Origin"] = "https://bhumi.atrbpn.go.id";
-      /* Tanpa cookie sesi BHUMI, nginx membalas 403 "Forbidden" dan seluruh
-         layer persil jadi kosong tanpa keterangan apa pun. */
       try {
         let sesi = await bacaSesiBhumi(env);
         if (!sesi) sesi = await buatSesiBhumi(env);
@@ -490,7 +542,7 @@ export default {
     // (serupa aturan UA di /mprx yang sudah ditemukan kemarin).
     const xPub = request.headers.get("X-Client-Pubkey");
     if (xPub && isBhumiExpapi) fwdHeaders["X-Client-Pubkey"] = xPub;
-    if (isBhumiMprx || isBhumiExpapi) {
+    if (isBhumiExpapi) {
       fwdHeaders["User-Agent"] = request.headers.get("User-Agent") ||
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
     }
@@ -500,15 +552,16 @@ export default {
       body = await request.arrayBuffer();
     }
 
+    const cacheUpstream = isBhumiMprx
+      ? { cacheTtlByStatus: { "200-299": 86400, "400-599": -1 } }
+      : { cacheTtl: isGistaruRdtrExport ? 3600 : isGistaruInteractiveApi ? 300 : 0 };
     const opsiUpstream = {
       method,
       headers: fwdHeaders,
       body: method === "POST" ? body : undefined,
       redirect: "follow",
-      // Tile persil BHUMI bersifat publik dan nyaris tidak berubah; di-cache
-      // di edge supaya pemetaan (ratusan tile per layar) tidak membebani
-      // maupun menghafal ulang permintaan ke server ATR/BPN.
-      cf: { cacheTtl: isBhumiMprx ? 86400 : isGistaruRdtrExport ? 3600 : isGistaruInteractiveApi ? 300 : 0 }
+      // Ikuti plugin: cache tile sukses 24 jam, jangan cache respons gagal.
+      cf: cacheUpstream
     };
 
     try {
@@ -518,19 +571,20 @@ export default {
          yang baru dan ulangi persis satu kali. Tanpa langkah ini layer persil
          akan tetap kosong selama sisa masa berlaku sesi lama. */
       const perluSesiUlang =
-        (isBhumiMprx || isBhumiExpapi) &&
-        (upstream.status === 403 || upstream.status === 401) &&
-        Boolean(fwdHeaders.Cookie);
+        (isBhumiMprx || (isBhumiExpapi && Boolean(fwdHeaders.Cookie))) &&
+        (upstream.status === 403 || upstream.status === 401);
       if (perluSesiUlang) {
+        const sesiKey = isBhumiMprx ? BHUMI_MPRX_SESI_KEY : BHUMI_SESI_KEY;
         try {
           if (upstream.body) await upstream.body.cancel();
         } catch {
           /* Body lama tidak terpakai; membatalkannya hanya rapi-rapi. */
         }
-        await hapusSesiBhumi(env);
-        const sesiBaru = await buatSesiBhumi(env).catch(() => "");
-        if (sesiBaru) {
-          fwdHeaders.Cookie = sesiBaru;
+        await hapusSesiBhumi(env, sesiKey);
+        const sesiBaru = await buatSesiBhumi(env, sesiKey, isBhumiMprx).catch(() => "");
+        if (isBhumiMprx || sesiBaru) {
+          if (sesiBaru) fwdHeaders.Cookie = sesiBaru;
+          else delete fwdHeaders.Cookie;
           upstream = await fetch(target.toString(), opsiUpstream);
         }
       }

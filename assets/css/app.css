@@ -437,6 +437,9 @@
     #layerCatalogDropdown .lc-pin-btn { display: none !important; }
     .lc-pin-btn:hover { color: #d97706; background: rgba(245,158,11,.1); }
     .lc-item-actions { display: inline-flex; align-items: center; gap: 2px; margin-left: auto; flex-shrink: 0; }
+    .lc-local-source-note { padding: 2px 10px 7px 30px; color: #64748b; font-size: 11px; line-height: 1.45; }
+    .lc-copy-xyz-btn { display: block; margin: 0 10px 10px 30px; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; color: #334155; font-size: 11px; font-weight: 600; cursor: pointer; }
+    .lc-copy-xyz-btn:hover { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; }
     .lc-pin-btn-active { color: #f59e0b; }
     .lc-pin-btn-active:hover { color: #d97706; background: rgba(245,158,11,.15); }
     .lc-unpin-all { margin-right: 8px; padding: 3px 8px; border: 1px solid #d97706; border-radius: 6px; background: #fff; color: #d97706; font-size: 10px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
@@ -11221,6 +11224,26 @@ details[open] > .gt-card-head::after {
       color: #173d5f;
       font-family: 'Segoe UI', sans-serif;
       font-size: 11px;
+    }
+    .gp-point-popup.agol-popup {
+      display: flex;
+      flex-direction: column;
+      width: 320px;
+      max-width: min(320px, calc(100vw - 48px));
+      max-height: min(360px, 55vh);
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: none;
+    }
+    .gp-point-popup .agol-popup-header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      flex: 0 0 auto;
+    }
+    .gp-point-popup .agol-popup-body {
+      min-height: 0;
+      overflow-y: auto;
     }
     .gp-point-popup > strong,
     .alat-popup > strong {

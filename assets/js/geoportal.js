@@ -66,11 +66,12 @@
           icon: L.divIcon({ className: 'gp-point-icon', html: pinSvg, iconSize: [24, 24], iconAnchor: [12, 24], popupAnchor: [0, -24] }),
           title: String(title)
         });
-        const rows = Object.entries(props)
-          .filter(([, v]) => v !== null && v !== undefined && v !== '')
-          .map(([k, v]) => `<div class="gp-point-popup-row"><b>${escapeBMKGHTML(k)}</b><span>${escapeBMKGHTML(Array.isArray(v) ? v.join(', ') : v)}</span></div>`)
-          .join('');
-        marker.bindPopup(`<div class="gp-point-popup"><strong>${escapeBMKGHTML(title || 'Detail POI')}</strong>${rows}</div>`, { maxWidth: 260, className: 'gp-point-leaflet-popup' });
+        const entries = Object.entries(props).filter(([, value]) => value !== null && value !== undefined && value !== '');
+        const fields = entries.map(([key, value]) =>
+          `<div class="agol-popup-field"><span class="agol-popup-field-label">${escapeBMKGHTML(key.replace(/_/g, ' '))}</span><span class="agol-popup-field-value">${escapeBMKGHTML(formatGeoportalValue(value))}</span></div>`
+        ).join('');
+        const popup = `<div class="agol-popup gp-point-popup"><div class="agol-popup-header agol-geo-kawasan"><div class="agol-popup-badge"><span class="agol-popup-badge-dot"></span>GeoPortal Hub</div><div class="agol-popup-title">${escapeBMKGHTML(title || 'Detail POI')}</div><div class="agol-popup-subtitle">${escapeBMKGHTML(layerName)} · ${entries.length} atribut</div></div><div class="agol-popup-body"><div class="agol-popup-fields">${fields || '<div class="geoportal-no-prop">Tidak ada atribut tersedia.</div>'}</div></div></div>`;
+        marker.bindPopup(popup, { maxWidth: 340, className: 'gp-point-leaflet-popup' });
         cluster.addLayer(marker);
       });
     });
@@ -912,6 +913,10 @@
 
   // ArcGIS REST Layer: Lahan Baku Sawah & Kawasan Pertanian
   const ARCGIS_SAWAH_CONFIG = {
+    'arcgis-simontana-pl8300': {
+      url: 'https://simontana.kehutanan.go.id/arcgis/rest/services/simontana/pl_8300/MapServer/WMSServer',
+      wmsLayers: '0'
+    },
     'arcgis-sawah-2023': { url: 'https://sig02.pertanian.go.id/server/rest/services/Sawah/Sawah2023/MapServer', layers: [0] },
     'arcgis-sawah-2019': { url: 'https://sig02.pertanian.go.id/server/rest/services/Sawah/LBS2019/MapServer', layers: Array.from({ length: 34 }, (_, id) => id) },
     'arcgis-kawasan-padi': { url: 'https://sig02.pertanian.go.id/server/rest/services/Kawasan/Peta_Kawasan_Padi/MapServer', layers: [0] },
@@ -1109,11 +1114,20 @@
     if (visible) {
       if (arcgisSawahLayers[layerKey]) { map.addLayer(arcgisSawahLayers[layerKey]); scheduleRenderGeoportalLegend(); return; }
       try {
-        arcgisSawahLayers[layerKey] = L.esri.dynamicMapLayer({
-          url: config.url,
-          opacity: 0.7,
-          layers: config.layers
-        }).addTo(map);
+        arcgisSawahLayers[layerKey] = config.wmsLayers
+          ? L.tileLayer.wms(config.url, {
+              layers: config.wmsLayers,
+              format: 'image/png',
+              transparent: true,
+              version: '1.1.1',
+              opacity: 0.7,
+              attribution: 'SIMONTANA Kementerian Kehutanan'
+            }).addTo(map)
+          : L.esri.dynamicMapLayer({
+              url: config.url,
+              opacity: 0.7,
+              layers: config.layers
+            }).addTo(map);
       } catch (err) {
         console.warn('Gagal memuat layer ' + layerKey + ':', err);
       }
@@ -1162,7 +1176,7 @@
       }
       categoryNodes.push({
         id: cat.id,
-        text: cat.title + ' <span class="layer-count-badge">' + totalCount + '</span>',
+        text: cat.title + ' <span class="layer-count-badge">' + (cat.discoverLayers ? '…' : totalCount) + '</span>',
         children: true,
         li_attr: { 'data-level': '0', 'data-wms-url': wmsUrl }
       });
@@ -1183,6 +1197,30 @@
       const categoryEntry = categoryById.get(nodeId);
       if (categoryEntry) {
         const { cat, wmsUrl } = categoryEntry;
+        if (cat.discoverLayers && cat._discoveryState !== 'loaded') {
+          if (cat._discoveryState !== 'loading' && cat._discoveryState !== 'failed') {
+            cat._discoveryState = 'loading';
+            discoverGeoportalWmsCategory(layersConfig, cat).then(layers => {
+              cat.layers = layers;
+              cat._discoveryState = 'loaded';
+              layers.forEach(layer => {
+                GEOPORTAL_LAYER_DATA.push({ id: layer.id, label: layer.label, category: cat.title, wmsUrl, type: 'wms' });
+                geoportalNodeIndex.set(`${wmsUrl}::${layer.id}`, `${cat.id}::${layer.id}`);
+              });
+              const tree = $(container).jstree(true);
+              const node = tree && tree.get_node(cat.id);
+              const badge = node && document.getElementById(node.id)?.querySelector('.layer-count-badge');
+              if (badge) badge.textContent = String(layers.length);
+              if (tree) tree.refresh_node(cat.id);
+            }).catch(error => {
+              cat._discoveryState = 'failed';
+              console.error('[Geoportal] Gagal menemukan layer ' + cat.title + ':', error);
+              const tree = $(container).jstree(true);
+              if (tree) tree.refresh_node(cat.id);
+            });
+          }
+          return [{ id: `${cat.id}::loading`, text: cat._discoveryState === 'failed' ? 'Layer gagal dimuat' : 'Memuat daftar layer…', li_attr: { 'data-level': '2', 'data-wms-url': wmsUrl } }];
+        }
         if (cat.layers.length && cat.layers[0].type === 'folder') {
           return cat.layers.map(folder => ({
             id: `${cat.id}::${folder.id}`,
@@ -1337,6 +1375,25 @@
       scheduleUpdateGeoportalServerBadges();
     });
 
+  }
+
+  async function discoverGeoportalWmsCategory(config, cat) {
+    const wmsUrl = config.sources[cat.source]?.wmsUrl;
+    if (!wmsUrl) throw new Error('URL WMS tidak ditemukan.');
+    const separator = wmsUrl.includes('?') ? '&' : '?';
+    const targetUrl = wmsUrl + separator + 'service=WMS&version=1.1.1&request=GetCapabilities';
+    const proxyUrl = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=' + encodeURIComponent(targetUrl);
+    const response = await fetch(proxyUrl);
+    if (!response.ok) throw new Error('WMS GetCapabilities HTTP ' + response.status);
+    const xml = new DOMParser().parseFromString(await response.text(), 'application/xml');
+    if (xml.querySelector('parsererror')) throw new Error('Respons GetCapabilities bukan XML yang valid.');
+    const layers = Array.from(xml.getElementsByTagNameNS('*', 'Layer')).flatMap(node => {
+      const name = Array.from(node.children).find(child => child.localName === 'Name')?.textContent?.trim();
+      const title = Array.from(node.children).find(child => child.localName === 'Title')?.textContent?.trim();
+      return name ? [{ id: name, label: title || name }] : [];
+    });
+    if (!layers.length) throw new Error('Tidak ada layer bernama pada GetCapabilities.');
+    return Array.from(new Map(layers.map(layer => [layer.id, layer])).values());
   }
 
   fetch('assets/data/geoportal-layers.json')

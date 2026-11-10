@@ -436,6 +436,14 @@ L.control.scale({
       maxZoom: 19,
       attribution: 'Esri, USGS, NASA'
     }),
+    'sentinel2-l1c': L.esri.imageMapLayer({
+      url: 'https://sentinel.arcgis.com/arcgis/rest/services/Sentinel2/ImageServer',
+      renderingRule: { rasterFunction: 'Natural Color with DRA' },
+      opacity: 1,
+      minZoom: 4,
+      maxZoom: 19,
+      attribution: 'Sentinel-2 L1C &copy; Esri, European Commission, ESA, Amazon Web Services'
+    }),
     'esri-dark-gray': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
       attribution: 'Esri'
@@ -1095,7 +1103,8 @@ L.control.scale({
     'chlorophyll-a': 'Citra NASA GIBS Chlorophyll-a tidak tersedia.',
     'par': 'Citra NASA GIBS PAR tidak tersedia.',
     'noaa-true-color': 'Citra NOAA True Color tidak tersedia.',
-    'noaa-goes-ir': 'Citra NOAA GOES IR tidak tersedia.'
+    'noaa-goes-ir': 'Citra NOAA GOES IR tidak tersedia.',
+    'sentinel2-l1c': 'Citra Sentinel-2 L1C dari Esri tidak tersedia saat ini.'
   };
 
   var SATELLITE_TILES = ['bmkg-himawari', 'bmkg-himawari-nc', 'bmkg-himawari-wv', 'bmkg-himawari-rp', 'bmkg-himawari-sw', 'bmkg-himawari-sm', 'bmkg-himawari-va', 'bmkg-himawari-vs', 'bmkg-himawari-fd', 'bmkg-himawari-hires',     'bmkg-gk2a', 'bmkg-gk2a-wv', 'bmkg-gk2a-rp',
@@ -1504,6 +1513,7 @@ L.control.scale({
     'noaa-true-color': 'NOAA True Color',
     'noaa-goes-ir': 'NOAA GOES IR',
     'sentinel2': 'Sentinel-2',
+    'sentinel2-l1c': 'Sentinel-2 L1C (Esri)',
     'eox-s2cloudless-2024': 'Sentinel-2 Cloudless 2024',
     'eox-blackmarble': 'NASA Black Marble',
     'eox-terrain-light': 'Terrain Light (EOX)'
@@ -2620,6 +2630,58 @@ const SAWAH_COLOR = '#87cf15';
     return !!(bhumiPersilNasionalLayer && map.hasLayer(bhumiPersilNasionalLayer));
   };
 
+  /* XYZ yang disediakan plugin QGIS BHUMI Persil di komputer pengguna. */
+  var BHUMI_QGIS_XYZ_URL = 'http://127.0.0.1:8765/bhumi/{z}/{x}/{y}.png';
+  var bhumiPersilQgisLocalLayer = null;
+  function toggleBhumiPersilQgisLocalLayer(show) {
+    if (show) {
+      if (bhumiPersilQgisLocalLayer && map.hasLayer(bhumiPersilQgisLocalLayer)) return;
+      bhumiPersilQgisLocalLayer = L.tileLayer(BHUMI_QGIS_XYZ_URL, {
+        tileSize: 256, minZoom: 9, maxZoom: 22,
+        attribution: 'ATR/BPN - BHUMI · server lokal QGIS'
+      });
+      var sudahDiberiTahu = false;
+      bhumiPersilQgisLocalLayer.on('tileerror', function () {
+        if (sudahDiberiTahu) return;
+        sudahDiberiTahu = true;
+        showMapToast('Server QGIS lokal tidak terjangkau. Jalankan plugin BHUMI Persil dan izinkan akses jaringan lokal.', 'error');
+      });
+      bhumiPersilQgisLocalLayer.addTo(map);
+    } else if (bhumiPersilQgisLocalLayer) {
+      if (map.hasLayer(bhumiPersilQgisLocalLayer)) map.removeLayer(bhumiPersilQgisLocalLayer);
+      bhumiPersilQgisLocalLayer = null;
+    }
+  }
+  window.toggleBhumiPersilQgisLocalLayer = toggleBhumiPersilQgisLocalLayer;
+  window.isBhumiPersilQgisLocalLayerActive = function () {
+    return !!(bhumiPersilQgisLocalLayer && map.hasLayer(bhumiPersilQgisLocalLayer));
+  };
+
+  function salinBhumiQgisXyz(btn) {
+    if (typeof window.RKRequireGoogleLogin !== 'function') {
+      showMapToast('Login Google belum siap. Muat ulang halaman lalu coba kembali.', 'error');
+      return;
+    }
+    window.RKRequireGoogleLogin(function () {
+      function berhasil() {
+        btn.textContent = 'URL tersalin';
+        showMapToast('URL XYZ BHUMI disalin. Tambahkan di QGIS sebagai XYZ Tiles.', 'info');
+        window.setTimeout(function () { btn.textContent = 'Salin URL XYZ untuk QGIS'; }, 1800);
+      }
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(BHUMI_QGIS_XYZ_URL).then(berhasil).catch(function () {
+          if (!bhumiPersilCopyFallback(BHUMI_QGIS_XYZ_URL, berhasil)) {
+            window.prompt('Salin URL XYZ ini untuk QGIS:', BHUMI_QGIS_XYZ_URL);
+          }
+        });
+      } else {
+        if (!bhumiPersilCopyFallback(BHUMI_QGIS_XYZ_URL, berhasil)) {
+          window.prompt('Salin URL XYZ ini untuk QGIS:', BHUMI_QGIS_XYZ_URL);
+        }
+      }
+    });
+  }
+
   /* ── Identifikasi persil saat klik (BHUMI /expapi/getPersil) ──
     * Saat layer Persil Nasional menyala, setiap klik peta mengirim query
     * titik (bbox viewport + posisi piksel klik, format identik dengan app
@@ -3619,8 +3681,10 @@ const SAWAH_COLOR = '#87cf15';
     input.setAttribute('readonly', '');
     input.style.position = 'fixed'; input.style.opacity = '0';
     document.body.appendChild(input); input.select();
-    try { if (document.execCommand('copy')) onSuccess(); } catch (e) { /* salin tidak didukung */ }
+    var copied = false;
+    try { copied = document.execCommand('copy'); if (copied) onSuccess(); } catch (e) { /* salin tidak didukung */ }
     document.body.removeChild(input);
+    return copied;
   }
 
   function bhumiPersilCloseSheet() {
@@ -5147,6 +5211,7 @@ const SAWAH_COLOR = '#87cf15';
             { id: 'nowcoast-visible-imagery', label: 'NOAA Visible Imagery' },
             { id: 'sentinel1-rtc', label: 'Sentinel-1 RTC (ESA)' },
             { id: 'sentinel2', label: 'Sentinel-2 (ESA)' },
+            { id: 'sentinel2-l1c', label: 'Sentinel-2 L1C (Esri, terbaru)' },
             { id: 'eox-s2cloudless-2024', label: 'Sentinel-2 Cloudless 2024 (EOX)' },
             { id: 'eox-blackmarble', label: 'NASA Black Marble (EOX)' },
             { id: 'eox-terrain-light', label: 'Terrain Light (EOX)' }
@@ -5444,6 +5509,7 @@ const SAWAH_COLOR = '#87cf15';
         { id: 'toggleKawasanHutanLayer', label: 'Kawasan Hutan (ESDM)' },
         { id: 'toggleGambutLayer', label: 'Lahan Gambut (SIMONTANA)' },
         { id: 'toggleKhLayer', label: 'Kawasan Hutan (Kemenhut)' },
+        { id: 'arcgis-simontana-pl8300', label: 'PL 8300 (SIMONTANA)' },
         { id: 'kwshutan-planologi', label: 'Kawasan Hutan 250K Juni 2026 (Planologi)' },
         { id: 'togglePippibLayer', label: 'PIPPIB 2023 Periode I' },
         { id: 'toggleSawitNasionalLayer', label: 'Sawit Nasional' },
@@ -5517,15 +5583,13 @@ const SAWAH_COLOR = '#87cf15';
       ]
     },
     {
-      /* Persil Nasional (ATRBPN). Sembunyikan dari Katalog Layer per
-       * permintaan 2026-10-31 -- kartu PERSIL Nasional di GeoTools > GeoPortal
-       * juga ikut disembunyikan pada hari yang sama. Hidden: kategori ini
-       * belum ditampilkan; hapus flagnya untuk mengunculkan kembali. */
+      /* Persil Nasional (ATRBPN). */
       cat: 'Persil Nasional (ATRBPN)',
       hidden: true,
       subcats: [
         { subcat: 'Peta Pertanahan', layers: [
-          { id: 'toggleBhumiPersilNasionalLayer', label: 'Persil Nasional (BHUMI)' }
+          { id: 'toggleBhumiPersilNasionalLayer', label: 'Persil Nasional (BHUMI)' },
+          { id: 'toggleBhumiPersilQgisLocalLayer', label: 'Persil Nasional (QGIS lokal)' }
         ]},
         { subcat: 'Layer Tematik BHUMI', layers: BHUMI_IDENTIFY_TEMPLAYERS.map(function(t) {
           return { id: 'bhumi-identify:' + t.layer, label: t.label };
@@ -5864,10 +5928,6 @@ const SAWAH_COLOR = '#87cf15';
     }
   } catch (e) {}
   var removedCatalogLayerIds = [
-    // 2026-10-31: kategori Persil Nasional (ATRBPN) disembunyikan dari
-    // Katalog Layer; pin tersimpan pengguna dibersihkan agar tidak membuang
-    // slot. Kembalikan ke _defaultPinnedLayers untuk mengunculkan lagi.
-    'toggleBhumiPersilNasionalLayer',
     // 2026-11-01: basemap "Peta Dasar ATR/BPN" disembunyikan dari Katalog
     // Layer (flag hidden pada entri petadasar-bpn). Kembalikan ke
     // _defaultPinnedLayers untuk mengunculkan lagi.
@@ -7051,6 +7111,7 @@ function syncLayerCatalogState() {
     'noaa-true-color': 'noaa-true-color.jpg',
     'noaa-goes-ir': 'noaa-goes-ir.jpg',
     'sentinel2': 'sentinel2.jpg',
+    'sentinel2-l1c': 'sentinel2.jpg',
     'eox-s2cloudless-2024': 'eox-s2cloudless-2024.jpg',
     'eox-blackmarble': 'eox-blackmarble.png',
     'eox-terrain-light': 'eox-terrain-light.jpg'
@@ -7266,7 +7327,8 @@ function syncLayerCatalogState() {
             if (l.id === 'toggleHujanLayer' && typeof isHujanLayerActive === 'function') {
               isChecked = isHujanLayerActive();
             }
-            var isBhumiEntry = l.id.indexOf('bhumi-') === 0;
+            var isQgisLocalEntry = l.id === 'toggleBhumiPersilQgisLocalLayer';
+            var isBhumiEntry = l.id.indexOf('bhumi-') === 0 || isQgisLocalEntry;
             html += '<div class="lc-item' + (l.unavailable ? ' lc-item-unavailable' : '') + '">';
 html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '"' + (l.geoportalKey ? ' data-geoportal-key="' + l.geoportalKey + '"' : '') + (l.dynamicKey ? ' data-dynamic-key="' + l.dynamicKey + '"' : '') + (l.unavailable ? ' disabled' : '') + (isChecked ? ' checked' : '') + ' />';
             html += '<label for="lc_' + l.id + '">' + l.label + '</label>';
@@ -7281,6 +7343,10 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
               html += '<button type="button" class="lc-pin-btn' + (pinned ? ' lc-pin-btn-active' : '') + '" data-layer-id="' + l.id + '" title="' + (pinned ? 'Hapus Pin' : 'Pin Layer') + '">' + (pinned ? pinIconFilled : pinIconOutline) + '</button>';
             }
             html += '</div></div>';
+            if (isQgisLocalEntry) {
+              html += '<div class="lc-local-source-note">Memerlukan plugin BHUMI Persil aktif di komputer ini. Jika plugin memakai port selain 8765, sesuaikan port pada URL.</div>';
+              html += '<button type="button" class="lc-copy-xyz-btn" data-copy-bhumi-qgis-xyz="1">Salin URL XYZ untuk QGIS</button>';
+            }
             if (l.id === 'toggleBmkgNormalHujan') {
               var selectedMonth = Number(window._bmkgNormalHujanMonth || 0);
               var monthLabels = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -7320,6 +7386,14 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
 
     container.innerHTML = html;
     container.classList.remove('lc-search-active');
+
+    container.querySelectorAll('.lc-copy-xyz-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        salinBhumiQgisXyz(btn);
+      });
+    });
 
     /* Thumbnail basemap yang tile-nya gagal dimuat (mis. BMKG tanpa
        baserun, layanan sedang turun) diganti placeholder grid peta --
@@ -7417,6 +7491,7 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
           (id === 'toggleBumiPersilLayer' && typeof window.toggleBumiPersilLayer === 'function') ||
           (id === 'toggleGistaruPersilLayer' && typeof window.toggleGistaruPersilLayer === 'function') ||
           (id === 'toggleBhumiPersilNasionalLayer' && typeof window.toggleBhumiPersilNasionalLayer === 'function') ||
+          (id === 'toggleBhumiPersilQgisLocalLayer' && typeof window.toggleBhumiPersilQgisLocalLayer === 'function') ||
           (id === 'toggleSawahGislinerLayer' && typeof window.toggleSawahGislinerLayer === 'function') ||
           (id === 'toggleJenisTanahJateng' && typeof window.toggleJenisTanahJateng === 'function') ||
           (id === 'toggleHwsdIndonesia' && typeof window.toggleHwsdIndonesia === 'function') ||
@@ -7532,6 +7607,9 @@ if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'fu
         }
         if (id === 'toggleBhumiPersilNasionalLayer' && typeof window.toggleBhumiPersilNasionalLayer === 'function') {
           window.toggleBhumiPersilNasionalLayer(cb.checked);
+        }
+        if (id === 'toggleBhumiPersilQgisLocalLayer' && typeof window.toggleBhumiPersilQgisLocalLayer === 'function') {
+          window.toggleBhumiPersilQgisLocalLayer(cb.checked);
         }
         if (id === 'toggleSawahGislinerLayer' && typeof window.toggleSawahGislinerLayer === 'function') {
           window.toggleSawahGislinerLayer(cb.checked);

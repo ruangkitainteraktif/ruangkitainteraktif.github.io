@@ -21,6 +21,9 @@
     "tanahbumbu": {
       "wmsUrl": "https://geoportal.tanahbumbukab.go.id/geoserver/ows"
     },
+    "tanahlaut": {
+      "wmsUrl": "https://geoportal.tanahlautkab.go.id/geoserver/ows"
+    },
     "kaltara": {
       "wmsUrl": "https://gis.khasanahkonsultama.id/geoserver/ows"
     },
@@ -82,6 +85,21 @@
     },
     "mahakamulu": {
       "wmsUrl": "https://geoserver-geoportal.mahakamulukab.go.id/geoserver/wms"
+    },
+    "sleman": {
+      "wmsUrl": "https://geoportal.slemankab.go.id/geoserver/ows"
+    },
+    "semarangkab": {
+      "wmsUrl": "https://gis.semarangkab.go.id/geoserver/palapa/wms"
+    },
+    "bojonegoro": {
+      "wmsUrl": "https://geoportal.bojonegorokab.go.id/geoserver/palapa/wms"
+    },
+    "bantul": {
+      "wmsUrl": "https://geoportal.bantulkab.go.id/geoserver/wms"
+    },
+    "kulonprogo": {
+      "wmsUrl": "https://geoportal.kulonprogokab.go.id/geoserver/wms"
     },
     "kotim": {
       "wmsUrl": "https://geoportal.kotimkab.go.id/geoserver/wms"
@@ -29899,6 +29917,41 @@
       ]
     },
     {
+      "id": "sleman",
+      "title": "Kabupaten Sleman",
+      "source": "sleman",
+      "discoverLayers": true,
+      "layers": []
+    },
+    {
+      "id": "bantul",
+      "title": "Kabupaten Bantul",
+      "source": "bantul",
+      "discoverLayers": true,
+      "layers": []
+    },
+    {
+      "id": "kulonprogo",
+      "title": "Kabupaten Kulon Progo",
+      "source": "kulonprogo",
+      "discoverLayers": true,
+      "layers": []
+    },
+    {
+      "id": "semarangkab",
+      "title": "Kabupaten Semarang",
+      "source": "semarangkab",
+      "discoverLayers": true,
+      "layers": []
+    },
+    {
+      "id": "bojonegoro",
+      "title": "Kabupaten Bojonegoro",
+      "source": "bojonegoro",
+      "discoverLayers": true,
+      "layers": []
+    },
+    {
       "id": "mahakamulu",
       "title": "Kabupaten Mahakam Ulu",
       "source": "mahakamulu",
@@ -31256,6 +31309,13 @@
           "label": "Peta Cagar Alam"
         }
       ]
+    },
+    {
+      "id": "tanahlaut",
+      "title": "Kabupaten Tanah Laut",
+      "source": "tanahlaut",
+      "discoverLayers": true,
+      "layers": []
     },
     {
       "id": "banjarkab",
