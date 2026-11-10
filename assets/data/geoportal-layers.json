@@ -30,9 +30,15 @@
     "hstkab": {
       "wmsUrl": "https://geoportal.hstkab.go.id/geoserver/ows"
     },
+    "tabalong": {
+      "wmsUrl": "https://geoportal.tabalongkab.go.id/geoserver/ows"
+    },
     "temanggung": {
       "wmsUrl": "https://geoportal.temanggungkab.go.id/geoserver/wms",
       "label": "Kabupaten Temanggung"
+    },
+    "pemalang": {
+      "wmsUrl": "https://geoportal.pemalangkab.go.id/geoserver/wms"
     },
     "sukoharjo": {
       "wmsUrl": "https://pisda.sukoharjokab.go.id/geoserver/ows",
@@ -45,6 +51,12 @@
     "magelang": {
       "wmsUrl": "https://geoportal.magelangkota.go.id/geoserver/ows",
       "label": "Kota Magelang"
+    },
+    "palembang": {
+      "wmsUrl": "https://geoportal.palembang.go.id/geoserver/palapa/wms"
+    },
+    "pontianak": {
+      "wmsUrl": "https://geoportal.pontianak.go.id/geoserver/ows"
     },
     "banjarmasin": {
       "wmsUrl": "https://geoportal.banjarmasinkota.go.id/geoserver/wms",
@@ -65,6 +77,9 @@
     "bandung": {
       "wmsUrl": "https://geodata.bandung.go.id/geoserver/ows",
       "label": "Kota Bandung"
+    },
+    "kotabogor": {
+      "wmsUrl": "https://satupeta.kotabogor.go.id/geoserver/wms"
     },
     "jabarprov": {
       "wmsUrl": "https://geoserver.jabarprov.go.id/geoserver/ows",
@@ -103,6 +118,12 @@
     },
     "kotim": {
       "wmsUrl": "https://geoportal.kotimkab.go.id/geoserver/wms"
+    },
+    "kotabaru": {
+      "wmsUrl": "https://geoportal.kotabarukab.go.id/geoserver/wms"
+    },
+    "bengkuluutara": {
+      "wmsUrl": "https://geoportal.bengkuluutarakab.go.id/geoserver/wms"
     },
     "kuburaya": {
       "wmsUrl": "https://geoportal.kuburaya.go.id/geoserver/wms"
@@ -21685,6 +21706,13 @@
       ]
     },
     {
+      "id": "pemalang",
+      "title": "Kabupaten Pemalang",
+      "source": "pemalang",
+      "discoverLayers": true,
+      "layers": []
+    },
+    {
       "id": "sukoharjo",
       "title": "Kabupaten Sukoharjo",
       "source": "sukoharjo",
@@ -23681,6 +23709,20 @@
           "swatch": "geo-admin"
         }
       ]
+    },
+    {
+      "id": "palembang",
+      "title": "Kota Palembang",
+      "source": "palembang",
+      "discoverLayers": true,
+      "layers": []
+    },
+    {
+      "id": "pontianak",
+      "title": "Kota Pontianak",
+      "source": "pontianak",
+      "discoverLayers": true,
+      "layers": []
     },
     {
       "id": "banjarmasin",
@@ -25844,6 +25886,13 @@
           "swatch": "geo-admin"
         }
       ]
+    },
+    {
+      "id": "kotabogor",
+      "title": "Kota Bogor",
+      "source": "kotabogor",
+      "discoverLayers": true,
+      "layers": []
     },
     {
       "id": "jogjakota",
@@ -31152,6 +31201,13 @@
       ]
     },
     {
+      "id": "tabalong",
+      "title": "Kabupaten Tabalong",
+      "source": "tabalong",
+      "discoverLayers": true,
+      "layers": []
+    },
+    {
       "id": "tanahbumbu",
       "title": "Kabupaten Tanah Bumbu",
       "source": "tanahbumbu",
@@ -32466,6 +32522,20 @@
           "label": "Restoran_321020240308112236"
         }
       ]
+    },
+    {
+      "id": "kotabaru",
+      "title": "Kabupaten Kotabaru",
+      "source": "kotabaru",
+      "discoverLayers": true,
+      "layers": []
+    },
+    {
+      "id": "bengkuluutara",
+      "title": "Kabupaten Bengkulu Utara",
+      "source": "bengkuluutara",
+      "discoverLayers": true,
+      "layers": []
     }
   ]
 }

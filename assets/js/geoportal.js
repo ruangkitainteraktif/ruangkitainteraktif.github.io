@@ -1145,6 +1145,21 @@
     const container = document.getElementById('geoportalLayerList');
     if (!container) return;
 
+    function escapeTreeText(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character];
+      });
+    }
+    function categoryLayerCount(cat) {
+      return cat.layers.length && cat.layers[0].type === 'folder'
+        ? cat.layers.reduce((sum, folder) => sum + (folder.children || []).length, 0)
+        : cat.layers.length;
+    }
+    function categoryNodeText(cat) {
+      const count = cat.discoverLayers && cat._discoveryState !== 'loaded' ? '…' : categoryLayerCount(cat);
+      return escapeTreeText(cat.title) + ' <span class="layer-count-badge">' + count + '</span>';
+    }
+
     GEOPORTAL_LAYER_DATA = [];
     geoportalNodeIndex.clear();
 
@@ -1155,12 +1170,10 @@
     layersConfig.categories.forEach(cat => {
       const wmsUrl = layersConfig.sources[cat.source]?.wmsUrl || GEOPORTAL_WMS_URL;
       categoryById.set(cat.id, { cat, wmsUrl });
-      let totalCount = 0;
       const folders = cat.layers.length && cat.layers[0].type === 'folder';
       if (folders) {
         cat.layers.forEach(folder => {
           folderById.set(`${cat.id}::${folder.id}`, { cat, folder, wmsUrl });
-          totalCount += (folder.children || []).length;
           (folder.children || []).forEach(child => {
             const nodeId = `${cat.id}::${folder.id}::${child.id}`;
             GEOPORTAL_LAYER_DATA.push({ id: child.id, label: child.label, category: cat.title, wmsUrl, type: child.type || 'wms' });
@@ -1168,7 +1181,6 @@
           });
         });
       } else {
-        totalCount = cat.layers.length;
         cat.layers.forEach(layer => {
           GEOPORTAL_LAYER_DATA.push({ id: layer.id, label: layer.label, category: cat.title, wmsUrl, type: layer.type || 'wms' });
           if (layer.type !== 'arcgis') geoportalNodeIndex.set(`${wmsUrl}::${layer.id}`, `${cat.id}::${layer.id}`);
@@ -1176,7 +1188,7 @@
       }
       categoryNodes.push({
         id: cat.id,
-        text: cat.title + ' <span class="layer-count-badge">' + (cat.discoverLayers ? '…' : totalCount) + '</span>',
+        text: categoryNodeText(cat),
         children: true,
         li_attr: { 'data-level': '0', 'data-wms-url': wmsUrl }
       });
@@ -1187,7 +1199,7 @@
       const nodeId = isArcgis ? layer.id : (folderId ? `${cat.id}::${folderId}::${layer.id}` : `${cat.id}::${layer.id}`);
       return {
         id: nodeId,
-        text: layer.label,
+        text: escapeTreeText(layer.label),
         li_attr: { 'data-level': folderId ? '2' : '1', 'data-wms-url': wmsUrl, 'data-layer-name': isArcgis ? '' : layer.id, 'data-hub-key': wmsUrl + '::' + layer.id, 'data-hub-label': layer.label || layer.id, 'data-hub-category': cat.title + (folderId ? ' · ' + (((folderById.get(cat.id + '::' + folderId) || {}).folder || {}).label || folderId) : ''), 'data-hub-type': layer.type || 'wms' }
       };
     }
@@ -1209,9 +1221,10 @@
               });
               const tree = $(container).jstree(true);
               const node = tree && tree.get_node(cat.id);
-              const badge = node && document.getElementById(node.id)?.querySelector('.layer-count-badge');
-              if (badge) badge.textContent = String(layers.length);
-              if (tree) tree.refresh_node(cat.id);
+              if (tree && node) {
+                tree.rename_node(node, categoryNodeText(cat));
+                tree.refresh_node(cat.id);
+              }
             }).catch(error => {
               cat._discoveryState = 'failed';
               console.error('[Geoportal] Gagal menemukan layer ' + cat.title + ':', error);
@@ -1224,7 +1237,7 @@
         if (cat.layers.length && cat.layers[0].type === 'folder') {
           return cat.layers.map(folder => ({
             id: `${cat.id}::${folder.id}`,
-            text: folder.label,
+            text: escapeTreeText(folder.label),
             children: true,
             li_attr: { 'data-level': '1', 'data-wms-url': wmsUrl }
           }));
@@ -1252,7 +1265,7 @@
         } else {
           children = cat.layers.filter(layer => categoryMatch || `${layer.label} ${layer.id}`.toLocaleLowerCase().includes(needle)).map(layer => layerNode(cat, layer, wmsUrl));
         }
-        if (children.length) results.push({ id: cat.id, text: cat.title, children, state: { opened: true }, li_attr: { 'data-level': '0', 'data-wms-url': wmsUrl } });
+        if (children.length) results.push({ id: cat.id, text: categoryNodeText(cat), children, state: { opened: true }, li_attr: { 'data-level': '0', 'data-wms-url': wmsUrl } });
       });
       return results;
     }
@@ -1270,6 +1283,7 @@
 
     $(container).jstree({
       core: {
+        force_text: false,
         data: function (node, callback) {
           callback(searchQuery ? (node.id === '#' ? makeSearchTree(searchQuery) : []) : getChildren(node.id));
         },
