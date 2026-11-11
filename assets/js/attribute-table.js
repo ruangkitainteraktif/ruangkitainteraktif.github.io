@@ -1539,6 +1539,20 @@
 
   function focusFeatureRowOnMap(feature, row) {
     if (!feature) return;
+    /* GeoPortal Hub WFS rows menyimpan geometri sebagai JSON agar atribut
+       tetap ringan. Gunakan geometri utuh untuk menyorot polygon/garis,
+       bukan hanya menerbangkan peta ke titik pertama. */
+    if (feature._geoGeometry && window.L) {
+      try {
+        var geoGeometry = JSON.parse(feature._geoGeometry);
+        if (geoGeometry && geoGeometry.type && geoGeometry.type !== 'Point' && geoGeometry.type !== 'MultiPoint') {
+          var geoLayer = window.L.geoJSON({ type: 'Feature', properties: {}, geometry: geoGeometry });
+          highlightFeatureLayerOnMap(geoLayer, true);
+          if (row) row.classList.add('at-row-active');
+          return;
+        }
+      } catch (e) { /* Geometri rusak: lanjutkan dengan penanda titik */ }
+    }
     if (feature._arcGeometry && window.L) {
       var geometry = feature._arcGeometry;
       var geometryLayer = null;

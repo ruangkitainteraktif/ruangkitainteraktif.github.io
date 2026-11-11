@@ -15,6 +15,40 @@
     return wmsUrl.replace(/\/wms\/?$/, '/wfs');
   }
 
+  /* Ambil fitur WFS untuk tabel atribut layer GeoPortal Hub. WMS sendiri
+     hanya mengirim gambar; tabel membutuhkan endpoint WFS dari GeoServer.
+     Batasi satu permintaan agar layer yang sangat besar tidak mengunci tab. */
+  window.fetchGeoportalHubFeatureCollection = async function (key) {
+    const separator = String(key || '').lastIndexOf('::');
+    if (separator < 0) throw new Error('Identitas layer GeoPortal tidak valid.');
+    const wmsUrl = key.slice(0, separator);
+    const layerName = resolveGeoportalLayerName(key.slice(separator + 2));
+    const wfsUrl = wfsUrlFromWmsUrl(wmsUrl);
+    const proxy = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=';
+    const requests = [
+      { version: '2.0.0', count: '2000' },
+      { version: '1.1.0', maxFeatures: '2000' }
+    ];
+    let lastError;
+    for (const options of requests) {
+      const params = new URLSearchParams({
+        service: 'WFS', version: options.version, request: 'GetFeature',
+        outputFormat: 'application/json', srsName: 'EPSG:4326'
+      });
+      params.set(options.version === '2.0.0' ? 'typeNames' : 'typeName', layerName);
+      params.set(options.count ? 'count' : 'maxFeatures', options.count || options.maxFeatures);
+      const target = wfsUrl + '?' + params.toString();
+      try {
+        const response = await fetch(proxy + encodeURIComponent(target));
+        if (!response.ok) throw new Error('WFS merespons HTTP ' + response.status + '.');
+        const data = await response.json();
+        if (data && data.features && Array.isArray(data.features)) return data;
+        throw new Error(data && data.message ? data.message : 'WFS tidak mengembalikan data fitur GeoJSON.');
+      } catch (error) { lastError = error; }
+    }
+    throw new Error('Tabel tidak tersedia untuk layer ini melalui WFS. ' + (lastError && lastError.message || ''));
+  };
+
   // Proxy CORS opsional untuk server yang memblokir fetch lintas-origin
   // (GetCapabilities, WFS, GetFeatureInfo). Kosongkan ('') untuk akses langsung.
   // Contoh: 'https://geoportal-proxy.example.workers.dev/'

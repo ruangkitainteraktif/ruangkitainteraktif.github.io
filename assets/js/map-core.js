@@ -6664,6 +6664,43 @@ function syncLayerCatalogState() {
     return null;
   }
 
+  /* WFS GeoServer kadang mengirim EPSG:4326 dengan urutan sumbu lat/lon,
+     walau GeoJSON umumnya memakai lon/lat. Untuk layer Indonesia, sumbu
+     pertama bernilai lintang dan sumbu kedua bujur adalah tanda jelas untuk
+     membalik koordinat. */
+  function normalizeGeoportalGeometry(geometry) {
+    if (!geometry || !geometry.coordinates) return geometry;
+    var copy;
+    try { copy = JSON.parse(JSON.stringify(geometry)); } catch (e) { return geometry; }
+    function firstPosition(value) {
+      if (!Array.isArray(value)) return null;
+      if (value.length >= 2 && typeof value[0] === 'number' && typeof value[1] === 'number') return value;
+      for (var i = 0; i < value.length; i++) {
+        var found = firstPosition(value[i]);
+        if (found) return found;
+      }
+      return null;
+    }
+    var first = firstPosition(copy.coordinates);
+    if (!first) return copy;
+    var projected = Math.abs(first[0]) > 180 || Math.abs(first[1]) > 90;
+    var swap = Math.abs(first[0]) <= 90 && Math.abs(first[1]) > 90 && Math.abs(first[1]) <= 180;
+    function visit(value) {
+      if (!Array.isArray(value)) return;
+      if (value.length >= 2 && typeof value[0] === 'number' && typeof value[1] === 'number') {
+        if (projected && window.L && L.CRS && L.CRS.EPSG3857) {
+          var unprojected = L.CRS.EPSG3857.unproject(L.point(value[0], value[1]));
+          value[0] = unprojected.lng;
+          value[1] = unprojected.lat;
+        } else if (swap) { var temp = value[0]; value[0] = value[1]; value[1] = temp; }
+        return;
+      }
+      value.forEach(visit);
+    }
+    if (projected || swap) visit(copy.coordinates);
+    return copy;
+  }
+
   /* Ratakan fitur GeoJSON jadi objek datar untuk tabel atribut. Nilai
      berupa objek diubah jadi JSON -- attribute-table.js hanya menyalin
      nilai primitif, jadi tanpa langkah ini kolomnya hilang begitu saja. */
@@ -6678,7 +6715,12 @@ function syncLayerCatalogState() {
         var v = props[k];
         row[k] = (v !== null && typeof v === 'object') ? JSON.stringify(v) : v;
       }
-      row._ll = uploadedFeatureLatLng(feat && feat.geometry);
+      var geometry = feat && feat.geometry;
+      if (entry.kind === 'geoportal-hub' && geometry) {
+        geometry = normalizeGeoportalGeometry(geometry);
+        row._geoGeometry = JSON.stringify(geometry);
+      }
+      row._ll = uploadedFeatureLatLng(geometry);
       return row;
     });
   }
@@ -6686,6 +6728,17 @@ function syncLayerCatalogState() {
   /* Buka sheet Tabel berisi SELURUH fitur satu baris unggahan. */
   async function bukaTabelFiturUnggahan(entry) {
     var fc = uploadedFeatureCollection(entry);
+    /* Layer GeoPortal Hub tersimpan sebagai referensi WMS. Minta fitur dari
+       WFS hanya saat tabel dibuka; gambar WMS tidak membawa tabel atribut. */
+    if (!fc && entry && entry.kind === 'geoportal-hub' && typeof window.fetchGeoportalHubFeatureCollection === 'function') {
+      try {
+        fc = await window.fetchGeoportalHubFeatureCollection(entry.ref.key);
+        entry.ref.geojson = fc;
+      } catch (err) {
+        if (window.showToast) window.showToast(err && err.message ? err.message : 'Gagal memuat tabel layer GeoPortal.', 'error');
+        return;
+      }
+    }
     /* ArcGIS dynamic map layers dirender sebagai gambar, jadi saat layer
        pertama dimuat belum memiliki GeoJSON. Ambil seluruh halaman fitur
        hanya ketika tabel diminta, lalu gunakan jalur tabel yang sama. */
@@ -6833,12 +6886,15 @@ function syncLayerCatalogState() {
       if (isUploaded) {
         var fcUnggahan = uploadedFeatureCollection(l);
         var arcgisDynamic = l.kind === 'arcgis' && l.ref && l.ref.descriptor && l.ref.descriptor.renderMode === 'dynamic';
-        if ((fcUnggahan && fcUnggahan.features.length) || arcgisDynamic) {
+        var geoportalWfs = l.kind === 'geoportal-hub' && l.ref && l.ref.meta && l.ref.meta.type !== 'arcgis';
+        if ((fcUnggahan && fcUnggahan.features.length) || arcgisDynamic || geoportalWfs) {
           var tabelBtn = document.createElement('button');
           tabelBtn.type = 'button';
           tabelBtn.className = 'lc-attr-btn lc-attr-btn-show al-table-btn';
           tabelBtn.dataset.layerId = l.id;
-          tabelBtn.title = fcUnggahan && fcUnggahan.features.length
+          tabelBtn.title = geoportalWfs
+            ? 'Buka Tabel Atribut (memuat fitur dari WFS)'
+            : fcUnggahan && fcUnggahan.features.length
             ? 'Lihat daftar fitur (' + fcUnggahan.features.length.toLocaleString('id-ID') + ' fitur)'
             : 'Muat dan lihat daftar fitur';
           tabelBtn.innerHTML = ATTR_ICON;
