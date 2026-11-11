@@ -139,6 +139,42 @@
     "inarisk": {
       "wmsUrl": "https://inarisk1.bnpb.go.id:8443/geoserver/wms",
       "label": "Badan Nasional Penanggulangan Bencana (BNPB)"
+    },
+    "mprri": {
+      "wmsUrl": "https://geoportal.mpr.go.id/geoserver/wms",
+      "label": "Majelis Permusyawaratan Rakyat Republik Indonesia (MPR RI)"
+    },
+    "dprri": {
+      "wmsUrl": "https://geonode.dpr.go.id/geoserver/ows",
+      "label": "Dewan Perwakilan Rakyat Republik Indonesia (DPR RI)"
+    },
+    "dpdri": {
+      "wmsUrl": "https://geo.dpd.go.id/geoserver/wms",
+      "label": "Dewan Perwakilan Daerah Republik Indonesia (DPD RI)"
+    },
+    "kemenpar": {
+      "wmsUrl": "https://geodashboard.kemenpar.go.id/geoserver/wms",
+      "label": "Kementerian Pariwisata"
+    },
+    "kemenhub": {
+      "wmsUrl": "https://gishub.kemenhub.go.id/geoserver/wms",
+      "label": "Kementerian Perhubungan"
+    },
+    "perpusnas": {
+      "wmsUrl": "https://gis.perpusnas.go.id/geoserver/wms",
+      "label": "Perpustakaan Nasional Republik Indonesia (PERPUSNAS)"
+    },
+    "kemenkoinfra": {
+      "wmsUrl": "https://geoportal.kemenkoinfra.go.id/geoserver/wms",
+      "label": "Kementerian Koordinator Bidang Infrastruktur dan Pembangunan Kewilayahan"
+    },
+    "ppatk": {
+      "wmsUrl": "https://geoportal.ppatk.go.id/geoserver/palapa/wms",
+      "label": "Pusat Pelaporan dan Analisis Transaksi Keuangan (PPATK)"
+    },
+    "bkkbn": {
+      "wmsUrl": "https://geoportal.kemendukbangga.go.id/geoserver/palapa/wms",
+      "label": "Badan Kependudukan dan Keluarga Berencana Nasional (BKKBN)"
     }
   },
   "categories": [
@@ -1068,8 +1104,22 @@
       ]
     },
     {
+      "id": "kemenhub",
+      "title": "Kementerian Perhubungan",
+      "source": "kemenhub",
+      "discoverLayers": true,
+      "layers": []
+    },
+    {
+      "id": "kemenpar",
+      "title": "Kementerian Pariwisata",
+      "source": "kemenpar",
+      "discoverLayers": true,
+      "layers": []
+    },
+    {
       "id": "inarisk",
-      "title": "InaRisk BNPB",
+      "title": "BNPB",
       "source": "inarisk",
       "layers": [
         {
@@ -1960,6 +2010,55 @@
           ]
         }
       ]
+    },
+    {
+      "id": "perpusnas",
+      "title": "PERPUSNAS",
+      "source": "perpusnas",
+      "discoverLayers": true,
+      "layers": []
+    },
+    {
+      "id": "ppatk",
+      "title": "PPATK",
+      "source": "ppatk",
+      "discoverLayers": true,
+      "layers": []
+    },
+    {
+      "id": "kemenkoinfra",
+      "title": "KEMENKO INFRA",
+      "source": "kemenkoinfra",
+      "discoverLayers": true,
+      "layers": []
+    },
+    {
+      "id": "bkkbn",
+      "title": "BKKBN",
+      "source": "bkkbn",
+      "discoverLayers": true,
+      "layers": []
+    },
+    {
+      "id": "mprri",
+      "title": "MPR RI",
+      "source": "mprri",
+      "discoverLayers": true,
+      "layers": []
+    },
+    {
+      "id": "dprri",
+      "title": "DPR RI",
+      "source": "dprri",
+      "discoverLayers": true,
+      "layers": []
+    },
+    {
+      "id": "dpdri",
+      "title": "DPD RI",
+      "source": "dpdri",
+      "discoverLayers": true,
+      "layers": []
     },
     {
       "id": "jatimprov",

@@ -6965,7 +6965,13 @@ function syncLayerCatalogState() {
       el.appendChild(cb);
       el.appendChild(label);
       el.appendChild(actions);
-      body.appendChild(el);
+      /* Slot iklan milik sheet harus tetap berada setelah seluruh daftar.
+         Slot dibuat saat DOM siap, sedangkan baris layer baru dirender saat
+         data layer tersedia; appendChild akan menaruh baris baru di bawah
+         iklan dan membuatnya tampak menyela daftar. */
+      var adSlot = body.querySelector(':scope > .active-layers-menu-adsense');
+      if (adSlot) body.insertBefore(el, adSlot);
+      else body.appendChild(el);
     });
 
     if (empty) empty.hidden = items.length > 0;
