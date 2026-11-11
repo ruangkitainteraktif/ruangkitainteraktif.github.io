@@ -6608,7 +6608,9 @@ function syncLayerCatalogState() {
       btn.innerHTML = LOADING_ICON;
       try {
         var result;
-        if (entry.kind === 'arcgis') {
+        if (entry.kind === 'geoportal-hub') {
+          result = await exportGeoportalHubShapefile(entry);
+        } else if (entry.kind === 'arcgis') {
           var mgr = window.ArcGISRestSourceManager;
           if (!mgr || typeof mgr.exportShapefile !== 'function') throw new Error('Fitur ekspor SHP belum siap.');
           result = await mgr.exportShapefile(entry.ref.descriptor.key);
@@ -6623,6 +6625,72 @@ function syncLayerCatalogState() {
       btn.disabled = false;
       btn.innerHTML = ikonAsli;
     });
+  }
+
+  async function exportGeoportalHubShapefile(entry) {
+    if (!entry || !entry.ref || typeof window.fetchGeoportalHubFeatureCollection !== 'function') {
+      return { ok: false, message: 'Fitur WFS GeoPortal belum siap.' };
+    }
+    var writer = window.shpwrite || (typeof shpwrite !== 'undefined' ? shpwrite : null);
+    if (!writer || typeof writer.zip !== 'function') {
+      return { ok: false, message: 'Modul pembuat SHP belum siap. Muat ulang halaman lalu coba kembali.' };
+    }
+    try {
+      var collection = uploadedFeatureCollection(entry) || await window.fetchGeoportalHubFeatureCollection(entry.ref.key);
+      var features = (collection.features || []).filter(function (feature) {
+        return feature && feature.geometry && feature.geometry.type && Array.isArray(feature.geometry.coordinates);
+      }).map(function (feature) {
+        var geometry = normalizeGeoportalGeometry(feature.geometry);
+        var properties = {};
+        var used = Object.create(null);
+        Object.keys(feature.properties || {}).forEach(function (key) {
+          var base = String(key || 'field').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 10) || 'field';
+          var field = base;
+          var suffix = 1;
+          while (used[field]) {
+            var tail = String(suffix++);
+            field = base.slice(0, 10 - tail.length) + tail;
+          }
+          used[field] = true;
+          var value = feature.properties[key];
+          properties[field] = value == null || (typeof value === 'number' && !Number.isFinite(value)) ? ''
+            : typeof value === 'boolean' ? (value ? 1 : 0)
+              : typeof value === 'object' ? JSON.stringify(value) : value;
+        });
+        return Object.assign({}, feature, { geometry: geometry, properties: properties });
+      });
+      if (!features.length) return { ok: false, message: 'Layer ini tidak memiliki geometri yang bisa diekspor.' };
+      var types = {};
+      features.forEach(function (feature) {
+        var type = feature.geometry.type;
+        if (type === 'Point' || type === 'MultiPoint') types.point = 'points';
+        else if (type === 'LineString' || type === 'MultiLineString') types.polyline = 'lines';
+        else if (type === 'Polygon' || type === 'MultiPolygon') types.polygon = 'polygons';
+      });
+      if (!Object.keys(types).length) return { ok: false, message: 'Jenis geometri layer ini tidak didukung SHP.' };
+      var label = entry.ref.meta && entry.ref.meta.label || 'layer_geoportal';
+      var fileName = label.replace(/[^a-z0-9_-]+/gi, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'layer_geoportal';
+      var zipData = await writer.zip({ type: 'FeatureCollection', features: features }, {
+        folder: fileName,
+        filename: fileName,
+        outputType: 'blob',
+        types: types,
+        prj: 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
+      });
+      var blob = zipData instanceof Blob ? zipData : new Blob([zipData], { type: 'application/zip' });
+      var objectUrl = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = fileName + '.zip';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(function () { URL.revokeObjectURL(objectUrl); }, 1000);
+      var limited = features.length >= 2000 ? ' (maksimal 2.000 fitur pertama)' : '';
+      return { ok: true, message: features.length.toLocaleString('id-ID') + ' fitur diekspor ke ' + fileName + '.zip' + limited + '.' };
+    } catch (error) {
+      return { ok: false, message: 'Gagal mengekspor SHP: ' + (error && error.message ? error.message : String(error)) };
+    }
   }
 
   /* ── Tabel fitur untuk baris layer unggahan (2026-11-02) ────────
@@ -6974,6 +7042,7 @@ function syncLayerCatalogState() {
         actions.appendChild(hapusBtn);
 
         var bisaEkspor = l.kind === 'arcgis' ||
+          (l.kind === 'geoportal-hub' && l.ref && l.ref.meta && l.ref.meta.type !== 'arcgis') ||
           (l.kind === 'alat' && l.ref && l.ref.type === 'GeoServer WFS');
         if (bisaEkspor) {
           var eksBtn = document.createElement('button');
