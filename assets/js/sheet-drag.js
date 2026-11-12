@@ -182,14 +182,11 @@
   }
 
   function sinkronkanLebarSheetKiri() {
-    var kiri = ['catalog-popup', 'attr', 'lg'];
-    var aktif = null;
-    for (var i = 0; i < kiri.length; i++) {
-      var id = kiri[i];
-      if (isOpen(id) && !isMinimized(id)) { aktif = elDari(DAFTAR[id]); break; }
-    }
-    if (aktif) document.body.style.setProperty('--left-sheet-width', aktif.getBoundingClientRect().width + 'px');
+    var widths = lebarSheetSisi();
+    if (widths.kiri > 0) document.body.style.setProperty('--left-sheet-width', widths.kiri + 'px', 'important');
     else document.body.style.removeProperty('--left-sheet-width');
+    if (widths.kanan > 0) document.body.style.setProperty('--right-sheet-width', widths.kanan + 'px', 'important');
+    else document.body.style.removeProperty('--right-sheet-width');
   }
 
   /* Lepaskan semua stop non-default: `--sheet-h` dihapus supaya CSS
@@ -377,7 +374,8 @@
       }
     }
 
-    chips.forEach(function (chip, index) {
+    var stackOffset = 0;
+    chips.forEach(function (chip) {
       var bottom = mobile() ? 72 : 68;
       if (mobile()) {
         /* Dock FAB menu mobile memakai bottom: calc(48px + env); tinggi
@@ -409,7 +407,8 @@
           }
         }
       }
-      chip.style.setProperty('bottom', (bottom + index * 44) + 'px', 'important');
+      chip.style.setProperty('bottom', (bottom + stackOffset) + 'px', 'important');
+      stackOffset += (chip.getBoundingClientRect().height || 36) + 8;
     });
   }
 
@@ -435,6 +434,59 @@
       else kanan = Math.max(kanan, width);
     }
     return { kiri: kiri, kanan: kanan };
+  }
+  function sinkronkanKontrolPetaDesktop() {
+    if (mobile()) return;
+    var mapEl = document.getElementById('map');
+    if (!mapEl) return;
+    var leftEdge = 0;
+    var rightEdge = window.innerWidth;
+    var idKiri = { 'catalog-popup': true, lg: true };
+    var chips = [];
+    for (var i = 0; i < URUT.length; i++) {
+      var id = URUT[i];
+      if (!isOpen(id)) continue;
+      var sheet = elDari(DAFTAR[id]);
+      if (!sheet) continue;
+      if (isMinimized(id)) { chips.push(sheet); continue; }
+      var rect = sheet.getBoundingClientRect();
+      if (rect.width <= 0) continue;
+      if (idKiri[id]) leftEdge = Math.max(leftEdge, rect.right);
+      else rightEdge = Math.min(rightEdge, rect.left);
+    }
+    if (rightEdge <= leftEdge) return;
+    var center = (leftEdge + rightEdge) / 2;
+    var mapRect = mapEl.getBoundingClientRect();
+    var controls = [
+      { el: document.querySelector('.unified-search'), fixed: false },
+      { el: document.querySelector('.quick-layer-bar'), fixed: false },
+      { el: mapEl.querySelector('.map-fab-wrap'), fixed: true },
+      { el: mapEl.querySelector('.leaflet-bottom.leaflet-center'), fixed: false }
+    ];
+    controls.forEach(function (item) {
+      if (!item.el) return;
+      var fixed = item.fixed || window.getComputedStyle(item.el).position === 'fixed';
+      item.el.style.setProperty('left', (fixed ? center : center - mapRect.left) + 'px', 'important');
+    });
+    chips.forEach(function (chip) {
+      chip.style.setProperty('left', center + 'px', 'important');
+      chip.style.setProperty('transform', 'translateX(-50%)', 'important');
+    });
+    var dockItems = mapEl.querySelector('.map-fab-wrap .map-fab-items');
+    if (dockItems) {
+      var dockWidth = (rightEdge - leftEdge) + 'px';
+      dockItems.style.setProperty('width', dockWidth, 'important');
+      dockItems.style.setProperty('min-width', dockWidth, 'important');
+      dockItems.style.setProperty('max-width', dockWidth, 'important');
+      dockItems.style.setProperty('box-sizing', 'border-box', 'important');
+      dockItems.style.setProperty('overflow-x', 'auto', 'important');
+      dockItems.style.setProperty('scrollbar-width', 'none', 'important');
+      dockItems.style.setProperty('align-items', 'center', 'important');
+      dockItems.querySelectorAll(':scope > *').forEach(function (item) {
+        item.style.setProperty('flex', '0 0 auto', 'important');
+        item.style.setProperty('flex-shrink', '0', 'important');
+      });
+    }
   }
   function sinkronkanPusatPetaDesktop(m) {
     var targetOffset = 0;
@@ -495,6 +547,7 @@
         sinkronkanPusatPetaDesktop(m);
         sinkronkanPusatPetaMobile(m);
       }
+      sinkronkanKontrolPetaDesktop();
     }, 340);
   }
 

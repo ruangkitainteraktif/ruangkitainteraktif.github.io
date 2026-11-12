@@ -17145,19 +17145,19 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
 
 @media (min-width: 769px) {
   /* Ukur bidang peta yang benar saat sheet membuka dari kiri dan/atau kanan. */
-  body:is(.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), .attr-table-sheet-open:not(.attr-table-sheet-minimized), .lg-sidebar-open:not(.lg-sidebar-minimized)) { --left-sheet-width: var(--desktop-sheet-width, 30vw); }
-  body:is(.hotspot-sheet-open:not(.hotspot-sheet-minimized), .geopangan-sheet-open:not(.geopangan-sheet-minimized), .transjakarta-sheet-open:not(.transjakarta-sheet-minimized), .transjogja-sheet-open:not(.transjogja-sheet-minimized), .geotools-sheet-open:not(.geotools-sheet-minimized), .geodata-sheet-open:not(.geodata-sheet-minimized), .ai-sheet-open:not(.ai-sheet-minimized), .dm-sidebar-open:not(.dm-sidebar-minimized), .al-sidebar-open:not(.al-sidebar-minimized), .pa-panel-open:not(.pa-panel-minimized)) { --right-sheet-width: var(--desktop-sheet-width, 30vw); }
+  body:is(.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), .lg-sidebar-open:not(.lg-sidebar-minimized)) { --left-sheet-width: var(--desktop-sheet-width, 30vw); }
+  body:is(.hotspot-sheet-open:not(.hotspot-sheet-minimized), .geopangan-sheet-open:not(.geopangan-sheet-minimized), .transjakarta-sheet-open:not(.transjakarta-sheet-minimized), .transjogja-sheet-open:not(.transjogja-sheet-minimized), .geotools-sheet-open:not(.geotools-sheet-minimized), .geodata-sheet-open:not(.geodata-sheet-minimized), .attr-table-sheet-open:not(.attr-table-sheet-minimized), .ai-sheet-open:not(.ai-sheet-minimized), .dm-sidebar-open:not(.dm-sidebar-minimized), .al-sidebar-open:not(.al-sidebar-minimized), .pa-panel-open:not(.pa-panel-minimized)) { --right-sheet-width: var(--desktop-sheet-width, 30vw); }
   body.sheet-terbuka #map { position: relative; left: var(--left-sheet-width, 0px) !important; flex: 0 0 calc(100vw - var(--left-sheet-width, 0px) - var(--right-sheet-width, 0px)) !important; width: calc(100vw - var(--left-sheet-width, 0px) - var(--right-sheet-width, 0px)) !important; max-width: calc(100vw - var(--left-sheet-width, 0px) - var(--right-sheet-width, 0px)) !important; transition: left .3s ease, flex-basis .3s ease, width .3s ease; }
-  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.attr-table-sheet-open:not(.attr-table-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) #map { left: var(--left-sheet-width) !important; flex-basis: calc(100vw - var(--left-sheet-width) - var(--right-sheet-width, 0px)) !important; width: calc(100vw - var(--left-sheet-width) - var(--right-sheet-width, 0px)) !important; max-width: calc(100vw - var(--left-sheet-width) - var(--right-sheet-width, 0px)) !important; }
+  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) #map { left: var(--left-sheet-width) !important; flex-basis: calc(100vw - var(--left-sheet-width) - var(--right-sheet-width, 0px)) !important; width: calc(100vw - var(--left-sheet-width) - var(--right-sheet-width, 0px)) !important; max-width: calc(100vw - var(--left-sheet-width) - var(--right-sheet-width, 0px)) !important; }
   body.sheet-terbuka .unified-search, body.sheet-terbuka .quick-layer-bar, body.sheet-terbuka .petadasar-export-block { left: calc((100vw + var(--left-sheet-width, 0px) - var(--right-sheet-width, 0px)) / 2) !important; max-width: calc(100vw - var(--left-sheet-width, 0px) - var(--right-sheet-width, 0px) - 24px); transition: left .3s ease; }
-  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.attr-table-sheet-open:not(.attr-table-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) .unified-search,
-  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.attr-table-sheet-open:not(.attr-table-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) .quick-layer-bar,
-  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.attr-table-sheet-open:not(.attr-table-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) .petadasar-export-block,
-  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.attr-table-sheet-open:not(.attr-table-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) #map .leaflet-bottom.leaflet-center { left: calc((100vw + var(--left-sheet-width) - var(--right-sheet-width, 0px)) / 2) !important; }
+  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) .unified-search,
+  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) .quick-layer-bar,
+  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) .petadasar-export-block,
+  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) #map .leaflet-bottom.leaflet-center { left: calc((100vw + var(--left-sheet-width) - var(--right-sheet-width, 0px)) / 2) !important; }
   body.sheet-terbuka #map .map-fab-wrap,
   body.sheet-terbuka #map .leaflet-bottom.leaflet-center { left: calc((100vw + var(--left-sheet-width, 0px) - var(--right-sheet-width, 0px)) / 2) !important; }
-  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.attr-table-sheet-open:not(.attr-table-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) #map .map-fab-wrap,
-  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.attr-table-sheet-open:not(.attr-table-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) #map .leaflet-bottom.leaflet-center { left: calc((100vw + var(--left-sheet-width) - var(--right-sheet-width, 0px)) / 2) !important; }
+  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) #map .map-fab-wrap,
+  :is(body.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), body.lg-sidebar-open:not(.lg-sidebar-minimized)) #map .leaflet-bottom.leaflet-center { left: calc((100vw + var(--left-sheet-width) - var(--right-sheet-width, 0px)) / 2) !important; }
 }
 
 
@@ -17186,7 +17186,7 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
 
 /* Desktop with a sheet on each side: cap each sheet so the map keeps a useful width. */
 @media (min-width: 769px) {
-  body:is(.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), .attr-table-sheet-open:not(.attr-table-sheet-minimized), .lg-sidebar-open:not(.lg-sidebar-minimized)):is(.hotspot-sheet-open:not(.hotspot-sheet-minimized), .geopangan-sheet-open:not(.geopangan-sheet-minimized), .transjakarta-sheet-open:not(.transjakarta-sheet-minimized), .transjogja-sheet-open:not(.transjogja-sheet-minimized), .geotools-sheet-open:not(.geotools-sheet-minimized), .geodata-sheet-open:not(.geodata-sheet-minimized), .ai-sheet-open:not(.ai-sheet-minimized), .dm-sidebar-open:not(.dm-sidebar-minimized), .al-sidebar-open:not(.al-sidebar-minimized), .pa-panel-open:not(.pa-panel-minimized)) {
+  body:is(.catalog-popup-sheet-open:not(.catalog-popup-sheet-minimized), .lg-sidebar-open:not(.lg-sidebar-minimized)):is(.hotspot-sheet-open:not(.hotspot-sheet-minimized), .geopangan-sheet-open:not(.geopangan-sheet-minimized), .transjakarta-sheet-open:not(.transjakarta-sheet-minimized), .transjogja-sheet-open:not(.transjogja-sheet-minimized), .geotools-sheet-open:not(.geotools-sheet-minimized), .geodata-sheet-open:not(.geodata-sheet-minimized), .attr-table-sheet-open:not(.attr-table-sheet-minimized), .ai-sheet-open:not(.ai-sheet-minimized), .dm-sidebar-open:not(.dm-sidebar-minimized), .al-sidebar-open:not(.al-sidebar-minimized), .pa-panel-open:not(.pa-panel-minimized)) {
     --dual-sheet-width: clamp(240px, 26vw, 360px);
     --left-sheet-width: var(--dual-sheet-width);
     --right-sheet-width: var(--dual-sheet-width);
@@ -17908,7 +17908,6 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   #attr-table-sheet.attr-table-sheet-open { transform: translateX(0) !important; }
   #attr-table-sheet.attr-table-sheet-minimized { left: auto !important; right: 50% !important; transform: translateX(50%) !important; }
   body.attr-table-sheet-open:not(.attr-table-sheet-minimized) {
-    --left-sheet-width: 0px !important;
     --right-sheet-width: var(--desktop-sheet-width, 30vw) !important;
   }
   body.attr-table-sheet-open:not(.attr-table-sheet-minimized) #map {
@@ -17921,6 +17920,6 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   body.attr-table-sheet-open:not(.attr-table-sheet-minimized) .unified-search,
   body.attr-table-sheet-open:not(.attr-table-sheet-minimized) .quick-layer-bar,
   body.attr-table-sheet-open:not(.attr-table-sheet-minimized) .petadasar-export-block {
-    left: calc((100vw - var(--right-sheet-width)) / 2) !important;
+    left: calc((100vw + var(--left-sheet-width, 0px) - var(--right-sheet-width)) / 2) !important;
   }
 }
