@@ -104,6 +104,36 @@
     return window.innerWidth <= BATAS_MOBILE;
   }
 
+  /* Route every layer's automatic fit through the visible map area. Many
+     independent layer modules call Leaflet fitBounds/flyToBounds directly;
+     patch the shared prototype so those calls also account for open sheets. */
+  function pasangPusatNavigasiLeaflet() {
+    if (!window.L || !window.L.Map || !window.L.Map.prototype || window.L.Map.prototype.__sheetVisibleFit) return;
+    var proto = window.L.Map.prototype;
+    ['fitBounds', 'flyToBounds'].forEach(function (method) {
+      var original = proto[method];
+      if (typeof original !== 'function') return;
+      proto[method] = function (bounds, options) {
+        if (document.body.classList.contains('sheet-terbuka') && !mobile()) {
+          var fitOptions = Object.assign({}, options || {});
+          var widths = lebarSheetSisi();
+          var topLeft = fitOptions.paddingTopLeft || [0, 0];
+          var bottomRight = fitOptions.paddingBottomRight || [0, 0];
+          var padding = fitOptions.padding;
+          var padX = Array.isArray(padding) ? (padding[0] || 0) : (padding || 0);
+          var padY = Array.isArray(padding) ? (padding[1] || 0) : (padding || 0);
+          fitOptions.paddingTopLeft = [widths.kiri + Math.max(topLeft[0] || 0, padX), Math.max(topLeft[1] || 0, padY)];
+          fitOptions.paddingBottomRight = [widths.kanan + Math.max(bottomRight[0] || 0, padX), Math.max(bottomRight[1] || 0, padY)];
+          delete fitOptions.padding;
+          return original.call(this, bounds, fitOptions);
+        }
+        return original.call(this, bounds, options);
+      };
+    });
+    proto.__sheetVisibleFit = true;
+  }
+  pasangPusatNavigasiLeaflet();
+
   function px(v) {
     var n = parseFloat(v);
     return isFinite(n) ? n : 0;
@@ -392,7 +422,9 @@
   function lebarSheetSisi() {
     var kiri = 0;
     var kanan = 0;
-    var idKiri = { 'catalog-popup': true, attr: true, lg: true };
+    /* Tabel atribut didock ke kanan pada desktop (app.css), sama seperti
+       sheet lain di sisi kanan. */
+    var idKiri = { 'catalog-popup': true, lg: true };
     for (var i = 0; i < URUT.length; i++) {
       var id = URUT[i];
       if (!isOpen(id) || isMinimized(id)) continue;
@@ -475,15 +507,7 @@
       var m = window.map || window._map;
       if (!m || !bounds || !bounds.isValid || !bounds.isValid()) return;
       if (typeof m.invalidateSize === 'function') m.invalidateSize({ pan: true });
-      var fitOptions = Object.assign({}, options || {});
-      if (!mobile()) {
-        var widths = lebarSheetSisi();
-        var topLeft = fitOptions.paddingTopLeft || [0, 0];
-        var bottomRight = fitOptions.paddingBottomRight || [0, 0];
-        fitOptions.paddingTopLeft = [widths.kiri + (topLeft[0] || 0), topLeft[1] || 0];
-        fitOptions.paddingBottomRight = [widths.kanan + (bottomRight[0] || 0), bottomRight[1] || 0];
-      }
-      m.flyToBounds(bounds, fitOptions);
+      m.flyToBounds(bounds, options || {});
     };
     if (document.body.classList.contains('sheet-terbuka')) {
       setTimeout(run, 380);

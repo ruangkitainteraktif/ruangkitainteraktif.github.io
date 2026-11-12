@@ -17234,10 +17234,29 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   body.sheet-terbuka #map .leaflet-bottom.leaflet-center {
     left: calc((100vw + var(--left-sheet-width, 0px) - var(--right-sheet-width, 0px)) / 2) !important;
   }
+  /* Keep the map controls within the usable map viewport after side sheets
+     open. The search and quick-layer bar share one centered, capped column. */
+  .unified-search,
+  .quick-layer-bar {
+    width: min(420px, calc(100vw - var(--left-sheet-width, 0px) - var(--right-sheet-width, 0px) - 32px)) !important;
+    box-sizing: border-box;
+  }
+  body.sheet-terbuka .unified-search,
+  body.sheet-terbuka .quick-layer-bar {
+    max-width: calc(100vw - var(--left-sheet-width, 0px) - var(--right-sheet-width, 0px) - 32px) !important;
+  }
+  /* Sheet overlays must not shrink the map's containing box; center overlays
+     using the remaining map span instead of the full browser viewport. */
+  body.sheet-terbuka .unified-search { top: 14px !important; }
+  body.sheet-terbuka .quick-layer-bar { top: 68px !important; }
   body.sheet-terbuka .unified-search,
   body.sheet-terbuka .quick-layer-bar,
   body.sheet-terbuka .petadasar-export-block {
     max-width: calc(100vw - var(--left-sheet-width, 0px) - var(--right-sheet-width, 0px) - 24px) !important;
+  }
+  body.sheet-terbuka #map .map-fab-wrap,
+  body.sheet-terbuka #map .leaflet-bottom.leaflet-center {
+    transform: translateX(-50%) !important;
   }
   body.sheet-terbuka #map .leaflet-bottom.leaflet-right {
     right: calc(var(--right-sheet-width, 0px) + 12px) !important;

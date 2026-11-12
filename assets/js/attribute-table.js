@@ -1533,7 +1533,15 @@
     }
     if (layer.getBounds) {
       var bounds = layer.getBounds();
-      if (bounds && bounds.isValid()) map.flyToBounds(bounds.pad(0.12), { padding: [32, 32], maxZoom: 15, duration: 0.75 });
+      if (bounds && bounds.isValid()) {
+        var fitBounds = bounds.pad(0.12);
+        var fitOptions = { padding: [32, 32], maxZoom: 15, duration: 0.75 };
+        if (window.SheetDrag && typeof window.SheetDrag.flyToBoundsInVisibleMap === 'function') {
+          window.SheetDrag.flyToBoundsInVisibleMap(fitBounds, fitOptions);
+        } else {
+          map.flyToBounds(fitBounds, fitOptions);
+        }
+      }
     }
   }
 
@@ -1592,7 +1600,13 @@
     if (!isFinite(lng)) lng = parseFloat(row && row.dataset.lng);
     if (!isFinite(lat) || !isFinite(lng)) return;
     clearFeatureLayerHighlight();
-    map.flyTo([lat, lng], Math.max(map.getZoom(), 13), { duration: 0.65 });
+    var targetZoom = Math.max(map.getZoom(), 13);
+    if (window.SheetDrag && typeof window.SheetDrag.flyToBoundsInVisibleMap === 'function' && window.L) {
+      var pointBounds = window.L.latLngBounds([lat, lng], [lat, lng]);
+      window.SheetDrag.flyToBoundsInVisibleMap(pointBounds, { maxZoom: targetZoom, duration: 0.65 });
+    } else {
+      map.flyTo([lat, lng], targetZoom, { duration: 0.65 });
+    }
     highlightMarkerOnMap(lat, lng, row);
   }
 
