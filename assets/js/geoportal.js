@@ -960,6 +960,22 @@
 
   // ArcGIS Vector Tile: LBS 2019/2024 (Kementan, geoportal.pertanian.go.id)
   const LBS_VT_CONFIG = {
+    'arcgis-vt-cetak-sawah-2016-2024': {
+      base: 'https://tiles-ap1.arcgis.com/sb13gykJzgyLZHGd/arcgis/rest/services/GEOSPASIAL_CETAK_SAWAH_2016_2024/VectorTileServer',
+      sourceLayer: 'EKSTENSIFIKAS_CETAKSAWAH',
+      label: 'Cetak Sawah 2016–2024 (ArcGIS AP1)',
+      color: '#ff0000',
+      fillColor: 'rgba(255,0,0,0.31)',
+      fitBounds: false
+    },
+    'arcgis-vt-lbs-2024-ap1': {
+      base: 'https://tiles-ap1.arcgis.com/sb13gykJzgyLZHGd/arcgis/rest/services/LBS2024_TILE/VectorTileServer',
+      sourceLayer: 'LBS2023',
+      label: 'LBS 2024 (ArcGIS AP1)',
+      color: '#00c5ff',
+      fillColor: 'rgba(115,223,255,0.33)',
+      fitBounds: false
+    },
     'arcgis-vt-lbs-2024': {
       base: 'https://geoportal.pertanian.go.id/arcgis/rest/services/Hosted/LBS2024_TILE/VectorTileServer',
       sourceLayer: 'LBS2023',
@@ -1023,7 +1039,7 @@
       }
       if (!map.hasLayer(lbsVtLayers[layerKey])) map.addLayer(lbsVtLayers[layerKey]);
       showLbsVtLegend(layerKey);
-      map.fitBounds([[ -7.75, 110.80 ], [ -7.35, 111.10 ]], { padding: [30, 30], maxZoom: 13 });
+      if (cfg.fitBounds !== false) map.fitBounds([[ -7.75, 110.80 ], [ -7.35, 111.10 ]], { padding: [30, 30], maxZoom: 13 });
     } else {
       if (lbsVtLayers[layerKey] && map.hasLayer(lbsVtLayers[layerKey])) {
         map.removeLayer(lbsVtLayers[layerKey]);

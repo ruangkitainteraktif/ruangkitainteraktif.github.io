@@ -5730,6 +5730,8 @@ const SAWAH_COLOR = '#87cf15';
 {
       cat: 'Lahan Baku Sawah',
       layers: [
+        { id: 'arcgis-vt-cetak-sawah-2016-2024', label: 'Cetak Sawah 2016–2024 (ArcGIS AP1)' },
+        { id: 'arcgis-vt-lbs-2024-ap1', label: 'Lahan Baku Sawah 2024 (ArcGIS AP1)' },
         { id: 'toggleSawahGislinerLayer', label: 'Lahan Sawah Dilindungi (ATR/BPN)' },
         { id: 'toggleSawahDilindungi', label: 'Lahan Sawah Dilindungi 50K (BIG)' },
         { id: 'toggleSawahNasional50k', label: 'Lahan Baku Sawah 50K (BIG)' },
@@ -5788,8 +5790,35 @@ const SAWAH_COLOR = '#87cf15';
         { id: 'toggleNationalRoad', label: 'Jalan Nasional' },
         { id: 'toggleEoxOverlay', label: 'Labels Overlay (EOX)' }
       ]
+    },
+    {
+      cat: 'Hak Guna Usaha (HGU)',
+      layers: [
+        { id: 'toggleHguVectorTiles', label: 'Peta HGU Indonesia' }
+      ]
     }
   ];
+
+  var hguVectorTileUrl = 'https://tiles-ap1.arcgis.com/sb13gykJzgyLZHGd/arcgis/rest/services/HGU/VectorTileServer';
+  var hguVectorTileLayer = null;
+  window.toggleHguVectorTiles = function (visible) {
+    if (!visible) {
+      if (hguVectorTileLayer && typeof map !== 'undefined' && map && map.hasLayer(hguVectorTileLayer)) map.removeLayer(hguVectorTileLayer);
+      return;
+    }
+    if (!hguVectorTileLayer) {
+      var vectorTileLayer = L.esri && L.esri.Vector && L.esri.Vector.vectorTileLayer;
+      if (!vectorTileLayer) {
+        if (typeof window.showToast === 'function') window.showToast('Plugin peta vektor ArcGIS belum tersedia.', 'error');
+        return;
+      }
+      hguVectorTileLayer = vectorTileLayer(hguVectorTileUrl, { opacity: 0.85 });
+      hguVectorTileLayer.on('error', function () {
+        if (typeof window.showToast === 'function') window.showToast('Layer HGU gagal dimuat dari server ArcGIS.', 'error');
+      });
+    }
+    if (typeof map !== 'undefined' && map && !map.hasLayer(hguVectorTileLayer)) hguVectorTileLayer.addTo(map);
+  };
 
   /* Citra satelit dan sensor pengamatan bumi tetap berada di Peta Dasar
      agar dapat dipilih sebagai basemap. Foto udara BIG dikelompokkan terpisah. */
@@ -5839,7 +5868,8 @@ const SAWAH_COLOR = '#87cf15';
     'Cuaca, Iklim & Kualitas Udara': 'Prakiraan dan pengamatan cuaca, pola iklim, kekeringan, serta polutan udara.',
     'Hutan, Lahan & Konservasi': 'Kawasan hutan, lahan gambut, perkebunan, dan kawasan lindung.',
     'Elevasi & Tutupan Lahan': 'Ketinggian dan bentuk permukaan bumi, kedalaman laut, serta jenis tutupan lahan.',
-    'Tutupan Lahan Global (UMD GLAD)': 'Tutupan lahan global 30 m dari UMD GLAD Land & Carbon Lab (Landsat): komposit 2000 & 2020, hutan, lahan pertanian, permukiman, air, salju, perubahan tutupan lahan, serta kawasan alam NatLand.'
+    'Tutupan Lahan Global (UMD GLAD)': 'Tutupan lahan global 30 m dari UMD GLAD Land & Carbon Lab (Landsat): komposit 2000 & 2020, hutan, lahan pertanian, permukiman, air, salju, perubahan tutupan lahan, serta kawasan alam NatLand.',
+    'Hak Guna Usaha (HGU)': 'Peta HGU dari ArcGIS VectorTileServer. Data ditampilkan sebagai tile vektor; atribut fitur tidak tersedia melalui katalog ini.'
   };
 
   (function placeGeologyAfterBasemap() {
@@ -7610,6 +7640,7 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
           (id === 'toggleSignificantMarkers' && typeof window.toggleSignificantMarkers === 'function') ||
           (id === 'toggleFeltMarkers' && typeof window.toggleFeltMarkers === 'function') ||
           (id === 'toggleLatestEarthquake' && typeof window.toggleLatestEarthquake === 'function') ||
+          (id === 'toggleHguVectorTiles' && typeof window.toggleHguVectorTiles === 'function') ||
           (id === 'toggleSebaranPasar' && typeof window.toggleSebaranPasar === 'function') ||
           (id === 'toggleSppgSebaranLayer' && typeof window.toggleSppgSebaranLayer === 'function') ||
           (id === 'toggleSppgLayer' && typeof window.toggleSppg === 'function') ||
@@ -7684,6 +7715,9 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
         }
         if (id === 'toggleLatestEarthquake' && typeof window.toggleLatestEarthquake === 'function') {
           window.toggleLatestEarthquake(cb.checked);
+        }
+        if (id === 'toggleHguVectorTiles' && typeof window.toggleHguVectorTiles === 'function') {
+          window.toggleHguVectorTiles(cb.checked);
         }
 if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'function') {
           window.toggleGeoportalCatalogLayer(cb.dataset.geoportalKey, cb.checked);

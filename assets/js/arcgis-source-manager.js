@@ -824,8 +824,9 @@
   }
 
   function createVectorTileLayer(descriptor) {
-    if (!L.esri || !L.esri.vectorTileLayer) throw new Error('VectorTileServer belum didukung oleh pustaka Esri Leaflet.');
-    var layer = L.esri.vectorTileLayer(descriptor.serviceUrl, { opacity: 0.82 });
+    var vectorTileLayer = L.esri && L.esri.Vector && L.esri.Vector.vectorTileLayer || L.esri && L.esri.vectorTileLayer;
+    if (!vectorTileLayer) throw new Error('VectorTileServer belum didukung oleh pustaka Esri Leaflet.');
+    var layer = vectorTileLayer(descriptor.serviceUrl, { opacity: 0.82 });
     layer.on('click', function (event) {
       var properties = event && event.properties || event && event.feature && event.feature.properties || {};
       openPopup(event.latlng, buildPopup(descriptor.name, properties, descriptor.type));
