@@ -11410,6 +11410,78 @@ details[open] > .gt-card-head::after {
     .geoportal-properties h4 { grid-column: 1 / -1; margin: 3px 0 0; color: #0879bf; font-size: 14px; }
     .geoportal-properties .geoportal-feature-card { width: 100%; max-width: none; max-height: none; overflow: hidden; border: 1px solid var(--border-color); border-radius: 0; box-shadow: none; }
     .geoportal-feature-card .agol-popup-body { padding: 0; }
+    /* Detail GeoPortal memakai tinggi panel untuk atribut, bukan slot iklan.
+       Baris ringkas menjaga properti umum terlihat sekaligus tanpa scroll. */
+    #catalog-popup-sheet:has(.geoportal-feature-card) .catalog-popup-sheet-ad-slot { display: none !important; }
+    #catalog-popup-sheet .catalog-popup-sheet-content:has(.geoportal-feature-card) {
+      display: grid;
+      min-height: 0;
+      grid-template-rows: minmax(0, 1fr);
+      align-content: stretch;
+      overflow: hidden;
+    }
+    #catalog-popup-sheet .catalog-popup-sheet-cards:has(.geoportal-feature-card) {
+      display: grid;
+      min-height: 0;
+      height: 100%;
+      grid-template-rows: minmax(0, 1fr);
+      align-content: stretch;
+      overflow: hidden;
+    }
+    /* Pisahkan hasil GetFeatureInfo ketika beberapa popup masuk ke Detail
+       Layer. Selector dua-card menjaga layout satu hasil tetap penuh panel. */
+    #catalog-popup-sheet .bhumi-persil-sheet-content:has(.geoportal-feature-card):has(.catalog-popup-sheet-card:nth-child(2)) {
+      display: block;
+      overflow: auto;
+    }
+    #catalog-popup-sheet .catalog-popup-sheet-content:has(.geoportal-feature-card):has(.catalog-popup-sheet-card:nth-child(2)) {
+      grid-template-rows: auto;
+      align-content: start;
+      overflow: visible;
+    }
+    #catalog-popup-sheet .catalog-popup-sheet-cards:has(.geoportal-feature-card):has(> .catalog-popup-sheet-card:nth-child(2)) {
+      height: auto;
+      grid-template-rows: auto;
+      align-content: start;
+      gap: 14px;
+      overflow: visible;
+    }
+    #catalog-popup-sheet .catalog-popup-sheet-cards:has(> .catalog-popup-sheet-card:nth-child(2)) .catalog-popup-sheet-card:has(.geoportal-feature-card) {
+      height: auto;
+    }
+    #catalog-popup-sheet .catalog-popup-sheet-card:has(.geoportal-feature-card) {
+      display: flex;
+      min-height: 0;
+      height: 100%;
+      flex-direction: column;
+    }
+    #catalog-popup-sheet .catalog-popup-sheet-card .geoportal-feature-card {
+      display: flex;
+      min-height: 0;
+      height: 100%;
+      flex: 1 1 auto;
+      flex-direction: column;
+      max-height: none !important;
+      overflow: hidden !important;
+    }
+    #catalog-popup-sheet .catalog-popup-sheet-card .geoportal-feature-card .agol-popup-body {
+      min-height: 0;
+      flex: 1 1 auto;
+      overflow: visible;
+    }
+    #catalog-popup-sheet .bhumi-persil-sheet-content:has(.geoportal-feature-card) {
+      display: grid;
+      min-height: 0;
+      grid-template-rows: minmax(0, 1fr);
+      overflow: hidden;
+    }
+    #catalog-popup-sheet .geoportal-feature-card .agol-popup-header { padding: 10px 12px 9px; }
+    #catalog-popup-sheet .geoportal-feature-card .agol-popup-badge { margin-bottom: 5px; padding: 2px 7px; font-size: 8px; }
+    #catalog-popup-sheet .geoportal-feature-card .agol-popup-title { font-size: 13px; line-height: 1.2; }
+    #catalog-popup-sheet .geoportal-feature-card .agol-popup-subtitle { font-size: 10px; }
+    #catalog-popup-sheet .geoportal-feature-card .bhumi-persil-data-table th,
+    #catalog-popup-sheet .geoportal-feature-card .bhumi-persil-data-table td { padding: 7px 9px; font-size: 13px; line-height: 1.4; }
+    #catalog-popup-sheet .geoportal-feature-card .bhumi-persil-data-table th { width: 40%; color: var(--text-secondary); font-size: 12px; font-weight: 600; }
 
     /* Sawah Popup */
     .sawah-popup { font-family: 'Google Sans', 'Segoe UI', sans-serif; }

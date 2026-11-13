@@ -1266,7 +1266,7 @@
               if (tree) tree.refresh_node(cat.id);
             });
           }
-          return [{ id: `${cat.id}::loading`, text: cat._discoveryState === 'failed' ? 'Layer gagal dimuat' : 'Memuat daftar layer…', li_attr: { 'data-level': '2', 'data-wms-url': wmsUrl } }];
+          return [{ id: `${cat.id}::loading`, text: cat._discoveryState === 'failed' ? 'Layer gagal dimuat — klik untuk coba lagi' : 'Memuat daftar layer…', li_attr: { 'data-level': '2', 'data-wms-url': wmsUrl, 'data-discovery-category': cat.id } }];
         }
         if (cat.layers.length && cat.layers[0].type === 'folder') {
           return cat.layers.map(folder => ({
@@ -1344,6 +1344,20 @@
       if (!node || !tree || !isCategoryOrFolder) return;
       if (tree.is_open(node)) tree.close_node(node);
       else tree.open_node(node);
+    });
+
+    // Discovery dapat gagal sementara (proxy/server timeout). Baris error
+    // bisa diklik untuk mengulang tanpa memuat ulang seluruh aplikasi.
+    $(container).on('select_node.jstree', function (event, data) {
+      const node = data && data.node;
+      const categoryId = node && node.li_attr && node.li_attr['data-discovery-category'];
+      if (!categoryId) return;
+      const entry = categoryById.get(categoryId);
+      const tree = $(container).jstree(true);
+      if (!entry || !tree || entry.cat._discoveryState !== 'failed') return;
+      entry.cat._discoveryState = null;
+      tree.refresh_node(categoryId);
+      tree.deselect_node(node);
     });
 
     function decorateGeoportalLayerButtons() {
@@ -1428,20 +1442,36 @@
   async function discoverGeoportalWmsCategory(config, cat) {
     const wmsUrl = config.sources[cat.source]?.wmsUrl;
     if (!wmsUrl) throw new Error('URL WMS tidak ditemukan.');
-    const separator = wmsUrl.includes('?') ? '&' : '?';
-    const targetUrl = wmsUrl + separator + 'service=WMS&version=1.1.1&request=GetCapabilities';
-    const proxyUrl = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=' + encodeURIComponent(targetUrl);
-    const response = await fetch(proxyUrl);
-    if (!response.ok) throw new Error('WMS GetCapabilities HTTP ' + response.status);
-    const xml = new DOMParser().parseFromString(await response.text(), 'application/xml');
-    if (xml.querySelector('parsererror')) throw new Error('Respons GetCapabilities bukan XML yang valid.');
-    const layers = Array.from(xml.getElementsByTagNameNS('*', 'Layer')).flatMap(node => {
-      const name = Array.from(node.children).find(child => child.localName === 'Name')?.textContent?.trim();
-      const title = Array.from(node.children).find(child => child.localName === 'Title')?.textContent?.trim();
-      return name ? [{ id: name, label: title || name }] : [];
-    });
-    if (!layers.length) throw new Error('Tidak ada layer bernama pada GetCapabilities.');
-    return Array.from(new Map(layers.map(layer => [layer.id, layer])).values());
+    let lastError;
+    for (const version of ['1.1.1', '1.3.0']) {
+      const target = new URL(wmsUrl);
+      target.searchParams.set('service', 'WMS');
+      target.searchParams.set('version', version);
+      target.searchParams.set('request', 'GetCapabilities');
+      const proxyUrl = 'https://kta-cors-proxy.ms-ruang-imajinasi.workers.dev/?url=' + encodeURIComponent(target.toString());
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 20000);
+      try {
+        const response = await fetch(proxyUrl, { signal: controller.signal });
+        if (!response.ok) throw new Error('WMS GetCapabilities HTTP ' + response.status);
+        const xml = new DOMParser().parseFromString(await response.text(), 'application/xml');
+        if (xml.querySelector('parsererror')) throw new Error('Respons GetCapabilities bukan XML yang valid.');
+        const exception = xml.querySelector('ServiceException, ExceptionText');
+        if (exception) throw new Error(exception.textContent.trim() || 'Server WMS menolak permintaan.');
+        const layers = Array.from(xml.getElementsByTagNameNS('*', 'Layer')).flatMap(node => {
+          const name = Array.from(node.children).find(child => child.localName === 'Name')?.textContent?.trim();
+          const title = Array.from(node.children).find(child => child.localName === 'Title')?.textContent?.trim();
+          return name ? [{ id: name, label: title || name }] : [];
+        });
+        if (layers.length) return Array.from(new Map(layers.map(layer => [layer.id, layer])).values());
+        lastError = new Error('Tidak ada layer bernama pada GetCapabilities (WMS ' + version + ').');
+      } catch (error) {
+        lastError = error && error.name === 'AbortError' ? new Error('WMS GetCapabilities timeout (20 detik).') : error;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+    throw lastError || new Error('Layer WMS tidak ditemukan.');
   }
 
   fetch('assets/data/geoportal-layers.json')
