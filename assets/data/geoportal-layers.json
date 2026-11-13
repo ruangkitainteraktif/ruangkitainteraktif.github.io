@@ -176,7 +176,10 @@
       "wmsUrl": "https://gishub.kemenhub.go.id/geoserver/wms",
       "label": "Kementerian Perhubungan"
     },
-    "perpusnas": {
+    "bpom": {
+      "wmsUrl": "https://gis.pom.go.id/geoserver/ows",
+      "label": "BPOM"
+    },    "perpusnas": {
       "wmsUrl": "https://gis.perpusnas.go.id/geoserver/wms",
       "label": "Perpustakaan Nasional Republik Indonesia (PERPUSNAS)"
     },
@@ -2251,6 +2254,23 @@
       ]
     },
     {
+      "id": "bpom",
+      "title": "BPOM",
+      "source": "bpom",
+      "layers": [
+        {"id":"satudb:lokas_balokpom","label":"lokas_balokpom"},
+        {"id":"satudb:lokas_balokpom_1","label":"lokas_balokpom_1"},
+        {"id":"satudb:masterdata_balaipom","label":"masterdata_balaipom"},
+        {"id":"satudb:masterdata_lokapom","label":"masterdata_lokapom"},
+        {"id":"satudb:masterdata_pusatpom","label":"masterdata_pusatpom"},
+        {"id":"satudb:pmpu_gkpd","label":"pmpu_gkpd"},
+        {"id":"satudb:profil_mpp_upt","label":"profil_mpp_upt"},
+        {"id":"satudb:profil_upt","label":"profil_upt"},
+        {"id":"satudb:sertifikat_CDOB","label":"sertifikat_CDOB"},
+        {"id":"pilot_postgis:sertifikat_cdob","label":"Sertifikat CDOB (Pilot PostGIS)"},
+        {"id":"satudb:trx_scan_barcode_public","label":"trx_scan_barcode_public"}
+      ]
+    },    {
       "id": "perpusnas",
       "title": "PERPUSNAS",
       "source": "perpusnas",
