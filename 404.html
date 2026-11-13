@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#071a2b">
+  <title>404 — Halaman Tidak Ditemukan | RUANG KITA</title>
+  <link rel="icon" type="image/png" href="/assets/img/favicon.jpg">
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Segoe UI", Inter, system-ui, -apple-system, sans-serif;
+      background: #071a2b;
+      color: #eaf5fb;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 50% 35%, rgba(13, 116, 144, .2), transparent 42%),
+        linear-gradient(145deg, #071a2b, #0b2338 58%, #071827);
+    }
+    .error-card {
+      width: min(100%, 620px);
+      padding: clamp(28px, 6vw, 58px);
+      border: 1px solid rgba(148, 203, 220, .18);
+      border-radius: 28px;
+      background: rgba(10, 31, 49, .82);
+      box-shadow: 0 28px 90px rgba(0, 0, 0, .35), inset 0 1px rgba(255, 255, 255, .04);
+      text-align: center;
+      backdrop-filter: blur(16px);
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      color: #dff8ff;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: .13em;
+    }
+    .brand-mark { display: grid; grid-template-columns: repeat(2, 9px); gap: 3px; transform: rotate(-8deg); }
+    .brand-mark i { width: 9px; height: 9px; border-radius: 3px; background: #37d1d5; }
+    .brand-mark i:nth-child(2), .brand-mark i:nth-child(3) { background: #f4c84b; }
+    .map-illustration {
+      display: block;
+      width: min(100%, 310px);
+      height: auto;
+      margin: 30px auto 16px;
+    }
+    .code { margin: 0; color: #55d4dc; font-size: clamp(56px, 12vw, 82px); font-weight: 800; letter-spacing: -.07em; line-height: 1; }
+    h1 { margin: 14px 0 10px; font-size: clamp(23px, 5vw, 31px); letter-spacing: -.025em; }
+    .message { max-width: 420px; margin: 0 auto; color: #a8bdcc; font-size: 15px; line-height: 1.7; }
+    .home-link {
+      display: inline-flex;
+      min-height: 48px;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      margin-top: 27px;
+      padding: 0 22px;
+      border: 0;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #24bdc7, #0797ad);
+      color: #03202b;
+      font-size: 14px;
+      font-weight: 750;
+      text-decoration: none;
+      box-shadow: 0 8px 24px rgba(11, 178, 194, .22);
+      transition: transform .18s ease, filter .18s ease;
+    }
+    .home-link:hover { transform: translateY(-2px); filter: brightness(1.08); }
+    .home-link:focus-visible { outline: 3px solid #f4c84b; outline-offset: 4px; }
+    .home-link svg { width: 17px; height: 17px; }
+    .footnote { margin: 25px 0 0; color: #6f899b; font-size: 11px; letter-spacing: .04em; }
+    @media (max-width: 480px) {
+      body { padding: 16px; }
+      .error-card { border-radius: 22px; }
+      .message { font-size: 14px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <main class="error-card">
+    <div class="brand" aria-label="RUANG KITA">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span>RUANG KITA</span>
+    </div>
+
+    <svg class="map-illustration" viewBox="0 0 320 170" role="img" aria-labelledby="mapTitle mapDesc">
+      <title id="mapTitle">Ilustrasi peta dengan lokasi yang tidak ditemukan</title>
+      <desc id="mapDesc">Peta bergaris koordinat dengan penanda lokasi yang terputus.</desc>
+      <defs>
+        <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+          <path d="M24 0H0V24" fill="none" stroke="#4a8399" stroke-opacity=".26" stroke-width="1" />
+        </pattern>
+        <linearGradient id="land" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stop-color="#20a6a9" stop-opacity=".72" />
+          <stop offset="1" stop-color="#126f85" stop-opacity=".5" />
+        </linearGradient>
+      </defs>
+      <rect x="12" y="12" width="296" height="146" rx="18" fill="#0c293c" stroke="#327286" stroke-opacity=".65" />
+      <rect x="12" y="12" width="296" height="146" rx="18" fill="url(#grid)" />
+      <path d="M39 47 75 34l28 13 29-9 29 16 38-8 23 17-11 20 13 15-19 27-38-8-28 15-28-14-29 8-22-18-23-5 8-24-15-17z" fill="url(#land)" stroke="#55d4dc" stroke-opacity=".85" stroke-width="1.5" />
+      <path d="m35 119 55-31 42 13 44-38 53 12 52-30M63 145l31-28 47 5 27-29 43 10 33-24" fill="none" stroke="#f4c84b" stroke-opacity=".7" stroke-width="2" stroke-dasharray="4 6" />
+      <circle cx="178" cy="71" r="20" fill="#071a2b" fill-opacity=".72" stroke="#f4c84b" stroke-opacity=".85" />
+      <path d="M178 59c-6.4 0-11.5 5.1-11.5 11.5 0 8.4 11.5 20.5 11.5 20.5s11.5-12.1 11.5-20.5C189.5 64.1 184.4 59 178 59Zm0 15.5a4 4 0 1 1 0-8 4 4 0 0 1 0 8Z" fill="#f4c84b" />
+      <path d="m205 99 18 18m0-18-18 18" stroke="#ff8d7d" stroke-linecap="round" stroke-width="3" />
+      <circle cx="54" cy="32" r="3" fill="#55d4dc" /><circle cx="280" cy="139" r="3" fill="#55d4dc" />
+    </svg>
+
+    <p class="code" aria-label="Error 404">404</p>
+    <h1>Halaman tidak ditemukan</h1>
+    <p class="message">Alamat yang kamu buka mungkin sudah berubah atau tidak tersedia. Kembali ke RUANG KITA untuk menjelajahi peta.</p>
+    <a class="home-link" href="/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z" /></svg>
+      Kembali ke Beranda
+    </a>
+    <p class="footnote">Satu Peta untuk Nusantara</p>
+  </main>
+</body>
+</html>
