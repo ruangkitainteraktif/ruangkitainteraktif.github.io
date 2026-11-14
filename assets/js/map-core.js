@@ -5820,6 +5820,57 @@ const SAWAH_COLOR = '#87cf15';
     if (typeof map !== 'undefined' && map && !map.hasLayer(hguVectorTileLayer)) hguVectorTileLayer.addTo(map);
   };
 
+  /* Katalog layanan VectorTileServer milik ArcGIS Online. Direktori servis
+     dimuat saat aplikasi berjalan supaya seluruh layanan akun ikut masuk
+     kategori baru tanpa menyalin daftar URL satu per satu ke katalog. */
+  var hostedArcgisVectorTiles = Object.create(null);
+  var hostedArcgisVectorTileLayers = Object.create(null);
+  var HOSTED_ARCGIS_SERVICES_URL = 'https://tiles-ap1.arcgis.com/sb13gykJzgyLZHGd/arcgis/rest/services/?f=json';
+  window.toggleHostedArcgisVectorTile = function (id, visible) {
+    var url = hostedArcgisVectorTiles[id];
+    if (!url || typeof map === 'undefined' || !map) return;
+    var layer = hostedArcgisVectorTileLayers[id];
+    if (!visible) {
+      if (layer && map.hasLayer(layer)) map.removeLayer(layer);
+      return;
+    }
+    if (!layer) {
+      var vectorTileLayer = L.esri && L.esri.Vector && L.esri.Vector.vectorTileLayer;
+      if (!vectorTileLayer) {
+        if (typeof window.showToast === 'function') window.showToast('Plugin peta vektor ArcGIS belum tersedia.', 'error');
+        return;
+      }
+      layer = hostedArcgisVectorTileLayers[id] = vectorTileLayer(url, { opacity: 0.85 });
+      layer.on('error', function () {
+        if (typeof window.showToast === 'function') window.showToast('Layer gagal dimuat dari server ArcGIS.', 'error');
+      });
+    }
+    if (!map.hasLayer(layer)) layer.addTo(map);
+  };
+  fetch(HOSTED_ARCGIS_SERVICES_URL).then(function (response) {
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    return response.json();
+  }).then(function (directory) {
+    var services = (directory && directory.services || []).filter(function (service) {
+      return service && service.name && service.type === 'VectorTileServer' && service.url;
+    });
+    var layers = services.map(function (service, index) {
+      var id = 'arcgis-hosted-vector-' + index;
+      hostedArcgisVectorTiles[id] = service.url;
+      return { id: id, label: service.name };
+    });
+    if (layers.length && typeof window.registerDynamicLayerCategory === 'function') {
+      window.registerDynamicLayerCategory({
+        signature: 'arcgis-hosted-vector-tiles',
+        title: 'TEMATIK PERTANIAN',
+        subcat: 'Layanan VectorTileServer',
+        layers: layers
+      });
+    }
+  }).catch(function (error) {
+    console.warn('[ArcGIS Online] Katalog VectorTileServer tidak dapat dimuat:', error);
+  });
+
   /* Citra satelit dan sensor pengamatan bumi tetap berada di Peta Dasar
      agar dapat dipilih sebagai basemap. Foto udara BIG dikelompokkan terpisah. */
   (function organizeImageryLayers() {
@@ -7641,6 +7692,7 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
           (id === 'toggleFeltMarkers' && typeof window.toggleFeltMarkers === 'function') ||
           (id === 'toggleLatestEarthquake' && typeof window.toggleLatestEarthquake === 'function') ||
           (id === 'toggleHguVectorTiles' && typeof window.toggleHguVectorTiles === 'function') ||
+          (id.indexOf('arcgis-hosted-vector-') === 0 && typeof window.toggleHostedArcgisVectorTile === 'function') ||
           (id === 'toggleSebaranPasar' && typeof window.toggleSebaranPasar === 'function') ||
           (id === 'toggleSppgSebaranLayer' && typeof window.toggleSppgSebaranLayer === 'function') ||
           (id === 'toggleSppgLayer' && typeof window.toggleSppg === 'function') ||
@@ -7718,6 +7770,9 @@ html += '<input type="checkbox" id="lc_' + l.id + '" data-layer-id="' + l.id + '
         }
         if (id === 'toggleHguVectorTiles' && typeof window.toggleHguVectorTiles === 'function') {
           window.toggleHguVectorTiles(cb.checked);
+        }
+        if (id.indexOf('arcgis-hosted-vector-') === 0 && typeof window.toggleHostedArcgisVectorTile === 'function') {
+          window.toggleHostedArcgisVectorTile(id, cb.checked);
         }
 if (cb.dataset.geoportalKey && typeof window.toggleGeoportalCatalogLayer === 'function') {
           window.toggleGeoportalCatalogLayer(cb.dataset.geoportalKey, cb.checked);
