@@ -121,6 +121,17 @@
   var visibleJalurJakartaSatu = false;
   var visibleHalte = false;
   var visibleAntarmoda = false;
+  var visibleBusRealtime = false;
+  var busRealtimeClient = null;
+  var busRealtimeLayer = null;
+  var busRealtime = Object.create(null);
+  var busRealtimeStatus = 'mati';
+  var busRealtimeLastAt = 0;
+  var busRealtimeSeen = 0;
+  var BUS_REALTIME_URL = 'wss://mqtt.tj.co.id:8084/mqtt';
+  var BUS_REALTIME_TOPIC = '/mobile_armada/#';
+  var BUS_REALTIME_STALE_MS = 45000;
+  var BUS_REALTIME_REMOVE_MS = 120000;
   var moduleActive = false;
   var koridorTerpilih = null;
   var koridorDisorot = null;
@@ -1576,6 +1587,215 @@ function tampilkanHalte(v) {
       + '</button>';
   }
 
+  function warnaRuteRealtime(kode) {
+    var key = String(kode || '').trim();
+    var info = infoKoridor(key);
+    if (info) return info.line;
+    var hue = 0;
+    for (var i = 0; i < key.length; i++) hue = (hue * 31 + key.charCodeAt(i)) % 360;
+    return 'hsl(' + hue + ', 78%, 48%)';
+  }
+
+  function usiaRealtime(waktu) {
+    var detik = Math.max(0, Math.floor((Date.now() - waktu) / 1000));
+    return detik < 60 ? detik + ' dtk lalu' : Math.floor(detik / 60) + ' mnt lalu';
+  }
+
+  function ringkasanRealtime() {
+    var jumlah = 0;
+    var rute = Object.create(null);
+    Object.keys(busRealtime).forEach(function (key) {
+      var bus = busRealtime[key];
+      if (Date.now() - bus.receivedAt > BUS_REALTIME_REMOVE_MS) return;
+      jumlah++;
+      rute[bus.route_code] = (rute[bus.route_code] || 0) + 1;
+    });
+    var daftar = Object.keys(rute).sort(function (a, b) { return a.localeCompare(b, 'id', { numeric: true }); });
+    return { jumlah: jumlah, rute: daftar, teks: daftar.map(function (kode) { return kode + ' (' + rute[kode] + ')'; }).join(' · ') };
+  }
+
+  function teksTombolRealtime(ringkas) {
+    if (ringkas && ringkas.jumlah) return nomor(ringkas.jumlah) + ' bus';
+    if (!visibleBusRealtime) return 'lihat';
+    return ({ memuat: 'menghubungkan', tersambung: 'menunggu', jeda: 'jeda', gagal: 'offline' })[busRealtimeStatus] || 'menunggu';
+  }
+
+  function htmlPopupBusRealtime(bus) {
+    var namaKendaraan = bus.bus_body_no || bus.vehicle_id || bus.key;
+    var tujuan = bus.trip_headsign || bus.headsign || '-';
+    var stopAktif = bus.curr_stops || bus.current_stop || '';
+    var stopBerikut = bus.next_stops || bus.next_stop || '';
+    function namaStop(v) { return String(v || '').replace(/^[^-]+-/, ''); }
+    var eta = Number(bus.next_gate_eta);
+    var etaTeks = Number.isFinite(eta) && eta >= 0 ? Math.max(1, Math.round(eta)) + ' menit' : '';
+    var html = '<div class="agol-popup tj-bus-popup" style="min-width:220px">';
+    html += headerPopup(warnaRuteRealtime(bus.route_code), '<div class="agol-popup-title"><span class="agol-popup-badge-dot" style="background:' + warnaRuteRealtime(bus.route_code) + '"></span>Bus ' + esc(namaKendaraan) + '</div>');
+    html += '<div class="agol-popup-body"><div class="agol-popup-fields">';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Rute / tujuan</span><span class="agol-popup-field-value">' + esc(bus.route_code || '-') + ' · ' + esc(tujuan) + '</span></div>';
+    if (bus.bus_type) html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Tipe bus</span><span class="agol-popup-field-value">' + esc(bus.bus_type) + '</span></div>';
+    if (stopAktif) html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Halte terakhir</span><span class="agol-popup-field-value">' + esc(namaStop(stopAktif)) + '</span></div>';
+    if (stopBerikut) html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Halte berikut</span><span class="agol-popup-field-value">' + esc(namaStop(stopBerikut)) + (etaTeks ? ' · ' + esc(etaTeks) : '') + '</span></div>';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Posisi</span><span class="agol-popup-field-value">' + Number(bus.lat).toFixed(5) + ', ' + Number(bus.lon).toFixed(5) + '</span></div>';
+    if (bus.bearing != null && Number.isFinite(Number(bus.bearing))) html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Arah kendaraan</span><span class="agol-popup-field-value">' + Math.round(Number(bus.bearing)) + '°</span></div>';
+    html += '<div class="agol-popup-field"><span class="agol-popup-field-label">Pembaruan data</span><span class="agol-popup-field-value">' + esc(usiaRealtime(bus.receivedAt)) + '</span></div>';
+    html += '</div></div><div class="agol-popup-footer"><span>Sumber: feed MQTT TransJakarta · indikatif</span></div></div>';
+    return html;
+  }
+
+  function gayaBusRealtime(bus) {
+    var stale = Date.now() - bus.receivedAt > BUS_REALTIME_STALE_MS;
+    return { pane: 'transjakartaRealtimePane', radius: 5, color: '#fff', weight: 1.2, opacity: stale ? .55 : 1, fillColor: warnaRuteRealtime(bus.route_code), fillOpacity: stale ? .45 : .95 };
+  }
+
+  function tampilkanStatusRealtime() {
+    var status = document.getElementById('tj-realtime-status');
+    var detail = document.getElementById('tj-realtime-detail');
+    var tombol = document.querySelector('#transjakarta-sheet [data-tj-layer="realtime"]');
+    var ringkas = ringkasanRealtime();
+    if (tombol) {
+      var hitung = tombol.querySelector('.tj-switch-count');
+      if (hitung) hitung.textContent = teksTombolRealtime(ringkas);
+    }
+    if (!status) return;
+    status.className = 'tj-realtime-status is-' + busRealtimeStatus;
+    var label = {
+      mati: 'Pelacakan nonaktif',
+      memuat: 'Menghubungkan ke feed real-time…',
+      tersambung: 'Terhubung · menunggu posisi bus',
+      live: 'LIVE · ' + nomor(ringkas.jumlah) + ' bus terpantau',
+      jeda: 'Feed tersambung, tetapi data bus sedang jeda',
+      gagal: 'Feed real-time tidak tersedia'
+    };
+    status.innerHTML = '<span class="tj-realtime-pulse" aria-hidden="true"></span><b>' + esc(label[busRealtimeStatus] || label.mati) + '</b>';
+    if (detail) {
+      var bagian = [];
+      if (ringkas.teks) bagian.push('Rute: ' + ringkas.teks);
+      if (busRealtimeLastAt) bagian.push('Data terakhir ' + usiaRealtime(busRealtimeLastAt));
+      if (!visibleBusRealtime) bagian.push('Aktifkan untuk menampilkan armada di peta');
+      detail.textContent = bagian.join(' · ') || 'Posisi bus dan halte berikutnya akan tampil jika tersedia di feed.';
+    }
+  }
+
+  function terimaBusRealtime(topic, payload) {
+    var data;
+    try { data = JSON.parse(payload && payload.toString ? payload.toString() : String(payload)); }
+    catch (e) { return; }
+    if (!data || typeof data !== 'object') return;
+    var route = String(data.route_code || '').trim().toUpperCase();
+    var key = String(topic || '').split('/').pop() || String(data.bus_body_no || data.vehicle_id || '');
+    var lat = Number(data.snap_latitude != null ? data.snap_latitude : data.latitude);
+    var lon = Number(data.snap_longitude != null ? data.snap_longitude : data.longitude);
+    if (!route || !key || !Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return;
+    var bus = busRealtime[key] || { key: key, marker: null };
+    Object.keys(data).forEach(function (field) { bus[field] = data[field]; });
+    bus.key = key;
+    bus.route_code = route;
+    bus.lat = lat;
+    bus.lon = lon;
+    bus.bearing = data.bearing != null && Number.isFinite(Number(data.bearing)) ? Number(data.bearing) : null;
+    bus.receivedAt = Date.now();
+    busRealtime[key] = bus;
+    busRealtimeLastAt = bus.receivedAt;
+    busRealtimeSeen++;
+    if (visibleBusRealtime && busRealtimeLayer) {
+      if (!bus.marker) {
+        bus.marker = L.circleMarker([lat, lon], gayaBusRealtime(bus));
+        bus.marker.bindPopup(htmlPopupBusRealtime(bus), { maxWidth: 320, className: 'agol-leaflet-popup' });
+        bus.marker.addTo(busRealtimeLayer);
+      } else {
+        bus.marker.setLatLng([lat, lon]);
+        bus.marker.setStyle(gayaBusRealtime(bus));
+        if (bus.marker.isPopupOpen()) bus.marker.getPopup().setContent(htmlPopupBusRealtime(bus));
+      }
+    }
+    if (busRealtimeStatus !== 'live') {
+      busRealtimeStatus = 'live';
+      tampilkanStatusRealtime();
+    }
+  }
+
+  function setRealtimeBus(aktif) {
+    visibleBusRealtime = !!aktif;
+    if (visibleBusRealtime) {
+      if (!map.getPane('transjakartaRealtimePane')) map.createPane('transjakartaRealtimePane');
+      map.getPane('transjakartaRealtimePane').style.zIndex = '433';
+      if (!busRealtimeLayer) busRealtimeLayer = L.layerGroup([], { pane: 'transjakartaRealtimePane' });
+      Object.keys(busRealtime).forEach(function (key) {
+        var bus = busRealtime[key];
+        if (Date.now() - bus.receivedAt > BUS_REALTIME_REMOVE_MS) return;
+        if (!bus.marker) {
+          bus.marker = L.circleMarker([bus.lat, bus.lon], gayaBusRealtime(bus));
+          bus.marker.bindPopup(htmlPopupBusRealtime(bus), { maxWidth: 320, className: 'agol-leaflet-popup' });
+        }
+        bus.marker.addTo(busRealtimeLayer);
+      });
+      if (!map.hasLayer(busRealtimeLayer)) busRealtimeLayer.addTo(map);
+      sambungkanRealtimeBus();
+    } else {
+      if (busRealtimeLayer && map.hasLayer(busRealtimeLayer)) map.removeLayer(busRealtimeLayer);
+      if (busRealtimeClient) {
+        try { busRealtimeClient.end(true); } catch (e) {}
+        busRealtimeClient = null;
+      }
+      busRealtimeStatus = 'mati';
+    }
+    tampilkanStatusRealtime();
+    renderSheet();
+  }
+
+  function sambungkanRealtimeBus() {
+    if (!visibleBusRealtime || busRealtimeClient) return;
+    if (!window.mqtt || typeof window.mqtt.connect !== 'function') {
+      busRealtimeStatus = 'gagal';
+      tampilkanStatusRealtime();
+      return;
+    }
+    busRealtimeStatus = 'memuat';
+    tampilkanStatusRealtime();
+    try {
+      busRealtimeClient = window.mqtt.connect(BUS_REALTIME_URL, {
+        clientId: 'ruangkita_' + Math.random().toString(16).slice(2, 10),
+        reconnectPeriod: 4000,
+        connectTimeout: 10000,
+        keepalive: 45,
+        clean: true
+      });
+      busRealtimeClient.on('connect', function () {
+        if (!visibleBusRealtime) return;
+        busRealtimeStatus = busRealtimeLastAt && Date.now() - busRealtimeLastAt < BUS_REALTIME_STALE_MS ? 'live' : 'tersambung';
+        busRealtimeClient.subscribe(BUS_REALTIME_TOPIC, function (err) {
+          if (err) { busRealtimeStatus = 'gagal'; tampilkanStatusRealtime(); }
+        });
+        tampilkanStatusRealtime();
+      });
+      busRealtimeClient.on('reconnect', function () { if (visibleBusRealtime) { busRealtimeStatus = 'memuat'; tampilkanStatusRealtime(); } });
+      busRealtimeClient.on('close', function () { if (visibleBusRealtime && busRealtimeStatus !== 'gagal') { busRealtimeStatus = 'jeda'; tampilkanStatusRealtime(); } });
+      busRealtimeClient.on('error', function () { if (visibleBusRealtime && !busRealtimeLastAt) { busRealtimeStatus = 'gagal'; tampilkanStatusRealtime(); } });
+      busRealtimeClient.on('message', terimaBusRealtime);
+    } catch (e) {
+      busRealtimeClient = null;
+      busRealtimeStatus = 'gagal';
+      tampilkanStatusRealtime();
+    }
+  }
+
+  window.setInterval(function () {
+    var now = Date.now();
+    Object.keys(busRealtime).forEach(function (key) {
+      var bus = busRealtime[key];
+      var age = now - bus.receivedAt;
+      if (age > BUS_REALTIME_REMOVE_MS) {
+        if (bus.marker && busRealtimeLayer) busRealtimeLayer.removeLayer(bus.marker);
+        delete busRealtime[key];
+      } else if (bus.marker) {
+        bus.marker.setStyle(gayaBusRealtime(bus));
+        if (bus.marker.isPopupOpen()) bus.marker.getPopup().setContent(htmlPopupBusRealtime(bus));
+      }
+    });
+    if (visibleBusRealtime && busRealtimeLastAt && now - busRealtimeLastAt > BUS_REALTIME_STALE_MS && busRealtimeStatus === 'live') busRealtimeStatus = 'jeda';
+    tampilkanStatusRealtime();
+  }, 5000);
+
   function renderSheet() {
     var body = sheetBody();
     if (!body) return;
@@ -1624,10 +1844,27 @@ function tampilkanHalte(v) {
       + '</div>'
       + '</div>'
       + '<div class="tj-ctrl">'
+      + tombolLayer('realtime', visibleBusRealtime, teksTombolRealtime(ringkasanRealtime()), '#0ea5e9', 'Armada bus · Posisi real-time')
       + tombolLayer('antarmoda', visibleAntarmoda, state.antarmodaError ? 'gagal' : (state.antarmoda ? nomor(state.antarmoda) + ' simpul' : 'lihat'), '', 'KRL · MRT · LRT · Kereta Bandara')
       + tombolLayer('jalur', visibleJalur, ada + ' koridor', '', 'TransJakarta · Jalur Koridor')
       + tombolLayer('jakartasatu-jalur', visibleJalurJakartaSatu, nomor(state.ringkasJakartaSatu.length) + ' koridor', '', 'TransJakarta · JakartaSatu')
       + '</div>'
+      + '<div class="tj-realtime-card" aria-live="polite">'
+      + '<div id="tj-realtime-status" class="tj-realtime-status is-' + esc(busRealtimeStatus) + '"></div>'
+      + '<div id="tj-realtime-detail" class="tj-realtime-detail"></div>'
+      + '<small>Sumber: <a href="https://github.com/stoikal/tj-tracker" target="_blank" rel="noopener noreferrer">dokumentasi proyek independen</a>. Feed MQTT ini belum terdokumentasi resmi; posisi dan ETA indikatif.</small>'
+      + '</div>'
+      + '<section class="tj-info-tarif" aria-label="Tarif dan jam layanan TransJakarta">'
+      + '<h4>Tarif &amp; jam layanan</h4>'
+      + '<div class="tj-info-tarif-grid">'
+      + '<div><b>Rp2.000</b><span>Tarif pagi, pukul 05.00–07.00 WIB</span></div>'
+      + '<div><b>Rp3.500</b><span>Tarif reguler, pukul 07.01–04.59 WIB</span></div>'
+      + '<div><b>Rp0</b><span>Mikrotrans</span></div>'
+      + '<div><b>Jam layanan</b><span>Koridor utama 24 jam; feeder dan Mikrotrans umumnya 05.00–22.00 WIB</span></div>'
+      + '</div>'
+      + '<p>Jam dapat berbeda menurut rute dan berubah saat ada penyesuaian layanan. Tarif khusus atau gratis bagi kelompok tertentu mengikuti ketentuan yang berlaku.</p>'
+      + '<div class="tj-info-sumber">Sumber: <a href="https://transjakarta.co.id/about/company-profile" target="_blank" rel="noopener noreferrer">TransJakarta</a> · <a href="https://jdih.jakarta.go.id/dokumenPeraturanDirectory/0031/2025absPERGUB003133.pdf" target="_blank" rel="noopener noreferrer">Pergub DKI Jakarta No. 33/2025</a></div>'
+      + '</section>'
       + '<div class="tj-table-wrap"><table class="tj-table">'
       + '<thead><tr><th class="tj-th-koridor">Koridor</th><th class="tj-th-nama">Jenis layanan</th><th class="tj-th-km">Panjang</th></tr></thead>'
       + '<tbody>' + (baris || '<tr><td colspan="3" class="tj-empty-row">Tidak ada koridor yang cocok dengan filter.</td></tr>') + '</tbody></table></div>'
@@ -1636,6 +1873,7 @@ function tampilkanHalte(v) {
       + '<thead><tr><th class="tj-th-koridor">Koridor</th><th class="tj-th-nama">Jenis layanan</th><th class="tj-th-km">Panjang</th></tr></thead>'
       + '<tbody>' + (barisJakartaSatu || '<tr><td colspan="3" class="tj-empty-row">Data koridor JakartaSatu tidak tersedia.</td></tr>') + '</tbody></table></div>'
       + '<div class="tj-sumber">Sumber jalur: Data_Jaringan_TransJakarta (GTFS) dan JakartaSatu. Data halte digabung dari TransJakarta Network dan JakartaSatu. Titik antarmoda: DPMPTSP DKI Jakarta.</div>';
+    tampilkanStatusRealtime();
   }
 
   /* Klik baris = zoom ke koridor itu. Dipakai bersama klik+tap karena
@@ -1653,6 +1891,7 @@ function tampilkanHalte(v) {
       else if (key === 'jakartasatu-jalur') setJalurJakartaSatu(!visibleJalurJakartaSatu);
       else if (key === 'antarmoda') tampilkanAntarmoda(!visibleAntarmoda);
       else if (key === 'halte') setHalte(!visibleHalte);
+      else if (key === 'realtime') setRealtimeBus(!visibleBusRealtime);
       else return false;
       return true;
     }
@@ -1937,6 +2176,7 @@ function tampilkanHalte(v) {
       setHalte(false);
     } else {
       moduleActive = false;
+      setRealtimeBus(false);
       setJalur(false);
       setJalurJakartaSatu(false);
       tampilkanAntarmoda(false);
@@ -1953,7 +2193,9 @@ function tampilkanHalte(v) {
   window.isTransjakartaJalurActive = function () { return visibleJalur; };
   window.isTransjakartaJakartaSatuJalurActive = function () { return visibleJalurJakartaSatu; };
   window.isTransjakartaHalteActive = function () { return visibleHalte; };
-  window.isTransjakartaActive = function () { return moduleActive || visibleJalur || visibleJalurJakartaSatu || visibleHalte || visibleAntarmoda; };
+  window.isTransjakartaActive = function () { return moduleActive || visibleJalur || visibleJalurJakartaSatu || visibleHalte || visibleAntarmoda || visibleBusRealtime; };
+  window.isTransjakartaRealtimeActive = function () { return visibleBusRealtime; };
+  window.getTransjakartaRealtimeStatus = function () { return { status: busRealtimeStatus, jumlah: ringkasanRealtime().jumlah, rute: ringkasanRealtime().rute, lastUpdate: busRealtimeLastAt || null, pesanDiterima: busRealtimeSeen }; };
   window.transjakartaCleanup = function () {
     window.toggleTransjakarta(false);
   };
@@ -1991,6 +2233,8 @@ function tampilkanHalte(v) {
     gelapkan: gelapkan,
     headerPopup: headerPopup,
     popupJalur: popupJalur,
-    popupHalte: popupHalte
+    popupHalte: popupHalte,
+    setRealtimeBus: setRealtimeBus,
+    getRealtimeStatus: window.getTransjakartaRealtimeStatus
   };
 })();

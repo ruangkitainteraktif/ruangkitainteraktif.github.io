@@ -56,7 +56,10 @@
 
   window.addEventListener('load', () => {
     setTimeout(() => {
-      document.getElementById('appLoadingOverlay')?.classList.add('is-hidden');
+      var landingPage = document.getElementById('rkLandingPage');
+      if (!landingPage || !landingPage.hidden) {
+        document.getElementById('appLoadingOverlay')?.classList.add('is-hidden');
+      }
       // Tampilkan welcome modal setelah loading overlay fade-out (session-based)
       if (!sessionStorage.getItem('ruangkita_welcome_shown')) {
         sessionStorage.setItem('ruangkita_welcome_shown', '1');
