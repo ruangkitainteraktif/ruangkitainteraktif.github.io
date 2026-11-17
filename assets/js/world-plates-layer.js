@@ -4,7 +4,6 @@
 
   const PLATES_URL = 'https://earthquake.usgs.gov/arcgis/rest/services/eq/map_plateboundaries/MapServer';
   let platesLayer = null;
-  let platesPopupMarker = null;
 
   function escapeHtml(v) {
     return String(v || '').replace(/[&<>"']/g, c => ({
@@ -75,7 +74,8 @@
           spatialReference: { wkid: 4326 }
         }),
         imageDisplay: size.x + ',' + size.y + ',96',
-        returnGeometry: 'false',
+        returnGeometry: 'true',
+        outSR: '4326',
         returnCatalogItems: 'false',
         f: 'json'
       });
@@ -88,7 +88,7 @@
       const features = [];
       data.results.forEach(r => {
         if (r.attributes) {
-          features.push({ attributes: r.attributes });
+          features.push({ attributes: r.attributes, geometry: r.geometry, layerName: 'Zona Patahan Dunia (USGS)', latlng: { lat: lat, lng: lon } });
         }
       });
       return features;
@@ -104,26 +104,13 @@
     const lat = e.latlng.lat;
     const lon = e.latlng.lng;
 
-    if (platesPopupMarker) { map.removeLayer(platesPopupMarker); platesPopupMarker = null; }
-
-    const icon = L.divIcon({
-      className: 'geoid-marker-wrap',
-      html: '<div class="geoid-marker" role="img"><svg viewBox="0 0 24 24"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg></div>',
-      iconSize: [48, 54],
-      iconAnchor: [24, 52],
-      popupAnchor: [0, -52]
-    });
-
-    platesPopupMarker = L.marker([lat, lon], { icon: icon, zIndexOffset: 1000 }).addTo(map);
-    platesPopupMarker.bindPopup('<div class="quake-popup" style="padding:16px;text-align:center;"><div style="width:24px;height:24px;border:3px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:geoportal-spin .8s linear infinite;margin:0 auto 8px;"></div><span style="font-size:11px;color:#94a3b8;">Mencari data zona patahan...</span></div>', { maxWidth: 300, className: 'quake-leaflet-popup' });
-    platesPopupMarker.openPopup();
-
     const features = await identifyPlates(lat, lon);
+    if (!platesLayer || !map.hasLayer(platesLayer)) return;
     if (features.length > 0) {
       const html = buildPopupHtml(features);
-      if (html) platesPopupMarker.setPopupContent(html);
+      window.showFaultIdentifyResult({ latlng: e.latlng, html: html, features: features, tableId: 'fault-selection-usgs' });
     } else {
-      platesPopupMarker.setPopupContent('<div class="quake-popup" style="padding:12px;text-align:center;"><span style="font-size:12px;color:#94a3b8;">Tidak ada data zona patahan di lokasi ini.</span></div>');
+      window.showFaultIdentifyResult({ latlng: e.latlng, html: '<div class="quake-popup" style="padding:12px;text-align:center;"><span style="font-size:12px;color:#94a3b8;">Tidak ada data zona patahan di lokasi ini.</span></div>' });
     }
   }
 
@@ -147,7 +134,7 @@
       } else {
         if (platesLayer) { map.removeLayer(platesLayer); }
         map.off('click', onMapClick);
-        if (platesPopupMarker) { map.removeLayer(platesPopupMarker); platesPopupMarker = null; }
+        if (window.clearFaultIdentifySelection) window.clearFaultIdentifySelection();
       }
     });
   });
@@ -155,7 +142,7 @@
   window._worldPlatesLayerCleanup = function () {
     if (platesLayer) { map.removeLayer(platesLayer); platesLayer = null; }
     map.off('click', onMapClick);
-    if (platesPopupMarker) { map.removeLayer(platesPopupMarker); platesPopupMarker = null; }
+    if (window.clearFaultIdentifySelection) window.clearFaultIdentifySelection();
     const cb = document.getElementById('toggleWorldPlatesLayer');
     if (cb) cb.checked = false;
   };
