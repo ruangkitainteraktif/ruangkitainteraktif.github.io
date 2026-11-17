@@ -9,6 +9,61 @@
   var empty = root.querySelector('#rkLandingEmpty');
   var clear = root.querySelector('#rkLandingClearSearch');
   var tip = root.querySelector('#rkLandingTip');
+  var weatherButton = root.querySelector('#rkWeatherWidget');
+  var weatherValue = root.querySelector('#rkWeatherWidgetValue');
+  var weatherStatus = root.querySelector('#rkWeatherWidgetStatus');
+
+  if (weatherButton && weatherValue && weatherStatus) {
+    weatherButton.setAttribute('aria-describedby', 'rkWeatherWidgetStatus');
+    weatherButton.addEventListener('click', function () {
+      if (!navigator.geolocation) {
+        weatherStatus.textContent = 'GPS tidak tersedia di browser ini.';
+        weatherStatus.hidden = false;
+        return;
+      }
+
+      weatherButton.disabled = true;
+      weatherValue.textContent = '…';
+      weatherStatus.textContent = 'Meminta lokasi untuk mengambil cuaca BMKG hari ini…';
+      weatherStatus.hidden = false;
+
+      navigator.geolocation.getCurrentPosition(function (position) {
+        var lat = position.coords.latitude;
+        var lon = position.coords.longitude;
+        var url = 'https://api.bmkg.go.id/publik/prakiraan-cuaca?lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lon);
+
+        fetch(url).then(function (response) {
+          if (!response.ok) throw new Error('Layanan cuaca sedang tidak tersedia.');
+          return response.json();
+        }).then(function (result) {
+          var current = result && result.data && result.data[0] && result.data[0].cuaca && result.data[0].cuaca[0] && result.data[0].cuaca[0][0];
+          if (!current) throw new Error('Data cuaca untuk lokasi ini belum tersedia.');
+
+          var temp = Number(current.t);
+          var tempLabel = Number.isFinite(temp) ? Math.round(temp) + '°' : '--°';
+          var weatherText = current.weather_desc || 'Cuaca hari ini';
+          var location = result.lokasi || {};
+          var locationParts = [location.desa, location.kecamatan, location.kabkota].filter(Boolean);
+          weatherValue.textContent = tempLabel;
+          weatherButton.setAttribute('aria-label', 'Cuaca sekitar: ' + weatherText + ', ' + tempLabel + '. Tekan untuk memperbarui.');
+          weatherStatus.textContent = weatherText + ' · ' + tempLabel + 'C' + (locationParts.length ? ' · ' + locationParts.join(', ') : '') + ' · BMKG';
+        }).catch(function (error) {
+          weatherValue.textContent = 'GPS';
+          weatherButton.setAttribute('aria-label', 'Gunakan GPS untuk melihat cuaca hari ini');
+          weatherStatus.textContent = error.message || 'Cuaca gagal dimuat. Coba lagi.';
+        }).finally(function () {
+          weatherButton.disabled = false;
+          weatherStatus.hidden = false;
+        });
+      }, function (error) {
+        weatherValue.textContent = 'GPS';
+        weatherButton.disabled = false;
+        weatherButton.setAttribute('aria-label', 'Gunakan GPS untuk melihat cuaca hari ini');
+        weatherStatus.textContent = error.code === 1 ? 'Izin lokasi ditolak. Aktifkan izin lokasi untuk melihat cuaca.' : 'Lokasi tidak berhasil diperoleh. Coba lagi.';
+        weatherStatus.hidden = false;
+      }, { enableHighAccuracy: false, maximumAge: 600000, timeout: 12000 });
+    });
+  }
 
   function filterTopics() {
     var query = (search && search.value || '').trim().toLocaleLowerCase('id');

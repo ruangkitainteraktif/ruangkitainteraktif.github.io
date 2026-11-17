@@ -161,4 +161,16 @@
   .rk-landing-copy{background:transparent;border-color:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
   .rk-landing-copy:before{position:absolute;z-index:-1;inset:-18px -20px -12px;content:"";border-radius:34px;background:rgba(250,246,239,.8);filter:blur(14px);pointer-events:none}
 }
+.rk-weather-widget-wrap{position:relative;display:inline-flex;flex:0 0 auto;align-items:center}
+.rk-weather-widget{display:inline-flex;min-height:38px;align-items:center;gap:6px;padding:0 11px;border:1px solid rgba(18,63,67,.14);border-radius:999px;color:#315f61;background:rgba(255,255,255,.64);font:inherit;font-size:11px;cursor:pointer;transition:background .16s ease,border-color .16s ease}
+.rk-weather-widget:hover{border-color:rgba(19,88,90,.3);background:#fff}
+.rk-weather-widget:disabled{cursor:wait;opacity:.72}
+.rk-weather-widget-icon{width:17px;height:17px;flex:0 0 17px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.7}
+.rk-weather-widget-label{font-weight:600}
+.rk-weather-widget strong{color:#123f43;font-size:11px;font-weight:800;white-space:nowrap}
+.rk-weather-widget-status{position:absolute;z-index:8;top:calc(100% + 11px);right:0;width:min(270px,calc(100vw - 30px));padding:11px 13px;border:1px solid rgba(18,63,67,.12);border-radius:11px;color:#315f61;background:rgba(255,253,249,.97);box-shadow:0 8px 24px rgba(22,47,46,.12);font-size:11px;line-height:1.5}
+.rk-weather-widget-status[hidden]{display:none}
+@media(max-width:920px) and (min-width:761px){.rk-landing-nav{gap:14px}.rk-landing-nav a:first-child,.rk-weather-widget-label{display:none}}
+@media(max-width:760px){.rk-weather-widget{min-height:34px;padding:0 9px;font-size:10px}.rk-weather-widget-status{top:calc(100% + 8px)}}
+@media(max-width:480px){.rk-weather-widget-label{display:none}.rk-weather-widget{min-height:32px;gap:4px;padding:0 8px}.rk-weather-widget-icon{width:16px;height:16px;flex-basis:16px}.rk-weather-widget-status{right:-82px;width:min(270px,calc(100vw - 24px))}}
 
