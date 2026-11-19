@@ -173,4 +173,5 @@
 @media(max-width:920px) and (min-width:761px){.rk-landing-nav{gap:14px}.rk-landing-nav a:first-child,.rk-weather-widget-label{display:none}}
 @media(max-width:760px){.rk-weather-widget{min-height:34px;max-width:42vw;padding:0 9px;font-size:10px}.rk-weather-widget-status{max-width:23vw}}
 @media(max-width:480px){.rk-weather-widget-label{display:none}.rk-weather-widget{min-height:32px;max-width:48vw;gap:4px;padding:0 8px}.rk-weather-widget-icon{width:16px;height:16px;flex-basis:16px}.rk-weather-widget-status{max-width:24vw;font-size:9px}}
+@media(max-width:760px){.rk-landing-header .rk-landing-enter,.rk-landing-nav a[href="#rkLandingCapabilities"]{display:none}}
 
