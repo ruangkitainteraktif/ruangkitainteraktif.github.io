@@ -196,6 +196,19 @@
     if (empty) empty.hidden = visible !== 0;
   }
 
+  var initialMapLocationRequested = false;
+  function focusMapOnUserLocation() {
+    if (initialMapLocationRequested || !navigator.geolocation) return;
+    initialMapLocationRequested = true;
+    navigator.geolocation.getCurrentPosition(function (position) {
+      var currentMap = window.map;
+      if (!currentMap || typeof currentMap.flyTo !== 'function') return;
+      currentMap.flyTo([position.coords.latitude, position.coords.longitude], 12, { duration: 1.2 });
+    }, function () {
+      // Keep the default map view when the user declines or location is unavailable.
+    }, { enableHighAccuracy: false, maximumAge: 600000, timeout: 12000 });
+  }
+
   if (search) search.addEventListener('input', filterTopics);
   if (clear) clear.addEventListener('click', function () {
     if (search) {
@@ -225,6 +238,7 @@
       if (button.tagName === 'A') event.preventDefault();
       if (root.hidden) return;
       try { sessionStorage.setItem(mapViewKey, '1'); } catch (error) { /* storage unavailable */ }
+      focusMapOnUserLocation();
       root.hidden = true;
       document.body.classList.add('rk-landing-dismissed');
       if (typeof window.closeWelcomeModal === 'function') window.closeWelcomeModal();
