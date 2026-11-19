@@ -176,7 +176,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/landing-page.css?v=20261117-rk-home-v52">
+  <link rel="stylesheet" href="assets/css/landing-page.css?v=20261119-weather-inline-v1">
     <link rel="stylesheet" href="assets/css/rdtr-interaktif.css?v=20261024-catalog-pager3">
   <link rel="stylesheet" href="assets/css/geodisaster.css?v=5">
 
@@ -232,7 +232,7 @@
           <span>RUANG<span>KITA</span><small>Satu Peta untuk Nusantara</small></span>
         </a>
         <nav class="rk-landing-nav" aria-label="Navigasi utama">
-          <a href="#rkLandingHow">Cara kerja</a><a href="#rkLandingCapabilities">Fitur</a><span class="rk-weather-widget-wrap"><button class="rk-weather-widget" id="rkWeatherWidget" type="button" aria-label="Gunakan GPS untuk melihat cuaca hari ini"><svg class="rk-weather-widget-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 18.5h9.2a4.3 4.3 0 0 0 .2-8.6A6.1 6.1 0 0 0 5.2 12a3.3 3.3 0 0 0 2.3 6.5Z"/><path d="M7.2 5.2 6 4M3.8 9H2M18 5.2 19.2 4M21 9h1"/></svg><span class="rk-weather-widget-label">Cuaca</span><strong id="rkWeatherWidgetValue">GPS</strong></button><span class="rk-weather-widget-status" id="rkWeatherWidgetStatus" role="status" aria-live="polite" hidden></span></span>
+          <a href="#rkLandingHow">Cara kerja</a><a href="#rkLandingCapabilities">Fitur</a><span class="rk-weather-widget-wrap"><button class="rk-weather-widget" id="rkWeatherWidget" type="button" aria-label="Gunakan GPS untuk melihat cuaca hari ini"><svg class="rk-weather-widget-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 18.5h9.2a4.3 4.3 0 0 0 .2-8.6A6.1 6.1 0 0 0 5.2 12a3.3 3.3 0 0 0 2.3 6.5Z"/><path d="M7.2 5.2 6 4M3.8 9H2M18 5.2 19.2 4M21 9h1"/></svg><span class="rk-weather-widget-label">Cuaca</span><strong id="rkWeatherWidgetValue">GPS</strong><span class="rk-weather-widget-status" id="rkWeatherWidgetStatus" role="status" aria-live="polite" hidden></span></button></span>
         </nav>
         <button class="rk-landing-enter" type="button" data-rk-open-map>Buka peta <span aria-hidden="true"></span></button>
       </header>
@@ -285,10 +285,10 @@
           <div class="rk-landing-tools"><label for="rkLandingSearch">Saring topik</label><input id="rkLandingSearch" type="search" placeholder="Ketik wilayah, cuaca, RDTR..." autocomplete="off"><button type="button" id="rkLandingClearSearch">Bersihkan</button></div>
           <p class="rk-landing-empty" id="rkLandingEmpty" role="status" hidden>Topik tidak ditemukan. Coba kata lain atau bersihkan pencarian.</p>
           <div class="rk-landing-list" id="rkLandingGrid">
-            <article class="rk-landing-card" data-topic="jelajah" data-search="cari wilayah administrasi desa kelurahan kecamatan kabupaten provinsi pencarian peta"><span class="rk-landing-card-icon" aria-hidden="true">?</span><h3>Temukan wilayah</h3><p>Cari desa, kelurahan, kecamatan, atau kota. Lihat batas dan informasi lokasi.</p><button type="button" data-rk-open-map>Jelajahi peta <span aria-hidden="true">?</span></button></article>
-            <article class="rk-landing-card" data-topic="pantau" data-search="cuaca bmkg satelit gempa gunung api hujan lingkungan bumi"><span class="rk-landing-card-icon" aria-hidden="true">?</span><h3>Pantau kondisi bumi</h3><p>Lihat cuaca, citra satelit, gempa, dan fenomena lingkungan di peta.</p><button type="button" data-rk-open-map>Jelajahi peta <span aria-hidden="true">?</span></button></article>
-            <article class="rk-landing-card" data-topic="ruang" data-search="rdtr zonasi kawasan hutan geologi tata ruang tematik"><span class="rk-landing-card-icon" aria-hidden="true">?</span><h3>Pahami tata ruang</h3><p>Jelajahi RDTR, kawasan hutan, geologi, dan layer tematik lainnya.</p><button type="button" data-rk-open-map>Jelajahi peta <span aria-hidden="true">?</span></button></article>
-            <article class="rk-landing-card" data-topic="olah" data-search="unggah data shp geojson gpx kmz gambar ukur analisis cetak pdf"><span class="rk-landing-card-icon" aria-hidden="true">?</span><h3>Olah data peta</h3><p>Tambahkan data sendiri, gambar atau ukur area, lalu simpan hasil peta.</p><button type="button" data-rk-open-map>Jelajahi peta <span aria-hidden="true">?</span></button></article>
+            <article class="rk-landing-card" data-topic="jelajah" data-search="cari wilayah administrasi desa kelurahan kecamatan kabupaten provinsi pencarian peta"><span class="rk-landing-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10.2c0 5.1-8 11-8 11s-8-5.9-8-11a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.6"/></svg></span><h3>Temukan wilayah</h3><p>Cari desa, kelurahan, kecamatan, atau kota. Lihat batas dan informasi lokasi.</p><button type="button" data-rk-open-map>Jelajahi peta <span aria-hidden="true">&#8594;</span></button></article>
+            <article class="rk-landing-card" data-topic="pantau" data-search="cuaca bmkg satelit gempa gunung api hujan lingkungan bumi"><span class="rk-landing-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></span><h3>Pantau kondisi bumi</h3><p>Lihat cuaca, citra satelit, gempa, dan fenomena lingkungan di peta.</p><button type="button" data-rk-open-map>Jelajahi peta <span aria-hidden="true">&#8594;</span></button></article>
+            <article class="rk-landing-card" data-topic="ruang" data-search="rdtr zonasi kawasan hutan geologi tata ruang tematik"><span class="rk-landing-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/></svg></span><h3>Pahami tata ruang</h3><p>Jelajahi RDTR, kawasan hutan, geologi, dan layer tematik lainnya.</p><button type="button" data-rk-open-map>Jelajahi peta <span aria-hidden="true">&#8594;</span></button></article>
+            <article class="rk-landing-card" data-topic="olah" data-search="unggah data shp geojson gpx kmz gambar ukur analisis cetak pdf"><span class="rk-landing-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5v-15Z"/><path d="M4 6v14.5A2.5 2.5 0 0 1 6.5 18H20M8 7h8m-8 4h8"/></svg></span><h3>Olah data peta</h3><p>Tambahkan data sendiri, gambar atau ukur area, lalu simpan hasil peta.</p><button type="button" data-rk-open-map>Jelajahi peta <span aria-hidden="true">&#8594;</span></button></article>
           </div>
         </section>
 
@@ -312,7 +312,7 @@
       </div>
     </main>
     <!-- END RUANG KITA LANDING PAGE -->
-    <script src="assets/js/landing-page.js?v=20261117-rk-home-v8"></script>
+    <script src="assets/js/landing-page.js?v=20261119-weather-permission-v3"></script>
 
     <!-- WELCOME FEATURE MODAL -->
     <div id="welcomeFeatureModal" class="welcome-modal" role="dialog" aria-modal="true" aria-labelledby="welcomeModalTitle">
@@ -4298,13 +4298,13 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
      <script src="assets/js/geoprocessing.js?v=20261107-gp-pane-v3"></script>
      <script src="assets/js/arcgis-source-manager.js?v=20261011-shp-label"></script>
       <script src="assets/js/geoserver-source-manager.js?v=20261026-village-search-single"></script>
-  <script src="assets/js/alat-draw-measure.js?v=20261009-remove-draw-layer"></script>
+  <script src="assets/js/alat-draw-measure.js?v=20261119-draw-edit-refresh-v2"></script>
   <!-- Cek Lokasi: butuh window.startDraw dari alat-draw-measure.js untuk
        memasang pin. init() juga memasang listener draw:created, sehingga
        setiap pin baru langsung mengisi panel hasil. -->
   <script src="assets/js/alat-cek-lokasi.js?v=20261010-village-boundary-fallbacks"></script>
   <script src="assets/js/alat-konverter-koordinat.js"></script>
-<script src="assets/js/geofarm-draw.js?v=20261009-geofarm-analysis-entrypoint"></script>
+<script src="assets/js/geofarm-draw.js?v=20261119-keep-edit-toolbar"></script>
 <script src="assets/js/geofarm-upload.js?v=20261009-geofarm-analysis-entrypoint"></script>
 <!-- Kalkulator Benih & Pupuk GeoFarm: butuh geodesic-area.js (luas poligon)
      dan alat-draw-measure.js (window.getDrawnLayers), keduanya sudah dimuat

@@ -314,6 +314,13 @@ function renderAreaGeometry() {
   measureExportLayer = measurePolygon;
 }
 
+function refreshDrawEditButtons() {
+  const editToolbar = drawControl && drawControl._toolbars && drawControl._toolbars.edit;
+  if (editToolbar && typeof editToolbar._checkDisabled === 'function') {
+    editToolbar._checkDisabled();
+  }
+}
+
 function startDraw(type, source) {
   // Sesi GeoFarm hanya boleh dimulai dari tombol Buat Polygon GeoFarm.
   // Pemanggilan tool gambar umum selalu menghapus penanda yang mungkin
@@ -369,6 +376,10 @@ function startDraw(type, source) {
 map.on(L.Draw.Event.CREATED, event => {
   const layer = event.layer;
   drawLayerGroup.addLayer(layer);
+  // Leaflet.draw normally updates the Edit/Delete buttons from FeatureGroup
+  // events. Recheck after adding the new layer as well, so the controls also
+  // become active when a draw handler has just stopped itself.
+  refreshDrawEditButtons();
   if (layer instanceof L.Polygon) {
     try {
       const latlngs = layer.getLatLngs();
@@ -416,6 +427,9 @@ map.on(L.Draw.Event.CREATED, event => {
 map.on('draw:drawstop', () => {
   drawSessionActive = false;
   drawHideExportActions = false;
+  // CREATE/DRAWSTOP ordering differs across Leaflet.draw handlers. Refresh
+  // once more after the handler has fully exited.
+  refreshDrawEditButtons();
   syncDrawChrome();
 });
 

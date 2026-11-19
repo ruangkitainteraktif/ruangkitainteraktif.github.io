@@ -108,6 +108,21 @@
     }
   }
 
+  // Mengakhiri mode menggambar setelah polygon selesai, tetapi membiarkan
+  // L.Control.Draw tetap terpasang. Leaflet.draw memakai toolbar yang sama
+  // untuk edit/hapus; melepas kontrol pada DRAWSTOP membuat polygon baru
+  // langsung tidak bisa diedit.
+  function finishGeofarmDrawing() {
+    if (typeof window.setGeofarmDrawSession === 'function') {
+      window.setGeofarmDrawSession(false);
+    }
+    document.body.classList.remove('geofarm-draw-active');
+    if (typeof window.setDrawHideExportActions === 'function') {
+      try { window.setDrawHideExportActions(false); } catch (e) { /* abaikan */ }
+    }
+    if (typeof window.syncDrawChrome === 'function') window.syncDrawChrome();
+  }
+
   function markButtonBusy(on) {
     var btn = document.getElementById('geofarmDrawPolygonBtn');
     if (!btn) return;
@@ -251,7 +266,7 @@
 
     var stop = function () {
       clearPendingStop();
-      endGeofarmDrawSession();
+      finishGeofarmDrawing();
       markButtonBusy(false);
       // Kembalikan sheet GeoTools ke tab GeoFarm agar tombol Buka Analisis
       // terlihat. Panel analisis tidak dibuka otomatis.

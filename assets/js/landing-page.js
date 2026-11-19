@@ -12,6 +12,18 @@
   var weatherButton = root.querySelector('#rkWeatherWidget');
   var weatherValue = root.querySelector('#rkWeatherWidgetValue');
   var weatherStatus = root.querySelector('#rkWeatherWidgetStatus');
+  var mapViewKey = 'ruangkita_map_view_active';
+
+  // Keep the map open after refresh in the same tab. A fresh tab/session
+  // still starts at the landing page.
+  try {
+    if (sessionStorage.getItem(mapViewKey) === '1') {
+      root.hidden = true;
+      document.body.classList.add('rk-landing-dismissed');
+    }
+  } catch (error) {
+    // Storage can be unavailable in private or restricted browser contexts.
+  }
 
   function normalizeWeatherArea(value) {
     return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('id')
@@ -78,60 +90,101 @@
   }
 
   if (weatherButton && weatherValue && weatherStatus) {
-    weatherButton.setAttribute('aria-describedby', 'rkWeatherWidgetStatus');
-    weatherButton.addEventListener('click', function () {
-      if (!navigator.geolocation) {
-        weatherStatus.textContent = 'GPS tidak tersedia di browser ini.';
-        weatherStatus.hidden = false;
-        return;
-      }
+    var weatherLoaded = false;
+    var weatherLoading = false;
+    var locationRequestPending = false;
 
+    function setWeatherError(message) {
+      weatherValue.textContent = '--';
+      weatherButton.setAttribute('aria-label', 'Cuaca tidak tersedia. Tekan untuk mencoba lagi.');
+      weatherStatus.textContent = message;
+      weatherStatus.hidden = false;
+    }
+
+    function loadWeatherForPosition(position) {
+      if (weatherLoaded || weatherLoading) return;
+      weatherLoading = true;
       weatherButton.disabled = true;
       weatherValue.textContent = '…';
-      weatherStatus.textContent = 'Meminta lokasi untuk mengambil cuaca BMKG hari ini…';
+      weatherStatus.textContent = 'Mengambil cuaca…';
       weatherStatus.hidden = false;
 
-      navigator.geolocation.getCurrentPosition(function (position) {
-        var lat = position.coords.latitude;
-        var lon = position.coords.longitude;
-        resolveWeatherADM4(lat, lon).then(function (adm4) {
-          var url = 'https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=' + encodeURIComponent(adm4.kode);
-          return fetchBMKGForecast(url).then(function (response) {
-            if (!response.ok) throw new Error('Layanan BMKG belum dapat dijangkau. Coba lagi sebentar.');
-            return response.json().then(function (result) { return { result: result, adm4: adm4 }; });
-          });
-        }).then(function (payload) {
-          var result = payload.result;
-          var adm4 = payload.adm4;
-          var current = result && result.data && result.data[0] && result.data[0].cuaca && result.data[0].cuaca[0] && result.data[0].cuaca[0][0];
-          if (!current) throw new Error('Data cuaca untuk lokasi ini belum tersedia.');
-
-          var temp = Number(current.t);
-          var tempLabel = Number.isFinite(temp) ? Math.round(temp) + '°' : '--°';
-          var weatherText = current.weather_desc || 'Cuaca hari ini';
-          var location = result.lokasi || {};
-          var locationParts = [location.desa || adm4.desa, location.kecamatan || adm4.kecamatan, location.kabkota || adm4.kabkota].filter(Boolean);
-          weatherValue.textContent = tempLabel;
-          weatherButton.setAttribute('aria-label', 'Cuaca sekitar: ' + weatherText + ', ' + tempLabel + '. Tekan untuk memperbarui.');
-          weatherStatus.textContent = weatherText + ' · ' + tempLabel + 'C' + (locationParts.length ? ' · ' + locationParts.join(', ') : '') + ' · BMKG';
-        }).catch(function (error) {
-          weatherValue.textContent = 'GPS';
-          weatherButton.setAttribute('aria-label', 'Gunakan GPS untuk melihat cuaca hari ini');
-          weatherStatus.textContent = error.message || 'Cuaca gagal dimuat. Coba lagi.';
-        }).finally(function () {
-          weatherButton.disabled = false;
-          weatherStatus.hidden = false;
+      var lat = position.coords.latitude;
+      var lon = position.coords.longitude;
+      resolveWeatherADM4(lat, lon).then(function (adm4) {
+        var url = 'https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=' + encodeURIComponent(adm4.kode);
+        return fetchBMKGForecast(url).then(function (response) {
+          if (!response.ok) throw new Error('Data cuaca belum dapat dimuat.');
+          return response.json().then(function (result) { return { result: result, adm4: adm4 }; });
         });
-      }, function (error) {
-        weatherValue.textContent = 'GPS';
-        weatherButton.disabled = false;
-        weatherButton.setAttribute('aria-label', 'Gunakan GPS untuk melihat cuaca hari ini');
-        weatherStatus.textContent = error.code === 1 ? 'Izin lokasi ditolak. Aktifkan izin lokasi untuk melihat cuaca.' : 'Lokasi tidak berhasil diperoleh. Coba lagi.';
-        weatherStatus.hidden = false;
-      }, { enableHighAccuracy: false, maximumAge: 600000, timeout: 12000 });
-    });
-  }
+      }).then(function (payload) {
+        var result = payload.result;
+        var adm4 = payload.adm4;
+        var current = result && result.data && result.data[0] && result.data[0].cuaca && result.data[0].cuaca[0] && result.data[0].cuaca[0][0];
+        if (!current) throw new Error('Data cuaca untuk lokasi ini belum tersedia.');
 
+        var temp = Number(current.t);
+        var tempLabel = Number.isFinite(temp) ? Math.round(temp) + '°C' : '--°C';
+        var weatherText = current.weather_desc || 'Cuaca hari ini';
+        var location = result.lokasi || {};
+        var locationParts = [location.desa || adm4.desa, location.kecamatan || adm4.kecamatan, location.kabkota || adm4.kabkota].filter(Boolean);
+        weatherValue.textContent = tempLabel;
+        weatherButton.setAttribute('aria-label', weatherText + ', ' + tempLabel + (locationParts.length ? ', ' + locationParts.join(', ') : ''));
+        weatherStatus.textContent = [weatherText, locationParts.join(', ')].filter(Boolean).join(' · ');
+        weatherStatus.hidden = false;
+        weatherLoaded = true;
+      }).catch(function (error) {
+        setWeatherError(error.message || 'Cuaca gagal dimuat.');
+      }).finally(function () {
+        weatherLoading = false;
+        weatherButton.disabled = false;
+      });
+    }
+
+    function requestWeatherLocation(forceRefresh) {
+      if (weatherLoaded && !forceRefresh) return;
+      if (locationRequestPending || weatherLoading) return;
+      if (forceRefresh) weatherLoaded = false;
+      if (!navigator.geolocation) {
+        setWeatherError('GPS tidak tersedia.');
+        return;
+      }
+      if (weatherLoading) return;
+      weatherButton.disabled = true;
+      locationRequestPending = true;
+      weatherValue.textContent = '…';
+      weatherStatus.textContent = 'Menunggu izin lokasi…';
+      weatherStatus.hidden = false;
+      navigator.geolocation.getCurrentPosition(function (position) {
+        locationRequestPending = false;
+        loadWeatherForPosition(position);
+      }, function (error) {
+        locationRequestPending = false;
+        weatherButton.disabled = false;
+        setWeatherError(error.code === 1 ? 'Izin lokasi ditolak.' : 'Lokasi tidak berhasil diperoleh.');
+      }, { enableHighAccuracy: false, maximumAge: 600000, timeout: 12000 });
+    }
+
+    weatherButton.addEventListener('click', function () { requestWeatherLocation(true); });
+    window.addEventListener('ruangkita:location-granted', function (event) {
+      var detail = event.detail || {};
+      if (Number.isFinite(detail.lat) && Number.isFinite(detail.lon)) {
+        loadWeatherForPosition({ coords: { latitude: detail.lat, longitude: detail.lon } });
+      }
+    });
+
+    // Use an existing grant immediately; a new request still needs a user gesture.
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: 'geolocation' }).then(function (permission) {
+        if (permission.state === 'granted') requestWeatherLocation();
+        var handlePermissionChange = function () {
+          if (permission.state === 'granted') requestWeatherLocation();
+        };
+        if (permission.addEventListener) permission.addEventListener('change', handlePermissionChange);
+        else permission.onchange = handlePermissionChange;
+      }).catch(function () { /* The weather button remains available as fallback. */ });
+    }
+  }
   function filterTopics() {
     var query = (search && search.value || '').trim().toLocaleLowerCase('id');
     var visible = 0;
@@ -171,6 +224,7 @@
     button.addEventListener('click', function (event) {
       if (button.tagName === 'A') event.preventDefault();
       if (root.hidden) return;
+      try { sessionStorage.setItem(mapViewKey, '1'); } catch (error) { /* storage unavailable */ }
       root.hidden = true;
       document.body.classList.add('rk-landing-dismissed');
       if (typeof window.closeWelcomeModal === 'function') window.closeWelcomeModal();
