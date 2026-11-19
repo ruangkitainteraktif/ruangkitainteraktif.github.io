@@ -159,6 +159,8 @@
     const toggle = document.getElementById('toggleWindAnim');
     const controls = document.getElementById('windControls');
     if (toggle) toggle.addEventListener('change', () => {
+      // Let delayed startup defaults know the user has already chosen a state.
+      toggle.dataset.userTouched = 'true';
       if (controls) controls.style.display = toggle.checked ? 'flex' : 'none';
       window.toggleWindAnimation(toggle.checked);
     });

@@ -1325,7 +1325,10 @@ L.control.scale({
     if (pbCb) pbCb.checked = false;
 
     var windToggle = document.getElementById('toggleWindAnim');
-    if (windToggle) {
+    // Startup defaults run shortly after `load` so optional scripts can
+    // register first. The map can already be interactive by then; preserve
+    // an Angin selection made during that small startup window.
+    if (windToggle && windToggle.dataset.userTouched !== 'true') {
       windToggle.checked = false;
       if (typeof window.toggleWindAnimation === 'function') {
         window.toggleWindAnimation(false);
@@ -1333,7 +1336,7 @@ L.control.scale({
       if (typeof windToggle.dispatchEvent === 'function') {
         windToggle.dispatchEvent(new Event('change', { bubbles: true }));
       }
-    } else if (typeof window.toggleWindAnimation === 'function') {
+    } else if (!windToggle && typeof window.toggleWindAnimation === 'function') {
       window.toggleWindAnimation(false);
     }
 
