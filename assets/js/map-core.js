@@ -4827,7 +4827,6 @@ const SAWAH_COLOR = '#87cf15';
       qlPm25:        { target: 'toggleAirVisualPm25',         type: 'checkbox' },
       qlWind:        { target: 'toggleWindAnim',              type: 'checkbox' },
       qlHujan:     { type: 'toggle-fn',                    fn: toggleHujanLayer },
-      qlRadar:     { type: 'toggle-fn',                    fn: function(v) { if (typeof window.toggleBmkgRadar === 'function') window.toggleBmkgRadar(v); } },
       qlProvinsi:  { type: 'toggle-fn',                    fn: function(v) { if (typeof window.toggleProvinceBoundary === 'function') window.toggleProvinceBoundary(v); } },
       qlEcmwfFire: { type: 'toggle-fn',                    fn: toggleEcmwfFireLayer },
       qlViirsNoaa20:{ type: 'toggle-fn',                    fn: toggleViirsNoaa20Layer },
@@ -4858,7 +4857,6 @@ const SAWAH_COLOR = '#87cf15';
           if (c.fn === toggleViirsNoaa20Layer) isOn = !!(viirsNoaa20Layer && map.hasLayer(viirsNoaa20Layer));
           else if (c.fn === toggleEcmwfFireLayer) isOn = !!(ecmwfFireLayer && map.hasLayer(ecmwfFireLayer));
           else if (c.fn === toggleHujanLayer) isOn = typeof isHujanLayerActive === 'function' && isHujanLayerActive();
-          else if (btnId === 'qlRadar') isOn = typeof window.isBmkgRadarActive === 'function' && window.isBmkgRadarActive();
           else if (btnId === 'qlProvinsi') isOn = typeof isProvinceBoundaryActive === 'function' && isProvinceBoundaryActive();
           else if (btnId === 'qlTransjakarta') isOn = typeof window.isTransjakartaActive === 'function' ? window.isTransjakartaActive() : (typeof window.isTransjakartaJalurActive === 'function' && (window.isTransjakartaJalurActive() || (typeof window.isTransjakartaHalteActive === 'function' && window.isTransjakartaHalteActive())));
           else if (c.fn === toggleGhrsstSstAnomali) isOn = !!(_ghrsstLayer && map.hasLayer(_ghrsstLayer));
@@ -4885,7 +4883,6 @@ const SAWAH_COLOR = '#87cf15';
             if (c.fn === toggleViirsNoaa20Layer) isOn = !!(viirsNoaa20Layer && map.hasLayer(viirsNoaa20Layer));
             else if (c.fn === toggleEcmwfFireLayer) isOn = !!(ecmwfFireLayer && map.hasLayer(ecmwfFireLayer));
             else if (c.fn === toggleHujanLayer) isOn = typeof isHujanLayerActive === 'function' && isHujanLayerActive();
-            else if (btnId === 'qlRadar') isOn = typeof window.isBmkgRadarActive === 'function' && window.isBmkgRadarActive();
             else if (btnId === 'qlProvinsi') isOn = typeof isProvinceBoundaryActive === 'function' && isProvinceBoundaryActive();
             else if (btnId === 'qlTransjakarta') isOn = typeof window.isTransjakartaActive === 'function' ? window.isTransjakartaActive() : (typeof window.isTransjakartaJalurActive === 'function' && (window.isTransjakartaJalurActive() || (typeof window.isTransjakartaHalteActive === 'function' && window.isTransjakartaHalteActive())));
             else if (c.fn === toggleGhrsstSstAnomali) isOn = !!(_ghrsstLayer && map.hasLayer(_ghrsstLayer));
