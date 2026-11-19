@@ -121,7 +121,7 @@
     detail.className = 'dukcapil-main-detail';
     renderDetail(data, kode, detail);
     if (typeof window.showDetailLayerInMainSheet === 'function') {
-      window.showDetailLayerInMainSheet(detail, 'Detail Administrasi · Data Penduduk');
+      window.showDetailLayerInMainSheet(detail, 'Data Penduduk');
     } else {
       renderDetail(data, kode);
       if (typeof toggleDetailPanel === 'function') toggleDetailPanel(true);

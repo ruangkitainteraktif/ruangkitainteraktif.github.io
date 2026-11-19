@@ -126,11 +126,22 @@
     sheet.setAttribute('role', 'region');
     sheet.setAttribute('aria-label', 'Detail layer peta');
     sheet.setAttribute('aria-hidden', 'true');
-    sheet.innerHTML = '<div class="bhumi-persil-sheet-handle" aria-hidden="true"></div><div class="bhumi-persil-sheet-head"><div class="bhumi-persil-sheet-title">Detail Layer</div><div class="bhumi-persil-sheet-actions"><button type="button" class="bhumi-persil-sheet-minimize" aria-label="Minimalkan detail layer" title="Minimalkan panel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button><button type="button" class="bhumi-persil-sheet-close" aria-label="Tutup detail layer" title="Tutup">&times;</button></div></div><div class="bhumi-persil-sheet-content catalog-popup-sheet-content"><div class="catalog-popup-sheet-ad-slot"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-7501816933195235" data-ad-slot="1306506445" data-ad-format="auto" data-full-width-responsive="true"></ins></div><div class="catalog-popup-sheet-cards"></div></div>';
+    sheet.innerHTML = '<div class="bhumi-persil-sheet-handle" aria-hidden="true"></div><div class="bhumi-persil-sheet-head"><div class="bhumi-persil-sheet-title">Detail Layer</div><div class="bhumi-persil-sheet-actions"><button type="button" class="bhumi-persil-sheet-back" aria-label="Kembali ke detail wilayah" title="Kembali" style="display:none"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/><path d="M9 12h11"/></svg></button><button type="button" class="bhumi-persil-sheet-minimize" aria-label="Minimalkan detail layer" title="Minimalkan panel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button><button type="button" class="bhumi-persil-sheet-close" aria-label="Tutup detail layer" title="Tutup">&times;</button></div></div><div class="bhumi-persil-sheet-content catalog-popup-sheet-content"><div class="catalog-popup-sheet-ad-slot"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-7501816933195235" data-ad-slot="1306506445" data-ad-format="auto" data-full-width-responsive="true"></ins></div><div class="catalog-popup-sheet-cards"></div></div>';
     sheet.insertBefore(resizeHandle, sheet.firstChild);
     document.body.appendChild(sheet);
     jagaLebarIklan(sheet);
     var minimizeButton = sheet.querySelector('.bhumi-persil-sheet-minimize');
+    var backButton = sheet.querySelector('.bhumi-persil-sheet-back');
+    backButton.addEventListener('click', function () {
+      var previous = sheet.__detailBackState;
+      if (!previous) return;
+      var cards = sheet.querySelector('.catalog-popup-sheet-cards');
+      cards.replaceChildren.apply(cards, previous.cards);
+      var title = sheet.querySelector('.bhumi-persil-sheet-title');
+      if (title) title.textContent = previous.title;
+      sheet.__detailBackState = null;
+      backButton.style.display = 'none';
+    });
     function updateIcon() {
       var minimized = sheet.classList.contains('is-minimized');
       minimizeButton.innerHTML = minimized
@@ -211,6 +222,9 @@
     var popupContentStyle = popupContent.getAttribute('style');
     var popupWrapperStyle = popupWrapper.getAttribute('style');
     var sheet = ensureCatalogPopupSheet();
+    sheet.__detailBackState = null;
+    var backButton = sheet.querySelector('.bhumi-persil-sheet-back');
+    if (backButton) backButton.style.display = 'none';
     var sheetTitle = sheet.querySelector('.bhumi-persil-sheet-title');
     if (sheetTitle) sheetTitle.textContent = popupContent.querySelector('.boundary-popup') ? 'Detail Administrasi' : 'Detail Layer';
     var content = sheet.querySelector('.catalog-popup-sheet-cards');
@@ -338,8 +352,20 @@
     if (!contentNode) return false;
     var sheet = ensureCatalogPopupSheet();
     var titleEl = sheet.querySelector('.bhumi-persil-sheet-title');
+    var previousTitle = titleEl ? titleEl.textContent : 'Detail Administrasi';
     if (titleEl) titleEl.textContent = title || 'Detail Layer';
     var cards = sheet.querySelector('.catalog-popup-sheet-cards');
+    var backButton = sheet.querySelector('.bhumi-persil-sheet-back');
+    if (title && title.indexOf('Data Penduduk') !== -1 && cards.childNodes.length) {
+      sheet.__detailBackState = {
+        title: previousTitle,
+        cards: Array.prototype.slice.call(cards.childNodes)
+      };
+      if (backButton) backButton.style.display = 'grid';
+    } else {
+      sheet.__detailBackState = null;
+      if (backButton) backButton.style.display = 'none';
+    }
     var card = document.createElement('div');
     card.className = 'catalog-popup-sheet-card';
     while (contentNode.firstChild) card.appendChild(contentNode.firstChild);
