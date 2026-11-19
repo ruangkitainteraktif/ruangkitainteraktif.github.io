@@ -172,7 +172,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.17/themes/default/style.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <link rel="stylesheet" href="assets/css/app.css?v=20261119-remove-bmkg-radar-quick-layer">
+  <link rel="stylesheet" href="assets/css/app.css?v=20261119-hotspot-detail-template">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -725,6 +725,18 @@
       </div>
       <div class="hs-sheet-body">
         <div id="hs-sheet-summary"></div>
+        <div class="hotspot-layer-control">
+          <button id="toggleHotspotMarkers" class="hotspot-layer-toggle" type="button" aria-label="Sembunyikan heatmap hotspot" aria-pressed="true" title="Sembunyikan heatmap hotspot">
+            <svg class="hotspot-eye-visible" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.3-6 9.5-6 9.5 6 9.5 6-3.3 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.7"/></svg>
+            <svg class="hotspot-eye-hidden" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 18M10.6 6.2A10.8 10.8 0 0 1 12 6c6.2 0 9.5 6 9.5 6a16 16 0 0 1-3.1 3.7M6.2 6.3C3.8 8 2.5 12 2.5 12s3.3 6 9.5 6c1.3 0 2.4-.3 3.4-.8"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+            <span>Heatmap</span>
+          </button>
+          <button id="toggleHotspotPoints" class="hotspot-layer-toggle" type="button" aria-label="Sembunyikan marker hotspot" aria-pressed="true" title="Sembunyikan marker hotspot">
+            <svg class="hotspot-eye-visible" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.3-6 9.5-6 9.5 6 9.5 6-3.3 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.7"/></svg>
+            <svg class="hotspot-eye-hidden" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 18M10.6 6.2A10.8 10.8 0 0 1 12 6c6.2 0 9.5 6 9.5 6a16 16 0 0 1-3.1 3.7M6.2 6.3C3.8 8 2.5 12 2.5 12s3.3 6 9.5 6c1.3 0 2.4-.3 3.4-.8"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+            <span>Hotspot</span>
+          </button>
+        </div>
         <div id="hs-sheet-table"></div>
         <div id="hs-sheet-luas"></div>
         <div id="hs-sheet-co2"></div>
@@ -4322,7 +4334,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/landcover-analysis.js"></script>
   <script src="assets/js/dukcapil-population.js?v=20261119-population-detail-title"></script>
   <script src="assets/data/kode_wilayah.js"></script>
-    <script src="assets/js/geoid-wilayah.js?v=20261102-solid-boundary-detail-sheet"></script>
+    <script src="assets/js/geoid-wilayah.js?v=20261119-hotspot-detail-template"></script>
   <script src="assets/js/geonusa-unified.js?v=20261007-local-search"></script>
   <script src="assets/js/geofarm-rekomendasi-pupuk.js"></script>
   <script src="assets/js/weather-data.js"></script>
@@ -4397,7 +4409,7 @@ JS hanya mengisi kedua host itu, tidak pernah mengosongkan
   <script src="assets/js/fasilitas-umum.js"></script>
     <script src="assets/js/unified-search.js?v=20261107-hub-catalog-search-v1"></script>
   <script src="assets/js/choropleth.js"></script>
-  <script src="assets/js/hotspot.js"></script>
+  <script src="assets/js/hotspot.js?v=20261119-hotspot-detail-template"></script>
   <script src="assets/js/kawasan-hutan.js"></script>
   <script src="assets/js/gambut-layer.js"></script>
   <script src="assets/js/kh-layer.js"></script>

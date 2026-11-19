@@ -6,6 +6,7 @@
   var heatmapLayer = null;
   var hotspotMarkerGroup = null;
   var hotspotLegendControl = null;
+  var hotspotMarkersVisible = true;
   var hotspotDataLoaded = false;
   var hotspotFeatures = [];
   var hotspotLoadPending = false;
@@ -22,6 +23,55 @@
     if (level === 'medium') return 0.6;
     return 0.3;
   }
+
+  function escapeHotspotHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (char) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
+    });
+  }
+
+  function safeHotspotReportUrl(value) {
+    try {
+      var url = new URL(String(value || ''), window.location.href);
+      return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function buildHotspotDetailPopup(properties) {
+    var p = properties || {};
+    var level = String(p.confidence_level || '-').toLowerCase();
+    var confidenceColor = getConfidenceColor(level);
+    var confidence = level + (p.confidence != null ? ' (' + p.confidence + '%)' : '');
+    var area = [p.desa, p.kecamatan].filter(Boolean).join(', ') || 'Lokasi tidak tersedia';
+    var reportUrl = safeHotspotReportUrl(p.route_create);
+    var fields = [
+      ['Kabupaten/Kota', p.kabkota],
+      ['Provinsi', p.nama_provinsi],
+      ['Satelit', p.sumber],
+      ['Confidence', '<span style="color:' + confidenceColor + ';">' + escapeHotspotHtml(confidence) + '</span>'],
+      ['Waktu deteksi', p.date_hotspot]
+    ];
+    var rows = fields.map(function (field) {
+      return '<div class="agol-popup-field"><span class="agol-popup-field-label">' + escapeHotspotHtml(field[0]) + '</span>' +
+        '<span class="agol-popup-field-value">' + (field[0] === 'Confidence' ? field[1] : escapeHotspotHtml(field[1] || '-')) + '</span></div>';
+    }).join('');
+    var reportAction = reportUrl
+      ? '<div class="hotspot-popup-actions"><a class="hotspot-popup-report" href="' + escapeHotspotHtml(reportUrl) + '" target="_blank" rel="noopener noreferrer">Laporkan Ground Check</a></div>'
+      : '';
+
+    return '<div class="agol-popup hotspot-detail-popup">' +
+      '<div class="agol-popup-header agol-geo-hotspot">' +
+        '<div class="agol-popup-badge"><span class="agol-popup-badge-dot" style="background:#fecaca;"></span>SIPONGI</div>' +
+        '<div class="agol-popup-title">Hotspot Karhutla</div>' +
+        '<div class="agol-popup-subtitle">' + escapeHotspotHtml(area) + '</div>' +
+      '</div>' +
+      '<div class="agol-popup-body"><div class="agol-popup-fields">' + rows + '</div>' + reportAction + '</div>' +
+      '<div class="agol-popup-footer"><span>Sumber: SIPONGI Kementerian Kehutanan</span></div>' +
+    '</div>';
+  }
+  window.buildHotspotDetailPopup = buildHotspotDetailPopup;
 
   function fetchHotspotData(callback) {
     fetch(HOTSPOT_API)
@@ -138,6 +188,7 @@
         },
         minOpacity: 0.4
       });
+      heatmapLayer.addTo(map);
 
       hotspotMarkerGroup = L.layerGroup();
 
@@ -147,7 +198,6 @@
         if (pp.lat == null || pp.long == null) continue;
 
         var color = getConfidenceColor(pp.confidence_level);
-        var confPct = pp.confidence != null ? pp.confidence + '%' : '-';
 
         var marker = L.circleMarker([pp.lat, pp.long], {
           radius: 4,
@@ -158,36 +208,29 @@
           fillOpacity: 0.85
         });
 
-        var popupHtml =
-          '<div style="font-family:system-ui,-apple-system,sans-serif;min-width:200px;">' +
-            '<div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px;">Hotspot Karhutla</div>' +
-            '<div style="font-size:11px;color:#475569;line-height:1.6;">' +
-              '<div><b>' + (pp.desa || '-') + '</b>, ' + (pp.kecamatan || '-') + '</div>' +
-              '<div>' + (pp.kabkota || '-') + ', ' + (pp.nama_provinsi || '-') + '</div>' +
-              '<div style="margin-top:4px;">' + (pp.sumber || '-') +
-                ' | <span style="color:' + color + ';font-weight:700;">' +
-                (pp.confidence_level || '-') + ' (' + confPct + ')</span>' +
-              '</div>' +
-              '<div>' + (pp.date_hotspot || '-') + '</div>' +
-            '</div>' +
-            '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #e5e7eb;">' +
-              '<a href="' + (pp.route_create || '#') + '" target="_blank" ' +
-              'style="font-size:10px;color:#0891b2;text-decoration:none;font-weight:600;">' +
-              'Laporkan Ground Check</a>' +
-            '</div>' +
-          '</div>';
+        var popupHtml = buildHotspotDetailPopup(pp);
 
         marker.bindPopup(popupHtml, { maxWidth: 280, className: 'hotspot-popup' });
         hotspotMarkerGroup.addLayer(marker);
       }
 
-      hotspotMarkerGroup.addTo(map);
+      if (hotspotMarkersVisible) hotspotMarkerGroup.addTo(map);
 
       var eyeBtn = document.getElementById('toggleHotspotMarkers');
       if (eyeBtn) {
         eyeBtn.style.display = 'flex';
         eyeBtn.classList.remove('markers-hidden');
-        eyeBtn.title = 'Tampilkan heatmap';
+        eyeBtn.setAttribute('aria-pressed', 'true');
+        eyeBtn.setAttribute('aria-label', 'Sembunyikan heatmap hotspot');
+        eyeBtn.title = 'Sembunyikan heatmap hotspot';
+      }
+      var pointsBtn = document.getElementById('toggleHotspotPoints');
+      if (pointsBtn) {
+        pointsBtn.style.display = 'flex';
+        pointsBtn.classList.toggle('markers-hidden', !hotspotMarkersVisible);
+        pointsBtn.setAttribute('aria-pressed', hotspotMarkersVisible ? 'true' : 'false');
+        pointsBtn.setAttribute('aria-label', (hotspotMarkersVisible ? 'Sembunyikan' : 'Tampilkan') + ' marker hotspot');
+        pointsBtn.title = (hotspotMarkersVisible ? 'Sembunyikan' : 'Tampilkan') + ' marker hotspot';
       }
 
       createHotspotLegend(hotspotFeatures.length, high, medium, low);
@@ -260,7 +303,12 @@
     if (eyeBtn) {
       eyeBtn.style.display = 'none';
       eyeBtn.classList.remove('markers-hidden');
+      eyeBtn.setAttribute('aria-pressed', 'false');
+      eyeBtn.setAttribute('aria-label', 'Tampilkan heatmap hotspot');
+      eyeBtn.title = 'Tampilkan heatmap hotspot';
     }
+    var pointsBtn = document.getElementById('toggleHotspotPoints');
+    if (pointsBtn) pointsBtn.style.display = 'none';
     var summaryCard = document.getElementById('hotspot-summary-card');
     if (summaryCard) summaryCard.innerHTML = '';
 
@@ -275,14 +323,36 @@
       map.removeLayer(heatmapLayer);
       if (eyeBtn) {
         eyeBtn.classList.add('markers-hidden');
-        eyeBtn.title = 'Tampilkan heatmap';
+        eyeBtn.setAttribute('aria-pressed', 'false');
+        eyeBtn.setAttribute('aria-label', 'Tampilkan heatmap hotspot');
+        eyeBtn.title = 'Tampilkan heatmap hotspot';
       }
     } else {
       heatmapLayer.addTo(map);
       if (eyeBtn) {
         eyeBtn.classList.remove('markers-hidden');
-        eyeBtn.title = 'Sembunyikan heatmap';
+        eyeBtn.setAttribute('aria-pressed', 'true');
+        eyeBtn.setAttribute('aria-label', 'Sembunyikan heatmap hotspot');
+        eyeBtn.title = 'Sembunyikan heatmap hotspot';
       }
+    }
+  }
+
+  function toggleHotspotPoints() {
+    if (!hotspotMarkerGroup) return;
+    var pointsBtn = document.getElementById('toggleHotspotPoints');
+    if (map.hasLayer(hotspotMarkerGroup)) {
+      map.removeLayer(hotspotMarkerGroup);
+      hotspotMarkersVisible = false;
+    } else {
+      hotspotMarkerGroup.addTo(map);
+      hotspotMarkersVisible = true;
+    }
+    if (pointsBtn) {
+      pointsBtn.classList.toggle('markers-hidden', !hotspotMarkersVisible);
+      pointsBtn.setAttribute('aria-pressed', hotspotMarkersVisible ? 'true' : 'false');
+      pointsBtn.setAttribute('aria-label', (hotspotMarkersVisible ? 'Sembunyikan' : 'Tampilkan') + ' marker hotspot');
+      pointsBtn.title = (hotspotMarkersVisible ? 'Sembunyikan' : 'Tampilkan') + ' marker hotspot';
     }
   }
 
@@ -304,6 +374,14 @@
         e.preventDefault();
         e.stopPropagation();
         toggleHotspotHeatmap();
+      });
+    }
+    var pointsBtn = document.getElementById('toggleHotspotPoints');
+    if (pointsBtn) {
+      pointsBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleHotspotPoints();
       });
     }
   });

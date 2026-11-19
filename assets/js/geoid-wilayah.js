@@ -1282,7 +1282,9 @@ function showHotspotPopup(lat, lon, desa, kecamatan, kabkota, provinsi, sumber, 
   const confColor = confidenceLevel === 'high' ? '#dc2626' : confidenceLevel === 'medium' ? '#f59e0b' : '#22c55e';
   const confPct = confidence != null ? confidence + '%' : '-';
 
-  const popupHtml = `<div style="font-family:system-ui,-apple-system,sans-serif;min-width:200px;">
+  const popupHtml = typeof window.buildHotspotDetailPopup === 'function'
+    ? window.buildHotspotDetailPopup({ desa, kecamatan, kabkota, nama_provinsi: provinsi, sumber, confidence, confidence_level: confidenceLevel, date_hotspot: dateHotspot, route_create: routeCreate })
+    : `<div style="font-family:system-ui,-apple-system,sans-serif;min-width:200px;">
     <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px;">Hotspot Karhutla</div>
     <div style="font-size:11px;color:#475569;line-height:1.6;">
       <div><b>${escapeGeoidHtml(desa || '-')}</b>, ${escapeGeoidHtml(kecamatan || '-')}</div>

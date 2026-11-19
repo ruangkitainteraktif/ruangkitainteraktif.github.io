@@ -6183,6 +6183,16 @@
     .hotspot-summary-details b { display: block; margin-top: 2px; font-size: 10px; }
     .hotspot-summary-waktu { padding: 7px 5px; background: rgba(0,0,0,.13); text-align: center; font-size: 9px; border-top: 1px solid rgba(255,255,255,.15); }
     .hotspot-summary-waktu b { display: block; margin-top: 2px; font-size: 10px; }
+    .hotspot-layer-control { display: flex; justify-content: center; gap: 8px; padding: 8px 0 0; }
+    .hotspot-layer-toggle { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 0 11px; border: 1px solid #fecaca; border-radius: 7px; background: #fff7f7; color: #991b1b; font: 600 10px/1 system-ui, sans-serif; cursor: pointer; }
+    .hotspot-layer-toggle:hover { background: #fee2e2; }
+    .hotspot-layer-toggle:focus-visible { outline: 2px solid #dc2626; outline-offset: 2px; }
+    .hotspot-layer-toggle svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .hotspot-eye-hidden { display: none; }
+    .hotspot-layer-toggle.markers-hidden { border-color: #d1d5db; background: #f9fafb; color: #64748b; }
+    .hotspot-layer-toggle.markers-hidden:hover { background: #f3f4f6; }
+    .hotspot-layer-toggle.markers-hidden .hotspot-eye-visible { display: none; }
+    .hotspot-layer-toggle.markers-hidden .hotspot-eye-hidden { display: block; }
 
     /* CO2 Chart */
     .co2-chart { margin-top: 16px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; overflow: hidden; }
@@ -6738,9 +6748,13 @@
       color: #aaa;
       font-weight: 500;
     }
+    .hotspot-popup-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
+    .hotspot-popup-report { display: inline-flex; align-items: center; min-height: 32px; padding: 0 11px; border-radius: 6px; background: #b91c1c; color: #fff; font-size: 10px; font-weight: 600; text-decoration: none; }
+    .hotspot-popup-report:hover { background: #991b1b; }
     /* Gempa NTT styles removed */
     /* geologi colors */
     .agol-geo-patahan  { background: linear-gradient(135deg, #7f1d1d, #991b1b); }
+    .agol-geo-hotspot  { background: linear-gradient(135deg, #7f1d1d, #dc2626); }
     .agol-geo-geostruktur { background: linear-gradient(135deg, #1e3a5f, #2563eb); }
     .agol-geo-geologi  { background: linear-gradient(135deg, #065f46, #059669); }
     .agol-geo-tanah    { background: linear-gradient(135deg, #78350f, #b7791f); }
