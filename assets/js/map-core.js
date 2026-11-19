@@ -1537,6 +1537,127 @@ L.control.scale({
     window.addEventListener('load', scheduleInitialStartupDefaults, { once: true });
   }
 
+  // Box zoom: drag a rectangle to zoom toward or away from its center.
+  var zoomBoxMode = null;
+  var zoomBoxPreviousInteractions = null;
+  var zoomBoxOriginalTouchAction = '';
+  var zoomBoxRectangle = null;
+  var zoomBoxStartPoint = null;
+  var zoomBoxPointerId = null;
+  var zoomBoxButtons = {};
+  var zoomBoxContainer = map.getContainer();
+
+  function finishZoomBoxMode() {
+    if (zoomBoxRectangle) map.removeLayer(zoomBoxRectangle);
+    zoomBoxRectangle = null;
+    zoomBoxStartPoint = null;
+    zoomBoxPointerId = null;
+    if (!zoomBoxMode) return;
+    zoomBoxMode = null;
+    zoomBoxContainer.classList.remove('rk-zoom-box-active');
+    zoomBoxContainer.style.touchAction = zoomBoxOriginalTouchAction;
+    if (zoomBoxPreviousInteractions) {
+      ['dragging', 'touchZoom', 'doubleClickZoom', 'scrollWheelZoom', 'boxZoom'].forEach(function (name) {
+        if (!map[name] || typeof map[name].enable !== 'function') return;
+        if (zoomBoxPreviousInteractions[name]) map[name].enable();
+        else map[name].disable();
+      });
+      zoomBoxPreviousInteractions = null;
+    }
+    Object.keys(zoomBoxButtons).forEach(function (key) {
+      zoomBoxButtons[key].classList.remove('zoom-area-active');
+      zoomBoxButtons[key].setAttribute('aria-pressed', 'false');
+    });
+  }
+
+  function setZoomBoxMode(mode) {
+    if (zoomBoxMode === mode) {
+      finishZoomBoxMode();
+      return;
+    }
+    finishZoomBoxMode();
+    zoomBoxMode = mode;
+    zoomBoxPreviousInteractions = {};
+    ['dragging', 'touchZoom', 'doubleClickZoom', 'scrollWheelZoom', 'boxZoom'].forEach(function (name) {
+      var handler = map[name];
+      if (!handler || typeof handler.enabled !== 'function') return;
+      zoomBoxPreviousInteractions[name] = handler.enabled();
+      handler.disable();
+    });
+    zoomBoxOriginalTouchAction = zoomBoxContainer.style.touchAction;
+    zoomBoxContainer.style.touchAction = 'none';
+    zoomBoxContainer.classList.add('rk-zoom-box-active');
+    zoomBoxButtons[mode].classList.add('zoom-area-active');
+    zoomBoxButtons[mode].setAttribute('aria-pressed', 'true');
+  }
+
+  function getZoomBoxPoint(event) {
+    var rect = zoomBoxContainer.getBoundingClientRect();
+    var size = map.getSize();
+    return L.point(
+      Math.max(0, Math.min(size.x, event.clientX - rect.left)),
+      Math.max(0, Math.min(size.y, event.clientY - rect.top))
+    );
+  }
+
+  function onZoomBoxPointerDown(event) {
+    if (!zoomBoxMode || event.button !== 0 || event.target.closest('.leaflet-control, .map-fab-wrap')) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    zoomBoxPointerId = event.pointerId;
+    zoomBoxStartPoint = getZoomBoxPoint(event);
+    var startLatLng = map.containerPointToLatLng(zoomBoxStartPoint);
+    zoomBoxRectangle = L.rectangle([startLatLng, startLatLng], {
+      color: '#087fa0', weight: 2, dashArray: '6 4', fillColor: '#31b8d2',
+      fillOpacity: 0.12, interactive: false
+    }).addTo(map);
+    try { zoomBoxContainer.setPointerCapture(event.pointerId); } catch (error) { /* capture may be unavailable */ }
+  }
+
+  function onZoomBoxPointerMove(event) {
+    if (!zoomBoxMode || zoomBoxPointerId !== event.pointerId || !zoomBoxStartPoint || !zoomBoxRectangle) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    var currentPoint = getZoomBoxPoint(event);
+    zoomBoxRectangle.setBounds(L.latLngBounds(
+      map.containerPointToLatLng(zoomBoxStartPoint),
+      map.containerPointToLatLng(currentPoint)
+    ));
+  }
+
+  function onZoomBoxPointerUp(event) {
+    if (!zoomBoxMode || zoomBoxPointerId !== event.pointerId || !zoomBoxStartPoint) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    var currentPoint = getZoomBoxPoint(event);
+    var width = Math.abs(currentPoint.x - zoomBoxStartPoint.x);
+    var height = Math.abs(currentPoint.y - zoomBoxStartPoint.y);
+    var bounds = zoomBoxRectangle && zoomBoxRectangle.getBounds();
+    var mode = zoomBoxMode;
+    finishZoomBoxMode();
+    if (!bounds || width < 12 || height < 12) return;
+
+    var size = map.getSize();
+    var scale = Math.min(size.x / width, size.y / height);
+    var levels = Math.max(0, Math.min(6, Math.log2(scale)));
+    var zoom = map.getZoom() + (mode === 'in' ? levels : -levels);
+    zoom = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), Math.round(zoom)));
+    map.flyTo(bounds.getCenter(), zoom, { duration: 0.75 });
+  }
+
+  function onZoomBoxKeyDown(event) {
+    if (zoomBoxMode && event.key === 'Escape') {
+      event.preventDefault();
+      finishZoomBoxMode();
+    }
+  }
+
+  zoomBoxContainer.addEventListener('pointerdown', onZoomBoxPointerDown, true);
+  zoomBoxContainer.addEventListener('pointermove', onZoomBoxPointerMove, true);
+  zoomBoxContainer.addEventListener('pointerup', onZoomBoxPointerUp, true);
+  zoomBoxContainer.addEventListener('pointercancel', finishZoomBoxMode, true);
+  window.addEventListener('keydown', onZoomBoxKeyDown);
+
   // Zoom Control
   const ZoomControl = L.Control.extend({
     options: { position: 'bottomright' },
@@ -1561,11 +1682,36 @@ L.control.scale({
         map.zoomOut();
       });
 
+      const zoomAreaIn = L.DomUtil.create('button', 'zoom-control-btn zoom-area-in');
+      zoomAreaIn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 7v10M7 12h10"/></svg>';
+      zoomAreaIn.title = 'Zoom masuk dengan kotak';
+      zoomAreaIn.setAttribute('aria-label', 'Zoom masuk dengan memilih area kotak');
+      zoomAreaIn.setAttribute('aria-pressed', 'false');
+      zoomAreaIn.addEventListener('click', function (event) {
+        event.stopPropagation();
+        setZoomBoxMode('in');
+      });
+
+      const zoomAreaOut = L.DomUtil.create('button', 'zoom-control-btn zoom-area-out');
+      zoomAreaOut.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 12h10"/></svg>';
+      zoomAreaOut.title = 'Zoom keluar dengan kotak';
+      zoomAreaOut.setAttribute('aria-label', 'Zoom keluar dengan memilih area kotak');
+      zoomAreaOut.setAttribute('aria-pressed', 'false');
+      zoomAreaOut.addEventListener('click', function (event) {
+        event.stopPropagation();
+        setZoomBoxMode('out');
+      });
+
+      zoomBoxButtons.in = zoomAreaIn;
+      zoomBoxButtons.out = zoomAreaOut;
+
       L.DomEvent.disableClickPropagation(wrap);
       L.DomEvent.disableScrollPropagation(wrap);
 
       wrap.appendChild(zoomIn);
       wrap.appendChild(zoomOut);
+      wrap.appendChild(zoomAreaIn);
+      wrap.appendChild(zoomAreaOut);
       return wrap;
     }
   });

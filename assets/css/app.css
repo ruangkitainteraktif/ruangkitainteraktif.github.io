@@ -1281,6 +1281,14 @@
     .zoom-control-btn:active {
       transform: scale(0.95);
     }
+    .zoom-control-btn.zoom-area-active {
+      color: #fff !important;
+      background: var(--accent) !important;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.35), 0 4px 12px rgba(8,63,102,.2) !important;
+    }
+    .zoom-control-btn.zoom-area-active svg { stroke: #fff !important; }
+    #map.rk-zoom-box-active,
+    #map.rk-zoom-box-active .leaflet-interactive { cursor: crosshair !important; }
     .leaflet-center .leaflet-control {
       float: none;
       clear: none;
@@ -17208,6 +17216,12 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
   #map .map-fab-wrap .zoom-control-btn:hover { background: var(--bg-card-hover) !important; box-shadow: inset 0 0 0 1px var(--accent) !important; transform: scale(1.08); }
 }
 
+@media (min-width: 769px) {
+  /* Desktop menyisakan zoom kotak; tombol zoom standar (+/−) disembunyikan. */
+  #map .zoom-control-in,
+  #map .zoom-control-out { display: none !important; }
+}
+
 
 @media (min-width: 769px) {
   /* Detail Layer, Tabel, dan Legenda dibuka dari sisi kiri pada desktop. */
@@ -18015,3 +18029,6 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
     left: calc((100vw + var(--left-sheet-width, 0px) - var(--right-sheet-width)) / 2) !important;
   }
 }
+
+/* Sembunyikan item FAB pembuka pemilih tabel atribut. */
+#map .map-fab-items .attr-table-fab { display: none !important; }
