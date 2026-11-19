@@ -6938,6 +6938,12 @@ function syncLayerCatalogState() {
       return (desc && desc.featureData && Array.isArray(desc.featureData.features)) ? desc.featureData : null;
     }
     var geo = entry.ref.geojson;
+    if ((!geo || !Array.isArray(geo.features)) && entry.leafletLayer && typeof entry.leafletLayer.toGeoJSON === 'function') {
+      try {
+        geo = entry.leafletLayer.toGeoJSON();
+        if (geo && Array.isArray(geo.features)) entry.ref.geojson = geo;
+      } catch (e) { /* layer belum siap dikonversi ke GeoJSON */ }
+    }
     return (geo && Array.isArray(geo.features)) ? geo : null;
   }
 
@@ -7182,7 +7188,8 @@ function syncLayerCatalogState() {
         var fcUnggahan = uploadedFeatureCollection(l);
         var arcgisDynamic = l.kind === 'arcgis' && l.ref && l.ref.descriptor && l.ref.descriptor.renderMode === 'dynamic';
         var geoportalWfs = l.kind === 'geoportal-hub' && l.ref && l.ref.meta && l.ref.meta.type !== 'arcgis';
-        if ((fcUnggahan && fcUnggahan.features.length) || arcgisDynamic || geoportalWfs) {
+        var vectorUpload = l.kind === 'alat' && l.leafletLayer && typeof l.leafletLayer.toGeoJSON === 'function';
+        if ((fcUnggahan && fcUnggahan.features.length) || arcgisDynamic || geoportalWfs || vectorUpload) {
           var tabelBtn = document.createElement('button');
           tabelBtn.type = 'button';
           tabelBtn.className = 'lc-attr-btn lc-attr-btn-show al-table-btn';

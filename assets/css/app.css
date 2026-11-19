@@ -18032,3 +18032,6 @@ body.geofarm-draw-active .leaflet-bottom.leaflet-left .leaflet-draw > .draw-acti
 
 /* Sembunyikan item FAB pembuka pemilih tabel atribut. */
 #map .map-fab-items .attr-table-fab { display: none !important; }
+
+/* Tombol kembali pada header sheet tabel disembunyikan. */
+#attr-table-sheet #atSheetBackBtn { display: none !important; }

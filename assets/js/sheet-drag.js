@@ -327,6 +327,13 @@
     var e = elDari(cfg);
     if (!e) return;
     if (!isOpen(id)) { buka(id); return; }
+    /* Dock positioning of desktop chips is written inline by
+       sinkronkanKontrolPetaDesktop(). Remove it before expanding so the
+       sheet returns to its CSS dock (right or left), not the map center. */
+    if (!mobile() && e.style) {
+      e.style.removeProperty('left');
+      e.style.removeProperty('transform');
+    }
     kelas(cfg, cfg.minClass, false);
     setBody(cfg, cfg.bodyMin, false);
     if (id === 'catalog-popup' || id === 'attr' || id === 'lg') {
