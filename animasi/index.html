@@ -409,9 +409,9 @@
     #toast { left: calc(50% + 160px); }
   }
   @media (max-width: 640px) {
-    #editor-panel { inset: auto 0 0; width: 100%; height: var(--mobile-sheet-height, 52vh); padding: 0 14px 10px; border: 0; border-top: 1px solid var(--border); border-radius:18px 18px 0 0; box-shadow:0 -8px 28px rgba(0,0,0,.28); transition:height .24s cubic-bezier(.2,.8,.2,1); }
+    #editor-panel { inset: auto 0 0; width: 100%; height: var(--mobile-sheet-height, 52vh); padding: 0 14px 10px; border: 1px solid rgba(148,163,184,.24); border-bottom: 0; border-radius:22px 22px 0 0; background:#111827; background-clip:padding-box; box-shadow:0 -12px 32px rgba(0,0,0,.42); transition:height .24s cubic-bezier(.2,.8,.2,1); }
     #canvas-wrap { inset: 0 0 var(--mobile-sheet-height, 52vh); transition:bottom .24s cubic-bezier(.2,.8,.2,1); }
-    #sheet-handle { position:sticky; top:0; z-index:3; display:flex; flex:0 0 34px; align-items:center; justify-content:center; margin:0 -14px 4px; padding:0 14px; background:#0b1220; border-radius:18px 18px 0 0; touch-action:none; cursor:grab; }
+    #sheet-handle { position:sticky; top:0; z-index:3; display:flex; flex:0 0 34px; align-items:center; justify-content:center; margin:0 -14px 4px; padding:0 14px; background:#111827; border-radius:21px 21px 0 0; touch-action:none; cursor:grab; }
     #sheet-handle:active { cursor:grabbing; }
     #sheet-grip { width:36px; height:4px; border-radius:9px; background:#64748b; transition:width .18s ease,background .18s ease; }
     #sheet-handle:hover #sheet-grip { width:44px; background:#94a3b8; }
@@ -472,8 +472,11 @@
     transform:translate(-50%,calc(-100% - 13px)); pointer-events:none;
   }
   #province-map-label[hidden] { display:none; }
-  .province-basemap-control { display:none; align-items:center; justify-content:space-between; gap:10px; margin:0 0 10px; padding:9px 11px; color:#cbd5e1; border:1px solid rgba(148,163,184,.2); border-radius:10px; background:rgba(15,23,42,.72); font-size:11px; }
-  .province-basemap-control.active { display:flex; }
+  .province-basemap-control { display:none; gap:7px; margin:0 0 10px; padding:10px; color:#cbd5e1; border:1px solid rgba(148,163,184,.2); border-radius:10px; background:rgba(15,23,42,.72); font-size:11px; }
+  .province-basemap-control.active { display:grid; }
+  .province-basemap-control > label { color:#7dd3fc; font-size:10px; font-weight:800; letter-spacing:.05em; }
+  #province-list { width:100%; min-width:0; height:36px; padding:0 9px; color:#e2e8f0; background:#111c2e; border:1px solid rgba(148,163,184,.28); border-radius:9px; font:inherit; font-size:11px; }
+  .province-basemap-row { display:flex; align-items:center; justify-content:space-between; gap:10px; color:#cbd5e1; }
   #province-basemap-credit { position:absolute; right:12px; bottom:12px; z-index:6; padding:4px 7px; color:#eef6ff; background:rgba(5,13,24,.7); border:1px solid rgba(255,255,255,.18); border-radius:6px; font-size:9px; text-shadow:0 1px 3px #000; pointer-events:none; }
   #province-basemap-credit[hidden] { display:none; }
   #toba-map-label { position:absolute; z-index:8; width:min(250px,calc(100% - 24px)); padding:9px 12px; color:#f8fafc; background:rgba(8,20,34,.94); border:1px solid var(--toba-accent,#67e8f9); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.35),0 0 20px color-mix(in srgb,var(--toba-accent,#67e8f9) 30%,transparent); transform:translate(-50%,calc(-100% - 12px)); pointer-events:none; }
@@ -503,7 +506,9 @@
   #province-map-label.is-arriving { animation:province-label-in .24s cubic-bezier(.2,.8,.2,1) both; }
   #province-map-label::after { content:""; position:absolute; left:calc(50% - 6px); bottom:-7px; width:11px; height:11px; background:var(--province-accent); clip-path:polygon(0 0,100% 0,50% 100%); }
   .province-map-emblem { flex:0 0 34px; width:34px; height:34px; padding:3px; object-fit:contain; background:#fff; border:2px solid var(--province-accent); border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.28); }
-  .province-map-name { align-self:center; overflow:hidden; font-size:12px; font-weight:850; line-height:1.2; text-align:center; text-overflow:ellipsis; white-space:nowrap; }
+  .province-map-copy { display:grid; min-width:0; gap:3px; text-align:center; }
+  .province-map-name { overflow:hidden; font-size:12px; font-weight:850; line-height:1.2; text-overflow:ellipsis; white-space:nowrap; }
+  .province-map-capital { color:#cbd5e1; font-size:10px; font-weight:650; line-height:1.2; white-space:nowrap; }
   @keyframes province-label-in { from { opacity:0; translate:0 5px; scale:.94; } to { opacity:1; translate:0 0; scale:1; } }
   .stage-icon { display:grid; place-items:center; }
   .stage-icon svg, button.btn svg, .stage-edit-tab svg { width:19px; height:19px; display:block; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
@@ -528,7 +533,7 @@
   <div id="scene-labels" class="scene-label-layer" aria-label="Pilih tahap animasi" aria-hidden="false"></div>
   <div id="province-map-label" hidden aria-hidden="true">
     <img class="province-map-emblem" id="province-map-emblem" alt="">
-    <span class="province-map-name" id="province-map-name"></span>
+    <span class="province-map-copy"><span class="province-map-name" id="province-map-name"></span><span class="province-map-capital" id="province-map-capital"></span></span>
   </div>
   <div id="toba-map-label" hidden aria-hidden="true">
     <span class="toba-label-top" id="toba-label-top"></span>
@@ -583,9 +588,10 @@
   <div class="stage-desc" id="card-desc">Panas matahari menghangatkan permukaan laut sehingga air berubah menjadi uap air yang naik ke atmosfer.</div>
 </aside>
 
-<section id="province-basemap-control" class="province-basemap-control" aria-label="Peta dasar provinsi">
-  <span>Peta dasar Indonesia</span>
-  <button id="province-basemap-toggle" class="toba-basemap-toggle" type="button" aria-pressed="true">Satelit aktif</button>
+<section id="province-basemap-control" class="province-basemap-control" aria-label="Pilihan provinsi dan peta dasar">
+  <label for="province-list">Jelajahi 38 provinsi</label>
+  <select id="province-list" aria-label="Pilih provinsi"></select>
+  <div class="province-basemap-row"><span>Peta dasar</span><button id="province-basemap-toggle" class="toba-basemap-toggle" type="button" aria-pressed="true">Satelit aktif</button></div>
 </section>
 
 <section id="toba-explorer" class="toba-explorer" aria-label="Jelajah daya tarik wisata Danau Toba">
@@ -1159,11 +1165,21 @@ async function ensureTobaWorld() {
       const land = new THREE.Mesh(geometry, material); land.position.y = -.08; land.receiveShadow = true; countyGroup.add(land);
       const edgePoints = sampledRing(ring, 650).map(([lon, lat]) => { const point = tobaProject(lon, lat); return new THREE.Vector3(point.x, .31, -point.y); });
       if (edgePoints.length > 2) { edgePoints.push(edgePoints[0].clone()); countyGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(edgePoints), new THREE.LineBasicMaterial({ color: 0x34566a, transparent: true, opacity: .9 }))); }
-      const centroid = ring.reduce((sum, point) => [sum[0] + point[0], sum[1] + point[1]], [0, 0]).map(value => value / ring.length);
-      const projected = tobaProject(centroid[0], centroid[1]);
-      const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: (() => { const c = document.createElement('canvas'); c.width = 512; c.height = 96; const ctx = c.getContext('2d'); ctx.font = '700 38px system-ui'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(8,20,34,.78)'; ctx.fillRect(8, 14, 496, 68); ctx.fillStyle = '#eff6ff'; ctx.fillText(feature.name.toUpperCase(), 256, 60); const texture = new THREE.CanvasTexture(c); texture.colorSpace = THREE.SRGBColorSpace; return texture; })(), transparent: true, depthTest: true }));
-      label.position.set(projected.x, .66, -projected.y); label.scale.set(8, 1.5, 1); tobaWorld.add(label);
     });
+    const labelRing = outerRings.reduce((largest, ring) => Math.abs(tobaRingArea(ring)) > Math.abs(tobaRingArea(largest || [])) ? ring : largest, null);
+    if (labelRing?.length) {
+      const centroid = labelRing.slice(0, -1).reduce((sum, point) => [sum[0] + point[0], sum[1] + point[1]], [0, 0]).map(value => value / (labelRing.length - 1));
+      const projected = tobaProject(centroid[0], centroid[1]);
+      const canvas = document.createElement('canvas'), fontSize = 46, text = feature.name.toLocaleUpperCase('id-ID');
+      const measure = canvas.getContext('2d'); measure.font = `750 ${fontSize}px system-ui, sans-serif`;
+      canvas.width = Math.ceil(measure.measureText(text).width + 36); canvas.height = 100;
+      const ctx = canvas.getContext('2d'); ctx.font = `750 ${fontSize}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+      ctx.strokeStyle = 'rgba(5,16,28,.94)'; ctx.lineWidth = 10; ctx.strokeText(text, canvas.width / 2, canvas.height / 2);
+      ctx.shadowColor = 'rgba(3,12,24,.65)'; ctx.shadowBlur = 8; ctx.fillStyle = '#f8fafc'; ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+      const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace;
+      const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false, depthWrite: false }));
+      label.position.set(projected.x, .62, -projected.y); label.scale.set(Math.min(10, Math.max(3.2, canvas.width / canvas.height * 1.12)), 1.12, 1); label.renderOrder = 5; countyGroup.add(label);
+    }
     tobaWorld.add(countyGroup);
   });
   // The source polygon includes the Lake Toba hole inside Simalungun; fill it as water.
@@ -1285,8 +1301,8 @@ function jumpToTobaDestination(id) {
   const index = tobaData?.features.findIndex(feature => String(feature.id) === String(id)); if (index == null || index < 0) return;
   const feature = tobaData.features[index]; const stageIndex = STAGES.findIndex(stage => stage.ktaNames?.includes(feature.kta)); if (stageIndex < 0) return;
   const indices = tobaChapterFeatures(stageIndex), localIndex = indices.indexOf(index); simTime = tobaStageStart(stageIndex) + (localIndex + .42) * TOBA_POINT_SECONDS;
-  activeStageIdx = stageIndex; isPlaying = true; updateSimulation(simTime); updateCard(stageIndex); updateSubtitle(stageIndex); setActiveStageButton(stageIndex); syncUI(simTime); updateCameraChoreography(simTime); showTobaDetail(index, stageIndex);
-  setIconButton(btnPlay, 'pause', 'Jeda'); btnPlay.setAttribute('aria-pressed', 'false'); syncSceneLabels();
+  activeStageIdx = stageIndex; isPlaying = false; updateSimulation(simTime); updateCard(stageIndex); updateSubtitle(stageIndex); setActiveStageButton(stageIndex); syncUI(simTime); updateCameraChoreography(simTime); showTobaDetail(index, stageIndex);
+  setIconButton(btnPlay, 'play', 'Putar'); btnPlay.setAttribute('aria-pressed', 'true'); syncSceneLabels();
 }
 function updateTobaTourism(t) {
   if (!tobaData) return;
@@ -1347,12 +1363,17 @@ function closedProvincePath(points, PathType = THREE.Path) {
 
 async function ensureIndonesiaProvinceWorld() {
   if (indonesiaProvinceData) return;
-  const dataResponse = await fetch(new URL('./data/provinsi-indonesia.json', import.meta.url));
+  const [dataResponse, geoResponse, capitalsResponse] = await Promise.all([
+    fetch(new URL('./data/provinsi-indonesia.json', import.meta.url)),
+    fetch(new URL('../assets/data/bps/geojson/provinsi.geojson', import.meta.url)),
+    fetch(new URL('./data/ibukota-provinsi.json', import.meta.url))
+  ]);
   if (!dataResponse.ok) throw new Error('Data daftar provinsi tidak dapat dimuat.');
-  const data = await dataResponse.json();
-  const geoResponse = await fetch(new URL('../assets/data/bps/geojson/provinsi.geojson', import.meta.url));
   if (!geoResponse.ok) throw new Error('Batas provinsi lokal tidak dapat dimuat.');
-  const geo = await geoResponse.json();
+  if (!capitalsResponse.ok) throw new Error('Data ibu kota provinsi tidak dapat dimuat.');
+  const [data, geo, capitals] = await Promise.all([dataResponse.json(), geoResponse.json(), capitalsResponse.json()]);
+  data.provinces.forEach(province => { province.capital = capitals.provinces[province.name] || ''; });
+  if (data.provinces.length !== 38 || data.provinces.some(province => !province.capital)) throw new Error('Data ibu kota belum lengkap untuk 38 provinsi.');
   await Promise.all(data.provinces.map(province => new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => { province.emblemImage = image; resolve(); };
@@ -1491,6 +1512,12 @@ async function ensureIndonesiaProvinceWorld() {
   }
   indonesiaRegionAnchors = regionTotals.map(total => new THREE.Vector3(total.x / Math.max(1, total.count), 0.7, total.z / Math.max(1, total.count)));
   indonesiaProvinceData = data;
+  const provinceList = document.getElementById('province-list');
+  provinceList.replaceChildren();
+  const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = 'Pilih provinsi'; provinceList.appendChild(placeholder);
+  data.provinces.forEach((province, index) => {
+    const option = document.createElement('option'); option.value = String(index); option.textContent = province.name; provinceList.appendChild(option);
+  });
 }
 
 function loadIndonesiaSatelliteBasemap() {
@@ -1545,6 +1572,18 @@ function provincePlaybackPosition(t) {
   };
 }
 
+function jumpToProvince(index) {
+  const province = indonesiaProvinceData?.provinces[index];
+  if (!province) return;
+  const stageIndex = STAGES.findIndex(stage => stage.regionId === province.regionId);
+  if (stageIndex < 0) return;
+  const provinceIndices = indonesiaProvinceData.provinces.map((item, itemIndex) => item.regionId === province.regionId ? itemIndex : -1).filter(itemIndex => itemIndex >= 0);
+  const localIndex = provinceIndices.indexOf(index);
+  simTime = stageIndex * STAGE_LEN + ((localIndex + .42) / provinceIndices.length) * STAGE_LEN;
+  stopSpeech(); activeStageIdx = stageIndex; isPlaying = false; updateSimulation(simTime); updateCard(stageIndex); updateSubtitle(stageIndex); setActiveStageButton(stageIndex); syncUI(simTime); updateCameraChoreography(simTime);
+  setIconButton(btnPlay, 'play', 'Putar'); btnPlay.setAttribute('aria-pressed', 'true'); syncSceneLabels();
+}
+
 function updateIndonesiaProvince(t) {
   if (!indonesiaProvinceData) return;
   const { index: nextIndex, within: withinProvince } = provincePlaybackPosition(t);
@@ -1579,6 +1618,9 @@ function updateProvinceSpotlight(index) {
   mapEmblem.src = province.emblemImage.src;
   mapEmblem.alt = `Lambang ${province.name}`;
   document.getElementById('province-map-name').textContent = province.name;
+  document.getElementById('province-map-capital').textContent = province.capital;
+  const provinceList = document.getElementById('province-list');
+  if (provinceList.value !== String(index)) provinceList.value = String(index);
   mapLabel.classList.remove('is-arriving');
   void mapLabel.offsetWidth;
   mapLabel.classList.add('is-arriving');
@@ -2054,7 +2096,7 @@ function labelForStage(stage, index) {
 function renderPresetOptions() {
   presetOptions.replaceChildren();
   const categories = new Map();
-  PRESETS.forEach(preset => {
+  PRESETS.filter(preset => !['hydrology', 'photosynthesis'].includes(preset.id)).forEach(preset => {
     const category = preset.category || 'Lainnya';
     let group = categories.get(category);
     if (!group) { group = document.createElement('optgroup'); group.label = category; categories.set(category, group); presetOptions.appendChild(group); }
@@ -2145,6 +2187,7 @@ renderPresetOptions();
 renderSceneLabels(activePreset);
 document.getElementById('toba-basemap-toggle').addEventListener('click', toggleTobaBasemap);
 document.getElementById('province-basemap-toggle').addEventListener('click', toggleIndonesiaBasemap);
+document.getElementById('province-list').addEventListener('change', event => { if (event.target.value !== '') jumpToProvince(Number(event.target.value)); });
 document.getElementById('toba-search').addEventListener('input', event => {
   const value = event.target.value.trim();
   document.querySelectorAll('#toba-legend button').forEach(button => button.setAttribute('aria-pressed', String(value === button.dataset.category)));
