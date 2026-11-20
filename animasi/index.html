@@ -427,10 +427,12 @@
     .toolbar { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 5px; }
     .toolbar button.btn { height: 34px; justify-content: center; padding: 0 4px; font-size: 10px; }
     #stage-card { display: none; }
-    #speed-panel { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0; }
-    #speed-panel .sp-title, #speed-panel > div:last-child { display: none; }
-    .sp-row { flex: 1 1 45%; min-width: 0; margin: 0; gap: 5px; }
-    .sp-row label, .sp-val { font-size: 10px; }
+    #speed-panel { position: relative; inset: auto; display: grid; grid-template-columns: minmax(0,1fr); align-items: stretch; width: 100%; gap: 8px; margin: 0; padding: 10px; }
+    #speed-panel .sp-title { display: block; margin: 0; }
+    #speed-panel > div:last-child { display: none; }
+    .sp-row { display: grid; grid-template-columns: 52px minmax(0,1fr) 38px; width: 100%; min-width: 0; margin: 0; gap: 8px; }
+    .sp-row label, .sp-val { font-size: 11px; }
+    .sp-row input[type="range"] { width: 100%; min-width: 0; }
     #bottom-dock { padding-top: 10px; gap: 8px; }
     .stage-btn { min-height: 34px; padding: 6px; }
     .stage-name { font-size: 11px; }
@@ -462,7 +464,7 @@
   .scene-label.is-offscreen { visibility:hidden; }  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
   #province-map-label {
     --province-accent: #38bdf8;
-    position:absolute; z-index:7; display:grid; grid-template-columns:auto 1fr; align-items:center; gap:4px 9px;
+    position:absolute; z-index:7; display:flex; align-items:center; gap:9px;
     width:max-content; max-width:min(230px,calc(100% - 24px)); padding:8px 12px;
     color:#f8fafc; background:linear-gradient(135deg,color-mix(in srgb,var(--province-accent) 30%,rgba(8,17,31,.96)),rgba(8,17,31,.96) 65%);
     border:1px solid var(--province-accent); border-radius:13px;
@@ -470,11 +472,38 @@
     transform:translate(-50%,calc(-100% - 13px)); pointer-events:none;
   }
   #province-map-label[hidden] { display:none; }
+  .province-basemap-control { display:none; align-items:center; justify-content:space-between; gap:10px; margin:0 0 10px; padding:9px 11px; color:#cbd5e1; border:1px solid rgba(148,163,184,.2); border-radius:10px; background:rgba(15,23,42,.72); font-size:11px; }
+  .province-basemap-control.active { display:flex; }
+  #province-basemap-credit { position:absolute; right:12px; bottom:12px; z-index:6; padding:4px 7px; color:#eef6ff; background:rgba(5,13,24,.7); border:1px solid rgba(255,255,255,.18); border-radius:6px; font-size:9px; text-shadow:0 1px 3px #000; pointer-events:none; }
+  #province-basemap-credit[hidden] { display:none; }
+  #toba-map-label { position:absolute; z-index:8; width:min(250px,calc(100% - 24px)); padding:9px 12px; color:#f8fafc; background:rgba(8,20,34,.94); border:1px solid var(--toba-accent,#67e8f9); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.35),0 0 20px color-mix(in srgb,var(--toba-accent,#67e8f9) 30%,transparent); transform:translate(-50%,calc(-100% - 12px)); pointer-events:none; }
+  #toba-map-label[hidden] { display:none; }
+  .toba-label-top { display:block; color:var(--toba-accent,#67e8f9); font-size:9px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+  .toba-label-name { display:block; margin-top:2px; font-size:12px; font-weight:800; line-height:1.3; }
+  .toba-label-meta { display:block; margin-top:3px; color:#cbd5e1; font-size:10px; line-height:1.35; }
+  #toba-explorer { display:none; margin:0 0 12px; padding:12px; border:1px solid rgba(103,232,249,.25); border-radius:13px; background:rgba(15,31,48,.92); }
+  #toba-explorer.active { display:grid; gap:9px; }
+  .toba-explorer-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .toba-explorer-title { color:#e0f2fe; font-size:12px; font-weight:800; }
+  .toba-explorer-count { color:#67e8f9; font-size:10px; font-weight:750; white-space:nowrap; }
+  .toba-basemap-toggle { min-height:25px; padding:3px 8px; color:#bae6fd; background:rgba(56,189,248,.1); border:1px solid rgba(56,189,248,.4); border-radius:8px; font:inherit; font-size:9px; font-weight:750; cursor:pointer; }
+  #toba-basemap-credit { position:absolute; right:12px; bottom:12px; z-index:6; padding:4px 7px; color:#eef6ff; background:rgba(5,13,24,.7); border:1px solid rgba(255,255,255,.18); border-radius:6px; font-size:9px; text-shadow:0 1px 3px #000; pointer-events:none; }
+  #toba-basemap-credit[hidden] { display:none; }
+  .toba-legend { display:flex; flex-wrap:wrap; gap:5px; }
+  .toba-legend button { display:inline-flex; align-items:center; gap:5px; min-height:24px; padding:3px 7px; color:#dbeafe; background:rgba(255,255,255,.045); border:1px solid rgba(148,163,184,.2); border-radius:999px; font-size:9px; cursor:pointer; }
+  .toba-legend button:hover, .toba-legend button[aria-pressed="true"] { background:rgba(56,189,248,.15); border-color:rgba(56,189,248,.65); }
+  .toba-legend i { width:7px; height:7px; border-radius:50%; }
+  .toba-explorer select, .toba-explorer input { width:100%; min-width:0; height:36px; padding:0 10px; color:#e2e8f0; background:#111d30; border:1px solid rgba(148,163,184,.28); border-radius:9px; font:inherit; font-size:11px; }
+  .toba-detail { min-height:74px; padding:9px 10px; background:rgba(3,10,20,.42); border-radius:9px; }
+  .toba-detail-kicker { color:#67e8f9; font-size:9px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+  .toba-detail-name { margin:3px 0; color:#f8fafc; font-size:12px; font-weight:800; line-height:1.3; }
+  .toba-detail-meta { color:#cbd5e1; font-size:10px; line-height:1.45; }
+  .toba-source { color:#7dd3fc; font-size:10px; text-decoration:none; }
+  .toba-source:hover { text-decoration:underline; }
   #province-map-label.is-arriving { animation:province-label-in .24s cubic-bezier(.2,.8,.2,1) both; }
   #province-map-label::after { content:""; position:absolute; left:calc(50% - 6px); bottom:-7px; width:11px; height:11px; background:var(--province-accent); clip-path:polygon(0 0,100% 0,50% 100%); }
-  .province-map-emblem { grid-row:1 / span 2; align-self:center; width:34px; height:34px; padding:3px; object-fit:contain; background:#fff; border:2px solid var(--province-accent); border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.28); }
-  .province-map-name { overflow:hidden; font-size:12px; font-weight:850; line-height:1.2; text-overflow:ellipsis; white-space:nowrap; }
-  .province-map-region { color:color-mix(in srgb,var(--province-accent) 76%,white); font-size:9px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+  .province-map-emblem { flex:0 0 34px; width:34px; height:34px; padding:3px; object-fit:contain; background:#fff; border:2px solid var(--province-accent); border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.28); }
+  .province-map-name { align-self:center; overflow:hidden; font-size:12px; font-weight:850; line-height:1.2; text-align:center; text-overflow:ellipsis; white-space:nowrap; }
   @keyframes province-label-in { from { opacity:0; translate:0 5px; scale:.94; } to { opacity:1; translate:0 0; scale:1; } }
   .stage-icon { display:grid; place-items:center; }
   .stage-icon svg, button.btn svg, .stage-edit-tab svg { width:19px; height:19px; display:block; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
@@ -500,8 +529,14 @@
   <div id="province-map-label" hidden aria-hidden="true">
     <img class="province-map-emblem" id="province-map-emblem" alt="">
     <span class="province-map-name" id="province-map-name"></span>
-    <span class="province-map-region" id="province-map-region"></span>
   </div>
+  <div id="toba-map-label" hidden aria-hidden="true">
+    <span class="toba-label-top" id="toba-label-top"></span>
+    <span class="toba-label-name" id="toba-label-name"></span>
+    <span class="toba-label-meta" id="toba-label-meta"></span>
+  </div>
+  <div id="toba-basemap-credit" hidden>Imagery © Esri, Maxar, Earthstar Geographics</div>
+  <div id="province-basemap-credit" hidden>Imagery © Esri, Maxar, Earthstar Geographics</div>
 </div>
 <div id="reels-guide"></div>
 <div id="province-spotlight" hidden aria-live="polite">
@@ -521,7 +556,7 @@
   <div class="brand">
     <div class="brand-badge">3D</div>
     <div>
-      <div class="brand-title">Siklus Hidrologi 3D — Studio Pro</div>
+      <div class="brand-title">Siklus Hidrologi 3D</div>
       <div class="brand-sub">Subtitle Editable + TTS Speed Control (15s Loop)</div>
     </div>
   </div>
@@ -547,6 +582,23 @@
   <div class="stage-heading" id="card-title">01. Evaporasi (Penguapan)</div>
   <div class="stage-desc" id="card-desc">Panas matahari menghangatkan permukaan laut sehingga air berubah menjadi uap air yang naik ke atmosfer.</div>
 </aside>
+
+<section id="province-basemap-control" class="province-basemap-control" aria-label="Peta dasar provinsi">
+  <span>Peta dasar Indonesia</span>
+  <button id="province-basemap-toggle" class="toba-basemap-toggle" type="button" aria-pressed="true">Satelit aktif</button>
+</section>
+
+<section id="toba-explorer" class="toba-explorer" aria-label="Jelajah daya tarik wisata Danau Toba">
+  <div class="toba-explorer-head"><span class="toba-explorer-title">Jelajah destinasi</span><button id="toba-basemap-toggle" class="toba-basemap-toggle" type="button" aria-pressed="true">Satelit aktif</button></div>
+  <div id="toba-explorer-count" class="toba-explorer-count">132 lokasi · 8 kabupaten</div>
+  <div id="toba-legend" class="toba-legend" aria-label="Filter kategori"></div>
+  <label class="sr-only" for="toba-search">Cari destinasi, kategori, atau kabupaten</label>
+  <input id="toba-search" type="search" placeholder="Cari destinasi atau kabupaten…" autocomplete="off">
+  <label class="sr-only" for="toba-destination-select">Pilih destinasi</label>
+  <select id="toba-destination-select" aria-label="Pilih destinasi wisata"></select>
+  <div id="toba-story-detail" class="toba-detail" aria-live="polite"></div>
+  <a class="toba-source" href="https://geoservices.big.go.id/gis/rest/services/DAPIG/Atlas_Pariwisata_Danau_Toba/MapServer" target="_blank" rel="noopener">Sumber data: Atlas Pariwisata Danau Toba · BIG ↗</a>
+</section>
 
 <!-- Speed Controls -->
 <div id="speed-panel">
@@ -1041,6 +1093,7 @@ scene.add(provinceWorld);
 let indonesiaProvinceData = null;
 let indonesiaProvinceGroups = [];
 let indonesiaProvinceTargets = [];
+let indonesiaProvinceCameraRanges = [];
 let indonesiaRegionAnchors = [];
 let activeProvinceIndex = -1;
 const provinceRegionColors = {
@@ -1050,6 +1103,210 @@ const provinceRegionColors = {
   'maluku-papua': '#d8b4fe'
 };
 const provincePastelColors = [0xfbcfe8, 0xfecaca, 0xfed7aa, 0xfef08a, 0xd9f99d, 0xa7f3d0, 0xa5f3fc, 0xbfdbfe, 0xc7d2fe, 0xddd6fe, 0xf5d0fe, 0xe2e8f0];
+let provinceBasemapMesh = null, provinceBasemapTexture = null, provinceBasemapEnabled = true, provinceBasemapRequested = false, provinceBasemapBounds = null;
+
+const tobaWorld = new THREE.Group();
+tobaWorld.visible = false;
+scene.add(tobaWorld);
+let tobaData = null, tobaBoundaryData = null, tobaMarkers = [], tobaTargets = [], tobaRegionAnchors = [], activeTobaIndex = -1;
+let tobaBasemapMesh = null, tobaBasemapTexture = null, tobaBasemapEnabled = true, tobaBasemapRequested = false;
+const tobaCountyMaterials = [];
+let tobaBasemapExtent = null;
+const tobaCategoryColors = { 'Desa Wisata': 0xfbbf24, 'Sejarah dan Budaya': 0xf472b6, Ekowisata: 0x34d399, Religi: 0xa78bfa, Ekraf: 0xfb923c, MICE: 0x38bdf8 };
+const tobaCountyColors = [0xbde0fe, 0xcaffbf, 0xffd6a5, 0xe4c1f9, 0xa0e7e5, 0xffcad4, 0xd0f4de, 0xfde2a7];
+const tobaMapScale = 15.5;
+const TOBA_POINT_SECONDS = 1.7;
+const TOBA_CHAPTER_PAUSE = 1.2;
+let tobaMapCenter = { lon: 99.05, lat: 2.55 };
+function tobaProject(lon, lat) { return new THREE.Vector2((lon - tobaMapCenter.lon) * tobaMapScale, (lat - tobaMapCenter.lat) * tobaMapScale); }
+function tobaRingArea(ring) { let area = 0; for (let i = 0; i < ring.length - 1; i++) area += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1]; return area / 2; }
+function tobaPath(ring, PathType = THREE.Path) {
+  const points = sampledRing(ring, 700).map(([lon, lat]) => tobaProject(lon, lat));
+  if (points.length < 4) return null;
+  const path = new PathType(); path.moveTo(points[0].x, points[0].y);
+  points.slice(1).forEach(point => path.lineTo(point.x, point.y)); path.closePath(); return path;
+}
+
+async function ensureTobaWorld() {
+  if (tobaData && tobaBoundaryData) return;
+  const [pointsResponse, boundaryResponse] = await Promise.all([
+    fetch(new URL('./data/danau-toba-wisata.json', import.meta.url)),
+    fetch(new URL('./data/danau-toba-kabupaten.json', import.meta.url))
+  ]);
+  if (!pointsResponse.ok || !boundaryResponse.ok) throw new Error('Data wisata lokal atau batas kabupaten gagal dimuat.');
+  const [pointData, boundaryData] = await Promise.all([pointsResponse.json(), boundaryResponse.json()]);
+  if (!Array.isArray(pointData.features) || pointData.features.length !== 132 || !Array.isArray(boundaryData.features) || boundaryData.features.length !== 8) throw new Error('Struktur data Atlas Danau Toba tidak sesuai.');
+  let minLon = Infinity, maxLon = -Infinity, minLat = Infinity, maxLat = -Infinity;
+  boundaryData.features.forEach(feature => feature.rings.flat().forEach(([lon, lat]) => { minLon = Math.min(minLon, lon); maxLon = Math.max(maxLon, lon); minLat = Math.min(minLat, lat); maxLat = Math.max(maxLat, lat); }));
+  tobaMapCenter = { lon: (minLon + maxLon) / 2, lat: (minLat + maxLat) / 2 };
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry((maxLon - minLon) * tobaMapScale + 9, (maxLat - minLat) * tobaMapScale + 9), new THREE.MeshStandardMaterial({ color: 0x12314a, roughness: 1 }));
+  ground.rotation.x = -Math.PI / 2; ground.position.y = -0.36; tobaWorld.add(ground);
+  const basemapMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+  tobaBasemapMesh = new THREE.Mesh(new THREE.PlaneGeometry((maxLon - minLon) * tobaMapScale, (maxLat - minLat) * tobaMapScale), basemapMaterial);
+  tobaBasemapMesh.rotation.x = -Math.PI / 2; tobaBasemapMesh.position.y = -.28; tobaBasemapMesh.visible = tobaBasemapEnabled; tobaWorld.add(tobaBasemapMesh);
+  loadTobaSatelliteBasemap(minLon, minLat, maxLon, maxLat);
+  const regionTotals = new Map();
+  boundaryData.features.forEach((feature, index) => {
+    const outerRings = feature.rings.filter(ring => tobaRingArea(ring) < 0);
+    const holes = feature.rings.filter(ring => tobaRingArea(ring) > 0);
+    const material = new THREE.MeshStandardMaterial({ color: tobaBasemapEnabled ? 0xeaf6f2 : tobaCountyColors[index % tobaCountyColors.length], transparent: tobaBasemapEnabled, opacity: tobaBasemapEnabled ? .34 : 1, depthWrite: !tobaBasemapEnabled, roughness: .84, flatShading: true, side: THREE.DoubleSide, emissive: 0x101827, emissiveIntensity: .1 });
+    tobaCountyMaterials.push({ material, baseColor: tobaCountyColors[index % tobaCountyColors.length] });
+    const countyGroup = new THREE.Group(); countyGroup.userData.material = material;
+    outerRings.forEach(ring => {
+      const shape = tobaPath(ring, THREE.Shape); if (!shape) return;
+      holes.forEach(hole => { const path = tobaPath(hole); if (path) shape.holes.push(path); });
+      const geometry = new THREE.ExtrudeGeometry(shape, { depth: .32, bevelEnabled: false, curveSegments: 1 }); geometry.rotateX(-Math.PI / 2);
+      const land = new THREE.Mesh(geometry, material); land.position.y = -.08; land.receiveShadow = true; countyGroup.add(land);
+      const edgePoints = sampledRing(ring, 650).map(([lon, lat]) => { const point = tobaProject(lon, lat); return new THREE.Vector3(point.x, .31, -point.y); });
+      if (edgePoints.length > 2) { edgePoints.push(edgePoints[0].clone()); countyGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(edgePoints), new THREE.LineBasicMaterial({ color: 0x34566a, transparent: true, opacity: .9 }))); }
+      const centroid = ring.reduce((sum, point) => [sum[0] + point[0], sum[1] + point[1]], [0, 0]).map(value => value / ring.length);
+      const projected = tobaProject(centroid[0], centroid[1]);
+      const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: (() => { const c = document.createElement('canvas'); c.width = 512; c.height = 96; const ctx = c.getContext('2d'); ctx.font = '700 38px system-ui'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(8,20,34,.78)'; ctx.fillRect(8, 14, 496, 68); ctx.fillStyle = '#eff6ff'; ctx.fillText(feature.name.toUpperCase(), 256, 60); const texture = new THREE.CanvasTexture(c); texture.colorSpace = THREE.SRGBColorSpace; return texture; })(), transparent: true, depthTest: true }));
+      label.position.set(projected.x, .66, -projected.y); label.scale.set(8, 1.5, 1); tobaWorld.add(label);
+    });
+    tobaWorld.add(countyGroup);
+  });
+  // The source polygon includes the Lake Toba hole inside Simalungun; fill it as water.
+  const lakeRing = boundaryData.features.find(feature => feature.name === 'Simalungun')?.rings.find(ring => tobaRingArea(ring) > 0);
+  if (lakeRing) { const lake = tobaPath(lakeRing, THREE.Shape); const mesh = new THREE.Mesh(new THREE.ShapeGeometry(lake), new THREE.MeshStandardMaterial({ color: 0x168aad, roughness: .35, metalness: .08, side: THREE.DoubleSide })); mesh.rotation.x = -Math.PI / 2; mesh.position.y = -.01; tobaWorld.add(mesh); }
+  const markerGeometry = new THREE.OctahedronGeometry(.26, 0);
+  pointData.features.forEach((feature, index) => {
+    const [lon, lat] = feature.coordinates, point = tobaProject(lon, lat), color = tobaCategoryColors[feature.category] || 0xffffff;
+    const material = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: .12, roughness: .4, flatShading: true });
+    const marker = new THREE.Mesh(markerGeometry, material); marker.position.set(point.x, .62, -point.y); marker.userData.destinationIndex = index; marker.castShadow = true; tobaWorld.add(marker);
+    const halo = new THREE.Mesh(new THREE.RingGeometry(.35, .48, 20), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .68, side: THREE.DoubleSide })); halo.rotation.x = -Math.PI / 2; halo.position.set(point.x, .38, -point.y); tobaWorld.add(halo);
+    tobaMarkers.push({ marker, halo, baseColor: color }); tobaTargets[index] = new THREE.Vector3(point.x, .8, -point.y);
+    const totals = regionTotals.get(feature.kta) || { x: 0, z: 0, count: 0 }; totals.x += point.x; totals.z -= point.y; totals.count++; regionTotals.set(feature.kta, totals);
+  });
+  tobaRegionAnchors = pointData.features.map(feature => { const total = regionTotals.get(feature.kta); return new THREE.Vector3(total.x / total.count, .7, total.z / total.count); });
+  tobaData = pointData; tobaBoundaryData = boundaryData;
+  populateTobaOptions();
+}
+
+function loadTobaSatelliteBasemap(minLon, minLat, maxLon, maxLat) {
+  if (!tobaBasemapMesh || tobaBasemapTexture || tobaBasemapRequested) return;
+  tobaBasemapExtent = { minLon, minLat, maxLon, maxLat };
+  tobaBasemapRequested = true;
+  const params = new URLSearchParams({ bbox: `${minLon - .025},${minLat - .025},${maxLon + .025},${maxLat + .025}`, bboxSR: '4326', imageSR: '4326', size: '2048,2048', format: 'jpg', f: 'image' });
+  const imageUrl = `https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?${params}`;
+  new THREE.TextureLoader().load(imageUrl, texture => {
+    tobaBasemapTexture = texture; texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+    tobaBasemapMesh.material.map = texture; tobaBasemapMesh.material.color.set(0xffffff); tobaBasemapMesh.material.needsUpdate = true;
+    document.getElementById('toba-basemap-credit').hidden = !tobaBasemapEnabled || activePreset?.id !== 'toba-tourism';
+  }, undefined, error => {
+    console.warn('Citra satelit Danau Toba gagal dimuat; memakai peta ilustrasi lokal.', error); tobaBasemapRequested = false; tobaBasemapEnabled = false;
+    if (tobaBasemapMesh) tobaBasemapMesh.visible = false;
+    tobaCountyMaterials.forEach(({ material, baseColor }) => { material.transparent = false; material.opacity = 1; material.depthWrite = true; material.color.setHex(baseColor); material.needsUpdate = true; });
+    const button = document.getElementById('toba-basemap-toggle'); button.textContent = 'Peta ilustrasi'; button.setAttribute('aria-pressed', 'false'); document.getElementById('toba-basemap-credit').hidden = true;
+  });
+}
+
+function toggleTobaBasemap() {
+  tobaBasemapEnabled = !tobaBasemapEnabled;
+  const button = document.getElementById('toba-basemap-toggle');
+  button.textContent = tobaBasemapEnabled ? (tobaBasemapTexture ? 'Satelit aktif' : 'Memuat satelit…') : 'Peta ilustrasi';
+  button.setAttribute('aria-pressed', String(tobaBasemapEnabled));
+  if (tobaBasemapMesh) tobaBasemapMesh.visible = tobaBasemapEnabled;
+  if (tobaBasemapEnabled && tobaBasemapExtent) loadTobaSatelliteBasemap(tobaBasemapExtent.minLon, tobaBasemapExtent.minLat, tobaBasemapExtent.maxLon, tobaBasemapExtent.maxLat);
+  if (tobaBasemapEnabled && !tobaBasemapTexture) button.textContent = 'Memuat satelit…';
+  tobaCountyMaterials.forEach(({ material, baseColor }) => { material.transparent = tobaBasemapEnabled; material.opacity = tobaBasemapEnabled ? .34 : 1; material.depthWrite = !tobaBasemapEnabled; material.color.setHex(tobaBasemapEnabled ? 0xeaf6f2 : baseColor); material.needsUpdate = true; });
+  document.getElementById('toba-basemap-credit').hidden = !tobaBasemapEnabled || !tobaBasemapTexture || activePreset?.id !== 'toba-tourism';
+}
+
+function tobaChapterFeatures(stageIndex) { const names = new Set(STAGES[stageIndex]?.ktaNames || []); return (tobaData?.features || []).map((feature, index) => names.has(feature.kta) ? index : -1).filter(index => index >= 0); }
+function tobaStoryPosition(index) {
+  let storyOffset = 0;
+  for (let chapter = 0; chapter < STAGES.length; chapter++) {
+    const indices = tobaChapterFeatures(chapter), local = indices.indexOf(index);
+    if (local >= 0) return { sequence: storyOffset + local + 1, chapter: chapter + 1, chapterSequence: local + 1, chapterCount: indices.length };
+    storyOffset += indices.length;
+  }
+  return { sequence: index + 1, chapter: 1, chapterSequence: index + 1, chapterCount: 132 };
+}
+function tobaStageStart(stageIndex) {
+  let start = 0;
+  for (let chapter = 0; chapter < stageIndex; chapter++) start += tobaChapterFeatures(chapter).length * TOBA_POINT_SECONDS + TOBA_CHAPTER_PAUSE;
+  return start;
+}
+function tobaPlaybackPosition(t) {
+  let elapsed = 0;
+  for (let stageIndex = 0; stageIndex < STAGES.length; stageIndex++) {
+    const indices = tobaChapterFeatures(stageIndex), chapterDuration = indices.length * TOBA_POINT_SECONDS;
+    if (t < elapsed + chapterDuration) {
+      const chapterTime = Math.max(0, Math.min(chapterDuration - .001, t - elapsed));
+      const cursor = chapterTime / TOBA_POINT_SECONDS, pointPosition = Math.min(indices.length - 1, Math.floor(cursor));
+      return { index: indices[pointPosition] ?? 0, within: cursor % 1, stageIndex, progress: chapterTime / chapterDuration, chapterPause: false, pauseProgress: 0 };
+    }
+    elapsed += chapterDuration;
+    const pauseEnd = elapsed + TOBA_CHAPTER_PAUSE;
+    if (t <= pauseEnd) return { index: indices[indices.length - 1] ?? 0, within: 1, stageIndex, progress: 1, chapterPause: true, pauseProgress: (t - elapsed) / TOBA_CHAPTER_PAUSE };
+    elapsed = pauseEnd;
+  }
+  return { index: 0, within: 0, stageIndex: 0, progress: 0, chapterPause: false, pauseProgress: 0 };
+}
+function showTobaDetail(index, chapterIndex = activeStageIdx) {
+  const feature = tobaData?.features[index]; if (!feature) return;
+  const count = tobaData.features.length;
+  const story = tobaStoryPosition(index);
+  document.getElementById('toba-map-label').style.setProperty('--toba-accent', `#${(tobaCategoryColors[feature.category] || 0x67e8f9).toString(16).padStart(6, '0')}`);
+  document.getElementById('toba-label-top').textContent = `${feature.category} · ${story.sequence}/${count}`;
+  document.getElementById('toba-label-name').textContent = feature.name;
+  document.getElementById('toba-label-meta').textContent = `${feature.kabupaten} · ${feature.kta}`;
+  const detail = document.getElementById('toba-story-detail');
+  detail.innerHTML = `<div class="toba-detail-kicker">Bab ${String(chapterIndex + 1).padStart(2, '0')} · Titik ${story.chapterSequence}/${story.chapterCount} · Urutan cerita ${story.sequence}/${count}</div><div class="toba-detail-name"></div><div class="toba-detail-meta"></div>`;
+  detail.querySelector('.toba-detail-name').textContent = feature.name;
+  detail.querySelector('.toba-detail-meta').textContent = `${feature.category} · ${feature.kabupaten} · ${feature.kta} · ${feature.coordinates[1].toFixed(4)}° LU, ${feature.coordinates[0].toFixed(4)}° BT`;
+  const select = document.getElementById('toba-destination-select'); if ([...select.options].some(option => option.value === String(feature.id))) select.value = String(feature.id);
+}
+function populateTobaOptions(filter = '') {
+  if (!tobaData) return;
+  const select = document.getElementById('toba-destination-select'); const query = filter.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  const legend = document.getElementById('toba-legend');
+  if (!legend.childElementCount) {
+    const all = document.createElement('button'); all.type = 'button'; all.textContent = 'Semua'; all.dataset.category = ''; all.setAttribute('aria-pressed', 'true'); legend.appendChild(all);
+    [...new Set(tobaData.features.map(feature => feature.category))].sort().forEach(category => {
+      const button = document.createElement('button'); button.type = 'button'; button.dataset.category = category;
+      const dot = document.createElement('i'); dot.style.background = `#${(tobaCategoryColors[category] || 0xffffff).toString(16).padStart(6, '0')}`;
+      button.append(dot, document.createTextNode(category)); legend.appendChild(button);
+    });
+    legend.addEventListener('click', event => {
+      const button = event.target.closest('button[data-category]'); if (!button) return;
+      document.getElementById('toba-search').value = button.dataset.category;
+      legend.querySelectorAll('button').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+      populateTobaOptions(button.dataset.category);
+    });
+  }
+  const matches = tobaData.features.map((feature, index) => ({ feature, index })).filter(({ feature }) => `${feature.name} ${feature.category} ${feature.kabupaten} ${feature.kta}`.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(query));
+  select.replaceChildren();
+  matches.forEach(({ feature }) => { const option = document.createElement('option'); option.value = String(feature.id); option.textContent = `${feature.name} · ${feature.kabupaten}`; select.appendChild(option); });
+  document.getElementById('toba-explorer-count').textContent = `${matches.length} dari 132 lokasi · 8 kabupaten`;
+}
+function jumpToTobaDestination(id) {
+  const index = tobaData?.features.findIndex(feature => String(feature.id) === String(id)); if (index == null || index < 0) return;
+  const feature = tobaData.features[index]; const stageIndex = STAGES.findIndex(stage => stage.ktaNames?.includes(feature.kta)); if (stageIndex < 0) return;
+  const indices = tobaChapterFeatures(stageIndex), localIndex = indices.indexOf(index); simTime = tobaStageStart(stageIndex) + (localIndex + .42) * TOBA_POINT_SECONDS;
+  activeStageIdx = stageIndex; isPlaying = true; updateSimulation(simTime); updateCard(stageIndex); updateSubtitle(stageIndex); setActiveStageButton(stageIndex); syncUI(simTime); updateCameraChoreography(simTime); showTobaDetail(index, stageIndex);
+  setIconButton(btnPlay, 'pause', 'Jeda'); btnPlay.setAttribute('aria-pressed', 'false'); syncSceneLabels();
+}
+function updateTobaTourism(t) {
+  if (!tobaData) return;
+  const { index, within, stageIndex } = tobaPlaybackPosition(t);
+  tobaMarkers.forEach(({ marker, halo, baseColor }, markerIndex) => {
+    const active = markerIndex === index, arrival = smoothstep(0, .24, within), fade = 1 - smoothstep(.82, 1, within);
+    marker.scale.setScalar(active ? .78 + .22 * arrival + .035 * Math.sin(within * Math.PI * 2) * fade : 1);
+    marker.material.emissiveIntensity = active ? .22 + .28 * fade : .1;
+    halo.scale.setScalar(active ? .78 + .18 * arrival + .08 * Math.sin(within * Math.PI) * fade : .75);
+    halo.material.opacity = active ? .46 + .4 * fade : .3; marker.material.color.setHex(active ? 0xffffff : baseColor);
+  });
+  if (index !== activeTobaIndex) { activeTobaIndex = index; showTobaDetail(index, stageIndex); }
+}
+function syncTobaMapLabel() {
+  const label = document.getElementById('toba-map-label'); if (activePreset?.id !== 'toba-tourism' || activeTobaIndex < 0) { label.hidden = true; return; }
+  const point = tobaTargets[activeTobaIndex]?.clone().project(camera); if (!point || point.z < -1 || point.z > 1 || Math.abs(point.x) > 1.2 || Math.abs(point.y) > 1.2) { label.hidden = true; return; }
+  const rect = document.getElementById('canvas-wrap').getBoundingClientRect(), halfWidth = Math.min(label.offsetWidth / 2, rect.width / 2 - 8);
+  label.style.left = `${Math.max(halfWidth + 8, Math.min(rect.width - halfWidth - 8, (point.x * .5 + .5) * rect.width))}px`;
+  label.style.top = `${Math.max(label.offsetHeight + 16, Math.min(rect.height - 10, (-point.y * .5 + .5) * rect.height))}px`; label.hidden = false;
+}
 
 function normalizedProvinceName(value) {
   return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
@@ -1105,6 +1362,21 @@ async function ensureIndonesiaProvinceWorld() {
   const featuresByName = new Map(geo.features.map(feature => [normalizedProvinceName(feature.properties?.nmprov), feature]));
   const background = new THREE.Mesh(new THREE.PlaneGeometry(42, 23), new THREE.MeshStandardMaterial({ color: 0x11233b, roughness: 1 }));
   background.rotation.x = -Math.PI / 2; background.position.y = -0.42; provinceWorld.add(background);
+  const bounds = [Infinity, -Infinity, Infinity, -Infinity];
+  const scanCoordinates = coordinates => {
+    if (typeof coordinates?.[0] === 'number') { bounds[0] = Math.min(bounds[0], coordinates[0]); bounds[1] = Math.max(bounds[1], coordinates[0]); bounds[2] = Math.min(bounds[2], coordinates[1]); bounds[3] = Math.max(bounds[3], coordinates[1]); return; }
+    coordinates?.forEach(scanCoordinates);
+  };
+  geo.features.forEach(feature => scanCoordinates(feature.geometry?.coordinates));
+  const [minLon, maxLon, minLat, maxLat] = bounds;
+  const mapWidth = (maxLon - minLon) * .78, mapHeight = (maxLat - minLat) * .88;
+  const mapCenterX = ((minLon + maxLon) / 2 - 118) * .78;
+  const mapCenterZ = -(((minLat + maxLat) / 2 + 2.5) * .88);
+  provinceBasemapBounds = { minLon, minLat, maxLon, maxLat, mapWidth, mapHeight, mapCenterX, mapCenterZ };
+  const basemapMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+  provinceBasemapMesh = new THREE.Mesh(new THREE.PlaneGeometry(mapWidth, mapHeight), basemapMaterial);
+  provinceBasemapMesh.rotation.x = -Math.PI / 2; provinceBasemapMesh.position.set(mapCenterX, -.34, mapCenterZ); provinceBasemapMesh.visible = provinceBasemapEnabled; provinceWorld.add(provinceBasemapMesh);
+  loadIndonesiaSatelliteBasemap();
   const regionTotals = data.regions.map(() => ({ x: 0, z: 0, count: 0 }));
   const regionIndex = new Map(data.regions.map((region, index) => [region.id, index]));
   const missing = [];
@@ -1114,8 +1386,19 @@ async function ensureIndonesiaProvinceWorld() {
     if (!feature?.geometry) { missing.push(province.name); return; }
     const provinceGroup = new THREE.Group();
     const baseColor = provincePastelColors[provinceIndex % provincePastelColors.length];
-    const material = new THREE.MeshStandardMaterial({ color: baseColor, roughness: 0.78, metalness: 0.02, emissive: 0x101827, emissiveIntensity: 0.08, side: THREE.DoubleSide });
+    const material = new THREE.MeshStandardMaterial({ color: baseColor, transparent: provinceBasemapEnabled, opacity: provinceBasemapEnabled ? .48 : 1, depthWrite: !provinceBasemapEnabled, roughness: 0.78, metalness: 0.02, emissive: 0x101827, emissiveIntensity: 0.08, side: THREE.DoubleSide });
     const polygons = feature.geometry.type === 'Polygon' ? [feature.geometry.coordinates] : feature.geometry.coordinates;
+    let provinceMinX = Infinity, provinceMaxX = -Infinity, provinceMinZ = Infinity, provinceMaxZ = -Infinity;
+    const scanProvinceExtent = coordinates => {
+      if (typeof coordinates?.[0] === 'number') {
+        const x = (coordinates[0] - 118) * .78, z = -((coordinates[1] + 2.5) * .88);
+        provinceMinX = Math.min(provinceMinX, x); provinceMaxX = Math.max(provinceMaxX, x);
+        provinceMinZ = Math.min(provinceMinZ, z); provinceMaxZ = Math.max(provinceMaxZ, z);
+        return;
+      }
+      coordinates?.forEach(scanProvinceExtent);
+    };
+    scanProvinceExtent(feature.geometry.coordinates);
     const polygonAreas = polygons.map(polygon => {
       const ring = polygon[0] || [];
       let area = 0;
@@ -1190,11 +1473,10 @@ async function ensureIndonesiaProvinceWorld() {
     provinceWorld.add(provinceGroup);
     indonesiaProvinceGroups[provinceIndex] = provinceGroup;
     if (centerCount) {
-      indonesiaProvinceTargets[provinceIndex] = new THREE.Vector3(
-        ((centerX / centerCount) - 118) * 0.78,
-        0.45,
-        -(((centerZ / centerCount) + 2.5) * 0.88)
-      );
+      const targetX = Number.isFinite(provinceMinX) ? (provinceMinX + provinceMaxX) / 2 : ((centerX / centerCount) - 118) * 0.78;
+      const targetZ = Number.isFinite(provinceMinZ) ? (provinceMinZ + provinceMaxZ) / 2 : -(((centerZ / centerCount) + 2.5) * 0.88);
+      indonesiaProvinceTargets[provinceIndex] = new THREE.Vector3(targetX, 0.45, targetZ);
+      indonesiaProvinceCameraRanges[provinceIndex] = { width: Math.max(.5, provinceMaxX - provinceMinX), height: Math.max(.5, provinceMaxZ - provinceMinZ) };
     }
     const regionSlot = regionIndex.get(province.regionId);
     if (regionSlot !== undefined && centerCount) {
@@ -1209,6 +1491,42 @@ async function ensureIndonesiaProvinceWorld() {
   }
   indonesiaRegionAnchors = regionTotals.map(total => new THREE.Vector3(total.x / Math.max(1, total.count), 0.7, total.z / Math.max(1, total.count)));
   indonesiaProvinceData = data;
+}
+
+function loadIndonesiaSatelliteBasemap() {
+  if (!provinceBasemapMesh || provinceBasemapTexture || provinceBasemapRequested || !provinceBasemapBounds) return;
+  provinceBasemapRequested = true;
+  const { minLon, minLat, maxLon, maxLat, mapWidth, mapHeight } = provinceBasemapBounds;
+  const width = 2048, height = Math.round(width * mapHeight / mapWidth);
+  const params = new URLSearchParams({ bbox: `${minLon},${minLat},${maxLon},${maxLat}`, bboxSR: '4326', imageSR: '4326', size: `${width},${height}`, format: 'jpg', adjustAspectRatio: 'false', f: 'image' });
+  const url = `https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?${params}`;
+  new THREE.TextureLoader().load(url, texture => {
+    provinceBasemapTexture = texture; texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+    provinceBasemapMesh.material.map = texture; provinceBasemapMesh.material.needsUpdate = true;
+    document.getElementById('province-basemap-credit').hidden = !provinceBasemapEnabled || activePreset?.id !== 'indonesia-provinces';
+    document.getElementById('province-basemap-toggle').textContent = 'Satelit aktif';
+  }, undefined, error => {
+    console.warn('Citra satelit Indonesia gagal dimuat; memakai peta ilustrasi lokal.', error);
+    provinceBasemapRequested = false; provinceBasemapEnabled = false;
+    if (provinceBasemapMesh) provinceBasemapMesh.visible = false;
+    indonesiaProvinceGroups.forEach(group => { const material = group.userData.material; material.transparent = false; material.opacity = 1; material.depthWrite = true; material.needsUpdate = true; });
+    const button = document.getElementById('province-basemap-toggle'); button.textContent = 'Peta ilustrasi'; button.setAttribute('aria-pressed', 'false');
+    document.getElementById('province-basemap-credit').hidden = true;
+  });
+}
+
+function toggleIndonesiaBasemap() {
+  provinceBasemapEnabled = !provinceBasemapEnabled;
+  if (provinceBasemapMesh) provinceBasemapMesh.visible = provinceBasemapEnabled;
+  if (provinceBasemapEnabled) loadIndonesiaSatelliteBasemap();
+  indonesiaProvinceGroups.forEach(group => {
+    const material = group.userData.material; material.transparent = provinceBasemapEnabled; material.opacity = provinceBasemapEnabled ? .48 : 1;
+    material.depthWrite = !provinceBasemapEnabled; material.needsUpdate = true;
+  });
+  const button = document.getElementById('province-basemap-toggle');
+  button.textContent = provinceBasemapEnabled ? (provinceBasemapTexture ? 'Satelit aktif' : 'Memuat satelit…') : 'Peta ilustrasi';
+  button.setAttribute('aria-pressed', String(provinceBasemapEnabled));
+  document.getElementById('province-basemap-credit').hidden = !provinceBasemapEnabled || !provinceBasemapTexture || activePreset?.id !== 'indonesia-provinces';
 }
 
 function provincePlaybackPosition(t) {
@@ -1261,7 +1579,6 @@ function updateProvinceSpotlight(index) {
   mapEmblem.src = province.emblemImage.src;
   mapEmblem.alt = `Lambang ${province.name}`;
   document.getElementById('province-map-name').textContent = province.name;
-  document.getElementById('province-map-region').textContent = region?.title || 'Indonesia';
   mapLabel.classList.remove('is-arriving');
   void mapLabel.offsetWidth;
   mapLabel.classList.add('is-arriving');
@@ -1314,8 +1631,29 @@ const CAM_KEYS = [
 
 let autoCamEnabled = true;
 
-function updateCameraChoreography(simTime) {
+function updateCameraChoreography(simTime, deltaSeconds = 1 / 60) {
   if (!autoCamEnabled) return;
+  if (activePreset?.id === 'toba-tourism') {
+    const { stageIndex, within, chapterPause, pauseProgress } = tobaPlaybackPosition(simTime);
+    const selected = tobaTargets[activeTobaIndex] || new THREE.Vector3();
+    const chapterCenter = chapter => {
+      const indices = tobaChapterFeatures(chapter);
+      return indices.length ? indices.reduce((sum, index) => sum.add(tobaTargets[index]), new THREE.Vector3()).multiplyScalar(1 / indices.length) : new THREE.Vector3();
+    };
+    const detail = smoothstep(.02, .32, within);
+    const nextChapter = stageIndex + 1 < STAGES.length ? stageIndex + 1 : 0;
+    const focus = chapterPause
+      ? chapterCenter(stageIndex).lerp(chapterCenter(nextChapter), smoothstep(0, 1, pauseProgress))
+      : selected;
+    const distance = chapterPause
+      ? THREE.MathUtils.lerp(camera.aspect < 1 ? 72 : 54, camera.aspect < 1 ? 96 : 72, smoothstep(0, 1, pauseProgress))
+      : THREE.MathUtils.lerp(12.5, 8.5, detail);
+    const azimuth = chapterPause ? .35 + stageIndex * .38 + pauseProgress * .28 : .5 + stageIndex * .38 + Math.sin(within * Math.PI) * .035;
+    const elevation = chapterPause ? .78 : .67 + .12 * detail;
+    const horizontal = Math.sqrt(1 - elevation * elevation);
+    const position = new THREE.Vector3(focus.x + Math.sin(azimuth) * horizontal * distance, focus.y + elevation * distance, focus.z + Math.cos(azimuth) * horizontal * distance);
+    camera.position.lerp(position, chapterPause ? .045 : .085); controls.target.lerp(focus, chapterPause ? .055 : .09); return;
+  }
   if (activePreset?.id === 'indonesia-provinces') {
     const stageIndex = Math.min(STAGES.length - 1, Math.floor(simTime / STAGE_LEN));
     const stageProgress = (simTime - stageIndex * STAGE_LEN) / STAGE_LEN;
@@ -1326,7 +1664,10 @@ function updateCameraChoreography(simTime) {
     const detailZoom = smoothstep(0.06, 0.32, stageProgress) * (1 - smoothstep(0.78, 0.98, stageProgress));
     const focus = regionFocus.lerp(provinceTarget, detailZoom * 0.56);
     const baseDistance = camera.aspect < 1 ? 76 : 46;
-    const distance = baseDistance * (1 - detailZoom * 0.58);
+    const provinceRange = indonesiaProvinceCameraRanges[activeProvinceIndex];
+    const visibleProvinceSpan = provinceRange ? Math.max(provinceRange.height, provinceRange.width / Math.max(camera.aspect, 0.45)) : 8;
+    const detailDistance = THREE.MathUtils.clamp(visibleProvinceSpan / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.18, 4.5, 15);
+    const distance = THREE.MathUtils.lerp(baseDistance, detailDistance, detailZoom);
     const azimuth = -0.38 + stageProgress * 0.76 + stageIndex * 0.12;
     const elevation = 0.55 + detailZoom * 0.14;
     const horizontal = Math.sqrt(1 - elevation * elevation);
@@ -1335,8 +1676,9 @@ function updateCameraChoreography(simTime) {
       focus.y + elevation * distance,
       focus.z + Math.cos(azimuth) * horizontal * distance
     );
-    camera.position.lerp(position, 0.065);
-    controls.target.lerp(focus, 0.065);
+    const cameraEase = 1 - Math.exp(-3.8 * Math.max(0, deltaSeconds));
+    camera.position.lerp(position, cameraEase);
+    controls.target.lerp(focus, cameraEase);
     return;
   }
   if (activePreset?.id === 'photosynthesis') {
@@ -1364,6 +1706,7 @@ function updateCameraChoreography(simTime) {
 }
 
 function updateSimulation(t) {
+  if (activePreset?.id === 'toba-tourism') { updateTobaTourism(t); return; }
   if (activePreset?.id === 'indonesia-provinces') {
     updateIndonesiaProvince(t);
     return;
@@ -1631,13 +1974,17 @@ function setIconButton(button, icon, label) {
   button.innerHTML = ICONS[icon]; button.title = label; button.setAttribute('aria-label', label);
 }
 function stageIconFor(presetId, index) {
-  if (presetId === 'indonesia-provinces') return 'map';
+  if (presetId === 'indonesia-provinces' || presetId === 'toba-tourism') return 'map';
   const icons = presetId === 'photosynthesis' ? ['sun', 'water', 'carbon', 'oxygen'] : ['sun', 'cloud', 'rain', 'river'];
   return icons[index] || 'sun';
 }
 
 function annotationAnchor(presetId, index) {
   if (presetId === 'indonesia-provinces') return indonesiaRegionAnchors[index] || null;
+  if (presetId === 'toba-tourism') {
+    const indices = tobaChapterFeatures(index); if (!indices.length) return null;
+    return indices.reduce((sum, pointIndex) => sum.add(tobaTargets[pointIndex]), new THREE.Vector3()).multiplyScalar(1 / indices.length);
+  }
   if (presetId === 'photosynthesis') {
     return [new THREE.Vector3(0.7, 5.4, 0), new THREE.Vector3(3.1, 4.7, 0), new THREE.Vector3(1.6, 4.0, 1.2), new THREE.Vector3(5.0, 6.0, 0)][index];
   }
@@ -1647,7 +1994,7 @@ function annotationAnchor(presetId, index) {
 
 function renderSceneLabels(preset) {
   sceneLabels.replaceChildren();
-  if (preset.id === 'indonesia-provinces') return;
+  if (preset.id === 'indonesia-provinces' || preset.id === 'toba-tourism') return;
   preset.stages.forEach((stage, index) => {
     const label = document.createElement('div');
     label.className = 'scene-label';
@@ -1729,11 +2076,20 @@ async function selectPreset(preset) {
     try { await ensureIndonesiaProvinceWorld(); }
     catch (error) {
       console.error(error);
-      provinceWorld.clear(); indonesiaProvinceGroups = []; indonesiaProvinceTargets = []; indonesiaRegionAnchors = []; indonesiaProvinceData = null;
+      provinceWorld.clear(); indonesiaProvinceGroups = []; indonesiaProvinceTargets = []; indonesiaProvinceCameraRanges = []; indonesiaRegionAnchors = []; indonesiaProvinceData = null;
       presetOptions.value = activePreset.id;
       const detail = error instanceof Error ? error.message : String(error);
       showToast(`Peta provinsi gagal dimuat: ${detail}`, 5000);
       return;
+    }
+  }
+  if (preset.id === 'toba-tourism') {
+    showToast('Memuat Atlas Pariwisata Danau Toba dari data lokal…', 3000);
+    try { await ensureTobaWorld(); }
+    catch (error) {
+      console.error(error); tobaWorld.clear(); tobaData = null; tobaBoundaryData = null; tobaMarkers = []; tobaTargets = []; tobaRegionAnchors = []; activeTobaIndex = -1;
+      presetOptions.value = activePreset.id;
+      showToast(`Peta Danau Toba gagal dimuat: ${error instanceof Error ? error.message : String(error)}`, 5000); return;
     }
   }
   stopSpeech();
@@ -1742,7 +2098,7 @@ async function selectPreset(preset) {
   DURATION = Number(preset.duration) || 15;
   STAGE_LEN = DURATION / STAGES.length;
   scrubber.max = DURATION;
-  document.querySelector(".brand-title").textContent = `${preset.title} 3D — Studio Pro`;
+  document.querySelector(".brand-title").textContent = `${preset.title} 3D`;
   document.title = `RUANGKITA — ${preset.title} Studio`;
   document.getElementById('export-title').textContent = `Export Animasi Video (${DURATION} Detik)`;
   try {
@@ -1752,17 +2108,25 @@ async function selectPreset(preset) {
       if (Array.isArray(parsed) && parsed.length === STAGES.length) STAGES = parsed;
     }
   } catch (e) {}
-  world.visible = preset.id !== 'photosynthesis' && preset.id !== 'indonesia-provinces';
+  world.visible = preset.id !== 'photosynthesis' && preset.id !== 'indonesia-provinces' && preset.id !== 'toba-tourism';
   photosynthesisWorld.visible = preset.id === 'photosynthesis';
   provinceWorld.visible = preset.id === 'indonesia-provinces';
+  document.getElementById('province-basemap-control').classList.toggle('active', preset.id === 'indonesia-provinces');
+  document.getElementById('province-basemap-credit').hidden = preset.id !== 'indonesia-provinces' || !provinceBasemapEnabled || !provinceBasemapTexture;
+  tobaWorld.visible = preset.id === 'toba-tourism';
+  document.getElementById('toba-explorer').classList.toggle('active', preset.id === 'toba-tourism');
+  document.getElementById('toba-basemap-credit').hidden = preset.id !== 'toba-tourism' || !tobaBasemapEnabled || !tobaBasemapTexture;
   document.getElementById('province-spotlight').hidden = true;
   document.getElementById('province-map-label').hidden = preset.id !== 'indonesia-provinces';
+  document.getElementById('toba-map-label').hidden = preset.id !== 'toba-tourism';
   const mapZoom = camera.aspect < 1 ? 1.78 : 1.14;
-  controls.maxDistance = preset.id === 'indonesia-provinces' ? 105 : 55;
-  camera.position.set(0, preset.id === 'photosynthesis' ? 9.5 : preset.id === 'indonesia-provinces' ? 31 * mapZoom : 14, preset.id === 'photosynthesis' ? 22.5 : preset.id === 'indonesia-provinces' ? 47 * mapZoom : 29);
-  controls.target.set(0, preset.id === 'photosynthesis' ? 3.1 : 0, 0);
+  controls.minDistance = preset.id === 'toba-tourism' ? 4.5 : 12;
+  controls.maxDistance = preset.id === 'indonesia-provinces' ? 105 : preset.id === 'toba-tourism' ? 155 : 55;
+  camera.position.set(0, preset.id === 'photosynthesis' ? 9.5 : preset.id === 'indonesia-provinces' ? 31 * mapZoom : preset.id === 'toba-tourism' ? 54 * (camera.aspect < 1 ? 1.2 : 1) : 14, preset.id === 'photosynthesis' ? 22.5 : preset.id === 'indonesia-provinces' ? 47 * mapZoom : preset.id === 'toba-tourism' ? 91 * (camera.aspect < 1 ? 1.2 : 1) : 29);
+  controls.target.set(0, preset.id === 'photosynthesis' ? 3.1 : preset.id === 'toba-tourism' ? .5 : 0, 0);
   simTime = 0; activeStageIdx = 0;
   activeProvinceIndex = -1;
+  activeTobaIndex = -1;
   stageBtns.forEach((button, index) => {
     button.classList.toggle('active', index === 0);
     const name = labelForStage(STAGES[index], index);
@@ -1779,6 +2143,25 @@ async function selectPreset(preset) {
 
 renderPresetOptions();
 renderSceneLabels(activePreset);
+document.getElementById('toba-basemap-toggle').addEventListener('click', toggleTobaBasemap);
+document.getElementById('province-basemap-toggle').addEventListener('click', toggleIndonesiaBasemap);
+document.getElementById('toba-search').addEventListener('input', event => {
+  const value = event.target.value.trim();
+  document.querySelectorAll('#toba-legend button').forEach(button => button.setAttribute('aria-pressed', String(value === button.dataset.category)));
+  populateTobaOptions(value);
+});
+document.getElementById('toba-destination-select').addEventListener('change', event => jumpToTobaDestination(event.target.value));
+let tobaPointerStart = null;
+const tobaRaycaster = new THREE.Raycaster();
+const tobaPointer = new THREE.Vector2();
+canvas.addEventListener('pointerdown', event => { tobaPointerStart = { x: event.clientX, y: event.clientY }; });
+canvas.addEventListener('pointerup', event => {
+  if (activePreset?.id !== 'toba-tourism' || !tobaPointerStart || Math.hypot(event.clientX - tobaPointerStart.x, event.clientY - tobaPointerStart.y) > 6) { tobaPointerStart = null; return; }
+  tobaPointerStart = null;
+  const rect = canvas.getBoundingClientRect(); tobaPointer.set((event.clientX - rect.left) / rect.width * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
+  tobaRaycaster.setFromCamera(tobaPointer, camera); const hit = tobaRaycaster.intersectObjects(tobaMarkers.map(item => item.marker), false)[0];
+  if (hit?.object?.userData?.destinationIndex != null) jumpToTobaDestination(tobaData.features[hit.object.userData.destinationIndex].id);
+});
 btnAnnotations.classList.add('active');
 btnAnnotations.setAttribute('aria-pressed', 'true');
 btnAnnotations.title = 'Sembunyikan keterangan animasi';
@@ -1803,6 +2186,14 @@ function updateCard(idx) {
   document.getElementById('card-desc').textContent = st.desc;
 }
 
+function stageIndexForTime(time) {
+  if (activePreset?.id === 'toba-tourism') return tobaPlaybackPosition(time).stageIndex;
+  return Math.min(STAGES.length - 1, Math.floor(time / STAGE_LEN));
+}
+function stageStartFor(index) {
+  return activePreset?.id === 'toba-tourism' ? tobaStageStart(index) : index * STAGE_LEN;
+}
+
 function setActiveStageButton(index) {
   stageBtns.forEach((button, i) => {
     const active = i === index;
@@ -1815,7 +2206,7 @@ function syncUI(t) {
   scrubber.value = t.toFixed(2);
   timeDisplay.textContent = `${t.toFixed(1).padStart(4, '0')}s / ${DURATION.toFixed(1)}s`;
 
-  const idx = Math.min(STAGES.length - 1, Math.floor(t / STAGE_LEN));
+  const idx = stageIndexForTime(t);
   if (idx !== activeStageIdx) {
     activeStageIdx = idx;
     updateCard(idx);
@@ -1857,7 +2248,7 @@ btnSpeed.addEventListener('click', () => {
 scrubber.addEventListener('input', (e) => {
   simTime = parseFloat(e.target.value);
   updateSimulation(simTime);
-  const idx = Math.min(STAGES.length - 1, Math.floor(simTime / STAGE_LEN));
+  const idx = stageIndexForTime(simTime);
   if (idx !== activeStageIdx) {
     activeStageIdx = idx;
     updateCard(idx);
@@ -1871,7 +2262,7 @@ scrubber.addEventListener('input', (e) => {
 stageBtns.forEach((btn) => {
   btn.addEventListener('click', () => {
     const idx = parseInt(btn.dataset.stage, 10);
-    simTime = idx * STAGE_LEN + 0.05;
+    simTime = stageStartFor(idx) + 0.05;
     updateSimulation(simTime);
     activeStageIdx = idx;
     updateCard(idx);
@@ -2218,6 +2609,26 @@ btnStartExport.addEventListener('click', async () => {
             ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
           }
         }
+      } else if (activePreset.id === 'toba-tourism' && tobaData) {
+        const destination = tobaData.features[activeTobaIndex] || tobaData.features[tobaPlaybackPosition(t).index];
+        const story = tobaStoryPosition(activeTobaIndex);
+        ctx.fillText(destination.name, pad + 28, topY + Math.round(outW * 0.098), headerTextWidth);
+        ctx.font = `600 ${Math.max(12, Math.round(outW * 0.016))}px Inter, system-ui, sans-serif`;
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillText(`${destination.category} · ${destination.kabupaten} · ${destination.kta}`, pad + 28, topY + Math.round(outW * 0.132), headerTextWidth);
+        const target = tobaTargets[activeTobaIndex]?.clone().project(camera);
+        if (target && target.z >= -1 && target.z <= 1 && Math.abs(target.x) <= 1.15 && Math.abs(target.y) <= 1.15) {
+          const screenX = (target.x * .5 + .5) * outW, screenY = (-target.y * .5 + .5) * outH;
+          const cardW = Math.min(outW * .72, Math.max(outW * .4, Math.round(outW * .018 * destination.name.length + outW * .13)));
+          const cardH = Math.round(outW * .095), cardX = Math.max(12, Math.min(outW - cardW - 12, screenX - cardW / 2)), cardY = Math.max(topY + Math.round(outW * .16), Math.min(outH - cardH - 24, screenY - cardH - 18));
+          const accent = `#${(tobaCategoryColors[destination.category] || 0x67e8f9).toString(16).padStart(6, '0')}`;
+          ctx.fillStyle = 'rgba(7,17,31,.92)'; ctx.beginPath(); ctx.roundRect(cardX, cardY, cardW, cardH, Math.round(outW * .012)); ctx.fill();
+          ctx.strokeStyle = accent; ctx.lineWidth = Math.max(1.5, outW * .0018); ctx.stroke();
+          ctx.textAlign = 'left'; ctx.fillStyle = accent; ctx.font = `800 ${Math.round(outW * .014)}px Inter, system-ui, sans-serif`;
+          ctx.fillText(`${destination.category.toLocaleUpperCase('id-ID')} · ${story.sequence}/132`, cardX + 16, cardY + cardH * .4, cardW - 32);
+          ctx.fillStyle = '#f8fafc'; ctx.font = `750 ${Math.round(outW * .019)}px Inter, system-ui, sans-serif`;
+          ctx.fillText(destination.name, cardX + 16, cardY + cardH * .76, cardW - 32); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+        }
       } else ctx.fillText(st.subtitle, pad + 28, topY + Math.round(outW * 0.105), headerTextWidth);
     }
 
@@ -2262,12 +2673,13 @@ function animate(now) {
   if (!isExporting) {
     if (isPlaying) simTime = (simTime + dt * playbackSpeed) % DURATION;
     updateSimulation(simTime);
-    updateCameraChoreography(simTime);
+    updateCameraChoreography(simTime, dt);
     controls.update();
     renderer.render(scene, camera);
     syncUI(simTime);
     syncSceneLabels();
     syncProvinceMapLabel();
+    syncTobaMapLabel();
   }
 }
 

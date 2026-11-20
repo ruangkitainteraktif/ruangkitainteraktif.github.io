@@ -1,0 +1,1592 @@
+{
+    "source":  "Badan Informasi Geospasial (BIG)",
+    "service":  "DAPIG/Atlas_Pariwisata_Danau_Toba/MapServer/1",
+    "retrievedAt":  "2026-11-20",
+    "featureCount":  132,
+    "features":  [
+                     {
+                         "id":  1,
+                         "name":  "Desa Wisata Sait Buttu",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Desa Wisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.857651200342673,
+                                             2.8297950447055769
+                                         ]
+                     },
+                     {
+                         "id":  2,
+                         "name":  "Museum Simalungun",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             99.061058699699288,
+                                             2.9543645380929888
+                                         ]
+                     },
+                     {
+                         "id":  3,
+                         "name":  "Rumah Bolon Purba",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.681128884090811,
+                                             2.910887826412079
+                                         ]
+                     },
+                     {
+                         "id":  4,
+                         "name":  "Pantai Haranggaol Horison",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.688945413600038,
+                                             2.8616567783377036
+                                         ]
+                     },
+                     {
+                         "id":  5,
+                         "name":  "Taman Mejuah Juah",
+                         "kabupaten":  "Karo",
+                         "kta":  "Kawasan Berastagi dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.506857700422586,
+                                             3.1973336000656332
+                                         ]
+                     },
+                     {
+                         "id":  6,
+                         "name":  "Kawasan Bukit Gundaling",
+                         "kabupaten":  "Karo",
+                         "kta":  "Kawasan Berastagi dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.495941047741212,
+                                             3.2077715490178207
+                                         ]
+                     },
+                     {
+                         "id":  7,
+                         "name":  "Air Terjun Sikulikap",
+                         "kabupaten":  "Karo",
+                         "kta":  "Kawasan Berastagi dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.535416299722499,
+                                             3.2446522002388747
+                                         ]
+                     },
+                     {
+                         "id":  8,
+                         "name":  "Taman Wisata Iman",
+                         "kabupaten":  "Dairi",
+                         "kta":  "Kawasan Dairi Pakpak dan Sekitarnya",
+                         "category":  "Religi",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.383799999770247,
+                                             2.7300183330796699
+                                         ]
+                     },
+                     {
+                         "id":  9,
+                         "name":  "Pemandangan Letter S",
+                         "kabupaten":  "Dairi",
+                         "kta":  "Kawasan Dairi Pakpak dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.376145000191684,
+                                             2.7422316669579345
+                                         ]
+                     },
+                     {
+                         "id":  10,
+                         "name":  "Monumen TB Simatupang dan Monumen L manik",
+                         "kabupaten":  "Dairi",
+                         "kta":  "Kawasan Dairi Pakpak dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.376013333148876,
+                                             2.7419133330339491
+                                         ]
+                     },
+                     {
+                         "id":  11,
+                         "name":  "Taman Wisata Foto Lae Pendaroh",
+                         "kabupaten":  "Dairi",
+                         "kta":  "Kawasan Dairi Pakpak dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.381851667120827,
+                                             2.7348350003350674
+                                         ]
+                     },
+                     {
+                         "id":  12,
+                         "name":  "Gereja HutaDame",
+                         "kabupaten":  "Tapanuli Utara",
+                         "kta":  "Kawasan Tarutung dan Sekitarnya",
+                         "category":  "Religi",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.974585007092458,
+                                             2.0089781727045306
+                                         ]
+                     },
+                     {
+                         "id":  13,
+                         "name":  "Unit Usaha Bumdes Hariara Nommensen Hitatoruan IV",
+                         "kabupaten":  "Tapanuli Utara",
+                         "kta":  "Kawasan Tarutung dan Sekitarnya",
+                         "category":  "Ekraf",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.975373779076676,
+                                             2.0147474117636648
+                                         ]
+                     },
+                     {
+                         "id":  14,
+                         "name":  "Pemandian Air Panas Tamaro",
+                         "kabupaten":  "Tapanuli Utara",
+                         "kta":  "Kawasan Tarutung dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.978379903309929,
+                                             2.0271539685808193
+                                         ]
+                     },
+                     {
+                         "id":  15,
+                         "name":  "Air Panas Hineni",
+                         "kabupaten":  "Tapanuli Utara",
+                         "kta":  "Kawasan Tarutung dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.979244840676927,
+                                             2.0298239154413977
+                                         ]
+                     },
+                     {
+                         "id":  16,
+                         "name":  "Wisata Aek Situmandi",
+                         "kabupaten":  "Tapanuli Utara",
+                         "kta":  "Kawasan Tarutung dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.980877719031582,
+                                             2.0289155929802973
+                                         ]
+                     },
+                     {
+                         "id":  17,
+                         "name":  "Pemandian Air Panas Pariban",
+                         "kabupaten":  "Karo",
+                         "kta":  "Kawasan Berastagi dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.510690500366366,
+                                             3.2231869999801006
+                                         ]
+                     },
+                     {
+                         "id":  18,
+                         "name":  "Puncak Gunung Sibayak",
+                         "kabupaten":  "Karo",
+                         "kta":  "Kawasan Berastagi dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.499900411075146,
+                                             3.2429068535685133
+                                         ]
+                     },
+                     {
+                         "id":  19,
+                         "name":  "Menara pandang Salib Kasih",
+                         "kabupaten":  "Tapanuli Utara",
+                         "kta":  "Kawasan Tarutung dan Sekitarnya",
+                         "category":  "Religi",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.998471944025084,
+                                             2.0204935652258769
+                                         ]
+                     },
+                     {
+                         "id":  20,
+                         "name":  "Salib Kasih",
+                         "kabupaten":  "Tapanuli Utara",
+                         "kta":  "Kawasan Tarutung dan Sekitarnya",
+                         "category":  "Religi",
+                         "photo":  "",
+                         "coordinates":  [
+                                             99.00135429456509,
+                                             2.0177473432653414
+                                         ]
+                     },
+                     {
+                         "id":  21,
+                         "name":  "Pemandian Air Soda Parbubu",
+                         "kabupaten":  "Tapanuli Utara",
+                         "kta":  "Kawasan Tarutung dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.965820158673466,
+                                             2.0006113030692063
+                                         ]
+                     },
+                     {
+                         "id":  22,
+                         "name":  "Pemandian Air Panas Sipolohon",
+                         "kabupaten":  "Tapanuli Utara",
+                         "kta":  "Kawasan Tarutung dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.943985455764221,
+                                             2.0752576418267381
+                                         ]
+                     },
+                     {
+                         "id":  23,
+                         "name":  "Delleng Simpon",
+                         "kabupaten":  "Pakpak Bharat",
+                         "kta":  "Kawasan Dairi Pakpak dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.396128332656474,
+                                             2.4601283327564261
+                                         ]
+                     },
+                     {
+                         "id":  24,
+                         "name":  "Arung Jeram Ulu Merah",
+                         "kabupaten":  "Pakpak Bharat",
+                         "kta":  "Kawasan Dairi Pakpak dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.374579999967068,
+                                             2.4992766667847945
+                                         ]
+                     },
+                     {
+                         "id":  25,
+                         "name":  "Pertulanan Marga Berutu",
+                         "kabupaten":  "Pakpak Bharat",
+                         "kta":  "Kawasan Dairi Pakpak dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.374984999757999,
+                                             2.5028683333069921
+                                         ]
+                     },
+                     {
+                         "id":  26,
+                         "name":  "Delleng Sindeka",
+                         "kabupaten":  "Pakpak Bharat",
+                         "kta":  "Kawasan Dairi Pakpak dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.32125833340541,
+                                             2.5367583331305923
+                                         ]
+                     },
+                     {
+                         "id":  27,
+                         "name":  "Museum Djamin Ginting",
+                         "kabupaten":  "Karo",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.520606599714881,
+                                             3.0608168003550986
+                                         ]
+                     },
+                     {
+                         "id":  28,
+                         "name":  "Geosite Huta Ginjang",
+                         "kabupaten":  "Tapanuli Utara",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.970496151276393,
+                                             2.314802991964541
+                                         ]
+                     },
+                     {
+                         "id":  29,
+                         "name":  "Desa Wisata Dokan",
+                         "kabupaten":  "Karo",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Desa Wisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.551926800281649,
+                                             3.0174507997147089
+                                         ]
+                     },
+                     {
+                         "id":  30,
+                         "name":  "Bukit Doa",
+                         "kabupaten":  "Tapanuli Utara",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Religi",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.980291914140594,
+                                             2.314797837949925
+                                         ]
+                     },
+                     {
+                         "id":  31,
+                         "name":  "Kawasan Wisata Tongging",
+                         "kabupaten":  "Karo",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.525910099671421,
+                                             2.8957939999931455
+                                         ]
+                     },
+                     {
+                         "id":  32,
+                         "name":  "Air Terjun Lae Singgabit",
+                         "kabupaten":  "Pakpak Bharat",
+                         "kta":  "Kawasan Dairi Pakpak dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.278628333430902,
+                                             2.5839983325570302
+                                         ]
+                     },
+                     {
+                         "id":  33,
+                         "name":  "Rumah Adat Sapo Jojong Sipitu",
+                         "kabupaten":  "Pakpak Bharat",
+                         "kta":  "Kawasan Dairi Pakpak dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.263915000277109,
+                                             2.5856966671674968
+                                         ]
+                     },
+                     {
+                         "id":  34,
+                         "name":  "Makam Tua Islam di Pakpak Bharat",
+                         "kabupaten":  "Pakpak Bharat",
+                         "kta":  "Kawasan Dairi Pakpak dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.265074999811475,
+                                             2.5859233331952964
+                                         ]
+                     },
+                     {
+                         "id":  35,
+                         "name":  "Aek Natonang",
+                         "kabupaten":  "Samosir",
+                         "kta":  "Kawasan Simanindo dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.88504026009997,
+                                             2.5611890073668633
+                                         ]
+                     },
+                     {
+                         "id":  36,
+                         "name":  "Air Terjun Sigarantung",
+                         "kabupaten":  "Samosir",
+                         "kta":  "Kawasan Simanindo dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.864388990359657,
+                                             2.6101212386043358
+                                         ]
+                     },
+                     {
+                         "id":  37,
+                         "name":  "Tomok",
+                         "kabupaten":  "Samosir",
+                         "kta":  "Kawasan Simanindo dan Sekitarnya",
+                         "category":  "Ekraf",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.861582029986778,
+                                             2.6524177609709341
+                                         ]
+                     },
+                     {
+                         "id":  38,
+                         "name":  "Makam raja sidabutar",
+                         "kabupaten":  "Samosir",
+                         "kta":  "Kawasan Simanindo dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.853638073738182,
+                                             2.6502738824337939
+                                         ]
+                     },
+                     {
+                         "id":  39,
+                         "name":  "Danau Lau Kawar",
+                         "kabupaten":  "Karo",
+                         "kta":  "Kawasan Berastagi dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.384972999904107,
+                                             3.1949007999320429
+                                         ]
+                     },
+                     {
+                         "id":  40,
+                         "name":  "Desa Wisata Lingga",
+                         "kabupaten":  "Karo",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Desa Wisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.465664100318008,
+                                             3.1208281000368174
+                                         ]
+                     },
+                     {
+                         "id":  41,
+                         "name":  "Huta Siallagan",
+                         "kabupaten":  "Samosir",
+                         "kta":  "Kawasan Simanindo dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.836578924677667,
+                                             2.6788574541082539
+                                         ]
+                     },
+                     {
+                         "id":  42,
+                         "name":  "Rumah Interniran Soekarno",
+                         "kabupaten":  "Karo",
+                         "kta":  "Kawasan Berastagi dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.511299999695268,
+                                             3.1772999999950571
+                                         ]
+                     },
+                     {
+                         "id":  43,
+                         "name":  "Vihara Taman Lumbini",
+                         "kabupaten":  "Karo",
+                         "kta":  "Kawasan Berastagi dan Sekitarnya",
+                         "category":  "Religi",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.544690900964383,
+                                             3.1912071520884524
+                                         ]
+                     },
+                     {
+                         "id":  44,
+                         "name":  "Waterfront City Pangururan",
+                         "kabupaten":  "Samosir",
+                         "kta":  "Kawasan Pangururan dan Sekitarnya",
+                         "category":  "Ekraf",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.701810149818641,
+                                             2.6011283922615576
+                                         ]
+                     },
+                     {
+                         "id":  45,
+                         "name":  "Sabah Julu",
+                         "kabupaten":  "Pakpak Bharat",
+                         "kta":  "Kawasan Dairi Pakpak dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.358061667212212,
+                                             2.5902133331788377
+                                         ]
+                     },
+                     {
+                         "id":  46,
+                         "name":  "Air Terjun Lae Mbilulu",
+                         "kabupaten":  "Pakpak Bharat",
+                         "kta":  "Kawasan Dairi Pakpak dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.349160000433756,
+                                             2.6117499998626386
+                                         ]
+                     },
+                     {
+                         "id":  47,
+                         "name":  "Agrowisata Kuta Dame",
+                         "kabupaten":  "Pakpak Bharat",
+                         "kta":  "Kawasan Dairi Pakpak dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.328656667371376,
+                                             2.6737916665522334
+                                         ]
+                     },
+                     {
+                         "id":  48,
+                         "name":  "Bukit Sibea Bea",
+                         "kabupaten":  "Samosir",
+                         "kta":  "Kawasan Pangururan dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.672734193028646,
+                                             2.55055184868894
+                                         ]
+                     },
+                     {
+                         "id":  49,
+                         "name":  "Kebun Efi",
+                         "kabupaten":  "Karo",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.466755299917224,
+                                             3.0105610998149359
+                                         ]
+                     },
+                     {
+                         "id":  50,
+                         "name":  "Bukit holbung",
+                         "kabupaten":  "Samosir",
+                         "kta":  "Kawasan Pangururan dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.697280594723736,
+                                             2.5300173352318893
+                                         ]
+                     },
+                     {
+                         "id":  51,
+                         "name":  "Museum Pusaka Karo",
+                         "kabupaten":  "Karo",
+                         "kta":  "Kawasan Berastagi dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.493439759737157,
+                                             3.1937877189281494
+                                         ]
+                     },
+                     {
+                         "id":  52,
+                         "name":  "Pasar Buah dan Sayur Berastagi",
+                         "kabupaten":  "Karo",
+                         "kta":  "Kawasan Berastagi dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.521297602802179,
+                                             3.1889881693685425
+                                         ]
+                     },
+                     {
+                         "id":  53,
+                         "name":  "TWA Sicike Cike",
+                         "kabupaten":  "Dairi",
+                         "kta":  "Kawasan Dairi Pakpak dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.388938332937755,
+                                             2.6546749999513395
+                                         ]
+                     },
+                     {
+                         "id":  54,
+                         "name":  "Air terjun efrata",
+                         "kabupaten":  "Samosir",
+                         "kta":  "Kawasan Pangururan dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.645045214764934,
+                                             2.5378903358703724
+                                         ]
+                     },
+                     {
+                         "id":  55,
+                         "name":  "Kampung Ulos Huta Raja",
+                         "kabupaten":  "Samosir",
+                         "kta":  "Kawasan Pangururan dan Sekitarnya",
+                         "category":  "Ekraf",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.689135937673427,
+                                             2.6642816425837736
+                                         ]
+                     },
+                     {
+                         "id":  56,
+                         "name":  "Cafe Maulana",
+                         "kabupaten":  "Karo",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Ekraf",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.50081927359065,
+                                             2.8931435252535493
+                                         ]
+                     },
+                     {
+                         "id":  57,
+                         "name":  "Air Terjun Sipiso-piso",
+                         "kabupaten":  "Karo",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.521967399875678,
+                                             2.9160360997861972
+                                         ]
+                     },
+                     {
+                         "id":  58,
+                         "name":  "Pantai Pasir Putih Parbaba",
+                         "kabupaten":  "Samosir",
+                         "kta":  "Kawasan Pangururan dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.689690804986697,
+                                             2.6953407825511135
+                                         ]
+                     },
+                     {
+                         "id":  59,
+                         "name":  "Bukit Cinta",
+                         "kabupaten":  "Dairi",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.569488333120148,
+                                             2.7558766666748511
+                                         ]
+                     },
+                     {
+                         "id":  60,
+                         "name":  "Air Terjun Siringo",
+                         "kabupaten":  "Dairi",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.55233499986042,
+                                             2.7725583334004114
+                                         ]
+                     },
+                     {
+                         "id":  61,
+                         "name":  "Bukit Siattaratas",
+                         "kabupaten":  "Dairi",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.525593333265761,
+                                             2.8154700001404649
+                                         ]
+                     },
+                     {
+                         "id":  62,
+                         "name":  "Danau Sidihoni",
+                         "kabupaten":  "Samosir",
+                         "kta":  "Kawasan Pangururan dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.749221121157859,
+                                             2.6028708763898862
+                                         ]
+                     },
+                     {
+                         "id":  63,
+                         "name":  "Pulau Paropo",
+                         "kabupaten":  "Dairi",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.529056667431291,
+                                             2.8445616671872358
+                                         ]
+                     },
+                     {
+                         "id":  64,
+                         "name":  "TIC atau Rumah Tanggal",
+                         "kabupaten":  "Dairi",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Ekraf",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.525344999871891,
+                                             2.8312599998491805
+                                         ]
+                     },
+                     {
+                         "id":  65,
+                         "name":  "Dermaga Apung Silalahi",
+                         "kabupaten":  "Dairi",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.532086666866235,
+                                             2.7913833327746147
+                                         ]
+                     },
+                     {
+                         "id":  66,
+                         "name":  "Gereja HKBP Balige",
+                         "kabupaten":  "Toba",
+                         "kta":  "Kawasan Balige dan Sekitarnya",
+                         "category":  "Religi",
+                         "photo":  "",
+                         "coordinates":  [
+                                             99.067099845181758,
+                                             2.3309111268470701
+                                         ]
+                     },
+                     {
+                         "id":  67,
+                         "name":  "Aek Sitio Tio",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.769416177414712,
+                                             2.2818549726289348
+                                         ]
+                     },
+                     {
+                         "id":  68,
+                         "name":  "Pantai Lumban Bul Bul",
+                         "kabupaten":  "Toba",
+                         "kta":  "Kawasan Balige dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             99.073419176154118,
+                                             2.348646700085169
+                                         ]
+                     },
+                     {
+                         "id":  69,
+                         "name":  "Sarcofagus Desa Tipang",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.812745075624775,
+                                             2.3531729645607129
+                                         ]
+                     },
+                     {
+                         "id":  70,
+                         "name":  "Tugu Debataraja Tipang",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.811566504190864,
+                                             2.3532076783916978
+                                         ]
+                     },
+                     {
+                         "id":  71,
+                         "name":  "Batu Maranak Batu Gonting",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.81475995720632,
+                                             2.3728290607126041
+                                         ]
+                     },
+                     {
+                         "id":  72,
+                         "name":  "Museum TB Silalahi",
+                         "kabupaten":  "Toba",
+                         "kta":  "Kawasan Balige dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             99.04850109275128,
+                                             2.3333175588583117
+                                         ]
+                     },
+                     {
+                         "id":  73,
+                         "name":  "Makam Raja Sisimangaraja XII",
+                         "kabupaten":  "Toba",
+                         "kta":  "Kawasan Balige dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             99.049121194187819,
+                                             2.3311053867042801
+                                         ]
+                     },
+                     {
+                         "id":  74,
+                         "name":  "Air Terjun Janji",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.815254696746933,
+                                             2.3394077039024523
+                                         ]
+                     },
+                     {
+                         "id":  75,
+                         "name":  "Rest Area Mess Pemkab",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.826067019077755,
+                                             2.3235253186385876
+                                         ]
+                     },
+                     {
+                         "id":  76,
+                         "name":  "Puncak Tarabunga",
+                         "kabupaten":  "Toba",
+                         "kta":  "Kawasan Balige dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             99.026563215120348,
+                                             2.3519402287586217
+                                         ]
+                     },
+                     {
+                         "id":  77,
+                         "name":  "Seribu Goa",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.542651034417759,
+                                             2.2010647507377143
+                                         ]
+                     },
+                     {
+                         "id":  78,
+                         "name":  "Ondo Coffee Lintong",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Ekraf",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.899508595445411,
+                                             2.2491114033686017
+                                         ]
+                     },
+                     {
+                         "id":  79,
+                         "name":  "Panorama Indah Agrowisata Sileme Leme",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.810751210300168,
+                                             2.3373457302213296
+                                         ]
+                     },
+                     {
+                         "id":  80,
+                         "name":  "Dolok Pesona Panoguan Solu",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.863611739590169,
+                                             2.3361064203750743
+                                         ]
+                     },
+                     {
+                         "id":  81,
+                         "name":  "Geosite Sipinsur",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.880793520204861,
+                                             2.3292909001549447
+                                         ]
+                     },
+                     {
+                         "id":  82,
+                         "name":  "Pemandian Mata Air Karang Anyar",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             99.126783332984473,
+                                             3.0074183325900208
+                                         ]
+                     },
+                     {
+                         "id":  83,
+                         "name":  "Pemandian Alam Sejuk",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             99.168500000374763,
+                                             2.969553332920043
+                                         ]
+                     },
+                     {
+                         "id":  84,
+                         "name":  "CA/TWA Dolok Tinggiraja",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.786739112919804,
+                                             3.1499009370786553
+                                         ]
+                     },
+                     {
+                         "id":  85,
+                         "name":  "Wisata Indah Sippan",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.56539499957961,
+                                             2.906501667318139
+                                         ]
+                     },
+                     {
+                         "id":  86,
+                         "name":  "Bah Damanik",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.92045666664194,
+                                             2.8651366672234531
+                                         ]
+                     },
+                     {
+                         "id":  87,
+                         "name":  "Pemandian Alam Simatahuting",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.919371666968914,
+                                             2.8661200003377871
+                                         ]
+                     },
+                     {
+                         "id":  88,
+                         "name":  "Bah bu tong/ kebun bah bu tong",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.906714999697556,
+                                             2.8530750004109677
+                                         ]
+                     },
+                     {
+                         "id":  89,
+                         "name":  "Air terjun bah biak",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.896248332694483,
+                                             2.8356950002241206
+                                         ]
+                     },
+                     {
+                         "id":  90,
+                         "name":  "Pulo dongdong sidamanik",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.886471666933915,
+                                             2.8489333328071211
+                                         ]
+                     },
+                     {
+                         "id":  91,
+                         "name":  "Tigaraja Farm",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.557694999724504,
+                                             2.9370800000420445
+                                         ]
+                     },
+                     {
+                         "id":  92,
+                         "name":  "Binahal Indah Resort",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "MICE",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.540260688579963,
+                                             2.9030636391756275
+                                         ]
+                     },
+                     {
+                         "id":  93,
+                         "name":  "Tabe Resort",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "MICE",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.548385592021532,
+                                             2.9036577448091521
+                                         ]
+                     },
+                     {
+                         "id":  94,
+                         "name":  "Bukit indah simarjarunjung",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.78135999976422,
+                                             2.8136466669601532
+                                         ]
+                     },
+                     {
+                         "id":  95,
+                         "name":  "Kawasan pantai tigaras",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.781259999649308,
+                                             2.8013666672379713
+                                         ]
+                     },
+                     {
+                         "id":  96,
+                         "name":  "Wisata ikan mas sipolha / tic",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekraf",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.86573333292705,
+                                             2.743011666954942
+                                         ]
+                     },
+                     {
+                         "id":  97,
+                         "name":  "Tman wisata kera sibaganding",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.927081667285165,
+                                             2.692803332807614
+                                         ]
+                     },
+                     {
+                         "id":  98,
+                         "name":  "Taman rusa sambar aek nauli",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.940378332594037,
+                                             2.7205800003667946
+                                         ]
+                     },
+                     {
+                         "id":  99,
+                         "name":  "Aek nauli elephant conservation",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.940301667188237,
+                                             2.7178333332417992
+                                         ]
+                     },
+                     {
+                         "id":  100,
+                         "name":  "Ekowisata harangan girsang",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.965439999956118,
+                                             2.6609400001809149
+                                         ]
+                     },
+                     {
+                         "id":  101,
+                         "name":  "Pasanggarahan bung karno",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.926245000106746,
+                                             2.6655883332350641
+                                         ]
+                     },
+                     {
+                         "id":  102,
+                         "name":  "Pantai bebas parapat",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.937267217907845,
+                                             2.6714023342503879
+                                         ]
+                     },
+                     {
+                         "id":  103,
+                         "name":  "Kampung warna warni",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekraf",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.93767214485365,
+                                             2.6636585778811082
+                                         ]
+                     },
+                     {
+                         "id":  104,
+                         "name":  "Batu gantung",
+                         "kabupaten":  "Simalungun",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.923795000438986,
+                                             2.6882316669579041
+                                         ]
+                     },
+                     {
+                         "id":  105,
+                         "name":  "Taman Eden 100",
+                         "kabupaten":  "Toba",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             99.038055556218978,
+                                             2.590277777697338
+                                         ]
+                     },
+                     {
+                         "id":  106,
+                         "name":  "Desa Wisata Persaroan Sibisa",
+                         "kabupaten":  "Toba",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Desa Wisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.975277778246948,
+                                             2.59361111126384
+                                         ]
+                     },
+                     {
+                         "id":  107,
+                         "name":  "Bukit Senyum Motung",
+                         "kabupaten":  "Toba",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.920833333291739,
+                                             2.6355555562439577
+                                         ]
+                     },
+                     {
+                         "id":  108,
+                         "name":  "Gereja Il Nomensen",
+                         "kabupaten":  "Toba",
+                         "kta":  "Kawasan Balige dan Sekitarnya",
+                         "category":  "Religi",
+                         "photo":  "",
+                         "coordinates":  [
+                                             99.157424999564114,
+                                             2.3948555557393547
+                                         ]
+                     },
+                     {
+                         "id":  109,
+                         "name":  "Makam Il Nomensen",
+                         "kabupaten":  "Toba",
+                         "kta":  "Kawasan Balige dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             99.155906389068662,
+                                             2.3952777784467685
+                                         ]
+                     },
+                     {
+                         "id":  110,
+                         "name":  "Pantai Parparean",
+                         "kabupaten":  "Toba",
+                         "kta":  "Kawasan Balige dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             99.14873055637014,
+                                             2.4322500004371932
+                                         ]
+                     },
+                     {
+                         "id":  111,
+                         "name":  "Desa Wisata Pardomuan Ajibata",
+                         "kabupaten":  "Toba",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Desa Wisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.939391904912554,
+                                             2.6440880648123652
+                                         ]
+                     },
+                     {
+                         "id":  112,
+                         "name":  "The Kaldera",
+                         "kabupaten":  "Toba",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "MICE",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.94702777770982,
+                                             2.6079722222403348
+                                         ]
+                     },
+                     {
+                         "id":  113,
+                         "name":  "Bukit Gibeon",
+                         "kabupaten":  "Toba",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.997722222402729,
+                                             2.5964944438635484
+                                         ]
+                     },
+                     {
+                         "id":  114,
+                         "name":  "Air Terjun Siboruon",
+                         "kabupaten":  "Toba",
+                         "kta":  "Kawasan Balige dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             99.080779000250743,
+                                             2.2898050002006585
+                                         ]
+                     },
+                     {
+                         "id":  115,
+                         "name":  "Pantai Pakkodian",
+                         "kabupaten":  "Toba",
+                         "kta":  "Kawasan Balige dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             99.011317000379336,
+                                             2.3396809997783521
+                                         ]
+                     },
+                     {
+                         "id":  116,
+                         "name":  "Desa Wisata Meat",
+                         "kabupaten":  "Toba",
+                         "kta":  "Kawasan Balige dan Sekitarnya",
+                         "category":  "Desa Wisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             99.003348999856541,
+                                             2.3261600003837657
+                                         ]
+                     },
+                     {
+                         "id":  117,
+                         "name":  "Air Terjun Situmurun",
+                         "kabupaten":  "Toba",
+                         "kta":  "Kawasan Parapat dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             99.007953141124631,
+                                             2.5376414430981526
+                                         ]
+                     },
+                     {
+                         "id":  118,
+                         "name":  "Gunung Sinabung",
+                         "kabupaten":  "Karo",
+                         "kta":  "Kawasan Berastagi dan Sekitarnya",
+                         "category":  "Ekowisata",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.39104471783952,
+                                             3.1712788284552289
+                                         ]
+                     },
+                     {
+                         "id":  119,
+                         "name":  "Aek Sipaulak Hosa Loja",
+                         "kabupaten":  "Dairi",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.503136667323417,
+                                             2.7988283325615271
+                                         ]
+                     },
+                     {
+                         "id":  120,
+                         "name":  "Sopo Deang Namora",
+                         "kabupaten":  "Dairi",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.531351667145771,
+                                             2.7912049999108604
+                                         ]
+                     },
+                     {
+                         "id":  121,
+                         "name":  "Bati Sigadap dan Si Jongjong",
+                         "kabupaten":  "Dairi",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.527596666652926,
+                                             2.8012966667078558
+                                         ]
+                     },
+                     {
+                         "id":  122,
+                         "name":  "Tigu Makam Raja Silahi Sabungan",
+                         "kabupaten":  "Dairi",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.528284999653067,
+                                             2.8128266669172035
+                                         ]
+                     },
+                     {
+                         "id":  123,
+                         "name":  "Binangai somaila",
+                         "kabupaten":  "Dairi",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.527613332889075,
+                                             2.7971000001649031
+                                         ]
+                     },
+                     {
+                         "id":  124,
+                         "name":  "Passur Paranggiran Deang Simalas Aek Simalas",
+                         "kabupaten":  "Dairi",
+                         "kta":  "Kawasan Merek dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.529836667428299,
+                                             2.7875683331121195
+                                         ]
+                     },
+                     {
+                         "id":  125,
+                         "name":  "Tombak Sulu",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.805920379621909,
+                                             2.3081329775549193
+                                         ]
+                     },
+                     {
+                         "id":  126,
+                         "name":  "Hariara tunghot",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.826468390104196,
+                                             2.3201962568518297
+                                         ]
+                     },
+                     {
+                         "id":  127,
+                         "name":  "Aek Sipangolu",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.846360877552513,
+                                             2.3241171049205036
+                                         ]
+                     },
+                     {
+                         "id":  128,
+                         "name":  "Istana Sisingamangaraja",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.812460033703644,
+                                             2.3062791996254077
+                                         ]
+                     },
+                     {
+                         "id":  129,
+                         "name":  "Makam 37 panglima ssmgrja",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.41176765905027,
+                                             2.2699091277041248
+                                         ]
+                     },
+                     {
+                         "id":  130,
+                         "name":  "Markas Sisingamangaraja 12",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.435301729890966,
+                                             2.4111595395811491
+                                         ]
+                     },
+                     {
+                         "id":  131,
+                         "name":  "Makam putri lopian",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.449161440048499,
+                                             2.3806042196090971
+                                         ]
+                     },
+                     {
+                         "id":  132,
+                         "name":  "Goa partongoan sisingamangaraja",
+                         "kabupaten":  "Humbang Hasundutan",
+                         "kta":  "Kawasan Muara dan Sekitarnya",
+                         "category":  "Sejarah dan Budaya",
+                         "photo":  "",
+                         "coordinates":  [
+                                             98.733465849669301,
+                                             2.3183041696017881
+                                         ]
+                     }
+                 ]
+}

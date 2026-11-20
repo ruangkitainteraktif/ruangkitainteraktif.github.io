@@ -128,6 +128,54 @@
                                            "regionId":  "maluku-papua"
                                        }
                                    ]
+                    },
+                    {
+                        "id": "toba-tourism",
+                        "title": "Atlas Pariwisata Danau Toba",
+                        "category": "Pariwisata",
+                        "description": "Story map 3D interaktif dari 132 titik daya tarik wisata BIG di delapan kabupaten sekitar Danau Toba.",
+                        "duration": 229.2,
+                        "data": "./data/danau-toba-wisata.json",
+                        "boundaries": "./data/danau-toba-kabupaten.json",
+                        "source": "Badan Informasi Geospasial (BIG), Atlas Pariwisata Danau Toba",
+                        "stages": [
+                            {
+                                "eyebrow": "JALUR 01 / 04",
+                                "title": "01. Parapat dan Merek",
+                                "shortTitle": "01 PARAPAT · MEREK",
+                                "subtitle": "Jelajahi 53 titik pada kawasan Parapat dan Merek.",
+                                "desc": "Data BIG mencatat 27 titik di Kawasan Parapat dan Sekitarnya serta 26 titik di Kawasan Merek dan Sekitarnya. Pilih satu titik untuk melihat klasifikasi dan kabupatennya.",
+                                "flow": "PARAPAT → MEREK",
+                                "ktaNames": ["Kawasan Parapat dan Sekitarnya", "Kawasan Merek dan Sekitarnya"]
+                            },
+                            {
+                                "eyebrow": "JALUR 02 / 04",
+                                "title": "02. Berastagi dan Dairi Pakpak",
+                                "shortTitle": "02 BERASTAGI · DAIRI",
+                                "subtitle": "Dua kawasan memuat 26 titik wisata dalam data BIG.",
+                                "desc": "Jalur ini menampilkan 11 titik Kawasan Berastagi dan Sekitarnya serta 15 titik Kawasan Dairi Pakpak dan Sekitarnya, sesuai pengelompokan pada data BIG.",
+                                "flow": "BERASTAGI → DAIRI-PAKPAK",
+                                "ktaNames": ["Kawasan Berastagi dan Sekitarnya", "Kawasan Dairi Pakpak dan Sekitarnya"]
+                            },
+                            {
+                                "eyebrow": "JALUR 03 / 04",
+                                "title": "03. Tarutung dan Muara",
+                                "shortTitle": "03 TARUTUNG · MUARA",
+                                "subtitle": "Ikuti 30 titik yang terdata di dua kawasan ini.",
+                                "desc": "Data BIG mengelompokkan 9 titik di Kawasan Tarutung dan Sekitarnya serta 21 titik di Kawasan Muara dan Sekitarnya. Keterangan lokasi mengikuti atribut sumber.",
+                                "flow": "TARUTUNG → MUARA",
+                                "ktaNames": ["Kawasan Tarutung dan Sekitarnya", "Kawasan Muara dan Sekitarnya"]
+                            },
+                            {
+                                "eyebrow": "JALUR 04 / 04",
+                                "title": "04. Samosir dan Balige",
+                                "shortTitle": "04 SAMOSIR · BALIGE",
+                                "subtitle": "Tiga kawasan menutup perjalanan dengan 23 titik wisata.",
+                                "desc": "Jalur terakhir merangkum 7 titik Kawasan Pangururan, 5 titik Kawasan Simanindo, dan 11 titik Kawasan Balige. Klik penanda atau cari nama destinasi untuk berpindah langsung.",
+                                "flow": "PANGURURAN → SIMANINDO → BALIGE",
+                                "ktaNames": ["Kawasan Pangururan dan Sekitarnya", "Kawasan Simanindo dan Sekitarnya", "Kawasan Balige dan Sekitarnya"]
+                            }
+                        ]
                     }
                 ]
 }
