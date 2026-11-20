@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#172b2b">
+  <title>GeoStudio · RuangKita</title>
+  <link rel="stylesheet" href="assets/css/geostudio.css">
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js" defer></script>
+  <script src="assets/js/geostudio-data.js" defer></script>
+  <script src="assets/js/geostudio.js" defer></script>
+</head>
+<body>
+  <main class="studio" id="studio">
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="RuangKita, kembali ke beranda">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span><strong>RUANG<span>KITA</span></strong><small>GeoStudio</small></span>
+      </a>
+      <div class="project-name"><span class="project-dot"></span><input id="projectTitle" aria-label="Judul proyek" value="Mengapa Jakarta Terus Mengalami Penurunan Tanah?" maxlength="90"></div>
+      <div class="top-actions">
+        <button class="button button-quiet" id="saveProject" type="button" title="Simpan di browser">Simpan</button>
+        <button class="button button-export" id="exportVideo" type="button"><span aria-hidden="true">↓</span> Ekspor MP4</button>
+      </div>
+    </header>
+
+    <section class="workspace" aria-label="Editor video peta">
+      <aside class="panel left-panel" aria-label="Pengaturan adegan">
+        <div class="panel-heading"><div><p class="eyebrow">KOMPOSISI</p><h1>Editor adegan</h1></div><div class="scene-actions"><button class="icon-button" type="button" id="removeScene" aria-label="Hapus adegan">−</button><button class="icon-button" type="button" id="addScene" aria-label="Tambah adegan">+</button></div></div>
+        <div class="scene-list" id="sceneList" aria-label="Adegan proyek"></div>
+        <div class="panel-divider"></div>
+        <section class="form-section">
+          <div class="section-title"><h2>Adegan terpilih</h2><span class="scene-index" id="sceneIndex">01</span></div>
+          <label class="field-label" for="sceneTitle">Judul di video</label>
+          <input class="text-input" id="sceneTitle" maxlength="64" value="Kota yang terus turun">
+          <label class="field-label" for="sceneCopy">Teks pendamping</label>
+          <textarea class="text-input text-area" id="sceneCopy" rows="3" maxlength="180">Jakarta berdiri di atas tanah yang perlahan bergerak.</textarea>
+          <div class="field-row">
+            <label class="field-label" for="sceneDuration">Durasi <span>detik</span><input class="number-input" id="sceneDuration" type="number" min="1" max="60" step="1" value="5"></label>
+            <label class="field-label" for="scenePreset">Animasi<select class="select-input" id="scenePreset">
+              <option value="zoomIn">Map Zoom In</option><option value="zoomOut">Map Zoom Out</option><option value="pan">Camera Pan</option><option value="marker">Marker Pop</option><option value="counter">Number Counter</option><option value="gauge">Gauge Fill</option><option value="bounce">Text Bounce</option><option value="icon">Icon Slide</option><option value="highlight">Highlight Region</option><option value="transition">Map Transition</option>
+            </select></label>
+          </div>
+        </section>
+        <div class="panel-divider"></div>
+        <section class="form-section">
+          <div class="section-title"><h2>Peta & kamera</h2><span class="section-note">D3 · GeoJSON</span></div>
+          <label class="field-label" for="countrySelect">Wilayah</label>
+          <select class="select-input" id="countrySelect"><option value="">Memuat daftar wilayah…</option></select>
+          <label class="field-label file-drop" for="geojsonFile"><span class="upload-icon" aria-hidden="true">＋</span><span><strong>Impor GeoJSON</strong><small>Feature, FeatureCollection, atau Geometry</small></span><input type="file" id="geojsonFile" accept=".json,.geojson,application/geo+json,application/json"></label>
+          <p class="inline-status" id="mapStatus" role="status">Memuat peta dunia…</p>
+          <div class="camera-grid">
+            <label class="field-label" for="cameraLat">Lintang<input class="number-input" id="cameraLat" type="number" min="-85" max="85" step="0.01" value="-6.20"></label>
+            <label class="field-label" for="cameraLon">Bujur<input class="number-input" id="cameraLon" type="number" min="-180" max="180" step="0.01" value="106.82"></label>
+          </div>
+          <label class="field-label range-label" for="cameraZoom">Zoom <output id="zoomValue">2.4×</output><input id="cameraZoom" type="range" min="1" max="8" step="0.1" value="2.4"></label>
+        </section>
+        <div class="panel-divider"></div>
+        <section class="form-section">
+          <div class="section-title"><h2>Penanda peta</h2><button class="text-button" id="addMarker" type="button">＋ Tambah</button></div>
+          <div class="marker-editor" id="markerEditor"></div>
+          <p class="field-help">Klik peta untuk menambahkan penanda pada titik yang dipilih kamera.</p>
+        </section>
+        <div class="panel-divider"></div>
+        <section class="form-section compact-section">
+          <div class="section-title"><h2>Pengisi suara</h2><span class="section-note" id="audioName">Belum ada audio</span></div>
+          <label class="audio-pick" for="voiceoverFile"><span aria-hidden="true">♫</span> Pilih audio <input type="file" id="voiceoverFile" accept="audio/*"></label>
+          <p class="field-help">Audio dipakai untuk pratinjau dan ekspor. Pilih ulang setelah membuka berkas proyek.</p>
+          <label class="field-label" for="subtitleScript">Naskah subtitle otomatis</label>
+          <textarea class="text-input text-area" id="subtitleScript" rows="3" placeholder="Kalimat dibagi merata, atau beri waktu seperti [00:04] Kalimat pembuka"></textarea>
+        </section>
+      </aside>
+
+      <section class="preview-column" aria-label="Pratinjau video vertikal">
+        <div class="preview-head"><div><span class="live-dot"></span><span id="previewState">PRATINJAU</span><span class="preview-size">9:16 · 1080 × 1920</span></div><button id="previewPlay" class="play-button" type="button" aria-label="Putar pratinjau"><span aria-hidden="true">▶</span> Putar semua</button></div>
+        <div class="preview-stage-wrap">
+          <div class="preview-stage" id="previewStage">
+            <svg id="mapSvg" viewBox="0 0 540 960" role="img" aria-label="Pratinjau ilustrasi peta animasi">
+              <defs>
+                <pattern id="paperGrain" width="70" height="70" patternUnits="userSpaceOnUse"><circle cx="9" cy="13" r=".8" fill="#ffffff" opacity=".26"/><circle cx="47" cy="32" r=".65" fill="#123e45" opacity=".15"/><circle cx="25" cy="57" r=".55" fill="#ffffff" opacity=".24"/><path d="M0 68h70" stroke="#fff" stroke-opacity=".06" stroke-width=".7"/></pattern>
+                <filter id="mapShadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#163a3d" flood-opacity=".19"/></filter>
+                <clipPath id="mapClip"><rect x="22" y="185" width="496" height="496" rx="19"/></clipPath>
+              </defs>
+              <rect width="540" height="960" fill="#f4eee1"/>
+              <rect width="540" height="960" fill="url(#paperGrain)"/>
+              <g class="map-frame" filter="url(#mapShadow)"><rect x="22" y="185" width="496" height="496" rx="19" fill="#2d9da2"/></g>
+              <g clip-path="url(#mapClip)"><g id="mapCamera"><g id="mapMotion"><path id="worldShape" d="" fill="#eadbb9" stroke="#17474b" stroke-width="1.45" stroke-linejoin="round"/><path id="selectedShape" d="" fill="#f0c777" fill-opacity=".7" stroke="#143f45" stroke-width="2.4" stroke-linejoin="round"/><g id="markerLayer"></g><g id="highlightLayer"></g></g></g></g>
+              <g class="map-coastline" aria-hidden="true"><path d="M37 207h38M462 207h40M37 659h43M460 659h42" stroke="#b4e0d9" stroke-width="1.2" opacity=".7"/></g>
+              <text class="map-label" id="regionLabel" x="46" y="227">PETA ILUSTRASI</text>
+              <g id="titleGroup"><text id="mapTitle" class="title-text" x="36" y="92">Kota yang terus turun</text><text id="mapCopy" class="copy-text" x="38" y="132">Jakarta berdiri di atas tanah yang perlahan bergerak.</text></g>
+              <g id="dataIllustration" transform="translate(38 718)">
+                <g id="gaugeGroup"><text class="data-kicker" x="0" y="0">PENGUKUR ELEVASI</text><path d="M0 58a48 48 0 0 1 96 0" fill="none" stroke="#d8cbb1" stroke-width="11" stroke-linecap="round"/><path id="gaugeArc" d="M0 58a48 48 0 0 1 96 0" fill="none" stroke="#ed722e" stroke-width="11" stroke-linecap="round" stroke-dasharray="151" stroke-dashoffset="151"/><text id="gaugeValue" class="gauge-value" x="48" y="50" text-anchor="middle"></text><text class="data-small" x="48" y="75" text-anchor="middle">ISI NILAI SENDIRI</text></g>
+                <g id="houseGroup" transform="translate(144 13)"><path d="M4 51 45 18l42 33v61H4z" fill="#f3c777" stroke="#17474b" stroke-width="3" stroke-linejoin="round"/><path d="M-3 54 45 13l49 41" fill="none" stroke="#17474b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><rect x="37" y="72" width="18" height="40" rx="2" fill="#d56c39" stroke="#17474b" stroke-width="2"/><rect x="12" y="64" width="17" height="16" fill="#b9e0d8" stroke="#17474b" stroke-width="2"/><rect x="62" y="64" width="17" height="16" fill="#b9e0d8" stroke="#17474b" stroke-width="2"/><path d="M90 108h35" stroke="#17474b" stroke-width="3" stroke-linecap="round"/><path d="M104 98v10M115 93v15" stroke="#ed722e" stroke-width="4" stroke-linecap="round"/></g>
+                <g id="chartGroup" transform="translate(313 8)"><text class="data-kicker" x="0" y="0">PERBANDINGAN</text><path d="M0 112h172" stroke="#17474b" stroke-width="2"/><text class="data-small" id="chartEmpty" x="86" y="68" text-anchor="middle">TAMBAHKAN DATA ANDA</text><g id="chartBars"></g><text class="data-small" x="0" y="134">NILAI DARI SUMBER ANDA</text></g>
+              </g>
+              <g id="subtitleGroup" opacity="0"><rect x="28" y="865" width="484" height="56" rx="9" fill="#183c3d" opacity=".94"/><text id="subtitleText" class="subtitle-text" x="270" y="900" text-anchor="middle"></text></g>
+              <text class="footer-mark" x="36" y="941">RUANGKITA · GEOSTUDIO</text><text class="footer-mark" id="frameNumber" x="504" y="941" text-anchor="end">01 / 06</text>
+            </svg>
+            <div class="stage-loading" id="stageLoading"><span class="loader"></span><span id="stageMessage">Menyiapkan peta ilustrasi…</span></div>
+          </div>
+          <div class="stage-tools"><button id="fitRegion" type="button" aria-label="Pas-kan wilayah ke layar">Pas-kan wilayah</button><span>Seret untuk geser peta · klik untuk menaruh penanda</span></div>
+        </div>
+        <div class="transport"><button class="transport-icon" id="jumpStart" type="button" aria-label="Ke awal">|◀</button><button class="transport-play" id="playPause" type="button" aria-label="Putar atau jeda">▶</button><button class="transport-icon" id="jumpEnd" type="button" aria-label="Ke akhir">▶|</button><div class="transport-time"><strong id="currentTime">00:00</strong><span>/</span><span id="totalTime">00:30</span></div><input type="range" id="timelineScrub" min="0" max="30" step="0.1" value="0" aria-label="Posisi timeline"><span class="fps-note">30 FPS</span></div>
+      </section>
+
+      <aside class="panel right-panel" aria-label="Aset dan data">
+        <div class="panel-heading"><div><p class="eyebrow">BAHAN VIDEO</p><h2>Aset & data</h2></div><button class="icon-button" id="projectMenu" type="button" aria-label="Opsi proyek">···</button></div>
+        <div class="asset-tabs" role="tablist"><button class="asset-tab active" type="button" role="tab" aria-selected="true" data-tab="visual">Visual</button><button class="asset-tab" type="button" role="tab" aria-selected="false" data-tab="data">Data</button><button class="asset-tab" type="button" role="tab" aria-selected="false" data-tab="notes">Catatan</button></div>
+        <div class="asset-content" id="visualTab" role="tabpanel">
+          <div class="asset-card"><div class="asset-card-top"><span class="asset-art map-art" aria-hidden="true"><i></i><b></b><em></em></span><div><strong>Peta ilustrasi</strong><small id="assetRegion">Jakarta, Indonesia</small></div></div><button class="row-action" type="button" id="recenterMap">Atur kamera <span>↗</span></button></div>
+          <div class="asset-card"><div class="asset-card-top"><span class="asset-art house-art" aria-hidden="true">⌂</span><div><strong>Objek adegan</strong><small>Rumah · pengukur · grafik</small></div></div><div class="object-switches"><label><input type="checkbox" id="showGauge" checked><span>Gauge</span></label><label><input type="checkbox" id="showHouse" checked><span>Rumah</span></label><label><input type="checkbox" id="showChart" checked><span>Grafik</span></label></div></div>
+          <div class="asset-card"><div class="asset-card-top"><span class="asset-art pin-art" aria-hidden="true">●</span><div><strong>Penanda lokasi</strong><small id="assetMarkerCount">0 penanda</small></div></div><button class="row-action" type="button" id="focusMarkers">Kelola penanda <span>↗</span></button></div>
+          <div class="asset-note"><span aria-hidden="true">i</span><p>Tambahkan data sumber sebelum memakai angka statistik. Contoh Jakarta disiapkan sebagai kanvas kosong.</p></div>
+        </div>
+        <div class="asset-content hidden" id="dataTab" role="tabpanel"><div class="data-heading"><h3>Angka proyek</h3><button class="text-button" type="button" id="addDataRow">＋ Tambah nilai</button></div><p class="field-help">Angka tidak diisi otomatis. Masukkan angka dan sumber dari data yang Anda miliki.</p><div id="dataRows" class="data-rows"></div><div class="no-data" id="noData">Belum ada angka. Nilai yang Anda tambahkan dapat dipakai pada gauge atau kartu data.</div><div class="source-field"><label class="field-label" for="dataSource">Sumber data</label><input class="text-input" id="dataSource" placeholder="URL atau nama sumber"></div></div>
+        <div class="asset-content hidden" id="notesTab" role="tabpanel"><div class="notes-card"><h3>Susunan cerita</h3><ol><li>Pembuka: satu pertanyaan</li><li>Orientasi: tunjukkan wilayah</li><li>Data: masukkan angka bersumber</li><li>Fokus lokal: dekati lokasi</li><li>Dampak: jelaskan dengan ilustrasi</li><li>Penutup: rangkum temuan</li></ol><p>Adegan bisa diurut ulang dengan tombol panah di setiap kartu.</p></div><div class="notes-card"><h3>Berkas proyek</h3><p>Proyek disimpan di browser ini. Ekspor berkas JSON untuk memindahkannya ke perangkat lain.</p><button class="row-action" type="button" id="exportProject">Unduh berkas proyek <span>↓</span></button><label class="row-action import-project" for="importProject">Buka berkas proyek <span>↑</span><input type="file" id="importProject" accept=".json,application/json"></label></div></div>
+      </aside>
+    </section>
+
+    <footer class="timeline-panel">
+      <div class="timeline-top"><div><p class="eyebrow">URUTAN VIDEO</p><h2>Timeline</h2></div><div class="timeline-total"><span id="timelineSceneCount">6 adegan</span><b id="timelineDuration">00:30</b></div></div>
+      <div class="timeline-track" id="timelineTrack" aria-label="Susunan adegan pada timeline"></div>
+      <div class="timeline-ruler"><span>00:00</span><div class="ruler-ticks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span id="rulerEnd">00:30</span></div>
+      <div class="audio-track"><span class="audio-track-label">♫ AUDIO</span><div id="audioTrackBody" class="audio-track-body"><span id="audioTrackName">Jatuhkan audio untuk menambahkan voice-over</span></div></div>
+    </footer>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="export-overlay" id="exportOverlay" hidden><div class="export-dialog" role="dialog" aria-modal="true" aria-labelledby="exportTitle"><div class="export-icon">↓</div><h2 id="exportTitle">Mengekspor video</h2><p id="exportMessage">Menyiapkan frame peta…</p><div class="progress-track"><span id="exportProgress"></span></div><div class="export-meta"><span id="exportPercent">0%</span><span>MP4 · 1080 × 1920 · 30 FPS</span></div><button id="cancelExport" class="button button-quiet" type="button">Batal</button></div></div>
+  </main>
+</body>
+</html>

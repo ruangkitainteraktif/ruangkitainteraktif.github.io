@@ -1,0 +1,335 @@
+﻿{
+    "version":  1,
+    "id":  "indonesia-provinces",
+    "title":  "38 Provinsi Indonesia",
+    "source":  {
+                   "provinceList":  "../../assets/data/geooss/provinces.json",
+                   "boundaries":  "../../assets/data/bps/geojson/provinsi.geojson",
+                   "emblems":  "../assets/provinsi",
+                   "emblemLicense":  "../assets/provinsi/LICENSE.txt"
+               },
+    "regions":  [
+                    {
+                        "id":  "sumatera",
+                        "title":  "Sumatera"
+                    },
+                    {
+                        "id":  "jawa-bali-nusa",
+                        "title":  "Jawa, Bali \u0026 Nusa Tenggara"
+                    },
+                    {
+                        "id":  "kalimantan-sulawesi",
+                        "title":  "Kalimantan \u0026 Sulawesi"
+                    },
+                    {
+                        "id":  "maluku-papua",
+                        "title":  "Maluku \u0026 Papua"
+                    }
+                ],
+    "provinces":  [
+                      {
+                          "id":  "1100000000",
+                          "code":  "11",
+                          "name":  "Aceh",
+                          "regionId":  "sumatera",
+                          "geometryName":  "ACEH",
+                          "emblem":  "assets/provinsi/11.png"
+                      },
+                      {
+                          "id":  "1200000000",
+                          "code":  "12",
+                          "name":  "Sumatera Utara",
+                          "regionId":  "sumatera",
+                          "geometryName":  "SUMATERA UTARA",
+                          "emblem":  "assets/provinsi/12.png"
+                      },
+                      {
+                          "id":  "1300000000",
+                          "code":  "13",
+                          "name":  "Sumatera Barat",
+                          "regionId":  "sumatera",
+                          "geometryName":  "SUMATERA BARAT",
+                          "emblem":  "assets/provinsi/13.png"
+                      },
+                      {
+                          "id":  "1400000000",
+                          "code":  "14",
+                          "name":  "Riau",
+                          "regionId":  "sumatera",
+                          "geometryName":  "RIAU",
+                          "emblem":  "assets/provinsi/14.png"
+                      },
+                      {
+                          "id":  "1500000000",
+                          "code":  "15",
+                          "name":  "Jambi",
+                          "regionId":  "sumatera",
+                          "geometryName":  "JAMBI",
+                          "emblem":  "assets/provinsi/15.png"
+                      },
+                      {
+                          "id":  "1600000000",
+                          "code":  "16",
+                          "name":  "Sumatera Selatan",
+                          "regionId":  "sumatera",
+                          "geometryName":  "SUMATERA SELATAN",
+                          "emblem":  "assets/provinsi/16.png"
+                      },
+                      {
+                          "id":  "1700000000",
+                          "code":  "17",
+                          "name":  "Bengkulu",
+                          "regionId":  "sumatera",
+                          "geometryName":  "BENGKULU",
+                          "emblem":  "assets/provinsi/17.png"
+                      },
+                      {
+                          "id":  "1800000000",
+                          "code":  "18",
+                          "name":  "Lampung",
+                          "regionId":  "sumatera",
+                          "geometryName":  "LAMPUNG",
+                          "emblem":  "assets/provinsi/18.png"
+                      },
+                      {
+                          "id":  "1900000000",
+                          "code":  "19",
+                          "name":  "Kepulauan Bangka Belitung",
+                          "regionId":  "sumatera",
+                          "geometryName":  "KEPULAUAN BANGKA BELITUNG",
+                          "emblem":  "assets/provinsi/19.png"
+                      },
+                      {
+                          "id":  "2100000000",
+                          "code":  "21",
+                          "name":  "Kepulauan Riau",
+                          "regionId":  "sumatera",
+                          "geometryName":  "KEPULAUAN RIAU",
+                          "emblem":  "assets/provinsi/21.png"
+                      },
+                      {
+                          "id":  "3100000000",
+                          "code":  "31",
+                          "name":  "DKI Jakarta",
+                          "regionId":  "jawa-bali-nusa",
+                          "geometryName":  "DKI JAKARTA",
+                          "emblem":  "assets/provinsi/31.png"
+                      },
+                      {
+                          "id":  "3200000000",
+                          "code":  "32",
+                          "name":  "Jawa Barat",
+                          "regionId":  "jawa-bali-nusa",
+                          "geometryName":  "JAWA BARAT",
+                          "emblem":  "assets/provinsi/32.png"
+                      },
+                      {
+                          "id":  "3300000000",
+                          "code":  "33",
+                          "name":  "Jawa Tengah",
+                          "regionId":  "jawa-bali-nusa",
+                          "geometryName":  "JAWA TENGAH",
+                          "emblem":  "assets/provinsi/33.png"
+                      },
+                      {
+                          "id":  "3400000000",
+                          "code":  "34",
+                          "name":  "Daerah Istimewa Yogyakarta",
+                          "regionId":  "jawa-bali-nusa",
+                          "geometryName":  "DI YOGYAKARTA",
+                          "emblem":  "assets/provinsi/34.png"
+                      },
+                      {
+                          "id":  "3500000000",
+                          "code":  "35",
+                          "name":  "Jawa Timur",
+                          "regionId":  "jawa-bali-nusa",
+                          "geometryName":  "JAWA TIMUR",
+                          "emblem":  "assets/provinsi/35.png"
+                      },
+                      {
+                          "id":  "3600000000",
+                          "code":  "36",
+                          "name":  "Banten",
+                          "regionId":  "jawa-bali-nusa",
+                          "geometryName":  "BANTEN",
+                          "emblem":  "assets/provinsi/36.png"
+                      },
+                      {
+                          "id":  "5100000000",
+                          "code":  "51",
+                          "name":  "Bali",
+                          "regionId":  "jawa-bali-nusa",
+                          "geometryName":  "BALI",
+                          "emblem":  "assets/provinsi/51.png"
+                      },
+                      {
+                          "id":  "5200000000",
+                          "code":  "52",
+                          "name":  "Nusa Tenggara Barat",
+                          "regionId":  "jawa-bali-nusa",
+                          "geometryName":  "NUSA TENGGARA BARAT",
+                          "emblem":  "assets/provinsi/52.png"
+                      },
+                      {
+                          "id":  "5300000000",
+                          "code":  "53",
+                          "name":  "Nusa Tenggara Timur",
+                          "regionId":  "jawa-bali-nusa",
+                          "geometryName":  "NUSA TENGGARA TIMUR",
+                          "emblem":  "assets/provinsi/53.png"
+                      },
+                      {
+                          "id":  "6100000000",
+                          "code":  "61",
+                          "name":  "Kalimantan Barat",
+                          "regionId":  "kalimantan-sulawesi",
+                          "geometryName":  "KALIMANTAN BARAT",
+                          "emblem":  "assets/provinsi/61.png"
+                      },
+                      {
+                          "id":  "6200000000",
+                          "code":  "62",
+                          "name":  "Kalimantan Tengah",
+                          "regionId":  "kalimantan-sulawesi",
+                          "geometryName":  "KALIMANTAN TENGAH",
+                          "emblem":  "assets/provinsi/62.png"
+                      },
+                      {
+                          "id":  "6300000000",
+                          "code":  "63",
+                          "name":  "Kalimantan Selatan",
+                          "regionId":  "kalimantan-sulawesi",
+                          "geometryName":  "KALIMANTAN SELATAN",
+                          "emblem":  "assets/provinsi/63.png"
+                      },
+                      {
+                          "id":  "6400000000",
+                          "code":  "64",
+                          "name":  "Kalimantan Timur",
+                          "regionId":  "kalimantan-sulawesi",
+                          "geometryName":  "KALIMANTAN TIMUR",
+                          "emblem":  "assets/provinsi/64.png"
+                      },
+                      {
+                          "id":  "6500000000",
+                          "code":  "65",
+                          "name":  "Kalimantan Utara",
+                          "regionId":  "kalimantan-sulawesi",
+                          "geometryName":  "KALIMANTAN UTARA",
+                          "emblem":  "assets/provinsi/65.png"
+                      },
+                      {
+                          "id":  "7100000000",
+                          "code":  "71",
+                          "name":  "Sulawesi Utara",
+                          "regionId":  "kalimantan-sulawesi",
+                          "geometryName":  "SULAWESI UTARA",
+                          "emblem":  "assets/provinsi/71.png"
+                      },
+                      {
+                          "id":  "7200000000",
+                          "code":  "72",
+                          "name":  "Sulawesi Tengah",
+                          "regionId":  "kalimantan-sulawesi",
+                          "geometryName":  "SULAWESI TENGAH",
+                          "emblem":  "assets/provinsi/72.png"
+                      },
+                      {
+                          "id":  "7300000000",
+                          "code":  "73",
+                          "name":  "Sulawesi Selatan",
+                          "regionId":  "kalimantan-sulawesi",
+                          "geometryName":  "SULAWESI SELATAN",
+                          "emblem":  "assets/provinsi/73.png"
+                      },
+                      {
+                          "id":  "7400000000",
+                          "code":  "74",
+                          "name":  "Sulawesi Tenggara",
+                          "regionId":  "kalimantan-sulawesi",
+                          "geometryName":  "SULAWESI TENGGARA",
+                          "emblem":  "assets/provinsi/74.png"
+                      },
+                      {
+                          "id":  "7500000000",
+                          "code":  "75",
+                          "name":  "Gorontalo",
+                          "regionId":  "kalimantan-sulawesi",
+                          "geometryName":  "GORONTALO",
+                          "emblem":  "assets/provinsi/75.png"
+                      },
+                      {
+                          "id":  "7600000000",
+                          "code":  "76",
+                          "name":  "Sulawesi Barat",
+                          "regionId":  "kalimantan-sulawesi",
+                          "geometryName":  "SULAWESI BARAT",
+                          "emblem":  "assets/provinsi/76.png"
+                      },
+                      {
+                          "id":  "8100000000",
+                          "code":  "81",
+                          "name":  "Maluku",
+                          "regionId":  "maluku-papua",
+                          "geometryName":  "MALUKU",
+                          "emblem":  "assets/provinsi/81.png"
+                      },
+                      {
+                          "id":  "8200000000",
+                          "code":  "82",
+                          "name":  "Maluku Utara",
+                          "regionId":  "maluku-papua",
+                          "geometryName":  "MALUKU UTARA",
+                          "emblem":  "assets/provinsi/82.png"
+                      },
+                      {
+                          "id":  "9100000000",
+                          "code":  "91",
+                          "name":  "Papua",
+                          "regionId":  "maluku-papua",
+                          "geometryName":  "PAPUA",
+                          "emblem":  "assets/provinsi/91.png"
+                      },
+                      {
+                          "id":  "9200000000",
+                          "code":  "92",
+                          "name":  "Papua Barat",
+                          "regionId":  "maluku-papua",
+                          "geometryName":  "PAPUA BARAT",
+                          "emblem":  "assets/provinsi/92.png"
+                      },
+                      {
+                          "id":  "9300000000",
+                          "code":  "93",
+                          "name":  "Papua Selatan",
+                          "regionId":  "maluku-papua",
+                          "geometryName":  "PAPUA SELATAN",
+                          "emblem":  "assets/provinsi/93.png"
+                      },
+                      {
+                          "id":  "9400000000",
+                          "code":  "94",
+                          "name":  "Papua Tengah",
+                          "regionId":  "maluku-papua",
+                          "geometryName":  "PAPUA TENGAH",
+                          "emblem":  "assets/provinsi/94.png"
+                      },
+                      {
+                          "id":  "9500000000",
+                          "code":  "95",
+                          "name":  "Papua Pegunungan",
+                          "regionId":  "maluku-papua",
+                          "geometryName":  "PAPUA PEGUNUNGAN",
+                          "emblem":  "assets/provinsi/95.png"
+                      },
+                      {
+                          "id":  "9600000000",
+                          "code":  "96",
+                          "name":  "Papua Barat Daya",
+                          "regionId":  "maluku-papua",
+                          "geometryName":  "PAPUA BARAT DAYA",
+                          "emblem":  "assets/provinsi/96.png"
+                      }
+                  ]
+}

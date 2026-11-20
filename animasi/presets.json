@@ -1,0 +1,133 @@
+﻿{
+    "version":  1,
+    "presets":  [
+                    {
+                        "id":  "hydrology",
+                        "title":  "Siklus Hidrologi",
+                        "category":  "Lingkungan",
+                        "description":  "Perjalanan air dari laut, awan, hujan, lalu kembali ke laut.",
+                        "duration":  15,
+                        "stages":  [
+                                       {
+                                           "eyebrow":  "TAHAP 01 / 04 • 0.0s – 3.75s",
+                                           "title":  "01. Evaporasi (Penguapan)",
+                                           "shortTitle":  "01 EVAPORASI",
+                                           "subtitle":  "Panas matahari menguapkan air laut ke atmosfer",
+                                           "desc":  "Sinar matahari memanaskan permukaan laut sehingga air berubah menjadi uap air yang naik ke atmosfer.",
+                                           "flow":  "LAUT → UAP → ATMOSFER"
+                                       },
+                                       {
+                                           "eyebrow":  "TAHAP 02 / 04 • 3.75s – 7.50s",
+                                           "title":  "02. Kondensasi (Pengembunan)",
+                                           "shortTitle":  "02 KONDENSASI",
+                                           "subtitle":  "Uap mendingin dan berkumpul membentuk awan hujan",
+                                           "desc":  "Di ketinggian yang dingin, uap air berkumpul padat dan mengembun menjadi gumpalan awan mendung di atas gunung.",
+                                           "flow":  "UAP → AWAN"
+                                       },
+                                       {
+                                           "eyebrow":  "TAHAP 03 / 04 • 7.50s – 11.25s",
+                                           "title":  "03. Presipitasi (Hujan)",
+                                           "shortTitle":  "03 PRESIPITASI",
+                                           "subtitle":  "Awan jenuh melepaskan rintik hujan ke pegunungan",
+                                           "desc":  "Butiran air di dalam awan menjadi terlalu berat dan jatuh sebagai hujan yang membasahi puncak serta lereng gunung.",
+                                           "flow":  "AWAN → HUJAN → DARAT"
+                                       },
+                                       {
+                                           "eyebrow":  "TAHAP 04 / 04 • 11.25s – 15.00s",
+                                           "title":  "04. Koleksi (Aliran ke Laut)",
+                                           "shortTitle":  "04 KOLEKSI",
+                                           "subtitle":  "Air hujan mengalir melalui sungai kembali ke laut",
+                                           "desc":  "Air hujan meresap ke tanah dan mengalir deras lewat sungai menuruni lembah hingga bermuara kembali ke laut.",
+                                           "flow":  "DARAT → SUNGAI → LAUT"
+                                       }
+                                   ]
+                    },
+                    {
+                        "id":  "photosynthesis",
+                        "title":  "Fotosintesis",
+                        "category":  "Biologi",
+                        "description":  "Cahaya, air, dan karbon dioksida diolah tumbuhan menjadi gula dan oksigen.",
+                        "duration":  15,
+                        "stages":  [
+                                       {
+                                           "eyebrow":  "TAHAP 01 / 04 • 0.0s – 3.75s",
+                                           "title":  "01. Penyerapan Cahaya",
+                                           "shortTitle":  "01 CAHAYA",
+                                           "subtitle":  "Klorofil menangkap energi cahaya matahari",
+                                           "desc":  "Daun menyerap cahaya matahari. Klorofil menggunakan energi ini untuk memulai proses fotosintesis.",
+                                           "flow":  "MATAHARI → DAUN"
+                                       },
+                                       {
+                                           "eyebrow":  "TAHAP 02 / 04 • 3.75s – 7.50s",
+                                           "title":  "02. Air dan Karbon Dioksida",
+                                           "shortTitle":  "02 BAHAN BAKU",
+                                           "subtitle":  "Air naik dari akar, karbon dioksida masuk melalui daun",
+                                           "desc":  "Akar menyerap air dari tanah dan mengirimkannya ke daun. Karbon dioksida dari udara masuk melalui stomata.",
+                                           "flow":  "AKAR + CO₂ → DAUN"
+                                       },
+                                       {
+                                           "eyebrow":  "TAHAP 03 / 04 • 7.50s – 11.25s",
+                                           "title":  "03. Pembentukan Glukosa",
+                                           "shortTitle":  "03 GLUKOSA",
+                                           "subtitle":  "Energi cahaya membantu mengubah air dan karbon dioksida",
+                                           "desc":  "Di dalam kloroplas, energi cahaya membantu mengolah air dan karbon dioksida menjadi glukosa sebagai sumber energi tumbuhan.",
+                                           "flow":  "AIR + CO₂ + CAHAYA → GLUKOSA"
+                                       },
+                                       {
+                                           "eyebrow":  "TAHAP 04 / 04 • 11.25s – 15.00s",
+                                           "title":  "04. Oksigen Dilepaskan",
+                                           "shortTitle":  "04 OKSIGEN",
+                                           "subtitle":  "Glukosa digunakan tumbuhan dan oksigen dilepas ke udara",
+                                           "desc":  "Glukosa menjadi sumber energi dan bahan pertumbuhan. Oksigen hasil fotosintesis keluar melalui daun ke atmosfer.",
+                                           "flow":  "GLUKOSA → TUMBUHAN · O₂ → UDARA"
+                                       }
+                                   ]
+                    },
+                    {
+                        "id":  "indonesia-provinces",
+                        "title":  "38 Provinsi Indonesia",
+                        "category":  "Geografi",
+                        "description":  "Jelajahi 38 provinsi Indonesia melalui peta 3D dan lambang daerah.",
+                        "duration":  38,
+                        "data":  "./data/provinsi-indonesia.json",
+                        "stages":  [
+                                       {
+                                           "eyebrow":  "WILAYAH 01 / 04",
+                                           "title":  "01. Sumatera",
+                                           "shortTitle":  "01 SUMATERA",
+                                           "subtitle":  "Sepuluh provinsi membentang dari Aceh hingga Kepulauan Riau.",
+                                           "desc":  "Jelajahi provinsi-provinsi di Pulau Sumatera dan gugus pulau di sekitarnya.",
+                                           "flow":  "SUMATERA",
+                                           "regionId":  "sumatera"
+                                       },
+                                       {
+                                           "eyebrow":  "WILAYAH 02 / 04",
+                                           "title":  "02. Jawa, Bali \u0026 Nusa Tenggara",
+                                           "shortTitle":  "02 JAWA, BALI \u0026 NUSA TENGGARA",
+                                           "subtitle":  "Dari Banten hingga Nusa Tenggara Timur, sembilan provinsi tersusun berantai.",
+                                           "desc":  "Perjalanan berlanjut melalui Pulau Jawa, Bali, Nusa Tenggara Barat, dan Nusa Tenggara Timur.",
+                                           "flow":  "JAWA-BALI-NUSA",
+                                           "regionId":  "jawa-bali-nusa"
+                                       },
+                                       {
+                                           "eyebrow":  "WILAYAH 03 / 04",
+                                           "title":  "03. Kalimantan \u0026 Sulawesi",
+                                           "shortTitle":  "03 KALIMANTAN \u0026 SULAWESI",
+                                           "subtitle":  "Sebelas provinsi mengisi dua pulau besar di tengah Indonesia.",
+                                           "desc":  "Lihat provinsi-provinsi di Kalimantan dan Sulawesi, termasuk gugus pulau di sekelilingnya.",
+                                           "flow":  "KALIMANTAN-SULAWESI",
+                                           "regionId":  "kalimantan-sulawesi"
+                                       },
+                                       {
+                                           "eyebrow":  "WILAYAH 04 / 04",
+                                           "title":  "04. Maluku \u0026 Papua",
+                                           "shortTitle":  "04 MALUKU \u0026 PAPUA",
+                                           "subtitle":  "Delapan provinsi di kawasan timur menutup perjalanan.",
+                                           "desc":  "Dari Maluku hingga enam provinsi di Tanah Papua, inilah bagian paling timur Indonesia.",
+                                           "flow":  "MALUKU-PAPUA",
+                                           "regionId":  "maluku-papua"
+                                       }
+                                   ]
+                    }
+                ]
+}

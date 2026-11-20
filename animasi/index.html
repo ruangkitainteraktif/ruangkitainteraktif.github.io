@@ -1,0 +1,2305 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RUANGKITA — Studio Pro</title>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7501816933195235" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-dark: #070b14;
+    --glass: rgba(13, 20, 36, 0.82);
+    --glass-solid: rgba(11, 17, 30, 0.96);
+    --border: rgba(255, 255, 255, 0.12);
+    --accent: #38bdf8;
+    --accent-2: #818cf8;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --success: #34d399;
+  }
+
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: var(--bg-dark); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, system-ui, sans-serif;
+    user-select: none;
+  }
+
+  #canvas-wrap {
+    position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 1;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 50% 25%, #162847 0%, #070b14 85%);
+  }
+  canvas#three-canvas { display: block; width: 100%; height: 100%; }
+
+  /* Reels Guide */
+  #reels-guide {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    height: min(92vh, 840px); aspect-ratio: 9 / 16;
+    border: 2px dashed rgba(56, 189, 248, 0.65); border-radius: 20px;
+    box-shadow: 0 0 0 9999px rgba(4, 7, 15, 0.62); z-index: 5;
+    pointer-events: none; display: none;
+  }
+  #reels-guide.active { display: block; }
+  #reels-guide::before {
+    content: "9:16 REELS SAFE FRAME"; position: absolute; top: 12px; left: 50%;
+    transform: translateX(-50%); font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    color: #7dd3fc; background: rgba(15, 23, 42, 0.85); padding: 4px 10px;
+    border-radius: 999px; border: 1px solid rgba(56, 189, 248, 0.35);
+  }
+  #reels-guide::after {
+    content: "Safe Zone (Caption & UI Area)"; position: absolute; bottom: 14px; left: 14px; right: 64px;
+    height: 18%; border: 1px dashed rgba(248, 113, 113, 0.45); border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; font-size: 10px;
+    color: rgba(252, 165, 165, 0.75); background: rgba(239, 68, 68, 0.06);
+  }
+
+  /* Top Bar */
+  #topbar {
+    position: fixed; top: 14px; left: 14px; right: 14px; height: 54px; z-index: 20;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 0 14px; background: var(--glass); backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border); border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .brand-badge {
+    width: 32px; height: 32px; border-radius: 10px;
+    background: linear-gradient(135deg, #38bdf8, #6366f1);
+    display: grid; place-items: center; font-weight: 800; font-size: 14px; color: #fff; flex-shrink: 0;
+  }
+  .brand-title { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brand-sub { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .toolbar { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+
+  button.btn {
+    appearance: none; border: 1px solid var(--border); background: rgba(255, 255, 255, 0.06);
+    color: var(--text); height: 34px; padding: 0 11px; border-radius: 10px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+    transition: all 0.18s ease;
+  }
+  button.btn:hover { background: rgba(255, 255, 255, 0.13); border-color: rgba(255, 255, 255, 0.25); }
+  button.btn.active { background: rgba(56, 189, 248, 0.2); border-color: rgba(56, 189, 248, 0.6); color: #7dd3fc; }
+  button.btn.primary {
+    background: linear-gradient(135deg, #0284c7, #4f46e5);
+    border-color: rgba(125, 211, 252, 0.45); color: #fff;
+  }
+  button.btn.primary:hover { filter: brightness(1.1); }
+  button.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  button.btn.vo-active {
+    background: rgba(52, 211, 153, 0.18); border-color: rgba(52, 211, 153, 0.55); color: #6ee7b7;
+  }
+
+  /* Stage Info Card */
+  #stage-card {
+    position: fixed; top: 80px; left: 14px; width: min(320px, calc(100vw - 28px)); z-index: 15;
+    padding: 12px 14px; background: var(--glass); backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px); border: 1px solid var(--border); border-radius: 14px;
+  }
+  #province-spotlight {
+    position: fixed; top: 18px; left: calc(50% + 180px); transform: translateX(-50%); z-index: 20;
+    display: flex; align-items: center; gap: 12px; width: min(330px, calc(100vw - 32px));
+    padding: 10px 14px; color: #e2e8f0; background: rgba(9, 17, 31, .9);
+    border: 1px solid rgba(56, 189, 248, .45); border-radius: 16px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.28); backdrop-filter: blur(12px); pointer-events: none;
+  }
+  #province-spotlight[hidden] { display: none; }
+  #province-spotlight img { width: 48px; height: 48px; object-fit: contain; padding: 4px; flex: 0 0 auto; background: #f8fafc; border-radius: 12px; }
+  .province-spotlight-copy { min-width: 0; display: grid; gap: 3px; }
+  .province-spotlight-region { color: #38bdf8; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+  .province-spotlight-name { overflow: hidden; color: #f8fafc; font-size: 14px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+  .province-spotlight-count { color: #94a3b8; font-size: 10px; }
+  .stage-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #38bdf8; margin-bottom: 4px; }
+  .stage-heading { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .stage-desc { font-size: 12px; line-height: 1.45; color: #cbd5e1; }
+  .studio-ad { flex:0 0 auto; margin:14px 0 0; padding:8px 10px 10px; overflow:hidden; border:1px solid rgba(148,163,184,.18); border-radius:10px; background:rgba(255,255,255,.025); }
+  .studio-ad-label { display:block; margin-bottom:6px; color:#94a3b8; font-size:9px; font-weight:750; letter-spacing:.04em; }
+  .studio-ad ins.adsbygoogle { display:block; width:100%; min-height:90px; }
+  .studio-ad ins.adsbygoogle[data-ad-status="unfilled"] { display:none !important; }
+  .studio-ad:has(ins.adsbygoogle[data-ad-status="unfilled"]) { display:none; }
+
+  /* Subtitle Bar */
+  #subtitle-bar {
+    position: fixed; left: 50%; bottom: 118px; transform: translateX(-50%);
+    width: min(740px, calc(100vw - 40px)); z-index: 18; pointer-events: none;
+    opacity: 0; transition: opacity 0.4s ease;
+  }
+  #subtitle-bar.visible { opacity: 1; }
+  body.clean-fullscreen #subtitle-bar { bottom: 36px; }
+
+  .subtitle-inner {
+    background: linear-gradient(180deg, rgba(8, 12, 24, 0.55) 0%, rgba(8, 12, 24, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 16px;
+    padding: 14px 22px 16px; text-align: center;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .subtitle-stage {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #38bdf8; margin-bottom: 6px;
+  }
+  .subtitle-text {
+    font-size: 17px; font-weight: 600; line-height: 1.45; color: #f1f5f9;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  }
+  .subtitle-sub { font-size: 13px; color: #94a3b8; margin-top: 6px; line-height: 1.4; }
+
+  /* Bottom Dock */
+  #bottom-dock {
+    position: fixed; bottom: 14px; left: 14px; right: 14px; z-index: 20;
+    padding: 12px 14px; background: var(--glass); backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border); border-radius: 16px;
+    display: flex; flex-direction: column; gap: 10px;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
+  }
+  .timeline-row { display: flex; align-items: center; gap: 10px; }
+  .time-label {
+    font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 600;
+    color: #cbd5e1; min-width: 78px; text-align: center;
+  }
+  #scrubber {
+    flex: 1; appearance: none; height: 6px; border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14); outline: none; cursor: pointer;
+  }
+  #scrubber::-webkit-slider-thumb {
+    appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    background: #38bdf8; border: 2px solid #fff;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.8); cursor: pointer;
+  }
+  .stages-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .stage-btn {
+    appearance: none; border: 1px solid var(--border); background: rgba(255, 255, 255, 0.04);
+    color: var(--text); padding: 8px 10px; border-radius: 10px; text-align: left; cursor: pointer;
+    transition: all 0.2s ease; display: flex; align-items: center; gap: 8px;
+  }
+  .stage-btn:hover { background: rgba(255, 255, 255, 0.09); }
+  .stage-btn.active {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(99, 102, 241, 0.22));
+    border-color: rgba(56, 189, 248, 0.65);
+  }
+  .stage-num {
+    font-size: 11px; font-weight: 800; color: #38bdf8;
+    background: rgba(56, 189, 248, 0.15); padding: 3px 6px; border-radius: 6px;
+  }
+  .stage-name { font-size: 12px; font-weight: 700; }
+
+  /* Clean Fullscreen */
+  body.clean-fullscreen #topbar,
+  body.clean-fullscreen #stage-card,
+  body.clean-fullscreen #bottom-dock,
+  body.clean-fullscreen #reels-guide { display: none !important; }
+
+  #exit-fs-btn {
+    position: fixed; top: 16px; right: 16px; z-index: 50; display: none;
+    background: rgba(15, 23, 42, 0.72); backdrop-filter: blur(10px); color: #f8fafc;
+    border: 1px solid rgba(255, 255, 255, 0.2); padding: 8px 14px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; cursor: pointer; opacity: 0; transition: opacity 0.25s ease;
+  }
+  body.clean-fullscreen #exit-fs-btn { display: inline-flex; align-items: center; gap: 6px; }
+  body.clean-fullscreen.show-cursor #exit-fs-btn { opacity: 1; }
+
+  /* VO Indicator */
+  #vo-indicator {
+    position: fixed; top: 80px; right: 14px; z-index: 16; display: none;
+    align-items: center; gap: 8px; padding: 8px 14px;
+    background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(52, 211, 153, 0.4);
+    border-radius: 999px; font-size: 12px; font-weight: 600; color: #6ee7b7;
+    backdrop-filter: blur(10px);
+  }
+  #vo-indicator.active { display: flex; }
+  #vo-indicator .pulse {
+    width: 8px; height: 8px; border-radius: 50%; background: #34d399;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.85); }
+  }
+
+  /* Speed Panel (compact under stage card) */
+  #speed-panel {
+    position: fixed; top: 80px; right: 14px; z-index: 15;
+    width: 210px; padding: 12px 14px; background: var(--glass);
+    backdrop-filter: blur(14px); border: 1px solid var(--border); border-radius: 14px;
+    font-size: 12px;
+  }
+  #speed-panel .sp-title { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #38bdf8; margin-bottom: 8px; text-transform: uppercase; }
+  .sp-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .sp-row label { color: #cbd5e1; font-weight: 600; white-space: nowrap; }
+  .sp-row input[type="range"] {
+    flex: 1; appearance: none; height: 5px; border-radius: 999px;
+    background: rgba(255,255,255,0.15); outline: none; cursor: pointer;
+  }
+  .sp-row input[type="range"]::-webkit-slider-thumb {
+    appearance: none; width: 14px; height: 14px; border-radius: 50%;
+    background: #38bdf8; border: 2px solid #fff; cursor: pointer;
+  }
+  .sp-val { min-width: 36px; text-align: right; font-variant-numeric: tabular-nums; color: #7dd3fc; font-weight: 700; }
+
+  /* Modals */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 100; background: rgba(3, 7, 18, 0.8);
+    backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal-card {
+    width: min(560px, 100%); max-height: 90vh; overflow-y: auto;
+    background: var(--glass-solid); border: 1px solid var(--border); border-radius: 18px;
+    padding: 22px; box-shadow: 0 24px 50px rgba(0, 0, 0, 0.6);
+  }
+  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; line-height: 1.45; }
+
+  .form-group { margin-bottom: 12px; }
+  .form-hint { color: var(--muted); font-size: 11px; line-height: 1.45; }
+  .form-group label { display: block; font-size: 11px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px; }
+  .form-group input, .form-group textarea, .form-group select {
+    width: 100%; border-radius: 10px; border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.06); color: var(--text); padding: 8px 10px;
+    font-size: 13px; outline: none; font-family: inherit;
+  }
+  .form-group textarea { min-height: 64px; resize: vertical; line-height: 1.4; }
+  .form-group select { height: 36px; }
+  .form-group select option { background: #0f172a; color: #f8fafc; }
+
+  .stage-edit-tabs {
+    display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .stage-edit-tab {
+    appearance: none; border: 1px solid var(--border); background: rgba(255,255,255,0.05);
+    color: var(--text); padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    cursor: pointer;
+  }
+  .stage-edit-tab.active {
+    background: rgba(56, 189, 248, 0.2); border-color: rgba(56, 189, 248, 0.55); color: #7dd3fc;
+  }
+
+  .progress-wrap { margin: 14px 0; display: none; }
+  .progress-wrap.active { display: block; }
+  .progress-bar-bg { width: 100%; height: 8px; border-radius: 999px; background: rgba(255,255,255,0.1); overflow: hidden; margin-bottom: 6px; }
+  .progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #38bdf8, #818cf8); transition: width 0.1s linear; }
+  .progress-status { font-size: 11px; color: #7dd3fc; display: flex; justify-content: space-between; }
+
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 140px; left: 50%; transform: translateX(-50%) translateY(20px);
+    z-index: 60; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(56, 189, 248, 0.4);
+    color: #e0f2fe; padding: 10px 18px; border-radius: 12px; font-size: 13px; font-weight: 600;
+    opacity: 0; pointer-events: none; transition: all 0.3s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 900px) {
+    body::before { width: 320px; }
+    #canvas-wrap { left: 320px; }
+    #topbar { width: 320px; }
+    #stage-card { width: 288px; }
+    #province-spotlight { left: calc(50% + 160px); }
+    #subtitle-bar { left: calc(50% + 160px); width: calc(100vw - 360px); }
+    #reels-guide { left: calc(50% + 160px); }
+    #toast { left: calc(50% + 160px); }
+  }
+  @media (max-width: 640px) {
+    body::before { width: 100%; height: var(--mobile-sheet-height, 52vh); inset: auto 0 0; border-right: 0; border-top: 1px solid var(--border); transition:height .24s cubic-bezier(.2,.8,.2,1); }
+    #canvas-wrap { inset: 0 0 48vh; }
+    #topbar { top: auto; bottom: calc(48vh - 120px); width: 100%; height: 120px; padding: 10px 14px; gap: 8px; }
+    .brand { padding-bottom: 6px; }
+    .brand-sub { display: none; }
+    .toolbar { grid-template-columns: repeat(4, minmax(0,1fr)); gap: 5px; }
+    #stage-card { display: none; }
+    #province-spotlight { top: 14px; left: 50%; width: min(300px, calc(100vw - 28px)); padding: 8px 11px; }
+    #province-spotlight img { width: 42px; height: 42px; }
+    #speed-panel { display: flex; position: absolute; top: auto; left: 14px; right: 14px; bottom: 142px; padding: 8px 10px; gap: 4px; }
+    #speed-panel .sp-title, #speed-panel > div:last-child { display: none; }
+    .sp-row { flex: 1; margin: 0; gap: 5px; }
+    .sp-row label { font-size: 10px; }
+    .sp-val { min-width: 32px; font-size: 10px; }
+    #bottom-dock { bottom: 10px; left: 14px; right: 14px; padding-top: 8px; gap: 7px; }
+    .stage-btn { min-height: 32px; }
+    #subtitle-bar { left: 50%; bottom: calc(48vh + 12px); width: calc(100vw - 24px); }
+    #reels-guide { left: 50%; height: min(44vh, 500px); }
+    #toast { left: 50%; bottom: 48vh; }
+  }
+  @media (max-width: 900px) {
+    #speed-panel { display: none; }
+  }
+  @media (max-width: 720px) {
+    .brand-sub { display: none; }
+    .stages-grid { grid-template-columns: repeat(2, 1fr); }
+    #stage-card { display: none; }
+    .subtitle-text { font-size: 15px; }
+    #subtitle-bar { bottom: 150px; }
+    .toolbar button.btn { padding: 0 8px; font-size: 11px; }
+  }
+  /* Editor workspace */
+  #editor-panel {
+    position: fixed; z-index: 20; inset: 0 auto 0 0; width: 360px; padding: 0 16px 16px;
+    display: flex; flex-direction: column; gap: 0; overflow-y: auto; overflow-x: hidden;
+    background: #0b1220; border-right: 1px solid rgba(148,163,184,.18);
+    box-shadow: 12px 0 32px rgba(0,0,0,.22); scrollbar-width: thin; scrollbar-color: #34445c transparent;
+  }
+  #sheet-handle { display:none; }
+  #canvas-wrap { inset: 0 0 0 360px; width: auto; height: auto; }
+  #topbar {
+    position: static; flex: 0 0 auto; width: auto; height: auto; margin: 0 -16px 0; padding: 16px;
+    display: flex; flex-direction: column; align-items: stretch; gap: 14px;
+    border: 0; border-bottom: 1px solid var(--border); border-radius: 0;
+    background: transparent; box-shadow: none; backdrop-filter: none;
+  }
+  .brand { padding: 0 0 12px; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .brand-title { font-size: 14px; }
+  .toolbar { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 7px; }
+  .toolbar button.btn { width: 100%; height: 40px; justify-content: center; padding: 0; font-size: 12px; }
+  .preset-picker { padding: 12px 0 14px; border-bottom: 1px solid var(--border); }
+  .preset-label { display: block; margin-bottom: 8px; color: #7dd3fc; font-size: 10px; font-weight: 800; letter-spacing: .12em; }
+  #preset-options { width: 100%; height: 38px; padding: 0 10px; border: 1px solid var(--border); border-radius: 9px; background: #111c2e; color: var(--text); font: inherit; font-size: 12px; }
+  #preset-options optgroup, #preset-options option { background: #111c2e; color: var(--text); }
+
+
+
+
+
+  #stage-card {
+    position: static; width: auto; flex: 0 0 auto; margin: 0; padding: 16px 2px;
+    background: transparent; border: 0; border-bottom: 1px solid var(--border); border-radius: 0;
+    backdrop-filter: none;
+  }
+  .stage-eyebrow { margin-bottom: 6px; }
+  .stage-heading { font-size: 15px; line-height: 1.35; }
+  .stage-desc { font-size: 12px; }
+  #speed-panel {
+    display: block; position: static; inset: auto; width: auto; flex: 0 0 auto; margin: 0; padding: 14px 2px;
+    background: transparent; border: 0; border-bottom: 1px solid var(--border); border-radius: 0;
+    backdrop-filter: none; font-size: 12px;
+  }
+  #speed-panel .sp-title { margin-bottom: 10px; }
+  .sp-row { margin-bottom: 10px; }
+  #speed-panel > div:last-child { font-size: 10px; }
+  #bottom-dock {
+    position: static; flex: 0 0 auto; width: auto; margin: auto 0 0; padding: 14px 0 0; gap: 12px;
+    background: transparent; border: 0; border-radius: 0; box-shadow: none; backdrop-filter: none;
+  }
+  .timeline-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 9px 10px; }
+  #btn-play { grid-column: 1; grid-row: 1; }
+  #btn-speed { grid-column: 2; grid-row: 1; }
+  #scrubber { grid-column: 1 / -1; grid-row: 2; width: 100%; }
+  #time-display { grid-column: 1 / -1; grid-row: 3; text-align: left; }
+  .stages-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
+  .stage-btn { min-height: 40px; padding: 8px; justify-content: center; }
+  .stage-btn.active { box-shadow: inset 3px 0 #38bdf8; }
+  #subtitle-bar { left: calc(50% + 180px); bottom: 28px; width: min(720px,calc(100vw - 400px)); }
+  #reels-guide { left: calc(50% + 180px); }
+  #vo-indicator { top: 16px; right: 16px; }
+  #toast { left: calc(50% + 180px); bottom: 16px; }
+  body.clean-fullscreen #editor-panel { display: none !important; }
+  body.clean-fullscreen #canvas-wrap { inset: 0; }
+  body.clean-fullscreen #subtitle-bar, body.clean-fullscreen #toast { left: 50%; }
+  @media (max-width: 900px) and (min-width: 641px) {
+    #editor-panel { width: 320px; padding-left: 14px; padding-right: 14px; }
+    #topbar { margin-left: -14px; margin-right: -14px; padding: 14px; }
+    #canvas-wrap { left: 320px; }
+    #subtitle-bar { left: calc(50% + 160px); width: calc(100vw - 360px); }
+    #reels-guide { left: calc(50% + 160px); }
+    #toast { left: calc(50% + 160px); }
+  }
+  @media (max-width: 640px) {
+    #editor-panel { inset: auto 0 0; width: 100%; height: var(--mobile-sheet-height, 52vh); padding: 0 14px 10px; border: 0; border-top: 1px solid var(--border); border-radius:18px 18px 0 0; box-shadow:0 -8px 28px rgba(0,0,0,.28); transition:height .24s cubic-bezier(.2,.8,.2,1); }
+    #canvas-wrap { inset: 0 0 var(--mobile-sheet-height, 52vh); transition:bottom .24s cubic-bezier(.2,.8,.2,1); }
+    #sheet-handle { position:sticky; top:0; z-index:3; display:flex; flex:0 0 34px; align-items:center; justify-content:center; margin:0 -14px 4px; padding:0 14px; background:#0b1220; border-radius:18px 18px 0 0; touch-action:none; cursor:grab; }
+    #sheet-handle:active { cursor:grabbing; }
+    #sheet-grip { width:36px; height:4px; border-radius:9px; background:#64748b; transition:width .18s ease,background .18s ease; }
+    #sheet-handle:hover #sheet-grip { width:44px; background:#94a3b8; }
+    body.sheet-collapsed #editor-panel { height:var(--mobile-sheet-height,58px); overflow:hidden; padding-bottom:0; }
+    body.sheet-collapsed #editor-panel > :not(#sheet-handle) { display:none !important; }
+    body.sheet-collapsed #canvas-wrap { bottom:var(--mobile-sheet-height,58px); }
+    body.sheet-collapsed::before { height:var(--mobile-sheet-height,58px); }
+    body.sheet-dragging #editor-panel { transition:none; }
+    body.sheet-dragging #canvas-wrap { transition:none; }
+    #topbar { gap: 8px; padding-top: 10px; padding-bottom: 10px; }
+    .brand { padding-bottom: 6px; }
+    .brand-sub { display: none; }
+    .toolbar { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 5px; }
+    .toolbar button.btn { height: 34px; justify-content: center; padding: 0 4px; font-size: 10px; }
+    #stage-card { display: none; }
+    #speed-panel { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0; }
+    #speed-panel .sp-title, #speed-panel > div:last-child { display: none; }
+    .sp-row { flex: 1 1 45%; min-width: 0; margin: 0; gap: 5px; }
+    .sp-row label, .sp-val { font-size: 10px; }
+    #bottom-dock { padding-top: 10px; gap: 8px; }
+    .stage-btn { min-height: 34px; padding: 6px; }
+    .stage-name { font-size: 11px; }
+    #subtitle-bar { left: 50%; bottom: calc(var(--mobile-sheet-height, 52vh) + 10px); width: calc(100vw - 20px); transition:opacity .4s ease,bottom .24s cubic-bezier(.2,.8,.2,1); }
+    body.sheet-dragging #subtitle-bar { transition:opacity .4s ease; }
+    #reels-guide { left: 50%; height: min(44vh,500px); }
+    #toast { left: 50%; bottom: calc(52vh + 8px); }
+  }
+  .scene-label-layer { position:absolute; inset:0; z-index:5; overflow:hidden; pointer-events:none; }
+  .scene-label-layer[hidden] { display:none; }
+  .scene-label {
+    position:absolute; display:flex; align-items:flex-start; gap:8px; width:min(290px,calc(100% - 20px));
+    padding:7px 11px; color:#eaf7ff; background:rgba(8,17,31,.9);
+    border:1px solid rgba(56,189,248,.62); border-radius:12px;
+    box-shadow:0 0 18px rgba(14,165,233,.3),0 8px 20px rgba(0,0,0,.3); pointer-events:auto; cursor:pointer;
+    transform:translate(-50%,calc(-100% - 9px)); white-space:nowrap;
+  }
+  .scene-label:hover, .scene-label:focus-visible { border-color:#bae6fd; background:rgba(8,39,62,.98); outline:2px solid rgba(125,211,252,.55); outline-offset:2px; }
+  .scene-label::after { content:""; position:absolute; left:calc(50% - 5px); bottom:-6px; width:9px; height:9px; background:#0b1728; border-right:1px solid rgba(56,189,248,.62); border-bottom:1px solid rgba(56,189,248,.62); transform:rotate(45deg); }
+  .scene-label.is-top { transform:translate(-50%,9px); }
+  .scene-label.is-top::after { top:-6px; bottom:auto; transform:rotate(225deg); }
+  .scene-label.is-active { border-color:#7dd3fc; background:rgba(8,39,62,.94); box-shadow:0 0 22px rgba(14,165,233,.46),0 8px 20px rgba(0,0,0,.3); }
+  .scene-label.is-inactive { display:none; }
+  .scene-label-icon { display:grid; place-items:center; flex:0 0 auto; width:20px; height:20px; color:#7dd3fc; }
+  .scene-label-icon svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .scene-label-copy { display:grid; flex:1; min-width:0; white-space:normal; }
+  .scene-label-name { display:block; font-size:10px; font-weight:750; line-height:1.3; }
+  .scene-label-detail { display:block; color:#c1d0de; font-size:10px; line-height:1.35; white-space:normal; overflow-wrap:anywhere; }
+  .scene-label.is-offscreen { visibility:hidden; }  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  #province-map-label {
+    --province-accent: #38bdf8;
+    position:absolute; z-index:7; display:grid; grid-template-columns:auto 1fr; align-items:center; gap:4px 9px;
+    width:max-content; max-width:min(230px,calc(100% - 24px)); padding:8px 12px;
+    color:#f8fafc; background:linear-gradient(135deg,color-mix(in srgb,var(--province-accent) 30%,rgba(8,17,31,.96)),rgba(8,17,31,.96) 65%);
+    border:1px solid var(--province-accent); border-radius:13px;
+    box-shadow:0 0 20px color-mix(in srgb,var(--province-accent) 42%,transparent),0 8px 22px rgba(0,0,0,.38);
+    transform:translate(-50%,calc(-100% - 13px)); pointer-events:none;
+  }
+  #province-map-label[hidden] { display:none; }
+  #province-map-label.is-arriving { animation:province-label-in .24s cubic-bezier(.2,.8,.2,1) both; }
+  #province-map-label::after { content:""; position:absolute; left:calc(50% - 6px); bottom:-7px; width:11px; height:11px; background:var(--province-accent); clip-path:polygon(0 0,100% 0,50% 100%); }
+  .province-map-emblem { grid-row:1 / span 2; align-self:center; width:34px; height:34px; padding:3px; object-fit:contain; background:#fff; border:2px solid var(--province-accent); border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.28); }
+  .province-map-name { overflow:hidden; font-size:12px; font-weight:850; line-height:1.2; text-overflow:ellipsis; white-space:nowrap; }
+  .province-map-region { color:color-mix(in srgb,var(--province-accent) 76%,white); font-size:9px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+  @keyframes province-label-in { from { opacity:0; translate:0 5px; scale:.94; } to { opacity:1; translate:0 0; scale:1; } }
+  .stage-icon { display:grid; place-items:center; }
+  .stage-icon svg, button.btn svg, .stage-edit-tab svg { width:19px; height:19px; display:block; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .stage-edit-tab { display:grid; place-items:center; width:40px; height:38px; padding:0; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline:2px solid #7dd3fc; outline-offset:2px; }
+  #exit-fs-btn { width:38px; height:38px; display:none; justify-content:center; align-items:center; padding:0; }
+  #exit-fs-btn svg { width:19px; height:19px; }
+  .stages-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  .stage-btn { justify-content:center; min-width:0; }
+  .toolbar button.btn { justify-content:center; padding:0; }
+  @media(max-width:640px) {
+    .toolbar { grid-template-columns:repeat(5,minmax(0,1fr)); }
+    .toolbar button.btn { height:34px; }
+    .stages-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  }
+</style>
+</head>
+<body>
+
+<div id="canvas-wrap">
+  <canvas id="three-canvas"></canvas>
+  <div id="scene-labels" class="scene-label-layer" aria-label="Pilih tahap animasi" aria-hidden="false"></div>
+  <div id="province-map-label" hidden aria-hidden="true">
+    <img class="province-map-emblem" id="province-map-emblem" alt="">
+    <span class="province-map-name" id="province-map-name"></span>
+    <span class="province-map-region" id="province-map-region"></span>
+  </div>
+</div>
+<div id="reels-guide"></div>
+<div id="province-spotlight" hidden aria-live="polite">
+  <img id="province-emblem" alt="">
+  <div class="province-spotlight-copy">
+    <span class="province-spotlight-region" id="province-region"></span>
+    <span class="province-spotlight-name" id="province-name"></span>
+    <span class="province-spotlight-count" id="province-count"></span>
+  </div>
+</div>
+
+<aside id="editor-panel" aria-label="Panel editor video">
+<div id="sheet-handle">
+  <span id="sheet-grip" aria-hidden="true"></span>
+</div>
+<header id="topbar">
+  <div class="brand">
+    <div class="brand-badge">3D</div>
+    <div>
+      <div class="brand-title">Siklus Hidrologi 3D — Studio Pro</div>
+      <div class="brand-sub">Subtitle Editable + TTS Speed Control (15s Loop)</div>
+    </div>
+  </div>
+  <section class="preset-picker" aria-label="Pilih preset animasi">
+    <span class="preset-label">PUSTAKA ANIMASI</span>
+    <select id="preset-options" aria-label="Pilih preset animasi"></select>
+  </section>
+  <div class="toolbar">
+    <button id="btn-autocam" class="btn active" title="Kamera otomatis" aria-label="Kamera otomatis"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="11" rx="2"/><path d="m16 11 5-3v9l-5-3M7 4h5"/></svg></button>
+    <button id="btn-vo" class="btn" title="Narasi suara" aria-label="Narasi suara"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M17 9a5 5 0 0 1 0 6m2.5-8.5a9 9 0 0 1 0 11"/></svg></button>
+    <button id="btn-subtitle" class="btn" title="Tampilkan subtitle" aria-label="Tampilkan subtitle" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5h16v12H9l-5 3V5Z"/><path d="M8 10h3m2 0h3M8 13h2m2 0h4"/></svg></button>
+    <button id="btn-edit" class="btn" title="Edit teks" aria-label="Edit teks"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 16.5-.8 4.3 4.3-.8L19 8.5 15.5 5 4 16.5Z"/><path d="m13.8 6.7 3.5 3.5M4 21h16"/></svg></button>
+    <button id="btn-reels" class="btn" title="Panduan bingkai 9:16" aria-label="Panduan bingkai 9:16"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2"/><path d="M10 5h4M10 19h4"/></svg></button>
+    <button id="btn-hud" class="btn active" title="Kartu informasi" aria-label="Kartu informasi"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg></button>
+    <button id="btn-annotations" class="btn" title="Tampilkan keterangan animasi" aria-label="Tampilkan keterangan animasi" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5h16v12H9l-5 3V5Z"/><path d="M8 9h8m-8 4h5"/></svg></button>
+    <button id="btn-export" class="btn primary" title="Ekspor video" aria-label="Ekspor video"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z"/><path d="M4 4v16"/></svg></button>
+    <button id="btn-fullscreen" class="btn" title="Layar penuh" aria-label="Layar penuh"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button>
+  </div>
+</header>
+
+<aside id="stage-card">
+  <div class="stage-eyebrow" id="card-eyebrow">TAHAP 01 / 04 • 0.0s – 3.75s</div>
+  <div class="stage-heading" id="card-title">01. Evaporasi (Penguapan)</div>
+  <div class="stage-desc" id="card-desc">Panas matahari menghangatkan permukaan laut sehingga air berubah menjadi uap air yang naik ke atmosfer.</div>
+</aside>
+
+<!-- Speed Controls -->
+<div id="speed-panel">
+  <div class="sp-title">Kecepatan</div>
+  <div class="sp-row">
+    <label>Animasi</label>
+    <input type="range" id="anim-speed" min="0.25" max="2.0" step="0.05" value="1.0">
+    <span class="sp-val" id="anim-speed-val">1.00x</span>
+  </div>
+  <div class="sp-row">
+    <label>TTS</label>
+    <input type="range" id="tts-speed" min="0.6" max="1.4" step="0.05" value="0.95">
+    <span class="sp-val" id="tts-speed-val">0.95x</span>
+  </div>
+  <div style="font-size:10px;color:#64748b;margin-top:4px;line-height:1.35;">
+    Atur kecepatan suara agar narasi selesai sebelum tahap berikutnya.
+  </div>
+</div>
+
+<aside class="studio-ad" aria-label="Iklan">
+  <span class="studio-ad-label">Iklan</span>
+  <ins class="adsbygoogle" data-ad-format="fluid" data-ad-layout-key="-fb+5w+4e-db+86" data-ad-client="ca-pub-7501816933195235" data-ad-slot="5975101505"></ins>
+  <script>(window.adsbygoogle = window.adsbygoogle || []).push({});</script>
+</aside>
+
+<div id="vo-indicator"><span class="pulse"></span><span>Narasi aktif</span></div>
+
+<div id="subtitle-bar">
+  <div class="subtitle-inner">
+    <div class="subtitle-stage" id="sub-stage">TAHAP 01 — EVAPORASI</div>
+    <div class="subtitle-text" id="sub-text">Panas matahari menguapkan air laut ke atmosfer</div>
+  </div>
+</div>
+
+<footer id="bottom-dock">
+  <div class="timeline-row">
+    <button id="btn-play" class="btn primary" style="min-width:42px;justify-content:center;" title="Jeda" aria-label="Jeda"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5v14m8-14v14"/></svg></button>
+    <input id="scrubber" type="range" min="0" max="15" step="0.01" value="0">
+    <div class="time-label" id="time-display">00.0s / 15.0s</div>
+    <button id="btn-speed" class="btn" style="min-width:42px;justify-content:center;" title="Kecepatan 1.0x" aria-label="Kecepatan 1.0x"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 17a9 9 0 1 1 16 0M12 13l5-5M7 17h10"/></svg></button>
+  </div>
+</footer>
+
+<button id="exit-fs-btn" title="Keluar dari layar penuh" aria-label="Keluar dari layar penuh">✕</button>
+<div id="toast"></div>
+
+<!-- Edit Subtitle Modal -->
+<div id="edit-modal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-title">✏️ Edit Subtitle & Narasi</div>
+    <div class="modal-sub">Ubah teks sesuai kebutuhan. Narasi (Voice) sebaiknya singkat agar selesai dalam ~3.5 detik.</div>
+
+    <div class="stage-edit-tabs" id="edit-tabs">
+      <button class="stage-edit-tab active" data-idx="0" title="Tahap 1" aria-label="Tahap 1"></button>
+      <button class="stage-edit-tab" data-idx="1" title="Tahap 2" aria-label="Tahap 2"></button>
+      <button class="stage-edit-tab" data-idx="2" title="Tahap 3" aria-label="Tahap 3"></button>
+      <button class="stage-edit-tab" data-idx="3" title="Tahap 4" aria-label="Tahap 4"></button>
+    </div>
+
+    <div id="edit-form">
+      <div class="form-group">
+        <label>Label Tahap</label>
+        <input type="text" id="edit-short" placeholder="01 EVAPORASI">
+      </div>
+      <div class="form-group">
+        <label>Judul Kartu Informasi</label>
+        <input type="text" id="edit-title" placeholder="01. Evaporasi (Penguapan)">
+      </div>
+      <div class="form-group">
+        <label>Keterangan Animasi</label>
+        <textarea id="edit-desc" placeholder="Uraian proses yang tampil pada kartu dan keterangan animasi..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Subtitle (caption di video)</label>
+        <input type="text" id="edit-subtitle" placeholder="Caption singkat yang tampil di video">
+      </div>
+      <div class="form-group"><p class="form-hint">Voice-over membacakan subtitle di atas. Buat caption singkat agar selesai dalam durasi tahap.</p></div>
+    </div>
+
+    <div class="modal-actions">
+      <button id="btn-preview-voice" class="btn" title="Pratinjau suara" aria-label="Pratinjau suara"><svg viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z"/></svg></button>
+      <button id="btn-reset-stage" class="btn" title="Pulihkan teks tahap" aria-label="Pulihkan teks tahap"><svg viewBox="0 0 24 24"><path d="M4 7v5h5M5 12a7 7 0 1 0 2-5"/></svg></button>
+      <button id="btn-cancel-edit" class="btn" title="Batal" aria-label="Batal"><svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+      <button id="btn-save-edit" class="btn primary" title="Simpan perubahan" aria-label="Simpan perubahan"><svg viewBox="0 0 24 24"><path d="M5 3h12l3 3v15H4V3h1Z"/><path d="M8 3v6h8V3M8 21v-8h8v8"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div id="export-modal" class="modal-overlay">
+  <div class="modal-card" style="width:min(440px,100%)">
+  <div class="modal-title" id="export-title">Export Animasi Video (15 Detik)</div>
+    <div class="modal-sub">Merender 1 siklus penuh dengan Auto-Cam. Subtitle bisa disertakan sebagai overlay.</div>
+
+    <div class="form-group">
+      <label for="export-aspect">Rasio & Resolusi</label>
+      <select id="export-aspect">
+        <option value="9:16">Vertikal 9:16 — Reels / TikTok (1080×1920)</option>
+        <option value="16:9">Horizontal 16:9 — YouTube (1920×1080)</option>
+        <option value="1:1">Persegi 1:1 (1080Ã—1080)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="export-fps">Frame Rate</label>
+      <select id="export-fps">
+        <option value="30">30 FPS</option>
+        <option value="60">60 FPS</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="export-overlay">Sertakan Label Tahap?</label>
+      <select id="export-overlay">
+        <option value="yes">Ya — Tampilkan Judul Tahap</option>
+        <option value="no">Tidak — Clean Animation</option>
+      </select>
+    </div>
+
+    <div class="progress-wrap" id="export-progress-wrap">
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="export-progress-fill"></div></div>
+      <div class="progress-status">
+        <span id="export-status-text">Menyiapkan encoder...</span>
+        <span id="export-pct">0%</span>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button id="btn-cancel-export" class="btn" title="Tutup" aria-label="Tutup"><svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+      <button id="btn-start-export" class="btn primary" title="Mulai render" aria-label="Mulai render"><svg viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+// ==========================================
+// 1. STAGE DATA (Editable)
+// ==========================================
+let DURATION = 15.0;
+let STAGE_LEN = DURATION / 4; // Default preset has four stages.
+
+const DEFAULT_STAGES = [
+  {
+    eyebrow: "TAHAP 01 / 04 • 0.0s – 3.75s",
+    title: "01. Evaporasi (Penguapan)",
+    shortTitle: "01 EVAPORASI",
+    subtitle: "Panas matahari menguapkan air laut ke atmosfer",
+    desc: "Panas matahari menguapkan air laut ke atmosfer",
+    voice: "Tahap satu. Evaporasi. Matahari memanaskan laut, air berubah jadi uap dan naik ke langit."
+  },
+  {
+    eyebrow: "TAHAP 02 / 04 • 3.75s – 7.50s",
+    title: "02. Kondensasi (Pengembunan)",
+    shortTitle: "02 KONDENSASI",
+    subtitle: "Uap mendingin dan berkumpul membentuk awan hujan",
+    desc: "Di ketinggian yang dingin, uap air berkumpul padat dan mengembun menjadi gumpalan awan mendung di atas gunung.",
+    voice: "Tahap dua. Kondensasi. Uap air mendingin di ketinggian dan mengembun menjadi awan."
+  },
+  {
+    eyebrow: "TAHAP 03 / 04 • 7.50s – 11.25s",
+    title: "03. Presipitasi (Hujan)",
+    shortTitle: "03 PRESIPITASI",
+    subtitle: "Awan jenuh melepaskan rintik hujan ke pegunungan",
+    desc: "Butiran air di dalam awan menjadi terlalu berat dan jatuh sebagai hujan yang membasahi puncak serta lereng gunung.",
+    voice: "Tahap tiga. Presipitasi. Butiran air di awan terlalu berat dan jatuh sebagai hujan."
+  },
+  {
+    eyebrow: "TAHAP 04 / 04 • 11.25s – 15.00s",
+    title: "04. Koleksi (Aliran ke Laut)",
+    shortTitle: "04 KOLEKSI",
+    subtitle: "Air hujan mengalir melalui sungai kembali ke laut",
+    desc: "Air hujan meresap ke tanah dan mengalir deras lewat sungai menuruni lembah hingga bermuara kembali ke laut.",
+    voice: "Tahap empat. Koleksi. Air hujan mengalir lewat sungai kembali ke laut. Siklus pun berulang."
+  }
+];
+
+// Preset content is kept in presets.json so additional lessons can be added as data.
+let PRESETS = [{ id: 'hydrology', title: 'Siklus Hidrologi', category: 'Lingkungan', description: 'Perjalanan air di alam.', duration: DURATION, stages: DEFAULT_STAGES }];
+try {
+  const response = await fetch(new URL('./presets.json', import.meta.url));
+  if (response.ok) {
+    const library = await response.json();
+    if (library.version && Array.isArray(library.presets)) PRESETS = library.presets;
+  }
+} catch (e) { console.warn('Preset JSON tidak dapat dimuat; memakai data hidrologi bawaan.', e); }
+let activePreset = PRESETS.find(preset => preset.id === 'hydrology') || PRESETS[0];
+let STAGES = JSON.parse(JSON.stringify(activePreset.stages));
+DURATION = Number(activePreset.duration) || 15;
+STAGE_LEN = DURATION / STAGES.length;
+try {
+  const saved = localStorage.getItem(`ruangkitastages_${activePreset.id}`) || (activePreset.id === 'hydrology' ? localStorage.getItem('siklus_stages_v2') : null);
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && parsed.length === STAGES.length) STAGES = parsed;
+  }
+} catch (e) {}
+
+// ==========================================
+// 2. RENDERER / SCENE / CAMERA
+// ==========================================
+const canvas = document.getElementById('three-canvas');
+const renderer = new THREE.WebGLRenderer({
+  canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true
+});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.08;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b162c);
+scene.fog = new THREE.FogExp2(0x0b162c, 0.011);
+
+const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 200);
+camera.position.set(0, 14, 29);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.maxPolarAngle = Math.PI * 0.48;
+controls.minDistance = 12;
+controls.maxDistance = 55;
+controls.target.set(0, 3.2, 0);
+
+// Lighting
+const hemiLight = new THREE.HemisphereLight(0x93c5fd, 0x1e293b, 0.85);
+scene.add(hemiLight);
+const sunLight = new THREE.DirectionalLight(0xfff3c4, 2.2);
+sunLight.position.set(-14, 22, 10);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.set(2048, 2048);
+sunLight.shadow.camera.near = 2; sunLight.shadow.camera.far = 65;
+const d = 18;
+sunLight.shadow.camera.left = -d; sunLight.shadow.camera.right = d;
+sunLight.shadow.camera.top = d; sunLight.shadow.camera.bottom = -d;
+sunLight.shadow.bias = -0.0005;
+scene.add(sunLight);
+const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.65);
+rimLight.position.set(16, 10, -14);
+scene.add(rimLight);
+
+// ==========================================
+// 3. WORLD GEOMETRY (same as before)
+// ==========================================
+const world = new THREE.Group();
+scene.add(world);
+
+function flatMat(color, roughness = 0.82, metalness = 0.05) {
+  return new THREE.MeshStandardMaterial({ color, roughness, metalness, flatShading: true });
+}
+
+const baseGeo = new THREE.BoxGeometry(24, 2.6, 16, 12, 2, 8);
+const basePos = baseGeo.attributes.position;
+for (let i = 0; i < basePos.count; i++) {
+  if (basePos.getY(i) < 0) {
+    basePos.setX(i, basePos.getX(i) * 0.94);
+    basePos.setZ(i, basePos.getZ(i) * 0.94);
+  }
+}
+baseGeo.computeVertexNormals();
+const baseMesh = new THREE.Mesh(baseGeo, flatMat(0x4a3525, 0.95));
+baseMesh.position.y = -1.3; baseMesh.receiveShadow = true; world.add(baseMesh);
+
+const oceanGeo = new THREE.BoxGeometry(11.5, 1.5, 15.8, 22, 1, 24);
+const oceanBaseY = [];
+const oPos = oceanGeo.attributes.position;
+for (let i = 0; i < oPos.count; i++) oceanBaseY.push(oPos.getY(i));
+const oceanMat = new THREE.MeshStandardMaterial({
+  color: 0x0ea5e9, roughness: 0.22, metalness: 0.15, flatShading: true, transparent: true, opacity: 0.92
+});
+const oceanMesh = new THREE.Mesh(oceanGeo, oceanMat);
+oceanMesh.position.set(-6.15, 0.15, 0); oceanMesh.receiveShadow = true; world.add(oceanMesh);
+
+const foamMesh = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.16, 15.6, 4, 1, 24), flatMat(0xe0f2fe, 0.4));
+foamMesh.position.set(-0.6, 0.86, 0); world.add(foamMesh);
+
+const beachGeo = new THREE.BoxGeometry(4.8, 1.8, 15.8, 8, 1, 16);
+const bPos = beachGeo.attributes.position;
+for (let i = 0; i < bPos.count; i++) {
+  const vx = bPos.getX(i), vy = bPos.getY(i);
+  if (vy > 0) {
+    const t = (vx + 2.4) / 4.8;
+    bPos.setY(i, vy + t * 0.55 + Math.sin(bPos.getZ(i) * 0.6) * 0.08);
+  }
+}
+beachGeo.computeVertexNormals();
+const beachMesh = new THREE.Mesh(beachGeo, flatMat(0xfde047, 0.88));
+beachMesh.position.set(0.8, 0.25, 0); beachMesh.receiveShadow = true; beachMesh.castShadow = true; world.add(beachMesh);
+
+const landGeo = new THREE.BoxGeometry(9.6, 2.3, 15.8, 12, 1, 16);
+const lPos = landGeo.attributes.position;
+for (let i = 0; i < lPos.count; i++) {
+  const vx = lPos.getX(i), vy = lPos.getY(i), vz = lPos.getZ(i);
+  if (vy > 0) {
+    const riverZ = Math.sin(vx * 0.45) * 1.4;
+    const distRiver = Math.abs(vz - riverZ);
+    const valleyDip = distRiver < 1.35 ? (1.35 - distRiver) * 0.42 : 0;
+    lPos.setY(i, vy + 0.35 - valleyDip + Math.cos(vx * 0.8 + vz * 0.5) * 0.14);
+  }
+}
+landGeo.computeVertexNormals();
+const landMesh = new THREE.Mesh(landGeo, flatMat(0x22c55e, 0.85));
+landMesh.position.set(7.1, 0.45, 0); landMesh.receiveShadow = true; landMesh.castShadow = true; world.add(landMesh);
+
+function createMountain(x, z, radius, height, snowRatio = 0.34) {
+  const mGroup = new THREE.Group(); mGroup.position.set(x, 1.4, z);
+  const rockGeo = new THREE.ConeGeometry(radius, height, 7, 3);
+  const rPos = rockGeo.attributes.position;
+  for (let i = 0; i < rPos.count; i++) {
+    const vy = rPos.getY(i);
+    if (vy < height * 0.45 && vy > -height * 0.45) {
+      rPos.setX(i, rPos.getX(i) + Math.sin(i * 2.3) * 0.35);
+      rPos.setZ(i, rPos.getZ(i) + Math.cos(i * 1.9) * 0.35);
+    }
+  }
+  rockGeo.computeVertexNormals();
+  const rockMesh = new THREE.Mesh(rockGeo, flatMat(0x64748b, 0.9));
+  rockMesh.position.y = height * 0.5; rockMesh.castShadow = true; rockMesh.receiveShadow = true; mGroup.add(rockMesh);
+  const snowH = height * snowRatio, snowR = radius * snowRatio * 1.04;
+  const snowMesh = new THREE.Mesh(new THREE.ConeGeometry(snowR, snowH, 7, 1), flatMat(0xf8fafc, 0.5));
+  snowMesh.position.y = height - snowH * 0.48; snowMesh.castShadow = true; mGroup.add(snowMesh);
+  world.add(mGroup); return mGroup;
+}
+createMountain(8.2, -3.2, 4.3, 8.6, 0.35);
+createMountain(9.0, 3.0, 3.8, 7.2, 0.32);
+createMountain(6.4, -0.3, 3.1, 5.6, 0.28);
+
+const riverPoints = [
+  new THREE.Vector3(7.4, 1.62, -0.6), new THREE.Vector3(5.6, 1.52, 0.8),
+  new THREE.Vector3(3.6, 1.42, -0.5), new THREE.Vector3(1.5, 1.25, 0.4),
+  new THREE.Vector3(-0.7, 0.92, 0.1)
+];
+const riverCurve = new THREE.CatmullRomCurve3(riverPoints);
+const riverGeo = new THREE.TubeGeometry(riverCurve, 36, 0.52, 6, false);
+riverGeo.scale(1, 0.22, 1);
+const riverMat = new THREE.MeshStandardMaterial({
+  color: 0x38bdf8, emissive: 0x0284c7, emissiveIntensity: 0.25, roughness: 0.18, flatShading: true
+});
+const riverMesh = new THREE.Mesh(riverGeo, riverMat); riverMesh.position.y = 1.22; world.add(riverMesh);
+
+function addPineTree(x, y, z, s = 1) {
+  const g = new THREE.Group(); g.position.set(x, y, z); g.scale.setScalar(s);
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.18, 0.7, 5), flatMat(0x78350f));
+  trunk.position.y = 0.35; trunk.castShadow = true; g.add(trunk);
+  const c1 = new THREE.Mesh(new THREE.ConeGeometry(0.65, 1.1, 6), flatMat(0x15803d));
+  c1.position.y = 1.05; c1.castShadow = true; g.add(c1);
+  const c2 = new THREE.Mesh(new THREE.ConeGeometry(0.48, 0.9, 6), flatMat(0x16a34a));
+  c2.position.y = 1.65; c2.castShadow = true; g.add(c2);
+  world.add(g);
+}
+function addPalmTree(x, y, z, s = 1) {
+  const g = new THREE.Group(); g.position.set(x, y, z); g.scale.setScalar(s);
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.18, 1.6, 5), flatMat(0x92400e));
+  trunk.position.y = 0.8; trunk.rotation.z = 0.14; trunk.castShadow = true; g.add(trunk);
+  for (let i = 0; i < 5; i++) {
+    const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.28, 1.1, 4), flatMat(0x4ade80));
+    leaf.position.set(-0.1, 1.6, 0); leaf.rotation.z = Math.PI * 0.42;
+    leaf.rotation.y = (i / 5) * Math.PI * 2; leaf.castShadow = true; g.add(leaf);
+  }
+  world.add(g);
+}
+addPalmTree(0.4, 1.15, -4.6, 0.95); addPalmTree(0.9, 1.2, 4.8, 1.05); addPalmTree(1.4, 1.25, -2.5, 0.85);
+addPineTree(3.8, 1.55, -5.2, 1.05); addPineTree(4.6, 1.55, -3.8, 0.85); addPineTree(4.1, 1.55, 4.9, 1.1);
+addPineTree(5.2, 1.55, 3.6, 0.9); addPineTree(6.8, 1.55, -6.1, 0.95); addPineTree(7.2, 1.55, 5.8, 1.0);
+
+const sunGroup = new THREE.Group(); sunGroup.position.set(-8.5, 12.2, -3.5); world.add(sunGroup);
+const sunCore = new THREE.Mesh(new THREE.IcosahedronGeometry(1.65, 1), new THREE.MeshBasicMaterial({ color: 0xfacc15 }));
+sunGroup.add(sunCore);
+const sunHalo = new THREE.Mesh(new THREE.IcosahedronGeometry(2.15, 1), new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.25 }));
+sunGroup.add(sunHalo);
+const raysGroup = new THREE.Group(); sunGroup.add(raysGroup);
+for (let i = 0; i < 10; i++) {
+  const angle = (i / 10) * Math.PI * 2;
+  const ray = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.85, 4), new THREE.MeshBasicMaterial({ color: 0xfde047 }));
+  ray.position.set(Math.cos(angle) * 2.55, Math.sin(angle) * 2.55, 0);
+  ray.rotation.z = angle - Math.PI * 0.5; raysGroup.add(ray);
+}
+
+const cloudGroup = new THREE.Group(); cloudGroup.position.set(-5.0, 10.6, 0); world.add(cloudGroup);
+const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.75, metalness: 0.02, flatShading: true });
+const puffSpecs = [[0,0,0,1.55],[-1.35,-0.2,0.3,1.15],[1.35,-0.15,-0.25,1.2],[-0.6,0.45,-0.55,1.1],[0.65,0.4,0.55,1.05],[0,-0.25,0.95,0.95],[0,-0.25,-0.95,0.95]];
+const cloudPuffs = [];
+puffSpecs.forEach(([px,py,pz,r]) => {
+  const puff = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 1), cloudMat);
+  puff.position.set(px,py,pz); puff.castShadow = true; cloudGroup.add(puff);
+  cloudPuffs.push({ mesh: puff, basePos: new THREE.Vector3(px,py,pz) });
+});
+
+// Particles
+const VAPOR_COUNT = 55;
+const vaporInst = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.22, 0), new THREE.MeshBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.85 }), VAPOR_COUNT);
+world.add(vaporInst);
+const vaporData = Array.from({ length: VAPOR_COUNT }, (_, i) => ({
+  x: -9.5 + (i % 11) * 0.72 + (Math.random()-0.5)*0.4,
+  z: -5.5 + Math.floor(i/11)*2.6 + (Math.random()-0.5)*1.2,
+  phase: Math.random(), speed: 0.75 + Math.random()*0.5
+}));
+
+const RAIN_COUNT = 130;
+const rainInst = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.035, 0.055, 0.65, 4), new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.85 }), RAIN_COUNT);
+world.add(rainInst);
+const rainData = Array.from({ length: RAIN_COUNT }, () => ({
+  ox: (Math.random()-0.5)*3.6, oz: (Math.random()-0.5)*2.6, phase: Math.random(), speed: 1.4 + Math.random()*0.6
+}));
+
+const FLOW_COUNT = 45;
+const flowInst = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.2, 0), new THREE.MeshBasicMaterial({ color: 0xbae6fd, transparent: true, opacity: 0.9 }), FLOW_COUNT);
+world.add(flowInst);
+const flowData = Array.from({ length: FLOW_COUNT }, (_, i) => ({ offset: i/FLOW_COUNT, lateral: (Math.random()-0.5)*0.45 }));
+
+const rippleGeo = new THREE.RingGeometry(0.3, 0.55, 24); rippleGeo.rotateX(-Math.PI*0.5);
+const rippleMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0, side: THREE.DoubleSide });
+const rippleMesh = new THREE.Mesh(rippleGeo, rippleMat); rippleMesh.position.set(-1.3, 0.94, 0.1); world.add(rippleMesh);
+
+// ==========================================
+// 3B. PHOTOSYNTHESIS PRESET SCENE
+// ==========================================
+const photosynthesisWorld = new THREE.Group();
+photosynthesisWorld.visible = false;
+scene.add(photosynthesisWorld);
+const photoMat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.72, flatShading: true, ...extra });
+const photoGround = new THREE.Mesh(new THREE.CylinderGeometry(7.5, 7.8, 0.65, 9), photoMat(0x31523c));
+photoGround.position.y = -2.45; photoGround.receiveShadow = true; photosynthesisWorld.add(photoGround);
+const soil = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.5, 0.28, 8), photoMat(0x67452f));
+soil.position.set(1.4, -0.04, 0); photosynthesisWorld.add(soil);
+const pot = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.05, 2.25, 7, 1, true), photoMat(0xc46b42));
+pot.position.set(1.4, -1.1, 0); pot.castShadow = true; photosynthesisWorld.add(pot);
+const potRim = new THREE.Mesh(new THREE.TorusGeometry(1.55, 0.13, 5, 8), photoMat(0xe79a62));
+potRim.rotation.x = Math.PI / 2; potRim.position.set(1.4, 0.02, 0); photosynthesisWorld.add(potRim);
+const plant = new THREE.Group(); plant.position.set(1.4, 0.08, 0); photosynthesisWorld.add(plant);
+const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.22, 5.8, 6), photoMat(0x4d9b54));
+stem.position.y = 2.85; stem.castShadow = true; plant.add(stem);
+const leafShape = new THREE.Shape();
+leafShape.moveTo(0, 0); leafShape.bezierCurveTo(0.72, 0.28, 0.72, 1.25, 0, 1.75); leafShape.bezierCurveTo(-0.72, 1.25, -0.72, 0.28, 0, 0);
+const leafGeo = new THREE.ShapeGeometry(leafShape, 12);
+const leafMaterial = photoMat(0x43b866, { side: THREE.DoubleSide, emissive: 0x164d28, emissiveIntensity: 0.18 });
+const leafGroups = [];
+function addLeaf(y, side, angle) {
+  const g = new THREE.Group(); g.position.set(0, y, 0); g.rotation.z = angle; g.scale.setScalar(side);
+  const leaf = new THREE.Mesh(leafGeo, leafMaterial); leaf.castShadow = true; g.add(leaf);
+  const veinCurve = new THREE.LineCurve3(new THREE.Vector3(0, 0.08, 0.035), new THREE.Vector3(0, 1.68, 0.035));
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(veinCurve, 12, 0.025, 4, false), photoMat(0xa7ed91)));
+  for (let n = 1; n <= 4; n++) {
+    const yv = n * 0.31;
+    for (const sign of [-1, 1]) {
+      const vein = new THREE.LineCurve3(new THREE.Vector3(0, yv, 0.035), new THREE.Vector3(sign * 0.48, yv + 0.2, 0.035));
+      g.add(new THREE.Mesh(new THREE.TubeGeometry(vein, 3, 0.012, 3, false), photoMat(0x9cdd7f)));
+    }
+  }
+  plant.add(g); leafGroups.push(g);
+}
+addLeaf(1.1, 0.82, -1.0); addLeaf(1.5, 0.9, 1.0); addLeaf(2.1, 0.88, -0.82);
+addLeaf(2.55, 1.0, 0.82); addLeaf(3.0, 0.92, -0.62); addLeaf(3.5, 1.06, 0.48); addLeaf(4.15, 0.92, -0.2);
+const rootMaterial = photoMat(0xc49a68);
+for (let i = 0; i < 5; i++) {
+  const root = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.11, 1.5 + (i % 2) * 0.4, 5), rootMaterial);
+  root.position.set((i - 2) * 0.28, -0.45, (i % 2 ? 0.35 : -0.35)); root.rotation.z = (i - 2) * 0.17; plant.add(root);
+}
+const photoSun = new THREE.Group(); photoSun.position.set(-5.4, 8.5, 0); photosynthesisWorld.add(photoSun);
+const photoSunCore = new THREE.Mesh(new THREE.IcosahedronGeometry(1.25, 1), new THREE.MeshBasicMaterial({ color: 0xffdc73 })); photoSun.add(photoSunCore);
+const photoSunHalo = new THREE.Mesh(new THREE.IcosahedronGeometry(1.8, 1), new THREE.MeshBasicMaterial({ color: 0xffe7a1, transparent: true, opacity: 0.16 })); photoSun.add(photoSunHalo);
+const photoParticles = {};
+function makePhotoParticles(key, count, radius, color) {
+  const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.95 });
+  const mesh = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(radius, 1), material, count);
+  mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); photosynthesisWorld.add(mesh); photoParticles[key] = { mesh, count };
+}
+makePhotoParticles('light', 18, 0.13, 0xffe48a);
+makePhotoParticles('water', 20, 0.12, 0x56c8ff);
+makePhotoParticles('carbon', 18, 0.16, 0x9da9b9);
+makePhotoParticles('oxygen', 20, 0.13, 0xe9f9ff);
+makePhotoParticles('sugar', 14, 0.15, 0xf4b942);
+const photoDummy = new THREE.Object3D();
+photosynthesisWorld.userData.leaves = leafGroups;
+
+const provinceWorld = new THREE.Group();
+provinceWorld.visible = false;
+scene.add(provinceWorld);
+let indonesiaProvinceData = null;
+let indonesiaProvinceGroups = [];
+let indonesiaProvinceTargets = [];
+let indonesiaRegionAnchors = [];
+let activeProvinceIndex = -1;
+const provinceRegionColors = {
+  'sumatera': '#fdba74',
+  'jawa-bali-nusa': '#fda4af',
+  'kalimantan-sulawesi': '#86efac',
+  'maluku-papua': '#d8b4fe'
+};
+const provincePastelColors = [0xfbcfe8, 0xfecaca, 0xfed7aa, 0xfef08a, 0xd9f99d, 0xa7f3d0, 0xa5f3fc, 0xbfdbfe, 0xc7d2fe, 0xddd6fe, 0xf5d0fe, 0xe2e8f0];
+
+function normalizedProvinceName(value) {
+  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
+}
+
+function sampledRing(ring, limit = 90) {
+  if (!Array.isArray(ring) || ring.length < 4) return [];
+  const stride = Math.max(1, Math.ceil((ring.length - 1) / limit));
+  const points = [];
+  for (let i = 0; i < ring.length - 1; i += stride) points.push(ring[i]);
+  points.push(ring[ring.length - 1]);
+  return points.length >= 4 ? points : [];
+}
+
+function shapeFromRing(ring) {
+  const sampled = sampledRing(ring);
+  if (!sampled.length) return null;
+  const points = [];
+  sampled.forEach(point => {
+    const previous = points[points.length - 1];
+    if (!previous || Math.abs(point[0] - previous[0]) > 1e-9 || Math.abs(point[1] - previous[1]) > 1e-9) points.push(point);
+  });
+  const firstPoint = points[0], lastPoint = points[points.length - 1];
+  if (firstPoint && lastPoint && Math.abs(firstPoint[0] - lastPoint[0]) < 1e-9 && Math.abs(firstPoint[1] - lastPoint[1]) < 1e-9) points.pop();
+  if (points.length < 3) return null;
+  return { points };
+}
+
+function closedProvincePath(points, PathType = THREE.Path) {
+  if (!points?.length) return null;
+  const first = points[0];
+  const path = new PathType();
+  path.moveTo((first[0] - 118) * 0.78, (first[1] + 2.5) * 0.88);
+  points.slice(1).forEach(point => path.lineTo((point[0] - 118) * 0.78, (point[1] + 2.5) * 0.88));
+  path.closePath();
+  return path;
+}
+
+async function ensureIndonesiaProvinceWorld() {
+  if (indonesiaProvinceData) return;
+  const dataResponse = await fetch(new URL('./data/provinsi-indonesia.json', import.meta.url));
+  if (!dataResponse.ok) throw new Error('Data daftar provinsi tidak dapat dimuat.');
+  const data = await dataResponse.json();
+  const geoResponse = await fetch(new URL('../assets/data/bps/geojson/provinsi.geojson', import.meta.url));
+  if (!geoResponse.ok) throw new Error('Batas provinsi lokal tidak dapat dimuat.');
+  const geo = await geoResponse.json();
+  await Promise.all(data.provinces.map(province => new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => { province.emblemImage = image; resolve(); };
+    image.onerror = () => reject(new Error(`Lambang ${province.name} tidak dapat dimuat.`));
+    image.src = new URL(`./${province.emblem}`, import.meta.url).href;
+  })));
+  const featuresByName = new Map(geo.features.map(feature => [normalizedProvinceName(feature.properties?.nmprov), feature]));
+  const background = new THREE.Mesh(new THREE.PlaneGeometry(42, 23), new THREE.MeshStandardMaterial({ color: 0x11233b, roughness: 1 }));
+  background.rotation.x = -Math.PI / 2; background.position.y = -0.42; provinceWorld.add(background);
+  const regionTotals = data.regions.map(() => ({ x: 0, z: 0, count: 0 }));
+  const regionIndex = new Map(data.regions.map((region, index) => [region.id, index]));
+  const missing = [];
+
+  data.provinces.forEach((province, provinceIndex) => {
+    const feature = featuresByName.get(normalizedProvinceName(province.geometryName || province.name));
+    if (!feature?.geometry) { missing.push(province.name); return; }
+    const provinceGroup = new THREE.Group();
+    const baseColor = provincePastelColors[provinceIndex % provincePastelColors.length];
+    const material = new THREE.MeshStandardMaterial({ color: baseColor, roughness: 0.78, metalness: 0.02, emissive: 0x101827, emissiveIntensity: 0.08, side: THREE.DoubleSide });
+    const polygons = feature.geometry.type === 'Polygon' ? [feature.geometry.coordinates] : feature.geometry.coordinates;
+    const polygonAreas = polygons.map(polygon => {
+      const ring = polygon[0] || [];
+      let area = 0;
+      for (let pointIndex = 0; pointIndex < ring.length - 1; pointIndex++) {
+        area += ring[pointIndex][0] * ring[pointIndex + 1][1] - ring[pointIndex + 1][0] * ring[pointIndex][1];
+      }
+      return Math.abs(area / 2);
+    });
+    const largestPolygon = polygonAreas.indexOf(Math.max(...polygonAreas));
+    const polygonGeometries = [];
+    const outlineGeometries = [];
+    let centerX = 0, centerZ = 0, centerCount = 0;
+
+    polygons.forEach((polygon, polygonIndex) => {
+      if (polygonAreas[polygonIndex] < 0.0005 && polygonIndex !== largestPolygon) return;
+      let outer, geometry;
+      try {
+        outer = shapeFromRing(polygon[0]);
+        if (!outer) return;
+        const shape = closedProvincePath(outer.points, THREE.Shape);
+        for (let holeIndex = 1; holeIndex < polygon.length; holeIndex++) {
+          const hole = shapeFromRing(polygon[holeIndex]);
+          if (!hole) continue;
+          shape.holes.push(closedProvincePath(hole.points));
+        }
+        geometry = new THREE.ExtrudeGeometry(shape, { depth: 0.2, bevelEnabled: false, curveSegments: 1 });
+        geometry.rotateX(-Math.PI / 2);
+      } catch (error) {
+        try {
+          if (!outer) return;
+          const outerOnlyShape = closedProvincePath(outer.points, THREE.Shape);
+          geometry = new THREE.ExtrudeGeometry(outerOnlyShape, { depth: 0.2, bevelEnabled: false, curveSegments: 1 });
+          geometry.rotateX(-Math.PI / 2);
+          console.warn(`Lubang poligon ${province.name} diabaikan karena geometri tidak valid.`, error);
+        } catch (fallbackError) {
+          console.warn(`Bagian batas ${province.name} dilewati karena geometri tidak valid.`, fallbackError);
+          return;
+        }
+      }
+      polygonGeometries.push(geometry);
+      const outlineVertices = [];
+      outer.points.forEach((point, pointIndex) => {
+        const next = outer.points[(pointIndex + 1) % outer.points.length];
+        outlineVertices.push((point[0] - 118) * 0.78, 0.22, -((point[1] + 2.5) * 0.88));
+        outlineVertices.push((next[0] - 118) * 0.78, 0.22, -((next[1] + 2.5) * 0.88));
+      });
+      const outlineGeometry = new THREE.BufferGeometry();
+      outlineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(outlineVertices, 3));
+      outlineGeometries.push(outlineGeometry);
+      outer.points.forEach(point => { centerX += point[0]; centerZ += point[1]; centerCount++; });
+    });
+    if (!polygonGeometries.length) return;
+    let mergedPolygons = null, mergedOutlines = null;
+    try {
+      mergedPolygons = mergeGeometries(polygonGeometries, false);
+      mergedOutlines = mergeGeometries(outlineGeometries, false);
+    } catch (error) {
+      console.warn(`Penggabungan geometri ${province.name} gagal; memakai geometri terpisah.`, error);
+    }
+    if (mergedPolygons) {
+      provinceGroup.add(new THREE.Mesh(mergedPolygons, material));
+      polygonGeometries.forEach(geometry => geometry.dispose());
+    } else polygonGeometries.forEach(geometry => provinceGroup.add(new THREE.Mesh(geometry, material)));
+    const outlineMaterial = new THREE.LineBasicMaterial({ color: 0x26364a, transparent: true, opacity: 0.94, depthWrite: false });
+    if (mergedOutlines) {
+      provinceGroup.add(new THREE.LineSegments(mergedOutlines, outlineMaterial));
+      outlineGeometries.forEach(geometry => geometry.dispose());
+    } else outlineGeometries.forEach(geometry => provinceGroup.add(new THREE.LineSegments(geometry, outlineMaterial)));
+    provinceGroup.userData.material = material;
+    provinceGroup.userData.baseColor = baseColor;
+    provinceGroup.position.y = 0.04;
+    provinceWorld.add(provinceGroup);
+    indonesiaProvinceGroups[provinceIndex] = provinceGroup;
+    if (centerCount) {
+      indonesiaProvinceTargets[provinceIndex] = new THREE.Vector3(
+        ((centerX / centerCount) - 118) * 0.78,
+        0.45,
+        -(((centerZ / centerCount) + 2.5) * 0.88)
+      );
+    }
+    const regionSlot = regionIndex.get(province.regionId);
+    if (regionSlot !== undefined && centerCount) {
+      regionTotals[regionSlot].x += ((centerX / centerCount) - 118) * 0.78;
+      regionTotals[regionSlot].z += -(((centerZ / centerCount) + 2.5) * 0.88);
+      regionTotals[regionSlot].count++;
+    }
+  });
+
+  if (missing.length || indonesiaProvinceGroups.filter(Boolean).length !== 38) {
+    throw new Error(`Batas belum cocok untuk: ${missing.join(', ') || 'sebagian provinsi'}`);
+  }
+  indonesiaRegionAnchors = regionTotals.map(total => new THREE.Vector3(total.x / Math.max(1, total.count), 0.7, total.z / Math.max(1, total.count)));
+  indonesiaProvinceData = data;
+}
+
+function provincePlaybackPosition(t) {
+  if (!indonesiaProvinceData) return { index: 0, within: 0 };
+  const safeTime = Math.min(Math.max(0, t), DURATION - 0.0001);
+  const stageIndex = Math.min(STAGES.length - 1, Math.floor(safeTime / STAGE_LEN));
+  const stageStart = stageIndex * STAGE_LEN;
+  const stageProgress = Math.min(0.9999, Math.max(0, (safeTime - stageStart) / STAGE_LEN));
+  const provinceIndices = indonesiaProvinceData.provinces
+    .map((province, index) => province.regionId === STAGES[stageIndex].regionId ? index : -1)
+    .filter(index => index >= 0);
+  const localPosition = stageProgress * provinceIndices.length;
+  return {
+    index: provinceIndices[Math.min(provinceIndices.length - 1, Math.floor(localPosition))] ?? 0,
+    within: localPosition % 1
+  };
+}
+
+function updateIndonesiaProvince(t) {
+  if (!indonesiaProvinceData) return;
+  const { index: nextIndex, within: withinProvince } = provincePlaybackPosition(t);
+  const pop = 0.08 + Math.sin(withinProvince * Math.PI) * 0.68;
+  indonesiaProvinceGroups.forEach((group, index) => {
+    const isActive = index === nextIndex;
+    group.position.y = isActive ? pop : 0.04;
+    group.userData.material.color.setHex(isActive ? 0xfde68a : group.userData.baseColor);
+    group.userData.material.emissive.setHex(isActive ? 0x493c1c : 0x101827);
+    group.userData.material.emissiveIntensity = isActive ? 0.55 + Math.sin(t * 7) * 0.08 : 0.12;
+  });
+  if (nextIndex !== activeProvinceIndex) {
+    activeProvinceIndex = nextIndex;
+    updateProvinceSpotlight(nextIndex);
+  }
+}
+
+function updateProvinceSpotlight(index) {
+  const province = indonesiaProvinceData?.provinces[index];
+  if (!province) return;
+  const emblem = document.getElementById('province-emblem');
+  const region = indonesiaProvinceData.regions.find(item => item.id === province.regionId);
+  const mapLabel = document.getElementById('province-map-label');
+  emblem.src = province.emblemImage.src;
+  emblem.alt = `Lambang ${province.name}`;
+  document.getElementById('province-region').textContent = region?.title || 'Indonesia';
+  document.getElementById('province-name').textContent = province.name;
+  document.getElementById('province-count').textContent = `Provinsi ${String(index + 1).padStart(2, '0')} dari 38`;
+  document.getElementById('province-spotlight').hidden = true;
+  mapLabel.style.setProperty('--province-accent', provinceRegionColors[province.regionId] || '#38bdf8');
+  const mapEmblem = document.getElementById('province-map-emblem');
+  mapEmblem.src = province.emblemImage.src;
+  mapEmblem.alt = `Lambang ${province.name}`;
+  document.getElementById('province-map-name').textContent = province.name;
+  document.getElementById('province-map-region').textContent = region?.title || 'Indonesia';
+  mapLabel.classList.remove('is-arriving');
+  void mapLabel.offsetWidth;
+  mapLabel.classList.add('is-arriving');
+}
+
+function syncProvinceMapLabel() {
+  const label = document.getElementById('province-map-label');
+  if (activePreset?.id !== 'indonesia-provinces' || activeProvinceIndex < 0) {
+    label.hidden = true;
+    return;
+  }
+  const target = indonesiaProvinceTargets[activeProvinceIndex];
+  if (!target) { label.hidden = true; return; }
+  const provinceGroup = indonesiaProvinceGroups[activeProvinceIndex];
+  const anchor = target.clone();
+  anchor.y = (provinceGroup?.position.y || 0) + 1.15;
+  const point = anchor.project(camera);
+  if (point.z < -1 || point.z > 1 || Math.abs(point.x) > 1.12 || Math.abs(point.y) > 1.12) {
+    label.hidden = true;
+    return;
+  }
+  const rect = document.getElementById('canvas-wrap').getBoundingClientRect();
+  const halfWidth = Math.max(70, label.offsetWidth / 2);
+  const x = Math.max(halfWidth + 8, Math.min(rect.width - halfWidth - 8, (point.x * 0.5 + 0.5) * rect.width));
+  const y = Math.max(label.offsetHeight + 18, Math.min(rect.height - 12, (-point.y * 0.5 + 0.5) * rect.height));
+  label.style.left = `${x}px`;
+  label.style.top = `${y}px`;
+  label.hidden = false;
+}
+
+// ==========================================
+// 4. SIMULATION
+// ==========================================
+const dummy = new THREE.Object3D();
+const whiteColor = new THREE.Color(0xffffff);
+const stormColor = new THREE.Color(0x475569);
+
+function smoothstep(edge0, edge1, x) {
+  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+}
+
+const CAM_KEYS = [
+  { t: 0.0,  pos: [0.0, 14.5, 29.0], target: [0.0, 3.2, 0.0] },
+  { t: 3.75, pos: [-9.5, 11.5, 23.5], target: [-4.5, 5.2, 0.0] },
+  { t: 7.5,  pos: [2.0, 15.5, 22.0], target: [4.5, 7.5, 0.0] },
+  { t: 11.25,pos: [10.5, 13.5, 22.5], target: [5.5, 4.2, 0.0] },
+  { t: 15.0, pos: [0.0, 14.5, 29.0], target: [0.0, 3.2, 0.0] }
+];
+
+let autoCamEnabled = true;
+
+function updateCameraChoreography(simTime) {
+  if (!autoCamEnabled) return;
+  if (activePreset?.id === 'indonesia-provinces') {
+    const stageIndex = Math.min(STAGES.length - 1, Math.floor(simTime / STAGE_LEN));
+    const stageProgress = (simTime - stageIndex * STAGE_LEN) / STAGE_LEN;
+    const regionAnchor = indonesiaRegionAnchors[stageIndex] || new THREE.Vector3(0, 0.5, 0);
+    const provinceTarget = indonesiaProvinceTargets[activeProvinceIndex] || regionAnchor;
+    const regionMix = smoothstep(0.04, 0.25, stageProgress) * (1 - smoothstep(0.86, 0.99, stageProgress));
+    const regionFocus = new THREE.Vector3(0, 0.35, 0).lerp(regionAnchor, regionMix);
+    const detailZoom = smoothstep(0.06, 0.32, stageProgress) * (1 - smoothstep(0.78, 0.98, stageProgress));
+    const focus = regionFocus.lerp(provinceTarget, detailZoom * 0.56);
+    const baseDistance = camera.aspect < 1 ? 76 : 46;
+    const distance = baseDistance * (1 - detailZoom * 0.58);
+    const azimuth = -0.38 + stageProgress * 0.76 + stageIndex * 0.12;
+    const elevation = 0.55 + detailZoom * 0.14;
+    const horizontal = Math.sqrt(1 - elevation * elevation);
+    const position = new THREE.Vector3(
+      focus.x + Math.sin(azimuth) * horizontal * distance,
+      focus.y + elevation * distance,
+      focus.z + Math.cos(azimuth) * horizontal * distance
+    );
+    camera.position.lerp(position, 0.065);
+    controls.target.lerp(focus, 0.065);
+    return;
+  }
+  if (activePreset?.id === 'photosynthesis') {
+    const drift = Math.sin(simTime * 0.35) * 0.35;
+    camera.position.lerp(new THREE.Vector3(drift, 9.5, 22.5), 0.08);
+    controls.target.lerp(new THREE.Vector3(0, 3.1, 0), 0.08);
+    return;
+  }
+  let k0 = CAM_KEYS[0], k1 = CAM_KEYS[1];
+  for (let i = 0; i < CAM_KEYS.length - 1; i++) {
+    if (simTime >= CAM_KEYS[i].t && simTime <= CAM_KEYS[i + 1].t) {
+      k0 = CAM_KEYS[i]; k1 = CAM_KEYS[i + 1]; break;
+    }
+  }
+  const localT = smoothstep(k0.t, k1.t, simTime);
+  const aspectZoom = camera.aspect < 1.0 ? 1.28 : 1.0;
+  const px = THREE.MathUtils.lerp(k0.pos[0], k1.pos[0], localT) * aspectZoom;
+  const py = THREE.MathUtils.lerp(k0.pos[1], k1.pos[1], localT) * (camera.aspect < 1.0 ? 1.12 : 1.0);
+  const pz = THREE.MathUtils.lerp(k0.pos[2], k1.pos[2], localT) * aspectZoom;
+  const tx = THREE.MathUtils.lerp(k0.target[0], k1.target[0], localT);
+  const ty = THREE.MathUtils.lerp(k0.target[1], k1.target[1], localT);
+  const tz = THREE.MathUtils.lerp(k0.target[2], k1.target[2], localT);
+  camera.position.lerp(new THREE.Vector3(px, py, pz), 0.12);
+  controls.target.lerp(new THREE.Vector3(tx, ty, tz), 0.12);
+}
+
+function updateSimulation(t) {
+  if (activePreset?.id === 'indonesia-provinces') {
+    updateIndonesiaProvince(t);
+    return;
+  }
+  if (activePreset?.id === 'photosynthesis') {
+    updatePhotosynthesis(t);
+    return;
+  }
+  const evapStrength = smoothstep(0.0, 0.9, t) * (1 - smoothstep(3.6, 5.2, t));
+  const condStrength = smoothstep(3.2, 4.6, t) * (1 - smoothstep(10.8, 12.2, t));
+  const rainStrength = smoothstep(7.2, 8.2, t) * (1 - smoothstep(10.8, 11.8, t));
+  const collStrength = smoothstep(10.8, 11.8, t) * (1 - smoothstep(14.3, 15.0, t));
+
+  for (let i = 0; i < oPos.count; i++) {
+    const vx = oPos.getX(i), vz = oPos.getZ(i);
+    oPos.setY(i, oceanBaseY[i] + Math.sin(t * 2.4 + vx * 0.7 + vz * 0.5) * 0.08);
+  }
+  oPos.needsUpdate = true;
+  foamMesh.position.x = -0.65 + Math.sin(t * 2.4) * 0.14;
+
+  raysGroup.rotation.z = t * 0.45;
+  sunCore.scale.setScalar(1 + evapStrength * 0.14 * Math.sin(t * 4));
+  sunLight.intensity = 1.95 + evapStrength * 0.55 - rainStrength * 0.45;
+
+  const cloudTravel = smoothstep(3.0, 7.6, t) * (1 - smoothstep(12.2, 14.9, t));
+  cloudGroup.position.x = THREE.MathUtils.lerp(-5.5, 6.8, cloudTravel);
+  cloudGroup.position.y = 10.6 + Math.sin(t * 1.8) * 0.2;
+  cloudGroup.scale.setScalar(0.72 + condStrength * 0.42);
+  cloudMat.color.lerpColors(whiteColor, stormColor, smoothstep(4.5, 7.5, t) * (1 - smoothstep(11.0, 12.8, t)));
+  cloudPuffs.forEach((p, idx) => {
+    const spread = 1.18 - condStrength * 0.22;
+    p.mesh.position.copy(p.basePos).multiplyScalar(spread);
+    p.mesh.position.y += Math.sin(t * 2.5 + idx) * 0.05;
+  });
+
+  for (let i = 0; i < VAPOR_COUNT; i++) {
+    const v = vaporData[i];
+    if (evapStrength <= 0.01) dummy.scale.setScalar(0);
+    else {
+      const p = (t * 0.34 * v.speed + v.phase) % 1;
+      const y = THREE.MathUtils.lerp(1.1, 9.8, p);
+      const x = THREE.MathUtils.lerp(v.x, cloudGroup.position.x + Math.sin(p * 6 + i) * 0.8, p * 0.75);
+      const z = v.z * (1 - p * 0.55);
+      dummy.position.set(x, y, z);
+      dummy.rotation.set(t + i, t * 0.7, 0);
+      dummy.scale.setScalar(Math.max(0.001, Math.sin(p * Math.PI) * evapStrength * 1.15));
+    }
+    dummy.updateMatrix(); vaporInst.setMatrixAt(i, dummy.matrix);
+  }
+  vaporInst.instanceMatrix.needsUpdate = true;
+
+  for (let i = 0; i < RAIN_COUNT; i++) {
+    const r = rainData[i];
+    if (rainStrength <= 0.01) dummy.scale.setScalar(0);
+    else {
+      const p = (t * 1.35 * r.speed + r.phase) % 1;
+      dummy.position.set(cloudGroup.position.x + r.ox, THREE.MathUtils.lerp(cloudGroup.position.y - 0.8, 2.0, p), cloudGroup.position.z + r.oz);
+      dummy.rotation.set(0, 0, -0.08);
+      dummy.scale.set(rainStrength, rainStrength * (0.8 + p * 0.5), rainStrength);
+    }
+    dummy.updateMatrix(); rainInst.setMatrixAt(i, dummy.matrix);
+  }
+  rainInst.instanceMatrix.needsUpdate = true;
+
+  riverMat.emissiveIntensity = 0.2 + collStrength * 0.75;
+  for (let i = 0; i < FLOW_COUNT; i++) {
+    const f = flowData[i];
+    if (collStrength <= 0.01) dummy.scale.setScalar(0);
+    else {
+      const u = (t * 0.42 + f.offset) % 1;
+      const pt = riverCurve.getPointAt(u);
+      dummy.position.set(pt.x, pt.y + 1.28, pt.z + f.lateral);
+      dummy.rotation.set(t * 2, i, 0);
+      dummy.scale.setScalar(Math.max(0.001, Math.sin(u * Math.PI) * collStrength * 1.25));
+    }
+    dummy.updateMatrix(); flowInst.setMatrixAt(i, dummy.matrix);
+  }
+  flowInst.instanceMatrix.needsUpdate = true;
+
+  if (collStrength > 0.05) {
+    const rp = (t * 0.9) % 1;
+    rippleMesh.scale.setScalar(0.6 + rp * 3.2);
+    rippleMat.opacity = (1 - rp) * collStrength * 0.75;
+  } else rippleMat.opacity = 0;
+}
+
+function updatePhotosynthesis(t) {
+  const stage = Math.min(3, Math.floor(t / STAGE_LEN));
+  const progress = (t % STAGE_LEN) / STAGE_LEN;
+  const ease = value => value * value * (3 - 2 * value);
+  photoSun.rotation.y = t * 0.12;
+  photoSunCore.scale.setScalar(1 + (stage === 0 ? Math.sin(t * 4) * 0.05 : 0));
+  leafGroups.forEach((leaf, i) => {
+    leaf.rotation.y = Math.sin(t * 1.2 + i) * 0.035;
+  });
+  const routes = {
+    light: { from: [-5.4, 8.5, 0], to: [0.8, 5.0, 0], active: stage === 0 },
+    water: { from: [1.2, -0.25, 0.2], to: [1.2, 4.1, 0], active: stage === 1 },
+    carbon: { from: [6.0, 5.1, 0], to: [2.25, 4.2, 0], active: stage === 1 },
+    oxygen: { from: [2.3, 4.1, 0.15], to: [6.2, 7.4, 0.2], active: stage === 3 },
+    sugar: { from: [1.2, 4.0, 0.2], to: [1.2, 0.45, 0.2], active: stage >= 2 }
+  };
+  for (const [key, { from, to, active }] of Object.entries(routes)) {
+    const { mesh, count } = photoParticles[key];
+    for (let i = 0; i < count; i++) {
+      const p = (progress * 0.78 + (i / count) * 0.58) % 1;
+      const fade = active ? Math.min(1, ease(Math.min(1, p * 3)), ease(Math.min(1, (1 - p) * 3))) : 0;
+      photoDummy.position.set(
+        THREE.MathUtils.lerp(from[0], to[0], p) + Math.sin(p * Math.PI * 2 + i) * 0.12,
+        THREE.MathUtils.lerp(from[1], to[1], p) + Math.sin(p * Math.PI * 2) * 0.12,
+        THREE.MathUtils.lerp(from[2], to[2], p) + Math.cos(p * Math.PI * 2 + i) * 0.12
+      );
+      photoDummy.rotation.set(t + i, t * 0.8, t * 0.4);
+      photoDummy.scale.setScalar(Math.max(0.001, fade * (key === 'oxygen' ? 0.7 + (i % 3) * 0.16 : 1)));
+      photoDummy.updateMatrix(); mesh.setMatrixAt(i, photoDummy.matrix);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+  }
+}
+
+// ==========================================
+// 5. TTS SYSTEM (improved timing)
+// ==========================================
+let voEnabled = false;
+let lastSpokenStage = -1;
+let preferredVoice = null;
+let ttsRate = 0.95; // user adjustable
+let isSpeaking = false;
+
+function initTTS() {
+  if (!('speechSynthesis' in window)) return;
+  function pickVoice() {
+    const voices = speechSynthesis.getVoices();
+    preferredVoice = voices.find(v => v.lang === 'id-ID' || v.lang.startsWith('id')) ||
+                     voices.find(v => v.lang.includes('id')) ||
+                     voices.find(v => v.name.toLowerCase().includes('indonesia')) ||
+                     voices.find(v => v.lang.startsWith('en')) || voices[0] || null;
+  }
+  pickVoice();
+  if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = pickVoice;
+}
+
+function speakStage(idx, force = false) {
+  if (!voEnabled || !('speechSynthesis' in window)) return;
+  if (!force && idx === lastSpokenStage) return;
+
+  speechSynthesis.cancel();
+  lastSpokenStage = idx;
+  isSpeaking = true;
+
+  const st = STAGES[idx];
+  const utter = new SpeechSynthesisUtterance(st.subtitle);
+  utter.lang = 'id-ID';
+  utter.rate = ttsRate;
+  utter.pitch = 1.0;
+  utter.volume = 1.0;
+  if (preferredVoice) utter.voice = preferredVoice;
+
+  document.getElementById('vo-indicator').classList.add('active');
+
+  utter.onend = () => { isSpeaking = false; document.getElementById('vo-indicator').classList.remove('active'); };
+  utter.onerror = () => { isSpeaking = false; document.getElementById('vo-indicator').classList.remove('active'); };
+
+  speechSynthesis.speak(utter);
+}
+
+function stopSpeech() {
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  isSpeaking = false;
+  document.getElementById('vo-indicator').classList.remove('active');
+}
+
+// ==========================================
+// 6. UI STATE
+// ==========================================
+let simTime = 0;
+let isPlaying = true;
+let playbackSpeed = 1.0; // animation speed (user adjustable via slider + preset)
+let activeStageIdx = 0;
+let subtitleVisible = false;
+let hudVisible = true;
+let reelsMode = false;
+
+const scrubber = document.getElementById('scrubber');
+const timeDisplay = document.getElementById('time-display');
+const btnPlay = document.getElementById('btn-play');
+const btnSpeed = document.getElementById('btn-speed');
+const btnAutoCam = document.getElementById('btn-autocam');
+const btnReels = document.getElementById('btn-reels');
+const btnHud = document.getElementById('btn-hud');
+const btnFullscreen = document.getElementById('btn-fullscreen');
+const exitFsBtn = document.getElementById('exit-fs-btn');
+const stageCard = document.getElementById('stage-card');
+const reelsGuide = document.getElementById('reels-guide');
+const stageBtns = document.querySelectorAll('.stage-btn');
+const btnVo = document.getElementById('btn-vo');
+const btnSubtitle = document.getElementById('btn-subtitle');
+const subtitleBar = document.getElementById('subtitle-bar');
+const toastEl = document.getElementById('toast');
+const animSpeedSlider = document.getElementById('anim-speed');
+const ttsSpeedSlider = document.getElementById('tts-speed');
+const animSpeedVal = document.getElementById('anim-speed-val');
+const ttsSpeedVal = document.getElementById('tts-speed-val');
+const presetOptions = document.getElementById('preset-options');
+
+const editorPanel = document.getElementById('editor-panel');
+const sheetHandle = document.getElementById('sheet-handle');
+let mobileSheetHeight = Math.round(window.innerHeight * 0.52);
+let sheetDragStartY = 0;
+let sheetDragStartHeight = mobileSheetHeight;
+let sheetDragging = false;
+
+function maxMobileSheetHeight() {
+  const subtitleSpace = subtitleVisible && subtitleBar.classList.contains('visible')
+    ? subtitleBar.getBoundingClientRect().height + 32
+    : 58;
+  return Math.max(58, window.innerHeight - subtitleSpace);
+}
+
+sheetHandle.addEventListener('pointerdown', (event) => {
+  sheetDragging = true;
+  document.body.classList.add('sheet-dragging');
+  sheetDragStartY = event.clientY;
+  sheetDragStartHeight = editorPanel.getBoundingClientRect().height;
+  sheetHandle.setPointerCapture(event.pointerId);
+  event.preventDefault();
+});
+sheetHandle.addEventListener('pointermove', (event) => {
+  if (!sheetDragging) return;
+  const maxHeight = maxMobileSheetHeight();
+  mobileSheetHeight = Math.max(58, Math.min(maxHeight, sheetDragStartHeight + sheetDragStartY - event.clientY));
+  document.body.style.setProperty('--mobile-sheet-height', mobileSheetHeight + 'px');
+  document.body.classList.toggle('sheet-collapsed', mobileSheetHeight <= 84);
+});
+function finishSheetDrag() {
+  if (!sheetDragging) return;
+  sheetDragging = false;
+  document.body.classList.remove('sheet-dragging');
+  mobileSheetHeight = Math.min(mobileSheetHeight, maxMobileSheetHeight());
+  document.body.classList.toggle('sheet-collapsed', mobileSheetHeight <= 84);
+  document.body.style.setProperty('--mobile-sheet-height', mobileSheetHeight + 'px');
+  handleResize();
+}
+sheetHandle.addEventListener('pointerup', finishSheetDrag);
+sheetHandle.addEventListener('pointercancel', finishSheetDrag);
+
+const btnAnnotations = document.getElementById('btn-annotations');
+const sceneLabels = document.getElementById('scene-labels');
+
+const ICONS = {
+  pause: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 5v14m8-14v14"/></svg>',
+  play: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z"/></svg>',
+  speed: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 17a9 9 0 1 1 16 0M12 13l5-5M7 17h10"/></svg>',
+  sun: '<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  cloud: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 18h12a4 4 0 0 0 .3-8A6.5 6.5 0 0 0 6 9a4.5 4.5 0 0 0 0 9Z"/></svg>',
+  rain: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 4h10a4 4 0 0 1 .3 8H7a4 4 0 0 1-.3-8Z"/><path d="m8 15-1 3m6-3-1 3m6-3-1 3"/></svg>',
+  river: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 15c3-3 5 3 8 0s5 3 10 0M3 19c3-3 5 3 8 0s5 3 10 0M6 5v6m0 0-2-2m2 2 2-2"/></svg>',
+  water: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3c-2 3-6 7-6 11a6 6 0 0 0 12 0c0-4-4-8-6-11Z"/><path d="M9 15a3 3 0 0 0 3 3"/></svg>',
+  carbon: '<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M5 7l-2-2m16 12 2 2M8 12h8m-6-3-2 3 2 3"/></svg>',
+  sugar: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m12 3 8 4v10l-8 4-8-4V7l8-4Z"/><path d="m4 7 8 4 8-4m-8 4v10"/></svg>',
+  oxygen: '<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="8" cy="14" r="4"/><circle cx="16.5" cy="8" r="2.5"/><circle cx="17" cy="17" r="1.5"/></svg>',
+  map: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z"/><path d="M9 3v15m6-12v15"/></svg>'
+};
+function setIconButton(button, icon, label) {
+  button.innerHTML = ICONS[icon]; button.title = label; button.setAttribute('aria-label', label);
+}
+function stageIconFor(presetId, index) {
+  if (presetId === 'indonesia-provinces') return 'map';
+  const icons = presetId === 'photosynthesis' ? ['sun', 'water', 'carbon', 'oxygen'] : ['sun', 'cloud', 'rain', 'river'];
+  return icons[index] || 'sun';
+}
+
+function annotationAnchor(presetId, index) {
+  if (presetId === 'indonesia-provinces') return indonesiaRegionAnchors[index] || null;
+  if (presetId === 'photosynthesis') {
+    return [new THREE.Vector3(0.7, 5.4, 0), new THREE.Vector3(3.1, 4.7, 0), new THREE.Vector3(1.6, 4.0, 1.2), new THREE.Vector3(5.0, 6.0, 0)][index];
+  }
+  const cloud = cloudGroup.position;
+  return [new THREE.Vector3(-4.5, 2.7, 0), cloud.clone().add(new THREE.Vector3(0, 2.1, 0)), cloud.clone().add(new THREE.Vector3(1.8, -1.5, 0)), riverCurve.getPointAt(0.48).add(new THREE.Vector3(0, 1.5, 1.1))][index];
+}
+
+function renderSceneLabels(preset) {
+  sceneLabels.replaceChildren();
+  if (preset.id === 'indonesia-provinces') return;
+  preset.stages.forEach((stage, index) => {
+    const label = document.createElement('div');
+    label.className = 'scene-label';
+    label.tabIndex = 0; label.setAttribute('role', 'button');
+    label.setAttribute('aria-label', 'Putar dari tahap ' + (index + 1) + ': ' + labelForStage(stage, index));
+    const playStage = () => {
+      simTime = index * STAGE_LEN + 0.05;
+      activeStageIdx = index;
+      updateSimulation(simTime); updateCard(index); updateSubtitle(index); setActiveStageButton(index);
+      scrubber.value = simTime.toFixed(2);
+      timeDisplay.textContent = simTime.toFixed(1).padStart(4, '0') + 's / ' + DURATION.toFixed(1) + 's';
+      isPlaying = true;
+      setIconButton(btnPlay, 'pause', 'Jeda'); btnPlay.setAttribute('aria-pressed', 'false');
+      syncSceneLabels();
+      if (voEnabled) speakStage(index, true);
+    };
+    label.addEventListener('click', playStage);
+    label.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); playStage(); }
+    });
+    const icon = document.createElement('span'); icon.className = 'scene-label-icon'; icon.innerHTML = ICONS[stageIconFor(preset.id, index)];
+    const copy = document.createElement('span'); copy.className = 'scene-label-copy';
+    const title = document.createElement('span'); title.className = 'scene-label-name'; title.textContent = `${String(index + 1).padStart(2, '0')} ${labelForStage(stage, index)}`;
+    const detail = document.createElement('span'); detail.className = 'scene-label-detail'; detail.textContent = stage.subtitle;
+    copy.append(title, detail); label.append(icon, copy); sceneLabels.appendChild(label);
+  });
+  syncSceneLabels();
+}
+
+function syncSceneLabels() {
+  if (sceneLabels.hidden) return;
+  const layerRect = sceneLabels.getBoundingClientRect();
+  sceneLabels.querySelectorAll('.scene-label').forEach((label, index) => {
+    const active = index === activeStageIdx;
+    label.classList.toggle('is-active', active);
+    label.classList.toggle('is-inactive', !active);
+    if (!active) return;
+    const anchor = annotationAnchor(activePreset.id, index);
+    if (!anchor) return;
+    const point = anchor.clone().project(camera);
+    const offscreen = point.z < -1 || point.z > 1 || Math.abs(point.x) > 1.12 || Math.abs(point.y) > 1.12;
+    label.classList.toggle('is-offscreen', offscreen);
+    const rawX = (point.x * 0.5 + 0.5) * layerRect.width;
+    const rawY = (-point.y * 0.5 + 0.5) * layerRect.height;
+    const halfWidth = Math.min(label.offsetWidth / 2 + 8, layerRect.width / 2);
+    const x = Math.max(halfWidth, Math.min(layerRect.width - halfWidth, rawX));
+    label.classList.toggle('is-top', rawY < label.offsetHeight + 18);
+    label.style.left = `${x}px`;
+    label.style.top = `${Math.max(8, Math.min(layerRect.height - 8, rawY))}px`;
+  });
+}
+
+function labelForStage(stage, index) {
+  return stage.shortTitle.replace(/^\d+\s*/, '') || stage.title;
+}
+
+function renderPresetOptions() {
+  presetOptions.replaceChildren();
+  const categories = new Map();
+  PRESETS.forEach(preset => {
+    const category = preset.category || 'Lainnya';
+    let group = categories.get(category);
+    if (!group) { group = document.createElement('optgroup'); group.label = category; categories.set(category, group); presetOptions.appendChild(group); }
+    const option = document.createElement('option'); option.value = preset.id; option.textContent = preset.title;
+    group.appendChild(option);
+  });
+  presetOptions.addEventListener('change', () => { void selectPreset(PRESETS.find(preset => preset.id === presetOptions.value)); });
+  updatePresetSelection();
+}
+
+function updatePresetSelection() {
+  presetOptions.value = activePreset.id;
+}
+
+async function selectPreset(preset) {
+  if (!preset || preset.id === activePreset.id) return;
+  if (preset.id === 'indonesia-provinces') {
+    showToast('Memuat peta provinsi dari data lokal…', 3000);
+    try { await ensureIndonesiaProvinceWorld(); }
+    catch (error) {
+      console.error(error);
+      provinceWorld.clear(); indonesiaProvinceGroups = []; indonesiaProvinceTargets = []; indonesiaRegionAnchors = []; indonesiaProvinceData = null;
+      presetOptions.value = activePreset.id;
+      const detail = error instanceof Error ? error.message : String(error);
+      showToast(`Peta provinsi gagal dimuat: ${detail}`, 5000);
+      return;
+    }
+  }
+  stopSpeech();
+  activePreset = preset;
+  STAGES = JSON.parse(JSON.stringify(preset.stages));
+  DURATION = Number(preset.duration) || 15;
+  STAGE_LEN = DURATION / STAGES.length;
+  scrubber.max = DURATION;
+  document.querySelector(".brand-title").textContent = `${preset.title} 3D — Studio Pro`;
+  document.title = `RUANGKITA — ${preset.title} Studio`;
+  document.getElementById('export-title').textContent = `Export Animasi Video (${DURATION} Detik)`;
+  try {
+    const saved = localStorage.getItem(`ruangkitastages_${preset.id}`);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length === STAGES.length) STAGES = parsed;
+    }
+  } catch (e) {}
+  world.visible = preset.id !== 'photosynthesis' && preset.id !== 'indonesia-provinces';
+  photosynthesisWorld.visible = preset.id === 'photosynthesis';
+  provinceWorld.visible = preset.id === 'indonesia-provinces';
+  document.getElementById('province-spotlight').hidden = true;
+  document.getElementById('province-map-label').hidden = preset.id !== 'indonesia-provinces';
+  const mapZoom = camera.aspect < 1 ? 1.78 : 1.14;
+  controls.maxDistance = preset.id === 'indonesia-provinces' ? 105 : 55;
+  camera.position.set(0, preset.id === 'photosynthesis' ? 9.5 : preset.id === 'indonesia-provinces' ? 31 * mapZoom : 14, preset.id === 'photosynthesis' ? 22.5 : preset.id === 'indonesia-provinces' ? 47 * mapZoom : 29);
+  controls.target.set(0, preset.id === 'photosynthesis' ? 3.1 : 0, 0);
+  simTime = 0; activeStageIdx = 0;
+  activeProvinceIndex = -1;
+  stageBtns.forEach((button, index) => {
+    button.classList.toggle('active', index === 0);
+    const name = labelForStage(STAGES[index], index);
+    button.querySelector('.stage-icon').innerHTML = ICONS[stageIconFor(preset.id, index)];
+    button.querySelector('.stage-name').textContent = name;
+    button.title = name; button.setAttribute('aria-label', name);
+  });
+  editTabs.forEach((tab, index) => setIconButton(tab, stageIconFor(preset.id, index), `Tahap ${index + 1}: ${labelForStage(STAGES[index], index)}`));
+  renderSceneLabels(preset);
+  updatePresetSelection(); updateCard(0); updateSubtitle(0); updateSimulation(0); syncUI(0);
+  if (voEnabled) speakStage(0, true);
+  showToast(`Preset ${preset.title} dipilih`);
+}
+
+renderPresetOptions();
+renderSceneLabels(activePreset);
+btnAnnotations.classList.add('active');
+btnAnnotations.setAttribute('aria-pressed', 'true');
+btnAnnotations.title = 'Sembunyikan keterangan animasi';
+btnAnnotations.setAttribute('aria-label', btnAnnotations.title);
+
+function showToast(msg, duration = 2200) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(() => toastEl.classList.remove('show'), duration);
+}
+
+function updateSubtitle(idx) {
+  const st = STAGES[idx];
+  document.getElementById('sub-stage').textContent = `TAHAP 0${idx + 1} — ${st.shortTitle.replace(/^\d+\s*/, '')}`;
+  document.getElementById('sub-text').textContent = st.subtitle;
+}
+
+function updateCard(idx) {
+  const st = STAGES[idx];
+  document.getElementById('card-eyebrow').textContent = st.eyebrow;
+  document.getElementById('card-title').textContent = st.title;
+  document.getElementById('card-desc').textContent = st.desc;
+}
+
+function setActiveStageButton(index) {
+  stageBtns.forEach((button, i) => {
+    const active = i === index;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+}
+
+function syncUI(t) {
+  scrubber.value = t.toFixed(2);
+  timeDisplay.textContent = `${t.toFixed(1).padStart(4, '0')}s / ${DURATION.toFixed(1)}s`;
+
+  const idx = Math.min(STAGES.length - 1, Math.floor(t / STAGE_LEN));
+  if (idx !== activeStageIdx) {
+    activeStageIdx = idx;
+    updateCard(idx);
+    updateSubtitle(idx);
+    setActiveStageButton(idx);
+    // Speak only when stage actually changes and VO is on
+    if (voEnabled) speakStage(idx);
+  }
+}
+
+// Speed sliders
+animSpeedSlider.addEventListener('input', () => {
+  playbackSpeed = parseFloat(animSpeedSlider.value);
+  animSpeedVal.textContent = playbackSpeed.toFixed(2) + 'x';
+  setIconButton(btnSpeed, 'speed', `Kecepatan animasi ${playbackSpeed.toFixed(1)}x`);
+});
+ttsSpeedSlider.addEventListener('input', () => {
+  ttsRate = parseFloat(ttsSpeedSlider.value);
+  ttsSpeedVal.textContent = ttsRate.toFixed(2) + 'x';
+});
+
+btnPlay.addEventListener('click', () => {
+  isPlaying = !isPlaying;
+  setIconButton(btnPlay, isPlaying ? 'pause' : 'play', isPlaying ? 'Jeda' : 'Putar');
+  btnPlay.setAttribute('aria-pressed', String(!isPlaying));
+  if (!isPlaying) stopSpeech();
+});
+
+const speedPresets = [0.5, 0.75, 1.0, 1.25, 1.5];
+let speedPresetIdx = 2;
+btnSpeed.addEventListener('click', () => {
+  speedPresetIdx = (speedPresetIdx + 1) % speedPresets.length;
+  playbackSpeed = speedPresets[speedPresetIdx];
+  animSpeedSlider.value = playbackSpeed;
+  animSpeedVal.textContent = playbackSpeed.toFixed(2) + 'x';
+  setIconButton(btnSpeed, 'speed', `Kecepatan animasi ${playbackSpeed.toFixed(1)}x`);
+});
+
+scrubber.addEventListener('input', (e) => {
+  simTime = parseFloat(e.target.value);
+  updateSimulation(simTime);
+  const idx = Math.min(STAGES.length - 1, Math.floor(simTime / STAGE_LEN));
+  if (idx !== activeStageIdx) {
+    activeStageIdx = idx;
+    updateCard(idx);
+    updateSubtitle(idx);
+    setActiveStageButton(idx);
+    if (voEnabled) speakStage(idx, true);
+  }
+  timeDisplay.textContent = `${simTime.toFixed(1).padStart(4, '0')}s / ${DURATION.toFixed(1)}s`;
+});
+
+stageBtns.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const idx = parseInt(btn.dataset.stage, 10);
+    simTime = idx * STAGE_LEN + 0.05;
+    updateSimulation(simTime);
+    activeStageIdx = idx;
+    updateCard(idx);
+    updateSubtitle(idx);
+    setActiveStageButton(idx);
+    scrubber.value = simTime.toFixed(2);
+    timeDisplay.textContent = `${simTime.toFixed(1).padStart(4, '0')}s / ${DURATION.toFixed(1)}s`;
+    if (voEnabled) speakStage(idx, true);
+  });
+});
+
+btnAutoCam.addEventListener('click', () => {
+  autoCamEnabled = !autoCamEnabled;
+  btnAutoCam.classList.toggle('active', autoCamEnabled);
+  btnAutoCam.setAttribute('aria-pressed', String(autoCamEnabled));
+  btnAutoCam.title = autoCamEnabled ? 'Kamera otomatis aktif' : 'Kamera manual';
+  btnAutoCam.setAttribute('aria-label', btnAutoCam.title);
+  showToast(autoCamEnabled ? 'Auto-Camera aktif' : 'Kamera manual');
+});
+controls.addEventListener('start', () => {
+  if (autoCamEnabled) {
+    autoCamEnabled = false;
+    btnAutoCam.classList.remove('active');
+    btnAutoCam.setAttribute('aria-pressed', 'false');
+    btnAutoCam.title = 'Kamera manual'; btnAutoCam.setAttribute('aria-label', 'Kamera manual');
+  }
+});
+
+btnReels.addEventListener('click', () => {
+  reelsMode = !reelsMode;
+  btnReels.classList.toggle('active', reelsMode);
+  btnReels.setAttribute('aria-pressed', String(reelsMode));
+  btnReels.title = reelsMode ? 'Sembunyikan panduan 9:16' : 'Tampilkan panduan 9:16';
+  btnReels.setAttribute('aria-label', btnReels.title);
+  reelsGuide.classList.toggle('active', reelsMode);
+});
+
+btnHud.addEventListener('click', () => {
+  hudVisible = !hudVisible;
+  btnHud.classList.toggle('active', hudVisible);
+  btnHud.title = hudVisible ? 'Sembunyikan kartu informasi' : 'Tampilkan kartu informasi';
+  btnHud.setAttribute('aria-label', btnHud.title);
+  btnHud.setAttribute('aria-pressed', String(hudVisible));
+  stageCard.style.display = hudVisible ? 'block' : 'none';
+});
+
+btnAnnotations.addEventListener('click', () => {
+  sceneLabels.hidden = !sceneLabels.hidden;
+  const visible = !sceneLabels.hidden;
+  sceneLabels.setAttribute('aria-hidden', String(!visible));
+  btnAnnotations.classList.toggle('active', visible);
+  btnAnnotations.setAttribute('aria-pressed', String(visible));
+  btnAnnotations.title = visible ? 'Sembunyikan keterangan animasi' : 'Tampilkan keterangan animasi';
+  btnAnnotations.setAttribute('aria-label', btnAnnotations.title);
+});
+
+btnVo.addEventListener('click', () => {
+  voEnabled = !voEnabled;
+  btnVo.classList.toggle('vo-active', voEnabled);
+  btnVo.classList.toggle('active', voEnabled);
+  btnVo.setAttribute('aria-pressed', String(voEnabled));
+  btnVo.title = voEnabled ? 'Matikan narasi suara' : 'Aktifkan narasi suara';
+  btnVo.setAttribute('aria-label', btnVo.title);
+  if (voEnabled) {
+    showToast('Voice-Over aktif');
+    speakStage(activeStageIdx, true);
+  } else {
+    stopSpeech();
+    showToast('Voice-Over dimatikan');
+  }
+});
+
+btnSubtitle.addEventListener('click', () => {
+  subtitleVisible = !subtitleVisible;
+  btnSubtitle.classList.toggle('active', subtitleVisible);
+  btnSubtitle.title = subtitleVisible ? 'Sembunyikan subtitle' : 'Tampilkan subtitle';
+  btnSubtitle.setAttribute('aria-label', btnSubtitle.title);
+  btnSubtitle.setAttribute('aria-pressed', String(subtitleVisible));
+  subtitleBar.classList.toggle('visible', subtitleVisible);
+  showToast(subtitleVisible ? 'Subtitle ditampilkan' : 'Subtitle disembunyikan');
+});
+
+// ==========================================
+// 7. EDIT SUBTITLE MODAL
+// ==========================================
+const editModal = document.getElementById('edit-modal');
+const btnEdit = document.getElementById('btn-edit');
+const editTabs = document.querySelectorAll('.stage-edit-tab');
+let editIdx = 0;
+editTabs.forEach((tab, index) => setIconButton(tab, stageIconFor(activePreset.id, index), `Tahap ${index + 1}: ${labelForStage(STAGES[index], index)}`));
+setActiveStageButton(0);
+
+function loadEditForm(idx) {
+  editIdx = idx;
+  const st = STAGES[idx];
+  document.getElementById('edit-short').value = st.shortTitle;
+  document.getElementById('edit-title').value = st.title;
+  document.getElementById('edit-desc').value = st.desc;
+  document.getElementById('edit-subtitle').value = st.subtitle;
+  editTabs.forEach((t, i) => t.classList.toggle('active', i === idx));
+}
+
+btnEdit.addEventListener('click', () => {
+  loadEditForm(activeStageIdx);
+  editModal.classList.add('open');
+});
+
+editTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    // save current form first
+    saveCurrentEditForm();
+    loadEditForm(parseInt(tab.dataset.idx, 10));
+  });
+});
+
+function saveCurrentEditForm() {
+  STAGES[editIdx].shortTitle = document.getElementById('edit-short').value.trim() || STAGES[editIdx].shortTitle;
+  STAGES[editIdx].title = document.getElementById('edit-title').value.trim() || STAGES[editIdx].title;
+  STAGES[editIdx].desc = document.getElementById('edit-desc').value.trim() || STAGES[editIdx].desc;
+  STAGES[editIdx].subtitle = document.getElementById('edit-subtitle').value.trim() || STAGES[editIdx].subtitle;
+}
+
+document.getElementById('btn-save-edit').addEventListener('click', () => {
+  saveCurrentEditForm();
+  try {
+    localStorage.setItem(`ruangkitastages_${activePreset.id}`, JSON.stringify(STAGES));
+  } catch (e) {}
+  // Refresh current UI
+  updateCard(activeStageIdx);
+  updateSubtitle(activeStageIdx);
+  editModal.classList.remove('open');
+  showToast('Teks disimpan ✓');
+});
+
+document.getElementById('btn-cancel-edit').addEventListener('click', () => {
+  editModal.classList.remove('open');
+});
+
+document.getElementById('btn-reset-stage').addEventListener('click', () => {
+  STAGES[editIdx] = JSON.parse(JSON.stringify(activePreset.stages[editIdx]));
+  loadEditForm(editIdx);
+  showToast('Tahap di-reset ke default');
+});
+
+document.getElementById('btn-preview-voice').addEventListener('click', () => {
+  if (!('speechSynthesis' in window)) {
+    showToast('TTS tidak didukung di browser ini');
+    return;
+  }
+  speechSynthesis.cancel();
+  const text = document.getElementById('edit-subtitle').value.trim();
+  if (!text) return;
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'id-ID';
+  utter.rate = ttsRate;
+  if (preferredVoice) utter.voice = preferredVoice;
+  speechSynthesis.speak(utter);
+  showToast('Preview narasi...');
+});
+
+// ==========================================
+// 8. FULLSCREEN
+// ==========================================
+let cursorTimer = null;
+function setCleanFullscreen(active) {
+  document.body.classList.toggle('clean-fullscreen', active);
+  if (active) {
+    document.body.classList.add('show-cursor');
+    clearTimeout(cursorTimer);
+    cursorTimer = setTimeout(() => document.body.classList.remove('show-cursor'), 2200);
+  }
+  handleResize();
+}
+btnFullscreen.addEventListener('click', async () => {
+  try {
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch (err) {
+    setCleanFullscreen(!document.body.classList.contains('clean-fullscreen'));
+  }
+});
+exitFsBtn.addEventListener('click', async () => {
+  if (document.fullscreenElement) await document.exitFullscreen();
+  else setCleanFullscreen(false);
+});
+document.addEventListener('fullscreenchange', () => setCleanFullscreen(Boolean(document.fullscreenElement)));
+document.addEventListener('mousemove', () => {
+  if (document.body.classList.contains('clean-fullscreen')) {
+    document.body.classList.add('show-cursor');
+    clearTimeout(cursorTimer);
+    cursorTimer = setTimeout(() => document.body.classList.remove('show-cursor'), 2200);
+  }
+});
+function handleResize() {
+  const width = canvas.parentElement.clientWidth || window.innerWidth;
+  const height = canvas.parentElement.clientHeight || window.innerHeight;
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height);
+}
+window.addEventListener('resize', handleResize);
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+  if (e.code === 'Space') { e.preventDefault(); btnPlay.click(); }
+  else if (e.code === 'KeyV') btnVo.click();
+  else if (e.code === 'KeyS') btnSubtitle.click();
+  else if (e.code === 'KeyE') btnEdit.click();
+  else if (e.code === 'KeyC') btnAutoCam.click();
+  else if (e.code === 'KeyF') btnFullscreen.click();
+});
+
+// ==========================================
+// 9. EXPORT
+// ==========================================
+const exportModal = document.getElementById('export-modal');
+const btnExport = document.getElementById('btn-export');
+const btnCancelExport = document.getElementById('btn-cancel-export');
+const btnStartExport = document.getElementById('btn-start-export');
+const progressWrap = document.getElementById('export-progress-wrap');
+const progressFill = document.getElementById('export-progress-fill');
+const statusText = document.getElementById('export-status-text');
+const pctText = document.getElementById('export-pct');
+let isExporting = false;
+
+btnExport.addEventListener('click', () => {
+  if (isExporting) return;
+  progressWrap.classList.remove('active');
+  exportModal.classList.add('open');
+});
+btnCancelExport.addEventListener('click', () => { if (!isExporting) exportModal.classList.remove('open'); });
+
+btnStartExport.addEventListener('click', async () => {
+  if (isExporting) return;
+  isExporting = true;
+  btnStartExport.disabled = true;
+  btnCancelExport.disabled = true;
+  progressWrap.classList.add('active');
+  stopSpeech();
+
+  const aspect = document.getElementById('export-aspect').value;
+  const fps = parseInt(document.getElementById('export-fps').value, 10);
+  const includeOverlay = document.getElementById('export-overlay').value === 'yes';
+
+  let outW = 1080, outH = 1920;
+  if (aspect === '16:9') { outW = 1920; outH = 1080; }
+  else if (aspect === '1:1') { outW = 1080; outH = 1080; }
+
+  const compCanvas = document.createElement('canvas');
+  compCanvas.width = outW; compCanvas.height = outH;
+  const ctx = compCanvas.getContext('2d');
+
+  const origW = canvas.parentElement.clientWidth, origH = canvas.parentElement.clientHeight, origPixelRatio = renderer.getPixelRatio();
+  const prevAutoCam = autoCamEnabled;
+  autoCamEnabled = true;
+  renderer.setPixelRatio(1);
+  renderer.setSize(outW, outH, false);
+  camera.aspect = outW / outH; camera.updateProjectionMatrix();
+
+  const mimeCandidates = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
+  const chosenMime = mimeCandidates.find(m => MediaRecorder.isTypeSupported(m)) || 'video/webm';
+  const isMp4 = chosenMime.includes('mp4');
+  const fileExt = isMp4 ? 'mp4' : 'webm';
+
+  const stream = compCanvas.captureStream(fps);
+  const recorder = new MediaRecorder(stream, { mimeType: chosenMime, videoBitsPerSecond: 12_000_000 });
+  const chunks = [];
+  recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+  const recordingDone = new Promise(resolve => { recorder.onstop = resolve; });
+  recorder.start();
+
+  const totalFrames = Math.round(DURATION * fps);
+  statusText.textContent = `Merender ${totalFrames} frame (${outW}Ã—${outH})...`;
+
+  for (let frame = 0; frame <= totalFrames; frame++) {
+    const t = (frame / totalFrames) * DURATION;
+    simTime = t;
+    updateSimulation(t);
+    updateCameraChoreography(t);
+    controls.update();
+    renderer.render(scene, camera);
+    ctx.drawImage(canvas, 0, 0, outW, outH);
+
+    if (includeOverlay) {
+      const idx = Math.min(3, Math.floor(t / STAGE_LEN));
+      const st = STAGES[idx];
+      const pad = Math.round(outW * 0.06);
+      const topY = aspect === '9:16' ? Math.round(outH * 0.11) : Math.round(outH * 0.06);
+      ctx.fillStyle = 'rgba(10, 16, 30, 0.72)';
+      ctx.beginPath();
+      ctx.roundRect(pad, topY, outW - pad * 2, Math.round(outW * 0.145), 22);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = `800 ${Math.round(outW * 0.036)}px Inter, system-ui, sans-serif`;
+      const headerTextWidth = Math.max(0, outW - pad * 2 - 56);
+      ctx.fillText(st.shortTitle, pad + 28, topY + Math.round(outW * 0.058), headerTextWidth);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = `500 ${Math.round(outW * 0.025)}px Inter, system-ui, sans-serif`;
+      if (activePreset.id === 'indonesia-provinces' && indonesiaProvinceData) {
+        const provinceIndex = provincePlaybackPosition(t).index;
+        const province = indonesiaProvinceData.provinces[provinceIndex];
+        ctx.fillText(province.name, pad + 28, topY + Math.round(outW * 0.105), outW - pad * 2 - 130);
+        if (province.emblemImage?.complete) {
+          const emblemSize = Math.round(outW * 0.075);
+          ctx.drawImage(province.emblemImage, outW - pad - emblemSize - 14, topY + 10, emblemSize, emblemSize);
+        }
+
+        // Render the same sequential, region-colored callout above the active province.
+        const provinceTarget = indonesiaProvinceTargets[provinceIndex];
+        if (provinceTarget) {
+          const anchor = provinceTarget.clone();
+          anchor.y = (indonesiaProvinceGroups[provinceIndex]?.position.y || 0) + 1.15;
+          const projected = anchor.project(camera);
+          if (projected.z >= -1 && projected.z <= 1 && Math.abs(projected.x) <= 1.12 && Math.abs(projected.y) <= 1.12) {
+            const region = indonesiaProvinceData.regions.find(item => item.id === province.regionId);
+            const accent = provinceRegionColors[province.regionId] || '#38bdf8';
+            const regionName = region?.title || 'INDONESIA';
+            const cardFont = Math.max(15, Math.round(outW * 0.021));
+            const smallFont = Math.max(10, Math.round(outW * 0.012));
+            ctx.font = `850 ${cardFont}px Inter, system-ui, sans-serif`;
+            const cardW = Math.min(outW * 0.42, Math.max(outW * 0.22, ctx.measureText(province.name).width + cardFont * 5.1));
+            const cardH = cardFont * 2.55;
+            const screenX = (projected.x * 0.5 + 0.5) * outW;
+            const screenY = (-projected.y * 0.5 + 0.5) * outH;
+            const cardX = Math.max(12, Math.min(outW - cardW - 12, screenX - cardW / 2));
+            const cardY = Math.max(12, Math.min(outH - cardH - 12, screenY - cardH - 16));
+            ctx.fillStyle = 'rgba(7, 17, 31, 0.93)';
+            ctx.beginPath(); ctx.roundRect(cardX, cardY, cardW, cardH, Math.max(10, cardFont * 0.55)); ctx.fill();
+            ctx.strokeStyle = accent; ctx.lineWidth = Math.max(1.5, outW * 0.0018); ctx.stroke();
+            const logoSize = cardFont * 2.55;
+            const logoX = cardX + cardFont * 0.55;
+            const logoY = cardY + (cardH - logoSize) / 2;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.roundRect(logoX, logoY, logoSize, logoSize, Math.max(6, cardFont * 0.35)); ctx.fill();
+            if (province.emblemImage?.complete && province.emblemImage.naturalWidth) {
+              ctx.drawImage(province.emblemImage, logoX + 3, logoY + 3, logoSize - 6, logoSize - 6);
+            }
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#f8fafc'; ctx.font = `850 ${cardFont}px Inter, system-ui, sans-serif`;
+            ctx.fillText(province.name, cardX + cardFont * 3.45, cardY + cardH * 0.43, cardW - cardFont * 3.8);
+            ctx.fillStyle = accent; ctx.font = `800 ${smallFont}px Inter, system-ui, sans-serif`;
+            ctx.fillText(regionName.toLocaleUpperCase('id-ID'), cardX + cardFont * 3.45, cardY + cardH * 0.76, cardW - cardFont * 3.8);
+            ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+          }
+        }
+      } else ctx.fillText(st.subtitle, pad + 28, topY + Math.round(outW * 0.105), headerTextWidth);
+    }
+
+    const pct = Math.round((frame / totalFrames) * 100);
+    progressFill.style.width = `${pct}%`;
+    pctText.textContent = `${pct}%`;
+    await new Promise(resolve => setTimeout(resolve, 1000 / fps));
+  }
+
+  progressFill.style.width = '100%';
+  pctText.textContent = '100%';
+  recorder.stop();
+  await recordingDone;
+
+  const blob = new Blob(chunks, { type: chosenMime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ruangkita-${activePreset.id}-${aspect.replace(':', 'x')}.${fileExt}`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+  autoCamEnabled = prevAutoCam;
+  renderer.setPixelRatio(origPixelRatio);
+  renderer.setSize(origW, origH);
+  camera.aspect = origW / origH; camera.updateProjectionMatrix();
+
+  statusText.textContent = `Selesai! File .${fileExt.toUpperCase()} diunduh.`;
+  isExporting = false;
+  btnStartExport.disabled = false;
+  btnCancelExport.disabled = false;
+});
+
+// ==========================================
+// 10. MAIN LOOP
+// ==========================================
+let lastNow = performance.now();
+function animate(now) {
+  requestAnimationFrame(animate);
+  const dt = Math.min(0.1, (now - lastNow) / 1000);
+  lastNow = now;
+  if (!isExporting) {
+    if (isPlaying) simTime = (simTime + dt * playbackSpeed) % DURATION;
+    updateSimulation(simTime);
+    updateCameraChoreography(simTime);
+    controls.update();
+    renderer.render(scene, camera);
+    syncUI(simTime);
+    syncSceneLabels();
+    syncProvinceMapLabel();
+  }
+}
+
+const startupPreset = PRESETS.find(preset => preset.id === 'indonesia-provinces');
+if (startupPreset && startupPreset.id !== activePreset.id) await selectPreset(startupPreset);
+
+initTTS();
+updateSubtitle(0);
+updateCard(0);
+updateSimulation(0);
+syncUI(0);
+handleResize();
+requestAnimationFrame(animate);
+
+setTimeout(() => {
+  showToast('E = Edit Teks • V = Voice-Over • S = Subtitle • Spasi = Play/Pause', 4000);
+}, 900);
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
