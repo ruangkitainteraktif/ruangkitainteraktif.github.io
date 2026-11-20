@@ -1132,6 +1132,41 @@ function tobaPath(ring, PathType = THREE.Path) {
   const path = new PathType(); path.moveTo(points[0].x, points[0].y);
   points.slice(1).forEach(point => path.lineTo(point.x, point.y)); path.closePath(); return path;
 }
+function createTobaCategoryMarker(category, color, destinationIndex) {
+  const group = new THREE.Group(), materials = [];
+  const add = (geometry, tint, position, scale = [1, 1, 1], rotation = [0, 0, 0]) => {
+    const material = new THREE.MeshStandardMaterial({ color: tint, emissive: color, emissiveIntensity: .08, roughness: .58, metalness: .02, flatShading: true });
+    const mesh = new THREE.Mesh(geometry, material); mesh.position.set(...position); mesh.scale.set(...scale); mesh.rotation.set(...rotation);
+    mesh.receiveShadow = true; mesh.userData.destinationIndex = destinationIndex; group.add(mesh); materials.push(material);
+  };
+  const box = (w, h, d, tint, pos) => add(new THREE.BoxGeometry(w, h, d), tint, pos);
+  const cylinder = (top, bottom, height, sides, tint, pos) => add(new THREE.CylinderGeometry(top, bottom, height, sides), tint, pos);
+  const light = 0xfff4dc, accent = 0xffdf8a, dark = 0x173047;
+  if (category === 'Desa Wisata') {
+    box(.62, .46, .54, light, [0, .34, 0]); add(new THREE.ConeGeometry(.52, .44, 4), color, [0, .78, 0], [1, 1, 1], [0, Math.PI / 4, 0]);
+    box(.14, .28, .05, dark, [0, .23, .3]); box(.12, .12, .04, 0x72d8ed, [-.19, .38, .3]); box(.12, .12, .04, 0x72d8ed, [.19, .38, .3]);
+  } else if (category === 'Sejarah dan Budaya') {
+    box(.72, .12, .66, accent, [0, .07, 0]); cylinder(.2, .27, .58, 8, light, [0, .43, 0]);
+    add(new THREE.ConeGeometry(.42, .28, 6), color, [0, .86, 0]); box(.12, .32, .05, dark, [0, .38, .27]);
+  } else if (category === 'Ekowisata') {
+    cylinder(.09, .14, .48, 6, 0x8b5e3c, [0, .25, 0]); add(new THREE.ConeGeometry(.43, .62, 7), color, [0, .61, 0]);
+    add(new THREE.ConeGeometry(.31, .48, 7), 0x8ce0a0, [0, .91, 0]); add(new THREE.SphereGeometry(.11, 8, 6), accent, [.34, .22, .03]);
+  } else if (category === 'Religi') {
+    box(.68, .44, .58, light, [0, .32, 0]); add(new THREE.SphereGeometry(.3, 10, 7), color, [0, .66, 0], [1, .72, 1]);
+    box(.15, .3, .05, accent, [0, .21, .32]); cylinder(.05, .07, .72, 7, color, [-.35, .4, 0]); cylinder(.05, .07, .72, 7, color, [.35, .4, 0]);
+  } else if (category === 'Ekraf') {
+    box(.64, .44, .56, color, [0, .32, 0]); box(.72, .09, .64, accent, [0, .59, 0]);
+    [.19, .32, .45].forEach((y, i) => box(.66, .04, .59, i % 2 ? light : 0xf3c56e, [0, y, 0]));
+    add(new THREE.TorusGeometry(.22, .05, 6, 12, Math.PI), accent, [0, .76, 0], [1, 1, 1], [0, 0, Math.PI]);
+  } else {
+    box(.8, .44, .62, light, [0, .32, 0]); box(.94, .11, .72, color, [0, .6, 0]); box(.15, .3, .05, dark, [0, .21, .34]);
+    [-.27, -.09, .09, .27].forEach(x => box(.075, .16, .04, 0x72d8ed, [x, .37, .33])); cylinder(.06, .06, .22, 8, accent, [0, .78, 0]);
+  }
+  const hitArea = new THREE.Mesh(new THREE.SphereGeometry(.62, 8, 6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, colorWrite: false, depthWrite: false }));
+  hitArea.position.y = .44; hitArea.userData.destinationIndex = destinationIndex; group.add(hitArea);
+  group.userData.materials = materials; group.userData.destinationIndex = destinationIndex;
+  return group;
+}
 
 async function ensureTobaWorld() {
   if (tobaData && tobaBoundaryData) return;
@@ -1185,11 +1220,9 @@ async function ensureTobaWorld() {
   // The source polygon includes the Lake Toba hole inside Simalungun; fill it as water.
   const lakeRing = boundaryData.features.find(feature => feature.name === 'Simalungun')?.rings.find(ring => tobaRingArea(ring) > 0);
   if (lakeRing) { const lake = tobaPath(lakeRing, THREE.Shape); const mesh = new THREE.Mesh(new THREE.ShapeGeometry(lake), new THREE.MeshStandardMaterial({ color: 0x168aad, roughness: .35, metalness: .08, side: THREE.DoubleSide })); mesh.rotation.x = -Math.PI / 2; mesh.position.y = -.01; tobaWorld.add(mesh); }
-  const markerGeometry = new THREE.OctahedronGeometry(.26, 0);
   pointData.features.forEach((feature, index) => {
     const [lon, lat] = feature.coordinates, point = tobaProject(lon, lat), color = tobaCategoryColors[feature.category] || 0xffffff;
-    const material = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: .12, roughness: .4, flatShading: true });
-    const marker = new THREE.Mesh(markerGeometry, material); marker.position.set(point.x, .62, -point.y); marker.userData.destinationIndex = index; marker.castShadow = true; tobaWorld.add(marker);
+    const marker = createTobaCategoryMarker(feature.category, color, index); marker.position.set(point.x, .24, -point.y); marker.rotation.y = (index % 8) * Math.PI / 4; tobaWorld.add(marker);
     const halo = new THREE.Mesh(new THREE.RingGeometry(.35, .48, 20), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .68, side: THREE.DoubleSide })); halo.rotation.x = -Math.PI / 2; halo.position.set(point.x, .38, -point.y); tobaWorld.add(halo);
     tobaMarkers.push({ marker, halo, baseColor: color }); tobaTargets[index] = new THREE.Vector3(point.x, .8, -point.y);
     const totals = regionTotals.get(feature.kta) || { x: 0, z: 0, count: 0 }; totals.x += point.x; totals.z -= point.y; totals.count++; regionTotals.set(feature.kta, totals);
@@ -1309,10 +1342,10 @@ function updateTobaTourism(t) {
   const { index, within, stageIndex } = tobaPlaybackPosition(t);
   tobaMarkers.forEach(({ marker, halo, baseColor }, markerIndex) => {
     const active = markerIndex === index, arrival = smoothstep(0, .24, within), fade = 1 - smoothstep(.82, 1, within);
-    marker.scale.setScalar(active ? .78 + .22 * arrival + .035 * Math.sin(within * Math.PI * 2) * fade : 1);
-    marker.material.emissiveIntensity = active ? .22 + .28 * fade : .1;
+    marker.scale.setScalar(active ? .9 + .12 * arrival + .035 * Math.sin(within * Math.PI * 2) * fade : 1);
+    marker.userData.materials.forEach(material => { material.emissive.setHex(active ? 0xffffff : baseColor); material.emissiveIntensity = active ? .34 + .32 * fade : .08; });
     halo.scale.setScalar(active ? .78 + .18 * arrival + .08 * Math.sin(within * Math.PI) * fade : .75);
-    halo.material.opacity = active ? .46 + .4 * fade : .3; marker.material.color.setHex(active ? 0xffffff : baseColor);
+    halo.material.opacity = active ? .46 + .4 * fade : .3;
   });
   if (index !== activeTobaIndex) { activeTobaIndex = index; showTobaDetail(index, stageIndex); }
 }
@@ -2202,7 +2235,7 @@ canvas.addEventListener('pointerup', event => {
   if (activePreset?.id !== 'toba-tourism' || !tobaPointerStart || Math.hypot(event.clientX - tobaPointerStart.x, event.clientY - tobaPointerStart.y) > 6) { tobaPointerStart = null; return; }
   tobaPointerStart = null;
   const rect = canvas.getBoundingClientRect(); tobaPointer.set((event.clientX - rect.left) / rect.width * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
-  tobaRaycaster.setFromCamera(tobaPointer, camera); const hit = tobaRaycaster.intersectObjects(tobaMarkers.map(item => item.marker), false)[0];
+  tobaRaycaster.setFromCamera(tobaPointer, camera); const hit = tobaRaycaster.intersectObjects(tobaMarkers.map(item => item.marker), true)[0];
   if (hit?.object?.userData?.destinationIndex != null) jumpToTobaDestination(tobaData.features[hit.object.userData.destinationIndex].id);
 });
 btnAnnotations.classList.add('active');
