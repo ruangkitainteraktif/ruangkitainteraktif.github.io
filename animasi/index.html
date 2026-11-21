@@ -381,6 +381,26 @@
   #speed-panel .sp-title { margin-bottom: 10px; }
   .sp-row { margin-bottom: 10px; }
   #speed-panel > div:last-child { font-size: 10px; }
+  #motion-panel { flex:0 0 auto; padding:14px 2px; border-bottom:1px solid var(--border); }
+  .motion-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+  .motion-title { color:#e2e8f0; font-size:12px; font-weight:750; }
+  #motion-reset { padding:4px 8px; color:#bae6fd; background:rgba(56,189,248,.08); border:1px solid rgba(56,189,248,.25); border-radius:7px; font:inherit; font-size:10px; cursor:pointer; }
+  .motion-control { display:grid; grid-template-columns:1fr auto; gap:5px 10px; margin:10px 0; color:#cbd5e1; font-size:11px; }
+  .motion-control input { grid-column:1 / -1; width:100%; accent-color:#38bdf8; }
+  .motion-value { color:#7dd3fc; font-variant-numeric:tabular-nums; }
+  .motion-note { color:#64748b; font-size:10px; line-height:1.4; }
+  .motion-color { width:38px; height:26px; padding:2px; border:1px solid rgba(148,163,184,.35); border-radius:6px; background:#111c2e; cursor:pointer; }
+  .motion-color-row { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:10px 0; color:#cbd5e1; font-size:11px; }
+  .motion-section { margin-top:12px; padding-top:10px; border-top:1px solid rgba(148,163,184,.14); }
+  .motion-section summary { color:#e2e8f0; font-size:11px; font-weight:750; cursor:pointer; }
+  .motion-section[open] summary { margin-bottom:10px; }
+  .motion-section .motion-control { margin:8px 0; }
+  #map-upload { flex:0 0 auto; padding:14px 2px; border-bottom:1px solid var(--border); }
+  #map-upload-title { display:block; margin-bottom:9px; color:#7dd3fc; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+  #map-upload-file { width:100%; color:#cbd5e1; font:inherit; font-size:10px; }
+  #map-upload-file::file-selector-button { margin-right:8px; padding:7px 9px; color:#e0f2fe; background:#13243a; border:1px solid rgba(56,189,248,.3); border-radius:8px; font:inherit; cursor:pointer; }
+  #map-upload-status { min-height:28px; margin:8px 0; color:#94a3b8; font-size:10px; line-height:1.4; }
+  #map-upload-create { width:100%; justify-content:center; }
   #bottom-dock {
     position: static; flex: 0 0 auto; width: auto; margin: auto 0 0; padding: 14px 0 0; gap: 12px;
     background: transparent; border: 0; border-radius: 0; box-shadow: none; backdrop-filter: none;
@@ -570,6 +590,12 @@
     <span class="preset-label">PUSTAKA ANIMASI</span>
     <select id="preset-options" aria-label="Pilih preset animasi"></select>
   </section>
+  <section id="map-upload" aria-label="Impor peta sendiri">
+    <label id="map-upload-title" for="map-upload-file">Buat animasi dari peta</label>
+    <input id="map-upload-file" type="file" multiple accept=".geojson,.json,.zip,.shp,.shx,.dbf,.prj,.cpg,application/geo+json,application/json,application/zip">
+    <div id="map-upload-status" aria-live="polite">Pilih GeoJSON, ZIP shapefile, atau komponen SHP beserta berkas pendampingnya.</div>
+    <button id="map-upload-create" class="btn primary" type="button" disabled>Buat animasi otomatis</button>
+  </section>
   <div class="toolbar">
     <button id="btn-autocam" class="btn active" title="Kamera otomatis" aria-label="Kamera otomatis"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="11" rx="2"/><path d="m16 11 5-3v9l-5-3M7 4h5"/></svg></button>
     <button id="btn-vo" class="btn" title="Narasi suara" aria-label="Narasi suara"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6l-5 4H4Z"/><path d="M17 9a5 5 0 0 1 0 6m2.5-8.5a9 9 0 0 1 0 11"/></svg></button>
@@ -624,6 +650,29 @@
     Atur kecepatan suara agar narasi selesai sebelum tahap berikutnya.
   </div>
 </div>
+
+<section id="motion-panel" aria-label="Pengaturan gerak kamera dan peta">
+  <div class="motion-head"><span class="motion-title">Gerak kamera & peta</span><button id="motion-reset" type="button">Atur ulang</button></div>
+  <label class="motion-control" for="motion-camera-speed"><span>Kecepatan kamera</span><output class="motion-value" id="motion-camera-speed-value">1.00×</output><input id="motion-camera-speed" type="range" min="0.5" max="2" step="0.05" value="1"></label>
+  <label class="motion-control" for="motion-camera-distance"><span>Jarak kamera</span><output class="motion-value" id="motion-camera-distance-value">1.00×</output><input id="motion-camera-distance" type="range" min="0.7" max="1.5" step="0.05" value="1"></label>
+  <label class="motion-control" for="motion-map-lift"><span>Tinggi fly-up peta</span><output class="motion-value" id="motion-map-lift-value">0.68</output><input id="motion-map-lift" type="range" min="0.2" max="1.5" step="0.02" value="0.68"></label>
+  <label class="motion-control" for="motion-polygon-depth"><span>Ketebalan polygon</span><output class="motion-value" id="motion-polygon-depth-value">1.00×</output><input id="motion-polygon-depth" type="range" min="0.5" max="2.5" step="0.05" value="1"></label>
+  <label class="motion-color-row" for="motion-polygon-color"><span>Warna polygon</span><input class="motion-color" id="motion-polygon-color" type="color" value="#a8d8c8"></label>
+  <label class="motion-control" for="motion-outline-speed"><span>Kecepatan outline reveal</span><output class="motion-value" id="motion-outline-speed-value">1.00×</output><input id="motion-outline-speed" type="range" min="0.3" max="2.5" step="0.05" value="1"></label>
+  <label class="motion-color-row" for="motion-outline-color"><span>Warna outline</span><input class="motion-color" id="motion-outline-color" type="color" value="#26364a"></label>
+  <label class="motion-control" for="motion-outline-opacity"><span>Kontras outline</span><output class="motion-value" id="motion-outline-opacity-value">94%</output><input id="motion-outline-opacity" type="range" min="0.2" max="1" step="0.02" value="0.94"></label>
+  <details class="motion-section">
+    <summary>Posisi & putaran peta</summary>
+    <label class="motion-control" for="motion-map-x"><span>Geser kiri / kanan</span><output class="motion-value" id="motion-map-x-value">0.0</output><input id="motion-map-x" type="range" min="-25" max="25" step="0.5" value="0"></label>
+    <label class="motion-control" for="motion-map-y"><span>Geser atas / bawah</span><output class="motion-value" id="motion-map-y-value">0.0</output><input id="motion-map-y" type="range" min="-25" max="25" step="0.5" value="0"></label>
+    <label class="motion-control" for="motion-map-z"><span>Geser depan / belakang</span><output class="motion-value" id="motion-map-z-value">0.0</output><input id="motion-map-z" type="range" min="-25" max="25" step="0.5" value="0"></label>
+    <label class="motion-control" for="motion-map-rotate-x"><span>Putar sumbu X</span><output class="motion-value" id="motion-map-rotate-x-value">0°</output><input id="motion-map-rotate-x" type="range" min="-180" max="180" step="5" value="0"></label>
+    <label class="motion-control" for="motion-map-rotate-y"><span>Putar sumbu Y</span><output class="motion-value" id="motion-map-rotate-y-value">0°</output><input id="motion-map-rotate-y" type="range" min="-180" max="180" step="5" value="0"></label>
+    <label class="motion-control" for="motion-map-rotate-z"><span>Putar sumbu Z</span><output class="motion-value" id="motion-map-rotate-z-value">0°</output><input id="motion-map-rotate-z" type="range" min="-180" max="180" step="5" value="0"></label>
+    <button id="motion-map-reset" type="button">Atur ulang posisi peta</button>
+  </details>
+  <div class="motion-note">Posisi dan putaran berlaku pada preset peta. Outline provinsi muncul mengikuti urutan animasi. Pengaturan tersimpan di perangkat ini.</div>
+</section>
 
 <aside class="studio-ad" aria-label="Iklan">
   <span class="studio-ad-label">Iklan</span>
@@ -1097,6 +1146,13 @@ photosynthesisWorld.userData.leaves = leafGroups;
 const provinceWorld = new THREE.Group();
 provinceWorld.visible = false;
 scene.add(provinceWorld);
+const uploadedWorld = new THREE.Group();
+uploadedWorld.visible = false;
+scene.add(uploadedWorld);
+let uploadedMapFeatures = [];
+let uploadedMapBounds = null;
+let uploadedMapCameraDistance = 36;
+let pendingUploadedGeoJSON = null;
 let indonesiaProvinceData = null;
 let indonesiaProvinceGroups = [];
 let indonesiaProvinceTargets = [];
@@ -1118,6 +1174,8 @@ scene.add(tobaWorld);
 let tobaData = null, tobaBoundaryData = null, tobaMarkers = [], tobaTargets = [], tobaRegionAnchors = [], activeTobaIndex = -1;
 let tobaBasemapMesh = null, tobaBasemapTexture = null, tobaBasemapEnabled = true, tobaBasemapRequested = false;
 const tobaCountyMaterials = [];
+const motionPolygonMeshes = [];
+const motionOutlineMaterials = [];
 let tobaBasemapExtent = null;
 const tobaCategoryColors = { 'Desa Wisata': 0xfbbf24, 'Sejarah dan Budaya': 0xf472b6, Ekowisata: 0x34d399, Religi: 0xa78bfa, Ekraf: 0xfb923c, MICE: 0x38bdf8 };
 const tobaCountyColors = [0xbde0fe, 0xcaffbf, 0xffd6a5, 0xe4c1f9, 0xa0e7e5, 0xffcad4, 0xd0f4de, 0xfde2a7];
@@ -1198,9 +1256,9 @@ async function ensureTobaWorld() {
       const shape = tobaPath(ring, THREE.Shape); if (!shape) return;
       holes.forEach(hole => { const path = tobaPath(hole); if (path) shape.holes.push(path); });
       const geometry = new THREE.ExtrudeGeometry(shape, { depth: .32, bevelEnabled: false, curveSegments: 1 }); geometry.rotateX(-Math.PI / 2);
-      const land = new THREE.Mesh(geometry, material); land.position.y = -.08; land.receiveShadow = true; countyGroup.add(land);
+      const land = new THREE.Mesh(geometry, material); land.position.y = -.08; land.receiveShadow = true; countyGroup.add(land); motionPolygonMeshes.push(land);
       const edgePoints = sampledRing(ring, 650).map(([lon, lat]) => { const point = tobaProject(lon, lat); return new THREE.Vector3(point.x, .31, -point.y); });
-      if (edgePoints.length > 2) { edgePoints.push(edgePoints[0].clone()); countyGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(edgePoints), new THREE.LineBasicMaterial({ color: 0x34566a, transparent: true, opacity: .9 }))); }
+      if (edgePoints.length > 2) { edgePoints.push(edgePoints[0].clone()); const outlineMaterial = new THREE.LineBasicMaterial({ color: 0x34566a, transparent: true, opacity: .9 }); motionOutlineMaterials.push({ material: outlineMaterial, baseColor: 0x34566a, baseOpacity: .9 }); countyGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(edgePoints), outlineMaterial)); }
     });
     const labelRing = outerRings.reduce((largest, ring) => Math.abs(tobaRingArea(ring)) > Math.abs(tobaRingArea(largest || [])) ? ring : largest, null);
     if (labelRing?.length) {
@@ -1230,6 +1288,7 @@ async function ensureTobaWorld() {
   });
   tobaRegionAnchors = pointData.features.map(feature => { const total = regionTotals.get(feature.kta); return new THREE.Vector3(total.x / total.count, .7, total.z / total.count); });
   tobaData = pointData; tobaBoundaryData = boundaryData;
+  applyMotionMapStyles();
   populateTobaOptions();
 }
 
@@ -1247,6 +1306,7 @@ function loadTobaSatelliteBasemap(minLon, minLat, maxLon, maxLat) {
     console.warn('Citra satelit Danau Toba gagal dimuat; memakai peta ilustrasi lokal.', error); tobaBasemapRequested = false; tobaBasemapEnabled = false;
     if (tobaBasemapMesh) tobaBasemapMesh.visible = false;
     tobaCountyMaterials.forEach(({ material, baseColor }) => { material.transparent = false; material.opacity = 1; material.depthWrite = true; material.color.setHex(baseColor); material.needsUpdate = true; });
+  applyMotionMapStyles();
     const button = document.getElementById('toba-basemap-toggle'); button.textContent = 'Peta ilustrasi'; button.setAttribute('aria-pressed', 'false'); document.getElementById('toba-basemap-credit').hidden = true;
   });
 }
@@ -1260,6 +1320,7 @@ function toggleTobaBasemap() {
   if (tobaBasemapEnabled && tobaBasemapExtent) loadTobaSatelliteBasemap(tobaBasemapExtent.minLon, tobaBasemapExtent.minLat, tobaBasemapExtent.maxLon, tobaBasemapExtent.maxLat);
   if (tobaBasemapEnabled && !tobaBasemapTexture) button.textContent = 'Memuat satelit…';
   tobaCountyMaterials.forEach(({ material, baseColor }) => { material.transparent = tobaBasemapEnabled; material.opacity = tobaBasemapEnabled ? .34 : 1; material.depthWrite = !tobaBasemapEnabled; material.color.setHex(tobaBasemapEnabled ? 0xeaf6f2 : baseColor); material.needsUpdate = true; });
+  applyMotionMapStyles();
   document.getElementById('toba-basemap-credit').hidden = !tobaBasemapEnabled || !tobaBasemapTexture || activePreset?.id !== 'toba-tourism';
 }
 
@@ -1343,6 +1404,7 @@ function updateTobaTourism(t) {
   const { index, within, stageIndex } = tobaPlaybackPosition(t);
   tobaMarkers.forEach(({ marker, halo, baseColor }, markerIndex) => {
     const active = markerIndex === index, arrival = smoothstep(0, .24, within), fade = 1 - smoothstep(.82, 1, within);
+    motionEngine.flyup(marker, active ? arrival : 0, { baseY: .24, height: .68 });
     marker.scale.setScalar(active ? .9 + .12 * arrival + .035 * Math.sin(within * Math.PI * 2) * fade : 1);
     marker.userData.materials.forEach(material => { material.emissive.setHex(active ? 0xffffff : baseColor); material.emissiveIntensity = active ? .34 + .32 * fade : .08; });
     halo.scale.setScalar(active ? .78 + .18 * arrival + .08 * Math.sin(within * Math.PI) * fade : .75);
@@ -1514,14 +1576,22 @@ async function ensureIndonesiaProvinceWorld() {
       console.warn(`Penggabungan geometri ${province.name} gagal; memakai geometri terpisah.`, error);
     }
     if (mergedPolygons) {
-      provinceGroup.add(new THREE.Mesh(mergedPolygons, material));
+      const polygonMesh = new THREE.Mesh(mergedPolygons, material); provinceGroup.add(polygonMesh); motionPolygonMeshes.push(polygonMesh);
       polygonGeometries.forEach(geometry => geometry.dispose());
-    } else polygonGeometries.forEach(geometry => provinceGroup.add(new THREE.Mesh(geometry, material)));
+    } else polygonGeometries.forEach(geometry => { const polygonMesh = new THREE.Mesh(geometry, material); provinceGroup.add(polygonMesh); motionPolygonMeshes.push(polygonMesh); });
     const outlineMaterial = new THREE.LineBasicMaterial({ color: 0x26364a, transparent: true, opacity: 0.94, depthWrite: false });
+    motionOutlineMaterials.push({ material: outlineMaterial, baseColor: 0x26364a, baseOpacity: .94 });
+    provinceGroup.userData.outlines = [];
+    const addOutline = geometry => {
+      const outline = new THREE.LineSegments(geometry, outlineMaterial);
+      outline.userData.revealCount = geometry.getAttribute('position').count;
+      geometry.setDrawRange(0, 0);
+      provinceGroup.add(outline); provinceGroup.userData.outlines.push(outline);
+    };
     if (mergedOutlines) {
-      provinceGroup.add(new THREE.LineSegments(mergedOutlines, outlineMaterial));
+      addOutline(mergedOutlines);
       outlineGeometries.forEach(geometry => geometry.dispose());
-    } else outlineGeometries.forEach(geometry => provinceGroup.add(new THREE.LineSegments(geometry, outlineMaterial)));
+    } else outlineGeometries.forEach(addOutline);
     provinceGroup.userData.material = material;
     provinceGroup.userData.baseColor = baseColor;
     provinceGroup.position.y = 0.04;
@@ -1546,6 +1616,7 @@ async function ensureIndonesiaProvinceWorld() {
   }
   indonesiaRegionAnchors = regionTotals.map(total => new THREE.Vector3(total.x / Math.max(1, total.count), 0.7, total.z / Math.max(1, total.count)));
   indonesiaProvinceData = data;
+  applyMotionMapStyles();
   const provinceList = document.getElementById('province-list');
   provinceList.replaceChildren();
   const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = 'Pilih provinsi'; provinceList.appendChild(placeholder);
@@ -1602,7 +1673,10 @@ function provincePlaybackPosition(t) {
   const localPosition = stageProgress * provinceIndices.length;
   return {
     index: provinceIndices[Math.min(provinceIndices.length - 1, Math.floor(localPosition))] ?? 0,
-    within: localPosition % 1
+    within: localPosition % 1,
+    stageIndex,
+    localPosition,
+    provinceIndices
   };
 }
 
@@ -1620,14 +1694,20 @@ function jumpToProvince(index) {
 
 function updateIndonesiaProvince(t) {
   if (!indonesiaProvinceData) return;
-  const { index: nextIndex, within: withinProvince } = provincePlaybackPosition(t);
-  const pop = 0.08 + Math.sin(withinProvince * Math.PI) * 0.68;
+  const { index: nextIndex, within: withinProvince, stageIndex, localPosition, provinceIndices } = provincePlaybackPosition(t);
   indonesiaProvinceGroups.forEach((group, index) => {
     const isActive = index === nextIndex;
-    group.position.y = isActive ? pop : 0.04;
-    group.userData.material.color.setHex(isActive ? 0xfde68a : group.userData.baseColor);
+    motionEngine.flyup(group, isActive ? withinProvince : 0, { baseY: 0.04, height: 0.68, easing: (_start, _end, progress) => Math.sin(progress * Math.PI), bob: 0.035, phase: t * 7 });
+    group.userData.material.color.set(isActive ? 0xfde68a : motionEngine.settings.polygonColor || group.userData.baseColor);
     group.userData.material.emissive.setHex(isActive ? 0x493c1c : 0x101827);
     group.userData.material.emissiveIntensity = isActive ? 0.55 + Math.sin(t * 7) * 0.08 : 0.12;
+    const regionStage = STAGES.findIndex(stage => stage.regionId === indonesiaProvinceData.provinces[index]?.regionId);
+    const order = provinceIndices.indexOf(index);
+    const progress = regionStage < stageIndex ? 1 : regionStage > stageIndex || order < 0 ? 0 : Math.min(1, Math.max(0, (localPosition - order) * motionEngine.settings.outlineSpeed));
+    group.userData.outlines?.forEach(outline => {
+      const count = Math.floor(outline.userData.revealCount * progress / 2) * 2;
+      outline.geometry.setDrawRange(0, count);
+    });
   });
   if (nextIndex !== activeProvinceIndex) {
     activeProvinceIndex = nextIndex;
@@ -1697,6 +1777,175 @@ function smoothstep(edge0, edge1, x) {
   return t * t * (3 - 2 * t);
 }
 
+class MotionEngine {
+  constructor() {
+    this.settings = { cameraSpeed: 1, cameraDistance: 1, mapLift: 1, polygonDepth: 1, polygonColor: null, outlineSpeed: 1, outlineColor: null, outlineOpacity: null, mapX: 0, mapY: 0, mapZ: 0, mapRotateX: 0, mapRotateY: 0, mapRotateZ: 0 };
+  }
+
+  damp(current, target, rate, deltaSeconds) {
+    return current + (target - current) * (1 - Math.exp(-Math.max(0, rate) * Math.max(0, deltaSeconds)));
+  }
+
+  camera(camera, controls, position, focus, deltaSeconds, { positionRate = 4, focusRate = positionRate } = {}) {
+    const alpha = rate => 1 - Math.exp(-Math.max(0, rate * this.settings.cameraSpeed) * Math.max(0, deltaSeconds));
+    const isMapPreset = ['indonesia-provinces', 'toba-tourism', 'uploaded-map'].includes(activePreset?.id);
+    const target = focus.clone();
+    const offset = position.clone().sub(focus);
+    const mapRotation = new THREE.Euler(
+      THREE.MathUtils.degToRad(this.settings.mapRotateX),
+      THREE.MathUtils.degToRad(this.settings.mapRotateY),
+      THREE.MathUtils.degToRad(this.settings.mapRotateZ),
+      'XYZ'
+    );
+    if (isMapPreset) {
+      target.add(new THREE.Vector3(this.settings.mapX, this.settings.mapY, this.settings.mapZ));
+      offset.applyEuler(mapRotation);
+    }
+    const scaledPosition = offset.multiplyScalar(this.settings.cameraDistance).add(target);
+    const desiredUp = isMapPreset ? new THREE.Vector3(0, 1, 0).applyEuler(mapRotation) : new THREE.Vector3(0, 1, 0);
+    camera.up.lerp(desiredUp, alpha(positionRate)).normalize();
+    camera.position.lerp(scaledPosition, alpha(positionRate));
+    controls.target.lerp(target, alpha(focusRate));
+  }
+
+  path(keys, time) {
+    if (!keys?.length) return null;
+    if (keys.length === 1 || time <= keys[0].t) return keys[0];
+    const last = keys[keys.length - 1];
+    if (time >= last.t) return last;
+    const index = keys.findIndex((key, i) => i < keys.length - 1 && time >= key.t && time <= keys[i + 1].t);
+    const from = keys[index], to = keys[index + 1];
+    const progress = smoothstep(from.t, to.t, time);
+    return {
+      t: time,
+      pos: from.pos.map((value, axis) => THREE.MathUtils.lerp(value, to.pos[axis], progress)),
+      target: from.target.map((value, axis) => THREE.MathUtils.lerp(value, to.target[axis], progress))
+    };
+  }
+
+  flyup(object, progress, { baseY = 0, height = 1, easing = smoothstep, bob = 0, phase = 0 } = {}) {
+    if (!object) return 0;
+    const amount = Math.max(0, Math.min(1, progress));
+    const lift = easing(0, 1, amount) * height * this.settings.mapLift + Math.sin(amount * Math.PI) * bob * this.settings.mapLift * Math.sin(phase);
+    object.position.y = baseY + lift;
+    return lift;
+  }
+}
+
+const motionEngine = new MotionEngine();
+window.motionEngine = motionEngine;
+
+const motionDefaults = { cameraSpeed: 1, cameraDistance: 1, mapLift: 1, polygonDepth: 1, polygonColor: null, outlineSpeed: 1, outlineColor: null, outlineOpacity: null, mapX: 0, mapY: 0, mapZ: 0, mapRotateX: 0, mapRotateY: 0, mapRotateZ: 0 };
+try {
+  const savedMotion = JSON.parse(localStorage.getItem('ruangkitamotionsettings_v1') || '{}');
+  Object.keys(motionDefaults).filter(key => typeof motionDefaults[key] === 'number').forEach(key => {
+    const value = Number(savedMotion[key]);
+    const bounds = { cameraSpeed: [.5, 2], cameraDistance: [.7, 1.5], mapLift: [.2 / .68, 1.5 / .68], polygonDepth: [.5, 2.5], outlineSpeed: [.3, 2.5], outlineOpacity: [.2, 1], mapX: [-25, 25], mapY: [-25, 25], mapZ: [-25, 25], mapRotateX: [-180, 180], mapRotateY: [-180, 180], mapRotateZ: [-180, 180] }[key];
+    if (Number.isFinite(value)) motionEngine.settings[key] = THREE.MathUtils.clamp(value, ...bounds);
+  });
+  ['polygonColor', 'outlineColor'].forEach(key => { if (/^#[0-9a-f]{6}$/i.test(savedMotion[key] || '')) motionEngine.settings[key] = savedMotion[key]; });
+} catch { /* Settings remain at their defaults when storage is unavailable. */ }
+
+const motionInputs = {
+  cameraSpeed: document.getElementById('motion-camera-speed'),
+  cameraDistance: document.getElementById('motion-camera-distance'),
+  mapLift: document.getElementById('motion-map-lift'),
+  polygonDepth: document.getElementById('motion-polygon-depth'),
+  polygonColor: document.getElementById('motion-polygon-color'),
+  outlineSpeed: document.getElementById('motion-outline-speed'),
+  outlineColor: document.getElementById('motion-outline-color'),
+  outlineOpacity: document.getElementById('motion-outline-opacity'),
+  mapX: document.getElementById('motion-map-x'),
+  mapY: document.getElementById('motion-map-y'),
+  mapZ: document.getElementById('motion-map-z'),
+  mapRotateX: document.getElementById('motion-map-rotate-x'),
+  mapRotateY: document.getElementById('motion-map-rotate-y'),
+  mapRotateZ: document.getElementById('motion-map-rotate-z')
+};
+const motionOutputs = {
+  cameraSpeed: document.getElementById('motion-camera-speed-value'),
+  cameraDistance: document.getElementById('motion-camera-distance-value'),
+  mapLift: document.getElementById('motion-map-lift-value'),
+  polygonDepth: document.getElementById('motion-polygon-depth-value'),
+  outlineSpeed: document.getElementById('motion-outline-speed-value'),
+  outlineOpacity: document.getElementById('motion-outline-opacity-value'),
+  mapX: document.getElementById('motion-map-x-value'),
+  mapY: document.getElementById('motion-map-y-value'),
+  mapZ: document.getElementById('motion-map-z-value'),
+  mapRotateX: document.getElementById('motion-map-rotate-x-value'),
+  mapRotateY: document.getElementById('motion-map-rotate-y-value'),
+  mapRotateZ: document.getElementById('motion-map-rotate-z-value')
+};
+function applyMotionMapStyles() {
+  motionPolygonMeshes.forEach(mesh => { mesh.scale.y = motionEngine.settings.polygonDepth; });
+  tobaCountyMaterials.forEach(({ material, baseColor }) => {
+    material.color.set(motionEngine.settings.polygonColor || (tobaBasemapEnabled ? 0xeaf6f2 : baseColor));
+    material.needsUpdate = true;
+  });
+  uploadedMapFeatures.forEach(feature => { feature.material.color.set(motionEngine.settings.polygonColor || feature.baseColor); feature.material.needsUpdate = true; });
+  indonesiaProvinceGroups.forEach(group => { if (group?.userData.material && !motionEngine.settings.polygonColor) group.userData.material.color.setHex(group.userData.baseColor); });
+  motionOutlineMaterials.forEach(({ material, baseColor, baseOpacity }) => {
+    material.color.set(motionEngine.settings.outlineColor || baseColor);
+    material.opacity = motionEngine.settings.outlineOpacity ?? baseOpacity;
+    material.needsUpdate = true;
+  });
+}
+function syncMotionControls() {
+  motionInputs.cameraSpeed.value = motionEngine.settings.cameraSpeed;
+  motionInputs.cameraDistance.value = motionEngine.settings.cameraDistance;
+  motionInputs.mapLift.value = 0.68 * motionEngine.settings.mapLift;
+  motionInputs.polygonDepth.value = motionEngine.settings.polygonDepth;
+  motionInputs.polygonColor.value = motionEngine.settings.polygonColor || '#a8d8c8';
+  motionInputs.outlineSpeed.value = motionEngine.settings.outlineSpeed;
+  motionInputs.outlineColor.value = motionEngine.settings.outlineColor || '#26364a';
+  motionInputs.outlineOpacity.value = motionEngine.settings.outlineOpacity ?? .94;
+  motionOutputs.cameraSpeed.value = `${motionEngine.settings.cameraSpeed.toFixed(2)}×`;
+  motionOutputs.cameraDistance.value = `${motionEngine.settings.cameraDistance.toFixed(2)}×`;
+  motionOutputs.mapLift.value = (0.68 * motionEngine.settings.mapLift).toFixed(2);
+  motionOutputs.polygonDepth.value = `${motionEngine.settings.polygonDepth.toFixed(2)}×`;
+  motionOutputs.outlineSpeed.value = `${motionEngine.settings.outlineSpeed.toFixed(2)}×`;
+  motionOutputs.outlineOpacity.value = `${Math.round((motionEngine.settings.outlineOpacity ?? .94) * 100)}%`;
+  ['mapX', 'mapY', 'mapZ'].forEach(key => { motionInputs[key].value = motionEngine.settings[key]; motionOutputs[key].value = motionEngine.settings[key].toFixed(1); });
+  ['mapRotateX', 'mapRotateY', 'mapRotateZ'].forEach(key => { motionInputs[key].value = motionEngine.settings[key]; motionOutputs[key].value = `${Math.round(motionEngine.settings[key])}°`; });
+}
+Object.keys(motionInputs).forEach(key => motionInputs[key].addEventListener('input', () => {
+  const cameraSetting = ['cameraSpeed', 'cameraDistance', 'mapX', 'mapY', 'mapZ', 'mapRotateX', 'mapRotateY', 'mapRotateZ'].includes(key);
+  motionEngine.settings[key] = motionInputs[key].type === 'color' ? motionInputs[key].value : Number(motionInputs[key].value) / (key === 'mapLift' ? 0.68 : 1);
+  syncMotionControls();
+  try { localStorage.setItem('ruangkitamotionsettings_v1', JSON.stringify(motionEngine.settings)); } catch { /* The current session still uses the selected values. */ }
+  applyMotionMapStyles();
+  updateSimulation(simTime);
+  if (cameraSetting && !autoCamEnabled) {
+    autoCamEnabled = true;
+    btnAutoCam.classList.add('active');
+    btnAutoCam.setAttribute('aria-pressed', 'true');
+    btnAutoCam.title = 'Kamera otomatis aktif'; btnAutoCam.setAttribute('aria-label', btnAutoCam.title);
+  }
+  if (cameraSetting) updateCameraChoreography(simTime, 1 / 60);
+}));
+document.getElementById('motion-reset').addEventListener('click', () => {
+  Object.assign(motionEngine.settings, motionDefaults);
+  syncMotionControls();
+  try { localStorage.removeItem('ruangkitamotionsettings_v1'); } catch { /* Reset still applies for this session. */ }
+  applyMotionMapStyles();
+  updateSimulation(simTime);
+  autoCamEnabled = true;
+  btnAutoCam.classList.add('active');
+  btnAutoCam.setAttribute('aria-pressed', 'true');
+  btnAutoCam.title = 'Kamera otomatis aktif'; btnAutoCam.setAttribute('aria-label', btnAutoCam.title);
+  updateCameraChoreography(simTime, 1 / 60);
+});
+document.getElementById('motion-map-reset').addEventListener('click', () => {
+  ['mapX', 'mapY', 'mapZ', 'mapRotateX', 'mapRotateY', 'mapRotateZ'].forEach(key => { motionEngine.settings[key] = 0; });
+  syncMotionControls();
+  try { localStorage.setItem('ruangkitamotionsettings_v1', JSON.stringify(motionEngine.settings)); } catch { /* Reset still applies for this session. */ }
+  autoCamEnabled = true;
+  btnAutoCam.classList.add('active'); btnAutoCam.setAttribute('aria-pressed', 'true');
+  btnAutoCam.title = 'Kamera otomatis aktif'; btnAutoCam.setAttribute('aria-label', btnAutoCam.title);
+  updateCameraChoreography(simTime, 1 / 60);
+});
+syncMotionControls();
+
 const CAM_KEYS = [
   { t: 0.0,  pos: [0.0, 14.5, 29.0], target: [0.0, 3.2, 0.0] },
   { t: 3.75, pos: [-9.5, 11.5, 23.5], target: [-4.5, 5.2, 0.0] },
@@ -1706,6 +1955,247 @@ const CAM_KEYS = [
 ];
 
 let autoCamEnabled = true;
+
+function uploadedMapPlaybackPosition(time) {
+  const count = uploadedMapFeatures.length;
+  if (!count) return { index: 0, within: 0, cursor: 0 };
+  const cursor = Math.min(count - 0.0001, Math.max(0, time / DURATION * count));
+  const index = Math.floor(cursor);
+  return { index, within: cursor - index, cursor };
+}
+
+function updateUploadedMap(time) {
+  if (!uploadedMapFeatures.length) return;
+  const { index: activeIndex, within } = uploadedMapPlaybackPosition(time);
+  uploadedMapFeatures.forEach((feature, index) => {
+    const progress = index < activeIndex ? 1 : index > activeIndex ? 0 : within;
+    const active = index === activeIndex;
+    motionEngine.flyup(feature.group, active ? within : 0, {
+      baseY: .04,
+      height: .68,
+      easing: (_start, _end, amount) => Math.sin(amount * Math.PI)
+    });
+    feature.material.color.set(active ? 0xfde68a : motionEngine.settings.polygonColor || feature.baseColor);
+    feature.material.emissive.setHex(active ? 0x493c1c : 0x101827);
+    feature.material.emissiveIntensity = active ? .48 : .1;
+    feature.outlines.forEach(outline => {
+      const reveal = index < activeIndex ? 1 : Math.min(1, progress * motionEngine.settings.outlineSpeed);
+      outline.geometry.setDrawRange(0, Math.floor(outline.userData.revealCount * reveal / 2) * 2);
+    });
+  });
+}
+
+function importedFeatureList(data) {
+  const collections = Array.isArray(data) ? data : [data];
+  const features = [];
+  const appendGeometry = (geometry, properties = {}) => {
+    if (!geometry) return;
+    if (geometry.type === 'GeometryCollection') geometry.geometries?.forEach(item => appendGeometry(item, properties));
+    else if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') features.push({ type: 'Feature', properties, geometry });
+  };
+  collections.forEach(collection => {
+    if (collection?.type === 'FeatureCollection') collection.features?.forEach(feature => appendGeometry(feature.geometry, feature.properties || {}));
+    else if (collection?.type === 'Feature') appendGeometry(collection.geometry, collection.properties || {});
+    else if (collection?.type && collection.coordinates) appendGeometry(collection);
+  });
+  return features;
+}
+
+function importedRings(feature) {
+  const geometry = feature.geometry;
+  return geometry.type === 'Polygon' ? geometry.coordinates : geometry.coordinates.flat();
+}
+
+function sampledGeoRing(ring, maximum = 700) {
+  if (!Array.isArray(ring) || ring.length < 4) return [];
+  const stride = Math.max(1, Math.ceil((ring.length - 1) / maximum));
+  const sampled = [];
+  for (let index = 0; index < ring.length - 1; index += stride) sampled.push(ring[index]);
+  sampled.push(ring[ring.length - 1]);
+  return sampled;
+}
+
+function shapeFromGeoRing(ring, PathType) {
+  const points = sampledGeoRing(ring).map(([longitude, latitude]) => uploadedMapProject(longitude, latitude));
+  if (points.length < 4) return null;
+  const path = new PathType();
+  path.moveTo(points[0].x, points[0].y);
+  points.slice(1).forEach(point => path.lineTo(point.x, point.y));
+  path.closePath();
+  return path;
+}
+
+let uploadedMapProject = () => new THREE.Vector2();
+
+function normalizeImportedGeometry(features) {
+  if (!features.length) throw new Error('Tidak ada polygon. Gunakan data Polygon atau MultiPolygon.');
+  if (features.length > 2500) throw new Error('Batas impor 2.500 fitur polygon agar editor tetap lancar.');
+  let minLon = Infinity, maxLon = -Infinity, minLat = Infinity, maxLat = -Infinity, vertexCount = 0;
+  features.forEach(feature => importedRings(feature).forEach(ring => ring.forEach(coordinate => {
+    const longitude = Number(coordinate?.[0]), latitude = Number(coordinate?.[1]);
+    if (!Number.isFinite(longitude) || !Number.isFinite(latitude) || Math.abs(longitude) > 180 || Math.abs(latitude) > 90) {
+      throw new Error('Koordinat harus dalam longitude/latitude WGS84. GeoJSON tanpa CRS perlu dikonversi ke WGS84 terlebih dahulu.');
+    }
+    minLon = Math.min(minLon, longitude); maxLon = Math.max(maxLon, longitude);
+    minLat = Math.min(minLat, latitude); maxLat = Math.max(maxLat, latitude); vertexCount++;
+  })));
+  if (vertexCount > 600000) throw new Error('Batas impor 600.000 titik. Sederhanakan geometri sebelum mengunggah.');
+  const centerLon = (minLon + maxLon) / 2, centerLat = (minLat + maxLat) / 2;
+  const width = (maxLon - minLon) * Math.max(.15, Math.cos(THREE.MathUtils.degToRad(centerLat)));
+  const height = maxLat - minLat;
+  const scale = 28 / Math.max(width, height, .0001);
+  uploadedMapProject = (longitude, latitude) => new THREE.Vector2((longitude - centerLon) * Math.max(.15, Math.cos(THREE.MathUtils.degToRad(centerLat))) * scale, (latitude - centerLat) * scale);
+  return {
+    minLon, maxLon, minLat, maxLat, centerLon, centerLat,
+    center: new THREE.Vector3(0, .35, 0),
+    scale,
+    span: Math.max(width, height) * scale,
+    vertexCount
+  };
+}
+
+function buildUploadedMap(features) {
+  const oldGroups = new Set(uploadedWorld.children);
+  const oldOutlineMaterials = new Set(uploadedMapFeatures.map(feature => feature.outlineMaterial));
+  uploadedMapFeatures.forEach(feature => {
+    feature.group.traverse(object => object.geometry?.dispose());
+    feature.material.dispose(); feature.outlineMaterial.dispose();
+  });
+  for (let index = motionPolygonMeshes.length - 1; index >= 0; index--) if (oldGroups.has(motionPolygonMeshes[index].parent)) motionPolygonMeshes.splice(index, 1);
+  for (let index = motionOutlineMaterials.length - 1; index >= 0; index--) if (oldOutlineMaterials.has(motionOutlineMaterials[index].material)) motionOutlineMaterials.splice(index, 1);
+  uploadedWorld.clear();
+  uploadedMapFeatures = [];
+  uploadedMapBounds = normalizeImportedGeometry(features);
+  uploadedMapCameraDistance = Math.max(22, uploadedMapBounds.span / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.22);
+  const palette = [0x74c0a7, 0x7aa6d8, 0xd6a45f, 0xb48ac7, 0xe07a78, 0x73b9c2, 0x95b85c, 0xd984aa];
+  features.forEach((feature, index) => {
+    const ringsByPolygon = feature.geometry.type === 'Polygon' ? [feature.geometry.coordinates] : feature.geometry.coordinates;
+    const group = new THREE.Group();
+    const baseColor = palette[index % palette.length];
+    const material = new THREE.MeshStandardMaterial({ color: motionEngine.settings.polygonColor || baseColor, roughness: .72, metalness: .02, flatShading: true, side: THREE.DoubleSide, emissive: 0x101827, emissiveIntensity: .1 });
+    let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+    const outlinePositions = [];
+    ringsByPolygon.forEach(rings => {
+      const outer = shapeFromGeoRing(rings[0], THREE.Shape);
+      if (!outer) return;
+      for (let ringIndex = 1; ringIndex < rings.length; ringIndex++) {
+        const hole = shapeFromGeoRing(rings[ringIndex], THREE.Path);
+        if (hole) outer.holes.push(hole);
+      }
+      const geometry = new THREE.ExtrudeGeometry(outer, { depth: .24, bevelEnabled: false, curveSegments: 1 });
+      geometry.rotateX(-Math.PI / 2);
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.receiveShadow = true; mesh.castShadow = true; mesh.scale.y = motionEngine.settings.polygonDepth;
+      group.add(mesh); motionPolygonMeshes.push(mesh);
+      const line = sampledGeoRing(rings[0]);
+      line.forEach((coordinate, pointIndex) => {
+        const next = line[(pointIndex + 1) % line.length];
+        const a = uploadedMapProject(coordinate[0], coordinate[1]);
+        const b = uploadedMapProject(next[0], next[1]);
+        minX = Math.min(minX, a.x); maxX = Math.max(maxX, a.x); minZ = Math.min(minZ, a.y); maxZ = Math.max(maxZ, a.y);
+        outlinePositions.push(a.x, .3, -a.y, b.x, .3, -b.y);
+      });
+    });
+    const outlineGeometry = new THREE.BufferGeometry();
+    outlineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(outlinePositions, 3));
+    outlineGeometry.computeBoundingSphere();
+    outlineGeometry.setDrawRange(0, 0);
+    const outlineMaterial = new THREE.LineBasicMaterial({ color: motionEngine.settings.outlineColor || 0x26364a, transparent: true, opacity: motionEngine.settings.outlineOpacity ?? .94, depthWrite: false });
+    const outline = new THREE.LineSegments(outlineGeometry, outlineMaterial);
+    outline.userData.revealCount = outlineGeometry.getAttribute('position').count;
+    group.add(outline); uploadedWorld.add(group);
+    motionOutlineMaterials.push({ material: outlineMaterial, baseColor: 0x26364a, baseOpacity: .94 });
+    const properties = feature.properties || {};
+    const nameKey = Object.keys(properties).find(key => /^(name|nama|title|label)$/i.test(key)) || Object.keys(properties).find(key => /^id$/i.test(key));
+    const name = String(nameKey ? properties[nameKey] : `Fitur ${String(index + 1).padStart(2, '0')}`);
+    const anchor = new THREE.Vector3((minX + maxX) / 2, .35, -(minZ + maxZ) / 2);
+    group.position.y = .04;
+    uploadedMapFeatures.push({ group, material, baseColor, anchor, name, outlineMaterial, outlines: [outline] });
+  });
+  if (!uploadedMapFeatures.length) throw new Error('Geometri polygon tidak dapat dibuat dari file ini.');
+  applyMotionMapStyles();
+}
+
+async function readUploadedMap(files) {
+  const fileArray = [...files];
+  if (!fileArray.length) return;
+  const status = document.getElementById('map-upload-status');
+  const createButton = document.getElementById('map-upload-create');
+  createButton.disabled = true; pendingUploadedGeoJSON = null;
+  status.textContent = 'Membaca data peta…';
+  try {
+    let parsed;
+    const zipFile = fileArray.find(file => file.name.toLowerCase().endsWith('.zip'));
+    const geoFile = fileArray.find(file => /\.(geojson|json)$/i.test(file.name));
+    if (zipFile) {
+      const shpModule = await import('https://unpkg.com/shpjs@6.2.0/dist/shp.esm.js');
+      parsed = await shpModule.default(await zipFile.arrayBuffer());
+    } else if (geoFile) parsed = JSON.parse(await geoFile.text());
+    else {
+      const shapeFile = fileArray.find(file => file.name.toLowerCase().endsWith('.shp'));
+      if (!shapeFile) throw new Error('Pilih file GeoJSON, ZIP shapefile, atau .shp bersama berkas .dbf/.shx/.prj bila tersedia.');
+      const baseName = shapeFile.name.replace(/\.shp$/i, '').toLowerCase();
+      const binaryParts = { shp: await shapeFile.arrayBuffer() };
+      for (const extension of ['shx', 'dbf', 'prj', 'cpg']) {
+        const companion = fileArray.find(file => file.name.toLowerCase() === `${baseName}.${extension}`);
+        if (companion) binaryParts[extension] = await companion.arrayBuffer();
+      }
+      const shpModule = await import('https://unpkg.com/shpjs@6.2.0/dist/shp.esm.js');
+      parsed = await shpModule.default(binaryParts);
+    }
+    const features = importedFeatureList(parsed);
+    const bounds = normalizeImportedGeometry(features);
+    pendingUploadedGeoJSON = { features, bounds, fileName: fileArray.find(file => /\.(geojson|json|zip|shp)$/i.test(file.name))?.name || 'Peta saya' };
+    createButton.disabled = false;
+    status.textContent = `${features.length.toLocaleString('id-ID')} polygon siap dianimasikan · ${(bounds.vertexCount).toLocaleString('id-ID')} titik batas`;
+  } catch (error) {
+    console.error('Impor peta gagal:', error);
+    status.textContent = error instanceof Error ? error.message : 'File peta gagal dibaca.';
+  }
+}
+
+async function createUploadedMapAnimation() {
+  if (!pendingUploadedGeoJSON) return;
+  const status = document.getElementById('map-upload-status');
+  const createButton = document.getElementById('map-upload-create');
+  createButton.disabled = true; status.textContent = 'Menyusun geometri dan gerakan otomatis…';
+  try {
+    const imported = pendingUploadedGeoJSON;
+    buildUploadedMap(imported.features);
+    const baseName = imported.fileName.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim();
+    const title = baseName || 'Peta Saya';
+    const stages = [
+      ['01. Peta masuk', 'Peta diangkat ke kanvas', 'Bentuk wilayah mulai terlihat satu per satu.'],
+      ['02. Batas terungkap', 'Garis batas terbuka', 'Outline mengikuti urutan fitur di data.'],
+      ['03. Jelajahi wilayah', 'Kamera menelusuri peta', 'Kamera bergerak dari satu wilayah ke wilayah berikutnya.'],
+      ['04. Tampilan akhir', 'Peta lengkap', 'Seluruh geometri tampil dalam satu komposisi.']
+    ].map(([titleText, shortTitle, desc], index) => ({
+      eyebrow: `TAHAP ${String(index + 1).padStart(2, '0')} / 04`, title: titleText, shortTitle, subtitle: desc, desc,
+      voice: `Tahap ${index + 1}. ${desc}`
+    }));
+    const duration = THREE.MathUtils.clamp(imported.features.length * 1.1, 15, 36);
+    const preset = { id: 'uploaded-map', title, category: 'Peta Saya', description: `${imported.features.length} fitur polygon`, duration, stages };
+    PRESETS = PRESETS.filter(item => item.id !== 'uploaded-map'); PRESETS.push(preset);
+    try { localStorage.removeItem('ruangkitastages_uploaded-map'); } catch {}
+    let group = [...presetOptions.querySelectorAll('optgroup')].find(item => item.label === 'Peta Saya');
+    if (!group) { group = document.createElement('optgroup'); group.label = 'Peta Saya'; presetOptions.appendChild(group); }
+    group.querySelector('option[value="uploaded-map"]')?.remove();
+    const option = document.createElement('option'); option.value = preset.id; option.textContent = `${preset.title} · ${imported.features.length} fitur`; group.appendChild(option);
+    presetOptions.value = preset.id;
+    autoCamEnabled = true; btnAutoCam.classList.add('active'); btnAutoCam.setAttribute('aria-pressed', 'true');
+    isPlaying = true;
+    await selectPreset(preset);
+    setIconButton(btnPlay, 'pause', 'Jeda'); btnPlay.setAttribute('aria-pressed', 'false');
+    status.textContent = `${imported.features.length.toLocaleString('id-ID')} polygon · animasi siap. Ubah warna, fly-up, outline, dan posisi lewat kontrol di atas.`;
+  } catch (error) {
+    console.error('Pembuatan animasi peta gagal:', error);
+    status.textContent = error instanceof Error ? error.message : 'Animasi peta gagal dibuat.';
+    createButton.disabled = false;
+  }
+}
+
+document.getElementById('map-upload-file').addEventListener('change', event => { void readUploadedMap(event.target.files); });
+document.getElementById('map-upload-create').addEventListener('click', () => { void createUploadedMapAnimation(); });
 
 function updateCameraChoreography(simTime, deltaSeconds = 1 / 60) {
   if (!autoCamEnabled) return;
@@ -1728,9 +2218,7 @@ function updateCameraChoreography(simTime, deltaSeconds = 1 / 60) {
     const elevation = chapterPause ? .78 : .67 + .12 * detail;
     const horizontal = Math.sqrt(1 - elevation * elevation);
     const position = new THREE.Vector3(focus.x + Math.sin(azimuth) * horizontal * distance, focus.y + elevation * distance, focus.z + Math.cos(azimuth) * horizontal * distance);
-    const cameraEase = 1 - Math.exp(-(chapterPause ? 2.6 : 4.2) * Math.max(0, deltaSeconds));
-    const focusEase = 1 - Math.exp(-(chapterPause ? 3.1 : 5.2) * Math.max(0, deltaSeconds));
-    camera.position.lerp(position, cameraEase); controls.target.lerp(focus, focusEase); return;
+    motionEngine.camera(camera, controls, position, focus, deltaSeconds, { positionRate: chapterPause ? 2.6 : 4.2, focusRate: chapterPause ? 3.1 : 5.2 }); return;
   }
   if (activePreset?.id === 'indonesia-provinces') {
     const stageIndex = Math.min(STAGES.length - 1, Math.floor(simTime / STAGE_LEN));
@@ -1754,37 +2242,37 @@ function updateCameraChoreography(simTime, deltaSeconds = 1 / 60) {
       focus.y + elevation * distance,
       focus.z + Math.cos(azimuth) * horizontal * distance
     );
-    const cameraEase = 1 - Math.exp(-3.8 * Math.max(0, deltaSeconds));
-    camera.position.lerp(position, cameraEase);
-    controls.target.lerp(focus, cameraEase);
+    motionEngine.camera(camera, controls, position, focus, deltaSeconds, { positionRate: 3.8 });
+    return;
+  }
+  if (activePreset?.id === 'uploaded-map' && uploadedMapFeatures.length) {
+    const { index, within } = uploadedMapPlaybackPosition(simTime);
+    const feature = uploadedMapFeatures[index];
+    const focus = feature?.anchor || uploadedMapBounds.center;
+    const detailDistance = Math.max(7, uploadedMapCameraDistance * .48);
+    const distance = THREE.MathUtils.lerp(uploadedMapCameraDistance, detailDistance, smoothstep(.02, .45, within));
+    const azimuth = .45 + (index / Math.max(1, uploadedMapFeatures.length)) * Math.PI * 1.2;
+    const elevation = .68 + .08 * smoothstep(0, 1, within);
+    const horizontal = Math.sqrt(1 - elevation * elevation);
+    const position = new THREE.Vector3(focus.x + Math.sin(azimuth) * horizontal * distance, focus.y + elevation * distance, focus.z + Math.cos(azimuth) * horizontal * distance);
+    motionEngine.camera(camera, controls, position, focus, deltaSeconds, { positionRate: 3.6, focusRate: 4.2 });
     return;
   }
   if (activePreset?.id === 'photosynthesis') {
     const drift = Math.sin(simTime * 0.35) * 0.35;
-    camera.position.lerp(new THREE.Vector3(drift, 9.5, 22.5), 0.08);
-    controls.target.lerp(new THREE.Vector3(0, 3.1, 0), 0.08);
+    motionEngine.camera(camera, controls, new THREE.Vector3(drift, 9.5, 22.5), new THREE.Vector3(0, 3.1, 0), deltaSeconds, { positionRate: 5, focusRate: 5 });
     return;
   }
-  let k0 = CAM_KEYS[0], k1 = CAM_KEYS[1];
-  for (let i = 0; i < CAM_KEYS.length - 1; i++) {
-    if (simTime >= CAM_KEYS[i].t && simTime <= CAM_KEYS[i + 1].t) {
-      k0 = CAM_KEYS[i]; k1 = CAM_KEYS[i + 1]; break;
-    }
-  }
-  const localT = smoothstep(k0.t, k1.t, simTime);
+  const key = motionEngine.path(CAM_KEYS, simTime);
   const aspectZoom = camera.aspect < 1.0 ? 1.28 : 1.0;
-  const px = THREE.MathUtils.lerp(k0.pos[0], k1.pos[0], localT) * aspectZoom;
-  const py = THREE.MathUtils.lerp(k0.pos[1], k1.pos[1], localT) * (camera.aspect < 1.0 ? 1.12 : 1.0);
-  const pz = THREE.MathUtils.lerp(k0.pos[2], k1.pos[2], localT) * aspectZoom;
-  const tx = THREE.MathUtils.lerp(k0.target[0], k1.target[0], localT);
-  const ty = THREE.MathUtils.lerp(k0.target[1], k1.target[1], localT);
-  const tz = THREE.MathUtils.lerp(k0.target[2], k1.target[2], localT);
-  camera.position.lerp(new THREE.Vector3(px, py, pz), 0.12);
-  controls.target.lerp(new THREE.Vector3(tx, ty, tz), 0.12);
+  const position = new THREE.Vector3(key.pos[0] * aspectZoom, key.pos[1] * (camera.aspect < 1.0 ? 1.12 : 1.0), key.pos[2] * aspectZoom);
+  const focus = new THREE.Vector3(...key.target);
+  motionEngine.camera(camera, controls, position, focus, deltaSeconds, { positionRate: 7, focusRate: 7 });
 }
 
 function updateSimulation(t) {
   if (activePreset?.id === 'toba-tourism') { updateTobaTourism(t); return; }
+  if (activePreset?.id === 'uploaded-map') { updateUploadedMap(t); return; }
   if (activePreset?.id === 'indonesia-provinces') {
     updateIndonesiaProvince(t);
     return;
@@ -2052,7 +2540,7 @@ function setIconButton(button, icon, label) {
   button.innerHTML = ICONS[icon]; button.title = label; button.setAttribute('aria-label', label);
 }
 function stageIconFor(presetId, index) {
-  if (presetId === 'indonesia-provinces' || presetId === 'toba-tourism') return 'map';
+  if (presetId === 'indonesia-provinces' || presetId === 'toba-tourism' || presetId === 'uploaded-map') return 'map';
   const icons = presetId === 'photosynthesis' ? ['sun', 'water', 'carbon', 'oxygen'] : ['sun', 'cloud', 'rain', 'river'];
   return icons[index] || 'sun';
 }
@@ -2072,7 +2560,7 @@ function annotationAnchor(presetId, index) {
 
 function renderSceneLabels(preset) {
   sceneLabels.replaceChildren();
-  if (preset.id === 'indonesia-provinces' || preset.id === 'toba-tourism') return;
+  if (preset.id === 'indonesia-provinces' || preset.id === 'toba-tourism' || preset.id === 'uploaded-map') return;
   preset.stages.forEach((stage, index) => {
     const label = document.createElement('div');
     label.className = 'scene-label';
@@ -2148,7 +2636,7 @@ function updatePresetSelection() {
 }
 
 async function selectPreset(preset) {
-  if (!preset || preset.id === activePreset.id) return;
+  if (!preset || (preset.id === activePreset.id && preset.id !== 'uploaded-map')) return;
   if (preset.id === 'indonesia-provinces') {
     showToast('Memuat peta provinsi dari data lokal…', 3000);
     try { await ensureIndonesiaProvinceWorld(); }
@@ -2186,9 +2674,10 @@ async function selectPreset(preset) {
       if (Array.isArray(parsed) && parsed.length === STAGES.length) STAGES = parsed;
     }
   } catch (e) {}
-  world.visible = preset.id !== 'photosynthesis' && preset.id !== 'indonesia-provinces' && preset.id !== 'toba-tourism';
+  world.visible = preset.id !== 'photosynthesis' && preset.id !== 'indonesia-provinces' && preset.id !== 'toba-tourism' && preset.id !== 'uploaded-map';
   photosynthesisWorld.visible = preset.id === 'photosynthesis';
   provinceWorld.visible = preset.id === 'indonesia-provinces';
+  uploadedWorld.visible = preset.id === 'uploaded-map';
   document.getElementById('province-basemap-control').classList.toggle('active', preset.id === 'indonesia-provinces');
   document.getElementById('province-basemap-credit').hidden = preset.id !== 'indonesia-provinces' || !provinceBasemapEnabled || !provinceBasemapTexture;
   tobaWorld.visible = preset.id === 'toba-tourism';
@@ -2198,7 +2687,7 @@ async function selectPreset(preset) {
   document.getElementById('province-map-label').hidden = preset.id !== 'indonesia-provinces';
   document.getElementById('toba-map-label').hidden = preset.id !== 'toba-tourism';
   const mapZoom = camera.aspect < 1 ? 1.78 : 1.14;
-  const mapNavigation = preset.id === 'indonesia-provinces' || preset.id === 'toba-tourism';
+  const mapNavigation = preset.id === 'indonesia-provinces' || preset.id === 'toba-tourism' || preset.id === 'uploaded-map';
   controls.enablePan = true;
   controls.enableRotate = true;
   controls.panSpeed = mapNavigation ? 1.15 : 1;
@@ -2213,10 +2702,15 @@ async function selectPreset(preset) {
     : { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
   canvas.style.cursor = mapNavigation ? 'grab' : 'default';
   canvas.title = mapNavigation ? 'Tarik untuk menggeser peta · Klik kanan lalu tarik untuk memutar · Roda mouse atau pinch untuk zoom' : '';
-  controls.minDistance = mapNavigation ? 6 : 12;
-  controls.maxDistance = preset.id === 'indonesia-provinces' ? 90 : preset.id === 'toba-tourism' ? 110 : 55;
+  controls.minDistance = preset.id === 'uploaded-map' ? 2 : mapNavigation ? 6 : 12;
+  controls.maxDistance = preset.id === 'uploaded-map' ? Math.max(120, uploadedMapCameraDistance * 2.5) : preset.id === 'indonesia-provinces' ? 90 : preset.id === 'toba-tourism' ? 110 : 55;
   camera.position.set(0, preset.id === 'photosynthesis' ? 9.5 : preset.id === 'indonesia-provinces' ? 31 * mapZoom : preset.id === 'toba-tourism' ? 54 * (camera.aspect < 1 ? 1.2 : 1) : 14, preset.id === 'photosynthesis' ? 22.5 : preset.id === 'indonesia-provinces' ? 47 * mapZoom : preset.id === 'toba-tourism' ? 91 * (camera.aspect < 1 ? 1.2 : 1) : 29);
   controls.target.set(0, preset.id === 'photosynthesis' ? 3.1 : preset.id === 'toba-tourism' ? .5 : 0, 0);
+  if (preset.id === 'uploaded-map' && uploadedMapBounds) {
+    const center = uploadedMapBounds.center;
+    camera.position.set(center.x, center.y + uploadedMapCameraDistance * .62, center.z + uploadedMapCameraDistance);
+    controls.target.copy(center);
+  }
   simTime = 0; activeStageIdx = 0;
   activeProvinceIndex = -1;
   activeTobaIndex = -1;
